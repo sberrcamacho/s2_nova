@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Bell, Database, Download, Fingerprint, Mail, MapPin, Moon, Phone, Shield, Sparkles, Sun, User } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
@@ -24,6 +24,13 @@ export default function SettingsPage() {
   const [phone, setPhone] = useState(user?.phone ?? '')
   const [city, setCity] = useState(user?.city ?? '')
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!user) return
+    setName(user.name)
+    setPhone(user.phone)
+    setCity(user.city)
+  }, [user?.id])
 
   if (!user) return null
 

@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, Calendar, ChevronDown, LogOut, Menu, Moon, Search, Settings, Sun, User } from 'lucide-react'
+import { AlertTriangle, Bell, Calendar, Check, CheckCircle2, ChevronDown, Info, LogOut, Menu, Moon, Search, Settings, Sun, User } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { Dropdown } from '@/components/ui/Dropdown'
 import { IconButton } from '@/components/ui/IconButton'
@@ -8,12 +8,24 @@ import { useAuth } from '@/state/AuthContext'
 import { useTheme } from '@/state/ThemeContext'
 import { useToast } from '@/state/ToastContext'
 import { DATE_RANGE_OPTIONS, useDashboardFilters } from '@/dashboard/DashboardFiltersContext'
-import { notifications as mockNotifications } from '@/data/notifications'
+import { notifications as mockNotifications, type AppNotification } from '@/data/notifications'
 import { cn } from '@/lib/cn'
 
 interface HeaderProps {
   title: string
   onMenuClick: () => void
+}
+
+const NOTIFICATION_TONE_ICON: Record<AppNotification['tone'], ReactNode> = {
+  warning: <AlertTriangle className="h-4 w-4" />,
+  positive: <CheckCircle2 className="h-4 w-4" />,
+  info: <Info className="h-4 w-4" />,
+}
+
+const NOTIFICATION_TONE_CLASSES: Record<AppNotification['tone'], string> = {
+  warning: 'bg-warning-soft text-warning',
+  positive: 'bg-positive-soft text-positive',
+  info: 'bg-accent-soft text-primary',
 }
 
 export function Header({ title, onMenuClick }: HeaderProps) {
@@ -68,11 +80,12 @@ export function Header({ title, onMenuClick }: HeaderProps) {
                     setRangeOpen(false)
                   }}
                   className={cn(
-                    'flex w-full items-center rounded-[var(--radius-sm)] px-3 py-2 text-left text-sm font-medium transition-colors',
+                    'flex w-full items-center justify-between gap-3 rounded-[var(--radius-sm)] px-3 py-2 text-left text-sm font-medium transition-colors',
                     range === opt.value ? 'bg-accent-soft text-primary' : 'text-ink hover:bg-bg-secondary',
                   )}
                 >
                   {opt.label}
+                  {range === opt.value && <Check className="h-4 w-4" />}
                 </button>
               ))}
             </div>
@@ -88,6 +101,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
 
         <Dropdown
           align="right"
+          width={280}
           trigger={
             <IconButton
               icon={
@@ -102,6 +116,11 @@ export function Header({ title, onMenuClick }: HeaderProps) {
           }
           items={mockNotifications.slice(0, 4).map((n) => ({
             label: n.title,
+            icon: (
+              <span className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-full', NOTIFICATION_TONE_CLASSES[n.tone])}>
+                {NOTIFICATION_TONE_ICON[n.tone]}
+              </span>
+            ),
             onSelect: () => showToast(n.message, n.tone === 'warning' ? 'error' : n.tone === 'positive' ? 'success' : 'info'),
           }))}
         />

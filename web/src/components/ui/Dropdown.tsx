@@ -12,9 +12,10 @@ interface DropdownProps {
   trigger: ReactNode
   items: DropdownItem[]
   align?: 'left' | 'right'
+  width?: number
 }
 
-export function Dropdown({ trigger, items, align = 'right' }: DropdownProps) {
+export function Dropdown({ trigger, items, align = 'right', width = 190 }: DropdownProps) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -38,8 +39,9 @@ export function Dropdown({ trigger, items, align = 'right' }: DropdownProps) {
       {open && (
         <div
           role="menu"
+          style={{ minWidth: width }}
           className={cn(
-            'absolute top-full z-50 mt-2 min-w-[190px] animate-fade-in rounded-[var(--radius-md)] border border-border bg-surface-elevated p-1.5 shadow-[var(--shadow-lg)]',
+            'absolute top-full z-50 mt-2 animate-fade-in rounded-[var(--radius-md)] border border-border bg-surface-elevated p-1.5 shadow-[var(--shadow-lg)]',
             align === 'right' ? 'right-0' : 'left-0',
           )}
         >
