@@ -8,7 +8,7 @@ import { NovaBarChart } from '@/components/charts/NovaBarChart'
 import { useAppData } from '@/state/AppDataContext'
 import { useToast } from '@/state/ToastContext'
 import { analyticsService } from '@/services/analyticsService'
-import { formatCOP } from '@/lib/currency'
+import { useCurrency } from '@/state/useCurrency'
 import { cn } from '@/lib/cn'
 import type { MonthlySummary } from '@/types'
 
@@ -21,6 +21,7 @@ const RANGES = [
 export default function ReportsPage() {
   const { transactions } = useAppData()
   const { showToast } = useToast()
+  const { format } = useCurrency()
   const [rangeMonths, setRangeMonths] = useState<number>(6)
   const [history, setHistory] = useState<MonthlySummary[]>([])
   const [savingsTrend, setSavingsTrend] = useState<{ label: string; balance: number }[]>([])
@@ -65,10 +66,10 @@ export default function ReportsPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KPICard label="Ingresos totales" value={formatCOP(totalIncome)} icon={<ArrowDownLeft className="h-4 w-4" />} />
-        <KPICard label="Gastos totales" value={formatCOP(totalExpenses)} icon={<ArrowUpRight className="h-4 w-4" />} />
-        <KPICard label="Ahorro neto" value={formatCOP(netSavings)} icon={<PiggyBank className="h-4 w-4" />} tone="primary" />
-        <KPICard label="Ahorro mensual promedio" value={formatCOP(avgMonthlySave)} icon={<Wallet className="h-4 w-4" />} />
+        <KPICard label="Ingresos totales" value={format(totalIncome)} icon={<ArrowDownLeft className="h-4 w-4" />} />
+        <KPICard label="Gastos totales" value={format(totalExpenses)} icon={<ArrowUpRight className="h-4 w-4" />} />
+        <KPICard label="Ahorro neto" value={format(netSavings)} icon={<PiggyBank className="h-4 w-4" />} tone="primary" />
+        <KPICard label="Ahorro mensual promedio" value={format(avgMonthlySave)} icon={<Wallet className="h-4 w-4" />} />
       </div>
 
       <ChartCard title="Tendencia de ahorro neto" subtitle={`Últimos ${rangeMonths} meses`}>

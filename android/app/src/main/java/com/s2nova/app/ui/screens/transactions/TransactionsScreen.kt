@@ -33,6 +33,8 @@ import com.s2nova.app.data.model.Transaction
 import com.s2nova.app.data.model.TransactionType
 import com.s2nova.app.ui.components.NovaTopBar
 import com.s2nova.app.ui.components.TransactionRow
+import com.s2nova.app.ui.StringKey
+import com.s2nova.app.ui.rememberStrings
 
 private enum class TypeFilter(val label: String) { ALL("Todos"), INCOME("Ingresos"), EXPENSE("Gastos") }
 
@@ -44,6 +46,7 @@ fun TransactionsScreen(
     val transactions by AppContainer.transactionRepository.transactions.collectAsStateWithLifecycle()
     var search by remember { mutableStateOf("") }
     var filter by remember { mutableStateOf(TypeFilter.ALL) }
+    val t = rememberStrings()
 
     val filtered = transactions.filter { t ->
         val matchesType = when (filter) {
@@ -57,7 +60,7 @@ fun TransactionsScreen(
     }
 
     Scaffold(
-        topBar = { NovaTopBar(title = "Movimientos", onBack = onBack) },
+        topBar = { NovaTopBar(title = t(StringKey.TITLE_TRANSACTIONS), onBack = onBack) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {

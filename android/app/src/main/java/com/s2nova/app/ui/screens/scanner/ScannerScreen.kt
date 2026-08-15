@@ -56,7 +56,6 @@ import androidx.core.content.ContextCompat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import com.s2nova.app.data.AppContainer
-import com.s2nova.app.data.formatCOP
 import com.s2nova.app.data.mock.categoryMap
 import com.s2nova.app.data.mock.paymentMethods
 import com.s2nova.app.data.model.NewTransactionInput
@@ -66,6 +65,7 @@ import com.s2nova.app.data.model.Product
 import com.s2nova.app.data.model.TransactionType
 import com.s2nova.app.data.todayISO
 import com.s2nova.app.ui.components.CategoryIcon
+import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.theme.NovaColors
 
 private sealed interface ScanState {
@@ -82,6 +82,7 @@ fun ScannerScreen(
 ) {
     val context = LocalContext.current
     val colors = NovaColors.current
+    val format = rememberCurrencyFormatter()
 
     var hasPermission by remember {
         mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
@@ -226,7 +227,7 @@ fun ScannerScreen(
                     )
                     AppContainer.notificationRepository.add(
                         title = "Compra registrada",
-                        message = "Se registró \"${found.product.name}\" — ${formatCOP(found.product.price)}.",
+                        message = "Se registró \"${found.product.name}\" — ${format(found.product.price)}.",
                         tone = NotificationTone.INFO,
                     )
                     onPurchaseRegistered()
@@ -319,8 +320,9 @@ private fun ProductFoundSheet(
                 )
             }
         }
+        val format = rememberCurrencyFormatter()
         Text(
-            formatCOP(product.price),
+            format(product.price),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.ExtraBold,
             color = MaterialTheme.colorScheme.onBackground,

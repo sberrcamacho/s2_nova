@@ -41,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
 import com.s2nova.app.data.currentMonthKey
-import com.s2nova.app.data.formatCOP
 import com.s2nova.app.data.mock.categoryMap
 import com.s2nova.app.data.mock.expenseCategories
 import com.s2nova.app.data.model.BudgetProgress
@@ -54,6 +53,9 @@ import com.s2nova.app.ui.components.StatusBadge
 import com.s2nova.app.ui.components.badgeToneFor
 import com.s2nova.app.ui.components.budgetStatusColor
 import com.s2nova.app.ui.components.budgetStatusLabel
+import com.s2nova.app.ui.StringKey
+import com.s2nova.app.ui.rememberCurrencyFormatter
+import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.theme.NovaColors
 
 @Composable
@@ -61,6 +63,8 @@ fun BudgetsScreen() {
     val transactions by AppContainer.transactionRepository.transactions.collectAsStateWithLifecycle()
     val budgets by AppContainer.budgetRepository.budgets.collectAsStateWithLifecycle()
     val colors = NovaColors.current
+    val format = rememberCurrencyFormatter()
+    val t = rememberStrings()
 
     val progressList = budgets.filter { it.month == currentMonthKey() }
         .map { AppContainer.budgetRepository.progressFor(it, transactions) }
@@ -74,7 +78,7 @@ fun BudgetsScreen() {
     var creating by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = { NovaTopBar(title = "Presupuestos") },
+        topBar = { NovaTopBar(title = t(StringKey.TITLE_BUDGETS)) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         LazyColumn(
@@ -93,8 +97,8 @@ fun BudgetsScreen() {
                         .padding(20.dp),
                 ) {
                     Text("PRESUPUESTO DEL MES", style = MaterialTheme.typography.labelMedium, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.6f))
-                    Text(formatCOP(totalSpent), style = MaterialTheme.typography.headlineLarge, color = androidx.compose.ui.graphics.Color.White, modifier = Modifier.padding(top = 4.dp))
-                    Text("de ${formatCOP(totalLimit)}", style = MaterialTheme.typography.bodyMedium, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.7f))
+                    Text(format(totalSpent), style = MaterialTheme.typography.headlineLarge, color = androidx.compose.ui.graphics.Color.White, modifier = Modifier.padding(top = 4.dp))
+                    Text("de ${format(totalLimit)}", style = MaterialTheme.typography.bodyMedium, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.7f))
                     Spacer(Modifier.height(12.dp))
                     NovaProgressBar(percentage = pct, color = androidx.compose.ui.graphics.Color.White)
                     Text("$pct% utilizado", style = MaterialTheme.typography.bodySmall, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.7f), modifier = Modifier.padding(top = 6.dp))
@@ -124,13 +128,13 @@ fun BudgetsScreen() {
                         }
                         Spacer(Modifier.height(10.dp))
                         Row {
-                            Text(formatCOP(progress.spent), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.ExtraBold)
-                            Text(" / ${formatCOP(progress.budget.limit)}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(format(progress.spent), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.ExtraBold)
+                            Text(" / ${format(progress.budget.limit)}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Spacer(Modifier.height(8.dp))
                         NovaProgressBar(percentage = progress.percentage, color = budgetStatusColor(progress.status, colors))
                         Text(
-                            if (progress.remaining >= 0) "${formatCOP(progress.remaining)} disponibles" else "${formatCOP(-progress.remaining)} por encima del límite",
+                            if (progress.remaining >= 0) "${format(progress.remaining)} disponibles" else "${format(-progress.remaining)} por encima del límite",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = 6.dp),

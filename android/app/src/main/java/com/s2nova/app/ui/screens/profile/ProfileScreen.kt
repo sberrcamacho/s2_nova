@@ -38,10 +38,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
-import com.s2nova.app.data.formatCOP
 import com.s2nova.app.ui.components.NovaCard
 import com.s2nova.app.ui.components.StatusBadge
 import com.s2nova.app.ui.components.BadgeTone
+import com.s2nova.app.ui.rememberCurrencyFormatter
 
 @Composable
 fun ProfileScreen(
@@ -53,6 +53,7 @@ fun ProfileScreen(
     val transactions by AppContainer.transactionRepository.transactions.collectAsStateWithLifecycle()
     val budgets by AppContainer.budgetRepository.budgets.collectAsStateWithLifecycle()
     val savedTotal = budgets.sumOf { b -> (AppContainer.budgetRepository.progressFor(b, transactions)).remaining.coerceAtLeast(0.0) }
+    val format = rememberCurrencyFormatter()
 
     Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
         Column(
@@ -84,7 +85,7 @@ fun ProfileScreen(
             ) {
                 ProfileStat(value = transactions.size.toString(), label = "Transacciones")
                 ProfileStat(value = budgets.size.toString(), label = "Presupuestos")
-                ProfileStat(value = formatCOP(savedTotal), label = "Disponible")
+                ProfileStat(value = format(savedTotal), label = "Disponible")
             }
 
             SectionLabel("CUENTA Y SEGURIDAD")

@@ -7,6 +7,7 @@ import { IconButton } from '@/components/ui/IconButton'
 import { useAuth } from '@/state/AuthContext'
 import { useTheme } from '@/state/ThemeContext'
 import { useToast } from '@/state/ToastContext'
+import { useTranslation } from '@/state/useTranslation'
 import { DATE_RANGE_OPTIONS, useDashboardFilters } from '@/dashboard/DashboardFiltersContext'
 import { notifications as mockNotifications, type AppNotification } from '@/data/notifications'
 import { cn } from '@/lib/cn'
@@ -33,19 +34,20 @@ export function Header({ title, onMenuClick }: HeaderProps) {
   const { theme, toggleTheme } = useTheme()
   const { user, logout } = useAuth()
   const { showToast } = useToast()
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [rangeOpen, setRangeOpen] = useState(false)
   const unreadCount = mockNotifications.filter((n) => !n.read).length
 
   const onLogout = () => {
     logout()
-    showToast('Sesión cerrada', 'info')
+    showToast(t('header.sessionClosed'), 'info')
   }
 
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-border bg-surface/90 px-4 backdrop-blur sm:px-6">
       <div className="flex min-w-0 items-center gap-3">
-        <IconButton icon={<Menu className="h-5 w-5" />} label="Abrir menú" variant="ghost" className="lg:hidden" onClick={onMenuClick} />
+        <IconButton icon={<Menu className="h-5 w-5" />} label={t('header.openMenu')} variant="ghost" className="lg:hidden" onClick={onMenuClick} />
         <p className="hidden truncate text-xs font-semibold text-ink-tertiary sm:block">
           <span className="text-ink-secondary">S2 Nova</span> / {title}
         </p>
@@ -55,7 +57,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-tertiary" />
         <input
           type="search"
-          placeholder="Buscar movimientos, categorías..."
+          placeholder={t('header.search')}
           className="w-full rounded-[var(--radius-md)] border border-border bg-bg-secondary py-2 pl-9 pr-3 text-[13px] font-medium text-ink placeholder:text-ink-tertiary focus:border-primary focus:outline-none"
         />
       </div>
@@ -94,7 +96,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
 
         <IconButton
           icon={theme === 'dark' ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
-          label="Cambiar tema"
+          label={t('header.changeTheme')}
           variant="ghost"
           onClick={toggleTheme}
         />
@@ -110,7 +112,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
                   {unreadCount > 0 && <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-negative" />}
                 </span>
               }
-              label="Notificaciones"
+              label={t('header.notifications')}
               variant="ghost"
             />
           }
@@ -129,9 +131,9 @@ export function Header({ title, onMenuClick }: HeaderProps) {
           align="right"
           trigger={<Avatar initials={user?.avatarInitials ?? 'US'} size="sm" className="cursor-pointer" />}
           items={[
-            { label: 'Mi perfil', icon: <User className="h-4 w-4" />, onSelect: () => navigate('/settings') },
-            { label: 'Configuración', icon: <Settings className="h-4 w-4" />, onSelect: () => navigate('/settings') },
-            { label: 'Cerrar sesión', icon: <LogOut className="h-4 w-4" />, onSelect: onLogout, destructive: true },
+            { label: t('header.myProfile'), icon: <User className="h-4 w-4" />, onSelect: () => navigate('/settings') },
+            { label: t('nav.settings'), icon: <Settings className="h-4 w-4" />, onSelect: () => navigate('/settings') },
+            { label: t('header.logout'), icon: <LogOut className="h-4 w-4" />, onSelect: onLogout, destructive: true },
           ]}
         />
       </div>

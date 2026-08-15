@@ -75,6 +75,9 @@ export interface Product {
   imageColor: string // placeholder swatch since we have no real product imagery
 }
 
+export type CurrencyCode = 'COP' | 'USD'
+export type LanguageCode = 'es' | 'en'
+
 export interface User {
   id: string
   name: string
@@ -82,12 +85,13 @@ export interface User {
   phone: string
   city: string
   avatarInitials: string
-  currency: 'COP'
+  currency: CurrencyCode
   memberSince: string
   preferences: {
     theme: 'light' | 'dark' | 'system'
     notifications: boolean
     biometricLogin: boolean
+    language: LanguageCode
   }
 }
 

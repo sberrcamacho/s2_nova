@@ -1,6 +1,6 @@
 import { Cell, Pie, PieChart, Tooltip } from 'recharts'
 import { ChartTooltip } from '@/components/charts/ChartTooltip'
-import { formatCOP } from '@/lib/currency'
+import { useCurrency } from '@/state/useCurrency'
 
 interface DonutSlice {
   name: string
@@ -22,6 +22,7 @@ interface NovaDonutChartProps {
 // fails to render unless we pin the width ourselves.
 export function NovaDonutChart({ data, height = 240, width, centerLabel, centerValue }: NovaDonutChartProps) {
   const boxWidth = width ?? height
+  const { format } = useCurrency()
   return (
     <div className="relative shrink-0" style={{ height, width: boxWidth }}>
       <PieChart width={boxWidth} height={height}>
@@ -41,7 +42,7 @@ export function NovaDonutChart({ data, height = 240, width, centerLabel, centerV
             <Cell key={slice.name} fill={slice.color} />
           ))}
         </Pie>
-        <Tooltip content={<ChartTooltip formatter={(value, name) => [formatCOP(value), name]} />} />
+        <Tooltip content={<ChartTooltip formatter={(value, name) => [format(value), name]} />} />
       </PieChart>
       {(centerLabel || centerValue) && (
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">

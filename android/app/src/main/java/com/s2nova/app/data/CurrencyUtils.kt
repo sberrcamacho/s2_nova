@@ -1,5 +1,6 @@
 package com.s2nova.app.data
 
+import com.s2nova.app.data.model.Currency
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
@@ -19,3 +20,19 @@ fun formatCOP(value: Double, signed: Boolean = false): String {
     val sign = if (value < 0) "-" else if (signed && value > 0) "+" else ""
     return "$sign$$grouped"
 }
+
+// US dollar display formatting: "$125,000.00" — a display-format switch
+// only (same underlying amount, no real COP→USD conversion since there is
+// no backend/FX rate).
+private val USD_FORMAT = DecimalFormat("#,##0.00", DecimalFormatSymbols(Locale.US))
+
+fun formatUSD(value: Double, signed: Boolean = false): String {
+    val grouped = USD_FORMAT.format(abs(value))
+    val sign = if (value < 0) "-" else if (signed && value > 0) "+" else ""
+    return "$sign$$grouped"
+}
+
+// Currency-aware entry point, used wherever the user's format preference
+// (UserPreferences.currency) should drive how an amount is displayed.
+fun formatCurrency(value: Double, currency: Currency, signed: Boolean = false): String =
+    if (currency == Currency.USD) formatUSD(value, signed) else formatCOP(value, signed)

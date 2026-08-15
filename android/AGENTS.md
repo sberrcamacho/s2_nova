@@ -49,10 +49,19 @@ it if missing) with `compileSdk 36` / `minSdk 26` platforms installed.
   — donut, sparkline, bar pair). There's no Compose port of the web's
   Recharts library; keep new chart needs in this file rather than pulling in
   a heavy charting dependency for a mock-data app.
-- **Fonts**: uses the system sans-serif (weight-matched) rather than the
-  web's Plus Jakarta Sans/Inter. Drop static font files under
-  `app/src/main/res/font/` and reference them from `ui/theme/Type.kt` if
-  exact font-family parity becomes a priority.
+- **Fonts**: Plus Jakarta Sans, bundled locally as `.ttf` files under
+  `app/src/main/res/font/` (same family the web app loads as `--font-sans`)
+  and wired into `ui/theme/Type.kt` as `NovaFontFamily` — no network/Google
+  Play Services Fonts dependency.
+- **Currency format / language** are user preferences
+  (`UserPreferences.currency`/`.language`, editable in `SettingsScreen`),
+  not device settings — screens read them via `rememberCurrencyFormatter()`
+  and `rememberStrings()` (`ui/CurrencyFormatting.kt`, `ui/Strings.kt`)
+  rather than calling `formatCOP`/`formatUSD` or hardcoding copy directly,
+  mirroring web's `useCurrency()`/`useTranslation()`. The `StringKey`
+  dictionary covers the bottom nav, top bar titles, and the Settings screen
+  itself — same scope as the web app's translation coverage, not a
+  screen-by-screen translation of the whole app yet.
 
 ## Keeping in sync with the web app
 

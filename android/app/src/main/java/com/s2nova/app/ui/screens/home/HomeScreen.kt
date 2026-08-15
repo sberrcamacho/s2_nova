@@ -33,12 +33,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AnalyticsHelpers
 import com.s2nova.app.data.AppContainer
-import com.s2nova.app.data.formatCOP
 import com.s2nova.app.data.mock.categoryMap
 import com.s2nova.app.ui.components.DonutSlice
 import com.s2nova.app.ui.components.NovaCard
 import com.s2nova.app.ui.components.NovaDonutChart
 import com.s2nova.app.ui.components.TransactionRow
+import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.theme.NovaColors
 
 @Composable
@@ -51,6 +51,7 @@ fun HomeScreen(
     val user by AppContainer.authRepository.currentUser.collectAsStateWithLifecycle()
     val notifications by AppContainer.notificationRepository.notifications.collectAsStateWithLifecycle()
     val colors = NovaColors.current
+    val format = rememberCurrencyFormatter()
 
     val totalIncome = transactions.filter { it.type == com.s2nova.app.data.model.TransactionType.INCOME }.sumOf { it.amount }
     val totalExpenses = transactions.filter { it.type == com.s2nova.app.data.model.TransactionType.EXPENSE }.sumOf { it.amount }
@@ -114,16 +115,16 @@ fun HomeScreen(
                 Column {
                     Text("SALDO ACTUAL", style = MaterialTheme.typography.labelMedium, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.6f))
                     Text(
-                        formatCOP(balance),
+                        format(balance),
                         style = MaterialTheme.typography.headlineLarge,
                         color = androidx.compose.ui.graphics.Color.White,
                         modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
                     )
                     HorizontalDivider(color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.12f))
                     Row(modifier = Modifier.padding(top = 14.dp)) {
-                        HeroStat(label = "Ingresos", value = formatCOP(thisMonth.income), valueColor = colors.positive, modifier = Modifier.weight(1f))
-                        HeroStat(label = "Gastos", value = formatCOP(thisMonth.expenses), valueColor = colors.negative, modifier = Modifier.weight(1f))
-                        HeroStat(label = "Ahorro", value = formatCOP(thisMonth.savings), valueColor = androidx.compose.ui.graphics.Color.White, modifier = Modifier.weight(1f))
+                        HeroStat(label = "Ingresos", value = format(thisMonth.income), valueColor = colors.positive, modifier = Modifier.weight(1f))
+                        HeroStat(label = "Gastos", value = format(thisMonth.expenses), valueColor = colors.negative, modifier = Modifier.weight(1f))
+                        HeroStat(label = "Ahorro", value = format(thisMonth.savings), valueColor = androidx.compose.ui.graphics.Color.White, modifier = Modifier.weight(1f))
                     }
                 }
             }

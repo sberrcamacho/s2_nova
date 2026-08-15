@@ -10,16 +10,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.s2nova.app.data.formatCOP
 import com.s2nova.app.data.model.TransactionType
+import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.theme.NovaColors
 
 @Composable
 fun AmountText(amount: Double, type: TransactionType, modifier: Modifier = Modifier) {
     val colors = NovaColors.current
+    val format = rememberCurrencyFormatter()
     val signed = if (type == TransactionType.INCOME) amount else -amount
     Text(
-        text = formatCOP(signed, signed = true),
+        text = format(signed, signed = true),
         color = if (type == TransactionType.INCOME) colors.positive else colors.negative,
         style = MaterialTheme.typography.titleSmall,
         modifier = modifier,

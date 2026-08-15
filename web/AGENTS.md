@@ -24,7 +24,8 @@ documented path is missing, or when the repository contradicts this guide.
 - `src/App.tsx` - Root component; mounts the dashboard route tree at `/`
 - `src/dashboard/` - The entire application: layout, pages, and dashboard-local state (`DashboardFiltersContext`)
 - `src/components/ui/`, `src/components/charts/` - Shared, reusable building blocks used across dashboard pages
-- `src/state/` - App-wide React context (auth, theme, toast, mock app data)
+- `src/state/` - App-wide React context (auth, theme, toast, mock app data) plus `useCurrency`/`useTranslation`, hooks bound to `user.currency`/`user.preferences.language` — use these instead of importing `lib/currency.ts` or hardcoding copy directly, so amounts/text stay in sync with the Settings page's currency-format and language toggles
+- `src/lib/i18n/` - Small hand-rolled translation dictionary (`es`/`en`) consumed via `useTranslation()`'s `t()`
 - `src/services/`, `src/data/` - Mock "backend" layer: in-memory CRUD + seed data. No real API/database yet.
 - `src/index.css` - Global CSS entrypoint, Tailwind CSS v4 import, and the S2 Nova design tokens (light/dark palettes)
 - `index.html` - Vite HTML shell containing the `#root` element and loading `src/main.tsx`

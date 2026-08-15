@@ -1,4 +1,4 @@
-import { Sparkle } from '@/components/ui/Sparkle'
+import logoMark from '@/assets/logo-mark.png'
 import { cn } from '@/lib/cn'
 
 interface LogoProps {
@@ -19,14 +19,15 @@ const NOVA_SIZES = { sm: 'text-[9px]', md: 'text-[10px]', lg: 'text-xs' }
 export function LogoMark({ size = 'md', className }: { size?: LogoProps['size']; className?: string }) {
   const px = MARK_SIZES[size ?? 'md']
   return (
-    <div
-      className={cn('relative flex shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-secondary text-on-primary shadow-primary', className)}
-      style={{ width: px, height: px, boxShadow: 'var(--shadow-primary)' }}
+    <img
+      src={logoMark}
+      width={px}
+      height={px}
+      className={cn('shrink-0 select-none', className)}
+      style={{ width: px, height: px }}
+      alt=""
       aria-hidden="true"
-    >
-      <span className={cn('font-sans font-extrabold tracking-tight', S2_SIZES[size ?? 'md'])}>S2</span>
-      <Sparkle size={px * 0.3} className="absolute -right-1 -top-1 text-highlight animate-sparkle" />
-    </div>
+    />
   )
 }
 

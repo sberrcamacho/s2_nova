@@ -15,12 +15,13 @@ import { useToast } from '@/state/ToastContext'
 import { useDashboardFilters } from '@/dashboard/DashboardFiltersContext'
 import { analyticsService } from '@/services/analyticsService'
 import { categoryMap } from '@/data/categories'
-import { formatCOP } from '@/lib/currency'
+import { useCurrency } from '@/state/useCurrency'
 import { isSameMonth } from '@/lib/date'
 import type { CategoryId, MonthlySummary } from '@/types'
 
 export default function ExpensesPage() {
   const { transactions } = useAppData()
+  const { format } = useCurrency()
   const { monthKeys } = useDashboardFilters()
   const { showToast } = useToast()
   const [history, setHistory] = useState<MonthlySummary[]>([])
@@ -66,8 +67,8 @@ export default function ExpensesPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KPICard label="Total gastado" value={formatCOP(total)} icon={<TrendingDown className="h-4 w-4" />} tone="primary" />
-        <KPICard label="Promedio por transacción" value={formatCOP(avgPerTxn)} icon={<Receipt className="h-4 w-4" />} />
+        <KPICard label="Total gastado" value={format(total)} icon={<TrendingDown className="h-4 w-4" />} tone="primary" />
+        <KPICard label="Promedio por transacción" value={format(avgPerTxn)} icon={<Receipt className="h-4 w-4" />} />
         <KPICard label="Transacciones" value={String(periodExpenses.length)} icon={<Receipt className="h-4 w-4" />} />
         <KPICard label="Categoría principal" value={topCategory ? categoryMap[topCategory.category]?.label ?? '' : '—'} icon={<Wallet className="h-4 w-4" />} />
       </div>
@@ -85,7 +86,7 @@ export default function ExpensesPage() {
             <EmptyState icon={<Sparkles className="h-6 w-6" />} title="Sin gastos" description="No hay gastos en este periodo." />
           ) : (
             <div className="flex justify-center">
-              <NovaDonutChart data={donutData} height={220} centerLabel="Total" centerValue={formatCOP(total)} />
+              <NovaDonutChart data={donutData} height={220} centerLabel="Total" centerValue={format(total)} />
             </div>
           )}
         </ChartCard>
@@ -102,7 +103,7 @@ export default function ExpensesPage() {
                 <div className="mb-1.5 flex items-center justify-between text-[13px]">
                   <span className="font-semibold text-ink">{categoryMap[e.category]?.label}</span>
                   <span className="font-numeric font-bold text-ink-secondary">
-                    {formatCOP(e.amount)} · {e.percentage}%
+                    {format(e.amount)} · {e.percentage}%
                   </span>
                 </div>
                 <ProgressBar value={e.percentage} tone="negative" />

@@ -14,31 +14,33 @@ import {
 import { Logo } from '@/components/ui/Logo'
 import { Avatar } from '@/components/ui/Avatar'
 import { useAuth } from '@/state/AuthContext'
+import { useTranslation } from '@/state/useTranslation'
+import type { TranslationKey } from '@/lib/i18n/translations'
 import { cn } from '@/lib/cn'
 
-const TOP_ITEM = { to: '/overview', label: 'Resumen', icon: LayoutGrid }
+const TOP_ITEM = { to: '/overview', labelKey: 'nav.overview' as TranslationKey, icon: LayoutGrid }
 
 const NAV_GROUPS = [
   {
-    label: 'Transacciones',
+    labelKey: 'nav.group.transactions' as TranslationKey,
     items: [
-      { to: '/transactions', label: 'Movimientos', icon: Receipt },
-      { to: '/expenses', label: 'Gastos', icon: ArrowUpRight },
-      { to: '/income', label: 'Ingresos', icon: ArrowDownLeft },
+      { to: '/transactions', labelKey: 'nav.transactions' as TranslationKey, icon: Receipt },
+      { to: '/expenses', labelKey: 'nav.expenses' as TranslationKey, icon: ArrowUpRight },
+      { to: '/income', labelKey: 'nav.income' as TranslationKey, icon: ArrowDownLeft },
     ],
   },
   {
-    label: 'Planificación',
+    labelKey: 'nav.group.planning' as TranslationKey,
     items: [
-      { to: '/budgets', label: 'Presupuestos', icon: Wallet },
-      { to: '/categories', label: 'Categorías', icon: Shapes },
+      { to: '/budgets', labelKey: 'nav.budgets' as TranslationKey, icon: Wallet },
+      { to: '/categories', labelKey: 'nav.categories' as TranslationKey, icon: Shapes },
     ],
   },
   {
-    label: 'Análisis',
+    labelKey: 'nav.group.analysis' as TranslationKey,
     items: [
-      { to: '/analytics', label: 'Analítica', icon: BarChart3 },
-      { to: '/reports', label: 'Reportes', icon: FileText },
+      { to: '/analytics', labelKey: 'nav.analytics' as TranslationKey, icon: BarChart3 },
+      { to: '/reports', labelKey: 'nav.reports' as TranslationKey, icon: FileText },
     ],
   },
 ]
@@ -50,6 +52,7 @@ interface SidebarProps {
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const { user } = useAuth()
+  const { t } = useTranslation()
 
   return (
     <>
@@ -64,7 +67,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       >
         <div className="flex h-16 items-center justify-between px-5">
           <Logo size="sm" tone="inverted" />
-          <button className="text-white/50 lg:hidden" onClick={onClose} aria-label="Cerrar menú">
+          <button className="text-white/50 lg:hidden" onClick={onClose} aria-label={t('sidebar.closeMenu')}>
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -73,9 +76,9 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <SidebarLink item={TOP_ITEM} onClick={onClose} />
 
           {NAV_GROUPS.map((group) => (
-            <div key={group.label}>
+            <div key={group.labelKey}>
               <p className="px-3 pb-1.5 text-[10.5px] font-bold uppercase tracking-wider text-white/35">
-                {group.label}
+                {t(group.labelKey)}
               </p>
               <div className="flex flex-col gap-1">
                 {group.items.map((item) => (
@@ -86,7 +89,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           ))}
 
           <div className="mt-auto flex flex-col gap-1 pt-2">
-            <SidebarLink item={{ to: '/settings', label: 'Configuración', icon: Settings }} onClick={onClose} />
+            <SidebarLink item={{ to: '/settings', labelKey: 'nav.settings', icon: Settings }} onClick={onClose} />
           </div>
         </nav>
 
@@ -95,7 +98,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <Avatar initials={user?.avatarInitials ?? 'US'} size="sm" />
             <div className="min-w-0">
               <p className="truncate text-[13px] font-bold text-white">{user?.name ?? 'Usuario S2 Nova'}</p>
-              <p className="text-[11px] font-medium text-white/45">Cuenta demo</p>
+              <p className="text-[11px] font-medium text-white/45">{t('sidebar.demoAccount')}</p>
             </div>
           </div>
         </div>
@@ -108,9 +111,10 @@ function SidebarLink({
   item,
   onClick,
 }: {
-  item: { to: string; label: string; icon: typeof LayoutGrid }
+  item: { to: string; labelKey: TranslationKey; icon: typeof LayoutGrid }
   onClick: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <NavLink
       to={item.to}
@@ -123,7 +127,7 @@ function SidebarLink({
       }
     >
       <item.icon className="h-[18px] w-[18px]" strokeWidth={2.1} />
-      {item.label}
+      {t(item.labelKey)}
     </NavLink>
   )
 }

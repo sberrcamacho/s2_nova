@@ -26,14 +26,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.s2nova.app.ui.StringKey
+import com.s2nova.app.ui.rememberStrings
 
-private data class BottomTab(val route: String, val label: String, val icon: ImageVector)
+private data class BottomTab(val route: String, val labelKey: StringKey, val icon: ImageVector)
 
 private val TABS = listOf(
-    BottomTab(NovaDestinations.HOME, "Inicio", Icons.Filled.Home),
-    BottomTab(NovaDestinations.REPORTS, "Reportes", Icons.Filled.BarChart),
-    BottomTab(NovaDestinations.BUDGETS, "Presupuesto", Icons.Filled.Wallet),
-    BottomTab(NovaDestinations.PROFILE, "Perfil", Icons.Filled.Person),
+    BottomTab(NovaDestinations.HOME, StringKey.NAV_HOME, Icons.Filled.Home),
+    BottomTab(NovaDestinations.REPORTS, StringKey.NAV_REPORTS, Icons.Filled.BarChart),
+    BottomTab(NovaDestinations.BUDGETS, StringKey.NAV_BUDGETS, Icons.Filled.Wallet),
+    BottomTab(NovaDestinations.PROFILE, StringKey.NAV_PROFILE, Icons.Filled.Person),
 )
 
 @Composable
@@ -42,6 +44,7 @@ fun NovaBottomBar(
     onNavigate: (String) -> Unit,
     onFabClick: () -> Unit,
 ) {
+    val t = rememberStrings()
     Column {
         NavigationBar(containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
             TABS.forEachIndexed { index, tab ->
@@ -51,8 +54,8 @@ fun NovaBottomBar(
                 NavigationBarItem(
                     selected = currentRoute == tab.route,
                     onClick = { onNavigate(tab.route) },
-                    icon = { Icon(tab.icon, contentDescription = tab.label) },
-                    label = { Text(tab.label) },
+                    icon = { Icon(tab.icon, contentDescription = t(tab.labelKey)) },
+                    label = { Text(t(tab.labelKey)) },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = MaterialTheme.colorScheme.primary,
                         selectedTextColor = MaterialTheme.colorScheme.primary,
@@ -68,6 +71,7 @@ fun NovaBottomBar(
 
 @Composable
 private fun RowScope.FabSlot(onClick: () -> Unit) {
+    val t = rememberStrings()
     NavigationBarItem(
         selected = false,
         onClick = onClick,
@@ -78,7 +82,7 @@ private fun RowScope.FabSlot(onClick: () -> Unit) {
                     .background(MaterialTheme.colorScheme.primary, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.Filled.Add, contentDescription = "Agregar", tint = MaterialTheme.colorScheme.onPrimary)
+                Icon(Icons.Filled.Add, contentDescription = t(StringKey.NAV_ADD), tint = MaterialTheme.colorScheme.onPrimary)
             }
         },
         label = {},

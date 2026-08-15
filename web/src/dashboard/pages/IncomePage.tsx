@@ -14,12 +14,13 @@ import { useAppData } from '@/state/AppDataContext'
 import { useDashboardFilters } from '@/dashboard/DashboardFiltersContext'
 import { analyticsService } from '@/services/analyticsService'
 import { categoryMap } from '@/data/categories'
-import { formatCOP } from '@/lib/currency'
+import { useCurrency } from '@/state/useCurrency'
 import { isSameMonth } from '@/lib/date'
 import type { CategoryId, MonthlySummary } from '@/types'
 
 export default function IncomePage() {
   const { transactions } = useAppData()
+  const { format } = useCurrency()
   const { monthKeys } = useDashboardFilters()
   const [history, setHistory] = useState<MonthlySummary[]>([])
 
@@ -61,8 +62,8 @@ export default function IncomePage() {
   return (
     <div className="flex flex-col gap-5">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KPICard label="Total de ingresos" value={formatCOP(total)} icon={<ArrowDownLeft className="h-4 w-4" />} tone="primary" />
-        <KPICard label="Promedio por ingreso" value={formatCOP(avgPerTxn)} icon={<Receipt className="h-4 w-4" />} />
+        <KPICard label="Total de ingresos" value={format(total)} icon={<ArrowDownLeft className="h-4 w-4" />} tone="primary" />
+        <KPICard label="Promedio por ingreso" value={format(avgPerTxn)} icon={<Receipt className="h-4 w-4" />} />
         <KPICard label="Movimientos" value={String(periodIncome.length)} icon={<Receipt className="h-4 w-4" />} />
         <KPICard label="Fuente principal" value={topSource ? categoryMap[topSource.category]?.label ?? '' : '—'} icon={<Wallet className="h-4 w-4" />} />
       </div>
@@ -91,7 +92,7 @@ export default function IncomePage() {
             <EmptyState icon={<Sparkles className="h-6 w-6" />} title="Sin ingresos" description="No hay ingresos en este periodo." />
           ) : (
             <div className="flex justify-center">
-              <NovaDonutChart data={donutData} height={220} centerLabel="Total" centerValue={formatCOP(total)} />
+              <NovaDonutChart data={donutData} height={220} centerLabel="Total" centerValue={format(total)} />
             </div>
           )}
         </ChartCard>

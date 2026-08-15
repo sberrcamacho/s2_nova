@@ -26,10 +26,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AnalyticsHelpers
 import com.s2nova.app.data.AppContainer
-import com.s2nova.app.data.formatCOP
 import com.s2nova.app.data.mock.categoryMap
 import com.s2nova.app.ui.components.CategoryIcon
 import com.s2nova.app.ui.components.NovaCard
+import com.s2nova.app.ui.StringKey
+import com.s2nova.app.ui.rememberCurrencyFormatter
+import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.components.NovaProgressBar
 import com.s2nova.app.ui.components.NovaSparkline
 import com.s2nova.app.ui.components.NovaTopBar
@@ -42,6 +44,8 @@ fun ReportsScreen() {
     val transactions by AppContainer.transactionRepository.transactions.collectAsStateWithLifecycle()
     var range by remember { mutableStateOf(RangeOption.MONTH) }
     val colors = NovaColors.current
+    val format = rememberCurrencyFormatter()
+    val t = rememberStrings()
 
     val history = AnalyticsHelpers.monthlyHistory(transactions, range.months)
     val totalSpent = history.sumOf { it.expenses }
@@ -56,7 +60,7 @@ fun ReportsScreen() {
     val topSpending = AnalyticsHelpers.categoryBreakdown(transactions).take(5)
 
     Scaffold(
-        topBar = { NovaTopBar(title = "Reportes") },
+        topBar = { NovaTopBar(title = t(StringKey.TITLE_REPORTS)) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         LazyColumn(
@@ -81,7 +85,7 @@ fun ReportsScreen() {
                     Column(modifier = Modifier.padding(18.dp)) {
                         Text("GASTO TOTAL", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                            Text(formatCOP(totalSpent), style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 4.dp, end = 10.dp))
+                            Text(format(totalSpent), style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 4.dp, end = 10.dp))
                             Text(
                                 "${if (deltaPct >= 0) "↑" else "↓"} ${kotlin.math.abs(deltaPct)}%",
                                 color = if (deltaPct >= 0) colors.negative else colors.positive,
@@ -100,7 +104,7 @@ fun ReportsScreen() {
 
             item {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    StatTile(label = "Promedio diario", value = formatCOP(avgDaily), modifier = Modifier.weight(1f))
+                    StatTile(label = "Promedio diario", value = format(avgDaily), modifier = Modifier.weight(1f))
                     StatTile(label = "Mes más alto", value = highestMonth?.label ?: "—", modifier = Modifier.weight(1f))
                 }
             }
@@ -125,7 +129,7 @@ fun ReportsScreen() {
                             NovaProgressBar(percentage = entry.percentage, color = categoryMap[entry.category]?.let { androidx.compose.ui.graphics.Color(it.color) } ?: colors.negative)
                         }
                         Column(horizontalAlignment = androidx.compose.ui.Alignment.End, modifier = Modifier.padding(start = 12.dp)) {
-                            Text(formatCOP(entry.amount), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
+                            Text(format(entry.amount), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
                             Text("${entry.percentage}%", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }

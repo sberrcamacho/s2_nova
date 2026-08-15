@@ -13,7 +13,7 @@ import { useAppData } from '@/state/AppDataContext'
 import { useToast } from '@/state/ToastContext'
 import { budgetService, type BudgetProgress } from '@/services/budgetService'
 import { categoryMap, expenseCategories } from '@/data/categories'
-import { formatCOP } from '@/lib/currency'
+import { useCurrency } from '@/state/useCurrency'
 import type { CategoryId } from '@/types'
 
 const STATUS_TONE: Record<BudgetProgress['status'], 'positive' | 'warning' | 'negative'> = {
@@ -30,6 +30,7 @@ const STATUS_LABEL: Record<BudgetProgress['status'], string> = {
 export default function BudgetsPage() {
   const { budgets, refresh } = useAppData()
   const { showToast } = useToast()
+  const { format } = useCurrency()
   const [editing, setEditing] = useState<BudgetProgress | null>(null)
   const [limitInput, setLimitInput] = useState('')
   const [saving, setSaving] = useState(false)
@@ -82,8 +83,8 @@ export default function BudgetsPage() {
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between gap-3">
         <div className="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-3">
-          <KPICard label="Presupuesto total" value={formatCOP(totalLimit)} icon={<Wallet className="h-4 w-4" />} tone="primary" />
-          <KPICard label="Gastado este mes" value={formatCOP(totalSpent)} icon={<TrendingDown className="h-4 w-4" />} trend={{ value: pct, label: 'del presupuesto' }} />
+          <KPICard label="Presupuesto total" value={format(totalLimit)} icon={<Wallet className="h-4 w-4" />} tone="primary" />
+          <KPICard label="Gastado este mes" value={format(totalSpent)} icon={<TrendingDown className="h-4 w-4" />} trend={{ value: pct, label: 'del presupuesto' }} />
           <KPICard label="Categorías excedidas" value={String(overCount)} icon={<PiggyBank className="h-4 w-4" />} />
         </div>
       </div>
@@ -108,11 +109,11 @@ export default function BudgetsPage() {
                 <Badge tone={STATUS_TONE[b.status]}>{STATUS_LABEL[b.status]}</Badge>
               </div>
               <p className="font-numeric text-lg font-extrabold text-ink">
-                {formatCOP(b.spent)} <span className="text-sm font-semibold text-ink-tertiary">/ {formatCOP(b.limit)}</span>
+                {format(b.spent)} <span className="text-sm font-semibold text-ink-tertiary">/ {format(b.limit)}</span>
               </p>
               <ProgressBar value={b.percentage} tone={STATUS_TONE[b.status]} trackClassName="mt-3" />
               <p className="mt-2 text-xs font-semibold text-ink-tertiary">
-                {b.remaining >= 0 ? `${formatCOP(b.remaining)} disponibles` : `${formatCOP(Math.abs(b.remaining))} por encima del límite`}
+                {b.remaining >= 0 ? `${format(b.remaining)} disponibles` : `${format(Math.abs(b.remaining))} por encima del límite`}
               </p>
             </Card>
           ))}

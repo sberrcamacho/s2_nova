@@ -71,10 +71,16 @@ data class Product(
     val unit: String,
 )
 
+enum class Currency { COP, USD }
+
+enum class AppLanguage { ES, EN }
+
 data class UserPreferences(
     val darkTheme: Boolean,
     val notifications: Boolean,
     val biometricLogin: Boolean,
+    val currency: Currency = Currency.COP,
+    val language: AppLanguage = AppLanguage.ES,
 )
 
 data class User(

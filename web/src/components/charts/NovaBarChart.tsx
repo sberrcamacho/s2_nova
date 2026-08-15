@@ -1,7 +1,7 @@
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { axisTickStyle, chartColors } from '@/components/charts/chartTheme'
 import { ChartTooltip } from '@/components/charts/ChartTooltip'
-import { formatCOPCompact } from '@/lib/currency'
+import { useCurrency } from '@/state/useCurrency'
 
 interface Series {
   key: string
@@ -18,6 +18,7 @@ interface NovaBarChartProps {
 }
 
 export function NovaBarChart({ data, xKey, series, height = 260, radius = 6 }: NovaBarChartProps) {
+  const { formatCompact } = useCurrency()
   return (
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={data} margin={{ top: 8, right: 8, left: -12, bottom: 0 }} barGap={6}>
@@ -27,11 +28,11 @@ export function NovaBarChart({ data, xKey, series, height = 260, radius = 6 }: N
           axisLine={false}
           tickLine={false}
           tick={axisTickStyle}
-          tickFormatter={(v) => formatCOPCompact(v)}
+          tickFormatter={(v) => formatCompact(v)}
           width={54}
         />
         <Tooltip
-          content={<ChartTooltip formatter={(value, name) => [formatCOPCompact(value), name]} />}
+          content={<ChartTooltip formatter={(value, name) => [formatCompact(value), name]} />}
           cursor={{ fill: 'var(--color-bg-secondary)' }}
         />
         {series.map((s) => (

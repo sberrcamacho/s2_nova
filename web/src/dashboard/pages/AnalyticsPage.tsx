@@ -10,12 +10,13 @@ import { NovaDonutChart } from '@/components/charts/NovaDonutChart'
 import { useAppData } from '@/state/AppDataContext'
 import { analyticsService } from '@/services/analyticsService'
 import { categoryMap } from '@/data/categories'
-import { formatCOP } from '@/lib/currency'
+import { useCurrency } from '@/state/useCurrency'
 import { currentMonthKey, isSameMonth } from '@/lib/date'
 import type { CategoryBreakdownEntry, MonthlySummary } from '@/types'
 
 export default function AnalyticsPage() {
   const { transactions } = useAppData()
+  const { format } = useCurrency()
   const [history, setHistory] = useState<MonthlySummary[]>([])
   const [breakdown, setBreakdown] = useState<CategoryBreakdownEntry[]>([])
   const [savingsTrend, setSavingsTrend] = useState<{ label: string; balance: number }[]>([])
@@ -59,10 +60,10 @@ export default function AnalyticsPage() {
   return (
     <div className="flex flex-col gap-5">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KPICard label="Ritmo de gasto" value={`${formatCOP(burnRate)}/día`} icon={<Flame className="h-4 w-4" />} tone="primary" />
+        <KPICard label="Ritmo de gasto" value={`${format(burnRate)}/día`} icon={<Flame className="h-4 w-4" />} tone="primary" />
         <KPICard label="Mejor mes" value={bestMonth?.label ?? '—'} icon={<TrendingUp className="h-4 w-4" />} />
         <KPICard label="Peor mes" value={worstMonth?.label ?? '—'} icon={<TrendingDown className="h-4 w-4" />} />
-        <KPICard label="Pronóstico próx. mes" value={formatCOP(forecast)} icon={<Calendar className="h-4 w-4" />} />
+        <KPICard label="Pronóstico próx. mes" value={format(forecast)} icon={<Calendar className="h-4 w-4" />} />
       </div>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
@@ -112,8 +113,8 @@ export default function AnalyticsPage() {
       <Card className="p-5 sm:p-6">
         <h3 className="mb-4 text-[15px] font-bold text-ink">Análisis de hábitos de gasto</h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <InsightTile label="Promedio entre semana" value={formatCOP(insights.weekdayAvg)} />
-          <InsightTile label="Promedio fin de semana" value={formatCOP(insights.weekendAvg)} />
+          <InsightTile label="Promedio entre semana" value={format(insights.weekdayAvg)} />
+          <InsightTile label="Promedio fin de semana" value={format(insights.weekendAvg)} />
           <InsightTile label="Día de mayor gasto" value={insights.peakDay} />
         </div>
       </Card>

@@ -1,5 +1,7 @@
 package com.s2nova.app.ui.screens.settings
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.draw.clip
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -29,8 +32,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.BuildConfig
 import com.s2nova.app.data.AppContainer
 import com.s2nova.app.data.ThemeController
+import com.s2nova.app.data.model.AppLanguage
+import com.s2nova.app.data.model.Currency
+import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.components.NovaCard
 import com.s2nova.app.ui.components.NovaTopBar
+import com.s2nova.app.ui.rememberStrings
 
 @Composable
 fun SettingsScreen(onBack: () -> Unit) {
@@ -43,9 +50,12 @@ fun SettingsScreen(onBack: () -> Unit) {
     var city by remember { mutableStateOf(user?.city ?: "") }
     var notifications by remember { mutableStateOf(user?.preferences?.notifications ?: true) }
     var biometric by remember { mutableStateOf(user?.preferences?.biometricLogin ?: false) }
+    val currency = user?.preferences?.currency ?: Currency.COP
+    val language = user?.preferences?.language ?: AppLanguage.ES
+    val t = rememberStrings()
 
     Scaffold(
-        topBar = { NovaTopBar(title = "Configuración", onBack = onBack) },
+        topBar = { NovaTopBar(title = t(StringKey.TITLE_SETTINGS), onBack = onBack) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         Column(
@@ -55,15 +65,15 @@ fun SettingsScreen(onBack: () -> Unit) {
                 .verticalScroll(rememberScrollState())
                 .padding(20.dp),
         ) {
-            Text("Información personal", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
+            Text(t(StringKey.SETTINGS_PERSONAL_INFO), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
             Spacer(Modifier.height(12.dp))
-            OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Nombre completo") }, singleLine = true, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(t(StringKey.SETTINGS_FULL_NAME)) }, singleLine = true, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(12.dp))
-            OutlinedTextField(value = user?.email ?: "", onValueChange = {}, label = { Text("Correo electrónico") }, enabled = false, singleLine = true, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = user?.email ?: "", onValueChange = {}, label = { Text(t(StringKey.SETTINGS_EMAIL)) }, enabled = false, singleLine = true, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(12.dp))
-            OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text("Teléfono") }, singleLine = true, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text(t(StringKey.SETTINGS_PHONE)) }, singleLine = true, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(12.dp))
-            OutlinedTextField(value = city, onValueChange = { city = it }, label = { Text("Ciudad") }, singleLine = true, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = city, onValueChange = { city = it }, label = { Text(t(StringKey.SETTINGS_CITY)) }, singleLine = true, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(16.dp))
             Button(
                 onClick = {
@@ -71,28 +81,42 @@ fun SettingsScreen(onBack: () -> Unit) {
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 shape = RoundedCornerShape(14.dp),
-            ) { Text("Guardar cambios", modifier = Modifier.padding(vertical = 4.dp)) }
+            ) { Text(t(StringKey.SETTINGS_SAVE_CHANGES), modifier = Modifier.padding(vertical = 4.dp)) }
 
-            Text("Preferencias", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 28.dp, bottom = 12.dp))
+            Text(t(StringKey.SETTINGS_PREFERENCES), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 28.dp, bottom = 12.dp))
             NovaCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    PreferenceRow("Modo oscuro", isDark) { ThemeController.setDark(it) }
+                    PreferenceRow(t(StringKey.SETTINGS_DARK_MODE), isDark) { ThemeController.setDark(it) }
                     Spacer(Modifier.height(14.dp))
-                    PreferenceRow("Notificaciones", notifications) {
+                    PreferenceRow(t(StringKey.SETTINGS_NOTIFICATIONS), notifications) {
                         notifications = it
                         AppContainer.authRepository.updateUser { u -> u.copy(preferences = u.preferences.copy(notifications = it)) }
                     }
                     Spacer(Modifier.height(14.dp))
-                    PreferenceRow("Inicio biométrico", biometric) {
+                    PreferenceRow(t(StringKey.SETTINGS_BIOMETRIC), biometric) {
                         biometric = it
                         AppContainer.authRepository.updateUser { u -> u.copy(preferences = u.preferences.copy(biometricLogin = it)) }
                     }
+                    Spacer(Modifier.height(14.dp))
+                    PreferenceChoiceRow(
+                        label = t(StringKey.SETTINGS_CURRENCY_FORMAT),
+                        options = listOf(Currency.COP to "COP", Currency.USD to "USD"),
+                        selected = currency,
+                        onSelect = { AppContainer.authRepository.updateUser { u -> u.copy(preferences = u.preferences.copy(currency = it)) } },
+                    )
+                    Spacer(Modifier.height(14.dp))
+                    PreferenceChoiceRow(
+                        label = t(StringKey.SETTINGS_LANGUAGE),
+                        options = listOf(AppLanguage.ES to "Español", AppLanguage.EN to "English"),
+                        selected = language,
+                        onSelect = { AppContainer.authRepository.updateUser { u -> u.copy(preferences = u.preferences.copy(language = it)) } },
+                    )
                 }
             }
 
             NovaCard(modifier = Modifier.fillMaxWidth().padding(top = 20.dp)) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Acerca de", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
+                    Text(t(StringKey.SETTINGS_ABOUT), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
                     Text(
                         "S2 Nova · Versión ${BuildConfig.VERSION_NAME} · Datos de demostración, sin conexión a un backend real.",
                         style = MaterialTheme.typography.bodySmall,
@@ -112,5 +136,31 @@ private fun PreferenceRow(label: String, checked: Boolean, onChange: (Boolean) -
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         Text(label, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onBackground)
         Switch(checked = checked, onCheckedChange = onChange)
+    }
+}
+
+@Composable
+private fun <T> PreferenceChoiceRow(label: String, options: List<Pair<T, String>>, selected: T, onSelect: (T) -> Unit) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Text(label, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onBackground)
+        Row(
+            modifier = Modifier
+                .clip(RoundedCornerShape(50))
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+        ) {
+            options.forEach { (value, optLabel) ->
+                val active = value == selected
+                Text(
+                    optLabel,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(if (active) MaterialTheme.colorScheme.primary else androidx.compose.ui.graphics.Color.Transparent)
+                        .clickable { onSelect(value) }
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                )
+            }
+        }
     }
 }
