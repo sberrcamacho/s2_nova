@@ -5,6 +5,7 @@ import path from 'node:path'
 
 // Vite config — https://vitejs.dev/config/
 export default defineConfig({
+  base: '/s2_nova/',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
