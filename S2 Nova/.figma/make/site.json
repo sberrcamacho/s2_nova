@@ -1,0 +1,14 @@
+{
+  "title": "S2 Nova — Finanzas personales",
+  "description": "Manage your finances effortlessly with this intuitive app designed for individuals seeking to track expenses, budget effectively, and achieve financial goals.",
+  "icons": {
+    "icon": "/favicon.svg"
+  },
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
