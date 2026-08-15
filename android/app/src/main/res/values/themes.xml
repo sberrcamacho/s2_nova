@@ -1,0 +1,9 @@
+<resources>
+    <!-- Base theme for the single Compose activity. All real theming (colors,
+         typography, light/dark) lives in ui/theme/Theme.kt — this just needs
+         to be a Material-derived theme with no action bar. -->
+    <style name="Theme.S2Nova" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>
