@@ -16,13 +16,15 @@ import { useDashboardFilters } from '@/dashboard/DashboardFiltersContext'
 import { analyticsService } from '@/services/analyticsService'
 import { categoryMap } from '@/data/categories'
 import { useCurrency } from '@/state/useCurrency'
+import { useTranslation } from '@/state/useTranslation'
 import { isSameMonth } from '@/lib/date'
 import { Sparkles } from 'lucide-react'
-import type { MonthlySummary } from '@/types'
+import type { CategoryId, MonthlySummary } from '@/types'
 
 export default function OverviewPage() {
   const { transactions, budgets } = useAppData()
   const { format } = useCurrency()
+  const { tCategory } = useTranslation()
   const { monthKeys } = useDashboardFilters()
   const navigate = useNavigate()
 
@@ -56,7 +58,7 @@ export default function OverviewPage() {
   }))
 
   const breakdown = useMemo(() => {
-    const totals = new Map<string, number>()
+    const totals = new Map<CategoryId, number>()
     for (const t of periodTransactions) {
       if (t.type !== 'expense') continue
       totals.set(t.category, (totals.get(t.category) ?? 0) + t.amount)
@@ -67,7 +69,7 @@ export default function OverviewPage() {
   }, [periodTransactions])
 
   const donutData = breakdown.map((e) => ({
-    name: categoryMap[e.category]?.label ?? e.category,
+    name: tCategory(e.category),
     value: e.amount,
     color: categoryMap[e.category]?.color ?? '#9C9CAA',
   }))
@@ -140,7 +142,7 @@ export default function OverviewPage() {
               <div key={b.id}>
                 <div className="mb-1.5 flex items-center gap-2">
                   <CategoryIcon category={b.category} size="sm" />
-                  <span className="flex-1 truncate text-[13px] font-semibold text-ink">{categoryMap[b.category]?.label}</span>
+                  <span className="flex-1 truncate text-[13px] font-semibold text-ink">{tCategory(b.category)}</span>
                   <span className="font-numeric text-xs font-bold text-ink-secondary">{b.percentage}%</span>
                 </div>
                 <ProgressBar

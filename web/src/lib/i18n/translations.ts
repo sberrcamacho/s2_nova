@@ -1,4 +1,4 @@
-import type { LanguageCode } from '@/types'
+import type { CategoryId, LanguageCode, PaymentMethod } from '@/types'
 
 // Small hand-rolled dictionary — no i18n library dependency for a
 // mock-data demo app. Covers the app chrome (sidebar, header, page
@@ -75,10 +75,45 @@ const dictionary = {
     es: 'S2 Nova · Datos de demostración, sin conexión a un backend real.',
     en: 'S2 Nova · Demo data, not connected to a real backend.',
   },
+
+  'category.food': { es: 'Alimentación', en: 'Food' },
+  'category.transportation': { es: 'Transporte', en: 'Transportation' },
+  'category.shopping': { es: 'Compras', en: 'Shopping' },
+  'category.health': { es: 'Salud', en: 'Health' },
+  'category.education': { es: 'Educación', en: 'Education' },
+  'category.entertainment': { es: 'Entretenimiento', en: 'Entertainment' },
+  'category.bills': { es: 'Servicios', en: 'Bills' },
+  'category.subscriptions': { es: 'Suscripciones', en: 'Subscriptions' },
+  'category.salary': { es: 'Salario', en: 'Salary' },
+  'category.freelance': { es: 'Freelance', en: 'Freelance' },
+  'category.other': { es: 'Otros', en: 'Other' },
+
+  'paymentMethod.cash': { es: 'Efectivo', en: 'Cash' },
+  'paymentMethod.debit_card': { es: 'Tarjeta débito', en: 'Debit card' },
+  'paymentMethod.credit_card': { es: 'Tarjeta crédito', en: 'Credit card' },
+  'paymentMethod.bank_transfer': { es: 'Transferencia', en: 'Bank transfer' },
+  'paymentMethod.nequi': { es: 'Nequi', en: 'Nequi' },
+  'paymentMethod.daviplata': { es: 'Daviplata', en: 'Daviplata' },
+
+  'budgetStatus.on_track': { es: 'En curso', en: 'On track' },
+  'budgetStatus.near_limit': { es: 'Cerca del límite', en: 'Near limit' },
+  'budgetStatus.over_budget': { es: 'Excedido', en: 'Over budget' },
 } as const satisfies Record<string, Record<LanguageCode, string>>
 
 export type TranslationKey = keyof typeof dictionary
 
 export function translate(key: TranslationKey, language: LanguageCode): string {
   return dictionary[key][language]
+}
+
+// `CategoryId`/`PaymentMethod` values are the exact suffix of their
+// `category.*`/`paymentMethod.*` dictionary keys, so every category/payment
+// label in the app goes through this instead of the (Spanish-only) `label`
+// field on the mock data in `data/categories.ts`.
+export function categoryTranslationKey(id: CategoryId): TranslationKey {
+  return `category.${id}` as TranslationKey
+}
+
+export function paymentMethodTranslationKey(id: PaymentMethod): TranslationKey {
+  return `paymentMethod.${id}` as TranslationKey
 }

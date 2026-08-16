@@ -59,9 +59,59 @@ it if missing) with `compileSdk 36` / `minSdk 26` platforms installed.
   and `rememberStrings()` (`ui/CurrencyFormatting.kt`, `ui/Strings.kt`)
   rather than calling `formatCOP`/`formatUSD` or hardcoding copy directly,
   mirroring web's `useCurrency()`/`useTranslation()`. The `StringKey`
-  dictionary covers the bottom nav, top bar titles, and the Settings screen
-  itself — same scope as the web app's translation coverage, not a
-  screen-by-screen translation of the whole app yet.
+  dictionary covers every screen's UI chrome (labels, buttons, placeholders,
+  validation messages, dialogs) **except** auth (no user/language
+  preference exists yet before login) and the barcode scanner (explicitly
+  out of scope). It also covers every category/payment-method/budget-status
+  label via `categoryStringKey()`/`paymentMethodStringKey()`/
+  `budgetStatusStringKey()` — never read `Category.label`/
+  `PaymentMethodOption.label` off `data/mock/MockCategories.kt` directly in
+  a screen, always go through those + `rememberStrings()` so it reacts to
+  the language toggle. Free-form seeded mock content (transaction
+  descriptions/merchants, notification title/message text, product names)
+  is intentionally left untranslated, same principle as not translating a
+  user's own data. `formatUSD` (`data/CurrencyUtils.kt`) actually converts
+  COP → USD using a fixed reference rate (`COP_PER_USD`) — there's no live
+  FX feed, so it's a documented stand-in constant, not fabricated live data.
+- **Logo**: two theme-specific bitmaps, `drawable-nodpi/logo_mark_dark.png`
+  and `logo_mark_light.png` (own rounded-card background baked in, mirrors
+  web's `logo-mark-dark.png`/`logo-mark-light.png`). `SplashScreen` (the
+  in-app Compose route) and `AuthLayout.AuthLogo()` pick between them by
+  reading `ThemeController.darkOverride` (falling back to
+  `isSystemInDarkTheme()`), same pattern `SettingsScreen` already uses for
+  `isDark`. The adaptive launcher icon (`mipmap-*/ic_launcher_foreground.png`)
+  is generated from the dark variant since the launcher background stays
+  dark. Regenerate all of these from
+  `design-reference/suggestions/logo-dark.png`/`logo-light.png` together if
+  the mark ever changes.
+- **System splash screen** (shown before any Compose content exists, via
+  `androidx.core:core-splashscreen`): `MainActivity` calls
+  `installSplashScreen()`; the Activity's manifest theme is
+  `Theme.S2Nova.Starting` (`values/themes.xml`), overridden per night mode
+  in `values-night/themes.xml`. Each variant points at a **background-less**
+  transparent-glyph drawable (`drawable-nodpi/splash_icon_light.png` /
+  `splash_icon_dark.png` — deliberately different assets from
+  `logo_mark_*`, which carry their own card background and would get
+  clipped oddly by the OS's icon-safe-zone) plus a `@color/splash_background`
+  matching `ui/theme/Color.kt`'s `LightBg`/`DarkBg`
+  (`values/colors.xml` / `values-night/colors.xml`), so there's no color
+  flash into the Compose splash. This only follows the **system** day/night
+  setting — it renders before `ThemeController`'s in-app override exists to
+  read. Keep the icon's visible content to roughly 55–60% of its canvas;
+  the OS clips anything closer to full-bleed (this was the actual bug:
+  the icon used to fall back to the launcher's adaptive icon, which is
+  always dark, showing a black card even in light mode). Regenerate the
+  splash icons the same way as `logo_mark_*` (transparent glyph, no card)
+  from `design-reference/suggestions/logo-dark.png`/`logo-light.png` if the
+  mark changes.
+- **Category/payment-method pill selectors** (`AddTransactionScreen.kt`'s
+  `CategoryChip`/`PaymentMethodChip`): filled `primary` background when
+  selected, a subtle `outline`-alpha `border` when not (so unselected pills
+  read as tappable rather than blending into the card background), and
+  `Modifier.selectable(role = Role.RadioButton)` instead of bare
+  `clickable` so screen readers announce the selected state. Follow this
+  pattern for any new chip-style selector rather than reintroducing a
+  borderless chip.
 
 ## Keeping in sync with the web app
 

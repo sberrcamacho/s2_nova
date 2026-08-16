@@ -16,12 +16,14 @@ import { useDashboardFilters } from '@/dashboard/DashboardFiltersContext'
 import { analyticsService } from '@/services/analyticsService'
 import { categoryMap } from '@/data/categories'
 import { useCurrency } from '@/state/useCurrency'
+import { useTranslation } from '@/state/useTranslation'
 import { isSameMonth } from '@/lib/date'
 import type { CategoryId, MonthlySummary } from '@/types'
 
 export default function ExpensesPage() {
   const { transactions } = useAppData()
   const { format } = useCurrency()
+  const { tCategory } = useTranslation()
   const { monthKeys } = useDashboardFilters()
   const { showToast } = useToast()
   const [history, setHistory] = useState<MonthlySummary[]>([])
@@ -48,7 +50,7 @@ export default function ExpensesPage() {
 
   const topCategory = breakdown[0]
   const donutData = breakdown.map((e) => ({
-    name: categoryMap[e.category]?.label ?? e.category,
+    name: tCategory(e.category),
     value: e.amount,
     color: categoryMap[e.category]?.color ?? '#9C9CAA',
   }))
@@ -70,7 +72,7 @@ export default function ExpensesPage() {
         <KPICard label="Total gastado" value={format(total)} icon={<TrendingDown className="h-4 w-4" />} tone="primary" />
         <KPICard label="Promedio por transacción" value={format(avgPerTxn)} icon={<Receipt className="h-4 w-4" />} />
         <KPICard label="Transacciones" value={String(periodExpenses.length)} icon={<Receipt className="h-4 w-4" />} />
-        <KPICard label="Categoría principal" value={topCategory ? categoryMap[topCategory.category]?.label ?? '' : '—'} icon={<Wallet className="h-4 w-4" />} />
+        <KPICard label="Categoría principal" value={topCategory ? tCategory(topCategory.category) : '—'} icon={<Wallet className="h-4 w-4" />} />
       </div>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
@@ -101,7 +103,7 @@ export default function ExpensesPage() {
             {breakdown.slice(0, 6).map((e) => (
               <div key={e.category}>
                 <div className="mb-1.5 flex items-center justify-between text-[13px]">
-                  <span className="font-semibold text-ink">{categoryMap[e.category]?.label}</span>
+                  <span className="font-semibold text-ink">{tCategory(e.category)}</span>
                   <span className="font-numeric font-bold text-ink-secondary">
                     {format(e.amount)} · {e.percentage}%
                   </span>

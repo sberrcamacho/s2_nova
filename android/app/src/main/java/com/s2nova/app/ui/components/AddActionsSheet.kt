@@ -21,6 +21,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.s2nova.app.ui.StringKey
+import com.s2nova.app.ui.rememberStrings
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,18 +31,19 @@ fun AddActionsSheet(
     onAddManually: () -> Unit,
     onScan: () -> Unit,
 ) {
+    val t = rememberStrings()
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
             ActionRow(
                 icon = Icons.Filled.Edit,
-                title = "Agregar manualmente",
-                subtitle = "Registra un ingreso o gasto",
+                title = t(StringKey.ADD_ACTION_MANUAL_TITLE),
+                subtitle = t(StringKey.ADD_ACTION_MANUAL_SUBTITLE),
                 onClick = onAddManually,
             )
             ActionRow(
                 icon = Icons.Filled.QrCodeScanner,
-                title = "Escanear código de barras",
-                subtitle = "Registra una compra al instante",
+                title = t(StringKey.ADD_ACTION_SCAN_TITLE),
+                subtitle = t(StringKey.ADD_ACTION_SCAN_SUBTITLE),
                 onClick = onScan,
             )
         }

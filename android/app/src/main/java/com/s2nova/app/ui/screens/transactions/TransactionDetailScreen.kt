@@ -35,12 +35,16 @@ import com.s2nova.app.data.formatLongDate
 import com.s2nova.app.data.mock.categoryMap
 import com.s2nova.app.data.mock.paymentMethodMap
 import com.s2nova.app.data.model.TransactionType
+import com.s2nova.app.ui.StringKey
+import com.s2nova.app.ui.categoryStringKey
 import com.s2nova.app.ui.components.AmountText
 import com.s2nova.app.ui.components.BadgeTone
 import com.s2nova.app.ui.components.CategoryIcon
 import com.s2nova.app.ui.components.CategoryIconSize
 import com.s2nova.app.ui.components.NovaTopBar
 import com.s2nova.app.ui.components.StatusBadge
+import com.s2nova.app.ui.paymentMethodStringKey
+import com.s2nova.app.ui.rememberStrings
 
 @Composable
 fun TransactionDetailScreen(
@@ -52,16 +56,17 @@ fun TransactionDetailScreen(
     val transactions by AppContainer.transactionRepository.transactions.collectAsStateWithLifecycle()
     val transaction = transactions.find { it.id == transactionId }
     var confirmDelete by remember { mutableStateOf(false) }
+    val t = rememberStrings()
 
     Scaffold(
         topBar = {
             NovaTopBar(
-                title = "Detalle del movimiento",
+                title = t(StringKey.TXN_DETAIL_TITLE),
                 onBack = onBack,
                 actions = {
                     if (transaction != null) {
                         IconButton(onClick = { onEdit(transaction.id) }) {
-                            Icon(Icons.Filled.Edit, contentDescription = "Editar", tint = MaterialTheme.colorScheme.onBackground)
+                            Icon(Icons.Filled.Edit, contentDescription = t(StringKey.TXN_DETAIL_EDIT_CD), tint = MaterialTheme.colorScheme.onBackground)
                         }
                     }
                 },
@@ -72,7 +77,7 @@ fun TransactionDetailScreen(
         if (transaction == null) {
             Column(modifier = Modifier.fillMaxSize().padding(padding), horizontalAlignment = Alignment.CenterHorizontally) {
                 Spacer(Modifier.height(48.dp))
-                Text("Este movimiento ya no existe.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(t(StringKey.TXN_DETAIL_NOT_FOUND), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             return@Scaffold
         }
@@ -95,7 +100,7 @@ fun TransactionDetailScreen(
                 )
                 AmountText(amount = transaction.amount, type = transaction.type, modifier = Modifier.padding(top = 6.dp))
                 StatusBadge(
-                    text = if (transaction.type == TransactionType.INCOME) "Ingreso" else "Gasto",
+                    text = if (transaction.type == TransactionType.INCOME) t(StringKey.ADD_TXN_INCOME) else t(StringKey.ADD_TXN_EXPENSE),
                     tone = if (transaction.type == TransactionType.INCOME) BadgeTone.POSITIVE else BadgeTone.NEGATIVE,
                     modifier = Modifier.padding(top = 8.dp),
                 )
@@ -103,11 +108,11 @@ fun TransactionDetailScreen(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp), color = MaterialTheme.colorScheme.outline)
 
-            DetailRow("Fecha", formatLongDate(transaction.date))
-            DetailRow("Categoría", category?.label ?: "—")
-            DetailRow("Método de pago", paymentMethodMap[transaction.paymentMethod]?.label ?: "—")
-            if (!transaction.merchant.isNullOrBlank()) DetailRow("Comercio", transaction.merchant)
-            if (!transaction.note.isNullOrBlank()) DetailRow("Nota", transaction.note)
+            DetailRow(t(StringKey.TXN_DETAIL_DATE), formatLongDate(transaction.date))
+            DetailRow(t(StringKey.ADD_TXN_CATEGORY), category?.let { t(categoryStringKey(it.id)) } ?: "—")
+            DetailRow(t(StringKey.ADD_TXN_PAYMENT_METHOD), paymentMethodMap[transaction.paymentMethod]?.let { t(paymentMethodStringKey(it.id)) } ?: "—")
+            if (!transaction.merchant.isNullOrBlank()) DetailRow(t(StringKey.TXN_DETAIL_MERCHANT), transaction.merchant)
+            if (!transaction.note.isNullOrBlank()) DetailRow(t(StringKey.TXN_DETAIL_NOTE), transaction.note)
 
             Spacer(Modifier.height(24.dp))
 
@@ -120,23 +125,23 @@ fun TransactionDetailScreen(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Icon(Icons.Filled.Delete, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
-                Text("Eliminar movimiento")
+                Text(t(StringKey.TXN_DETAIL_DELETE))
             }
         }
 
         if (confirmDelete) {
             AlertDialog(
                 onDismissRequest = { confirmDelete = false },
-                title = { Text("Eliminar transacción") },
-                text = { Text("¿Seguro que deseas eliminar \"${transaction.description}\"? Esta acción no se puede deshacer.") },
+                title = { Text(t(StringKey.TXN_DETAIL_DELETE_DIALOG_TITLE)) },
+                text = { Text("${t(StringKey.TXN_DETAIL_DELETE_CONFIRM_PREFIX)} \"${transaction.description}\"${t(StringKey.TXN_DETAIL_DELETE_CONFIRM_SUFFIX)}") },
                 confirmButton = {
                     TextButton(onClick = {
                         AppContainer.transactionRepository.delete(transaction.id)
                         confirmDelete = false
                         onDeleted()
-                    }) { Text("Eliminar", color = MaterialTheme.colorScheme.error) }
+                    }) { Text(t(StringKey.TXN_DETAIL_DELETE_CONFIRM), color = MaterialTheme.colorScheme.error) }
                 },
-                dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancelar") } },
+                dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(t(StringKey.COMMON_CANCEL)) } },
             )
         }
     }

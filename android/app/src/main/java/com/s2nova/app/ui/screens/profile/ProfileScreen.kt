@@ -38,10 +38,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
+import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.components.NovaCard
 import com.s2nova.app.ui.components.StatusBadge
 import com.s2nova.app.ui.components.BadgeTone
 import com.s2nova.app.ui.rememberCurrencyFormatter
+import com.s2nova.app.ui.rememberStrings
 
 @Composable
 fun ProfileScreen(
@@ -54,6 +56,7 @@ fun ProfileScreen(
     val budgets by AppContainer.budgetRepository.budgets.collectAsStateWithLifecycle()
     val savedTotal = budgets.sumOf { b -> (AppContainer.budgetRepository.progressFor(b, transactions)).remaining.coerceAtLeast(0.0) }
     val format = rememberCurrencyFormatter()
+    val t = rememberStrings()
 
     Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
         Column(
@@ -74,7 +77,7 @@ fun ProfileScreen(
                 }
                 Text(user?.name ?: "", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 12.dp))
                 Text(user?.email ?: "", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                StatusBadge(text = "Cuenta demo", tone = BadgeTone.PRIMARY, modifier = Modifier.padding(top = 8.dp))
+                StatusBadge(text = t(StringKey.PROFILE_DEMO_ACCOUNT), tone = BadgeTone.PRIMARY, modifier = Modifier.padding(top = 8.dp))
             }
 
             Row(
@@ -83,26 +86,26 @@ fun ProfileScreen(
                     .padding(top = 24.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                ProfileStat(value = transactions.size.toString(), label = "Transacciones")
-                ProfileStat(value = budgets.size.toString(), label = "Presupuestos")
-                ProfileStat(value = format(savedTotal), label = "Disponible")
+                ProfileStat(value = transactions.size.toString(), label = t(StringKey.PROFILE_TRANSACTIONS))
+                ProfileStat(value = budgets.size.toString(), label = t(StringKey.PROFILE_BUDGETS))
+                ProfileStat(value = format(savedTotal), label = t(StringKey.PROFILE_AVAILABLE))
             }
 
-            SectionLabel("CUENTA Y SEGURIDAD")
+            SectionLabel(t(StringKey.PROFILE_ACCOUNT_SECURITY))
             NovaCard(modifier = Modifier.fillMaxWidth()) {
                 Column {
-                    ProfileRow(Icons.Filled.Person, "Editar perfil", onClick = onOpenSettings)
-                    ProfileRow(Icons.Filled.Lock, "Cambiar contraseña", onClick = { onShowComingSoon("Cambiar contraseña") })
-                    ProfileRow(Icons.Filled.Security, "Autenticación de dos factores", onClick = { onShowComingSoon("Autenticación de dos factores") })
+                    ProfileRow(Icons.Filled.Person, t(StringKey.PROFILE_EDIT_PROFILE), onClick = onOpenSettings)
+                    ProfileRow(Icons.Filled.Lock, t(StringKey.PROFILE_CHANGE_PASSWORD), onClick = { onShowComingSoon(t(StringKey.PROFILE_CHANGE_PASSWORD)) })
+                    ProfileRow(Icons.Filled.Security, t(StringKey.PROFILE_TWO_FACTOR), onClick = { onShowComingSoon(t(StringKey.PROFILE_TWO_FACTOR)) })
                 }
             }
 
-            SectionLabel("PREFERENCIAS")
+            SectionLabel(t(StringKey.PROFILE_PREFERENCES))
             NovaCard(modifier = Modifier.fillMaxWidth()) {
                 Column {
-                    ProfileRow(Icons.Filled.Settings, "Configuración", onClick = onOpenSettings)
-                    ProfileRow(Icons.Filled.Shield, "Privacidad y seguridad", onClick = { onShowComingSoon("Privacidad y seguridad") })
-                    ProfileRow(Icons.Filled.Fingerprint, "Inicio biométrico", onClick = { onShowComingSoon("Inicio biométrico") })
+                    ProfileRow(Icons.Filled.Settings, t(StringKey.TITLE_SETTINGS), onClick = onOpenSettings)
+                    ProfileRow(Icons.Filled.Shield, t(StringKey.PROFILE_PRIVACY), onClick = { onShowComingSoon(t(StringKey.PROFILE_PRIVACY)) })
+                    ProfileRow(Icons.Filled.Fingerprint, t(StringKey.SETTINGS_BIOMETRIC), onClick = { onShowComingSoon(t(StringKey.SETTINGS_BIOMETRIC)) })
                 }
             }
 
@@ -117,7 +120,7 @@ fun ProfileScreen(
                     .padding(top = 24.dp, bottom = 24.dp),
             ) {
                 Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
-                Text("Cerrar sesión")
+                Text(t(StringKey.PROFILE_LOGOUT))
             }
         }
     }

@@ -27,6 +27,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AnalyticsHelpers
 import com.s2nova.app.data.AppContainer
 import com.s2nova.app.data.mock.categoryMap
+import com.s2nova.app.ui.categoryStringKey
 import com.s2nova.app.ui.components.CategoryIcon
 import com.s2nova.app.ui.components.NovaCard
 import com.s2nova.app.ui.StringKey
@@ -37,7 +38,7 @@ import com.s2nova.app.ui.components.NovaSparkline
 import com.s2nova.app.ui.components.NovaTopBar
 import com.s2nova.app.ui.theme.NovaColors
 
-private enum class RangeOption(val label: String, val months: Int) { WEEK("Semana", 1), MONTH("Mes", 6), YEAR("Año", 12) }
+private enum class RangeOption(val key: StringKey, val months: Int) { WEEK(StringKey.REPORTS_RANGE_WEEK, 1), MONTH(StringKey.REPORTS_RANGE_MONTH, 6), YEAR(StringKey.REPORTS_RANGE_YEAR, 12) }
 
 @Composable
 fun ReportsScreen() {
@@ -75,7 +76,7 @@ fun ReportsScreen() {
                             selected = range == opt,
                             onClick = { range = opt },
                             shape = SegmentedButtonDefaults.itemShape(index, RangeOption.entries.size),
-                        ) { Text(opt.label) }
+                        ) { Text(t(opt.key)) }
                     }
                 }
             }
@@ -83,7 +84,7 @@ fun ReportsScreen() {
             item {
                 NovaCard(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(18.dp)) {
-                        Text("GASTO TOTAL", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(t(StringKey.REPORTS_TOTAL_SPENT), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                             Text(format(totalSpent), style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 4.dp, end = 10.dp))
                             Text(
@@ -104,19 +105,19 @@ fun ReportsScreen() {
 
             item {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    StatTile(label = "Promedio diario", value = format(avgDaily), modifier = Modifier.weight(1f))
-                    StatTile(label = "Mes más alto", value = highestMonth?.label ?: "—", modifier = Modifier.weight(1f))
+                    StatTile(label = t(StringKey.REPORTS_AVG_DAILY), value = format(avgDaily), modifier = Modifier.weight(1f))
+                    StatTile(label = t(StringKey.REPORTS_HIGHEST_MONTH), value = highestMonth?.label ?: "—", modifier = Modifier.weight(1f))
                 }
             }
             item {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    StatTile(label = "Tasa de ahorro", value = "$savingsRate%", modifier = Modifier.weight(1f))
-                    StatTile(label = "Periodo", value = range.label, modifier = Modifier.weight(1f))
+                    StatTile(label = t(StringKey.REPORTS_SAVINGS_RATE), value = "$savingsRate%", modifier = Modifier.weight(1f))
+                    StatTile(label = t(StringKey.REPORTS_PERIOD), value = t(range.key), modifier = Modifier.weight(1f))
                 }
             }
 
             item {
-                Text("Mayor gasto", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 8.dp))
+                Text(t(StringKey.REPORTS_TOP_SPENDING), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 8.dp))
             }
 
             items(topSpending) { entry ->
@@ -124,7 +125,7 @@ fun ReportsScreen() {
                     Row(modifier = Modifier.padding(14.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                         CategoryIcon(category = entry.category)
                         Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
-                            Text(categoryMap[entry.category]?.label ?: "", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
+                            Text(categoryMap[entry.category]?.let { t(categoryStringKey(it.id)) } ?: "", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
                             Spacer(Modifier.height(6.dp))
                             NovaProgressBar(percentage = entry.percentage, color = categoryMap[entry.category]?.let { androidx.compose.ui.graphics.Color(it.color) } ?: colors.negative)
                         }

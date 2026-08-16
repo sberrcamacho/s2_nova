@@ -58,12 +58,6 @@ fun budgetStatusColor(status: com.s2nova.app.data.model.BudgetStatus, colors: co
     com.s2nova.app.data.model.BudgetStatus.ON_TRACK -> colors.positive
 }
 
-fun budgetStatusLabel(status: com.s2nova.app.data.model.BudgetStatus): String = when (status) {
-    com.s2nova.app.data.model.BudgetStatus.OVER_BUDGET -> "Excedido"
-    com.s2nova.app.data.model.BudgetStatus.NEAR_LIMIT -> "Cerca del límite"
-    com.s2nova.app.data.model.BudgetStatus.ON_TRACK -> "En curso"
-}
-
 fun badgeToneFor(status: com.s2nova.app.data.model.BudgetStatus): BadgeTone = when (status) {
     com.s2nova.app.data.model.BudgetStatus.OVER_BUDGET -> BadgeTone.NEGATIVE
     com.s2nova.app.data.model.BudgetStatus.NEAR_LIMIT -> BadgeTone.WARNING

@@ -26,6 +26,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.s2nova.app.data.mock.categoryMap
 import com.s2nova.app.data.model.CategoryId
+import com.s2nova.app.ui.categoryStringKey
+import com.s2nova.app.ui.rememberStrings
 
 fun iconFor(category: CategoryId): ImageVector = when (category) {
     CategoryId.FOOD -> Icons.Filled.Restaurant
@@ -53,6 +55,7 @@ fun CategoryIcon(
 ) {
     val meta = categoryMap[category]
     val color = meta?.let { Color(it.color) } ?: Color(0xFF9C9CAA)
+    val t = rememberStrings()
     Box(
         modifier = modifier
             .size(size.box.dp)
@@ -61,7 +64,7 @@ fun CategoryIcon(
     ) {
         Icon(
             imageVector = iconFor(category),
-            contentDescription = meta?.label,
+            contentDescription = t(categoryStringKey(category)),
             tint = color,
             modifier = Modifier.size(size.icon.dp),
         )

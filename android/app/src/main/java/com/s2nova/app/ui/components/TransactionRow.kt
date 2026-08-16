@@ -15,6 +15,8 @@ import androidx.compose.ui.unit.dp
 import com.s2nova.app.data.formatShortDate
 import com.s2nova.app.data.mock.categoryMap
 import com.s2nova.app.data.model.Transaction
+import com.s2nova.app.ui.categoryStringKey
+import com.s2nova.app.ui.rememberStrings
 
 @Composable
 fun TransactionRow(
@@ -24,6 +26,7 @@ fun TransactionRow(
     onClick: (() -> Unit)? = null,
 ) {
     val category = categoryMap[transaction.category]
+    val t = rememberStrings()
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -44,7 +47,7 @@ fun TransactionRow(
                 overflow = TextOverflow.Ellipsis,
             )
             val subtitle = buildString {
-                append(transaction.merchant ?: category?.label ?: "")
+                append(transaction.merchant ?: category?.let { t(categoryStringKey(it.id)) } ?: "")
                 if (showDate) {
                     if (isNotEmpty()) append(" · ")
                     append(formatShortDate(transaction.date))

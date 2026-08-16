@@ -12,8 +12,10 @@ import { Button } from '@/components/ui/Button'
 import { useAppData } from '@/state/AppDataContext'
 import { useToast } from '@/state/ToastContext'
 import { budgetService, type BudgetProgress } from '@/services/budgetService'
-import { categoryMap, expenseCategories } from '@/data/categories'
+import { expenseCategories } from '@/data/categories'
 import { useCurrency } from '@/state/useCurrency'
+import { useTranslation } from '@/state/useTranslation'
+import type { TranslationKey } from '@/lib/i18n/translations'
 import type { CategoryId } from '@/types'
 
 const STATUS_TONE: Record<BudgetProgress['status'], 'positive' | 'warning' | 'negative'> = {
@@ -21,16 +23,17 @@ const STATUS_TONE: Record<BudgetProgress['status'], 'positive' | 'warning' | 'ne
   near_limit: 'warning',
   over_budget: 'negative',
 }
-const STATUS_LABEL: Record<BudgetProgress['status'], string> = {
-  on_track: 'En curso',
-  near_limit: 'Cerca del límite',
-  over_budget: 'Excedido',
+const STATUS_KEY: Record<BudgetProgress['status'], TranslationKey> = {
+  on_track: 'budgetStatus.on_track',
+  near_limit: 'budgetStatus.near_limit',
+  over_budget: 'budgetStatus.over_budget',
 }
 
 export default function BudgetsPage() {
   const { budgets, refresh } = useAppData()
   const { showToast } = useToast()
   const { format } = useCurrency()
+  const { t, tCategory } = useTranslation()
   const [editing, setEditing] = useState<BudgetProgress | null>(null)
   const [limitInput, setLimitInput] = useState('')
   const [saving, setSaving] = useState(false)
@@ -103,10 +106,10 @@ export default function BudgetsPage() {
               <div className="mb-3 flex items-center gap-3">
                 <CategoryIcon category={b.category} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13.5px] font-bold text-ink">{categoryMap[b.category]?.label}</p>
+                  <p className="truncate text-[13.5px] font-bold text-ink">{tCategory(b.category)}</p>
                   <p className="text-xs text-ink-tertiary">Límite mensual</p>
                 </div>
-                <Badge tone={STATUS_TONE[b.status]}>{STATUS_LABEL[b.status]}</Badge>
+                <Badge tone={STATUS_TONE[b.status]}>{t(STATUS_KEY[b.status])}</Badge>
               </div>
               <p className="font-numeric text-lg font-extrabold text-ink">
                 {format(b.spent)} <span className="text-sm font-semibold text-ink-tertiary">/ {format(b.limit)}</span>
@@ -127,7 +130,7 @@ export default function BudgetsPage() {
             .map((b) => (
               <div key={b.id} className="flex items-center gap-3">
                 <CategoryIcon category={b.category} size="sm" />
-                <span className="w-32 shrink-0 truncate text-[13px] font-semibold text-ink">{categoryMap[b.category]?.label}</span>
+                <span className="w-32 shrink-0 truncate text-[13px] font-semibold text-ink">{tCategory(b.category)}</span>
                 <div className="flex-1">
                   <ProgressBar value={b.percentage} tone={STATUS_TONE[b.status]} />
                 </div>
@@ -142,7 +145,7 @@ export default function BudgetsPage() {
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-3">
               <CategoryIcon category={editing.category} />
-              <p className="text-sm font-bold text-ink">{categoryMap[editing.category]?.label}</p>
+              <p className="text-sm font-bold text-ink">{tCategory(editing.category)}</p>
             </div>
             <Input
               label="Límite mensual"
@@ -164,7 +167,7 @@ export default function BudgetsPage() {
             label="Categoría"
             value={newCategory}
             onChange={(e) => setNewCategory(e.target.value as CategoryId)}
-            options={availableCategories.map((c) => ({ value: c.id, label: c.label }))}
+            options={availableCategories.map((c) => ({ value: c.id, label: tCategory(c.id) }))}
           />
           <Input
             label="Límite mensual"

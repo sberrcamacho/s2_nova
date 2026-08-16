@@ -25,7 +25,7 @@ documented path is missing, or when the repository contradicts this guide.
 - `src/dashboard/` - The entire application: layout, pages, and dashboard-local state (`DashboardFiltersContext`)
 - `src/components/ui/`, `src/components/charts/` - Shared, reusable building blocks used across dashboard pages
 - `src/state/` - App-wide React context (auth, theme, toast, mock app data) plus `useCurrency`/`useTranslation`, hooks bound to `user.currency`/`user.preferences.language` — use these instead of importing `lib/currency.ts` or hardcoding copy directly, so amounts/text stay in sync with the Settings page's currency-format and language toggles
-- `src/lib/i18n/` - Small hand-rolled translation dictionary (`es`/`en`) consumed via `useTranslation()`'s `t()`
+- `src/lib/i18n/` - Small hand-rolled translation dictionary (`es`/`en`) consumed via `useTranslation()`'s `t()`. Coverage is app chrome (sidebar, header, page titles) + the full Settings screen, **plus every category/payment-method/budget-status label shown anywhere** — `useTranslation()` also exposes `tCategory(id)`/`tPaymentMethod(id)` for those (mirrors `data/categories.ts`'s `CategoryId`/`PaymentMethod` values, which are the exact dictionary-key suffixes: `category.<id>`, `paymentMethod.<id>`). It is *not* a page-by-page translation of every dashboard screen's own copy (table headers, empty states, chart titles, etc. are still Spanish-only) — that's a separate, larger effort from the category/payment-label fix. Never read `.label` off `data/categories.ts` directly in a component; always go through `tCategory`/`tPaymentMethod` so it reacts to the language toggle.
 - `src/services/`, `src/data/` - Mock "backend" layer: in-memory CRUD + seed data. No real API/database yet.
 - `src/index.css` - Global CSS entrypoint, Tailwind CSS v4 import, and the S2 Nova design tokens (light/dark palettes)
 - `index.html` - Vite HTML shell containing the `#root` element and loading `src/main.tsx`
@@ -55,6 +55,15 @@ The dashboard sidebar (`src/dashboard/components/Sidebar.tsx`) is
 **permanently dark navy**, independent of the light/dark app theme — this
 matches the Figma reference and is intentional, not a bug. Use
 `<Logo tone="inverted" />` on dark, non-theme-reactive surfaces like it.
+
+The logo ships as two pre-rendered PNG tiles, `assets/logo-mark-dark.png`
+and `assets/logo-mark-light.png` (own rounded-card background baked in, not
+a transparent glyph — extracting a transparent glyph from the source art
+left a visible stray border, which is why it's not done that way).
+`LogoMark`/`Logo` (`components/ui/Logo.tsx`) pick between them via
+`useTheme()`, unless `tone="inverted"` pins the dark tile. Regenerate both
+from `design-reference/suggestions/logo-dark.png` /`logo-light.png` if the
+mark ever changes, rather than re-deriving one from the other.
 
 ## Code quality
 

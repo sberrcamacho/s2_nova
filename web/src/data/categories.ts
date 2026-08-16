@@ -1,4 +1,4 @@
-import type { Category } from '@/types'
+import type { Category, PaymentMethod } from '@/types'
 
 // Colors are deliberately varied (not all purple) so category chips, chart
 // legends, and budget rows stay easy to tell apart at a glance. Purple stays
@@ -24,7 +24,7 @@ export const categoryMap: Record<string, Category> = Object.fromEntries(
 export const expenseCategories = categories.filter((c) => c.kind === 'expense' || c.kind === 'both')
 export const incomeCategories = categories.filter((c) => c.kind === 'income' || c.kind === 'both')
 
-export const paymentMethods: { id: string; label: string; icon: string }[] = [
+export const paymentMethods: { id: PaymentMethod; label: string; icon: string }[] = [
   { id: 'cash', label: 'Efectivo', icon: 'Banknote' },
   { id: 'debit_card', label: 'Tarjeta débito', icon: 'CreditCard' },
   { id: 'credit_card', label: 'Tarjeta crédito', icon: 'CreditCard' },

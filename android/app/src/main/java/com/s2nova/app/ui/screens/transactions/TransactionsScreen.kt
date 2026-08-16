@@ -36,7 +36,7 @@ import com.s2nova.app.ui.components.TransactionRow
 import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.rememberStrings
 
-private enum class TypeFilter(val label: String) { ALL("Todos"), INCOME("Ingresos"), EXPENSE("Gastos") }
+private enum class TypeFilter(val key: StringKey) { ALL(StringKey.TXN_LIST_FILTER_ALL), INCOME(StringKey.HOME_INCOME), EXPENSE(StringKey.HOME_EXPENSES) }
 
 @Composable
 fun TransactionsScreen(
@@ -68,7 +68,7 @@ fun TransactionsScreen(
                 OutlinedTextField(
                     value = search,
                     onValueChange = { search = it },
-                    placeholder = { Text("Buscar por descripción o comercio") },
+                    placeholder = { Text(t(StringKey.TXN_LIST_SEARCH_PLACEHOLDER)) },
                     leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
@@ -80,7 +80,7 @@ fun TransactionsScreen(
                             selected = filter == f,
                             onClick = { filter = f },
                             shape = SegmentedButtonDefaults.itemShape(index, TypeFilter.entries.size),
-                        ) { Text(f.label) }
+                        ) { Text(t(f.key)) }
                     }
                 }
             }
@@ -90,8 +90,8 @@ fun TransactionsScreen(
                     modifier = Modifier.fillMaxWidth().padding(top = 48.dp),
                     horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
                 ) {
-                    Text("Sin resultados", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
-                    Text("Ajusta la búsqueda o los filtros.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(t(StringKey.TXN_LIST_EMPTY_TITLE), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
+                    Text(t(StringKey.TXN_LIST_EMPTY_SUBTITLE), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else {
                 LazyColumn(contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)) {

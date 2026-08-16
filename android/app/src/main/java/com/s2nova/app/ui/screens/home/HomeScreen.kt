@@ -34,11 +34,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AnalyticsHelpers
 import com.s2nova.app.data.AppContainer
 import com.s2nova.app.data.mock.categoryMap
+import com.s2nova.app.ui.StringKey
+import com.s2nova.app.ui.categoryStringKey
 import com.s2nova.app.ui.components.DonutSlice
 import com.s2nova.app.ui.components.NovaCard
 import com.s2nova.app.ui.components.NovaDonutChart
 import com.s2nova.app.ui.components.TransactionRow
 import com.s2nova.app.ui.rememberCurrencyFormatter
+import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.theme.NovaColors
 
 @Composable
@@ -52,6 +55,7 @@ fun HomeScreen(
     val notifications by AppContainer.notificationRepository.notifications.collectAsStateWithLifecycle()
     val colors = NovaColors.current
     val format = rememberCurrencyFormatter()
+    val t = rememberStrings()
 
     val totalIncome = transactions.filter { it.type == com.s2nova.app.data.model.TransactionType.INCOME }.sumOf { it.amount }
     val totalExpenses = transactions.filter { it.type == com.s2nova.app.data.model.TransactionType.EXPENSE }.sumOf { it.amount }
@@ -71,7 +75,7 @@ fun HomeScreen(
         item {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("HOLA", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(t(StringKey.HOME_GREETING), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
                         user?.name?.substringBefore(" ") ?: "👋",
                         style = MaterialTheme.typography.headlineMedium,
@@ -80,7 +84,7 @@ fun HomeScreen(
                 }
                 Box {
                     IconButton(onClick = onOpenNotifications) {
-                        Icon(Icons.Filled.Notifications, contentDescription = "Notificaciones", tint = MaterialTheme.colorScheme.onBackground)
+                        Icon(Icons.Filled.Notifications, contentDescription = t(StringKey.SETTINGS_NOTIFICATIONS), tint = MaterialTheme.colorScheme.onBackground)
                     }
                     if (unreadCount > 0) {
                         Box(
@@ -113,7 +117,7 @@ fun HomeScreen(
                     .padding(20.dp),
             ) {
                 Column {
-                    Text("SALDO ACTUAL", style = MaterialTheme.typography.labelMedium, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.6f))
+                    Text(t(StringKey.HOME_BALANCE), style = MaterialTheme.typography.labelMedium, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.6f))
                     Text(
                         format(balance),
                         style = MaterialTheme.typography.headlineLarge,
@@ -122,9 +126,9 @@ fun HomeScreen(
                     )
                     HorizontalDivider(color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.12f))
                     Row(modifier = Modifier.padding(top = 14.dp)) {
-                        HeroStat(label = "Ingresos", value = format(thisMonth.income), valueColor = colors.positive, modifier = Modifier.weight(1f))
-                        HeroStat(label = "Gastos", value = format(thisMonth.expenses), valueColor = colors.negative, modifier = Modifier.weight(1f))
-                        HeroStat(label = "Ahorro", value = format(thisMonth.savings), valueColor = androidx.compose.ui.graphics.Color.White, modifier = Modifier.weight(1f))
+                        HeroStat(label = t(StringKey.HOME_INCOME), value = format(thisMonth.income), valueColor = colors.positive, modifier = Modifier.weight(1f))
+                        HeroStat(label = t(StringKey.HOME_EXPENSES), value = format(thisMonth.expenses), valueColor = colors.negative, modifier = Modifier.weight(1f))
+                        HeroStat(label = t(StringKey.HOME_SAVINGS), value = format(thisMonth.savings), valueColor = androidx.compose.ui.graphics.Color.White, modifier = Modifier.weight(1f))
                     }
                 }
             }
@@ -134,11 +138,11 @@ fun HomeScreen(
             NovaCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(18.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Resumen de gastos", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
+                        Text(t(StringKey.HOME_EXPENSE_SUMMARY), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
                     }
                     Spacer(Modifier.height(12.dp))
                     if (breakdown.isEmpty()) {
-                        Text("Sin gastos este mes.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(t(StringKey.HOME_NO_EXPENSES), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             NovaDonutChart(
@@ -159,7 +163,7 @@ fun HomeScreen(
                                                 .background(meta?.let { androidx.compose.ui.graphics.Color(it.color) } ?: colors.negative, CircleShape),
                                         )
                                         Text(
-                                            "${meta?.label} · ${entry.percentage}%",
+                                            "${meta?.let { t(categoryStringKey(it.id)) }} · ${entry.percentage}%",
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.padding(start = 6.dp),
@@ -175,12 +179,12 @@ fun HomeScreen(
 
         item {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                Text("Movimientos recientes", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
+                Text(t(StringKey.HOME_RECENT_TXNS), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.clickable(onClick = onOpenTransactions),
                 ) {
-                    Text("Ver todos", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                    Text(t(StringKey.HOME_SEE_ALL), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                     Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
                 }
             }

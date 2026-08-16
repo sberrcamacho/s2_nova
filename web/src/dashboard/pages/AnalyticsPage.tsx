@@ -11,12 +11,14 @@ import { useAppData } from '@/state/AppDataContext'
 import { analyticsService } from '@/services/analyticsService'
 import { categoryMap } from '@/data/categories'
 import { useCurrency } from '@/state/useCurrency'
+import { useTranslation } from '@/state/useTranslation'
 import { currentMonthKey, isSameMonth } from '@/lib/date'
 import type { CategoryBreakdownEntry, MonthlySummary } from '@/types'
 
 export default function AnalyticsPage() {
   const { transactions } = useAppData()
   const { format } = useCurrency()
+  const { tCategory } = useTranslation()
   const [history, setHistory] = useState<MonthlySummary[]>([])
   const [breakdown, setBreakdown] = useState<CategoryBreakdownEntry[]>([])
   const [savingsTrend, setSavingsTrend] = useState<{ label: string; balance: number }[]>([])
@@ -28,7 +30,7 @@ export default function AnalyticsPage() {
   }, [transactions])
 
   const donutData = breakdown.map((e) => ({
-    name: categoryMap[e.category]?.label ?? e.category,
+    name: tCategory(e.category),
     value: e.amount,
     color: categoryMap[e.category]?.color ?? '#9C9CAA',
   }))
@@ -101,7 +103,7 @@ export default function AnalyticsPage() {
               {breakdown.slice(0, 6).map((entry) => (
                 <div key={entry.category} className="flex items-center gap-2 text-xs">
                   <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: categoryMap[entry.category]?.color }} />
-                  <span className="flex-1 truncate font-semibold text-ink-secondary">{categoryMap[entry.category]?.label}</span>
+                  <span className="flex-1 truncate font-semibold text-ink-secondary">{tCategory(entry.category)}</span>
                   <span className="font-numeric font-bold text-ink">{entry.percentage}%</span>
                 </div>
               ))}

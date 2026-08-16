@@ -1,7 +1,8 @@
 package com.s2nova.app.ui.screens.addtransaction
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -32,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -45,9 +48,13 @@ import com.s2nova.app.data.model.NewTransactionInput
 import com.s2nova.app.data.model.PaymentMethod
 import com.s2nova.app.data.model.TransactionType
 import com.s2nova.app.data.todayISO
+import com.s2nova.app.ui.StringKey
+import com.s2nova.app.ui.categoryStringKey
 import com.s2nova.app.ui.components.CategoryIcon
 import com.s2nova.app.ui.components.CategoryIconSize
 import com.s2nova.app.ui.components.NovaTopBar
+import com.s2nova.app.ui.paymentMethodStringKey
+import com.s2nova.app.ui.rememberStrings
 
 @Composable
 fun AddTransactionScreen(
@@ -56,6 +63,7 @@ fun AddTransactionScreen(
     onBack: () -> Unit,
 ) {
     val editing = editTransactionId?.let { AppContainer.transactionRepository.getById(it) }
+    val t = rememberStrings()
 
     var type by remember { mutableStateOf(editing?.type ?: TransactionType.EXPENSE) }
     var amountText by remember { mutableStateOf(editing?.amount?.toInt()?.toString() ?: "") }
@@ -68,7 +76,7 @@ fun AddTransactionScreen(
     val categoriesForType = if (type == TransactionType.EXPENSE) expenseCategories else incomeCategories
 
     Scaffold(
-        topBar = { NovaTopBar(title = if (editing != null) "Editar movimiento" else "Agregar movimiento", onBack = onBack) },
+        topBar = { NovaTopBar(title = if (editing != null) t(StringKey.ADD_TXN_TITLE_EDIT) else t(StringKey.ADD_TXN_TITLE_NEW), onBack = onBack) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         Column(
@@ -79,13 +87,13 @@ fun AddTransactionScreen(
                 .padding(20.dp),
         ) {
             SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                listOf(TransactionType.EXPENSE to "Gasto", TransactionType.INCOME to "Ingreso").forEachIndexed { index, (t, label) ->
+                listOf(TransactionType.EXPENSE to t(StringKey.ADD_TXN_EXPENSE), TransactionType.INCOME to t(StringKey.ADD_TXN_INCOME)).forEachIndexed { index, (txnType, label) ->
                     SegmentedButton(
-                        selected = type == t,
+                        selected = type == txnType,
                         onClick = {
-                            type = t
-                            if (categoryMap[category]?.let { it.isExpense != (t == TransactionType.EXPENSE) } != false) {
-                                category = (if (t == TransactionType.EXPENSE) expenseCategories else incomeCategories).first().id
+                            type = txnType
+                            if (categoryMap[category]?.let { it.isExpense != (txnType == TransactionType.EXPENSE) } != false) {
+                                category = (if (txnType == TransactionType.EXPENSE) expenseCategories else incomeCategories).first().id
                             }
                         },
                         shape = SegmentedButtonDefaults.itemShape(index, 2),
@@ -93,7 +101,7 @@ fun AddTransactionScreen(
                 }
             }
 
-            Text("Monto", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 20.dp, bottom = 6.dp))
+            Text(t(StringKey.ADD_TXN_AMOUNT), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 20.dp, bottom = 6.dp))
             OutlinedTextField(
                 value = amountText,
                 onValueChange = { amountText = it.filter { c -> c.isDigit() } },
@@ -106,21 +114,21 @@ fun AddTransactionScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            Text("Descripción", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 20.dp, bottom = 6.dp))
+            Text(t(StringKey.ADD_TXN_DESCRIPTION), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 20.dp, bottom = 6.dp))
             OutlinedTextField(
                 value = description,
                 onValueChange = { description = it },
-                placeholder = { Text("Ej. Mercado semanal") },
+                placeholder = { Text(t(StringKey.ADD_TXN_DESCRIPTION_PLACEHOLDER)) },
                 singleLine = true,
                 shape = RoundedCornerShape(14.dp),
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            Text("Categoría", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 20.dp, bottom = 6.dp))
+            Text(t(StringKey.ADD_TXN_CATEGORY), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 20.dp, bottom = 6.dp))
             Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 categoriesForType.forEach { cat ->
                     CategoryChip(
-                        label = cat.label,
+                        label = t(categoryStringKey(cat.id)),
                         categoryId = cat.id,
                         selected = category == cat.id,
                         onClick = { category = cat.id },
@@ -128,30 +136,22 @@ fun AddTransactionScreen(
                 }
             }
 
-            Text("Método de pago", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 20.dp, bottom = 6.dp))
+            Text(t(StringKey.ADD_TXN_PAYMENT_METHOD), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 20.dp, bottom = 6.dp))
             Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 paymentMethods.forEach { pm ->
-                    val selected = paymentMethod == pm.id
-                    Text(
-                        pm.label,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier
-                            .background(
-                                if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                                RoundedCornerShape(50),
-                            )
-                            .clickable { paymentMethod = pm.id }
-                            .padding(horizontal = 14.dp, vertical = 8.dp),
+                    PaymentMethodChip(
+                        label = t(paymentMethodStringKey(pm.id)),
+                        selected = paymentMethod == pm.id,
+                        onClick = { paymentMethod = pm.id },
                     )
                 }
             }
 
-            Text("Nota (opcional)", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 20.dp, bottom = 6.dp))
+            Text(t(StringKey.ADD_TXN_NOTE), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 20.dp, bottom = 6.dp))
             OutlinedTextField(
                 value = note,
                 onValueChange = { note = it },
-                placeholder = { Text("Agrega una nota") },
+                placeholder = { Text(t(StringKey.ADD_TXN_NOTE_PLACEHOLDER)) },
                 shape = RoundedCornerShape(14.dp),
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -164,11 +164,11 @@ fun AddTransactionScreen(
                 onClick = {
                     val amount = amountText.toDoubleOrNull()
                     if (amount == null || amount <= 0) {
-                        error = "Ingresa un monto válido."
+                        error = t(StringKey.ADD_TXN_ERROR_AMOUNT)
                         return@Button
                     }
                     if (description.isBlank()) {
-                        error = "Ingresa una descripción."
+                        error = t(StringKey.ADD_TXN_ERROR_DESCRIPTION)
                         return@Button
                     }
                     val input = NewTransactionInput(
@@ -193,23 +193,25 @@ fun AddTransactionScreen(
                     .fillMaxWidth()
                     .padding(top = 28.dp, bottom = 12.dp),
             ) {
-                Text(if (editing != null) "Guardar cambios" else "Guardar movimiento", modifier = Modifier.padding(vertical = 6.dp))
+                Text(if (editing != null) t(StringKey.ADD_TXN_SAVE_EDIT) else t(StringKey.ADD_TXN_SAVE_NEW), modifier = Modifier.padding(vertical = 6.dp))
             }
         }
     }
 }
 
+// Selectable pill: tappable area, filled + no border when selected, subtle
+// outline when not (so it still reads as "tap to choose" rather than a
+// plain label even before the user has picked anything).
 @Composable
 private fun CategoryChip(label: String, categoryId: CategoryId, selected: Boolean, onClick: () -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .background(
-                if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                RoundedCornerShape(50),
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 8.dp),
+            .clip(RoundedCornerShape(50))
+            .background(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
+            .border(BorderStroke(1.dp, if (selected) androidx.compose.ui.graphics.Color.Transparent else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)), RoundedCornerShape(50))
+            .selectable(selected = selected, onClick = onClick, role = androidx.compose.ui.semantics.Role.RadioButton)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
     ) {
         CategoryIcon(category = categoryId, size = CategoryIconSize.SM)
         Text(
@@ -219,4 +221,19 @@ private fun CategoryChip(label: String, categoryId: CategoryId, selected: Boolea
             modifier = Modifier.padding(start = 8.dp),
         )
     }
+}
+
+@Composable
+private fun PaymentMethodChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    Text(
+        label,
+        style = MaterialTheme.typography.bodyMedium,
+        color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
+            .border(BorderStroke(1.dp, if (selected) androidx.compose.ui.graphics.Color.Transparent else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)), RoundedCornerShape(50))
+            .selectable(selected = selected, onClick = onClick, role = androidx.compose.ui.semantics.Role.RadioButton)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+    )
 }

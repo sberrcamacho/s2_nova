@@ -52,8 +52,9 @@ import com.s2nova.app.ui.components.NovaTopBar
 import com.s2nova.app.ui.components.StatusBadge
 import com.s2nova.app.ui.components.badgeToneFor
 import com.s2nova.app.ui.components.budgetStatusColor
-import com.s2nova.app.ui.components.budgetStatusLabel
 import com.s2nova.app.ui.StringKey
+import com.s2nova.app.ui.budgetStatusStringKey
+import com.s2nova.app.ui.categoryStringKey
 import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.theme.NovaColors
@@ -96,12 +97,12 @@ fun BudgetsScreen() {
                         )
                         .padding(20.dp),
                 ) {
-                    Text("PRESUPUESTO DEL MES", style = MaterialTheme.typography.labelMedium, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.6f))
+                    Text(t(StringKey.BUDGETS_MONTH_LABEL), style = MaterialTheme.typography.labelMedium, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.6f))
                     Text(format(totalSpent), style = MaterialTheme.typography.headlineLarge, color = androidx.compose.ui.graphics.Color.White, modifier = Modifier.padding(top = 4.dp))
-                    Text("de ${format(totalLimit)}", style = MaterialTheme.typography.bodyMedium, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.7f))
+                    Text("${t(StringKey.BUDGETS_OF)} ${format(totalLimit)}", style = MaterialTheme.typography.bodyMedium, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.7f))
                     Spacer(Modifier.height(12.dp))
                     NovaProgressBar(percentage = pct, color = androidx.compose.ui.graphics.Color.White)
-                    Text("$pct% utilizado", style = MaterialTheme.typography.bodySmall, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.7f), modifier = Modifier.padding(top = 6.dp))
+                    Text("$pct% ${t(StringKey.BUDGETS_UTILIZED)}", style = MaterialTheme.typography.bodySmall, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.7f), modifier = Modifier.padding(top = 6.dp))
                 }
             }
 
@@ -110,7 +111,7 @@ fun BudgetsScreen() {
                     val available = expenseCategories.filter { c -> progressList.none { it.budget.category == c.id } }
                     TextButton(onClick = { creating = true }, enabled = available.isNotEmpty()) {
                         Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
-                        Text("Nuevo presupuesto")
+                        Text(t(StringKey.BUDGETS_NEW))
                     }
                 }
             }
@@ -121,10 +122,10 @@ fun BudgetsScreen() {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             CategoryIcon(category = progress.budget.category)
                             Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
-                                Text(categoryMap[progress.budget.category]?.label ?: "", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
-                                Text("Límite mensual", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(categoryMap[progress.budget.category]?.let { t(categoryStringKey(it.id)) } ?: "", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
+                                Text(t(StringKey.BUDGETS_MONTHLY_LIMIT), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
-                            StatusBadge(text = budgetStatusLabel(progress.status), tone = badgeToneFor(progress.status))
+                            StatusBadge(text = t(budgetStatusStringKey(progress.status)), tone = badgeToneFor(progress.status))
                         }
                         Spacer(Modifier.height(10.dp))
                         Row {
@@ -134,7 +135,7 @@ fun BudgetsScreen() {
                         Spacer(Modifier.height(8.dp))
                         NovaProgressBar(percentage = progress.percentage, color = budgetStatusColor(progress.status, colors))
                         Text(
-                            if (progress.remaining >= 0) "${format(progress.remaining)} disponibles" else "${format(-progress.remaining)} por encima del límite",
+                            if (progress.remaining >= 0) "${format(progress.remaining)} ${t(StringKey.BUDGETS_REMAINING)}" else "${format(-progress.remaining)} ${t(StringKey.BUDGETS_OVER_LIMIT)}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = 6.dp),
@@ -175,22 +176,23 @@ fun BudgetsScreen() {
 @Composable
 private fun EditBudgetDialog(categoryId: CategoryId, initialLimit: String, onDismiss: () -> Unit, onSave: (Double) -> Unit) {
     var limitText by remember { mutableStateOf(initialLimit) }
+    val t = rememberStrings()
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Editar presupuesto de ${categoryMap[categoryId]?.label}") },
+        title = { Text("${t(StringKey.BUDGETS_EDIT_TITLE_PREFIX)} ${categoryMap[categoryId]?.let { t(categoryStringKey(it.id)) }}") },
         text = {
             OutlinedTextField(
                 value = limitText,
                 onValueChange = { limitText = it.filter { c -> c.isDigit() } },
                 leadingIcon = { Text("$") },
-                label = { Text("Límite mensual") },
+                label = { Text(t(StringKey.BUDGETS_MONTHLY_LIMIT)) },
                 singleLine = true,
             )
         },
         confirmButton = {
-            TextButton(onClick = { limitText.toDoubleOrNull()?.let { if (it > 0) onSave(it) } }) { Text("Guardar") }
+            TextButton(onClick = { limitText.toDoubleOrNull()?.let { if (it > 0) onSave(it) } }) { Text(t(StringKey.COMMON_SAVE)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(t(StringKey.COMMON_CANCEL)) } },
     )
 }
 
@@ -199,18 +201,19 @@ private fun CreateBudgetDialog(availableCategories: List<CategoryId>, onDismiss:
     var selected by remember { mutableStateOf(availableCategories.firstOrNull()) }
     var limitText by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
+    val t = rememberStrings()
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Nuevo presupuesto") },
+        title = { Text(t(StringKey.BUDGETS_NEW)) },
         text = {
             Column {
                 Box {
                     OutlinedTextField(
-                        value = selected?.let { categoryMap[it]?.label } ?: "",
+                        value = selected?.let { id -> categoryMap[id]?.let { t(categoryStringKey(it.id)) } } ?: "",
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Categoría") },
+                        label = { Text(t(StringKey.ADD_TXN_CATEGORY)) },
                         trailingIcon = {
                             Icon(
                                 Icons.Filled.KeyboardArrowDown,
@@ -230,7 +233,7 @@ private fun CreateBudgetDialog(availableCategories: List<CategoryId>, onDismiss:
                     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                         availableCategories.forEach { c ->
                             DropdownMenuItem(
-                                text = { Text(categoryMap[c]?.label ?: "") },
+                                text = { Text(categoryMap[c]?.let { t(categoryStringKey(it.id)) } ?: "") },
                                 onClick = { selected = c; expanded = false },
                             )
                         }
@@ -240,7 +243,7 @@ private fun CreateBudgetDialog(availableCategories: List<CategoryId>, onDismiss:
                     value = limitText,
                     onValueChange = { limitText = it.filter { c -> c.isDigit() } },
                     leadingIcon = { Text("$") },
-                    label = { Text("Límite mensual") },
+                    label = { Text(t(StringKey.BUDGETS_MONTHLY_LIMIT)) },
                     singleLine = true,
                     modifier = Modifier.padding(top = 12.dp),
                 )
@@ -251,8 +254,8 @@ private fun CreateBudgetDialog(availableCategories: List<CategoryId>, onDismiss:
                 val cat = selected
                 val limit = limitText.toDoubleOrNull()
                 if (cat != null && limit != null && limit > 0) onCreate(cat, limit)
-            }) { Text("Crear") }
+            }) { Text(t(StringKey.BUDGETS_CREATE)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(t(StringKey.COMMON_CANCEL)) } },
     )
 }

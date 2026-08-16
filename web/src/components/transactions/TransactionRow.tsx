@@ -1,7 +1,7 @@
-import { categoryMap } from '@/data/categories'
 import { AmountText } from '@/components/ui/AmountText'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { formatShortDate } from '@/lib/date'
+import { useTranslation } from '@/state/useTranslation'
 import type { Transaction } from '@/types'
 import { cn } from '@/lib/cn'
 
@@ -13,7 +13,7 @@ interface TransactionRowProps {
 }
 
 export function TransactionRow({ transaction, onClick, showDate = true, className }: TransactionRowProps) {
-  const category = categoryMap[transaction.category]
+  const { tCategory } = useTranslation()
   const Comp = onClick ? 'button' : 'div'
 
   return (
@@ -29,7 +29,7 @@ export function TransactionRow({ transaction, onClick, showDate = true, classNam
       <div className="min-w-0 flex-1">
         <p className="truncate text-[13.5px] font-semibold text-ink">{transaction.description}</p>
         <p className="truncate text-xs text-ink-tertiary">
-          {transaction.merchant ?? category?.label}
+          {transaction.merchant ?? tCategory(transaction.category)}
           {showDate && ` · ${formatShortDate(transaction.date)}`}
         </p>
       </div>

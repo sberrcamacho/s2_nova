@@ -15,12 +15,14 @@ import { useDashboardFilters } from '@/dashboard/DashboardFiltersContext'
 import { analyticsService } from '@/services/analyticsService'
 import { categoryMap } from '@/data/categories'
 import { useCurrency } from '@/state/useCurrency'
+import { useTranslation } from '@/state/useTranslation'
 import { isSameMonth } from '@/lib/date'
 import type { CategoryId, MonthlySummary } from '@/types'
 
 export default function IncomePage() {
   const { transactions } = useAppData()
   const { format } = useCurrency()
+  const { tCategory } = useTranslation()
   const { monthKeys } = useDashboardFilters()
   const [history, setHistory] = useState<MonthlySummary[]>([])
 
@@ -46,7 +48,7 @@ export default function IncomePage() {
 
   const topSource = breakdown[0]
   const donutData = breakdown.map((e) => ({
-    name: categoryMap[e.category]?.label ?? e.category,
+    name: tCategory(e.category),
     value: e.amount,
     color: categoryMap[e.category]?.color ?? '#9C9CAA',
   }))
@@ -65,7 +67,7 @@ export default function IncomePage() {
         <KPICard label="Total de ingresos" value={format(total)} icon={<ArrowDownLeft className="h-4 w-4" />} tone="primary" />
         <KPICard label="Promedio por ingreso" value={format(avgPerTxn)} icon={<Receipt className="h-4 w-4" />} />
         <KPICard label="Movimientos" value={String(periodIncome.length)} icon={<Receipt className="h-4 w-4" />} />
-        <KPICard label="Fuente principal" value={topSource ? categoryMap[topSource.category]?.label ?? '' : '—'} icon={<Wallet className="h-4 w-4" />} />
+        <KPICard label="Fuente principal" value={topSource ? tCategory(topSource.category) : '—'} icon={<Wallet className="h-4 w-4" />} />
       </div>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
@@ -119,7 +121,7 @@ export default function IncomePage() {
               {breakdown.map((e) => (
                 <div key={e.category}>
                   <div className="mb-1.5 flex items-center justify-between text-[13px]">
-                    <span className="font-semibold text-ink">{categoryMap[e.category]?.label}</span>
+                    <span className="font-semibold text-ink">{tCategory(e.category)}</span>
                     <span className="font-numeric font-bold text-ink-secondary">{e.percentage}%</span>
                   </div>
                   <ProgressBar value={e.percentage} tone="positive" />

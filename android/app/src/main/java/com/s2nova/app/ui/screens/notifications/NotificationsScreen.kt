@@ -30,23 +30,26 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
 import com.s2nova.app.data.model.AppNotification
 import com.s2nova.app.data.model.NotificationTone
+import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.components.NovaCard
 import com.s2nova.app.ui.components.NovaTopBar
+import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.theme.NovaColors
 
 @Composable
 fun NotificationsScreen(onBack: () -> Unit) {
     val notifications by AppContainer.notificationRepository.notifications.collectAsStateWithLifecycle()
     val colors = NovaColors.current
+    val t = rememberStrings()
 
     Scaffold(
         topBar = {
             NovaTopBar(
-                title = "Notificaciones",
+                title = t(StringKey.SETTINGS_NOTIFICATIONS),
                 onBack = onBack,
                 actions = {
                     TextButton(onClick = { AppContainer.notificationRepository.markAllRead() }) {
-                        Text("Marcar todo leído")
+                        Text(t(StringKey.NOTIF_MARK_ALL_READ))
                     }
                 },
             )
@@ -55,7 +58,7 @@ fun NotificationsScreen(onBack: () -> Unit) {
     ) { padding ->
         if (notifications.isEmpty()) {
             Box(modifier = Modifier.padding(padding).fillMaxWidth().padding(top = 48.dp), contentAlignment = Alignment.Center) {
-                Text("No tienes notificaciones.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(t(StringKey.NOTIF_EMPTY), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             return@Scaffold
         }

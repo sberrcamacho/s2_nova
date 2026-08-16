@@ -11,9 +11,10 @@ import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { AmountText } from '@/components/ui/AmountText'
 import { useAppData } from '@/state/AppDataContext'
 import { useToast } from '@/state/ToastContext'
-import { categories, categoryMap, paymentMethods } from '@/data/categories'
+import { categories, paymentMethods } from '@/data/categories'
 import { formatLongDate } from '@/lib/date'
 import { cn } from '@/lib/cn'
+import { useTranslation } from '@/state/useTranslation'
 import type { Transaction } from '@/types'
 
 type SortKey = 'date' | 'amount'
@@ -22,6 +23,7 @@ const PAGE_SIZE = 10
 export default function TransactionsPage() {
   const { transactions, deleteTransaction } = useAppData()
   const { showToast } = useToast()
+  const { tCategory, tPaymentMethod } = useTranslation()
 
   const [search, setSearch] = useState('')
   const [type, setType] = useState('all')
@@ -95,7 +97,7 @@ export default function TransactionsPage() {
           className="sm:max-w-[160px]"
         />
         <Select
-          options={[{ value: 'all', label: 'Todas las categorías' }, ...categories.map((c) => ({ value: c.id, label: c.label }))]}
+          options={[{ value: 'all', label: 'Todas las categorías' }, ...categories.map((c) => ({ value: c.id, label: tCategory(c.id) }))]}
           value={category}
           onChange={(e) => {
             setCategory(e.target.value)
@@ -104,7 +106,7 @@ export default function TransactionsPage() {
           className="sm:max-w-[190px]"
         />
         <Select
-          options={[{ value: 'all', label: 'Todos los métodos' }, ...paymentMethods.map((m) => ({ value: m.id, label: m.label }))]}
+          options={[{ value: 'all', label: 'Todos los métodos' }, ...paymentMethods.map((m) => ({ value: m.id, label: tPaymentMethod(m.id) }))]}
           value={method}
           onChange={(e) => {
             setMethod(e.target.value)
@@ -146,7 +148,7 @@ export default function TransactionsPage() {
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3.5">
-                      <Badge tone="neutral">{categoryMap[t.category]?.label}</Badge>
+                      <Badge tone="neutral">{tCategory(t.category)}</Badge>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3.5">
                       <Badge tone={t.type === 'income' ? 'positive' : 'negative'}>{t.type === 'income' ? 'Ingreso' : 'Gasto'}</Badge>
@@ -155,7 +157,7 @@ export default function TransactionsPage() {
                       <AmountText amount={t.amount} type={t.type} />
                     </td>
                     <td className="whitespace-nowrap px-4 py-3.5 text-[13px] font-medium text-ink-secondary">
-                      {paymentMethods.find((m) => m.id === t.paymentMethod)?.label}
+                      {tPaymentMethod(t.paymentMethod)}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3.5">
                       <Badge tone="positive">Completado</Badge>

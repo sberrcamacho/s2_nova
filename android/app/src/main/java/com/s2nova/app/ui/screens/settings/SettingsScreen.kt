@@ -118,7 +118,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(t(StringKey.SETTINGS_ABOUT), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
                     Text(
-                        "S2 Nova · Versión ${BuildConfig.VERSION_NAME} · Datos de demostración, sin conexión a un backend real.",
+                        "S2 Nova · v${BuildConfig.VERSION_NAME} · ${t(StringKey.SETTINGS_ABOUT_NOTE)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 4.dp),
@@ -133,7 +133,11 @@ fun SettingsScreen(onBack: () -> Unit) {
 
 @Composable
 private fun PreferenceRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+    ) {
         Text(label, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onBackground)
         Switch(checked = checked, onCheckedChange = onChange)
     }
