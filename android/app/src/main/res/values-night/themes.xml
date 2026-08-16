@@ -1,0 +1,10 @@
+<resources>
+    <!-- Dark-mode override: same starting theme, dark background + the
+         cyan/purple glyph variant. See values/themes.xml for the base. -->
+    <style name="Theme.S2Nova.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon_dark</item>
+        <item name="windowSplashScreenIconBackgroundColor">@android:color/transparent</item>
+        <item name="postSplashScreenTheme">@style/Theme.S2Nova</item>
+    </style>
+</resources>

@@ -11,11 +11,15 @@ export function formatCOP(value: number, opts: { signed?: boolean } = {}): strin
   return `${sign}$${grouped}`
 }
 
+// Fixed reference rate used to convert COP (the currency all mock data is
+// seeded in) to USD for display. There is no backend/live FX feed, so this
+// is a stand-in constant rather than a fabricated "live" rate.
+export const COP_PER_USD = 4000
+
 // US dollar display formatting: "$125,000.00" — comma thousands separator,
-// two decimals. This is a display-format switch only (same underlying
-// amount, no real COP→USD conversion — there is no backend/FX rate).
+// two decimals, value actually converted from the underlying COP amount.
 export function formatUSD(value: number, opts: { signed?: boolean } = {}): string {
-  const rounded = Math.abs(value)
+  const rounded = Math.abs(value) / COP_PER_USD
   const grouped = rounded.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   const sign = value < 0 ? '-' : opts.signed && value > 0 ? '+' : ''
   return `${sign}$${grouped}`
@@ -41,7 +45,7 @@ export function formatCOPCompact(value: number): string {
 }
 
 export function formatUSDCompact(value: number): string {
-  const abs = Math.abs(value)
+  const abs = Math.abs(value) / COP_PER_USD
   const sign = value < 0 ? '-' : ''
   if (abs >= 1_000_000) {
     return `${sign}$${(abs / 1_000_000).toFixed(abs >= 10_000_000 ? 0 : 1)}M`

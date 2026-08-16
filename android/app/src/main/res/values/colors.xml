@@ -1,0 +1,5 @@
+<resources>
+    <!-- System splash screen background — matches ui/theme/Color.kt's
+         LightBg so there's no color flash into the Compose splash. -->
+    <color name="splash_background">#FFFFFFFF</color>
+</resources>

@@ -2,6 +2,7 @@ package com.s2nova.app.ui.screens.auth
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -11,12 +12,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.R
+import com.s2nova.app.data.ThemeController
 
 @Composable
 fun AuthLayout(
@@ -43,8 +47,10 @@ fun AuthLayout(
 
 @Composable
 fun AuthLogo() {
+    val darkOverride by ThemeController.darkOverride.collectAsStateWithLifecycle()
+    val isDark = darkOverride ?: isSystemInDarkTheme()
     Image(
-        painter = painterResource(R.drawable.logo_mark),
+        painter = painterResource(if (isDark) R.drawable.logo_mark_dark else R.drawable.logo_mark_light),
         contentDescription = null,
         modifier = Modifier.size(52.dp),
     )

@@ -1,5 +1,7 @@
-import logoMark from '@/assets/logo-mark.png'
+import logoMarkDark from '@/assets/logo-mark-dark.png'
+import logoMarkLight from '@/assets/logo-mark-light.png'
 import { cn } from '@/lib/cn'
+import { useTheme } from '@/state/ThemeContext'
 
 interface LogoProps {
   variant?: 'full' | 'mark'
@@ -13,14 +15,18 @@ const MARK_SIZES = { sm: 32, md: 40, lg: 56 }
 const S2_SIZES = { sm: 'text-sm', md: 'text-base', lg: 'text-xl' }
 const NOVA_SIZES = { sm: 'text-[9px]', md: 'text-[10px]', lg: 'text-xs' }
 
-// The S2 Nova mark: a rounded square with "S2" as the dominant glyph and a
-// small sparkle riding its corner. Used standalone (app icon, favicon,
-// avatar fallback) or paired with the wordmark in headers/sidebars.
-export function LogoMark({ size = 'md', className }: { size?: LogoProps['size']; className?: string }) {
+// The S2 Nova mark: a rounded hexagon glyph with a rising bar chart, shipped
+// as two theme-specific renders (a dark card for dark surfaces, a light card
+// for light surfaces) — same asset pairing as the app icon. `tone="inverted"`
+// pins the dark render on surfaces that stay dark regardless of the app
+// theme (e.g. the sidebar); otherwise it follows the live theme.
+export function LogoMark({ size = 'md', tone = 'default', className }: { size?: LogoProps['size']; tone?: LogoProps['tone']; className?: string }) {
+  const { theme } = useTheme()
   const px = MARK_SIZES[size ?? 'md']
+  const src = tone === 'inverted' || theme === 'dark' ? logoMarkDark : logoMarkLight
   return (
     <img
-      src={logoMark}
+      src={src}
       width={px}
       height={px}
       className={cn('shrink-0 select-none', className)}
@@ -32,13 +38,13 @@ export function LogoMark({ size = 'md', className }: { size?: LogoProps['size'];
 }
 
 export function Logo({ variant = 'full', size = 'md', tone = 'default', className }: LogoProps) {
-  if (variant === 'mark') return <LogoMark size={size} className={className} />
+  if (variant === 'mark') return <LogoMark size={size} tone={tone} className={className} />
 
   const inverted = tone === 'inverted'
 
   return (
     <div className={cn('flex items-center gap-2.5', className)}>
-      <LogoMark size={size} />
+      <LogoMark size={size} tone={tone} />
       <div className="flex flex-col leading-none">
         <span
           className={cn('font-extrabold tracking-tight', inverted ? 'text-white' : 'text-ink', S2_SIZES[size])}

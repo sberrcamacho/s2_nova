@@ -21,13 +21,17 @@ fun formatCOP(value: Double, signed: Boolean = false): String {
     return "$sign$$grouped"
 }
 
-// US dollar display formatting: "$125,000.00" — a display-format switch
-// only (same underlying amount, no real COP→USD conversion since there is
-// no backend/FX rate).
+// Fixed reference rate used to convert COP (the currency all mock data is
+// seeded in) to USD for display. There is no backend/live FX feed, so this
+// is a stand-in constant rather than a fabricated "live" rate.
+const val COP_PER_USD = 4000.0
+
+// US dollar display formatting: "$125,000.00" — comma thousands separator,
+// value actually converted from the underlying COP amount.
 private val USD_FORMAT = DecimalFormat("#,##0.00", DecimalFormatSymbols(Locale.US))
 
 fun formatUSD(value: Double, signed: Boolean = false): String {
-    val grouped = USD_FORMAT.format(abs(value))
+    val grouped = USD_FORMAT.format(abs(value) / COP_PER_USD)
     val sign = if (value < 0) "-" else if (signed && value > 0) "+" else ""
     return "$sign$$grouped"
 }
