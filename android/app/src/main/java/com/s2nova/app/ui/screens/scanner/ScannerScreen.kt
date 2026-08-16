@@ -56,7 +56,6 @@ import androidx.core.content.ContextCompat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import com.s2nova.app.data.AppContainer
-import com.s2nova.app.data.mock.categoryMap
 import com.s2nova.app.data.mock.paymentMethods
 import com.s2nova.app.data.model.NewTransactionInput
 import com.s2nova.app.data.model.NotificationTone
@@ -64,8 +63,12 @@ import com.s2nova.app.data.model.PaymentMethod
 import com.s2nova.app.data.model.Product
 import com.s2nova.app.data.model.TransactionType
 import com.s2nova.app.data.todayISO
+import com.s2nova.app.ui.categoryStringKey
 import com.s2nova.app.ui.components.CategoryIcon
+import com.s2nova.app.ui.paymentMethodStringKey
 import com.s2nova.app.ui.rememberCurrencyFormatter
+import com.s2nova.app.ui.rememberStrings
+import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.theme.NovaColors
 
 private sealed interface ScanState {
@@ -83,6 +86,7 @@ fun ScannerScreen(
     val context = LocalContext.current
     val colors = NovaColors.current
     val format = rememberCurrencyFormatter()
+    val t = rememberStrings()
 
     var hasPermission by remember {
         mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
@@ -122,7 +126,7 @@ fun ScannerScreen(
             ) {
                 Icon(Icons.Filled.QrCodeScanner, contentDescription = null, tint = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.6f), modifier = Modifier.size(48.dp))
                 Text(
-                    "S2 Nova necesita acceso a la cámara para escanear códigos de barras.",
+                    t(StringKey.SCANNER_PERMISSION_MESSAGE),
                     color = androidx.compose.ui.graphics.Color.White,
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(top = 16.dp),
@@ -131,7 +135,7 @@ fun ScannerScreen(
                 Button(
                     onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) },
                     modifier = Modifier.padding(top = 20.dp),
-                ) { Text("Permitir acceso a la cámara") }
+                ) { Text(t(StringKey.SCANNER_PERMISSION_BUTTON)) }
             }
         }
 
@@ -148,9 +152,9 @@ fun ScannerScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("Escanear código", color = androidx.compose.ui.graphics.Color.White, style = MaterialTheme.typography.titleLarge)
+                Text(t(StringKey.SCANNER_TITLE), color = androidx.compose.ui.graphics.Color.White, style = MaterialTheme.typography.titleLarge)
                 IconButton(onClick = onClose) {
-                    Icon(Icons.Filled.Close, contentDescription = "Cerrar", tint = androidx.compose.ui.graphics.Color.White)
+                    Icon(Icons.Filled.Close, contentDescription = t(StringKey.SCANNER_CLOSE_CD), tint = androidx.compose.ui.graphics.Color.White)
                 }
             }
 
@@ -158,18 +162,18 @@ fun ScannerScreen(
 
             if (scanState is ScanState.NotFound) {
                 Text(
-                    "No encontramos ese producto.",
+                    t(StringKey.SCANNER_NOT_FOUND),
                     color = androidx.compose.ui.graphics.Color.White,
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 )
                 TextButton(onClick = { scanState = ScanState.Scanning }, modifier = Modifier.fillMaxWidth()) {
-                    Text("Intentar de nuevo", color = colors.negative)
+                    Text(t(StringKey.SCANNER_TRY_AGAIN), color = colors.negative)
                 }
             } else {
                 Text(
-                    "Ubica el código de barras dentro del marco",
+                    t(StringKey.SCANNER_HINT),
                     color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.75f),
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
@@ -186,7 +190,7 @@ fun ScannerScreen(
                 OutlinedTextField(
                     value = manualCode,
                     onValueChange = { manualCode = it },
-                    placeholder = { Text("O ingresa el código manualmente", color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.4f)) },
+                    placeholder = { Text(t(StringKey.SCANNER_MANUAL_PLACEHOLDER), color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.4f)) },
                     singleLine = true,
                     textStyle = androidx.compose.ui.text.TextStyle(color = androidx.compose.ui.graphics.Color.White),
                     shape = RoundedCornerShape(14.dp),
@@ -226,8 +230,8 @@ fun ScannerScreen(
                         ),
                     )
                     AppContainer.notificationRepository.add(
-                        title = "Compra registrada",
-                        message = "Se registró \"${found.product.name}\" — ${format(found.product.price)}.",
+                        title = t(StringKey.SCANNER_NOTIF_TITLE),
+                        message = "${t(StringKey.SCANNER_NOTIF_MESSAGE_PREFIX)}${found.product.name}${t(StringKey.SCANNER_NOTIF_MESSAGE_MIDDLE)}${format(found.product.price)}.",
                         tone = NotificationTone.INFO,
                     )
                     onPurchaseRegistered()
@@ -308,13 +312,14 @@ private fun ProductFoundSheet(
     onDiscard: () -> Unit,
     onConfirm: () -> Unit,
 ) {
+    val t = rememberStrings()
     Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             CategoryIcon(category = product.category, size = com.s2nova.app.ui.components.CategoryIconSize.LG)
             Column(modifier = Modifier.padding(start = 14.dp)) {
                 Text(product.name, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
                 Text(
-                    "${product.brand} · ${product.unit} · ${categoryMap[product.category]?.label}",
+                    "${product.brand} · ${product.unit} · ${t(categoryStringKey(product.category))}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -329,12 +334,12 @@ private fun ProductFoundSheet(
             modifier = Modifier.padding(top = 16.dp),
         )
 
-        Text("Método de pago", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 20.dp, bottom = 8.dp))
+        Text(t(StringKey.ADD_TXN_PAYMENT_METHOD), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 20.dp, bottom = 8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             paymentMethods.take(3).forEach { pm ->
                 val selected = paymentMethod == pm.id
                 Text(
-                    pm.label,
+                    t(paymentMethodStringKey(pm.id)),
                     color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier
@@ -346,13 +351,13 @@ private fun ProductFoundSheet(
         }
 
         Row(modifier = Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            TextButton(onClick = onDiscard, modifier = Modifier.weight(1f)) { Text("Descartar") }
+            TextButton(onClick = onDiscard, modifier = Modifier.weight(1f)) { Text(t(StringKey.SCANNER_DISCARD)) }
             Button(
                 onClick = onConfirm,
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 shape = RoundedCornerShape(14.dp),
                 modifier = Modifier.weight(1f),
-            ) { Text("Registrar compra") }
+            ) { Text(t(StringKey.SCANNER_CONFIRM_PURCHASE)) }
         }
     }
 }

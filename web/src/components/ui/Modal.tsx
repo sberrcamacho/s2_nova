@@ -2,6 +2,7 @@ import { useEffect, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { IconButton } from '@/components/ui/IconButton'
+import { useTranslation } from '@/state/useTranslation'
 import { cn } from '@/lib/cn'
 
 interface ModalProps {
@@ -17,6 +18,7 @@ interface ModalProps {
 const SIZE_CLASSES = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-2xl' }
 
 export function Modal({ open, onClose, title, description, children, size = 'md', footer }: ModalProps) {
+  const { t } = useTranslation()
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
@@ -55,7 +57,7 @@ export function Modal({ open, onClose, title, description, children, size = 'md'
             )}
             {description && <p className="mt-1 text-sm text-ink-secondary">{description}</p>}
           </div>
-          <IconButton icon={<X className="h-4 w-4" />} label="Cerrar" variant="ghost" size="sm" onClick={onClose} />
+          <IconButton icon={<X className="h-4 w-4" />} label={t('common.close')} variant="ghost" size="sm" onClick={onClose} />
         </div>
         {children}
         {footer && <div className="mt-6 flex justify-end gap-3">{footer}</div>}

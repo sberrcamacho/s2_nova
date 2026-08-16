@@ -23,7 +23,7 @@ const PAGE_SIZE = 10
 export default function TransactionsPage() {
   const { transactions, deleteTransaction } = useAppData()
   const { showToast } = useToast()
-  const { tCategory, tPaymentMethod } = useTranslation()
+  const { t, tCategory, tPaymentMethod, language } = useTranslation()
 
   const [search, setSearch] = useState('')
   const [type, setType] = useState('all')
@@ -70,7 +70,7 @@ export default function TransactionsPage() {
   const confirmDelete = async () => {
     if (!toDelete) return
     await deleteTransaction(toDelete.id)
-    showToast('Transacción eliminada', 'success')
+    showToast(t('txn.deletedToast'), 'success')
     setToDelete(null)
   }
 
@@ -78,7 +78,7 @@ export default function TransactionsPage() {
     <div className="flex flex-col gap-4">
       <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
         <Input
-          placeholder="Buscar por descripción o comercio…"
+          placeholder={t('txn.searchPlaceholder')}
           leftIcon={<Search className="h-4 w-4" />}
           value={search}
           onChange={(e) => {
@@ -88,7 +88,7 @@ export default function TransactionsPage() {
           className="sm:max-w-xs"
         />
         <Select
-          options={[{ value: 'all', label: 'Todos los tipos' }, { value: 'income', label: 'Ingresos' }, { value: 'expense', label: 'Gastos' }]}
+          options={[{ value: 'all', label: t('txn.filterAllTypes') }, { value: 'income', label: t('nav.income') }, { value: 'expense', label: t('nav.expenses') }]}
           value={type}
           onChange={(e) => {
             setType(e.target.value)
@@ -97,7 +97,7 @@ export default function TransactionsPage() {
           className="sm:max-w-[160px]"
         />
         <Select
-          options={[{ value: 'all', label: 'Todas las categorías' }, ...categories.map((c) => ({ value: c.id, label: tCategory(c.id) }))]}
+          options={[{ value: 'all', label: t('txn.filterAllCategories') }, ...categories.map((c) => ({ value: c.id, label: tCategory(c.id) }))]}
           value={category}
           onChange={(e) => {
             setCategory(e.target.value)
@@ -106,7 +106,7 @@ export default function TransactionsPage() {
           className="sm:max-w-[190px]"
         />
         <Select
-          options={[{ value: 'all', label: 'Todos los métodos' }, ...paymentMethods.map((m) => ({ value: m.id, label: tPaymentMethod(m.id) }))]}
+          options={[{ value: 'all', label: t('txn.filterAllMethods') }, ...paymentMethods.map((m) => ({ value: m.id, label: tPaymentMethod(m.id) }))]}
           value={method}
           onChange={(e) => {
             setMethod(e.target.value)
@@ -118,54 +118,54 @@ export default function TransactionsPage() {
 
       <Card className="overflow-hidden">
         {pageItems.length === 0 ? (
-          <EmptyState icon={<Search className="h-6 w-6" />} title="Sin resultados" description="Ajusta la búsqueda o los filtros." />
+          <EmptyState icon={<Search className="h-6 w-6" />} title={t('txn.emptyTitle')} description={t('txn.emptyDescription')} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[840px] border-collapse text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-[11px] font-bold uppercase tracking-wide text-ink-tertiary">
-                  <SortableTh label="Fecha" active={sortKey === 'date'} dir={sortDir} onClick={() => toggleSort('date')} />
-                  <th className="px-4 py-3">Descripción</th>
-                  <th className="px-4 py-3">Categoría</th>
-                  <th className="px-4 py-3">Tipo</th>
-                  <SortableTh label="Monto" active={sortKey === 'amount'} dir={sortDir} onClick={() => toggleSort('amount')} />
-                  <th className="px-4 py-3">Método</th>
-                  <th className="px-4 py-3">Estado</th>
-                  <th className="px-4 py-3 text-right">Acciones</th>
+                  <SortableTh label={t('txn.colDate')} active={sortKey === 'date'} dir={sortDir} onClick={() => toggleSort('date')} />
+                  <th className="px-4 py-3">{t('txn.colDescription')}</th>
+                  <th className="px-4 py-3">{t('txn.colCategory')}</th>
+                  <th className="px-4 py-3">{t('txn.colType')}</th>
+                  <SortableTh label={t('txn.colAmount')} active={sortKey === 'amount'} dir={sortDir} onClick={() => toggleSort('amount')} />
+                  <th className="px-4 py-3">{t('txn.colMethod')}</th>
+                  <th className="px-4 py-3">{t('txn.colStatus')}</th>
+                  <th className="px-4 py-3 text-right">{t('txn.colActions')}</th>
                 </tr>
               </thead>
               <tbody>
-                {pageItems.map((t) => (
-                  <tr key={t.id} className="border-b border-border last:border-0 hover:bg-bg-secondary">
-                    <td className="whitespace-nowrap px-4 py-3.5 text-[13px] font-medium text-ink-secondary">{formatLongDate(t.date)}</td>
+                {pageItems.map((txn) => (
+                  <tr key={txn.id} className="border-b border-border last:border-0 hover:bg-bg-secondary">
+                    <td className="whitespace-nowrap px-4 py-3.5 text-[13px] font-medium text-ink-secondary">{formatLongDate(txn.date, language)}</td>
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-2.5">
-                        <CategoryIcon category={t.category} size="sm" />
+                        <CategoryIcon category={txn.category} size="sm" />
                         <div className="min-w-0">
-                          <p className="truncate text-[13.5px] font-semibold text-ink">{t.description}</p>
-                          <p className="truncate text-xs text-ink-tertiary">{t.merchant}</p>
+                          <p className="truncate text-[13.5px] font-semibold text-ink">{txn.description}</p>
+                          <p className="truncate text-xs text-ink-tertiary">{txn.merchant}</p>
                         </div>
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3.5">
-                      <Badge tone="neutral">{tCategory(t.category)}</Badge>
+                      <Badge tone="neutral">{tCategory(txn.category)}</Badge>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3.5">
-                      <Badge tone={t.type === 'income' ? 'positive' : 'negative'}>{t.type === 'income' ? 'Ingreso' : 'Gasto'}</Badge>
+                      <Badge tone={txn.type === 'income' ? 'positive' : 'negative'}>{txn.type === 'income' ? t('txn.typeIncome') : t('txn.typeExpense')}</Badge>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3.5">
-                      <AmountText amount={t.amount} type={t.type} />
+                      <AmountText amount={txn.amount} type={txn.type} />
                     </td>
                     <td className="whitespace-nowrap px-4 py-3.5 text-[13px] font-medium text-ink-secondary">
-                      {tPaymentMethod(t.paymentMethod)}
+                      {tPaymentMethod(txn.paymentMethod)}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3.5">
-                      <Badge tone="positive">Completado</Badge>
+                      <Badge tone="positive">{t('txn.statusCompleted')}</Badge>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3.5 text-right">
                       <button
-                        aria-label="Eliminar transacción"
-                        onClick={() => setToDelete(t)}
+                        aria-label={t('txn.deleteAria')}
+                        onClick={() => setToDelete(txn)}
                         className="rounded-[var(--radius-sm)] p-1.5 text-ink-tertiary transition-colors hover:bg-negative-soft hover:text-negative"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -181,33 +181,33 @@ export default function TransactionsPage() {
         {filtered.length > 0 && (
           <div className="flex items-center justify-between border-t border-border px-4 py-3">
             <p className="text-xs font-medium text-ink-tertiary">
-              Mostrando {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} de {filtered.length}
+              {t('common.showing')} {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} {t('common.of')} {filtered.length}
             </p>
             <div className="flex items-center gap-1.5">
               <Button variant="secondary" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)} leftIcon={<ChevronLeft className="h-4 w-4" />}>
-                Anterior
+                {t('common.previous')}
               </Button>
               <span className="px-2 text-xs font-bold text-ink-secondary">
                 {page} / {totalPages}
               </span>
               <Button variant="secondary" size="sm" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)} rightIcon={<ChevronRight className="h-4 w-4" />}>
-                Siguiente
+                {t('common.next')}
               </Button>
             </div>
           </div>
         )}
       </Card>
 
-      <Modal open={!!toDelete} onClose={() => setToDelete(null)} title="Eliminar transacción" size="sm">
+      <Modal open={!!toDelete} onClose={() => setToDelete(null)} title={t('txn.deleteTitle')} size="sm">
         <p className="text-sm text-ink-secondary">
-          ¿Seguro que deseas eliminar <span className="font-bold text-ink">{toDelete?.description}</span>? Esta acción no se puede deshacer.
+          {t('txn.deleteConfirmPrefix')} <span className="font-bold text-ink">{toDelete?.description}</span>{t('txn.deleteConfirmSuffix')}
         </p>
         <div className="mt-5 flex justify-end gap-3">
           <Button variant="secondary" onClick={() => setToDelete(null)}>
-            Cancelar
+            {t('common.cancel')}
           </Button>
           <Button variant="danger" onClick={confirmDelete}>
-            Eliminar
+            {t('common.delete')}
           </Button>
         </div>
       </Modal>

@@ -60,9 +60,16 @@ it if missing) with `compileSdk 36` / `minSdk 26` platforms installed.
   rather than calling `formatCOP`/`formatUSD` or hardcoding copy directly,
   mirroring web's `useCurrency()`/`useTranslation()`. The `StringKey`
   dictionary covers every screen's UI chrome (labels, buttons, placeholders,
-  validation messages, dialogs) **except** auth (no user/language
-  preference exists yet before login) and the barcode scanner (explicitly
-  out of scope). It also covers every category/payment-method/budget-status
+  validation messages, dialogs, permission prompts) **except** auth
+  (`LoginScreen`/`RegisterScreen`/`ForgotPasswordScreen`/`AuthLayout`) —
+  there is no logged-in user (and therefore no language preference) before
+  login, and `AuthRepository.login()`/`.logout()` don't persist one across
+  the session boundary, so there is no language state for those screens to
+  react to; `rememberStrings()` would just always resolve to its `ES`
+  fallback there. `ScannerScreen` **is** in scope (its UI chrome, permission
+  message, and product-found sheet all use `rememberStrings()`) — only the
+  camera/ML Kit scanning logic itself is untouched. It also covers every
+  category/payment-method/budget-status
   label via `categoryStringKey()`/`paymentMethodStringKey()`/
   `budgetStatusStringKey()` — never read `Category.label`/
   `PaymentMethodOption.label` off `data/mock/MockCategories.kt` directly in

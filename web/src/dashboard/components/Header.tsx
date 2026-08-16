@@ -30,7 +30,7 @@ const NOTIFICATION_TONE_CLASSES: Record<AppNotification['tone'], string> = {
 }
 
 export function Header({ title, onMenuClick }: HeaderProps) {
-  const { range, setRange, rangeLabel } = useDashboardFilters()
+  const { range, setRange, rangeLabelKey } = useDashboardFilters()
   const { theme, toggleTheme } = useTheme()
   const { user, logout } = useAuth()
   const { showToast } = useToast()
@@ -69,7 +69,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
             className="flex items-center gap-2 rounded-[var(--radius-md)] border border-border bg-surface px-3 py-2 text-[13px] font-semibold text-ink-secondary transition-colors hover:border-border-strong"
           >
             <Calendar className="h-4 w-4" />
-            {rangeLabel}
+            {t(rangeLabelKey)}
             <ChevronDown className="h-3.5 w-3.5" />
           </button>
           {rangeOpen && (
@@ -86,7 +86,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
                     range === opt.value ? 'bg-accent-soft text-primary' : 'text-ink hover:bg-bg-secondary',
                   )}
                 >
-                  {opt.label}
+                  {t(opt.labelKey)}
                   {range === opt.value && <Check className="h-4 w-4" />}
                 </button>
               ))}

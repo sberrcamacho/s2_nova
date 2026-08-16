@@ -12,23 +12,25 @@ import { analyticsService } from '@/services/analyticsService'
 import { categoryMap } from '@/data/categories'
 import { useCurrency } from '@/state/useCurrency'
 import { useTranslation } from '@/state/useTranslation'
-import { currentMonthKey, isSameMonth } from '@/lib/date'
+import { currentMonthKey, isSameMonth, weekdayLabel } from '@/lib/date'
 import type { CategoryBreakdownEntry, MonthlySummary } from '@/types'
 
 export default function AnalyticsPage() {
   const { transactions } = useAppData()
   const { format } = useCurrency()
-  const { tCategory } = useTranslation()
+  const { t, tCategory, language } = useTranslation()
   const [history, setHistory] = useState<MonthlySummary[]>([])
   const [breakdown, setBreakdown] = useState<CategoryBreakdownEntry[]>([])
   const [savingsTrend, setSavingsTrend] = useState<{ label: string; balance: number }[]>([])
 
   useEffect(() => {
-    analyticsService.getMonthlyHistory(6).then(setHistory)
+    analyticsService.getMonthlyHistory(6, language).then(setHistory)
     analyticsService.getCategoryBreakdown().then(setBreakdown)
-    analyticsService.getSavingsTrend(6).then(setSavingsTrend)
-  }, [transactions])
+    analyticsService.getSavingsTrend(6, language).then(setSavingsTrend)
+  }, [transactions, language])
 
+  const incomeLabel = t('nav.income')
+  const expensesLabel = t('nav.expenses')
   const donutData = breakdown.map((e) => ({
     name: tCategory(e.category),
     value: e.amount,
@@ -54,49 +56,48 @@ export default function AnalyticsPage() {
     const weekdayTotal = byDay.slice(1, 6).reduce((s, v) => s + v, 0)
     const weekendAvg = weekendTotal / 2
     const weekdayAvg = weekdayTotal / 5
-    const dayLabels = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
     const peakIndex = byDay.indexOf(Math.max(...byDay))
-    return { weekdayAvg, weekendAvg, peakDay: dayLabels[peakIndex] ?? '—' }
-  }, [transactions])
+    return { weekdayAvg, weekendAvg, peakDay: peakIndex >= 0 ? weekdayLabel(peakIndex, language) : '—' }
+  }, [transactions, language])
 
   return (
     <div className="flex flex-col gap-5">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KPICard label="Ritmo de gasto" value={`${format(burnRate)}/día`} icon={<Flame className="h-4 w-4" />} tone="primary" />
-        <KPICard label="Mejor mes" value={bestMonth?.label ?? '—'} icon={<TrendingUp className="h-4 w-4" />} />
-        <KPICard label="Peor mes" value={worstMonth?.label ?? '—'} icon={<TrendingDown className="h-4 w-4" />} />
-        <KPICard label="Pronóstico próx. mes" value={format(forecast)} icon={<Calendar className="h-4 w-4" />} />
+        <KPICard label={t('analytics.burnRate')} value={`${format(burnRate)}${t('analytics.perDaySuffix')}`} icon={<Flame className="h-4 w-4" />} tone="primary" />
+        <KPICard label={t('analytics.bestMonth')} value={bestMonth?.label ?? '—'} icon={<TrendingUp className="h-4 w-4" />} />
+        <KPICard label={t('analytics.worstMonth')} value={worstMonth?.label ?? '—'} icon={<TrendingDown className="h-4 w-4" />} />
+        <KPICard label={t('analytics.forecastNextMonth')} value={format(forecast)} icon={<Calendar className="h-4 w-4" />} />
       </div>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-        <ChartCard title="Comparativo mensual" subtitle="Ingresos vs. gastos — últimos 6 meses">
+        <ChartCard title={t('overview.monthlyComparison')} subtitle={t('analytics.incomeVsExpensesLast6')}>
           <NovaBarChart
-            data={history.map((m) => ({ month: m.label, Ingresos: m.income, Gastos: m.expenses }))}
+            data={history.map((m) => ({ month: m.label, [incomeLabel]: m.income, [expensesLabel]: m.expenses }))}
             xKey="month"
             series={[
-              { key: 'Ingresos', label: 'Ingresos', color: 'var(--color-positive)' },
-              { key: 'Gastos', label: 'Gastos', color: 'var(--color-negative)' },
+              { key: incomeLabel, label: incomeLabel, color: 'var(--color-positive)' },
+              { key: expensesLabel, label: expensesLabel, color: 'var(--color-negative)' },
             ]}
           />
         </ChartCard>
-        <ChartCard title="Tendencia de gastos" subtitle="Evolución mensual">
+        <ChartCard title={t('analytics.expenseTrend')} subtitle={t('analytics.monthlyEvolution')}>
           <NovaLineChart
-            data={history.map((m) => ({ month: m.label, Gastos: m.expenses }))}
+            data={history.map((m) => ({ month: m.label, [expensesLabel]: m.expenses }))}
             xKey="month"
-            series={[{ key: 'Gastos', label: 'Gastos', color: 'var(--color-primary)' }]}
+            series={[{ key: expensesLabel, label: expensesLabel, color: 'var(--color-primary)' }]}
           />
         </ChartCard>
       </div>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-        <ChartCard title="Tendencia de ahorro" subtitle="Saldo acumulado">
+        <ChartCard title={t('overview.savingsTrend')} subtitle={t('analytics.accumulatedBalance')}>
           <NovaAreaChart
             data={savingsTrend}
             xKey="label"
-            series={[{ key: 'balance', label: 'Ahorro acumulado', color: 'var(--color-primary)' }]}
+            series={[{ key: 'balance', label: t('common.cumulativeSavings'), color: 'var(--color-primary)' }]}
           />
         </ChartCard>
-        <ChartCard title="Análisis por categoría" subtitle="Participación del gasto total del mes">
+        <ChartCard title={t('analytics.categoryAnalysis')} subtitle={t('analytics.monthlyExpenseShare')}>
           <div className="flex items-center gap-6">
             <NovaDonutChart data={donutData} height={200} />
             <div className="flex flex-1 flex-col gap-2.5">
@@ -113,11 +114,11 @@ export default function AnalyticsPage() {
       </div>
 
       <Card className="p-5 sm:p-6">
-        <h3 className="mb-4 text-[15px] font-bold text-ink">Análisis de hábitos de gasto</h3>
+        <h3 className="mb-4 text-[15px] font-bold text-ink">{t('analytics.spendingHabits')}</h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <InsightTile label="Promedio entre semana" value={format(insights.weekdayAvg)} />
-          <InsightTile label="Promedio fin de semana" value={format(insights.weekendAvg)} />
-          <InsightTile label="Día de mayor gasto" value={insights.peakDay} />
+          <InsightTile label={t('analytics.weekdayAvg')} value={format(insights.weekdayAvg)} />
+          <InsightTile label={t('analytics.weekendAvg')} value={format(insights.weekendAvg)} />
+          <InsightTile label={t('analytics.peakSpendingDay')} value={insights.peakDay} />
         </div>
       </Card>
     </div>

@@ -23,14 +23,14 @@ import type { CategoryId, MonthlySummary } from '@/types'
 export default function ExpensesPage() {
   const { transactions } = useAppData()
   const { format } = useCurrency()
-  const { tCategory } = useTranslation()
+  const { t, tCategory, language } = useTranslation()
   const { monthKeys } = useDashboardFilters()
   const { showToast } = useToast()
   const [history, setHistory] = useState<MonthlySummary[]>([])
 
   useEffect(() => {
-    analyticsService.getMonthlyHistory(6).then(setHistory)
-  }, [transactions])
+    analyticsService.getMonthlyHistory(6, language).then(setHistory)
+  }, [transactions, language])
 
   const periodExpenses = useMemo(
     () => transactions.filter((t) => t.type === 'expense' && monthKeys.some((mk) => isSameMonth(t.date, mk))),
@@ -49,6 +49,7 @@ export default function ExpensesPage() {
   }, [periodExpenses, total])
 
   const topCategory = breakdown[0]
+  const expensesLabel = t('nav.expenses')
   const donutData = breakdown.map((e) => ({
     name: tCategory(e.category),
     value: e.amount,
@@ -62,30 +63,30 @@ export default function ExpensesPage() {
           size="sm"
           variant="secondary"
           leftIcon={<Download className="h-4 w-4" />}
-          onClick={() => showToast('Exportación simulada — no hay archivo real en este entorno de demostración.', 'info')}
+          onClick={() => showToast(t('common.exportSimulated'), 'info')}
         >
-          Exportar CSV
+          {t('expenses.exportCsv')}
         </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KPICard label="Total gastado" value={format(total)} icon={<TrendingDown className="h-4 w-4" />} tone="primary" />
-        <KPICard label="Promedio por transacción" value={format(avgPerTxn)} icon={<Receipt className="h-4 w-4" />} />
-        <KPICard label="Transacciones" value={String(periodExpenses.length)} icon={<Receipt className="h-4 w-4" />} />
-        <KPICard label="Categoría principal" value={topCategory ? tCategory(topCategory.category) : '—'} icon={<Wallet className="h-4 w-4" />} />
+        <KPICard label={t('expenses.totalSpent')} value={format(total)} icon={<TrendingDown className="h-4 w-4" />} tone="primary" />
+        <KPICard label={t('expenses.avgPerTransaction')} value={format(avgPerTxn)} icon={<Receipt className="h-4 w-4" />} />
+        <KPICard label={t('settings.transactions')} value={String(periodExpenses.length)} icon={<Receipt className="h-4 w-4" />} />
+        <KPICard label={t('expenses.topCategory')} value={topCategory ? tCategory(topCategory.category) : '—'} icon={<Wallet className="h-4 w-4" />} />
       </div>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
-        <ChartCard title="Gastos mensuales" subtitle="Últimos 6 meses" className="xl:col-span-2">
+        <ChartCard title={t('expenses.monthlyExpenses')} subtitle={t('common.last6Months')} className="xl:col-span-2">
           <NovaBarChart
-            data={history.map((m) => ({ month: m.label, Gastos: m.expenses }))}
+            data={history.map((m) => ({ month: m.label, [expensesLabel]: m.expenses }))}
             xKey="month"
-            series={[{ key: 'Gastos', label: 'Gastos', color: 'var(--color-negative)' }]}
+            series={[{ key: expensesLabel, label: expensesLabel, color: 'var(--color-negative)' }]}
           />
         </ChartCard>
-        <ChartCard title="Distribución por categoría" subtitle="Periodo seleccionado">
+        <ChartCard title={t('expenses.distributionByCategory')} subtitle={t('common.periodSelected')}>
           {donutData.length === 0 ? (
-            <EmptyState icon={<Sparkles className="h-6 w-6" />} title="Sin gastos" description="No hay gastos en este periodo." />
+            <EmptyState icon={<Sparkles className="h-6 w-6" />} title={t('common.noExpensesTitle')} description={t('common.noExpensesDescription')} />
           ) : (
             <div className="flex justify-center">
               <NovaDonutChart data={donutData} height={220} centerLabel="Total" centerValue={format(total)} />
@@ -95,9 +96,9 @@ export default function ExpensesPage() {
       </div>
 
       <Card className="p-5 sm:p-6">
-        <h3 className="mb-4 text-[15px] font-bold text-ink">Categorías principales</h3>
+        <h3 className="mb-4 text-[15px] font-bold text-ink">{t('expenses.topCategories')}</h3>
         {breakdown.length === 0 ? (
-          <EmptyState icon={<Sparkles className="h-6 w-6" />} title="Sin datos" description="No hay gastos en el periodo seleccionado." />
+          <EmptyState icon={<Sparkles className="h-6 w-6" />} title={t('common.noDataTitle')} description={t('expenses.noDataDescription')} />
         ) : (
           <div className="flex flex-col gap-3.5">
             {breakdown.slice(0, 6).map((e) => (
@@ -116,14 +117,14 @@ export default function ExpensesPage() {
       </Card>
 
       <Card className="p-5 sm:p-6">
-        <h3 className="mb-4 text-[15px] font-bold text-ink">Gastos del periodo</h3>
+        <h3 className="mb-4 text-[15px] font-bold text-ink">{t('expenses.periodExpenses')}</h3>
         <div className="flex flex-col divide-y divide-border">
-          {periodExpenses.slice(0, 12).map((t) => (
-            <TransactionRow key={t.id} transaction={t} />
+          {periodExpenses.slice(0, 12).map((txn) => (
+            <TransactionRow key={txn.id} transaction={txn} />
           ))}
         </div>
         {periodExpenses.length === 0 && (
-          <EmptyState icon={<Sparkles className="h-6 w-6" />} title="Sin gastos registrados" description="No hay gastos en el periodo seleccionado." />
+          <EmptyState icon={<Sparkles className="h-6 w-6" />} title={t('expenses.emptyRegisteredTitle')} description={t('expenses.noDataDescription')} />
         )}
       </Card>
     </div>

@@ -24,7 +24,7 @@ import type { CategoryId, MonthlySummary } from '@/types'
 export default function OverviewPage() {
   const { transactions, budgets } = useAppData()
   const { format } = useCurrency()
-  const { tCategory } = useTranslation()
+  const { t, tCategory, language } = useTranslation()
   const { monthKeys } = useDashboardFilters()
   const navigate = useNavigate()
 
@@ -32,9 +32,9 @@ export default function OverviewPage() {
   const [savingsTrend, setSavingsTrend] = useState<{ label: string; balance: number }[]>([])
 
   useEffect(() => {
-    analyticsService.getMonthlyHistory(6).then(setHistory)
-    analyticsService.getSavingsTrend(6).then(setSavingsTrend)
-  }, [transactions])
+    analyticsService.getMonthlyHistory(6, language).then(setHistory)
+    analyticsService.getSavingsTrend(6, language).then(setSavingsTrend)
+  }, [transactions, language])
 
   const balance = useMemo(
     () => transactions.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0),
@@ -50,11 +50,13 @@ export default function OverviewPage() {
   const expenses = periodTransactions.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
   const savings = income - expenses
 
+  const incomeLabel = t('nav.income')
+  const expensesLabel = t('nav.expenses')
   const rangeSeries = history.filter((h) => monthKeys.includes(h.month))
   const chartData = (rangeSeries.length >= 2 ? rangeSeries : history).map((m) => ({
     month: m.label,
-    Ingresos: m.income,
-    Gastos: m.expenses,
+    [incomeLabel]: m.income,
+    [expensesLabel]: m.expenses,
   }))
 
   const breakdown = useMemo(() => {
@@ -80,37 +82,37 @@ export default function OverviewPage() {
   return (
     <div className="flex flex-col gap-5">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KPICard label="Saldo actual" value={format(balance)} icon={<Landmark className="h-4 w-4" />} tone="primary" />
+        <KPICard label={t('overview.balance')} value={format(balance)} icon={<Landmark className="h-4 w-4" />} tone="primary" />
         <KPICard
-          label="Ingresos totales"
+          label={t('overview.totalIncome')}
           value={format(income)}
           icon={<TrendingUp className="h-4 w-4" />}
-          trend={{ value: 8.4, label: 'vs. periodo anterior' }}
+          trend={{ value: 8.4, label: t('overview.vsPreviousPeriod') }}
         />
         <KPICard
-          label="Gastos totales"
+          label={t('overview.totalExpenses')}
           value={format(expenses)}
           icon={<TrendingDown className="h-4 w-4" />}
-          trend={{ value: -3.1, label: 'vs. periodo anterior' }}
+          trend={{ value: -3.1, label: t('overview.vsPreviousPeriod') }}
         />
-        <KPICard label="Ahorro" value={format(savings)} icon={<PiggyBank className="h-4 w-4" />} />
+        <KPICard label={t('overview.savings')} value={format(savings)} icon={<PiggyBank className="h-4 w-4" />} />
       </div>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
-        <ChartCard title="Ingresos vs. gastos" subtitle="Comparativo mensual" className="xl:col-span-2">
+        <ChartCard title={t('overview.incomeVsExpenses')} subtitle={t('overview.monthlyComparison')} className="xl:col-span-2">
           <NovaBarChart
             data={chartData}
             xKey="month"
             series={[
-              { key: 'Ingresos', label: 'Ingresos', color: 'var(--color-positive)' },
-              { key: 'Gastos', label: 'Gastos', color: 'var(--color-negative)' },
+              { key: incomeLabel, label: incomeLabel, color: 'var(--color-positive)' },
+              { key: expensesLabel, label: expensesLabel, color: 'var(--color-negative)' },
             ]}
           />
         </ChartCard>
 
-        <ChartCard title="Gastos por categoría" subtitle="Periodo seleccionado">
+        <ChartCard title={t('overview.expensesByCategory')} subtitle={t('common.periodSelected')}>
           {donutData.length === 0 ? (
-            <EmptyState icon={<Sparkles className="h-6 w-6" />} title="Sin gastos" description="No hay gastos en este periodo." />
+            <EmptyState icon={<Sparkles className="h-6 w-6" />} title={t('common.noExpensesTitle')} description={t('common.noExpensesDescription')} />
           ) : (
             <div className="flex justify-center">
               <NovaDonutChart data={donutData} height={220} centerLabel="Total" centerValue={format(expenses)} />
@@ -120,20 +122,20 @@ export default function OverviewPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
-        <ChartCard title="Tendencia de ahorro" subtitle="Saldo acumulado — últimos 6 meses" className="xl:col-span-2">
+        <ChartCard title={t('overview.savingsTrend')} subtitle={t('overview.accumulatedBalanceLast6')} className="xl:col-span-2">
           <NovaAreaChart
             data={savingsTrend}
             xKey="label"
-            series={[{ key: 'balance', label: 'Ahorro acumulado', color: 'var(--color-primary)' }]}
+            series={[{ key: 'balance', label: t('common.cumulativeSavings'), color: 'var(--color-primary)' }]}
           />
         </ChartCard>
 
         <ChartCard
-          title="Progreso de presupuestos"
-          subtitle="Categorías con mayor uso"
+          title={t('overview.budgetProgress')}
+          subtitle={t('overview.topUsedCategories')}
           action={
             <button onClick={() => navigate('/budgets')} className="flex items-center gap-0.5 text-xs font-bold text-primary">
-              Ver todos <ArrowRight className="h-3.5 w-3.5" />
+              {t('overview.viewAllBudgets')} <ArrowRight className="h-3.5 w-3.5" />
             </button>
           }
         >
@@ -157,18 +159,18 @@ export default function OverviewPage() {
 
       <Card className="p-5 sm:p-6">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-[15px] font-bold text-ink">Transacciones recientes</h3>
+          <h3 className="text-[15px] font-bold text-ink">{t('overview.recentTransactions')}</h3>
           <button onClick={() => navigate('/transactions')} className="flex items-center gap-0.5 text-xs font-bold text-primary">
-            Ver todas <ArrowRight className="h-3.5 w-3.5" />
+            {t('overview.viewAllTransactions')} <ArrowRight className="h-3.5 w-3.5" />
           </button>
         </div>
         <div className="flex flex-col divide-y divide-border">
-          {recent.map((t) => (
-            <TransactionRow key={t.id} transaction={t} />
+          {recent.map((txn) => (
+            <TransactionRow key={txn.id} transaction={txn} />
           ))}
         </div>
         {recent.length === 0 && (
-          <EmptyState icon={<Sparkles className="h-6 w-6" />} title="Aún no hay transacciones" description="Agrega movimientos desde la app móvil para verlos aquí." />
+          <EmptyState icon={<Sparkles className="h-6 w-6" />} title={t('overview.emptyTransactionsTitle')} description={t('overview.emptyTransactionsDescription')} />
         )}
       </Card>
     </div>

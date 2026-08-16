@@ -62,7 +62,7 @@ export default function BudgetsPage() {
     await refresh()
     setSaving(false)
     setEditing(null)
-    showToast('Presupuesto actualizado', 'success')
+    showToast(t('budgets.updatedToast'), 'success')
   }
 
   const openCreate = () => {
@@ -79,22 +79,22 @@ export default function BudgetsPage() {
     await refresh()
     setSaving(false)
     setCreating(false)
-    showToast('Presupuesto creado', 'success')
+    showToast(t('budgets.createdToast'), 'success')
   }
 
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between gap-3">
         <div className="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-3">
-          <KPICard label="Presupuesto total" value={format(totalLimit)} icon={<Wallet className="h-4 w-4" />} tone="primary" />
-          <KPICard label="Gastado este mes" value={format(totalSpent)} icon={<TrendingDown className="h-4 w-4" />} trend={{ value: pct, label: 'del presupuesto' }} />
-          <KPICard label="Categorías excedidas" value={String(overCount)} icon={<PiggyBank className="h-4 w-4" />} />
+          <KPICard label={t('budgets.totalBudget')} value={format(totalLimit)} icon={<Wallet className="h-4 w-4" />} tone="primary" />
+          <KPICard label={t('budgets.spentThisMonth')} value={format(totalSpent)} icon={<TrendingDown className="h-4 w-4" />} trend={{ value: pct, label: t('budgets.ofBudget') }} />
+          <KPICard label={t('budgets.overCategories')} value={String(overCount)} icon={<PiggyBank className="h-4 w-4" />} />
         </div>
       </div>
 
       <div className="flex items-center justify-end">
         <Button size="sm" leftIcon={<Plus className="h-4 w-4" />} disabled={availableCategories.length === 0} onClick={openCreate}>
-          Nuevo presupuesto
+          {t('budgets.newBudget')}
         </Button>
       </div>
 
@@ -107,7 +107,7 @@ export default function BudgetsPage() {
                 <CategoryIcon category={b.category} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[13.5px] font-bold text-ink">{tCategory(b.category)}</p>
-                  <p className="text-xs text-ink-tertiary">Límite mensual</p>
+                  <p className="text-xs text-ink-tertiary">{t('budgets.monthlyLimit')}</p>
                 </div>
                 <Badge tone={STATUS_TONE[b.status]}>{t(STATUS_KEY[b.status])}</Badge>
               </div>
@@ -116,14 +116,14 @@ export default function BudgetsPage() {
               </p>
               <ProgressBar value={b.percentage} tone={STATUS_TONE[b.status]} trackClassName="mt-3" />
               <p className="mt-2 text-xs font-semibold text-ink-tertiary">
-                {b.remaining >= 0 ? `${format(b.remaining)} disponibles` : `${format(Math.abs(b.remaining))} por encima del límite`}
+                {b.remaining >= 0 ? `${format(b.remaining)} ${t('budgets.remaining')}` : `${format(Math.abs(b.remaining))} ${t('budgets.overLimit')}`}
               </p>
             </Card>
           ))}
       </div>
 
       <Card className="p-5 sm:p-6">
-        <h3 className="mb-4 text-[15px] font-bold text-ink">Utilización de presupuesto</h3>
+        <h3 className="mb-4 text-[15px] font-bold text-ink">{t('budgets.utilization')}</h3>
         <div className="flex flex-col gap-4">
           {[...budgets]
             .sort((a, b) => b.percentage - a.percentage)
@@ -140,7 +140,7 @@ export default function BudgetsPage() {
         </div>
       </Card>
 
-      <Modal open={!!editing} onClose={() => setEditing(null)} title="Editar presupuesto" size="sm">
+      <Modal open={!!editing} onClose={() => setEditing(null)} title={t('budgets.editBudget')} size="sm">
         {editing && (
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-3">
@@ -148,36 +148,36 @@ export default function BudgetsPage() {
               <p className="text-sm font-bold text-ink">{tCategory(editing.category)}</p>
             </div>
             <Input
-              label="Límite mensual"
+              label={t('budgets.monthlyLimit')}
               inputMode="numeric"
               leftIcon={<span className="text-sm font-bold">$</span>}
               value={limitInput}
               onChange={(e) => setLimitInput(e.target.value.replace(/[^0-9]/g, ''))}
             />
             <Button fullWidth loading={saving} leftIcon={<Plus className="h-4 w-4" />} onClick={saveLimit}>
-              Guardar límite
+              {t('budgets.saveLimit')}
             </Button>
           </div>
         )}
       </Modal>
 
-      <Modal open={creating} onClose={() => setCreating(false)} title="Nuevo presupuesto" size="sm">
+      <Modal open={creating} onClose={() => setCreating(false)} title={t('budgets.newBudget')} size="sm">
         <div className="flex flex-col gap-4">
           <Select
-            label="Categoría"
+            label={t('budgets.category')}
             value={newCategory}
             onChange={(e) => setNewCategory(e.target.value as CategoryId)}
             options={availableCategories.map((c) => ({ value: c.id, label: tCategory(c.id) }))}
           />
           <Input
-            label="Límite mensual"
+            label={t('budgets.monthlyLimit')}
             inputMode="numeric"
             leftIcon={<span className="text-sm font-bold">$</span>}
             value={newLimitInput}
             onChange={(e) => setNewLimitInput(e.target.value.replace(/[^0-9]/g, ''))}
           />
           <Button fullWidth loading={saving} leftIcon={<Plus className="h-4 w-4" />} onClick={createBudget}>
-            Crear presupuesto
+            {t('budgets.createBudget')}
           </Button>
         </div>
       </Modal>

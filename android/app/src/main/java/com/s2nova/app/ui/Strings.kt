@@ -39,7 +39,12 @@ enum class StringKey {
     PAYMENT_CASH, PAYMENT_DEBIT_CARD, PAYMENT_CREDIT_CARD, PAYMENT_BANK_TRANSFER,
     PAYMENT_NEQUI, PAYMENT_DAVIPLATA,
 
-    COMMON_CANCEL, COMMON_SAVE,
+    COMMON_CANCEL, COMMON_SAVE, COMMON_BACK,
+
+    SCANNER_TITLE, SCANNER_CLOSE_CD, SCANNER_PERMISSION_MESSAGE, SCANNER_PERMISSION_BUTTON,
+    SCANNER_NOT_FOUND, SCANNER_TRY_AGAIN, SCANNER_HINT, SCANNER_MANUAL_PLACEHOLDER,
+    SCANNER_DISCARD, SCANNER_CONFIRM_PURCHASE, SCANNER_NOTIF_TITLE,
+    SCANNER_NOTIF_MESSAGE_PREFIX, SCANNER_NOTIF_MESSAGE_MIDDLE,
 
     HOME_GREETING, HOME_BALANCE, HOME_INCOME, HOME_EXPENSES, HOME_SAVINGS,
     HOME_EXPENSE_SUMMARY, HOME_NO_EXPENSES, HOME_RECENT_TXNS, HOME_SEE_ALL,
@@ -140,6 +145,21 @@ private val ES: Map<StringKey, String> = mapOf(
 
     StringKey.COMMON_CANCEL to "Cancelar",
     StringKey.COMMON_SAVE to "Guardar",
+    StringKey.COMMON_BACK to "Atrás",
+
+    StringKey.SCANNER_TITLE to "Escanear código",
+    StringKey.SCANNER_CLOSE_CD to "Cerrar",
+    StringKey.SCANNER_PERMISSION_MESSAGE to "S2 Nova necesita acceso a la cámara para escanear códigos de barras.",
+    StringKey.SCANNER_PERMISSION_BUTTON to "Permitir acceso a la cámara",
+    StringKey.SCANNER_NOT_FOUND to "No encontramos ese producto.",
+    StringKey.SCANNER_TRY_AGAIN to "Intentar de nuevo",
+    StringKey.SCANNER_HINT to "Ubica el código de barras dentro del marco",
+    StringKey.SCANNER_MANUAL_PLACEHOLDER to "O ingresa el código manualmente",
+    StringKey.SCANNER_DISCARD to "Descartar",
+    StringKey.SCANNER_CONFIRM_PURCHASE to "Registrar compra",
+    StringKey.SCANNER_NOTIF_TITLE to "Compra registrada",
+    StringKey.SCANNER_NOTIF_MESSAGE_PREFIX to "Se registró \"",
+    StringKey.SCANNER_NOTIF_MESSAGE_MIDDLE to "\" — ",
 
     StringKey.HOME_GREETING to "HOLA",
     StringKey.HOME_BALANCE to "SALDO ACTUAL",
@@ -274,6 +294,21 @@ private val EN: Map<StringKey, String> = mapOf(
 
     StringKey.COMMON_CANCEL to "Cancel",
     StringKey.COMMON_SAVE to "Save",
+    StringKey.COMMON_BACK to "Back",
+
+    StringKey.SCANNER_TITLE to "Scan barcode",
+    StringKey.SCANNER_CLOSE_CD to "Close",
+    StringKey.SCANNER_PERMISSION_MESSAGE to "S2 Nova needs camera access to scan barcodes.",
+    StringKey.SCANNER_PERMISSION_BUTTON to "Allow camera access",
+    StringKey.SCANNER_NOT_FOUND to "We couldn't find that product.",
+    StringKey.SCANNER_TRY_AGAIN to "Try again",
+    StringKey.SCANNER_HINT to "Position the barcode inside the frame",
+    StringKey.SCANNER_MANUAL_PLACEHOLDER to "Or enter the code manually",
+    StringKey.SCANNER_DISCARD to "Discard",
+    StringKey.SCANNER_CONFIRM_PURCHASE to "Record purchase",
+    StringKey.SCANNER_NOTIF_TITLE to "Purchase recorded",
+    StringKey.SCANNER_NOTIF_MESSAGE_PREFIX to "Registered \"",
+    StringKey.SCANNER_NOTIF_MESSAGE_MIDDLE to "\" — ",
 
     StringKey.HOME_GREETING to "HELLO",
     StringKey.HOME_BALANCE to "CURRENT BALANCE",

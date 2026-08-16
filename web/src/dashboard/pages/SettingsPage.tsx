@@ -44,7 +44,7 @@ export default function SettingsPage() {
     await userService.updateProfile({ name, phone, city })
     updateUser({ name, phone, city })
     setSaving(false)
-    showToast('Perfil actualizado', 'success')
+    showToast(t('settings.profileUpdatedToast'), 'success')
   }
 
   const toggleNotifications = async (checked: boolean) => {
@@ -76,7 +76,7 @@ export default function SettingsPage() {
 
         <Card className="flex flex-col gap-3 p-5">
           <h3 className="text-[13px] font-bold text-ink">{t('settings.accountSummary')}</h3>
-          <StatRow label={t('settings.memberSince')} value={formatLongDate(user.memberSince)} />
+          <StatRow label={t('settings.memberSince')} value={formatLongDate(user.memberSince, language)} />
           <StatRow label={t('settings.transactions')} value={String(transactions.length)} />
           <StatRow label={t('settings.activeBudgets')} value={String(budgets.length)} />
           <StatRow label={t('settings.availableInBudgets')} value={format(totalSaved)} />
@@ -151,7 +151,7 @@ export default function SettingsPage() {
         <Card className="flex flex-col gap-3 p-6">
           <h3 className="text-[15px] font-bold text-ink">{t('settings.dataPrivacy')}</h3>
           <button
-            onClick={() => showToast('Próximamente', 'info')}
+            onClick={() => showToast(t('common.comingSoon'), 'info')}
             className="flex items-center gap-3 rounded-[var(--radius-md)] border border-border p-4 text-left transition-colors hover:bg-bg-secondary"
           >
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-soft text-primary">
@@ -160,7 +160,7 @@ export default function SettingsPage() {
             <span className="flex-1 text-[13.5px] font-semibold text-ink">{t('settings.exportData')}</span>
           </button>
           <button
-            onClick={() => showToast('Próximamente', 'info')}
+            onClick={() => showToast(t('common.comingSoon'), 'info')}
             className="flex items-center gap-3 rounded-[var(--radius-md)] border border-border p-4 text-left transition-colors hover:bg-bg-secondary"
           >
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-soft text-primary">

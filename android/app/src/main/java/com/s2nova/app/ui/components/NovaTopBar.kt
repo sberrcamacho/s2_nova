@@ -11,6 +11,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import com.s2nova.app.ui.StringKey
+import com.s2nova.app.ui.rememberStrings
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -21,12 +23,13 @@ fun NovaTopBar(
     containerColor: Color = MaterialTheme.colorScheme.background,
     contentColor: Color = MaterialTheme.colorScheme.onBackground,
 ) {
+    val t = rememberStrings()
     CenterAlignedTopAppBar(
         title = { Text(title, color = contentColor) },
         navigationIcon = {
             if (onBack != null) {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = contentColor)
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = t(StringKey.COMMON_BACK), tint = contentColor)
                 }
             }
         },

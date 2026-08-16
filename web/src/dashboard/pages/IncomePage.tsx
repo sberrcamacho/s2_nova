@@ -22,13 +22,13 @@ import type { CategoryId, MonthlySummary } from '@/types'
 export default function IncomePage() {
   const { transactions } = useAppData()
   const { format } = useCurrency()
-  const { tCategory } = useTranslation()
+  const { t, tCategory, language } = useTranslation()
   const { monthKeys } = useDashboardFilters()
   const [history, setHistory] = useState<MonthlySummary[]>([])
 
   useEffect(() => {
-    analyticsService.getMonthlyHistory(6).then(setHistory)
-  }, [transactions])
+    analyticsService.getMonthlyHistory(6, language).then(setHistory)
+  }, [transactions, language])
 
   const periodIncome = useMemo(
     () => transactions.filter((t) => t.type === 'income' && monthKeys.some((mk) => isSameMonth(t.date, mk))),
@@ -47,6 +47,8 @@ export default function IncomePage() {
   }, [periodIncome, total])
 
   const topSource = breakdown[0]
+  const incomeLabel = t('nav.income')
+  const savingsLabel = t('overview.savings')
   const donutData = breakdown.map((e) => ({
     name: tCategory(e.category),
     value: e.amount,
@@ -64,34 +66,34 @@ export default function IncomePage() {
   return (
     <div className="flex flex-col gap-5">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KPICard label="Total de ingresos" value={format(total)} icon={<ArrowDownLeft className="h-4 w-4" />} tone="primary" />
-        <KPICard label="Promedio por ingreso" value={format(avgPerTxn)} icon={<Receipt className="h-4 w-4" />} />
-        <KPICard label="Movimientos" value={String(periodIncome.length)} icon={<Receipt className="h-4 w-4" />} />
-        <KPICard label="Fuente principal" value={topSource ? tCategory(topSource.category) : '—'} icon={<Wallet className="h-4 w-4" />} />
+        <KPICard label={t('income.totalIncome')} value={format(total)} icon={<ArrowDownLeft className="h-4 w-4" />} tone="primary" />
+        <KPICard label={t('income.avgPerIncome')} value={format(avgPerTxn)} icon={<Receipt className="h-4 w-4" />} />
+        <KPICard label={t('nav.transactions')} value={String(periodIncome.length)} icon={<Receipt className="h-4 w-4" />} />
+        <KPICard label={t('income.topSource')} value={topSource ? tCategory(topSource.category) : '—'} icon={<Wallet className="h-4 w-4" />} />
       </div>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
         <ChartCard
-          title="Ingresos mensuales"
-          subtitle="Últimos 6 meses"
+          title={t('income.monthlyIncome')}
+          subtitle={t('common.last6Months')}
           className="xl:col-span-2"
           action={
             trendPct !== null && (
               <Badge tone={trendPct >= 0 ? 'positive' : 'negative'} icon={<ArrowUpRight className="h-3 w-3" />}>
-                {trendPct >= 0 ? 'Creciendo' : 'Bajando'}
+                {trendPct >= 0 ? t('income.growing') : t('income.declining')}
               </Badge>
             )
           }
         >
           <NovaAreaChart
-            data={history.map((m) => ({ month: m.label, Ingresos: m.income }))}
+            data={history.map((m) => ({ month: m.label, [incomeLabel]: m.income }))}
             xKey="month"
-            series={[{ key: 'Ingresos', label: 'Ingresos', color: 'var(--color-positive)' }]}
+            series={[{ key: incomeLabel, label: incomeLabel, color: 'var(--color-positive)' }]}
           />
         </ChartCard>
-        <ChartCard title="Fuentes de ingreso" subtitle="Periodo seleccionado">
+        <ChartCard title={t('income.incomeSources')} subtitle={t('common.periodSelected')}>
           {donutData.length === 0 ? (
-            <EmptyState icon={<Sparkles className="h-6 w-6" />} title="Sin ingresos" description="No hay ingresos en este periodo." />
+            <EmptyState icon={<Sparkles className="h-6 w-6" />} title={t('income.noIncomeTitle')} description={t('income.noIncomeDescription')} />
           ) : (
             <div className="flex justify-center">
               <NovaDonutChart data={donutData} height={220} centerLabel="Total" centerValue={format(total)} />
@@ -101,21 +103,21 @@ export default function IncomePage() {
       </div>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-        <ChartCard title="Ingresos vs. ahorro" subtitle="Comparativo mensual">
+        <ChartCard title={t('income.incomeVsSavings')} subtitle={t('overview.monthlyComparison')}>
           <NovaBarChart
-            data={history.map((m) => ({ month: m.label, Ingresos: m.income, Ahorro: m.savings }))}
+            data={history.map((m) => ({ month: m.label, [incomeLabel]: m.income, [savingsLabel]: m.savings }))}
             xKey="month"
             series={[
-              { key: 'Ingresos', label: 'Ingresos', color: 'var(--color-positive)' },
-              { key: 'Ahorro', label: 'Ahorro', color: 'var(--color-primary)' },
+              { key: incomeLabel, label: incomeLabel, color: 'var(--color-positive)' },
+              { key: savingsLabel, label: savingsLabel, color: 'var(--color-primary)' },
             ]}
           />
         </ChartCard>
 
         <Card className="p-5 sm:p-6">
-          <h3 className="mb-4 text-[15px] font-bold text-ink">Fuentes de ingreso</h3>
+          <h3 className="mb-4 text-[15px] font-bold text-ink">{t('income.incomeSources')}</h3>
           {breakdown.length === 0 ? (
-            <EmptyState icon={<Sparkles className="h-6 w-6" />} title="Sin datos" description="No hay ingresos en el periodo seleccionado." />
+            <EmptyState icon={<Sparkles className="h-6 w-6" />} title={t('common.noDataTitle')} description={t('income.noDataDescription')} />
           ) : (
             <div className="flex flex-col gap-3.5">
               {breakdown.map((e) => (
@@ -133,14 +135,14 @@ export default function IncomePage() {
       </div>
 
       <Card className="p-5 sm:p-6">
-        <h3 className="mb-4 text-[15px] font-bold text-ink">Ingresos del periodo</h3>
+        <h3 className="mb-4 text-[15px] font-bold text-ink">{t('income.periodIncome')}</h3>
         <div className="flex flex-col divide-y divide-border">
-          {periodIncome.slice(0, 12).map((t) => (
-            <TransactionRow key={t.id} transaction={t} />
+          {periodIncome.slice(0, 12).map((txn) => (
+            <TransactionRow key={txn.id} transaction={txn} />
           ))}
         </div>
         {periodIncome.length === 0 && (
-          <EmptyState icon={<Sparkles className="h-6 w-6" />} title="Sin ingresos registrados" description="No hay ingresos en el periodo seleccionado." />
+          <EmptyState icon={<Sparkles className="h-6 w-6" />} title={t('income.emptyRegisteredTitle')} description={t('income.noDataDescription')} />
         )}
       </Card>
     </div>

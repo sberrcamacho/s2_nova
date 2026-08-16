@@ -13,7 +13,7 @@ interface TransactionRowProps {
 }
 
 export function TransactionRow({ transaction, onClick, showDate = true, className }: TransactionRowProps) {
-  const { tCategory } = useTranslation()
+  const { tCategory, language } = useTranslation()
   const Comp = onClick ? 'button' : 'div'
 
   return (
@@ -30,7 +30,7 @@ export function TransactionRow({ transaction, onClick, showDate = true, classNam
         <p className="truncate text-[13.5px] font-semibold text-ink">{transaction.description}</p>
         <p className="truncate text-xs text-ink-tertiary">
           {transaction.merchant ?? tCategory(transaction.category)}
-          {showDate && ` · ${formatShortDate(transaction.date)}`}
+          {showDate && ` · ${formatShortDate(transaction.date, language)}`}
         </p>
       </div>
       <AmountText amount={transaction.amount} type={transaction.type} className="shrink-0 text-[13.5px]" />

@@ -1,12 +1,16 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
+import type { TranslationKey } from '@/lib/i18n/translations'
 
 export type DateRangeKey = 'this_month' | 'last_month' | 'last_3_months' | 'this_year'
 
-export const DATE_RANGE_OPTIONS: { value: DateRangeKey; label: string }[] = [
-  { value: 'this_month', label: 'Este mes' },
-  { value: 'last_month', label: 'Mes pasado' },
-  { value: 'last_3_months', label: 'Últimos 3 meses' },
-  { value: 'this_year', label: 'Este año' },
+// Labels are translation keys, not text — the context stays presentation-
+// language-agnostic and the consuming component (Header) translates them
+// via useTranslation() so they react to the language preference.
+export const DATE_RANGE_OPTIONS: { value: DateRangeKey; labelKey: TranslationKey }[] = [
+  { value: 'this_month', labelKey: 'dateRange.thisMonth' },
+  { value: 'last_month', labelKey: 'dateRange.lastMonth' },
+  { value: 'last_3_months', labelKey: 'dateRange.last3Months' },
+  { value: 'this_year', labelKey: 'dateRange.thisYear' },
 ]
 
 function monthKeysFor(range: DateRangeKey): string[] {
@@ -31,7 +35,7 @@ interface DashboardFiltersValue {
   range: DateRangeKey
   setRange: (range: DateRangeKey) => void
   monthKeys: string[]
-  rangeLabel: string
+  rangeLabelKey: TranslationKey
 }
 
 const DashboardFiltersContext = createContext<DashboardFiltersValue | null>(null)
@@ -45,7 +49,7 @@ export function DashboardFiltersProvider({ children }: { children: ReactNode }) 
       range,
       setRange,
       monthKeys,
-      rangeLabel: DATE_RANGE_OPTIONS.find((o) => o.value === range)?.label ?? '',
+      rangeLabelKey: DATE_RANGE_OPTIONS.find((o) => o.value === range)?.labelKey ?? 'dateRange.thisMonth',
     }
   }, [range])
 

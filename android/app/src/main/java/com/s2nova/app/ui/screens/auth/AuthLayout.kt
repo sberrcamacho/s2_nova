@@ -50,7 +50,7 @@ fun AuthLogo() {
     val darkOverride by ThemeController.darkOverride.collectAsStateWithLifecycle()
     val isDark = darkOverride ?: isSystemInDarkTheme()
     Image(
-        painter = painterResource(if (isDark) R.drawable.logo_mark_dark else R.drawable.logo_mark_light),
+        painter = painterResource(if (isDark) R.drawable.splash_icon_dark else R.drawable.splash_icon_light),
         contentDescription = null,
         modifier = Modifier.size(52.dp),
     )

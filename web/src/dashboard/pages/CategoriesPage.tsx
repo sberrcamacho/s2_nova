@@ -17,7 +17,7 @@ import type { CategoryId } from '@/types'
 export default function CategoriesPage() {
   const { transactions } = useAppData()
   const { format } = useCurrency()
-  const { tCategory } = useTranslation()
+  const { t, tCategory } = useTranslation()
   const { monthKeys } = useDashboardFilters()
 
   const periodExpenses = useMemo(
@@ -44,9 +44,9 @@ export default function CategoriesPage() {
   return (
     <div className="flex flex-col gap-5">
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-        <ChartCard title="Distribución por categoría" subtitle="Periodo seleccionado">
+        <ChartCard title={t('expenses.distributionByCategory')} subtitle={t('common.periodSelected')}>
           {donutData.length === 0 ? (
-            <EmptyState icon={<Sparkles className="h-6 w-6" />} title="Sin gastos" description="No hay gastos en este periodo." />
+            <EmptyState icon={<Sparkles className="h-6 w-6" />} title={t('common.noExpensesTitle')} description={t('common.noExpensesDescription')} />
           ) : (
             <div className="flex flex-col items-center gap-4">
               <NovaDonutChart data={donutData} height={220} centerLabel="Total" centerValue={format(total)} />
@@ -64,9 +64,9 @@ export default function CategoriesPage() {
         </ChartCard>
 
         <Card className="p-5 sm:p-6">
-          <h3 className="mb-4 text-[15px] font-bold text-ink">Desglose por categoría</h3>
+          <h3 className="mb-4 text-[15px] font-bold text-ink">{t('categories.breakdown')}</h3>
           {breakdown.length === 0 ? (
-            <EmptyState icon={<Sparkles className="h-6 w-6" />} title="Sin datos" description="No hay gastos en el periodo seleccionado." />
+            <EmptyState icon={<Sparkles className="h-6 w-6" />} title={t('common.noDataTitle')} description={t('expenses.noDataDescription')} />
           ) : (
             <div className="flex flex-col gap-4">
               {breakdown.map((e, i) => (

@@ -72,7 +72,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           </button>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-4 overflow-y-auto px-3 py-2" aria-label="Navegación principal">
+        <nav className="flex flex-1 flex-col gap-4 overflow-y-auto px-3 py-2" aria-label={t('sidebar.mainNavigation')}>
           <SidebarLink item={TOP_ITEM} onClick={onClose} />
 
           {NAV_GROUPS.map((group) => (
@@ -97,7 +97,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <div className="flex items-center gap-3 rounded-[var(--radius-md)] bg-white/5 p-3">
             <Avatar initials={user?.avatarInitials ?? 'US'} size="sm" />
             <div className="min-w-0">
-              <p className="truncate text-[13px] font-bold text-white">{user?.name ?? 'Usuario S2 Nova'}</p>
+              <p className="truncate text-[13px] font-bold text-white">{user?.name ?? t('sidebar.fallbackUserName')}</p>
               <p className="text-[11px] font-medium text-white/45">{t('sidebar.demoAccount')}</p>
             </div>
           </div>

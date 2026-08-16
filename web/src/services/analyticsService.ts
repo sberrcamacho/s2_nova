@@ -1,8 +1,9 @@
 import { categoryMap } from '@/data/categories'
 import { delay } from '@/lib/async'
 import { currentMonthKey, isSameMonth, monthLabel } from '@/lib/date'
+import { translate } from '@/lib/i18n/translations'
 import { transactionService } from '@/services/transactionService'
-import type { CategoryBreakdownEntry, CategoryId, MonthlySummary, Transaction } from '@/types'
+import type { CategoryBreakdownEntry, CategoryId, LanguageCode, MonthlySummary, Transaction } from '@/types'
 
 function lastNMonthKeys(n: number): string[] {
   const keys: string[] = []
@@ -14,21 +15,21 @@ function lastNMonthKeys(n: number): string[] {
   return keys
 }
 
-function summarizeMonth(items: Transaction[], monthKey: string): MonthlySummary {
+function summarizeMonth(items: Transaction[], monthKey: string, language: LanguageCode): MonthlySummary {
   const monthItems = items.filter((t) => isSameMonth(t.date, monthKey))
   const income = monthItems.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0)
   const expenses = monthItems.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
-  return { month: monthKey, label: monthLabel(monthKey), income, expenses, savings: income - expenses }
+  return { month: monthKey, label: monthLabel(monthKey, language), income, expenses, savings: income - expenses }
 }
 
 export const analyticsService = {
-  async getMonthlySummary(monthKey: string = currentMonthKey()): Promise<MonthlySummary> {
-    return delay(summarizeMonth(transactionService._snapshot(), monthKey))
+  async getMonthlySummary(monthKey: string = currentMonthKey(), language: LanguageCode = 'es'): Promise<MonthlySummary> {
+    return delay(summarizeMonth(transactionService._snapshot(), monthKey, language))
   },
 
-  async getMonthlyHistory(months = 6): Promise<MonthlySummary[]> {
+  async getMonthlyHistory(months = 6, language: LanguageCode = 'es'): Promise<MonthlySummary[]> {
     const items = transactionService._snapshot()
-    return delay(lastNMonthKeys(months).map((key) => summarizeMonth(items, key)))
+    return delay(lastNMonthKeys(months).map((key) => summarizeMonth(items, key, language)))
   },
 
   async getCategoryBreakdown(monthKey: string = currentMonthKey()): Promise<CategoryBreakdownEntry[]> {
@@ -48,7 +49,10 @@ export const analyticsService = {
     return delay(entries)
   },
 
-  async getWeeklySpending(monthKey: string = currentMonthKey()): Promise<{ label: string; amount: number }[]> {
+  async getWeeklySpending(
+    monthKey: string = currentMonthKey(),
+    language: LanguageCode = 'es',
+  ): Promise<{ label: string; amount: number }[]> {
     const items = transactionService
       ._snapshot()
       .filter((t) => t.type === 'expense' && isSameMonth(t.date, monthKey))
@@ -58,11 +62,12 @@ export const analyticsService = {
       const week = Math.min(4, Math.floor((day - 1) / 7))
       buckets[week] += t.amount
     }
-    return delay(buckets.map((amount, i) => ({ label: `Sem ${i + 1}`, amount })))
+    const weekWord = translate('common.weekShort', language)
+    return delay(buckets.map((amount, i) => ({ label: `${weekWord} ${i + 1}`, amount })))
   },
 
-  async getSavingsTrend(months = 6): Promise<{ month: string; label: string; balance: number }[]> {
-    const history = await this.getMonthlyHistory(months)
+  async getSavingsTrend(months = 6, language: LanguageCode = 'es'): Promise<{ month: string; label: string; balance: number }[]> {
+    const history = await this.getMonthlyHistory(months, language)
     let balance = 0
     return history.map((m) => {
       balance += m.savings

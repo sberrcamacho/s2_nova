@@ -1,6 +1,7 @@
 import { createPortal } from 'react-dom'
 import { CheckCircle2, Info, TriangleAlert, X } from 'lucide-react'
 import { useToast } from '@/state/ToastContext'
+import { useTranslation } from '@/state/useTranslation'
 import { cn } from '@/lib/cn'
 
 const ICONS = {
@@ -11,6 +12,7 @@ const ICONS = {
 
 export function ToastViewport() {
   const { toasts, dismissToast } = useToast()
+  const { t } = useTranslation()
 
   if (toasts.length === 0) return null
 
@@ -27,7 +29,7 @@ export function ToastViewport() {
           {ICONS[toast.variant]}
           <p className="flex-1 text-[13px] font-semibold text-ink">{toast.message}</p>
           <button
-            aria-label="Descartar notificación"
+            aria-label={t('common.dismissNotification')}
             onClick={() => dismissToast(toast.id)}
             className="text-ink-tertiary transition-colors hover:text-ink"
           >
