@@ -241,6 +241,15 @@ const dictionary = {
   'insights.avg': { es: 'prom.', en: 'avg.' },
   'insights.viewAll': { es: 'Ver todas las sugerencias', en: 'View all insights' },
   'overview.insightsTitle': { es: 'Sugerencias para ti', en: 'Suggestions for you' },
+  'overview.financialHealth': { es: 'Salud financiera', en: 'Financial health' },
+  'health.label.excellent': { es: 'Excelente', en: 'Excellent' },
+  'health.label.good': { es: 'Buena', en: 'Good' },
+  'health.label.fair': { es: 'Regular', en: 'Fair' },
+  'health.label.needsAttention': { es: 'Necesita atención', en: 'Needs attention' },
+  'health.factor.savingsRate': { es: 'Tasa de ahorro', en: 'Savings rate' },
+  'health.factor.budgetAdherence': { es: 'Cumplimiento de presupuestos', en: 'Budget adherence' },
+  'health.factor.spendingTrend': { es: 'Tendencia de gasto', en: 'Spending trend' },
+  'health.factor.debtLoad': { es: 'Nivel de deuda', en: 'Debt load' },
   'insights.budgetPace.title': { es: 'Ritmo de presupuesto', en: 'Budget pace' },
   'insights.budgetPace.prefix': { es: 'Vas a exceder tu presupuesto de', en: "You're on track to exceed your" },
   'insights.budgetPace.middle': { es: 'en aproximadamente', en: 'budget in about' },
@@ -362,4 +371,12 @@ export function insightToneTranslationKey(tone: 'positive' | 'warning' | 'negati
 
 export function recurringIntervalTranslationKey(interval: 'weekly' | 'monthly' | 'yearly'): TranslationKey {
   return `recurring.interval.${interval}` as TranslationKey
+}
+
+export function healthLabelTranslationKey(label: 'excellent' | 'good' | 'fair' | 'needsAttention'): TranslationKey {
+  return `health.label.${label}` as TranslationKey
+}
+
+export function healthFactorTranslationKey(key: 'savingsRate' | 'budgetAdherence' | 'spendingTrend' | 'debtLoad'): TranslationKey {
+  return `health.factor.${key}` as TranslationKey
 }

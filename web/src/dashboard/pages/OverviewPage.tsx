@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight, Landmark, PiggyBank, TrendingDown, TrendingUp } from 'lucide-react'
+import { ArrowRight, HeartPulse, Landmark, PiggyBank, TrendingDown, TrendingUp } from 'lucide-react'
 import { KPICard } from '@/components/ui/KPICard'
 import { ChartCard } from '@/components/ui/ChartCard'
 import { Card } from '@/components/ui/Card'
+import { Badge } from '@/components/ui/Badge'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { NovaBarChart } from '@/components/charts/NovaBarChart'
@@ -19,8 +20,16 @@ import { useCurrency } from '@/state/useCurrency'
 import { useTranslation } from '@/state/useTranslation'
 import { isSameMonth } from '@/lib/date'
 import { Sparkles, Lightbulb } from 'lucide-react'
-import { getInsights, type Insight } from '@/services/insightsService'
+import { getInsights, getFinancialHealth, type Insight, type FinancialHealth } from '@/services/insightsService'
+import { healthFactorTranslationKey, healthLabelTranslationKey } from '@/lib/i18n/translations'
 import type { CategoryId, MonthlySummary } from '@/types'
+
+const HEALTH_TONE: Record<FinancialHealth['tone'], 'positive' | 'warning' | 'negative' | 'neutral'> = {
+  positive: 'positive',
+  warning: 'warning',
+  negative: 'negative',
+  neutral: 'neutral',
+}
 
 export default function OverviewPage() {
   const { transactions, budgets } = useAppData()
@@ -32,11 +41,13 @@ export default function OverviewPage() {
   const [history, setHistory] = useState<MonthlySummary[]>([])
   const [savingsTrend, setSavingsTrend] = useState<{ label: string; balance: number }[]>([])
   const [insights, setInsights] = useState<Insight[]>([])
+  const [health, setHealth] = useState<FinancialHealth | null>(null)
 
   useEffect(() => {
     analyticsService.getMonthlyHistory(6, language).then(setHistory)
     analyticsService.getSavingsTrend(6, language).then(setSavingsTrend)
     getInsights(language, format).then(setInsights)
+    getFinancialHealth().then(setHealth)
   }, [transactions, language, format])
 
   const balance = useMemo(
@@ -84,6 +95,37 @@ export default function OverviewPage() {
 
   return (
     <div className="flex flex-col gap-5">
+      {health && (
+        <Card className="p-5 sm:p-6">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+            <div className="flex shrink-0 items-center gap-4 sm:w-56">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-bg-secondary">
+                <span className="font-numeric text-2xl font-extrabold text-ink">{health.score}</span>
+              </div>
+              <div>
+                <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-ink-tertiary">
+                  <HeartPulse className="h-3.5 w-3.5" /> {t('overview.financialHealth')}
+                </p>
+                <Badge tone={HEALTH_TONE[health.tone]} className="mt-1.5">
+                  {t(healthLabelTranslationKey(health.label))}
+                </Badge>
+              </div>
+            </div>
+            <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2">
+              {health.factors.map((factor) => (
+                <div key={factor.key}>
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="text-xs font-semibold text-ink-secondary">{t(healthFactorTranslationKey(factor.key))}</span>
+                    <span className="font-numeric text-xs font-bold text-ink-tertiary">{factor.score}%</span>
+                  </div>
+                  <ProgressBar value={factor.score} tone={factor.score >= 60 ? 'positive' : factor.score >= 30 ? 'warning' : 'negative'} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KPICard label={t('overview.balance')} value={format(balance)} icon={<Landmark className="h-4 w-4" />} tone="primary" />
         <KPICard

@@ -1,3 +1,4 @@
+import { accountService } from '@/services/accountService'
 import { analyticsService } from '@/services/analyticsService'
 import { budgetService } from '@/services/budgetService'
 import { goalService } from '@/services/goalService'
@@ -273,4 +274,85 @@ export async function getInsights(language: LanguageCode, format: (amount: numbe
   }
 
   return insights
+}
+
+// --- Financial health score -------------------------------------------
+//
+// A single 0-100 number for Overview, per the product direction's "high-
+// level financial health" requirement. It's an opinionated weighted
+// formula over real numbers (savings rate, budget adherence, spending
+// trend, debt load) — not a fabricated value, but also not a claim of
+// objective truth; every factor is shown in the breakdown so it stays
+// auditable rather than a black box.
+
+export type HealthLabel = 'excellent' | 'good' | 'fair' | 'needsAttention'
+
+export interface FinancialHealthFactor {
+  key: 'savingsRate' | 'budgetAdherence' | 'spendingTrend' | 'debtLoad'
+  score: number // 0-100, this factor's own scale
+  weight: number // points this factor contributes to the 0-100 total at score=100
+}
+
+export interface FinancialHealth {
+  score: number // 0-100
+  label: HealthLabel
+  tone: InsightTone
+  factors: FinancialHealthFactor[]
+}
+
+function clamp01(value: number): number {
+  return Math.max(0, Math.min(1, value))
+}
+
+export async function getFinancialHealth(): Promise<FinancialHealth> {
+  const monthKey = currentMonthKey()
+  const prevMonthKey = previousMonthKey(monthKey)
+
+  const [budgets, wallets, summary, prevSummary] = await Promise.all([
+    budgetService.getBudgets(monthKey),
+    accountService.getWallets(),
+    analyticsService.getMonthlySummary(monthKey),
+    analyticsService.getMonthlySummary(prevMonthKey),
+  ])
+
+  // 1. Savings rate — 20%+ of income saved this month earns full marks.
+  const savingsRate = summary.income > 0 ? summary.savings / summary.income : 0
+  const savingsScore = clamp01(savingsRate / 0.2) * 100
+
+  // 2. Budget adherence — share of this month's budgets not over limit.
+  // No budgets on record isn't penalized (nothing to be over), same
+  // reasoning as "no data" cases in getInsights.
+  const budgetScore = budgets.length === 0 ? 100 : (budgets.filter((b) => b.status !== 'over_budget').length / budgets.length) * 100
+
+  // 3. Spending trend — flat or falling expenses vs. last month earns
+  // full marks; a 30%+ increase earns zero.
+  let spendingScore = 100
+  if (prevSummary.expenses > 0) {
+    const change = (summary.expenses - prevSummary.expenses) / prevSummary.expenses
+    spendingScore = clamp01(1 - Math.max(0, change) / 0.3) * 100
+  }
+
+  // 4. Debt load — outstanding borrowed money relative to what you have
+  // (wallet balances + outstanding lent money, i.e. money owed to you).
+  const transactions = transactionService._snapshot()
+  const outstandingBorrowed = transactions.filter((t) => t.loanKind === 'borrowed' && !t.loanSettled).reduce((sum, t) => sum + t.amount, 0)
+  const outstandingLent = transactions.filter((t) => t.loanKind === 'lent' && !t.loanSettled).reduce((sum, t) => sum + t.amount, 0)
+  const netAssets = wallets.reduce((sum, w) => sum + w.currentBalance, 0) + outstandingLent
+  let debtScore = 100
+  if (outstandingBorrowed > 0) {
+    debtScore = netAssets > 0 ? clamp01(1 - outstandingBorrowed / netAssets) * 100 : 0
+  }
+
+  const factors: FinancialHealthFactor[] = [
+    { key: 'savingsRate', score: Math.round(savingsScore), weight: 40 },
+    { key: 'budgetAdherence', score: Math.round(budgetScore), weight: 30 },
+    { key: 'spendingTrend', score: Math.round(spendingScore), weight: 20 },
+    { key: 'debtLoad', score: Math.round(debtScore), weight: 10 },
+  ]
+
+  const score = Math.round(factors.reduce((sum, f) => sum + (f.score / 100) * f.weight, 0))
+  const label: HealthLabel = score >= 80 ? 'excellent' : score >= 60 ? 'good' : score >= 40 ? 'fair' : 'needsAttention'
+  const tone: InsightTone = score >= 80 ? 'positive' : score >= 60 ? 'positive' : score >= 40 ? 'warning' : 'negative'
+
+  return { score, label, tone, factors }
 }
