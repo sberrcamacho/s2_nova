@@ -18,7 +18,8 @@ import { categoryMap } from '@/data/categories'
 import { useCurrency } from '@/state/useCurrency'
 import { useTranslation } from '@/state/useTranslation'
 import { isSameMonth } from '@/lib/date'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, Lightbulb } from 'lucide-react'
+import { getInsights, type Insight } from '@/services/insightsService'
 import type { CategoryId, MonthlySummary } from '@/types'
 
 export default function OverviewPage() {
@@ -30,11 +31,13 @@ export default function OverviewPage() {
 
   const [history, setHistory] = useState<MonthlySummary[]>([])
   const [savingsTrend, setSavingsTrend] = useState<{ label: string; balance: number }[]>([])
+  const [insights, setInsights] = useState<Insight[]>([])
 
   useEffect(() => {
     analyticsService.getMonthlyHistory(6, language).then(setHistory)
     analyticsService.getSavingsTrend(6, language).then(setSavingsTrend)
-  }, [transactions, language])
+    getInsights(language, format).then(setInsights)
+  }, [transactions, language, format])
 
   const balance = useMemo(
     () => transactions.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0),
@@ -97,6 +100,27 @@ export default function OverviewPage() {
         />
         <KPICard label={t('overview.savings')} value={format(savings)} icon={<PiggyBank className="h-4 w-4" />} />
       </div>
+
+      {insights.length > 0 && (
+        <Card className="p-5 sm:p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="flex items-center gap-2 text-[15px] font-bold text-ink">
+              <Lightbulb className="h-4 w-4 text-primary" /> {t('overview.insightsTitle')}
+            </h3>
+            <button onClick={() => navigate('/insights')} className="flex items-center gap-0.5 text-xs font-bold text-primary">
+              {t('insights.viewAll')} <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {insights.slice(0, 3).map((insight) => (
+              <div key={insight.id} className="rounded-[var(--radius-md)] bg-bg-secondary p-3.5">
+                <p className="text-[13px] font-bold text-ink">{insight.title}</p>
+                <p className="mt-1 line-clamp-3 text-xs text-ink-tertiary">{insight.description}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
         <ChartCard title={t('overview.incomeVsExpenses')} subtitle={t('overview.monthlyComparison')} className="xl:col-span-2">

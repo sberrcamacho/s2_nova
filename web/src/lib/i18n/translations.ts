@@ -1,4 +1,4 @@
-import type { CategoryId, LanguageCode, PaymentMethod } from '@/types'
+import type { CategoryId, LanguageCode, PaymentMethod, WalletType } from '@/types'
 
 // Small hand-rolled dictionary — no i18n library dependency for a
 // mock-data demo app. Covers the app chrome (sidebar, header, page
@@ -10,6 +10,11 @@ const dictionary = {
   'nav.expenses': { es: 'Gastos', en: 'Expenses' },
   'nav.income': { es: 'Ingresos', en: 'Income' },
   'nav.budgets': { es: 'Presupuestos', en: 'Budgets' },
+  'nav.wallets': { es: 'Wallets', en: 'Wallets' },
+  'nav.goals': { es: 'Objetivos', en: 'Goals' },
+  'nav.insights': { es: 'Sugerencias', en: 'Insights' },
+  'nav.recurring': { es: 'Recurrentes', en: 'Recurring' },
+  'nav.netWorth': { es: 'Patrimonio', en: 'Net Worth' },
   'nav.categories': { es: 'Categorías', en: 'Categories' },
   'nav.analytics': { es: 'Analítica', en: 'Analytics' },
   'nav.reports': { es: 'Reportes', en: 'Reports' },
@@ -40,6 +45,16 @@ const dictionary = {
   'page.income.subtitle': { es: 'Fuentes y evolución de tus ingresos', en: 'Sources and trends in your income' },
   'page.budgets.title': { es: 'Presupuestos', en: 'Budgets' },
   'page.budgets.subtitle': { es: 'Control de límites por categoría', en: 'Track limits by category' },
+  'page.wallets.title': { es: 'Wallets', en: 'Wallets' },
+  'page.wallets.subtitle': { es: 'Cuentas y saldos', en: 'Accounts and balances' },
+  'page.goals.title': { es: 'Objetivos', en: 'Goals' },
+  'page.goals.subtitle': { es: 'Metas de ahorro y pago', en: 'Savings and payoff targets' },
+  'page.recurring.title': { es: 'Recurrentes', en: 'Recurring' },
+  'page.recurring.subtitle': { es: 'Suscripciones e ingresos/gastos recurrentes', en: 'Subscriptions and recurring income/expenses' },
+  'page.netWorth.title': { es: 'Patrimonio', en: 'Net Worth' },
+  'page.netWorth.subtitle': { es: 'Saldos, préstamos y deudas', en: 'Balances, lent and borrowed money' },
+  'page.insights.title': { es: 'Sugerencias', en: 'Insights' },
+  'page.insights.subtitle': { es: 'Recomendaciones basadas en tus datos', en: 'Recommendations based on your data' },
   'page.categories.title': { es: 'Categorías', en: 'Categories' },
   'page.categories.subtitle': { es: 'Distribución de tu gasto por categoría', en: 'Your spending split by category' },
   'page.analytics.title': { es: 'Analítica', en: 'Analytics' },
@@ -186,17 +201,81 @@ const dictionary = {
   'budgets.spentThisMonth': { es: 'Gastado este mes', en: 'Spent this month' },
   'budgets.ofBudget': { es: 'del presupuesto', en: 'of budget' },
   'budgets.overCategories': { es: 'Categorías excedidas', en: 'Categories over budget' },
-  'budgets.newBudget': { es: 'Nuevo presupuesto', en: 'New budget' },
   'budgets.monthlyLimit': { es: 'Límite mensual', en: 'Monthly limit' },
   'budgets.utilization': { es: 'Utilización de presupuesto', en: 'Budget utilization' },
-  'budgets.editBudget': { es: 'Editar presupuesto', en: 'Edit budget' },
-  'budgets.saveLimit': { es: 'Guardar límite', en: 'Save limit' },
-  'budgets.category': { es: 'Categoría', en: 'Category' },
-  'budgets.createBudget': { es: 'Crear presupuesto', en: 'Create budget' },
   'budgets.remaining': { es: 'disponibles', en: 'remaining' },
   'budgets.overLimit': { es: 'por encima del límite', en: 'over the limit' },
-  'budgets.updatedToast': { es: 'Presupuesto actualizado', en: 'Budget updated' },
-  'budgets.createdToast': { es: 'Presupuesto creado', en: 'Budget created' },
+  'wallets.totalBalance': { es: 'Saldo total', en: 'Total balance' },
+  'wallets.emptyTitle': { es: 'Sin wallets todavía', en: 'No wallets yet' },
+  'wallets.emptySubtitleReadOnly': { es: 'Crea tu primera wallet desde la app de Android.', en: 'Create your first wallet from the Android app.' },
+  'wallets.type.cash': { es: 'Efectivo', en: 'Cash' },
+  'wallets.type.bank': { es: 'Banco', en: 'Banking' },
+  'wallets.type.savings': { es: 'Ahorros', en: 'Savings' },
+  'wallets.type.crypto': { es: 'Bitcoin/Cripto', en: 'Bitcoin/Crypto' },
+  'wallets.type.other': { es: 'Otro', en: 'Other' },
+
+  'goals.emptyReadOnly': { es: 'Aún no tienes objetivos. Crea uno desde la app de Android.', en: 'No goals yet. Create one from the Android app.' },
+
+  'recurring.title': { es: 'Recurrentes', en: 'Recurring' },
+  'recurring.monthlyExpenses': { es: 'Gastos recurrentes/mes', en: 'Recurring expenses/mo' },
+  'recurring.monthlyIncome': { es: 'Ingresos recurrentes/mes', en: 'Recurring income/mo' },
+  'recurring.subscriptions': { es: 'Suscripciones/mes', en: 'Subscriptions/mo' },
+  'recurring.upcoming': { es: 'Próximos movimientos', en: 'Upcoming' },
+  'recurring.empty': { es: 'Sin movimientos recurrentes.', en: 'No recurring items.' },
+  'recurring.dueToday': { es: 'Vence hoy', en: 'Due today' },
+  'recurring.paused': { es: 'Pausado', en: 'Paused' },
+  'recurring.interval.weekly': { es: 'Semanal', en: 'Weekly' },
+  'recurring.interval.monthly': { es: 'Mensual', en: 'Monthly' },
+  'recurring.interval.yearly': { es: 'Anual', en: 'Yearly' },
+
+  'netWorth.total': { es: 'Patrimonio neto', en: 'Net worth' },
+  'netWorth.lent': { es: 'Prestado (pendiente)', en: 'Lent (outstanding)' },
+  'netWorth.borrowed': { es: 'Recibido en préstamo (pendiente)', en: 'Borrowed (outstanding)' },
+  'netWorth.wallets': { es: 'Wallets', en: 'Wallets' },
+
+  'insights.empty': { es: 'No hay sugerencias por ahora — todo se ve en buen camino.', en: "No suggestions right now — everything looks on track." },
+  'insights.tone.positive': { es: 'Positivo', en: 'Positive' },
+  'insights.tone.warning': { es: 'Atención', en: 'Warning' },
+  'insights.tone.negative': { es: 'Alerta', en: 'Alert' },
+  'insights.tone.neutral': { es: 'Info', en: 'Info' },
+  'insights.vs': { es: 'vs', en: 'vs' },
+  'insights.avg': { es: 'prom.', en: 'avg.' },
+  'insights.viewAll': { es: 'Ver todas las sugerencias', en: 'View all insights' },
+  'overview.insightsTitle': { es: 'Sugerencias para ti', en: 'Suggestions for you' },
+  'insights.budgetPace.title': { es: 'Ritmo de presupuesto', en: 'Budget pace' },
+  'insights.budgetPace.prefix': { es: 'Vas a exceder tu presupuesto de', en: "You're on track to exceed your" },
+  'insights.budgetPace.middle': { es: 'en aproximadamente', en: 'budget in about' },
+  'insights.budgetPace.suffix': { es: 'días si mantienes este ritmo', en: 'days at this rate' },
+  'insights.categorySpike.title': { es: 'Categoría en aumento', en: 'Category on the rise' },
+  'insights.categorySpike.suffix': { es: 'más que el mes pasado', en: 'more than last month' },
+  'insights.subscriptions.title': { es: 'Suscripciones', en: 'Subscriptions' },
+  'insights.subscriptions.prefix': { es: 'Estás pagando', en: "You're paying" },
+  'insights.subscriptions.suffix': { es: 'al mes en suscripciones — vale la pena revisarlas', en: '/month in subscriptions — worth reviewing' },
+  'insights.savingsRate.title': { es: 'Tasa de ahorro', en: 'Savings rate' },
+  'insights.savingsRate.prefix': { es: 'Tu tasa de ahorro cambió', en: 'Your savings rate changed' },
+  'insights.savingsRate.suffix': { es: 'puntos en los últimos meses', en: 'points over the last few months' },
+  'insights.goalTarget.title': { es: 'Meta de ahorro', en: 'Savings goal' },
+  'insights.goalTarget.prefix': { es: 'Necesitas ahorrar', en: 'You need to save' },
+  'insights.goalTarget.middle': { es: 'al mes para alcanzar', en: 'a month to reach' },
+  'insights.goalTarget.suffix': { es: 'antes de la fecha objetivo', en: 'by its target date' },
+  'insights.unusualTransaction.title': { es: 'Gasto inusual', en: 'Unusual expense' },
+  'insights.unusualTransaction.middle': { es: 'en', en: 'in' },
+  'insights.unusualTransaction.suffix': { es: 'está muy por encima de lo habitual', en: 'is well above your usual average' },
+  'insights.monthProjection.title': { es: 'Proyección de fin de mes', en: 'End-of-month projection' },
+  'insights.monthProjection.prefix': { es: 'A este ritmo, terminarás el mes gastando', en: "At this pace, you'll end the month spending" },
+  'insights.monthProjection.suffix': { es: 'vs. el mes pasado', en: 'vs. last month' },
+  'insights.categoryShare.title': { es: 'Categoría dominante', en: 'Top category' },
+  'insights.categoryShare.suffix': { es: 'representa el', en: 'makes up' },
+  'insights.categoryShare.ofExpenses': { es: 'de tus gastos', en: 'of your expenses' },
+  'insights.goalProgress.title': { es: 'Progreso de objetivo', en: 'Goal progress' },
+  'insights.goalProgress.suffix': { es: 'va en el', en: 'is' },
+  'insights.goalProgress.complete': { es: 'completado', en: 'complete' },
+  'insights.upcomingExpenses.title': { es: 'Gastos próximos', en: 'Upcoming expenses' },
+  'insights.upcomingExpenses.prefix': { es: 'Tienes', en: 'You have' },
+  'insights.upcomingExpenses.suffix': { es: 'en gastos recurrentes próximos.', en: 'in upcoming recurring expenses.' },
+  'insights.spendingStreak.title': { es: 'Racha de gasto', en: 'Spending streak' },
+  'insights.spendingStreak.prefix': { es: 'Tu gasto ha subido', en: 'Your spending has increased for' },
+  'insights.spendingStreak.suffix': { es: 'meses seguidos.', en: 'consecutive months.' },
 
   'categories.breakdown': { es: 'Desglose por categoría', en: 'Breakdown by category' },
 
@@ -248,6 +327,7 @@ const dictionary = {
   'txn.colActions': { es: 'Acciones', en: 'Actions' },
   'txn.typeIncome': { es: 'Ingreso', en: 'Income' },
   'txn.typeExpense': { es: 'Gasto', en: 'Expense' },
+  'txn.typeTransfer': { es: 'Transferencia', en: 'Transfer' },
   'txn.statusCompleted': { es: 'Completado', en: 'Completed' },
   'txn.deleteAria': { es: 'Eliminar transacción', en: 'Delete transaction' },
   'txn.deleteTitle': { es: 'Eliminar transacción', en: 'Delete transaction' },
@@ -283,4 +363,16 @@ export function categoryTranslationKey(id: CategoryId): TranslationKey {
 
 export function paymentMethodTranslationKey(id: PaymentMethod): TranslationKey {
   return `paymentMethod.${id}` as TranslationKey
+}
+
+export function walletTypeTranslationKey(type: WalletType): TranslationKey {
+  return `wallets.type.${type}` as TranslationKey
+}
+
+export function insightToneTranslationKey(tone: 'positive' | 'warning' | 'negative' | 'neutral'): TranslationKey {
+  return `insights.tone.${tone}` as TranslationKey
+}
+
+export function recurringIntervalTranslationKey(interval: 'weekly' | 'monthly' | 'yearly'): TranslationKey {
+  return `recurring.interval.${interval}` as TranslationKey
 }

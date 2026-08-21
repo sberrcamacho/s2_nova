@@ -25,20 +25,72 @@ it if missing) with `compileSdk 36` / `minSdk 26` platforms installed.
 - `app/src/main/java/com/s2nova/app/ui/components/` — shared composables (cards, charts, category icons, progress bars, top bar, bottom nav)
 - `app/src/main/java/com/s2nova/app/ui/theme/` — Color/Theme/Type — ported 1:1 from `web/src/index.css`'s design tokens so both apps share one visual identity
 - `app/src/main/java/com/s2nova/app/data/model/` — data classes mirroring `web/src/types/index.ts`
-- `app/src/main/java/com/s2nova/app/data/mock/` — seed data mirroring `web/src/data/*.ts` (same categories, products/barcodes, budgets)
-- `app/src/main/java/com/s2nova/app/data/repository/` — in-memory "mock backend" mirroring `web/src/services/*.ts`
-- `app/src/main/java/com/s2nova/app/data/AppContainer.kt` — manual DI: a single object holding the repository singletons every screen reads from
+- `app/src/main/java/com/s2nova/app/data/mock/` — remaining seed data for entities not yet backend-backed (categories, products/barcodes) — mirrors `web/src/data/*.ts`
+- `app/src/main/java/com/s2nova/app/data/remote/` — `ApiClient` (Retrofit + OkHttp, auth interceptor, refresh-on-401 `Authenticator`), `ApiService` (endpoint interface), `Dto.kt` (wire types matching `backend/src/routes/*.ts` JSON exactly)
+- `app/src/main/java/com/s2nova/app/data/local/` — `SessionStore` (DataStore: access/refresh tokens) and `OnboardingStore` (DataStore: onboarding/tutorial completion flags)
+- `app/src/main/java/com/s2nova/app/data/repository/` — repositories backed by the real backend (`AuthRepository`, `WalletRepository`, `TransactionRepository`, `BudgetRepository`, `GoalRepository`, `CategoryRepository`); `ProductRepository`/`NotificationRepository` remain in-memory mock (barcode/product lookup and notifications are out of scope for the current backend integration pass)
+- `app/src/main/java/com/s2nova/app/data/AppContainer.kt` — manual DI: a single object holding the repository singletons every screen reads from; call `AppContainer.init(context)` once (done in `MainActivity.onCreate`) before any repository touches the network
 
 ## Architecture notes
 
-- **No DI framework, no ViewModels.** Repositories are `StateFlow`-backed
-  singletons in `AppContainer`; Composables `collectAsStateWithLifecycle()`
-  them directly and call repository methods for mutations. This is
-  intentionally simple for the mock-data stage — introduce Hilt + ViewModels
-  when a real backend/API replaces `AppContainer`'s repositories.
-- **No backend, no persistence.** All data is in-memory and resets on
-  process death. `AuthRepository` accepts the seeded demo account
-  (`mariana.torres@example.com`, any password) — see `data/mock/MockUser.kt`.
+- **No DI framework, no ViewModels — by design, not by omission.** Even
+  now that most repositories call a real backend, they stay
+  `StateFlow`-backed singletons in `AppContainer`; Composables
+  `collectAsStateWithLifecycle()` them directly and call suspend repository
+  methods via `rememberCoroutineScope().launch { ... }` for mutations. Do
+  not introduce Hilt or ViewModels "to do it properly" — this pattern is an
+  explicit, standing choice for this codebase, not a placeholder for a
+  future migration.
+- **Real backend, real session.** `AuthRepository` calls
+  `backend/src/routes/auth.ts` (register/login/refresh/logout) and persists
+  the access/refresh tokens via `SessionStore` (plain DataStore — not yet
+  an encrypted store; a known follow-up, see `ARCHITECTURE.md` §14).
+  `AppContainer.refreshUserData()` reloads every domain repository from the
+  backend after login/register and after a restored session at cold start.
+  `local.properties`' `API_BASE_URL` (gitignored) overrides the default
+  `http://10.0.2.2:3000/api/v1` (the emulator's alias for the host
+  machine's `localhost`, where `backend/` runs via `pnpm dev`).
+- **Wallets, Budgets, Goals.** "Wallet" in the UI is the backend's
+  `Account` resource (`WalletRepository`); a wallet is required on every
+  transaction (`AddTransactionScreen` blocks with a "create a wallet
+  first" state — `NoWalletState` — if none exist yet, rather than
+  crashing or silently picking one). Transaction "concepts" other than
+  plain Expense/Income (Transfer, Upcoming, Lent, Borrowed) are real
+  fields on `Transaction`/`NewTransactionInput` (`status`, `loanKind`,
+  `counterpartyName`, `dueDate`, `transferToWalletId`), not categories —
+  see `schema.prisma`'s doc comments in `backend/` for the full rationale.
+  **Subscription/Recurring is deliberately NOT a field on `Transaction`**
+  — it's a separate `RecurringSeries` definition
+  (`RecurringSeriesRepository`, `ui/screens/recurring/RecurringScreen.kt`)
+  that only ever produces a real `Transaction` when the user explicitly
+  confirms a due occurrence, never automatically on app start (that
+  conflation was this screen's original design; it was replaced because
+  "definition" and "occurrence" need to stay separate — see
+  `RecurringSeries`'s doc comment in `data/model/Models.kt`). Settling a
+  Lent/Borrowed transaction (`ui/screens/loans/LoansScreen.kt`) creates a
+  real opposite-direction settlement transaction
+  (`TransactionRepository.settleLoan`) — never just flips a flag,
+  otherwise the wallet balance would never reflect the repayment. Budgets
+  and Goals share a tab (`BudgetsScreen` + `ui/screens/goals/GoalsTab.kt`)
+  rather than a new bottom-nav item, to avoid changing the existing
+  bottom bar; budget/goal progress is computed server-side and read
+  directly (`BudgetRepository.budgetProgress`), never recomputed
+  client-side. Wallets/Recurring/Loans are reachable from Profile, same
+  pattern as Settings.
+- **Onboarding** (`ui/screens/onboarding/`): first-launch welcome →
+  optional income → wallet creation → optional 50/30/20 budget suggestion
+  → tutorial carousel, gated by `OnboardingStore` (DataStore), checked once
+  at splash before the nav graph picks Login vs. Onboarding vs. Home. Every
+  optional step has a Skip; the flow never blocks reaching Home. The local
+  DataStore flag is synced from the backend's `user_preferences.onboarding_completed_at`/`tutorial_completed_at`
+  on every `/me` fetch (`AuthRepository.fetchAndSyncMe`), so a returning
+  user on a new device/reinstall isn't incorrectly re-onboarded. Replay the
+  tutorial alone (not the full flow) from Settings. If the income step's
+  amount was filled in, `OnboardingWalletScreen` creates a monthly
+  `RecurringSeries` ("Salario") once the wallet is chosen/created —
+  income entered during onboarding is never a one-off transaction created
+  on that first launch, it's the same recurring-definition model as any
+  other subscription/income series.
 - **Barcode scanning** (`ui/screens/scanner/`) uses CameraX
   (`camera-core`/`camera2`/`lifecycle`/`view`) for the live preview and
   on-device ML Kit Barcode Scanning (`com.google.mlkit:barcode-scanning`)
@@ -111,14 +163,21 @@ it if missing) with `compileSdk 36` / `minSdk 26` platforms installed.
   splash icons the same way as `logo_mark_*` (transparent glyph, no card)
   from `design-reference/suggestions/logo-dark.png`/`logo-light.png` if the
   mark changes.
-- **Category/payment-method pill selectors** (`AddTransactionScreen.kt`'s
-  `CategoryChip`/`PaymentMethodChip`): filled `primary` background when
-  selected, a subtle `outline`-alpha `border` when not (so unselected pills
-  read as tappable rather than blending into the card background), and
+- **Payment-method pill selector** (`AddTransactionScreen.kt`'s
+  `PaymentMethodChip`): filled `primary` background when selected, a
+  subtle `outline`-alpha `border` when not (so unselected pills read as
+  tappable rather than blending into the card background), and
   `Modifier.selectable(role = Role.RadioButton)` instead of bare
   `clickable` so screen readers announce the selected state. Follow this
   pattern for any new chip-style selector rather than reintroducing a
-  borderless chip.
+  borderless chip. **Category selection** is a `ModalBottomSheet` icon
+  grid (`CategoryGridItem`) opened by tapping the category preview in the
+  Add Transaction hero card, not an inline chip row — chosen after
+  `design-reference/suggestions/transaction-select-category.jpeg` showed a
+  grid reads better than a horizontally-scrolling row once a category list
+  gets long; it reuses the existing `CategoryIcon` per-category color
+  tokens rather than the reference's flat icon tiles, to stay visually
+  distinct from that source.
 
 ## Keeping in sync with the web app
 

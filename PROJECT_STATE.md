@@ -116,9 +116,20 @@ the logo artifact was fixed (root cause: a fragile transparent-glyph
 extraction left a stray border ring — replaced with self-contained
 rounded-card tiles instead), the logo is now theme-reactive on both
 platforms, and the currency-format toggle now performs a real (fixed-rate)
-COP→USD conversion instead of only reformatting the same number. Check
-`design-reference/bugs/` and `suggestions/` for newer items before assuming
-this list is exhaustive.
+COP→USD conversion instead of only reformatting the same number.
+
+The `transaction-*.jpeg` batch in `design-reference/suggestions/` (an
+external finance app's Add Transaction flow, used as a structural
+reference, not a copy target) was actioned next: Android's
+`AddTransactionScreen` gained a gradient hero card (reusing the existing
+`heroFrom`/`heroTo` tokens the Home balance card already uses) showing the
+Expense/Income switch, a tappable category preview, and the amount field,
+plus a category picker that opens as a `ModalBottomSheet` icon grid instead
+of a horizontal chip row. Deliberately not adopted: the reference's
+Transfer tab and its Account/Budget/Goal chip rows, since S2 Nova has no
+account/goal data model to back them — see `android/AGENTS.md` for the
+scope reasoning. Check `design-reference/bugs/` and `suggestions/` for
+newer items before assuming this list is exhaustive.
 
 ## Recent history (last 10 commits, at initial snapshot)
 

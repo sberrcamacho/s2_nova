@@ -45,6 +45,7 @@ import com.s2nova.app.ui.components.NovaTopBar
 import com.s2nova.app.ui.components.StatusBadge
 import com.s2nova.app.ui.paymentMethodStringKey
 import com.s2nova.app.ui.rememberStrings
+import kotlinx.coroutines.launch
 
 @Composable
 fun TransactionDetailScreen(
@@ -57,6 +58,7 @@ fun TransactionDetailScreen(
     val transaction = transactions.find { it.id == transactionId }
     var confirmDelete by remember { mutableStateOf(false) }
     val t = rememberStrings()
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -136,9 +138,12 @@ fun TransactionDetailScreen(
                 text = { Text("${t(StringKey.TXN_DETAIL_DELETE_CONFIRM_PREFIX)} \"${transaction.description}\"${t(StringKey.TXN_DETAIL_DELETE_CONFIRM_SUFFIX)}") },
                 confirmButton = {
                     TextButton(onClick = {
-                        AppContainer.transactionRepository.delete(transaction.id)
-                        confirmDelete = false
-                        onDeleted()
+                        scope.launch {
+                            AppContainer.transactionRepository.delete(transaction.id)
+                            AppContainer.walletRepository.refresh()
+                            confirmDelete = false
+                            onDeleted()
+                        }
                     }) { Text(t(StringKey.TXN_DETAIL_DELETE_CONFIRM), color = MaterialTheme.colorScheme.error) }
                 },
                 dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(t(StringKey.COMMON_CANCEL)) } },

@@ -2,7 +2,27 @@ import { transactions as seedTransactions } from '@/data/transactions'
 import { delay } from '@/lib/async'
 import { generateId } from '@/lib/id'
 import { isSameMonth } from '@/lib/date'
+import { accountService } from '@/services/accountService'
+import { goalService } from '@/services/goalService'
 import type { NewTransactionInput, Transaction } from '@/types'
+
+// direction 1 applies a transaction's effect on wallet balances, -1
+// reverses it — mirrors backend/src/routes/transactions.ts's
+// applyBalanceEffect. A 'planned' ("Upcoming") transaction never calls
+// this, same rule as the backend.
+function applyBalanceEffect(transaction: Transaction, direction: 1 | -1) {
+  if (transaction.status === 'planned') return
+  const signed = direction * transaction.amount
+  if (transaction.type === 'expense') {
+    accountService._applyBalanceDelta(transaction.accountId, -signed)
+  } else if (transaction.type === 'income') {
+    accountService._applyBalanceDelta(transaction.accountId, signed)
+  } else {
+    accountService._applyBalanceDelta(transaction.accountId, -signed)
+    if (transaction.transferAccountId) accountService._applyBalanceDelta(transaction.transferAccountId, signed)
+  }
+  if (transaction.goalId && direction === 1) goalService._applyContribution(transaction.goalId, transaction.amount)
+}
 
 // In-memory store seeded from mock data. A real implementation would swap
 // this module for one backed by fetch()/axios calls to a REST API — every
@@ -56,8 +76,9 @@ export const transactionService = {
   },
 
   async addTransaction(input: NewTransactionInput): Promise<Transaction> {
-    const transaction: Transaction = { id: generateId('txn'), ...input }
+    const transaction: Transaction = { id: generateId('txn'), status: 'completed', ...input }
     store = [transaction, ...store]
+    applyBalanceEffect(transaction, 1)
     return delay(transaction, 380)
   },
 
@@ -72,6 +93,8 @@ export const transactionService = {
   },
 
   async deleteTransaction(id: string): Promise<void> {
+    const existing = store.find((t) => t.id === id)
+    if (existing) applyBalanceEffect(existing, -1)
     store = store.filter((t) => t.id !== id)
     return delay(undefined, 250)
   },

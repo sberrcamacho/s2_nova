@@ -19,11 +19,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -48,13 +51,16 @@ import com.s2nova.app.ui.rememberStrings
 @Composable
 fun ProfileScreen(
     onOpenSettings: () -> Unit,
+    onOpenWallets: () -> Unit,
+    onOpenRecurring: () -> Unit,
+    onOpenLoans: () -> Unit,
     onLogout: () -> Unit,
     onShowComingSoon: (String) -> Unit,
 ) {
     val user by AppContainer.authRepository.currentUser.collectAsStateWithLifecycle()
     val transactions by AppContainer.transactionRepository.transactions.collectAsStateWithLifecycle()
-    val budgets by AppContainer.budgetRepository.budgets.collectAsStateWithLifecycle()
-    val savedTotal = budgets.sumOf { b -> (AppContainer.budgetRepository.progressFor(b, transactions)).remaining.coerceAtLeast(0.0) }
+    val budgetProgress by AppContainer.budgetRepository.budgetProgress.collectAsStateWithLifecycle()
+    val savedTotal = budgetProgress.sumOf { it.remaining.coerceAtLeast(0.0) }
     val format = rememberCurrencyFormatter()
     val t = rememberStrings()
 
@@ -87,13 +93,16 @@ fun ProfileScreen(
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
                 ProfileStat(value = transactions.size.toString(), label = t(StringKey.PROFILE_TRANSACTIONS))
-                ProfileStat(value = budgets.size.toString(), label = t(StringKey.PROFILE_BUDGETS))
+                ProfileStat(value = budgetProgress.size.toString(), label = t(StringKey.PROFILE_BUDGETS))
                 ProfileStat(value = format(savedTotal), label = t(StringKey.PROFILE_AVAILABLE))
             }
 
             SectionLabel(t(StringKey.PROFILE_ACCOUNT_SECURITY))
             NovaCard(modifier = Modifier.fillMaxWidth()) {
                 Column {
+                    ProfileRow(Icons.Filled.Wallet, t(StringKey.WALLETS_TITLE), onClick = onOpenWallets)
+                    ProfileRow(Icons.Filled.Repeat, t(StringKey.RECURRING_TITLE), onClick = onOpenRecurring)
+                    ProfileRow(Icons.Filled.MonetizationOn, t(StringKey.LOANS_TITLE), onClick = onOpenLoans)
                     ProfileRow(Icons.Filled.Person, t(StringKey.PROFILE_EDIT_PROFILE), onClick = onOpenSettings)
                     ProfileRow(Icons.Filled.Lock, t(StringKey.PROFILE_CHANGE_PASSWORD), onClick = { onShowComingSoon(t(StringKey.PROFILE_CHANGE_PASSWORD)) })
                     ProfileRow(Icons.Filled.Security, t(StringKey.PROFILE_TWO_FACTOR), onClick = { onShowComingSoon(t(StringKey.PROFILE_TWO_FACTOR)) })

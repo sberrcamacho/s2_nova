@@ -55,6 +55,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
 import com.s2nova.app.data.mock.paymentMethods
 import com.s2nova.app.data.model.NewTransactionInput
@@ -70,6 +71,7 @@ import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.theme.NovaColors
+import kotlinx.coroutines.launch
 
 private sealed interface ScanState {
     data object Scanning : ScanState
@@ -101,6 +103,8 @@ fun ScannerScreen(
     var scanState by remember { mutableStateOf<ScanState>(ScanState.Scanning) }
     var manualCode by remember { mutableStateOf("") }
     var paymentMethod by remember { mutableStateOf(PaymentMethod.DEBIT_CARD) }
+    val scope = rememberCoroutineScope()
+    val wallets by AppContainer.walletRepository.wallets.collectAsStateWithLifecycle()
 
     fun runScan(code: String) {
         if (scanState !is ScanState.Scanning) return
@@ -217,24 +221,35 @@ fun ScannerScreen(
                 onPaymentMethodChange = { paymentMethod = it },
                 onDiscard = { scanState = ScanState.Scanning },
                 onConfirm = {
-                    AppContainer.transactionRepository.add(
-                        NewTransactionInput(
-                            description = found.product.name,
-                            amount = found.product.price,
-                            type = TransactionType.EXPENSE,
-                            category = found.product.category,
-                            date = todayISO(),
-                            paymentMethod = paymentMethod,
-                            merchant = found.product.brand,
-                            productId = found.product.barcode,
-                        ),
-                    )
-                    AppContainer.notificationRepository.add(
-                        title = t(StringKey.SCANNER_NOTIF_TITLE),
-                        message = "${t(StringKey.SCANNER_NOTIF_MESSAGE_PREFIX)}${found.product.name}${t(StringKey.SCANNER_NOTIF_MESSAGE_MIDDLE)}${format(found.product.price)}.",
-                        tone = NotificationTone.INFO,
-                    )
-                    onPurchaseRegistered()
+                    // Scanner has no wallet picker of its own — uses the
+                    // first wallet, same "must have a wallet first" rule
+                    // AddTransactionScreen enforces. Confirm is a no-op if
+                    // none exists yet rather than silently failing.
+                    val walletId = wallets.firstOrNull()?.id
+                    if (walletId != null) {
+                        scope.launch {
+                            AppContainer.transactionRepository.add(
+                                NewTransactionInput(
+                                    walletId = walletId,
+                                    description = found.product.name,
+                                    amount = found.product.price,
+                                    type = TransactionType.EXPENSE,
+                                    category = found.product.category,
+                                    date = todayISO(),
+                                    paymentMethod = paymentMethod,
+                                    merchant = found.product.brand,
+                                    productId = found.product.barcode,
+                                ),
+                            )
+                            AppContainer.walletRepository.refresh()
+                            AppContainer.notificationRepository.add(
+                                title = t(StringKey.SCANNER_NOTIF_TITLE),
+                                message = "${t(StringKey.SCANNER_NOTIF_MESSAGE_PREFIX)}${found.product.name}${t(StringKey.SCANNER_NOTIF_MESSAGE_MIDDLE)}${format(found.product.price)}.",
+                                tone = NotificationTone.INFO,
+                            )
+                            onPurchaseRegistered()
+                        }
+                    }
                 },
             )
         }

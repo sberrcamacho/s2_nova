@@ -40,7 +40,7 @@ import com.s2nova.app.ui.components.NovaTopBar
 import com.s2nova.app.ui.rememberStrings
 
 @Composable
-fun SettingsScreen(onBack: () -> Unit) {
+fun SettingsScreen(onBack: () -> Unit, onReplayTutorial: () -> Unit) {
     val user by AppContainer.authRepository.currentUser.collectAsStateWithLifecycle()
     val darkOverride by ThemeController.darkOverride.collectAsStateWithLifecycle()
     val isDark = darkOverride ?: androidx.compose.foundation.isSystemInDarkTheme()
@@ -114,7 +114,17 @@ fun SettingsScreen(onBack: () -> Unit) {
                 }
             }
 
-            NovaCard(modifier = Modifier.fillMaxWidth().padding(top = 20.dp)) {
+            NovaCard(modifier = Modifier.fillMaxWidth().padding(top = 20.dp).clickable(onClick = onReplayTutorial)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                ) {
+                    Text(t(StringKey.SETTINGS_REPLAY_TUTORIAL), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onBackground)
+                }
+            }
+
+            NovaCard(modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(t(StringKey.SETTINGS_ABOUT), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
                     Text(

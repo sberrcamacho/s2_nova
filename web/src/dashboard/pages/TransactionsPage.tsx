@@ -151,7 +151,9 @@ export default function TransactionsPage() {
                       <Badge tone="neutral">{tCategory(txn.category)}</Badge>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3.5">
-                      <Badge tone={txn.type === 'income' ? 'positive' : 'negative'}>{txn.type === 'income' ? t('txn.typeIncome') : t('txn.typeExpense')}</Badge>
+                      <Badge tone={txn.type === 'income' ? 'positive' : txn.type === 'expense' ? 'negative' : 'neutral'}>
+                        {txn.type === 'income' ? t('txn.typeIncome') : txn.type === 'expense' ? t('txn.typeExpense') : t('txn.typeTransfer')}
+                      </Badge>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3.5">
                       <AmountText amount={txn.amount} type={txn.type} />

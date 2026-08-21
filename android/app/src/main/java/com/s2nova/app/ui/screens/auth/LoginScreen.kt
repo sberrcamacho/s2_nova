@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -20,11 +21,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -32,8 +35,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.s2nova.app.data.AppContainer
-import com.s2nova.app.data.mock.DEMO_EMAIL
-import com.s2nova.app.data.mock.DEMO_PASSWORD
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
@@ -45,6 +47,8 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+    var loading by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     AuthLayout(title = "Bienvenido de nuevo", subtitle = "Inicia sesión para continuar con tus finanzas") {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -85,27 +89,33 @@ fun LoginScreen(
 
             Button(
                 onClick = {
-                    val ok = AppContainer.authRepository.login(email, password)
-                    if (ok) onLoginSuccess() else error = "Correo o contraseña incorrectos."
+                    loading = true
+                    scope.launch {
+                        AppContainer.authRepository.login(email, password)
+                            .onSuccess {
+                                AppContainer.refreshUserData()
+                                loading = false
+                                onLoginSuccess()
+                            }
+                            .onFailure {
+                                loading = false
+                                error = "Correo o contraseña incorrectos."
+                            }
+                    }
                 },
+                enabled = !loading,
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 4.dp),
             ) {
-                Text("Iniciar sesión", modifier = Modifier.padding(vertical = 6.dp))
+                if (loading) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MaterialTheme.colorScheme.onPrimary)
+                } else {
+                    Text("Iniciar sesión", modifier = Modifier.padding(vertical = 6.dp))
+                }
             }
-
-            Text(
-                text = "Demo: $DEMO_EMAIL / $DEMO_PASSWORD",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            )
 
             Row(
                 horizontalArrangement = Arrangement.Center,

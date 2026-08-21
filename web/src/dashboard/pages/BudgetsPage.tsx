@@ -1,22 +1,14 @@
-import { useState } from 'react'
-import { PiggyBank, Plus, TrendingDown, Wallet } from 'lucide-react'
+import { PiggyBank, TrendingDown, Wallet } from 'lucide-react'
 import { KPICard } from '@/components/ui/KPICard'
 import { Card } from '@/components/ui/Card'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { Badge } from '@/components/ui/Badge'
-import { Modal } from '@/components/ui/Modal'
-import { Input } from '@/components/ui/Input'
-import { Select } from '@/components/ui/Select'
-import { Button } from '@/components/ui/Button'
 import { useAppData } from '@/state/AppDataContext'
-import { useToast } from '@/state/ToastContext'
-import { budgetService, type BudgetProgress } from '@/services/budgetService'
-import { expenseCategories } from '@/data/categories'
+import { type BudgetProgress } from '@/services/budgetService'
 import { useCurrency } from '@/state/useCurrency'
 import { useTranslation } from '@/state/useTranslation'
 import type { TranslationKey } from '@/lib/i18n/translations'
-import type { CategoryId } from '@/types'
 
 const STATUS_TONE: Record<BudgetProgress['status'], 'positive' | 'warning' | 'negative'> = {
   on_track: 'positive',
@@ -29,85 +21,36 @@ const STATUS_KEY: Record<BudgetProgress['status'], TranslationKey> = {
   over_budget: 'budgetStatus.over_budget',
 }
 
+// Read-only: creating/editing budgets is Android's job (micro-management),
+// Web only shows progress for analysis — see root AGENTS.md.
 export default function BudgetsPage() {
-  const { budgets, refresh } = useAppData()
-  const { showToast } = useToast()
+  const { budgets } = useAppData()
   const { format } = useCurrency()
   const { t, tCategory } = useTranslation()
-  const [editing, setEditing] = useState<BudgetProgress | null>(null)
-  const [limitInput, setLimitInput] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [creating, setCreating] = useState(false)
-  const [newCategory, setNewCategory] = useState<CategoryId | ''>('')
-  const [newLimitInput, setNewLimitInput] = useState('')
 
   const totalLimit = budgets.reduce((s, b) => s + b.limit, 0)
   const totalSpent = budgets.reduce((s, b) => s + b.spent, 0)
   const overCount = budgets.filter((b) => b.status === 'over_budget').length
   const pct = totalLimit > 0 ? Math.round((totalSpent / totalLimit) * 100) : 0
-  const budgetedCategories = new Set(budgets.map((b) => b.category))
-  const availableCategories = expenseCategories.filter((c) => !budgetedCategories.has(c.id))
-
-  const openEdit = (b: BudgetProgress) => {
-    setEditing(b)
-    setLimitInput(String(b.limit))
-  }
-
-  const saveLimit = async () => {
-    if (!editing) return
-    const value = Number(limitInput)
-    if (!value || value <= 0) return
-    setSaving(true)
-    await budgetService.setBudgetLimit(editing.category, value, editing.month)
-    await refresh()
-    setSaving(false)
-    setEditing(null)
-    showToast(t('budgets.updatedToast'), 'success')
-  }
-
-  const openCreate = () => {
-    setNewCategory(availableCategories[0]?.id ?? '')
-    setNewLimitInput('')
-    setCreating(true)
-  }
-
-  const createBudget = async () => {
-    const value = Number(newLimitInput)
-    if (!newCategory || !value || value <= 0) return
-    setSaving(true)
-    await budgetService.setBudgetLimit(newCategory, value)
-    await refresh()
-    setSaving(false)
-    setCreating(false)
-    showToast(t('budgets.createdToast'), 'success')
-  }
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between gap-3">
-        <div className="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-3">
-          <KPICard label={t('budgets.totalBudget')} value={format(totalLimit)} icon={<Wallet className="h-4 w-4" />} tone="primary" />
-          <KPICard label={t('budgets.spentThisMonth')} value={format(totalSpent)} icon={<TrendingDown className="h-4 w-4" />} trend={{ value: pct, label: t('budgets.ofBudget') }} />
-          <KPICard label={t('budgets.overCategories')} value={String(overCount)} icon={<PiggyBank className="h-4 w-4" />} />
-        </div>
-      </div>
-
-      <div className="flex items-center justify-end">
-        <Button size="sm" leftIcon={<Plus className="h-4 w-4" />} disabled={availableCategories.length === 0} onClick={openCreate}>
-          {t('budgets.newBudget')}
-        </Button>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <KPICard label={t('budgets.totalBudget')} value={format(totalLimit)} icon={<Wallet className="h-4 w-4" />} tone="primary" />
+        <KPICard label={t('budgets.spentThisMonth')} value={format(totalSpent)} icon={<TrendingDown className="h-4 w-4" />} trend={{ value: pct, label: t('budgets.ofBudget') }} />
+        <KPICard label={t('budgets.overCategories')} value={String(overCount)} icon={<PiggyBank className="h-4 w-4" />} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {[...budgets]
           .sort((a, b) => b.percentage - a.percentage)
           .map((b) => (
-            <Card key={b.id} interactive onClick={() => openEdit(b)} className="p-5">
+            <Card key={b.id} className="p-5">
               <div className="mb-3 flex items-center gap-3">
                 <CategoryIcon category={b.category} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13.5px] font-bold text-ink">{tCategory(b.category)}</p>
-                  <p className="text-xs text-ink-tertiary">{t('budgets.monthlyLimit')}</p>
+                  <p className="truncate text-[13.5px] font-bold text-ink">{b.name ?? tCategory(b.category)}</p>
+                  <p className="text-xs text-ink-tertiary">{b.name ? tCategory(b.category) : t('budgets.monthlyLimit')}</p>
                 </div>
                 <Badge tone={STATUS_TONE[b.status]}>{t(STATUS_KEY[b.status])}</Badge>
               </div>
@@ -139,48 +82,6 @@ export default function BudgetsPage() {
             ))}
         </div>
       </Card>
-
-      <Modal open={!!editing} onClose={() => setEditing(null)} title={t('budgets.editBudget')} size="sm">
-        {editing && (
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-3">
-              <CategoryIcon category={editing.category} />
-              <p className="text-sm font-bold text-ink">{tCategory(editing.category)}</p>
-            </div>
-            <Input
-              label={t('budgets.monthlyLimit')}
-              inputMode="numeric"
-              leftIcon={<span className="text-sm font-bold">$</span>}
-              value={limitInput}
-              onChange={(e) => setLimitInput(e.target.value.replace(/[^0-9]/g, ''))}
-            />
-            <Button fullWidth loading={saving} leftIcon={<Plus className="h-4 w-4" />} onClick={saveLimit}>
-              {t('budgets.saveLimit')}
-            </Button>
-          </div>
-        )}
-      </Modal>
-
-      <Modal open={creating} onClose={() => setCreating(false)} title={t('budgets.newBudget')} size="sm">
-        <div className="flex flex-col gap-4">
-          <Select
-            label={t('budgets.category')}
-            value={newCategory}
-            onChange={(e) => setNewCategory(e.target.value as CategoryId)}
-            options={availableCategories.map((c) => ({ value: c.id, label: tCategory(c.id) }))}
-          />
-          <Input
-            label={t('budgets.monthlyLimit')}
-            inputMode="numeric"
-            leftIcon={<span className="text-sm font-bold">$</span>}
-            value={newLimitInput}
-            onChange={(e) => setNewLimitInput(e.target.value.replace(/[^0-9]/g, ''))}
-          />
-          <Button fullWidth loading={saving} leftIcon={<Plus className="h-4 w-4" />} onClick={createBudget}>
-            {t('budgets.createBudget')}
-          </Button>
-        </div>
-      </Modal>
     </div>
   )
 }

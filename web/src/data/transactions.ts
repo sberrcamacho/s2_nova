@@ -1,5 +1,6 @@
 import type { CategoryId, PaymentMethod, Transaction } from '@/types'
 import { generateId } from '@/lib/id'
+import { DEFAULT_ACCOUNT_ID } from '@/data/accounts'
 
 // Deterministic PRNG (mulberry32) — the seed dataset should look organic but
 // stay identical across reloads so the demo experience is stable.
@@ -87,6 +88,7 @@ function makeTransaction(
 ): Transaction {
   return {
     id: generateId('txn'),
+    accountId: DEFAULT_ACCOUNT_ID,
     description: template.desc,
     merchant: template.merchant,
     amount: range(template.min, template.max, template.min === template.max ? 1 : 500),

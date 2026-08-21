@@ -11,8 +11,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -22,12 +24,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.s2nova.app.data.AppContainer
+import kotlinx.coroutines.launch
 
 @Composable
 fun RegisterScreen(
@@ -39,6 +43,8 @@ fun RegisterScreen(
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
+    var loading by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     AuthLayout(title = "Crea tu cuenta", subtitle = "Empieza a controlar tus finanzas hoy") {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -88,20 +94,36 @@ fun RegisterScreen(
 
             Button(
                 onClick = {
-                    when {
-                        password != confirmPassword -> error = "Las contraseñas no coinciden."
-                        !AppContainer.authRepository.register(name, email, password) ->
-                            error = "Revisa tu nombre, correo y que la contraseña tenga al menos 6 caracteres."
-                        else -> onRegisterSuccess()
+                    if (password != confirmPassword) {
+                        error = "Las contraseñas no coinciden."
+                        return@Button
+                    }
+                    loading = true
+                    scope.launch {
+                        AppContainer.authRepository.register(name, email, password)
+                            .onSuccess {
+                                AppContainer.refreshUserData()
+                                loading = false
+                                onRegisterSuccess()
+                            }
+                            .onFailure {
+                                loading = false
+                                error = "Revisa tu nombre, correo y que la contraseña tenga al menos 6 caracteres."
+                            }
                     }
                 },
+                enabled = !loading,
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 4.dp),
             ) {
-                Text("Crear cuenta", modifier = Modifier.padding(vertical = 6.dp))
+                if (loading) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MaterialTheme.colorScheme.onPrimary)
+                } else {
+                    Text("Crear cuenta", modifier = Modifier.padding(vertical = 6.dp))
+                }
             }
 
             Row(
