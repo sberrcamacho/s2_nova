@@ -1,28 +1,27 @@
 import { useMemo, useState } from 'react'
-import { ArrowUpDown, ChevronLeft, ChevronRight, Search, Trash2 } from 'lucide-react'
+import { ArrowUpDown, ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { AmountText } from '@/components/ui/AmountText'
 import { useAppData } from '@/state/AppDataContext'
-import { useToast } from '@/state/ToastContext'
 import { categories, paymentMethods } from '@/data/categories'
 import { formatLongDate } from '@/lib/date'
 import { cn } from '@/lib/cn'
 import { useTranslation } from '@/state/useTranslation'
-import type { Transaction } from '@/types'
 
 type SortKey = 'date' | 'amount'
 const PAGE_SIZE = 10
 
+// Read-only: deleting/editing transactions is Android's job (micro-
+// management) — Web (macro-analysis) only lists, filters, and sorts them.
+// See root AGENTS.md's Android/Web responsibility split.
 export default function TransactionsPage() {
-  const { transactions, deleteTransaction } = useAppData()
-  const { showToast } = useToast()
+  const { transactions } = useAppData()
   const { t, tCategory, tPaymentMethod, language } = useTranslation()
 
   const [search, setSearch] = useState('')
@@ -32,7 +31,6 @@ export default function TransactionsPage() {
   const [sortKey, setSortKey] = useState<SortKey>('date')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
   const [page, setPage] = useState(1)
-  const [toDelete, setToDelete] = useState<Transaction | null>(null)
 
   const filtered = useMemo(() => {
     const list = transactions.filter((t) => {
@@ -65,13 +63,6 @@ export default function TransactionsPage() {
       setSortKey(key)
       setSortDir('desc')
     }
-  }
-
-  const confirmDelete = async () => {
-    if (!toDelete) return
-    await deleteTransaction(toDelete.id)
-    showToast(t('txn.deletedToast'), 'success')
-    setToDelete(null)
   }
 
   return (
@@ -131,7 +122,6 @@ export default function TransactionsPage() {
                   <SortableTh label={t('txn.colAmount')} active={sortKey === 'amount'} dir={sortDir} onClick={() => toggleSort('amount')} />
                   <th className="px-4 py-3">{t('txn.colMethod')}</th>
                   <th className="px-4 py-3">{t('txn.colStatus')}</th>
-                  <th className="px-4 py-3 text-right">{t('txn.colActions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -164,15 +154,6 @@ export default function TransactionsPage() {
                     <td className="whitespace-nowrap px-4 py-3.5">
                       <Badge tone="positive">{t('txn.statusCompleted')}</Badge>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3.5 text-right">
-                      <button
-                        aria-label={t('txn.deleteAria')}
-                        onClick={() => setToDelete(txn)}
-                        className="rounded-[var(--radius-sm)] p-1.5 text-ink-tertiary transition-colors hover:bg-negative-soft hover:text-negative"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -199,20 +180,6 @@ export default function TransactionsPage() {
           </div>
         )}
       </Card>
-
-      <Modal open={!!toDelete} onClose={() => setToDelete(null)} title={t('txn.deleteTitle')} size="sm">
-        <p className="text-sm text-ink-secondary">
-          {t('txn.deleteConfirmPrefix')} <span className="font-bold text-ink">{toDelete?.description}</span>{t('txn.deleteConfirmSuffix')}
-        </p>
-        <div className="mt-5 flex justify-end gap-3">
-          <Button variant="secondary" onClick={() => setToDelete(null)}>
-            {t('common.cancel')}
-          </Button>
-          <Button variant="danger" onClick={confirmDelete}>
-            {t('common.delete')}
-          </Button>
-        </div>
-      </Modal>
     </div>
   )
 }

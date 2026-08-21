@@ -118,7 +118,6 @@ const dictionary = {
   'budgetStatus.over_budget': { es: 'Excedido', en: 'Over budget' },
 
   'common.cancel': { es: 'Cancelar', en: 'Cancel' },
-  'common.delete': { es: 'Eliminar', en: 'Delete' },
   'common.close': { es: 'Cerrar', en: 'Close' },
   'common.dismissNotification': { es: 'Descartar notificación', en: 'Dismiss notification' },
   'common.comingSoon': { es: 'Próximamente', en: 'Coming soon' },
@@ -324,22 +323,10 @@ const dictionary = {
   'txn.colAmount': { es: 'Monto', en: 'Amount' },
   'txn.colMethod': { es: 'Método', en: 'Method' },
   'txn.colStatus': { es: 'Estado', en: 'Status' },
-  'txn.colActions': { es: 'Acciones', en: 'Actions' },
   'txn.typeIncome': { es: 'Ingreso', en: 'Income' },
   'txn.typeExpense': { es: 'Gasto', en: 'Expense' },
   'txn.typeTransfer': { es: 'Transferencia', en: 'Transfer' },
   'txn.statusCompleted': { es: 'Completado', en: 'Completed' },
-  'txn.deleteAria': { es: 'Eliminar transacción', en: 'Delete transaction' },
-  'txn.deleteTitle': { es: 'Eliminar transacción', en: 'Delete transaction' },
-  'txn.deleteConfirmPrefix': {
-    es: '¿Seguro que deseas eliminar',
-    en: 'Are you sure you want to delete',
-  },
-  'txn.deleteConfirmSuffix': {
-    es: '? Esta acción no se puede deshacer.',
-    en: '? This action cannot be undone.',
-  },
-  'txn.deletedToast': { es: 'Transacción eliminada', en: 'Transaction deleted' },
 
   'dateRange.thisMonth': { es: 'Este mes', en: 'This month' },
   'dateRange.lastMonth': { es: 'Mes pasado', en: 'Last month' },

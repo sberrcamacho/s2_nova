@@ -8,7 +8,6 @@ interface AppDataContextValue {
   budgets: BudgetProgress[]
   isLoading: boolean
   addTransaction: (input: NewTransactionInput) => Promise<Transaction>
-  deleteTransaction: (id: string) => Promise<void>
   refresh: () => Promise<void>
 }
 
@@ -48,15 +47,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         setTransactions(txns)
         setBudgets(budgetProgress)
         return created
-      },
-      deleteTransaction: async (id) => {
-        await transactionService.deleteTransaction(id)
-        const [txns, budgetProgress] = await Promise.all([
-          transactionService.getTransactions(),
-          budgetService.getBudgets(),
-        ])
-        setTransactions(txns)
-        setBudgets(budgetProgress)
       },
     }),
     [transactions, budgets, isLoading, load],

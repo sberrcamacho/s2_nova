@@ -92,13 +92,6 @@ export const transactionService = {
     return delay(updated, 300)
   },
 
-  async deleteTransaction(id: string): Promise<void> {
-    const existing = store.find((t) => t.id === id)
-    if (existing) applyBalanceEffect(existing, -1)
-    store = store.filter((t) => t.id !== id)
-    return delay(undefined, 250)
-  },
-
   // Synchronous escape hatch for derived calculations elsewhere in the mock
   // layer (analyticsService, budgetService) that need the current snapshot
   // without re-awaiting a network delay.
