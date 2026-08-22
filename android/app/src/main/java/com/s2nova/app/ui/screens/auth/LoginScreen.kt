@@ -35,6 +35,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.s2nova.app.data.AppContainer
+import com.s2nova.app.data.remote.toUserMessage
 import kotlinx.coroutines.launch
 
 @Composable
@@ -99,7 +100,7 @@ fun LoginScreen(
                             }
                             .onFailure {
                                 loading = false
-                                error = "Correo o contraseña incorrectos."
+                                error = it.toUserMessage("Correo o contraseña incorrectos.")
                             }
                     }
                 },

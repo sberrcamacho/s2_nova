@@ -31,6 +31,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.s2nova.app.data.AppContainer
+import com.s2nova.app.data.remote.toUserMessage
 import kotlinx.coroutines.launch
 
 @Composable
@@ -108,7 +109,7 @@ fun RegisterScreen(
                             }
                             .onFailure {
                                 loading = false
-                                error = "Revisa tu nombre, correo y que la contraseña tenga al menos 6 caracteres."
+                                error = it.toUserMessage("Revisa tu nombre, correo y que la contraseña tenga al menos 6 caracteres.")
                             }
                     }
                 },
