@@ -3,19 +3,18 @@ import { Navigate } from 'react-router-dom'
 import { DashboardLayout } from '@/dashboard/DashboardLayout'
 import OverviewPage from '@/dashboard/pages/OverviewPage'
 import TransactionsPage from '@/dashboard/pages/TransactionsPage'
-import ExpensesPage from '@/dashboard/pages/ExpensesPage'
-import IncomePage from '@/dashboard/pages/IncomePage'
 import BudgetsPage from '@/dashboard/pages/BudgetsPage'
 import GoalsPage from '@/dashboard/pages/GoalsPage'
-import WalletsPage from '@/dashboard/pages/WalletsPage'
-import RecurringPage from '@/dashboard/pages/RecurringPage'
-import NetWorthPage from '@/dashboard/pages/NetWorthPage'
-import CategoriesPage from '@/dashboard/pages/CategoriesPage'
 import AnalyticsPage from '@/dashboard/pages/AnalyticsPage'
 import InsightsPage from '@/dashboard/pages/InsightsPage'
 import ReportsPage from '@/dashboard/pages/ReportsPage'
 import SettingsPage from '@/dashboard/pages/SettingsPage'
 
+// Primary nav is exactly 7 items (Overview, Insights, Analytics, Budgets,
+// Goals, Reports, Settings) — see Sidebar.tsx. `/transactions` stays
+// routable as a deep link (linked from Overview's recent-transactions
+// list) without being a nav item, since its filter/sort/paginate table is
+// unique functionality, not a metric page absorbed elsewhere.
 export const dashboardRoutes: RouteObject[] = [
   {
     element: <DashboardLayout />,
@@ -23,14 +22,8 @@ export const dashboardRoutes: RouteObject[] = [
       { index: true, element: <Navigate to="overview" replace /> },
       { path: 'overview', element: <OverviewPage /> },
       { path: 'transactions', element: <TransactionsPage /> },
-      { path: 'expenses', element: <ExpensesPage /> },
-      { path: 'income', element: <IncomePage /> },
       { path: 'budgets', element: <BudgetsPage /> },
       { path: 'goals', element: <GoalsPage /> },
-      { path: 'wallets', element: <WalletsPage /> },
-      { path: 'recurring', element: <RecurringPage /> },
-      { path: 'net-worth', element: <NetWorthPage /> },
-      { path: 'categories', element: <CategoriesPage /> },
       { path: 'analytics', element: <AnalyticsPage /> },
       { path: 'insights', element: <InsightsPage /> },
       { path: 'reports', element: <ReportsPage /> },

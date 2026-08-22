@@ -1,21 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import {
-  ArrowDownLeft,
-  ArrowUpRight,
-  BarChart3,
-  FileText,
-  Flag,
-  Landmark,
-  Lightbulb,
-  LayoutGrid,
-  PiggyBank,
-  Receipt,
-  Repeat,
-  Settings,
-  Shapes,
-  Wallet,
-  X,
-} from 'lucide-react'
+import { BarChart3, FileText, Flag, Lightbulb, LayoutGrid, PiggyBank, Settings, X } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
 import { Avatar } from '@/components/ui/Avatar'
 import { useAuth } from '@/state/AuthContext'
@@ -23,36 +7,18 @@ import { useTranslation } from '@/state/useTranslation'
 import type { TranslationKey } from '@/lib/i18n/translations'
 import { cn } from '@/lib/cn'
 
-const TOP_ITEM = { to: '/overview', labelKey: 'nav.overview' as TranslationKey, icon: LayoutGrid }
-
-const NAV_GROUPS = [
-  {
-    labelKey: 'nav.group.transactions' as TranslationKey,
-    items: [
-      { to: '/transactions', labelKey: 'nav.transactions' as TranslationKey, icon: Receipt },
-      { to: '/expenses', labelKey: 'nav.expenses' as TranslationKey, icon: ArrowUpRight },
-      { to: '/income', labelKey: 'nav.income' as TranslationKey, icon: ArrowDownLeft },
-    ],
-  },
-  {
-    labelKey: 'nav.group.planning' as TranslationKey,
-    items: [
-      { to: '/wallets', labelKey: 'nav.wallets' as TranslationKey, icon: Wallet },
-      { to: '/budgets', labelKey: 'nav.budgets' as TranslationKey, icon: PiggyBank },
-      { to: '/goals', labelKey: 'nav.goals' as TranslationKey, icon: Flag },
-      { to: '/categories', labelKey: 'nav.categories' as TranslationKey, icon: Shapes },
-    ],
-  },
-  {
-    labelKey: 'nav.group.analysis' as TranslationKey,
-    items: [
-      { to: '/analytics', labelKey: 'nav.analytics' as TranslationKey, icon: BarChart3 },
-      { to: '/insights', labelKey: 'nav.insights' as TranslationKey, icon: Lightbulb },
-      { to: '/recurring', labelKey: 'nav.recurring' as TranslationKey, icon: Repeat },
-      { to: '/net-worth', labelKey: 'nav.netWorth' as TranslationKey, icon: Landmark },
-      { to: '/reports', labelKey: 'nav.reports' as TranslationKey, icon: FileText },
-    ],
-  },
+// Primary navigation is intentionally capped at exactly 7 items — the
+// consolidated Information Architecture. Everything else (transaction
+// detail, expenses/income/net-worth/recurring breakdowns, wallets,
+// categories) lives inside these pages (Analytics' tabs, Overview's
+// widgets) rather than as separate top-level destinations.
+const NAV_ITEMS: { to: string; labelKey: TranslationKey; icon: typeof LayoutGrid }[] = [
+  { to: '/overview', labelKey: 'nav.overview', icon: LayoutGrid },
+  { to: '/insights', labelKey: 'nav.insights', icon: Lightbulb },
+  { to: '/analytics', labelKey: 'nav.analytics', icon: BarChart3 },
+  { to: '/budgets', labelKey: 'nav.budgets', icon: PiggyBank },
+  { to: '/goals', labelKey: 'nav.goals', icon: Flag },
+  { to: '/reports', labelKey: 'nav.reports', icon: FileText },
 ]
 
 interface SidebarProps {
@@ -82,20 +48,9 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           </button>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-4 overflow-y-auto px-3 py-2" aria-label={t('sidebar.mainNavigation')}>
-          <SidebarLink item={TOP_ITEM} onClick={onClose} />
-
-          {NAV_GROUPS.map((group) => (
-            <div key={group.labelKey}>
-              <p className="px-3 pb-1.5 text-[10.5px] font-bold uppercase tracking-wider text-white/35">
-                {t(group.labelKey)}
-              </p>
-              <div className="flex flex-col gap-1">
-                {group.items.map((item) => (
-                  <SidebarLink key={item.to} item={item} onClick={onClose} />
-                ))}
-              </div>
-            </div>
+        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-2" aria-label={t('sidebar.mainNavigation')}>
+          {NAV_ITEMS.map((item) => (
+            <SidebarLink key={item.to} item={item} onClick={onClose} />
           ))}
 
           <div className="mt-auto flex flex-col gap-1 pt-2">

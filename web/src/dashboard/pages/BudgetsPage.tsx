@@ -1,14 +1,18 @@
+import { useEffect, useState } from 'react'
 import { PiggyBank, TrendingDown, Wallet } from 'lucide-react'
 import { KPICard } from '@/components/ui/KPICard'
 import { Card } from '@/components/ui/Card'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { Badge } from '@/components/ui/Badge'
+import { NovaBarChart } from '@/components/charts/NovaBarChart'
 import { useAppData } from '@/state/AppDataContext'
+import { analyticsService } from '@/services/analyticsService'
 import { type BudgetProgress } from '@/services/budgetService'
 import { useCurrency } from '@/state/useCurrency'
 import { useTranslation } from '@/state/useTranslation'
 import type { TranslationKey } from '@/lib/i18n/translations'
+import type { MonthlySummary } from '@/types'
 
 const STATUS_TONE: Record<BudgetProgress['status'], 'positive' | 'warning' | 'negative'> = {
   on_track: 'positive',
@@ -26,12 +30,19 @@ const STATUS_KEY: Record<BudgetProgress['status'], TranslationKey> = {
 export default function BudgetsPage() {
   const { budgets } = useAppData()
   const { format } = useCurrency()
-  const { t, tCategory } = useTranslation()
+  const { t, tCategory, language } = useTranslation()
+  const [history, setHistory] = useState<Record<string, MonthlySummary[]>>({})
 
   const totalLimit = budgets.reduce((s, b) => s + b.limit, 0)
   const totalSpent = budgets.reduce((s, b) => s + b.spent, 0)
   const overCount = budgets.filter((b) => b.status === 'over_budget').length
   const pct = totalLimit > 0 ? Math.round((totalSpent / totalLimit) * 100) : 0
+
+  useEffect(() => {
+    Promise.all(budgets.map((b) => analyticsService.getCategoryHistory(b.category, 6, language).then((h) => [b.id, h] as const))).then(
+      (entries) => setHistory(Object.fromEntries(entries)),
+    )
+  }, [budgets, language])
 
   return (
     <div className="flex flex-col gap-5">
@@ -80,6 +91,37 @@ export default function BudgetsPage() {
                 <span className="w-12 shrink-0 text-right font-numeric text-xs font-bold text-ink-secondary">{b.percentage}%</span>
               </div>
             ))}
+        </div>
+      </Card>
+
+      <Card className="p-5 sm:p-6">
+        <h3 className="text-[15px] font-bold text-ink">{t('budgets.historicalPerformance')}</h3>
+        <p className="mt-0.5 text-xs font-medium text-ink-tertiary">{t('budgets.historicalNote')}</p>
+        <div className="mt-5 flex flex-col gap-6">
+          {[...budgets]
+            .sort((a, b) => b.percentage - a.percentage)
+            .map((b) => {
+              const spentLabel = t('budgets.spent')
+              const limitLabel = t('budgets.limitProxy')
+              const h = history[b.id] ?? []
+              return (
+                <div key={b.id}>
+                  <div className="mb-2 flex items-center gap-2">
+                    <CategoryIcon category={b.category} size="sm" />
+                    <span className="text-[13px] font-bold text-ink">{b.name ?? tCategory(b.category)}</span>
+                  </div>
+                  <NovaBarChart
+                    data={h.map((m) => ({ month: m.label, [spentLabel]: m.expenses, [limitLabel]: b.limit }))}
+                    xKey="month"
+                    height={180}
+                    series={[
+                      { key: spentLabel, label: spentLabel, color: 'var(--color-negative)' },
+                      { key: limitLabel, label: limitLabel, color: 'var(--color-text-tertiary)' },
+                    ]}
+                  />
+                </div>
+              )
+            })}
         </div>
       </Card>
     </div>

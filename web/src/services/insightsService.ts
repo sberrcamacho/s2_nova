@@ -276,83 +276,141 @@ export async function getInsights(language: LanguageCode, format: (amount: numbe
   return insights
 }
 
-// --- Financial health score -------------------------------------------
+// --- Financial health summary -------------------------------------------
 //
-// A single 0-100 number for Overview, per the product direction's "high-
-// level financial health" requirement. It's an opinionated weighted
-// formula over real numbers (savings rate, budget adherence, spending
-// trend, debt load) — not a fabricated value, but also not a claim of
-// objective truth; every factor is shown in the breakdown so it stays
-// auditable rather than a black box.
+// A qualitative, per-category status for Overview — deliberately NOT a
+// single arbitrary 0-100 score. Each category (savings, budget, cash flow,
+// goals, debt) gets a short status word plus a one-line, data-driven
+// explanation, e.g. "Savings: Good — saving 22% of income this month."
+// A category is only ever labeled from a real computed number; when there
+// isn't enough data to say anything (no budgets, no goals), the category
+// says so explicitly instead of guessing.
 
-export type HealthLabel = 'excellent' | 'good' | 'fair' | 'needsAttention'
+export type HealthCategoryKey = 'savings' | 'budget' | 'cashFlow' | 'goals' | 'debt'
+export type HealthStatus = 'good' | 'fair' | 'low' | 'onTrack' | 'nearLimit' | 'overBudget' | 'positive' | 'tight' | 'negative' | 'attention' | 'moderate' | 'high' | 'none'
 
-export interface FinancialHealthFactor {
-  key: 'savingsRate' | 'budgetAdherence' | 'spendingTrend' | 'debtLoad'
-  score: number // 0-100, this factor's own scale
-  weight: number // points this factor contributes to the 0-100 total at score=100
+export interface FinancialHealthCategory {
+  key: HealthCategoryKey
+  status: HealthStatus
+  tone: InsightTone
+  detail: string
 }
 
 export interface FinancialHealth {
-  score: number // 0-100
-  label: HealthLabel
-  tone: InsightTone
-  factors: FinancialHealthFactor[]
+  categories: FinancialHealthCategory[]
 }
 
-function clamp01(value: number): number {
-  return Math.max(0, Math.min(1, value))
-}
+export async function getFinancialHealth(language: LanguageCode, format: (amount: number) => string): Promise<FinancialHealth> {
+  const t = (key: TranslationKey) => translate(key, language)
 
-export async function getFinancialHealth(): Promise<FinancialHealth> {
   const monthKey = currentMonthKey()
   const prevMonthKey = previousMonthKey(monthKey)
 
-  const [budgets, wallets, summary, prevSummary] = await Promise.all([
+  const [budgets, goals, wallets, summary, prevSummary] = await Promise.all([
     budgetService.getBudgets(monthKey),
+    goalService.getGoals(),
     accountService.getWallets(),
-    analyticsService.getMonthlySummary(monthKey),
-    analyticsService.getMonthlySummary(prevMonthKey),
+    analyticsService.getMonthlySummary(monthKey, language),
+    analyticsService.getMonthlySummary(prevMonthKey, language),
   ])
 
-  // 1. Savings rate — 20%+ of income saved this month earns full marks.
+  const categories: FinancialHealthCategory[] = []
+
+  // 1. Savings — this month's savings rate.
   const savingsRate = summary.income > 0 ? summary.savings / summary.income : 0
-  const savingsScore = clamp01(savingsRate / 0.2) * 100
+  const savingsPct = Math.round(savingsRate * 100)
+  const savingsStatus: HealthStatus = savingsRate >= 0.2 ? 'good' : savingsRate >= 0.1 ? 'fair' : 'low'
+  categories.push({
+    key: 'savings',
+    status: savingsStatus,
+    tone: savingsStatus === 'good' ? 'positive' : savingsStatus === 'fair' ? 'warning' : 'negative',
+    detail: summary.income > 0
+      ? `${t('health.savings.saving')} ${savingsPct}% ${t('health.savings.ofIncome')}`
+      : t('health.savings.noIncome'),
+  })
 
-  // 2. Budget adherence — share of this month's budgets not over limit.
-  // No budgets on record isn't penalized (nothing to be over), same
-  // reasoning as "no data" cases in getInsights.
-  const budgetScore = budgets.length === 0 ? 100 : (budgets.filter((b) => b.status !== 'over_budget').length / budgets.length) * 100
-
-  // 3. Spending trend — flat or falling expenses vs. last month earns
-  // full marks; a 30%+ increase earns zero.
-  let spendingScore = 100
-  if (prevSummary.expenses > 0) {
-    const change = (summary.expenses - prevSummary.expenses) / prevSummary.expenses
-    spendingScore = clamp01(1 - Math.max(0, change) / 0.3) * 100
+  // 2. Budget — share of this month's category budgets that are over/near.
+  if (budgets.length === 0) {
+    categories.push({ key: 'budget', status: 'none', tone: 'neutral', detail: t('health.budget.none') })
+  } else {
+    const overCount = budgets.filter((b) => b.status === 'over_budget').length
+    const nearCount = budgets.filter((b) => b.status === 'near_limit').length
+    const status: HealthStatus = overCount > 0 ? 'overBudget' : nearCount > 0 ? 'nearLimit' : 'onTrack'
+    categories.push({
+      key: 'budget',
+      status,
+      tone: status === 'onTrack' ? 'positive' : status === 'nearLimit' ? 'warning' : 'negative',
+      detail:
+        overCount > 0
+          ? `${overCount} ${overCount === 1 ? t('health.budget.categoryOver') : t('health.budget.categoriesOver')}`
+          : nearCount > 0
+            ? `${nearCount} ${nearCount === 1 ? t('health.budget.categoryNear') : t('health.budget.categoriesNear')}`
+            : t('health.budget.allOnTrack'),
+    })
   }
 
-  // 4. Debt load — outstanding borrowed money relative to what you have
-  // (wallet balances + outstanding lent money, i.e. money owed to you).
+  // 3. Cash flow — this month's net (income - expenses), and whether it
+  // improved or worsened vs. last month.
+  const net = summary.savings
+  const prevNet = prevSummary.savings
+  const cashFlowStatus: HealthStatus = net > 0 ? 'positive' : net === 0 ? 'tight' : 'negative'
+  categories.push({
+    key: 'cashFlow',
+    status: cashFlowStatus,
+    tone: cashFlowStatus === 'positive' ? 'positive' : cashFlowStatus === 'tight' ? 'warning' : 'negative',
+    detail:
+      net >= prevNet
+        ? `${t('health.cashFlow.net')} ${format(net)} ${t('health.cashFlow.improved')}`
+        : `${t('health.cashFlow.net')} ${format(net)} ${t('health.cashFlow.worsened')}`,
+  })
+
+  // 4. Goals — flags a goal only when its deadline is close (within 90
+  // days) and it's still well short of complete. This only reads a goal's
+  // own real fields (currentAmount, targetAmount, targetDate); it doesn't
+  // assume a start date or a contribution rate the data doesn't have, so
+  // it can't mislabel a goal that simply hasn't been worked on long yet.
+  if (goals.length === 0) {
+    categories.push({ key: 'goals', status: 'none', tone: 'neutral', detail: t('health.goals.none') })
+  } else {
+    const now = Date.now()
+    let attentionCount = 0
+    for (const g of goals) {
+      if (!g.targetDate || g.targetAmount <= 0) continue
+      const daysLeft = (new Date(`${g.targetDate}T00:00:00`).getTime() - now) / 86_400_000
+      const fraction = clamp01(g.currentAmount / g.targetAmount)
+      if (daysLeft <= 90 && fraction < 0.7) attentionCount++
+    }
+    const status: HealthStatus = attentionCount === 0 ? 'onTrack' : 'attention'
+    categories.push({
+      key: 'goals',
+      status,
+      tone: status === 'onTrack' ? 'positive' : 'warning',
+      detail: status === 'onTrack' ? t('health.goals.onTrack') : `${attentionCount} ${attentionCount === 1 ? t('health.goals.oneBehind') : t('health.goals.multipleBehind')}`,
+    })
+  }
+
+  // 5. Debt — outstanding borrowed money relative to net assets (wallet
+  // balances plus outstanding money lent out).
   const transactions = transactionService._snapshot()
   const outstandingBorrowed = transactions.filter((t) => t.loanKind === 'borrowed' && !t.loanSettled).reduce((sum, t) => sum + t.amount, 0)
   const outstandingLent = transactions.filter((t) => t.loanKind === 'lent' && !t.loanSettled).reduce((sum, t) => sum + t.amount, 0)
   const netAssets = wallets.reduce((sum, w) => sum + w.currentBalance, 0) + outstandingLent
-  let debtScore = 100
-  if (outstandingBorrowed > 0) {
-    debtScore = netAssets > 0 ? clamp01(1 - outstandingBorrowed / netAssets) * 100 : 0
+  if (outstandingBorrowed === 0) {
+    categories.push({ key: 'debt', status: 'none', tone: 'positive', detail: t('health.debt.none') })
+  } else {
+    const ratio = netAssets > 0 ? outstandingBorrowed / netAssets : 1
+    const status: HealthStatus = ratio < 0.2 ? 'low' : ratio < 0.5 ? 'moderate' : 'high'
+    categories.push({
+      key: 'debt',
+      status,
+      tone: status === 'low' ? 'positive' : status === 'moderate' ? 'warning' : 'negative',
+      detail: `${t('health.debt.outstanding')} ${format(outstandingBorrowed)}`,
+    })
   }
 
-  const factors: FinancialHealthFactor[] = [
-    { key: 'savingsRate', score: Math.round(savingsScore), weight: 40 },
-    { key: 'budgetAdherence', score: Math.round(budgetScore), weight: 30 },
-    { key: 'spendingTrend', score: Math.round(spendingScore), weight: 20 },
-    { key: 'debtLoad', score: Math.round(debtScore), weight: 10 },
-  ]
+  return { categories }
+}
 
-  const score = Math.round(factors.reduce((sum, f) => sum + (f.score / 100) * f.weight, 0))
-  const label: HealthLabel = score >= 80 ? 'excellent' : score >= 60 ? 'good' : score >= 40 ? 'fair' : 'needsAttention'
-  const tone: InsightTone = score >= 80 ? 'positive' : score >= 60 ? 'positive' : score >= 40 ? 'warning' : 'negative'
-
-  return { score, label, tone, factors }
+function clamp01(value: number): number {
+  return Math.max(0, Math.min(1, value))
 }

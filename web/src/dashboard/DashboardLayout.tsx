@@ -9,16 +9,10 @@ import type { TranslationKey } from '@/lib/i18n/translations'
 const PAGE_META: Record<string, { titleKey: TranslationKey; subtitleKey: TranslationKey }> = {
   '/overview': { titleKey: 'page.overview.title', subtitleKey: 'page.overview.subtitle' },
   '/transactions': { titleKey: 'page.transactions.title', subtitleKey: 'page.transactions.subtitle' },
-  '/expenses': { titleKey: 'page.expenses.title', subtitleKey: 'page.expenses.subtitle' },
-  '/income': { titleKey: 'page.income.title', subtitleKey: 'page.income.subtitle' },
   '/budgets': { titleKey: 'page.budgets.title', subtitleKey: 'page.budgets.subtitle' },
   '/goals': { titleKey: 'page.goals.title', subtitleKey: 'page.goals.subtitle' },
-  '/wallets': { titleKey: 'page.wallets.title', subtitleKey: 'page.wallets.subtitle' },
-  '/categories': { titleKey: 'page.categories.title', subtitleKey: 'page.categories.subtitle' },
   '/analytics': { titleKey: 'page.analytics.title', subtitleKey: 'page.analytics.subtitle' },
   '/insights': { titleKey: 'page.insights.title', subtitleKey: 'page.insights.subtitle' },
-  '/recurring': { titleKey: 'page.recurring.title', subtitleKey: 'page.recurring.subtitle' },
-  '/net-worth': { titleKey: 'page.netWorth.title', subtitleKey: 'page.netWorth.subtitle' },
   '/reports': { titleKey: 'page.reports.title', subtitleKey: 'page.reports.subtitle' },
   '/settings': { titleKey: 'page.settings.title', subtitleKey: 'page.settings.subtitle' },
 }

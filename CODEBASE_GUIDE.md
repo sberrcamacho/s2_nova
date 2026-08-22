@@ -6,30 +6,36 @@ the source of truth; this file explains *how the pieces connect*.
 
 ## 1. The big picture
 
-S2 Nova is **two independent apps** that share a visual identity and mock
-data shapes, but no code and no backend:
+S2 Nova is **two independent apps sharing one backend**: a visual
+identity and now a real database/API, but each client is still built, run,
+and deployed on its own:
 
 ```
 s2_nova/
 ├── android/            Native mobile app (Kotlin + Jetpack Compose)
 │                        → daily ops: expenses, income, transactions,
 │                          budgets, barcode-scanned purchases
+│                        → talks to backend/ for real (auth, accounts,
+│                          transactions, budgets, goals, recurring series)
 ├── web/                 Web dashboard (React 19 + TS + Vite + Tailwind v4)
-│                        → analysis: stats, charts, budgets, categories,
-│                          reports
+│                        → analysis: stats, charts, budgets, goals,
+│                          insights, reports
+│                        → still runs on its own in-memory mock data (no
+│                          login screen yet — see §4 below)
+├── backend/             Shared API (Node.js + TS + Fastify + Prisma/
+│                          PostgreSQL) — one user identity, one database
 └── design-reference/    Figma screenshots (source of truth for visuals)
                           + current-implementation screenshots
 ```
 
-Both apps run entirely on **in-memory mock data** — no server, no
-database, no network calls (except on-device ML Kit for barcode scanning).
-Data resets whenever the process restarts. This is intentional for the
-current stage of the product; a real backend would slot in later behind
-the same `services/`/`repository` interfaces that already exist.
-
-Because there's no shared backend yet, "keeping in sync" between the two
-apps is a manual, human discipline: color tokens, category/product/budget
-seed data, and copy/tone should match even though the code is duplicated.
+Android has been migrated off mock data onto the real backend (see
+`ARCHITECTURE.md`'s phased plan — Phases 1–3, 5, and 8 are done). Web has
+not (Phase 9): its `services/*.ts` are still in-memory CRUD over
+`data/*.ts` seed arrays, on purpose, until Web gets a real login screen to
+authenticate with. Until then, "keeping in sync" between the two clients
+is still a manual, human discipline for anything Web hasn't migrated yet:
+color tokens, category/product/budget seed data, and copy/tone should
+match even though that code is duplicated.
 
 ## 2. Web dashboard (`web/`)
 
@@ -52,8 +58,13 @@ index.html
 ### Layers, outside-in
 
 1. **Pages** (`src/dashboard/pages/`) — one per route: Overview,
-   Transactions, Expenses, Income, Budgets, Categories, Analytics, Reports,
-   Settings. These compose UI components and read data via hooks/services.
+   Transactions, Budgets, Goals, Analytics (tabs: Spending, Income, Cash
+   Flow, Net Worth), Insights, Reports, Settings. The old standalone
+   Expenses/Income/NetWorth/Recurring/Wallets/Categories pages were
+   absorbed into Analytics' tabs rather than kept as separate routes — see
+   `web/AGENTS.md`'s Information Architecture section for the current nav
+   (capped at exactly 7 items) and why. These compose UI components and
+   read data via hooks/services.
 2. **Shared components**
    - `src/components/ui/` — generic building blocks (Button, Card, Modal,
      Input, Badge, KPICard, ProgressBar, Toast, …)
@@ -73,8 +84,14 @@ index.html
    the date-range filter shared across dashboard pages.
 5. **Mock backend** (`src/services/` + `src/data/`) — `services/*.ts` are
    the "API layer" (e.g. `transactionService.ts`, `analyticsService.ts`);
-   `data/*.ts` is the seed data they read/mutate in memory. This is the
-   layer that would eventually be swapped for real HTTP calls.
+   `data/*.ts` is the seed data they read/mutate in memory. A real
+   `backend/` now exists and Android already calls it, but Web hasn't been
+   migrated yet (gated on Web getting a real login screen — see
+   `ARCHITECTURE.md` §9); when it is, this is the layer that gets swapped
+   for real `fetch()` calls, function signatures unchanged. Several
+   services (`accountService`, `goalService`, `budgetService`,
+   `recurringService`) are deliberately **read-only** on Web — creating/
+   editing wallets, budgets, goals, and recurring series is Android's job.
 6. **i18n** (`src/lib/i18n/translations.ts`) — hand-rolled `es`/`en`
    dictionary consumed through `useTranslation()`'s `t()`, `tCategory()`,
    `tPaymentMethod()`.
@@ -91,8 +108,9 @@ wiring. Utility classes are used directly in JSX.
 ## 3. Android app (`android/`)
 
 Stack: Kotlin, Jetpack Compose, CameraX + ML Kit (on-device barcode
-scanning), no DI framework, no ViewModels (deliberately, for this
-mock-data stage).
+scanning), no DI framework, no ViewModels (deliberate, standing choice —
+not a placeholder for a future migration, even now that most repositories
+call a real backend).
 
 ### Boot sequence
 
@@ -115,15 +133,28 @@ MainActivity.kt          single Activity, installs the splash screen,
    AddActionsSheet.
 3. **Theme** (`ui/theme/`) — Color/Theme/Type, ported 1:1 from
    `web/src/index.css`'s tokens so both apps look identical.
-4. **"Backend" layer** (`data/`):
+4. **Data layer** (`data/`):
    - `data/model/Models.kt` — data classes mirroring `web/src/types/index.ts`
-   - `data/mock/*.kt` — seed data mirroring `web/src/data/*.ts`
-   - `data/repository/*.kt` — in-memory `StateFlow`-backed repositories,
-     mirroring `web/src/services/*.ts`
+   - `data/mock/*.kt` — seed data for what's *not* backend-backed yet
+     (categories, products/barcodes) — mirrors the equivalent `web/src/data/*.ts`
+   - `data/remote/` — `ApiClient` (Retrofit + OkHttp, auth interceptor,
+     refresh-on-401 `Authenticator`), `ApiService` (endpoint interface),
+     `Dto.kt` (wire types matching `backend/src/routes/*.ts` JSON exactly)
+   - `data/local/` — `SessionStore` (DataStore: access/refresh tokens) and
+     `OnboardingStore` (DataStore: onboarding/tutorial completion flags)
+   - `data/repository/*.kt` — `StateFlow`-backed repositories; most
+     (`AuthRepository`, `WalletRepository`, `TransactionRepository`,
+     `BudgetRepository`, `GoalRepository`, `CategoryRepository`) now call
+     the real backend via `ApiClient`; `ProductRepository`/
+     `NotificationRepository` stay in-memory mock (out of scope for the
+     current backend integration pass)
    - `data/AppContainer.kt` — manual DI: one object holding every
-     repository singleton; screens call `collectAsStateWithLifecycle()`
-     directly on them and call repository methods to mutate data. This
-     stands in for Hilt + ViewModels until a real backend exists.
+     repository singleton; `AppContainer.init(context)` runs once in
+     `MainActivity.onCreate` before any repository touches the network;
+     screens call `collectAsStateWithLifecycle()` on the repositories
+     directly and launch suspend repository methods via
+     `rememberCoroutineScope()` for mutations. This stands in for Hilt +
+     ViewModels — a standing choice, not a stopgap.
 5. **Cross-cutting helpers**: `ui/CurrencyFormatting.kt`
    (`rememberCurrencyFormatter()`), `ui/Strings.kt`
    (`rememberStrings()`/`StringKey` dictionary) — same
@@ -140,21 +171,76 @@ MainActivity.kt          single Activity, installs the splash screen,
   an in-app Compose `SplashScreen` route that can react to the in-app
   theme override.
 
-## 4. How the two apps stay visually identical
+## 4. Backend (`backend/`)
 
-There's no shared package, so parity is maintained by convention, listed
-in `android/AGENTS.md`'s "Keeping in sync" section:
+Stack: Node.js, TypeScript, Fastify, Prisma ORM over PostgreSQL, Zod for
+request/response validation, JWT access tokens + rotating refresh tokens,
+argon2id password hashing. Full design rationale (why these choices, the
+schema, auth flows, sync strategy) lives in `ARCHITECTURE.md`; this file
+just maps how the code connects.
+
+### Boot sequence
+
+```
+src/server.ts            Fastify bootstrap: plugins, route registration, listen
+  → src/plugins/auth.ts    verifies the access token, derives userId
+  → src/routes/*.ts        one file per resource, each a Fastify plugin
+      → src/lib/prisma.ts  shared PrismaClient singleton
+```
+
+### Layers
+
+1. **Routes** (`src/routes/`) — `auth.ts`, `me.ts`, `accounts.ts`,
+   `categories.ts`, `transactions.ts`, `budgets.ts`, `goals.ts`,
+   `recurringSeries.ts`, `health.ts`. Every route except `auth/*`,
+   `health*`, and the public `GET /products/:barcode` lookup requires a
+   valid access token; `userId` always comes from the verified token,
+   never a client-supplied field.
+2. **Schema** (`prisma/schema.prisma`) — source of truth for the DB shape;
+   `prisma/seed.ts` seeds the global (`user_id = null`) categories every
+   user sees, kept in sync by `slug` with `web/src/data/categories.ts` and
+   `android/.../data/mock/MockCategories.kt`.
+3. **Validation** — Zod schemas reject malformed input before it reaches
+   Prisma; no ad-hoc `if` checks.
+4. **Money** — `BigInt` minor units in the DB and internal code; only the
+   route layer converts to/from the plain `number` shape the clients
+   already expect.
+
+### Running it
+
+```bash
+cd backend
+cp .env.example .env
+docker compose up -d          # starts Postgres on :5432
+pnpm install
+pnpm prisma:migrate           # applies prisma/schema.prisma, generates the client
+pnpm exec prisma db seed      # seeds the global categories
+pnpm dev                      # Fastify on :3000, reloads on change
+```
+
+`GET /api/v1/health` is a liveness check; `GET /api/v1/health/db` also
+round-trips a query through Prisma to check Postgres connectivity.
+
+## 5. How the two apps stay visually identical
+
+Web and Android share no UI package, so parity is maintained by
+convention, listed in `android/AGENTS.md`'s "Keeping in sync" section:
 
 | Concern | Web | Android |
 |---|---|---|
 | Color tokens | `src/index.css` | `ui/theme/Color.kt` |
-| Seed data | `src/data/*.ts` | `data/mock/*.kt` |
+| Seed data (categories/products not yet backend-only) | `src/data/*.ts` | `data/mock/*.kt` |
 | Type shapes | `src/types/index.ts` | `data/model/Models.kt` |
 | i18n | `src/lib/i18n/translations.ts` + `useTranslation()` | `ui/Strings.kt` + `rememberStrings()` |
 | Currency format | `useCurrency()` | `rememberCurrencyFormatter()` |
 | Logo | `assets/logo-mark-*.png` | `res/drawable-nodpi/logo_mark_*.png` |
 
-## 5. Running each app
+For entities Android already migrated (accounts, transactions, budgets,
+goals, recurring series), the backend's Prisma schema is the actual shared
+source of truth instead — Web's equivalent `data/*.ts` seed shapes just
+need to keep matching its field names by convention until Web migrates too.
+
+## 6. Running each app
 
 ```bash
 # Web dashboard
@@ -164,9 +250,12 @@ cd web && pnpm dev        # http://localhost:8443
 cd android
 ./gradlew assembleDebug   # build debug APK
 ./gradlew installDebug    # build + install on a running emulator/device
+
+# Backend (required for Android to do anything beyond its login screen)
+cd backend && docker compose up -d && pnpm dev   # http://localhost:3000
 ```
 
-## 6. Recommended tutorials, in reading order
+## 7. Recommended tutorials, in reading order
 
 If you want to actually *read and understand* this code (not just skim
 the tree above), these are the concrete stacks in play and where to learn
@@ -208,13 +297,30 @@ each one from primary sources:
    [developers.google.com/ml-kit/vision/barcode-scanning](https://developers.google.com/ml-kit/vision/barcode-scanning)
    — only needed for `ui/screens/scanner/`.
 
+### Backend side (Node.js + Fastify + Prisma)
+1. **Fastify** — [fastify.dev/docs/latest](https://fastify.dev/docs/latest/)
+   — start with "Getting Started" and "Plugins", since every file in
+   `src/routes/` is registered as a plugin in `src/server.ts`.
+2. **Prisma** — [prisma.io/docs](https://www.prisma.io/docs/orm) — read
+   "Data model" and "CRUD" before opening `prisma/schema.prisma` or any
+   route that calls `prisma.<model>`.
+3. **Zod** — [zod.dev](https://zod.dev/) — short read; every route
+   validates its request/response through a Zod schema before touching
+   Prisma.
+4. **JWT** — [jwt.io/introduction](https://jwt.io/introduction) — enough
+   background to make sense of `src/lib/tokens.ts` and the access/refresh
+   token flow described in `ARCHITECTURE.md` §6.
+
 ### Suggested order to read the code itself
-1. Skim both `AGENTS.md` files (already concrete and repo-specific).
-2. Web: `src/main.tsx` → `src/App.tsx` → `src/dashboard/routes.tsx` →
+1. Skim all three `AGENTS.md` files (already concrete and repo-specific).
+2. Backend: `src/server.ts` → pick one resource, e.g. `src/routes/accounts.ts`
+   → trace it through `prisma/schema.prisma`'s matching model.
+3. Web: `src/main.tsx` → `src/App.tsx` → `src/dashboard/routes.tsx` →
    pick one simple page (`OverviewPage.tsx`) → trace its data back through
    a hook/service to `src/data/`.
-3. Android: `MainActivity.kt` → `NovaNavGraph.kt` → `HomeScreen.kt` →
-   trace its data back through `AppContainer.kt` → a repository → mock
-   data.
-4. Once one vertical slice makes sense on each side, the rest of the
+4. Android: `MainActivity.kt` → `NovaNavGraph.kt` → `HomeScreen.kt` →
+   trace its data back through `AppContainer.kt` → a repository → either
+   `data/remote/ApiClient.kt` (real backend) or `data/mock/` (categories/
+   products, still local).
+5. Once one vertical slice makes sense on each side, the rest of the
    screens/pages follow the same pattern and are much faster to read.
