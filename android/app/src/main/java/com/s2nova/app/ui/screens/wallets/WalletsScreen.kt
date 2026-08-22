@@ -22,9 +22,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.CurrencyBitcoin
 import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material3.AlertDialog
@@ -68,18 +70,23 @@ fun labelFor(type: WalletType): String {
     val t = rememberStrings()
     return when (type) {
         WalletType.CASH -> t(StringKey.WALLET_TYPE_CASH)
-        WalletType.BANK -> t(StringKey.WALLET_TYPE_BANK)
+        WalletType.BANK_DEBIT -> t(StringKey.WALLET_TYPE_BANK_DEBIT)
+        WalletType.BANK_CREDIT -> t(StringKey.WALLET_TYPE_BANK_CREDIT)
         WalletType.SAVINGS -> t(StringKey.WALLET_TYPE_SAVINGS)
         WalletType.CRYPTO -> t(StringKey.WALLET_TYPE_CRYPTO)
+        WalletType.NEQUI -> t(StringKey.WALLET_TYPE_NEQUI)
+        WalletType.DAVIPLATA -> t(StringKey.WALLET_TYPE_DAVIPLATA)
         WalletType.OTHER -> t(StringKey.WALLET_TYPE_OTHER)
     }
 }
 
 fun iconFor(type: WalletType) = when (type) {
     WalletType.CASH -> Icons.Filled.Payments
-    WalletType.BANK -> Icons.Filled.AttachMoney
+    WalletType.BANK_DEBIT -> Icons.Filled.AccountBalance
+    WalletType.BANK_CREDIT -> Icons.Filled.CreditCard
     WalletType.SAVINGS -> Icons.Filled.Savings
     WalletType.CRYPTO -> Icons.Filled.CurrencyBitcoin
+    WalletType.NEQUI, WalletType.DAVIPLATA -> Icons.Filled.PhoneAndroid
     WalletType.OTHER -> Icons.Filled.Wallet
 }
 

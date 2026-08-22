@@ -47,7 +47,7 @@ import kotlinx.coroutines.launch
 // concepts, and the brief prioritizes keeping Android's navigation
 // unchanged over adding a new top-level surface for a single new screen.
 @Composable
-fun GoalsTab() {
+fun GoalsTab(onContribute: (String) -> Unit) {
     val goals by AppContainer.goalRepository.goals.collectAsStateWithLifecycle()
     val format = rememberCurrencyFormatter()
     val t = rememberStrings()
@@ -100,6 +100,9 @@ fun GoalsTab() {
                     Spacer(Modifier.height(8.dp))
                     val percentage = if (goal.targetAmount > 0) ((goal.currentAmount / goal.targetAmount) * 100).toInt().coerceIn(0, 100) else 0
                     NovaProgressBar(percentage = percentage, color = MaterialTheme.colorScheme.primary)
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        TextButton(onClick = { onContribute(goal.id) }) { Text(t(StringKey.GOALS_CONTRIBUTE)) }
+                    }
                 }
             }
         }

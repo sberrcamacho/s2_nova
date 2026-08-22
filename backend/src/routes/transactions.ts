@@ -9,8 +9,28 @@ type Tx = Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction"
 const transactionTypeEnum = z.enum(["INCOME", "EXPENSE", "TRANSFER"]);
 const transactionStatusEnum = z.enum(["COMPLETED", "PLANNED"]);
 const loanKindEnum = z.enum(["LENT", "BORROWED"]);
-const paymentMethodEnum = z.enum(["CASH", "DEBIT_CARD", "CREDIT_CARD", "BANK_TRANSFER", "NEQUI", "DAVIPLATA"]);
 const dateOnly = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
+// A transaction's payment method is never chosen by the client — it's
+// derived from its wallet's AccountType, so "which wallet" and "how it was
+// paid" can never disagree (see schema.prisma's PaymentMethod doc
+// comment). CASH/NEQUI/DAVIPLATA wallets carry their own name straight
+// across; every card/bank-like wallet (debit, credit, savings, crypto,
+// other) reads as an electronic movement, BANK_TRANSFER.
+export function paymentMethodForAccountType(
+  type: "CASH" | "BANK_DEBIT" | "BANK_CREDIT" | "SAVINGS" | "CRYPTO" | "NEQUI" | "DAVIPLATA" | "OTHER",
+): "CASH" | "DEBIT_CARD" | "CREDIT_CARD" | "BANK_TRANSFER" | "NEQUI" | "DAVIPLATA" {
+  switch (type) {
+    case "CASH":
+      return "CASH";
+    case "NEQUI":
+      return "NEQUI";
+    case "DAVIPLATA":
+      return "DAVIPLATA";
+    default:
+      return "BANK_TRANSFER";
+  }
+}
 
 const createTransactionSchema = z
   .object({
@@ -26,7 +46,6 @@ const createTransactionSchema = z
     loanKind: loanKindEnum.optional(),
     counterpartyName: z.string().trim().min(1).max(120).optional(),
     dueDate: dateOnly.optional(),
-    paymentMethod: paymentMethodEnum,
     description: z.string().trim().min(1).max(200),
     merchant: z.string().trim().max(120).optional(),
     note: z.string().trim().max(500).optional(),
@@ -60,7 +79,6 @@ const updateTransactionSchema = z.object({
   status: transactionStatusEnum.optional(),
   counterpartyName: z.string().trim().min(1).max(120).nullable().optional(),
   dueDate: dateOnly.nullable().optional(),
-  paymentMethod: paymentMethodEnum.optional(),
   description: z.string().trim().min(1).max(200).optional(),
   merchant: z.string().trim().max(120).nullable().optional(),
   note: z.string().trim().max(500).nullable().optional(),
@@ -218,12 +236,16 @@ export async function transactionRoutes(app: FastifyInstance) {
     const body = createTransactionSchema.parse(request.body);
     const userId = request.userId!;
 
-    await assertOwned(userId, "account", body.accountId);
+    const account = await prisma.account.findFirst({ where: { id: body.accountId, userId } });
+    if (!account) {
+      throw Object.assign(new Error("Unknown or inaccessible account."), { statusCode: 422 });
+    }
     if (body.transferToAccountId) await assertOwned(userId, "account", body.transferToAccountId);
     await assertOwned(userId, "category", body.categoryId);
     if (body.budgetId) await assertOwned(userId, "budget", body.budgetId);
     if (body.goalId) await assertOwned(userId, "goal", body.goalId);
 
+    const paymentMethod = paymentMethodForAccountType(account.type);
     const transactionDate = parseDateOnly(body.date);
 
     const created = await prisma.$transaction(async (tx) => {
@@ -242,7 +264,7 @@ export async function transactionRoutes(app: FastifyInstance) {
           loanKind: body.loanKind,
           counterpartyName: body.counterpartyName,
           dueDate: body.dueDate ? parseDateOnly(body.dueDate) : null,
-          paymentMethod: body.paymentMethod,
+          paymentMethod,
           description: body.description,
           merchant: body.merchant,
           note: body.note,
@@ -308,7 +330,6 @@ export async function transactionRoutes(app: FastifyInstance) {
           status: nextStatus,
           counterpartyName: body.counterpartyName,
           dueDate: body.dueDate === undefined ? undefined : body.dueDate ? parseDateOnly(body.dueDate) : null,
-          paymentMethod: body.paymentMethod,
           description: body.description,
           merchant: body.merchant,
           note: body.note,

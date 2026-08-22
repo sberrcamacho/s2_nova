@@ -60,11 +60,9 @@ import com.s2nova.app.data.AppContainer
 import com.s2nova.app.data.mock.categoryMap
 import com.s2nova.app.data.mock.expenseCategories
 import com.s2nova.app.data.mock.incomeCategories
-import com.s2nova.app.data.mock.paymentMethods
 import com.s2nova.app.data.model.CategoryId
 import com.s2nova.app.data.model.LoanKind
 import com.s2nova.app.data.model.NewTransactionInput
-import com.s2nova.app.data.model.PaymentMethod
 import com.s2nova.app.data.model.TransactionStatus
 import com.s2nova.app.data.model.TransactionType
 import com.s2nova.app.data.todayISO
@@ -74,7 +72,6 @@ import com.s2nova.app.ui.components.CategoryIcon
 import com.s2nova.app.ui.components.CategoryIconSize
 import com.s2nova.app.ui.components.NovaTopBar
 import com.s2nova.app.ui.components.iconFor
-import com.s2nova.app.ui.paymentMethodStringKey
 import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.screens.wallets.labelFor
 import com.s2nova.app.ui.theme.NovaColors
@@ -108,7 +105,6 @@ fun AddTransactionScreen(
     var amountText by remember { mutableStateOf(editing?.amount?.toInt()?.toString() ?: "") }
     var description by remember { mutableStateOf(editing?.description ?: "") }
     var category by remember { mutableStateOf(editing?.category ?: expenseCategories.first().id) }
-    var paymentMethod by remember { mutableStateOf(editing?.paymentMethod ?: PaymentMethod.DEBIT_CARD) }
     var note by remember { mutableStateOf(editing?.note ?: "") }
     var walletId by remember(wallets) { mutableStateOf(editing?.walletId ?: wallets.firstOrNull()?.id) }
     var transferToWalletId by remember { mutableStateOf(editing?.transferToWalletId) }
@@ -270,17 +266,6 @@ fun AddTransactionScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            Text(t(StringKey.ADD_TXN_PAYMENT_METHOD), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 20.dp, bottom = 6.dp))
-            Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                paymentMethods.forEach { pm ->
-                    PaymentMethodChip(
-                        label = t(paymentMethodStringKey(pm.id)),
-                        selected = paymentMethod == pm.id,
-                        onClick = { paymentMethod = pm.id },
-                    )
-                }
-            }
-
             Text(t(StringKey.ADD_TXN_NOTE), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 20.dp, bottom = 6.dp))
             OutlinedTextField(
                 value = note,
@@ -404,7 +389,6 @@ fun AddTransactionScreen(
                         status = if (isUpcoming) TransactionStatus.PLANNED else TransactionStatus.COMPLETED,
                         category = category,
                         date = editing?.date ?: todayISO(),
-                        paymentMethod = paymentMethod,
                         note = note.ifBlank { null },
                         budgetId = budgetId,
                         goalId = goalId,
@@ -563,19 +547,4 @@ private fun CategoryGridItem(
             modifier = Modifier.padding(top = 6.dp),
         )
     }
-}
-
-@Composable
-private fun PaymentMethodChip(label: String, selected: Boolean, onClick: () -> Unit) {
-    Text(
-        label,
-        style = MaterialTheme.typography.bodyMedium,
-        color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
-        modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .background(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
-            .border(BorderStroke(1.dp, if (selected) Color.Transparent else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)), RoundedCornerShape(50))
-            .selectable(selected = selected, onClick = onClick, role = androidx.compose.ui.semantics.Role.RadioButton)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
-    )
 }

@@ -23,6 +23,7 @@ import com.s2nova.app.ui.screens.auth.ForgotPasswordScreen
 import com.s2nova.app.ui.screens.auth.LoginScreen
 import com.s2nova.app.ui.screens.auth.RegisterScreen
 import com.s2nova.app.ui.screens.budgets.BudgetsScreen
+import com.s2nova.app.ui.screens.goals.GoalContributionScreen
 import com.s2nova.app.ui.screens.home.HomeScreen
 import com.s2nova.app.ui.screens.loans.LoansScreen
 import com.s2nova.app.ui.screens.notifications.NotificationsScreen
@@ -196,7 +197,20 @@ fun NovaApp() {
                     onPurchaseRegistered = { navController.navigateAsRoot(NovaDestinations.HOME) },
                 )
             }
-            composable(NovaDestinations.BUDGETS) { BudgetsScreen() }
+            composable(NovaDestinations.BUDGETS) {
+                BudgetsScreen(onContributeToGoal = { goalId -> navController.navigate(NovaDestinations.goalContribution(goalId)) })
+            }
+            composable(
+                NovaDestinations.GOAL_CONTRIBUTION,
+                arguments = listOf(navArgument("goalId") { type = androidx.navigation.NavType.StringType }),
+            ) { entry ->
+                val goalId = entry.arguments?.getString("goalId").orEmpty()
+                GoalContributionScreen(
+                    goalId = goalId,
+                    onDone = { navController.popBackStack() },
+                    onBack = { navController.popBackStack() },
+                )
+            }
             composable(NovaDestinations.WALLETS) { WalletsScreen(onBack = { navController.popBackStack() }) }
             composable(NovaDestinations.RECURRING) { RecurringScreen(onBack = { navController.popBackStack() }) }
             composable(NovaDestinations.LOANS) { LoansScreen(onBack = { navController.popBackStack() }) }

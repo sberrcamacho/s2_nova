@@ -77,10 +77,17 @@ enum class StringKey {
 
     WALLETS_TITLE, WALLETS_NEW, WALLETS_NAME, WALLETS_TYPE, WALLETS_INITIAL_BALANCE,
     WALLETS_CREATE, WALLETS_EMPTY_TITLE, WALLETS_EMPTY_SUBTITLE,
-    WALLET_TYPE_CASH, WALLET_TYPE_BANK, WALLET_TYPE_SAVINGS, WALLET_TYPE_CRYPTO, WALLET_TYPE_OTHER,
+    WALLET_TYPE_CASH, WALLET_TYPE_BANK_DEBIT, WALLET_TYPE_BANK_CREDIT, WALLET_TYPE_SAVINGS,
+    WALLET_TYPE_CRYPTO, WALLET_TYPE_NEQUI, WALLET_TYPE_DAVIPLATA, WALLET_TYPE_OTHER,
 
     GOALS_TITLE, GOALS_NEW, GOALS_EMPTY, GOALS_NAME, GOALS_NAME_PLACEHOLDER,
-    GOALS_TARGET_AMOUNT, GOALS_CREATE,
+    GOALS_TARGET_AMOUNT, GOALS_CREATE, GOALS_CONTRIBUTE,
+
+    GOAL_CONTRIBUTION_TITLE, GOAL_CONTRIBUTION_AMOUNT, GOAL_CONTRIBUTION_WALLET,
+    GOAL_CONTRIBUTION_SAVE, GOAL_CONTRIBUTION_SAVED, GOAL_CONTRIBUTION_DESCRIPTION_PREFIX,
+    GOAL_CONTRIBUTION_ERROR_AMOUNT, GOAL_CONTRIBUTION_ERROR_WALLET,
+
+    COMMON_UNDO,
 
     RECURRING_TITLE, RECURRING_NEW, RECURRING_EMPTY, RECURRING_NAME, RECURRING_NAME_PLACEHOLDER,
     RECURRING_AMOUNT, RECURRING_TYPE, RECURRING_INTERVAL, RECURRING_START_DATE, RECURRING_CREATE,
@@ -292,9 +299,12 @@ private val ES: Map<StringKey, String> = mapOf(
     StringKey.WALLETS_EMPTY_TITLE to "Sin wallets todavía",
     StringKey.WALLETS_EMPTY_SUBTITLE to "Crea tu primera wallet para empezar a registrar movimientos.",
     StringKey.WALLET_TYPE_CASH to "Efectivo",
-    StringKey.WALLET_TYPE_BANK to "Banco",
+    StringKey.WALLET_TYPE_BANK_DEBIT to "Cuenta débito",
+    StringKey.WALLET_TYPE_BANK_CREDIT to "Tarjeta de crédito",
     StringKey.WALLET_TYPE_SAVINGS to "Ahorros",
     StringKey.WALLET_TYPE_CRYPTO to "Bitcoin/Cripto",
+    StringKey.WALLET_TYPE_NEQUI to "Nequi",
+    StringKey.WALLET_TYPE_DAVIPLATA to "Daviplata",
     StringKey.WALLET_TYPE_OTHER to "Otro",
 
     StringKey.GOALS_TITLE to "Objetivos",
@@ -304,6 +314,18 @@ private val ES: Map<StringKey, String> = mapOf(
     StringKey.GOALS_NAME_PLACEHOLDER to "Ej. Cuota del carro",
     StringKey.GOALS_TARGET_AMOUNT to "Monto objetivo",
     StringKey.GOALS_CREATE to "Crear",
+    StringKey.GOALS_CONTRIBUTE to "Abonar",
+
+    StringKey.GOAL_CONTRIBUTION_TITLE to "Abonar a objetivo",
+    StringKey.GOAL_CONTRIBUTION_AMOUNT to "Monto a abonar",
+    StringKey.GOAL_CONTRIBUTION_WALLET to "Desde",
+    StringKey.GOAL_CONTRIBUTION_SAVE to "Abonar",
+    StringKey.GOAL_CONTRIBUTION_SAVED to "Abono agregado",
+    StringKey.GOAL_CONTRIBUTION_DESCRIPTION_PREFIX to "Abono a ",
+    StringKey.GOAL_CONTRIBUTION_ERROR_AMOUNT to "Ingresa un monto válido.",
+    StringKey.GOAL_CONTRIBUTION_ERROR_WALLET to "Elige una wallet de origen.",
+
+    StringKey.COMMON_UNDO to "Deshacer",
 
     StringKey.RECURRING_TITLE to "Recurrentes",
     StringKey.RECURRING_NEW to "Nuevo recurrente",
@@ -556,9 +578,12 @@ private val EN: Map<StringKey, String> = mapOf(
     StringKey.WALLETS_EMPTY_TITLE to "No wallets yet",
     StringKey.WALLETS_EMPTY_SUBTITLE to "Create your first wallet to start recording transactions.",
     StringKey.WALLET_TYPE_CASH to "Cash",
-    StringKey.WALLET_TYPE_BANK to "Banking",
+    StringKey.WALLET_TYPE_BANK_DEBIT to "Debit account",
+    StringKey.WALLET_TYPE_BANK_CREDIT to "Credit card",
     StringKey.WALLET_TYPE_SAVINGS to "Savings",
     StringKey.WALLET_TYPE_CRYPTO to "Bitcoin/Crypto",
+    StringKey.WALLET_TYPE_NEQUI to "Nequi",
+    StringKey.WALLET_TYPE_DAVIPLATA to "Daviplata",
     StringKey.WALLET_TYPE_OTHER to "Other",
 
     StringKey.GOALS_TITLE to "Goals",
@@ -568,6 +593,18 @@ private val EN: Map<StringKey, String> = mapOf(
     StringKey.GOALS_NAME_PLACEHOLDER to "E.g. Car Payment",
     StringKey.GOALS_TARGET_AMOUNT to "Target amount",
     StringKey.GOALS_CREATE to "Create",
+    StringKey.GOALS_CONTRIBUTE to "Contribute",
+
+    StringKey.GOAL_CONTRIBUTION_TITLE to "Contribute to goal",
+    StringKey.GOAL_CONTRIBUTION_AMOUNT to "Amount to add",
+    StringKey.GOAL_CONTRIBUTION_WALLET to "From",
+    StringKey.GOAL_CONTRIBUTION_SAVE to "Contribute",
+    StringKey.GOAL_CONTRIBUTION_SAVED to "Contribution added",
+    StringKey.GOAL_CONTRIBUTION_DESCRIPTION_PREFIX to "Contribution to ",
+    StringKey.GOAL_CONTRIBUTION_ERROR_AMOUNT to "Enter a valid amount.",
+    StringKey.GOAL_CONTRIBUTION_ERROR_WALLET to "Choose a source wallet.",
+
+    StringKey.COMMON_UNDO to "Undo",
 
     StringKey.RECURRING_TITLE to "Recurring",
     StringKey.RECURRING_NEW to "New recurring",

@@ -4,7 +4,7 @@ import { prisma } from "../lib/prisma.js";
 
 // "Wallet" in both clients — see the Account model's doc comment in
 // schema.prisma for why the table itself keeps its original name.
-const accountTypeEnum = z.enum(["CASH", "BANK", "SAVINGS", "CRYPTO", "OTHER"]);
+const accountTypeEnum = z.enum(["CASH", "BANK_DEBIT", "BANK_CREDIT", "SAVINGS", "CRYPTO", "NEQUI", "DAVIPLATA", "OTHER"]);
 
 const createAccountSchema = z.object({
   name: z.string().trim().min(1).max(80),

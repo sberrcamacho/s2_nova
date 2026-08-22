@@ -48,7 +48,6 @@ import com.s2nova.app.data.AppContainer
 import com.s2nova.app.data.mock.expenseCategories
 import com.s2nova.app.data.mock.incomeCategories
 import com.s2nova.app.data.model.CategoryId
-import com.s2nova.app.data.model.PaymentMethod
 import com.s2nova.app.data.model.RecurrenceInterval
 import com.s2nova.app.data.model.RecurringSeries
 import com.s2nova.app.data.model.TransactionType
@@ -161,7 +160,6 @@ fun RecurringScreen(onBack: () -> Unit) {
                             amount = amount,
                             walletId = walletId,
                             category = category,
-                            paymentMethod = PaymentMethod.BANK_TRANSFER,
                             interval = interval,
                             startDate = startDate,
                         )

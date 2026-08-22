@@ -33,11 +33,20 @@ enum ThemePreference {
   @@map("theme_preference")
 }
 
+// BANK_DEBIT/BANK_CREDIT replace the old flat BANK value — a bank wallet
+// always needs the debit/credit distinction ("tarjeta" in both clients'
+// copy), and NEQUI/DAVIPLATA moved here from PaymentMethod (they're wallets
+// a user holds a balance in, not just a way of paying). See PaymentMethod's
+// doc comment for how a transaction's payment method is derived from
+// whichever of these the transaction's wallet is.
 enum AccountType {
   CASH
-  BANK
+  BANK_DEBIT
+  BANK_CREDIT
   SAVINGS
   CRYPTO
+  NEQUI
+  DAVIPLATA
   OTHER
 
   @@map("account_type")
@@ -92,6 +101,14 @@ enum LoanKind {
   @@map("loan_kind")
 }
 
+// A transaction's payment method is never chosen independently by a
+// client — the route layer derives it from the transaction's account's
+// AccountType (CASH->CASH, NEQUI->NEQUI, DAVIPLATA->DAVIPLATA,
+// BANK_DEBIT/BANK_CREDIT/SAVINGS/CRYPTO/OTHER->BANK_TRANSFER; see
+// `paymentMethodForAccountType` in backend/src/routes/transactions.ts).
+// DEBIT_CARD/CREDIT_CARD are kept as valid enum values for old rows/reports
+// only — no code path produces them anymore since a card wallet's method is
+// BANK_TRANSFER, not a per-card distinction.
 enum PaymentMethod {
   CASH
   DEBIT_CARD

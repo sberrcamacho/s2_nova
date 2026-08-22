@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { addInterval, parseDateOnly } from "../lib/dates.js";
 import { prisma } from "../lib/prisma.js";
+import { paymentMethodForAccountType } from "./transactions.js";
 
 // Recurring definitions ("Netflix, $45,000/month") — see schema.prisma's
 // RecurringSeries doc comment for why this is a separate model from
@@ -11,7 +12,6 @@ import { prisma } from "../lib/prisma.js";
 
 const intervalEnum = z.enum(["WEEKLY", "MONTHLY", "YEARLY"]);
 const seriesTypeEnum = z.enum(["INCOME", "EXPENSE"]);
-const paymentMethodEnum = z.enum(["CASH", "DEBIT_CARD", "CREDIT_CARD", "BANK_TRANSFER", "NEQUI", "DAVIPLATA"]);
 const dateOnly = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 const createSeriesSchema = z.object({
@@ -20,7 +20,6 @@ const createSeriesSchema = z.object({
   amount: z.number().int().positive(),
   accountId: z.string().uuid(),
   categoryId: z.string().uuid(),
-  paymentMethod: paymentMethodEnum.default("BANK_TRANSFER"),
   interval: intervalEnum,
   startDate: dateOnly,
 });
@@ -95,7 +94,7 @@ export async function recurringSeriesRoutes(app: FastifyInstance) {
         amountMinor: BigInt(body.amount),
         accountId: body.accountId,
         categoryId: body.categoryId,
-        paymentMethod: body.paymentMethod,
+        paymentMethod: paymentMethodForAccountType(account.type),
         interval: body.interval,
         nextOccurrenceDate: parseDateOnly(body.startDate),
       },

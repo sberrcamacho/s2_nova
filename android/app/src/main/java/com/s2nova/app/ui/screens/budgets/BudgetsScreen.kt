@@ -65,7 +65,7 @@ import com.s2nova.app.ui.theme.NovaColors
 import kotlinx.coroutines.launch
 
 @Composable
-fun BudgetsScreen() {
+fun BudgetsScreen(onContributeToGoal: (String) -> Unit) {
     val t = rememberStrings()
     var tab by remember { mutableStateOf(0) }
 
@@ -78,7 +78,7 @@ fun BudgetsScreen() {
                 Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text(t(StringKey.TITLE_BUDGETS)) })
                 Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text(t(StringKey.GOALS_TITLE)) })
             }
-            if (tab == 0) BudgetsTab() else GoalsTab()
+            if (tab == 0) BudgetsTab() else GoalsTab(onContribute = onContributeToGoal)
         }
     }
 }

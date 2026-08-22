@@ -99,6 +99,10 @@ data class TransactionDto(
     val updatedAt: String,
 )
 
+// No paymentMethod field — the backend derives it from accountId's wallet
+// type (see backend/src/routes/transactions.ts's paymentMethodForAccountType),
+// never from the client. TransactionDto still carries the derived value on
+// reads.
 @Serializable
 data class CreateTransactionRequest(
     val accountId: String,
@@ -113,7 +117,6 @@ data class CreateTransactionRequest(
     val loanKind: String? = null,
     val counterpartyName: String? = null,
     val dueDate: String? = null,
-    val paymentMethod: String,
     val description: String,
     val merchant: String? = null,
     val note: String? = null,
@@ -127,7 +130,6 @@ data class UpdateTransactionRequest(
     val budgetId: String? = null,
     val goalId: String? = null,
     val status: String? = null,
-    val paymentMethod: String? = null,
     val description: String? = null,
     val merchant: String? = null,
     val note: String? = null,
@@ -164,7 +166,6 @@ data class CreateRecurringSeriesRequest(
     val amount: Long,
     val accountId: String,
     val categoryId: String,
-    val paymentMethod: String = "BANK_TRANSFER",
     val interval: String,
     val startDate: String,
 )

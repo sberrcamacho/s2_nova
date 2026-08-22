@@ -236,7 +236,6 @@ fun ScannerScreen(
                                     type = TransactionType.EXPENSE,
                                     category = found.product.category,
                                     date = todayISO(),
-                                    paymentMethod = paymentMethod,
                                     merchant = found.product.brand,
                                     productId = found.product.barcode,
                                 ),
@@ -319,6 +318,13 @@ private fun Corner(alignment: Alignment, color: androidx.compose.ui.graphics.Col
     }
 }
 
+// paymentMethod/onPaymentMethodChange are cosmetic only: the backend now
+// derives the saved transaction's payment method from whichever wallet the
+// purchase lands in (see data/model/Models.kt's PaymentMethod doc comment),
+// same as AddTransactionScreen. Scanner has no wallet picker of
+// its own (always uses the first wallet — see onConfirm below), so this
+// selector doesn't actually change anything about the saved record; kept
+// as-is since giving Scanner a real wallet picker is out of scope here.
 @Composable
 private fun ProductFoundSheet(
     product: Product,

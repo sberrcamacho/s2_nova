@@ -71,12 +71,48 @@ it if missing) with `compileSdk 36` / `minSdk 26` platforms installed.
   real opposite-direction settlement transaction
   (`TransactionRepository.settleLoan`) — never just flips a flag,
   otherwise the wallet balance would never reflect the repayment. Budgets
-  and Goals share a tab (`BudgetsScreen` + `ui/screens/goals/GoalsTab.kt`)
-  rather than a new bottom-nav item, to avoid changing the existing
-  bottom bar; budget/goal progress is computed server-side and read
-  directly (`BudgetRepository.budgetProgress`), never recomputed
+  and Goals share a tab (`BudgetsScreen` + `ui/screens/goals/GoalsScreen.kt`'s
+  `GoalsTab`) rather than a new bottom-nav item, to avoid changing the
+  existing bottom bar; budget/goal progress is computed server-side and
+  read directly (`BudgetRepository.budgetProgress`), never recomputed
   client-side. Wallets/Recurring/Loans are reachable from Profile, same
   pattern as Settings.
+- **Wallet type ↔ payment method coherence.** `WalletType`
+  (`data/model/Models.kt`) is `CASH, BANK_DEBIT, BANK_CREDIT, SAVINGS,
+  CRYPTO, NEQUI, DAVIPLATA, OTHER` — mirrors backend's `AccountType`
+  (`backend/prisma/schema.prisma`). `BANK_DEBIT`/`BANK_CREDIT` replace the
+  old flat `BANK` (a bank wallet always carries the debit/credit
+  distinction — that's what "tarjeta" means in the product copy); Nequi
+  and Daviplata are wallet types a user holds a balance in, not payment
+  methods, so they moved out of `PaymentMethod` into `WalletType`. A
+  transaction's `paymentMethod` is never chosen by the user or sent by
+  this client — `CreateTransactionRequest`/`CreateRecurringSeriesRequest`
+  have no `paymentMethod` field at all; the backend derives it
+  server-side from the transaction's wallet
+  (`paymentMethodForAccountType` in `backend/src/routes/transactions.ts`,
+  reused by `recurringSeries.ts`), so a wallet and "how it was paid" can
+  never disagree. `AddTransactionScreen` has no payment-method picker for
+  this reason — `PaymentMethod` (Kotlin) only exists to deserialize and
+  display the value the server already computed
+  (`TransactionDetailScreen`/`TransactionRow`); `ScannerScreen`'s payment-
+  method chips are the one exception, kept as cosmetic-only (it has no
+  wallet picker of its own either, always uses the first wallet) rather
+  than removed, since giving Scanner a real wallet picker was out of
+  scope for this pass.
+- **Goal contributions** (`ui/screens/goals/GoalContributionScreen.kt`,
+  reached via a goal card's "Abonar" button in `GoalsTab`) are a dedicated
+  flow, separate from the general Add Transaction form, for moving money
+  from a wallet straight into a goal's progress — no category picker (it
+  posts under `CategoryId.OTHER` without ever showing that choice).
+  Mechanically it's nothing new: a normal `EXPENSE` transaction with
+  `goalId` set, the same link `AddTransactionScreen`'s "more options" goal
+  chip already produces (`backend/src/routes/goals.ts`'s `computeProgress`
+  sums every `COMPLETED` transaction by `goalId`) — so it stays
+  editable/deletable from `TransactionDetailScreen` like any other
+  transaction. Saving shows a `Snackbar` with an "Undo" action
+  (`SnackbarHostState`, no new dependency) as the fast path for reversing
+  a contribution right after making it; that's in addition to, not
+  instead of, deleting it later from the transaction detail screen.
 - **Onboarding** (`ui/screens/onboarding/`): first-launch welcome →
   optional income → wallet creation → optional 50/30/20 budget suggestion
   → tutorial carousel, gated by `OnboardingStore` (DataStore), checked once
@@ -163,14 +199,17 @@ it if missing) with `compileSdk 36` / `minSdk 26` platforms installed.
   splash icons the same way as `logo_mark_*` (transparent glyph, no card)
   from `design-reference/suggestions/logo-dark.png`/`logo-light.png` if the
   mark changes.
-- **Payment-method pill selector** (`AddTransactionScreen.kt`'s
-  `PaymentMethodChip`): filled `primary` background when selected, a
-  subtle `outline`-alpha `border` when not (so unselected pills read as
-  tappable rather than blending into the card background), and
-  `Modifier.selectable(role = Role.RadioButton)` instead of bare
-  `clickable` so screen readers announce the selected state. Follow this
-  pattern for any new chip-style selector rather than reintroducing a
-  borderless chip. **Category selection** is a `ModalBottomSheet` icon
+- **Pill selector pattern** (`AddTransactionScreen.kt`'s `SelectChip`,
+  `GoalContributionScreen.kt`'s `GoalContributionChip`): filled `primary`
+  background when selected, a subtle `outline`-alpha `border` when not (so
+  unselected pills read as tappable rather than blending into the card
+  background), and `Modifier.selectable(role = Role.RadioButton)` instead
+  of bare `clickable` so screen readers announce the selected state.
+  Follow this pattern for any new chip-style selector rather than
+  reintroducing a borderless chip — each screen keeps its own small
+  private composable for this rather than sharing one, matching
+  `RecurringScreen.kt`'s `RecurringChip`. **Category selection** is a
+  `ModalBottomSheet` icon
   grid (`CategoryGridItem`) opened by tapping the category preview in the
   Add Transaction hero card, not an inline chip row — chosen after
   `design-reference/suggestions/transaction-select-category.jpeg` showed a

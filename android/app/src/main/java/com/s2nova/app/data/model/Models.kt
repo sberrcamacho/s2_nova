@@ -17,7 +17,12 @@ enum class RecurrenceInterval { WEEKLY, MONTHLY, YEARLY }
 // someone else — tracked as outstanding until settled.
 enum class LoanKind { LENT, BORROWED }
 
-enum class WalletType { CASH, BANK, SAVINGS, CRYPTO, OTHER }
+// BANK_DEBIT/BANK_CREDIT replace the old flat BANK value — a bank wallet
+// always needs the debit/credit distinction ("tarjeta" in the UI copy).
+// NEQUI/DAVIPLATA are wallet types here, not payment methods — a user
+// holds a balance in them, same as any other wallet. Mirrors backend's
+// AccountType (backend/prisma/schema.prisma).
+enum class WalletType { CASH, BANK_DEBIT, BANK_CREDIT, SAVINGS, CRYPTO, NEQUI, DAVIPLATA, OTHER }
 
 data class Wallet(
     val id: String,
@@ -32,6 +37,15 @@ enum class CategoryId {
     BILLS, SUBSCRIPTIONS, SALARY, FREELANCE, OTHER,
 }
 
+// A transaction's payment method is never chosen independently by the user
+// — the backend derives it server-side from whichever wallet was picked
+// (paymentMethodForAccountType in backend/src/routes/transactions.ts), so
+// a wallet and "how it was paid" can never disagree. This client never
+// sends or computes one (see NewTransactionInput below); this enum only
+// exists to deserialize the value the server already computed, for
+// display (TransactionRow/TransactionDetailScreen). DEBIT_CARD/CREDIT_CARD
+// are kept only so historical/seeded rows still deserialize — no code path
+// produces them anymore (a card wallet reads as BANK_TRANSFER).
 enum class PaymentMethod { CASH, DEBIT_CARD, CREDIT_CARD, BANK_TRANSFER, NEQUI, DAVIPLATA }
 
 data class Category(
@@ -69,6 +83,8 @@ data class Transaction(
     val settledByTransactionId: String? = null,
 )
 
+// No paymentMethod field — the backend derives it from the wallet
+// (accountId), never from client input; see PaymentMethod's doc comment.
 data class NewTransactionInput(
     val walletId: String,
     val transferToWalletId: String? = null,
@@ -78,7 +94,6 @@ data class NewTransactionInput(
     val status: TransactionStatus = TransactionStatus.COMPLETED,
     val category: CategoryId,
     val date: String,
-    val paymentMethod: PaymentMethod,
     val merchant: String? = null,
     val note: String? = null,
     val productId: String? = null,

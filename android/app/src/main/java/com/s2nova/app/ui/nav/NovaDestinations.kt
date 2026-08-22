@@ -22,6 +22,7 @@ object NovaDestinations {
     const val WALLETS = "wallets"
     const val RECURRING = "recurring"
     const val LOANS = "loans"
+    const val GOAL_CONTRIBUTION = "goal_contribution/{goalId}"
     const val REPORTS = "reports"
     const val NOTIFICATIONS = "notifications"
     const val PROFILE = "profile"
@@ -29,4 +30,5 @@ object NovaDestinations {
 
     fun transactionDetail(id: String) = "transaction_detail/$id"
     fun editTransaction(id: String) = "edit_transaction/$id"
+    fun goalContribution(goalId: String) = "goal_contribution/$goalId"
 }

@@ -135,7 +135,7 @@ accounts                                -- "wallets": cash, bank, savings...
   id                 uuid pk
   user_id            uuid fk -> users.id
   name               text
-  type               text            -- 'cash' | 'bank' | 'savings' | 'other'
+  type               text            -- 'cash' | 'bank_debit' | 'bank_credit' | 'savings' | 'crypto' | 'nequi' | 'daviplata' | 'other'
   initial_balance_minor  bigint      -- COP has no subunit; stored as integer minor units, see §"monetary values"
   current_balance_minor  bigint
   created_at         timestamptz
@@ -169,7 +169,7 @@ transactions
   amount_minor       bigint          -- always positive; sign implied by type
   category_id        uuid fk -> categories.id
   product_id         uuid null fk -> products.id
-  payment_method     text
+  payment_method     text            -- server-derived from account.type, never client-chosen; see backend/src/routes/transactions.ts's paymentMethodForAccountType
   description        text
   merchant           text null
   note               text null

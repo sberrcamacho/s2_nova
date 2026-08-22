@@ -48,7 +48,6 @@ class RecurringSeriesRepository(private val categoryRepository: CategoryReposito
         amount: Double,
         walletId: String,
         category: com.s2nova.app.data.model.CategoryId,
-        paymentMethod: PaymentMethod,
         interval: RecurrenceInterval,
         startDate: String,
     ): RecurringSeries? {
@@ -60,7 +59,6 @@ class RecurringSeriesRepository(private val categoryRepository: CategoryReposito
                 amount = amount.toLong(),
                 accountId = walletId,
                 categoryId = categoryBackendId,
-                paymentMethod = paymentMethod.name,
                 interval = interval.name,
                 startDate = startDate,
             ),

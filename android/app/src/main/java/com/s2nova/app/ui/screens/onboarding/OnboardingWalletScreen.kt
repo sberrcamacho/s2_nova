@@ -28,7 +28,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.s2nova.app.data.AppContainer
 import com.s2nova.app.data.model.CategoryId
-import com.s2nova.app.data.model.PaymentMethod
 import com.s2nova.app.data.model.RecurrenceInterval
 import com.s2nova.app.data.model.TransactionType
 import com.s2nova.app.data.model.WalletType
@@ -126,7 +125,6 @@ fun OnboardingWalletScreen(
                                     amount = income,
                                     walletId = wallet.id,
                                     category = CategoryId.SALARY,
-                                    paymentMethod = PaymentMethod.BANK_TRANSFER,
                                     interval = RecurrenceInterval.MONTHLY,
                                     startDate = todayISO(),
                                 )
