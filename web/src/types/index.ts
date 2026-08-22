@@ -161,6 +161,7 @@ export interface User {
     theme: 'light' | 'dark' | 'system'
     notifications: boolean
     biometricLogin: boolean
+    hideAmounts: boolean
     language: LanguageCode
   }
 }

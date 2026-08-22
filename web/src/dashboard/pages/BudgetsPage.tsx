@@ -11,18 +11,14 @@ import { analyticsService } from '@/services/analyticsService'
 import { type BudgetProgress } from '@/services/budgetService'
 import { useCurrency } from '@/state/useCurrency'
 import { useTranslation } from '@/state/useTranslation'
-import type { TranslationKey } from '@/lib/i18n/translations'
+import { currentMonthKey, monthNameLabel } from '@/lib/date'
+import { cn } from '@/lib/cn'
 import type { MonthlySummary } from '@/types'
 
 const STATUS_TONE: Record<BudgetProgress['status'], 'positive' | 'warning' | 'negative'> = {
   on_track: 'positive',
   near_limit: 'warning',
   over_budget: 'negative',
-}
-const STATUS_KEY: Record<BudgetProgress['status'], TranslationKey> = {
-  on_track: 'budgetStatus.on_track',
-  near_limit: 'budgetStatus.near_limit',
-  over_budget: 'budgetStatus.over_budget',
 }
 
 // Read-only: creating/editing budgets is Android's job (micro-management),
@@ -38,6 +34,11 @@ export default function BudgetsPage() {
   const overCount = budgets.filter((b) => b.status === 'over_budget').length
   const pct = totalLimit > 0 ? Math.round((totalSpent / totalLimit) * 100) : 0
 
+  const monthKey = currentMonthKey()
+  const now = new Date()
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+  const daysLeft = daysInMonth - now.getDate()
+
   useEffect(() => {
     Promise.all(budgets.map((b) => analyticsService.getCategoryHistory(b.category, 6, language).then((h) => [b.id, h] as const))).then(
       (entries) => setHistory(Object.fromEntries(entries)),
@@ -46,6 +47,10 @@ export default function BudgetsPage() {
 
   return (
     <div className="flex flex-col gap-5">
+      <p className="-mt-1 text-xs font-medium text-ink-tertiary">
+        {t('budgets.readOnlyNote')} {daysLeft} {t('budgets.daysLeftSuffix')} {monthNameLabel(monthKey, language)}.
+      </p>
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <KPICard label={t('budgets.totalBudget')} value={format(totalLimit)} icon={<Wallet className="h-4 w-4" />} tone="primary" />
         <KPICard label={t('budgets.spentThisMonth')} value={format(totalSpent)} icon={<TrendingDown className="h-4 w-4" />} trend={{ value: pct, label: t('budgets.ofBudget') }} />
@@ -56,14 +61,16 @@ export default function BudgetsPage() {
         {[...budgets]
           .sort((a, b) => b.percentage - a.percentage)
           .map((b) => (
-            <Card key={b.id} className="p-5">
-              <div className="mb-3 flex items-center gap-3">
-                <CategoryIcon category={b.category} />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13.5px] font-bold text-ink">{b.name ?? tCategory(b.category)}</p>
-                  <p className="text-xs text-ink-tertiary">{b.name ? tCategory(b.category) : t('budgets.monthlyLimit')}</p>
+            <Card key={b.id} className={cn('p-5', b.status === 'over_budget' && 'border-negative/35')}>
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <CategoryIcon category={b.category} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13.5px] font-bold text-ink">{b.name ?? tCategory(b.category)}</p>
+                    <p className="text-xs text-ink-tertiary">{b.name ? tCategory(b.category) : t('budgets.monthlyLimit')}</p>
+                  </div>
                 </div>
-                <Badge tone={STATUS_TONE[b.status]}>{t(STATUS_KEY[b.status])}</Badge>
+                <Badge tone={STATUS_TONE[b.status]}>{b.percentage}%</Badge>
               </div>
               <p className="font-numeric text-lg font-extrabold text-ink">
                 {format(b.spent)} <span className="text-sm font-semibold text-ink-tertiary">/ {format(b.limit)}</span>

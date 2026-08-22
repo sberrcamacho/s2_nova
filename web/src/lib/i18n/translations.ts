@@ -37,7 +37,10 @@ const dictionary = {
   'page.goals.title': { es: 'Objetivos', en: 'Goals' },
   'page.goals.subtitle': { es: 'Metas de ahorro y pago', en: 'Savings and payoff targets' },
   'page.insights.title': { es: 'Sugerencias', en: 'Insights' },
-  'page.insights.subtitle': { es: 'Recomendaciones basadas en tus datos', en: 'Recommendations based on your data' },
+  'page.insights.subtitle': {
+    es: 'Calculado con tus últimos 30 días. Nada aquí es una proyección.',
+    en: 'Computed from your last 30 days. Nothing here is a projection.',
+  },
   'page.analytics.title': { es: 'Analítica', en: 'Analytics' },
   'page.analytics.subtitle': { es: 'Gastos, ingresos, flujo de caja y patrimonio', en: 'Spending, income, cash flow and net worth' },
   'page.reports.title': { es: 'Reportes', en: 'Reports' },
@@ -334,7 +337,7 @@ const dictionary = {
   'analytics.weekendAvg': { es: 'Promedio fin de semana', en: 'Weekend average' },
   'analytics.peakSpendingDay': { es: 'Día de mayor gasto', en: 'Peak spending day' },
 
-  'reports.export': { es: 'Exportar', en: 'Export' },
+  'reports.export': { es: 'Exportar PDF', en: 'Export PDF' },
   'reports.netSavings': { es: 'Ahorro neto', en: 'Net savings' },
   'reports.avgMonthlySavings': { es: 'Ahorro mensual promedio', en: 'Average monthly savings' },
   'reports.netSavingsTrend': { es: 'Tendencia de ahorro neto', en: 'Net savings trend' },
@@ -369,6 +372,60 @@ const dictionary = {
   'dateRange.lastMonth': { es: 'Mes pasado', en: 'Last month' },
   'dateRange.last3Months': { es: 'Últimos 3 meses', en: 'Last 3 months' },
   'dateRange.thisYear': { es: 'Este año', en: 'This year' },
+
+  // Overview redesign
+  'overview.netThisMonth': { es: 'neto este mes', en: 'net this month' },
+  'overview.financialHealthSubtitle': { es: 'Cinco chequeos, actualizados a diario', en: 'Five checks, updated daily' },
+  'overview.insightsSubtitle': { es: 'Ordenadas por impacto este mes', en: 'Ranked by impact this month' },
+  'overview.upcomingEventsSubtitle': { es: 'Próximos 14 días, de series recurrentes activas', en: 'Next 14 days, from active recurring series' },
+  'overview.manageInApp': { es: 'Gestionar en la app →', en: 'Manage in app →' },
+
+  // Analytics redesign
+  'analytics.monthsOfRunway': { es: 'Meses de reserva', en: 'Months of runway' },
+  'analytics.fixedVsVariable': { es: 'Fijo vs. variable', en: 'Fixed vs. variable' },
+  'analytics.freelanceNote': {
+    es: 'El ingreso freelance puede variar de un mes a otro — planea con tu promedio, no con tu mejor mes.',
+    en: 'Freelance income can vary month to month — plan around your average, not your best month.',
+  },
+  'analytics.cashFlow.projectedBalance': { es: 'Saldo proyectado', en: 'Projected balance' },
+  'analytics.cashFlow.lowestProjected': { es: 'Saldo proyectado más bajo antes del próximo pago:', en: 'Lowest projected balance before your next payday:' },
+  'analytics.rangeSubtitlePrefix': { es: 'Últimos', en: 'Last' },
+  'analytics.rangeSubtitleSuffix': { es: 'meses', en: 'months' },
+  'netWorth.lentOut': { es: 'Prestado', en: 'Lent out' },
+  'netWorth.borrowedTile': { es: 'Recibido en préstamo', en: 'Borrowed' },
+  'netWorth.lentAndBorrowed': { es: 'Prestado y recibido en préstamo', en: 'Lent and borrowed' },
+
+  // Budgets redesign
+  'budgets.readOnlyNote': { es: 'Solo lectura aquí — los límites se configuran en la app móvil.', en: 'Read-only here — limits are set in the mobile app.' },
+  'budgets.daysLeftSuffix': { es: 'días restantes en', en: 'days left in' },
+
+  // Goals redesign
+  'goals.readOnlyNote': { es: 'Solo progreso. Los objetivos se crean y editan en la app móvil.', en: 'Progress only. Goals are created and edited in the mobile app.' },
+
+  // Reports redesign
+  'reports.reviewOf': { es: 'Revisión de', en: 'Review of' },
+  'reports.comparedWith': { es: 'comparado con', en: 'compared with' },
+  'reports.periodTotals': { es: 'Totales del periodo', en: 'Period totals' },
+  'reports.colMetric': { es: 'MÉTRICA', en: 'METRIC' },
+  'reports.colChange': { es: 'CAMBIO', en: 'CHANGE' },
+  'reports.savingsRate': { es: 'Tasa de ahorro', en: 'Savings rate' },
+
+  // Settings redesign
+  'settings.system': { es: 'Sistema', en: 'System' },
+  'settings.hideAmounts': { es: 'Ocultar montos por defecto', en: 'Hide amounts by default' },
+  'settings.hideAmountsHint': { es: 'Se difuminan hasta pasar el cursor', en: 'Blurred until you hover' },
+  'settings.biometricAndroidOnly': { es: 'Solo Android — se ignora en la web', en: 'Android only — ignored on web' },
+  'settings.editProfile': { es: 'Editar perfil', en: 'Edit profile' },
+  'settings.memberSincePrefix': { es: 'Miembro desde', en: 'Member since' },
+  'settings.security': { es: 'Seguridad', en: 'Security' },
+  'settings.password': { es: 'Contraseña', en: 'Password' },
+  'settings.passwordHint': { es: 'Última actualización hace tiempo', en: 'Last updated a while ago' },
+  'settings.change': { es: 'Cambiar', en: 'Change' },
+  'settings.activeSessions': { es: 'Sesiones activas', en: 'Active sessions' },
+  'settings.activeSessionsHint': { es: 'Administra dónde iniciaste sesión', en: 'Manage where you are signed in' },
+  'settings.manage': { es: 'Gestionar', en: 'Manage' },
+  'settings.deleteAccount': { es: 'Eliminar cuenta', en: 'Delete account' },
+  'settings.deleteAccountHint': { es: 'Se elimina todo permanentemente', en: 'Permanently removes everything' },
 } as const satisfies Record<string, Record<LanguageCode, string>>
 
 export type TranslationKey = keyof typeof dictionary

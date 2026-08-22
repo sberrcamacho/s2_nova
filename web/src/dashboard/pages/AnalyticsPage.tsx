@@ -1,28 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
-import {
-  ArrowDownLeft,
-  ArrowUpRight,
-  CreditCard,
-  Flame,
-  Landmark,
-  Receipt,
-  TrendingDown,
-  TrendingUp,
-  Wallet,
-} from 'lucide-react'
-import { KPICard } from '@/components/ui/KPICard'
+import { Landmark, Wallet } from 'lucide-react'
 import { ChartCard } from '@/components/ui/ChartCard'
 import { Card } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { Tabs } from '@/components/ui/Tabs'
 import { Sparkles } from 'lucide-react'
 import { NovaBarChart } from '@/components/charts/NovaBarChart'
-import { NovaAreaChart } from '@/components/charts/NovaAreaChart'
-import { NovaDonutChart } from '@/components/charts/NovaDonutChart'
-import { TransactionRow } from '@/components/transactions/TransactionRow'
 import { useAppData } from '@/state/AppDataContext'
 import { useDashboardFilters } from '@/dashboard/DashboardFiltersContext'
 import { analyticsService } from '@/services/analyticsService'
@@ -31,8 +16,9 @@ import { recurringService } from '@/services/recurringService'
 import { categoryMap } from '@/data/categories'
 import { useCurrency } from '@/state/useCurrency'
 import { useTranslation } from '@/state/useTranslation'
-import { currentMonthKey, formatShortDate, isSameMonth, weekdayLabel } from '@/lib/date'
-import { recurringIntervalTranslationKey, walletTypeTranslationKey } from '@/lib/i18n/translations'
+import { currentMonthKey, isSameMonth, monthYearLabel, weekdayLabel } from '@/lib/date'
+import { walletTypeTranslationKey } from '@/lib/i18n/translations'
+import { cn } from '@/lib/cn'
 import type { CategoryId, MonthlySummary, RecurringSeries, Wallet as WalletType } from '@/types'
 
 const INTERVALS_PER_MONTH: Record<RecurringSeries['interval'], number> = {
@@ -41,18 +27,43 @@ const INTERVALS_PER_MONTH: Record<RecurringSeries['interval'], number> = {
   yearly: 1 / 12,
 }
 
+const FIXED_CATEGORIES: CategoryId[] = ['bills', 'subscriptions']
+
 type AnalyticsTab = 'spending' | 'income' | 'cashFlow' | 'netWorth'
+type AnalyticsRange = 3 | 6 | 12
 
 // The single consolidated Analytics surface — absorbs the old
 // AnalyticsPage/ExpensesPage/IncomePage/NetWorthPage/RecurringPage(totals)
 // into one page with tabs, per the IA consolidation: Analytics is one nav
 // item, not five.
 export default function AnalyticsPage() {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
+  const { currency } = useCurrency()
   const [tab, setTab] = useState<AnalyticsTab>('spending')
+  const [range, setRange] = useState<AnalyticsRange>(6)
 
   return (
     <div className="flex flex-col gap-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-[13px] font-semibold text-ink-tertiary">
+          {monthYearLabel(currentMonthKey(), language)} · {currency}
+        </p>
+        <div className="flex overflow-hidden rounded-[9px] border border-border">
+          {([3, 6, 12] as AnalyticsRange[]).map((r) => (
+            <button
+              key={r}
+              onClick={() => setRange(r)}
+              className={cn(
+                'px-3.5 py-[7px] text-[11.5px] font-extrabold transition-colors',
+                range === r ? 'bg-primary text-on-primary' : 'bg-surface text-ink-tertiary hover:text-ink',
+              )}
+            >
+              {r}M
+            </button>
+          ))}
+        </div>
+      </div>
+
       <Tabs
         value={tab}
         onChange={(v) => setTab(v as AnalyticsTab)}
@@ -65,32 +76,41 @@ export default function AnalyticsPage() {
         className="self-start"
       />
 
-      {tab === 'spending' && <SpendingTab />}
-      {tab === 'income' && <IncomeTab />}
+      {tab === 'spending' && <SpendingTab range={range} />}
+      {tab === 'income' && <IncomeTab range={range} />}
       {tab === 'cashFlow' && <CashFlowTab />}
       {tab === 'netWorth' && <NetWorthTab />}
     </div>
   )
 }
 
-function SpendingTab() {
+function rangeSubtitle(range: AnalyticsRange, t: (k: import('@/lib/i18n/translations').TranslationKey) => string) {
+  return `${t('analytics.rangeSubtitlePrefix')} ${range} ${t('analytics.rangeSubtitleSuffix')}`
+}
+
+function SpendingTab({ range }: { range: AnalyticsRange }) {
   const { transactions } = useAppData()
   const { format } = useCurrency()
   const { t, tCategory, language } = useTranslation()
   const { monthKeys } = useDashboardFilters()
   const [history, setHistory] = useState<MonthlySummary[]>([])
+  const [wallets, setWallets] = useState<WalletType[]>([])
+  const [recurring, setRecurring] = useState<RecurringSeries[]>([])
 
   useEffect(() => {
-    analyticsService.getMonthlyHistory(6, language).then(setHistory)
-  }, [transactions, language])
+    analyticsService.getMonthlyHistory(range, language).then(setHistory)
+  }, [transactions, range, language])
+
+  useEffect(() => {
+    accountService.getWallets().then(setWallets)
+    recurringService.getRecurringSeries().then(setRecurring)
+  }, [])
 
   const periodExpenses = useMemo(
     () => transactions.filter((tx) => tx.type === 'expense' && monthKeys.some((mk) => isSameMonth(tx.date, mk))),
     [transactions, monthKeys],
   )
-
   const total = periodExpenses.reduce((s, tx) => s + tx.amount, 0)
-  const avgPerTxn = periodExpenses.length ? total / periodExpenses.length : 0
 
   const breakdown = useMemo(() => {
     const totals = new Map<CategoryId, number>()
@@ -98,107 +118,79 @@ function SpendingTab() {
     return Array.from(totals.entries())
       .map(([category, amount]) => ({ category, amount, percentage: total > 0 ? Math.round((amount / total) * 100) : 0 }))
       .sort((a, b) => b.amount - a.amount)
+      .slice(0, 5)
   }, [periodExpenses, total])
 
-  const topCategory = breakdown[0]
   const expensesLabel = t('nav.expenses')
-  const donutData = breakdown.map((e) => ({
-    name: tCategory(e.category),
-    value: e.amount,
-    color: categoryMap[e.category]?.color ?? '#9C9CAA',
-  }))
 
-  const insights = useMemo(() => {
+  const peakDay = useMemo(() => {
     const monthKey = currentMonthKey()
     const monthExpenses = transactions.filter((tx) => tx.type === 'expense' && isSameMonth(tx.date, monthKey))
     const byDay = new Array(7).fill(0) as number[]
-    for (const tx of monthExpenses) {
-      const day = new Date(`${tx.date}T00:00:00`).getDay()
-      byDay[day]! += tx.amount
-    }
-    const weekendAvg = (byDay[0]! + byDay[6]!) / 2
-    const weekdayAvg = byDay.slice(1, 6).reduce((s, v) => s + v, 0) / 5
+    for (const tx of monthExpenses) byDay[new Date(`${tx.date}T00:00:00`).getDay()]! += tx.amount
     const peakIndex = byDay.indexOf(Math.max(...byDay))
-    return { weekdayAvg, weekendAvg, peakDay: peakIndex >= 0 ? weekdayLabel(peakIndex, language) : '—' }
+    return peakIndex >= 0 && byDay[peakIndex]! > 0 ? weekdayLabel(peakIndex, language) : '—'
   }, [transactions, language])
 
   const burnRate = history.length ? history[history.length - 1]!.expenses / 30 : 0
 
+  const fixedCategorySet = useMemo(() => {
+    const set = new Set<CategoryId>(FIXED_CATEGORIES)
+    for (const s of recurring) if (s.active && s.type === 'expense') set.add(s.category)
+    return set
+  }, [recurring])
+  const fixedAmount = periodExpenses.filter((tx) => fixedCategorySet.has(tx.category)).reduce((s, tx) => s + tx.amount, 0)
+  const fixedPct = total > 0 ? Math.round((fixedAmount / total) * 100) : 0
+  const variablePct = total > 0 ? 100 - fixedPct : 0
+
+  const walletsTotal = wallets.reduce((s, w) => s + w.currentBalance, 0)
+  const avgMonthlyExpense = history.length ? history.reduce((s, m) => s + m.expenses, 0) / history.length : 0
+  const runway = avgMonthlyExpense > 0 ? walletsTotal / avgMonthlyExpense : 0
+
   return (
     <div className="flex flex-col gap-5">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KPICard label={t('expenses.totalSpent')} value={format(total)} icon={<TrendingDown className="h-4 w-4" />} tone="primary" />
-        <KPICard label={t('expenses.avgPerTransaction')} value={format(avgPerTxn)} icon={<Receipt className="h-4 w-4" />} />
-        <KPICard label={t('analytics.burnRate')} value={`${format(burnRate)}${t('analytics.perDaySuffix')}`} icon={<Flame className="h-4 w-4" />} />
-        <KPICard label={t('expenses.topCategory')} value={topCategory ? tCategory(topCategory.category) : '—'} icon={<Wallet className="h-4 w-4" />} />
-      </div>
-
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
-        <ChartCard title={t('expenses.monthlyExpenses')} subtitle={t('common.last6Months')} className="xl:col-span-2">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.45fr_1fr]">
+        <ChartCard title={t('expenses.monthlyExpenses')} subtitle={rangeSubtitle(range, t)}>
           <NovaBarChart
             data={history.map((m) => ({ month: m.label, [expensesLabel]: m.expenses }))}
             xKey="month"
             series={[{ key: expensesLabel, label: expensesLabel, color: 'var(--color-negative)' }]}
           />
         </ChartCard>
-        <ChartCard title={t('expenses.distributionByCategory')} subtitle={t('common.periodSelected')}>
-          {donutData.length === 0 ? (
-            <EmptyState icon={<Sparkles className="h-6 w-6" />} title={t('common.noExpensesTitle')} description={t('common.noExpensesDescription')} />
+
+        <Card className="p-5 sm:p-6">
+          <h3 className="text-[15px] font-bold text-ink">{t('categories.breakdown')}</h3>
+          {breakdown.length === 0 ? (
+            <EmptyState icon={<Sparkles className="h-6 w-6" />} title={t('common.noDataTitle')} description={t('expenses.noDataDescription')} />
           ) : (
-            <div className="flex justify-center">
-              <NovaDonutChart data={donutData} height={220} centerLabel="Total" centerValue={format(total)} />
+            <div className="mt-4 flex flex-col gap-3.5">
+              {breakdown.map((e) => (
+                <div key={e.category}>
+                  <div className="mb-1.5 flex items-center justify-between text-[12.5px]">
+                    <span className="font-semibold text-ink">{tCategory(e.category)}</span>
+                    <span className="font-numeric font-bold text-ink-secondary">
+                      {format(e.amount)} · {e.percentage}%
+                    </span>
+                  </div>
+                  <ProgressBar value={e.percentage} color={categoryMap[e.category]?.color} />
+                </div>
+              ))}
             </div>
           )}
-        </ChartCard>
+        </Card>
       </div>
 
-      <Card className="p-5 sm:p-6">
-        <h3 className="mb-4 text-[15px] font-bold text-ink">{t('categories.breakdown')}</h3>
-        {breakdown.length === 0 ? (
-          <EmptyState icon={<Sparkles className="h-6 w-6" />} title={t('common.noDataTitle')} description={t('expenses.noDataDescription')} />
-        ) : (
-          <div className="flex flex-col gap-3.5">
-            {breakdown.map((e) => (
-              <div key={e.category}>
-                <div className="mb-1.5 flex items-center gap-2.5">
-                  <CategoryIcon category={e.category} size="sm" />
-                  <span className="flex-1 truncate text-[13px] font-semibold text-ink">{tCategory(e.category)}</span>
-                  <span className="font-numeric text-xs font-bold text-ink-secondary">
-                    {format(e.amount)} · {e.percentage}%
-                  </span>
-                </div>
-                <ProgressBar value={e.percentage} tone="negative" />
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
-
-      <Card className="p-5 sm:p-6">
-        <h3 className="mb-4 text-[15px] font-bold text-ink">{t('analytics.spendingHabits')}</h3>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <InsightTile label={t('analytics.weekdayAvg')} value={format(insights.weekdayAvg)} />
-          <InsightTile label={t('analytics.weekendAvg')} value={format(insights.weekendAvg)} />
-          <InsightTile label={t('analytics.peakSpendingDay')} value={insights.peakDay} />
-        </div>
-      </Card>
-
-      <Card className="p-5 sm:p-6">
-        <h3 className="mb-4 text-[15px] font-bold text-ink">{t('expenses.periodExpenses')}</h3>
-        <div className="flex flex-col divide-y divide-border">
-          {periodExpenses.slice(0, 12).map((tx) => (
-            <TransactionRow key={tx.id} transaction={tx} />
-          ))}
-        </div>
-        {periodExpenses.length === 0 && (
-          <EmptyState icon={<Sparkles className="h-6 w-6" />} title={t('expenses.emptyRegisteredTitle')} description={t('expenses.noDataDescription')} />
-        )}
-      </Card>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatTile label={`${t('analytics.burnRate')}${t('analytics.perDaySuffix')}`.toUpperCase()} value={format(burnRate)} />
+        <StatTile label={t('analytics.peakSpendingDay').toUpperCase()} value={peakDay} />
+        <StatTile label={t('analytics.fixedVsVariable').toUpperCase()} value={`${fixedPct} / ${variablePct}`} />
+        <StatTile label={t('analytics.monthsOfRunway').toUpperCase()} value={runway.toFixed(1)} />
+      </div>
     </div>
   )
 }
 
-function IncomeTab() {
+function IncomeTab({ range }: { range: AnalyticsRange }) {
   const { transactions } = useAppData()
   const { format } = useCurrency()
   const { t, tCategory, language } = useTranslation()
@@ -206,16 +198,14 @@ function IncomeTab() {
   const [history, setHistory] = useState<MonthlySummary[]>([])
 
   useEffect(() => {
-    analyticsService.getMonthlyHistory(6, language).then(setHistory)
-  }, [transactions, language])
+    analyticsService.getMonthlyHistory(range, language).then(setHistory)
+  }, [transactions, range, language])
 
   const periodIncome = useMemo(
     () => transactions.filter((tx) => tx.type === 'income' && monthKeys.some((mk) => isSameMonth(tx.date, mk))),
     [transactions, monthKeys],
   )
-
   const total = periodIncome.reduce((s, tx) => s + tx.amount, 0)
-  const avgPerTxn = periodIncome.length ? total / periodIncome.length : 0
 
   const breakdown = useMemo(() => {
     const totals = new Map<CategoryId, number>()
@@ -225,105 +215,45 @@ function IncomeTab() {
       .sort((a, b) => b.amount - a.amount)
   }, [periodIncome, total])
 
-  const topSource = breakdown[0]
   const incomeLabel = t('nav.income')
-  const savingsLabel = t('overview.savings')
-  const donutData = breakdown.map((e) => ({
-    name: tCategory(e.category),
-    value: e.amount,
-    color: categoryMap[e.category]?.color ?? '#9C9CAA',
-  }))
-
-  const trendPct = useMemo(() => {
-    if (history.length < 2) return null
-    const prev = history[history.length - 2]!.income
-    const curr = history[history.length - 1]!.income
-    if (prev <= 0) return null
-    return Math.round(((curr - prev) / prev) * 100)
-  }, [history])
+  const hasFreelance = breakdown.some((e) => e.category === 'freelance')
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KPICard label={t('income.totalIncome')} value={format(total)} icon={<ArrowDownLeft className="h-4 w-4" />} tone="primary" />
-        <KPICard label={t('income.avgPerIncome')} value={format(avgPerTxn)} icon={<Receipt className="h-4 w-4" />} />
-        <KPICard label={t('nav.transactions')} value={String(periodIncome.length)} icon={<Receipt className="h-4 w-4" />} />
-        <KPICard label={t('income.topSource')} value={topSource ? tCategory(topSource.category) : '—'} icon={<Wallet className="h-4 w-4" />} />
-      </div>
-
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
-        <ChartCard
-          title={t('income.monthlyIncome')}
-          subtitle={t('common.last6Months')}
-          className="xl:col-span-2"
-          action={
-            trendPct !== null && (
-              <Badge tone={trendPct >= 0 ? 'positive' : 'negative'} icon={<ArrowUpRight className="h-3 w-3" />}>
-                {trendPct >= 0 ? t('income.growing') : t('income.declining')}
-              </Badge>
-            )
-          }
-        >
-          <NovaAreaChart
-            data={history.map((m) => ({ month: m.label, [incomeLabel]: m.income }))}
-            xKey="month"
-            series={[{ key: incomeLabel, label: incomeLabel, color: 'var(--color-positive)' }]}
-          />
-        </ChartCard>
-        <ChartCard title={t('income.incomeSources')} subtitle={t('common.periodSelected')}>
-          {donutData.length === 0 ? (
-            <EmptyState icon={<Sparkles className="h-6 w-6" />} title={t('income.noIncomeTitle')} description={t('income.noIncomeDescription')} />
-          ) : (
-            <div className="flex justify-center">
-              <NovaDonutChart data={donutData} height={220} centerLabel="Total" centerValue={format(total)} />
-            </div>
-          )}
-        </ChartCard>
-      </div>
-
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-        <ChartCard title={t('income.incomeVsSavings')} subtitle={t('overview.monthlyComparison')}>
-          <NovaBarChart
-            data={history.map((m) => ({ month: m.label, [incomeLabel]: m.income, [savingsLabel]: m.savings }))}
-            xKey="month"
-            series={[
-              { key: incomeLabel, label: incomeLabel, color: 'var(--color-positive)' },
-              { key: savingsLabel, label: savingsLabel, color: 'var(--color-primary)' },
-            ]}
-          />
-        </ChartCard>
-
-        <Card className="p-5 sm:p-6">
-          <h3 className="mb-4 text-[15px] font-bold text-ink">{t('income.incomeSources')}</h3>
-          {breakdown.length === 0 ? (
-            <EmptyState icon={<Sparkles className="h-6 w-6" />} title={t('common.noDataTitle')} description={t('income.noDataDescription')} />
-          ) : (
-            <div className="flex flex-col gap-3.5">
+    <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+      <Card className="p-5 sm:p-6">
+        <h3 className="text-[15px] font-bold text-ink">{t('income.incomeSources')}</h3>
+        {breakdown.length === 0 ? (
+          <EmptyState icon={<Sparkles className="h-6 w-6" />} title={t('common.noDataTitle')} description={t('income.noDataDescription')} />
+        ) : (
+          <>
+            <div className="mt-4 flex flex-col gap-3.5">
               {breakdown.map((e) => (
                 <div key={e.category}>
                   <div className="mb-1.5 flex items-center justify-between text-[13px]">
                     <span className="font-semibold text-ink">{tCategory(e.category)}</span>
-                    <span className="font-numeric font-bold text-ink-secondary">{e.percentage}%</span>
+                    <span className="font-numeric font-bold text-ink-secondary">
+                      {format(e.amount)} · {e.percentage}%
+                    </span>
                   </div>
-                  <ProgressBar value={e.percentage} tone="positive" />
+                  <ProgressBar value={e.percentage} color={categoryMap[e.category]?.color} />
                 </div>
               ))}
             </div>
-          )}
-        </Card>
-      </div>
-
-      <Card className="p-5 sm:p-6">
-        <h3 className="mb-4 text-[15px] font-bold text-ink">{t('income.periodIncome')}</h3>
-        <div className="flex flex-col divide-y divide-border">
-          {periodIncome.slice(0, 12).map((tx) => (
-            <TransactionRow key={tx.id} transaction={tx} />
-          ))}
-        </div>
-        {periodIncome.length === 0 && (
-          <EmptyState icon={<Sparkles className="h-6 w-6" />} title={t('income.emptyRegisteredTitle')} description={t('income.noDataDescription')} />
+            {hasFreelance && (
+              <p className="mt-4 border-t border-[#16161f] pt-4 text-xs text-ink-tertiary">{t('analytics.freelanceNote')}</p>
+            )}
+          </>
         )}
       </Card>
+
+      <ChartCard title={t('income.monthlyIncome')} subtitle={rangeSubtitle(range, t)}>
+        <NovaBarChart
+          data={history.map((m) => ({ month: m.label, [incomeLabel]: m.income }))}
+          xKey="month"
+          series={[{ key: incomeLabel, label: incomeLabel, color: 'var(--color-positive)' }]}
+          colorForIndex={(i) => (i === history.length - 1 ? 'var(--color-positive)' : 'rgba(50,201,138,.28)')}
+        />
+      </ChartCard>
     </div>
   )
 }
@@ -331,16 +261,9 @@ function IncomeTab() {
 function CashFlowTab() {
   const { transactions } = useAppData()
   const { format } = useCurrency()
-  const { t, tCategory, language } = useTranslation()
-  const [history, setHistory] = useState<MonthlySummary[]>([])
-  const [savingsTrend, setSavingsTrend] = useState<{ label: string; balance: number }[]>([])
+  const { t, language } = useTranslation()
   const [series, setSeries] = useState<RecurringSeries[]>([])
   const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    analyticsService.getMonthlyHistory(6, language).then(setHistory)
-    analyticsService.getSavingsTrend(6, language).then(setSavingsTrend)
-  }, [transactions, language])
 
   useEffect(() => {
     setIsLoading(true)
@@ -350,51 +273,35 @@ function CashFlowTab() {
       .finally(() => setIsLoading(false))
   }, [])
 
-  const currentMonth = history[history.length - 1]
-  const incomeLabel = t('nav.income')
-  const expensesLabel = t('nav.expenses')
-
   const active = series.filter((s) => s.active)
   const monthlyRecurringExpenses = active.filter((s) => s.type === 'expense').reduce((sum, s) => sum + s.amount * INTERVALS_PER_MONTH[s.interval], 0)
   const monthlyRecurringIncome = active.filter((s) => s.type === 'income').reduce((sum, s) => sum + s.amount * INTERVALS_PER_MONTH[s.interval], 0)
-  const subscriptionsTotal = active
-    .filter((s) => s.type === 'expense' && s.category === 'subscriptions')
-    .reduce((sum, s) => sum + s.amount * INTERVALS_PER_MONTH[s.interval], 0)
+  const netCashFlow = monthlyRecurringIncome - monthlyRecurringExpenses
+
+  const currentBalance = useMemo(
+    () => transactions.reduce((sum, tx) => sum + (tx.type === 'income' ? tx.amount : tx.type === 'expense' ? -tx.amount : 0), 0),
+    [transactions],
+  )
 
   const upcoming = useMemo(() => [...active].sort((a, b) => (a.nextOccurrenceDate < b.nextOccurrenceDate ? -1 : 1)), [active])
+  const projected = useMemo(() => {
+    let running = currentBalance
+    return upcoming.map((item) => {
+      running += item.type === 'income' ? item.amount : -item.amount
+      return running
+    })
+  }, [upcoming, currentBalance])
+
+  const nextPaydayIndex = upcoming.findIndex((s) => s.type === 'income')
+  const horizon = nextPaydayIndex >= 0 ? projected.slice(0, nextPaydayIndex + 1) : projected
+  const lowestProjected = horizon.length ? Math.min(...horizon) : currentBalance
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KPICard
-          label={t('analytics.cashFlow.netThisMonth')}
-          value={format(currentMonth?.savings ?? 0)}
-          icon={<TrendingUp className="h-4 w-4" />}
-          tone="primary"
-        />
-        <KPICard label={t('recurring.monthlyIncome')} value={format(monthlyRecurringIncome)} icon={<ArrowDownLeft className="h-4 w-4" />} />
-        <KPICard label={t('recurring.monthlyExpenses')} value={format(monthlyRecurringExpenses)} icon={<ArrowUpRight className="h-4 w-4" />} />
-        <KPICard label={t('recurring.subscriptions')} value={format(subscriptionsTotal)} icon={<CreditCard className="h-4 w-4" />} />
-      </div>
-
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-        <ChartCard title={t('overview.incomeVsExpenses')} subtitle={t('overview.monthlyComparison')}>
-          <NovaBarChart
-            data={history.map((m) => ({ month: m.label, [incomeLabel]: m.income, [expensesLabel]: m.expenses }))}
-            xKey="month"
-            series={[
-              { key: incomeLabel, label: incomeLabel, color: 'var(--color-positive)' },
-              { key: expensesLabel, label: expensesLabel, color: 'var(--color-negative)' },
-            ]}
-          />
-        </ChartCard>
-        <ChartCard title={t('analytics.cashFlow.trend')} subtitle={t('analytics.cashFlow.trendSubtitle')}>
-          <NovaAreaChart
-            data={savingsTrend}
-            xKey="label"
-            series={[{ key: 'balance', label: t('common.cumulativeSavings'), color: 'var(--color-primary)' }]}
-          />
-        </ChartCard>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatTile label={t('recurring.monthlyIncome').toUpperCase()} value={format(monthlyRecurringIncome)} tone="positive" />
+        <StatTile label={t('recurring.monthlyExpenses').toUpperCase()} value={format(monthlyRecurringExpenses)} tone="negative" />
+        <StatTile label={t('analytics.cashFlow.netThisMonth').toUpperCase()} value={format(netCashFlow)} tone="primary" />
       </div>
 
       <Card className="p-5 sm:p-6">
@@ -404,29 +311,27 @@ function CashFlowTab() {
         {!isLoading && upcoming.length === 0 && <p className="mt-4 text-sm text-ink-tertiary">{t('recurring.empty')}</p>}
 
         <div className="mt-4 flex flex-col divide-y divide-border">
-          {upcoming.map((item) => (
+          {upcoming.map((item, i) => (
             <div key={item.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
               <CategoryIcon category={item.category} size="sm" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[13.5px] font-semibold text-ink">{item.name}</p>
-                <p className="text-xs text-ink-tertiary">
-                  {tCategory(item.category)} · {t(recurringIntervalTranslationKey(item.interval))}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className={`font-numeric text-sm font-bold ${item.type === 'expense' ? 'text-negative' : 'text-positive'}`}>
-                  {item.type === 'expense' ? '-' : '+'}
-                  {format(item.amount)}
-                </p>
-                {item.isDue ? (
-                  <Badge tone="warning">{t('recurring.dueToday')}</Badge>
-                ) : (
-                  <p className="text-xs text-ink-tertiary">{formatShortDate(item.nextOccurrenceDate, language)}</p>
-                )}
-              </div>
+              <span className="w-16 shrink-0 text-[10px] font-bold uppercase tracking-[0.06em] text-ink-tertiary">
+                {new Date(`${item.nextOccurrenceDate}T00:00:00`).toLocaleDateString(language === 'en' ? 'en-US' : 'es-CO', { day: 'numeric', month: 'short' })}
+              </span>
+              <p className="min-w-0 flex-1 truncate text-[13.5px] font-semibold text-ink">{item.name}</p>
+              <p className={cn('font-numeric w-[110px] shrink-0 text-right text-sm font-bold', item.type === 'expense' ? 'text-negative' : 'text-positive')}>
+                {item.type === 'expense' ? '-' : '+'}
+                {format(item.amount)}
+              </p>
+              <p className="font-numeric w-[120px] shrink-0 text-right text-sm font-semibold text-ink-secondary">{format(projected[i]!)}</p>
             </div>
           ))}
         </div>
+
+        {upcoming.length > 0 && (
+          <p className="mt-4 border-t border-[#16161f] pt-3 text-xs font-semibold text-warning">
+            {t('analytics.cashFlow.lowestProjected')} {format(lowestProjected)}
+          </p>
+        )}
       </Card>
     </div>
   )
@@ -453,39 +358,68 @@ function NetWorthTab() {
   const netWorth = walletsTotal + outstandingLent - outstandingBorrowed
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <KPICard label={t('netWorth.total')} value={format(netWorth)} icon={<Landmark className="h-4 w-4" />} tone="primary" />
-        <KPICard label={t('netWorth.lent')} value={format(outstandingLent)} icon={<ArrowUpRight className="h-4 w-4" />} />
-        <KPICard label={t('netWorth.borrowed')} value={format(outstandingBorrowed)} icon={<ArrowDownLeft className="h-4 w-4" />} />
-      </div>
-
+    <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
       <Card className="p-5 sm:p-6">
-        <h3 className="mb-4 flex items-center gap-2 text-[15px] font-bold text-ink">
+        <h3 className="flex items-center gap-2 text-[15px] font-bold text-ink">
           <Wallet className="h-4 w-4 text-primary" /> {t('netWorth.wallets')}
         </h3>
-        {!isLoading && wallets.length === 0 && <p className="text-sm text-ink-tertiary">{t('wallets.emptyTitle')}</p>}
-        <div className="flex flex-col divide-y divide-border">
+        {!isLoading && wallets.length === 0 && <p className="mt-4 text-sm text-ink-tertiary">{t('wallets.emptyTitle')}</p>}
+        <div className="mt-3 flex flex-col divide-y divide-border">
           {wallets.map((wallet) => (
-            <div key={wallet.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
-              <div>
-                <p className="text-[13.5px] font-semibold text-ink">{wallet.name}</p>
-                <p className="text-xs text-ink-tertiary">{t(walletTypeTranslationKey(wallet.type))}</p>
+            <div key={wallet.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+              <span className="h-[30px] w-[30px] shrink-0 rounded-full" style={{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 16%, transparent)' }} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[13px] font-bold text-ink">{wallet.name}</p>
+                <p className="text-[11px] text-ink-tertiary">{t(walletTypeTranslationKey(wallet.type))}</p>
               </div>
-              <p className="font-numeric text-sm font-bold text-ink">{format(wallet.currentBalance)}</p>
+              <p className="font-numeric text-sm font-extrabold text-ink">{format(wallet.currentBalance)}</p>
             </div>
           ))}
+        </div>
+        <div className="mt-3 flex items-center justify-between border-t border-border pt-4">
+          <span className="text-[13px] font-bold text-ink">{t('netWorth.total')}</span>
+          <span className="font-numeric text-[22px] font-extrabold text-ink">{format(netWorth)}</span>
+        </div>
+      </Card>
+
+      <Card className="p-5 sm:p-6">
+        <h3 className="flex items-center gap-2 text-[15px] font-bold text-ink">
+          <Landmark className="h-4 w-4 text-primary" /> {t('netWorth.lentAndBorrowed')}
+        </h3>
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="rounded-[12px] bg-surface-elevated p-4">
+            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-ink-tertiary">{t('netWorth.lentOut')}</p>
+            <p className="font-numeric mt-1.5 text-lg font-extrabold text-positive">{format(outstandingLent)}</p>
+          </div>
+          <div className="rounded-[12px] bg-surface-elevated p-4">
+            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-ink-tertiary">{t('netWorth.borrowedTile')}</p>
+            {outstandingBorrowed > 0 ? (
+              <p className="font-numeric mt-1.5 text-lg font-extrabold text-negative">{format(outstandingBorrowed)}</p>
+            ) : (
+              <p className="mt-1.5 text-[13px] font-semibold text-ink-tertiary">{t('health.debt.none')}</p>
+            )}
+          </div>
         </div>
       </Card>
     </div>
   )
 }
 
-function InsightTile({ label, value }: { label: string; value: string }) {
+const TONE_VALUE_CLASS = { primary: 'text-ink', positive: 'text-positive', negative: 'text-negative' }
+
+function StatTile({ label, value, tone }: { label: string; value: string; tone?: 'primary' | 'positive' | 'negative' }) {
+  if (tone) {
+    return (
+      <Card className={cn('p-5', tone === 'primary' ? 'border-[#35305c] bg-gradient-to-br from-accent-soft/60 to-surface' : undefined)}>
+        <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-ink-tertiary">{label}</p>
+        <p className={cn('font-numeric mt-2 text-2xl font-extrabold', TONE_VALUE_CLASS[tone])}>{value}</p>
+      </Card>
+    )
+  }
   return (
     <div className="rounded-[var(--radius-md)] border border-border p-4">
-      <p className="text-[11px] font-bold uppercase tracking-wide text-ink-tertiary">{label}</p>
-      <p className="mt-1.5 font-numeric text-lg font-extrabold text-ink">{value}</p>
+      <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-ink-tertiary">{label}</p>
+      <p className="font-numeric mt-1.5 text-[22px] font-extrabold text-ink">{value}</p>
     </div>
   )
 }

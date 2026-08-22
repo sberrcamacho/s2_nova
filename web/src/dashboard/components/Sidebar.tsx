@@ -37,11 +37,11 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       )}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-[252px] shrink-0 flex-col border-r border-[#1c1c28] bg-[#0b0b14] transition-transform duration-200 lg:static lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 flex w-[234px] shrink-0 flex-col border-r border-[#1c1c28] bg-[#0b0b14] transition-transform duration-200 lg:static lg:translate-x-0',
           open ? 'translate-x-0' : '-translate-x-full',
         )}
       >
-        <div className="flex h-16 items-center justify-between px-5">
+        <div className="flex items-center justify-between px-[18px] pb-[22px] pt-[18px]">
           <Logo size="sm" tone="inverted" />
           <button className="text-white/50 lg:hidden" onClick={onClose} aria-label={t('sidebar.closeMenu')}>
             <X className="h-5 w-5" />
@@ -58,12 +58,12 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           </div>
         </nav>
 
-        <div className="border-t border-white/10 p-4">
-          <div className="flex items-center gap-3 rounded-[var(--radius-md)] bg-white/5 p-3">
-            <Avatar initials={user?.avatarInitials ?? 'US'} size="sm" />
+        <div className="border-t border-white/10 p-3">
+          <div className="flex items-center gap-2.5 rounded-[var(--radius-md)] bg-white/5 p-3">
+            <Avatar initials={user?.avatarInitials ?? 'US'} size="sm" className="h-[30px] w-[30px] text-[11px]" />
             <div className="min-w-0">
-              <p className="truncate text-[13px] font-bold text-white">{user?.name ?? t('sidebar.fallbackUserName')}</p>
-              <p className="text-[11px] font-medium text-white/45">{t('sidebar.demoAccount')}</p>
+              <p className="truncate text-[12.5px] font-bold text-white">{user?.name ?? t('sidebar.fallbackUserName')}</p>
+              <p className="text-[10.5px] font-medium text-white/45">{t('sidebar.demoAccount')}</p>
             </div>
           </div>
         </div>
@@ -86,12 +86,14 @@ function SidebarLink({
       onClick={onClick}
       className={({ isActive }) =>
         cn(
-          'flex items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 text-[13.5px] font-semibold transition-colors',
-          isActive ? 'bg-primary text-on-primary shadow-[var(--shadow-primary)]' : 'text-white/60 hover:bg-white/8 hover:text-white',
+          'flex items-center gap-[11px] rounded-[11px] px-3 py-[9px] text-[13px] font-semibold transition-colors',
+          isActive
+            ? 'bg-primary font-bold text-on-primary shadow-[var(--shadow-primary)]'
+            : 'text-white/55 hover:bg-white/8 hover:text-white',
         )
       }
     >
-      <item.icon className="h-[18px] w-[18px]" strokeWidth={2.1} />
+      <item.icon className="h-[18px] w-[18px] shrink-0" strokeWidth={2.1} />
       {t(item.labelKey)}
     </NavLink>
   )

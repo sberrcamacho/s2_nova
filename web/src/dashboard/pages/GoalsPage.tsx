@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Flag } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
-import { ProgressBar } from '@/components/ui/ProgressBar'
 import { NovaLineChart } from '@/components/charts/NovaLineChart'
 import { useAppData } from '@/state/AppDataContext'
 import { goalService } from '@/services/goalService'
@@ -51,6 +50,8 @@ export default function GoalsPage() {
 
   return (
     <div className="flex flex-col gap-5">
+      <p className="-mt-1 text-xs font-medium text-ink-tertiary">{t('goals.readOnlyNote')}</p>
+
       {!isLoading && goals.length === 0 && (
         <Card className="p-8 text-center">
           <Flag className="mx-auto h-8 w-8 text-ink-tertiary" />
@@ -58,9 +59,9 @@ export default function GoalsPage() {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {goals.map((goal) => {
-          const percentage = goal.targetAmount > 0 ? Math.min(100, Math.round((goal.currentAmount / goal.targetAmount) * 100)) : 0
+          const pct = goal.targetAmount > 0 ? Math.min(100, Math.round((goal.currentAmount / goal.targetAmount) * 100)) : 0
           const contributions = contributionsByGoal.get(goal.id) ?? []
           let cumulative = 0
           const trend = contributions.map((c) => {
@@ -70,28 +71,38 @@ export default function GoalsPage() {
 
           return (
             <Card key={goal.id} className="p-5">
-              <div className="mb-3 flex items-center gap-3">
-                <Flag className="h-5 w-5 text-primary" />
-                <p className="truncate text-[13.5px] font-bold text-ink">{goal.name}</p>
+              <div className="flex items-center gap-[18px]">
+                <div
+                  className="relative flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full"
+                  style={{ background: `conic-gradient(var(--color-primary) ${pct}%, var(--color-border) 0)` }}
+                >
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-surface">
+                    <span className="font-numeric text-sm font-extrabold text-ink">{pct}%</span>
+                  </div>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-extrabold text-ink">{goal.name}</p>
+                  <p className="font-numeric mt-1 text-lg font-extrabold text-ink">
+                    {format(goal.currentAmount)}{' '}
+                    <span className="text-xs font-semibold text-ink-tertiary">
+                      {t('common.of')} {format(goal.targetAmount)}
+                    </span>
+                  </p>
+                  {trend.length < 2 && <p className="mt-1 text-[11.5px] text-ink-tertiary">{t('goals.insufficientData')}</p>}
+                </div>
               </div>
-              <p className="font-numeric text-lg font-extrabold text-ink">
-                {format(goal.currentAmount)} <span className="text-sm font-semibold text-ink-tertiary">/ {format(goal.targetAmount)}</span>
-              </p>
-              <ProgressBar value={percentage} tone="primary" trackClassName="mt-3" />
 
-              <div className="mt-4 border-t border-border pt-4">
-                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-ink-tertiary">{t('goals.contributionsOverTime')}</p>
-                {trend.length >= 2 ? (
+              {trend.length >= 2 && (
+                <div className="mt-4 border-t border-border pt-4">
+                  <p className="mb-2 text-[10.5px] font-bold uppercase tracking-wide text-ink-tertiary">{t('goals.contributionsOverTime')}</p>
                   <NovaLineChart
                     data={trend}
                     xKey="label"
-                    height={140}
+                    height={120}
                     series={[{ key: 'amount', label: t('goals.contributionsOverTime'), color: 'var(--color-primary)' }]}
                   />
-                ) : (
-                  <p className="text-xs text-ink-tertiary">{t('goals.insufficientData')}</p>
-                )}
-              </div>
+                </div>
+              )}
             </Card>
           )
         })}

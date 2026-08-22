@@ -1,32 +1,25 @@
 import { useEffect, useState } from 'react'
-import { AlertTriangle, Calendar, ChevronDown, ChevronUp, CreditCard, Flag, Lightbulb, PieChart, Repeat, TrendingDown, TrendingUp } from 'lucide-react'
+import { ChevronDown, ChevronUp, Lightbulb } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
 import { useAppData } from '@/state/AppDataContext'
 import { useCurrency } from '@/state/useCurrency'
 import { useTranslation } from '@/state/useTranslation'
-import { getInsights, type Insight, type InsightKind, type InsightTone } from '@/services/insightsService'
+import { getInsights, type Insight, type InsightTone } from '@/services/insightsService'
 import { insightToneTranslationKey } from '@/lib/i18n/translations'
+import { cn } from '@/lib/cn'
 
-const INSIGHT_ICON: Record<InsightKind, typeof Lightbulb> = {
-  budgetPace: AlertTriangle,
-  categorySpike: TrendingUp,
-  categoryShare: PieChart,
-  subscriptions: CreditCard,
-  savingsRate: TrendingDown,
-  goalTarget: Flag,
-  goalProgress: Flag,
-  unusualTransaction: AlertTriangle,
-  monthProjection: Calendar,
-  upcomingExpenses: Repeat,
-  spendingStreak: TrendingUp,
+const TONE_ACCENT: Record<InsightTone, string> = {
+  negative: 'var(--color-negative)',
+  warning: 'var(--color-warning)',
+  positive: 'var(--color-positive)',
+  neutral: 'var(--color-primary)',
 }
 
-const TONE_BADGE: Record<InsightTone, 'positive' | 'warning' | 'negative' | 'neutral'> = {
-  positive: 'positive',
-  warning: 'warning',
-  negative: 'negative',
-  neutral: 'neutral',
+const TONE_TAG_CLASSES: Record<InsightTone, string> = {
+  negative: 'bg-negative-soft text-negative',
+  warning: 'bg-warning-soft text-warning',
+  positive: 'bg-positive-soft text-positive',
+  neutral: 'bg-accent-soft text-primary',
 }
 
 // Web-exclusive prescriptive suggestions — see insightsService.ts for how
@@ -68,22 +61,18 @@ export default function InsightsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {visible.map((insight) => {
-          const Icon = INSIGHT_ICON[insight.kind]
-          return (
-            <Card key={insight.id} className="p-5">
-              <div className="mb-2 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <Icon className="h-4 w-4 text-ink-secondary" />
-                  <p className="text-[13.5px] font-bold text-ink">{insight.title}</p>
-                </div>
-                <Badge tone={TONE_BADGE[insight.tone]}>{t(insightToneTranslationKey(insight.tone))}</Badge>
-              </div>
-              <p className="text-sm text-ink-secondary">{insight.description}</p>
-            </Card>
-          )
-        })}
+      <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
+        {visible.map((insight) => (
+          <Card key={insight.id} className="p-[18px_20px]" style={{ borderLeft: `3px solid ${TONE_ACCENT[insight.tone]}` }}>
+            <span
+              className={cn('inline-flex items-center rounded-full px-2 py-1 text-[10px] font-extrabold uppercase tracking-[0.09em]', TONE_TAG_CLASSES[insight.tone])}
+            >
+              {t(insightToneTranslationKey(insight.tone))}
+            </span>
+            <p className="mt-2.5 text-[14.5px] font-extrabold text-ink">{insight.title}</p>
+            <p className="mt-1.5 text-[12.5px] leading-[1.55] text-ink-secondary">{insight.description}</p>
+          </Card>
+        ))}
       </div>
       {insights.length > INITIAL_COUNT && (
         <button

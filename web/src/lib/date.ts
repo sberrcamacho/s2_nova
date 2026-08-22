@@ -49,6 +49,18 @@ export function monthLabel(monthKey: string, language: LanguageCode = 'es'): str
   return new Date(year, month - 1, 1).toLocaleDateString(localeFor(language), { month: 'short' })
 }
 
+// Full month name, e.g. "August" / "agosto" — capitalized either way, for
+// headers like Analytics'/Reports' "{Month} {Year}" line.
+export function monthNameLabel(monthKey: string, language: LanguageCode = 'es'): string {
+  const [year, month] = monthKey.split('-').map(Number)
+  const text = new Date(year, month - 1, 1).toLocaleDateString(localeFor(language), { month: 'long' })
+  return text.charAt(0).toUpperCase() + text.slice(1)
+}
+
+export function monthYearLabel(monthKey: string, language: LanguageCode = 'es'): string {
+  return `${monthNameLabel(monthKey, language)} ${monthKey.slice(0, 4)}`
+}
+
 export function currentMonthKey(): string {
   return todayISO().slice(0, 7)
 }

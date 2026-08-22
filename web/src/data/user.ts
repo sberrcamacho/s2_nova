@@ -13,6 +13,7 @@ export const mockUser: User = {
     theme: 'system',
     notifications: true,
     biometricLogin: false,
+    hideAmounts: false,
     language: 'es',
   },
 }
