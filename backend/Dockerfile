@@ -20,11 +20,19 @@ COPY package.json pnpm-lock.yaml* ./
 # `migrate` service this Dockerfile was originally written for).
 RUN pnpm install --frozen-lockfile
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY prisma ./prisma
+# Regenerated here rather than copied from the builder stage — pnpm's
+# node_modules layout makes `COPY --from=builder .../node_modules/.prisma`
+# unreliable across stages/build cache. Cheap (a few seconds) and avoids
+# depending on the builder stage's exact node_modules structure.
+RUN pnpm exec prisma generate
 USER s2nova
 EXPOSE 3000
 # Runs pending migrations (no-op if already applied — safe on every
 # restart/redeploy, including Render free tier waking from sleep) before
-# starting the server.
-CMD ["sh", "-c", "pnpm prisma:deploy && node dist/server.js"]
+# starting the server. Calls the `prisma` binary directly rather than via
+# `pnpm exec` — pnpm's corepack shim re-downloads pnpm itself the first
+# time it runs as the non-root `s2nova` user (a different cache dir than
+# the root user that ran `pnpm install` during the build), which would
+# otherwise add an avoidable network dependency to every cold start.
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node dist/server.js"]
