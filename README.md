@@ -16,7 +16,9 @@ independently. See `AGENTS.md` for the full architecture rationale and
 - **`design-reference/`** — Figma screenshots (`figma/`, the visual source
   of truth) and current-implementation screenshots (`current/`).
 
-Android is wired to the real backend (auth, accounts, transactions,
-budgets, goals, recurring series). Web still runs on its own in-memory
-mock data — it has no login screen of its own yet, so it can't
-authenticate against the backend (see `ARCHITECTURE.md` §9).
+Both apps are wired to the real backend (auth incl. Google Sign-In,
+accounts, transactions, budgets, goals, recurring series) — Web has its own
+login/register screens now too (see `ARCHITECTURE.md` §9). The backend runs
+24/7 on Render + Aiven for PostgreSQL (see `backend/AGENTS.md`'s
+"Production deployment" section); Web deploys to GitHub Pages via
+`.github/workflows/deploy.yml`.

@@ -12,8 +12,12 @@ a real session; a signed-out visitor lands on `/login`.
 
 ## Development Server
 
-Run `pnpm dev` from this directory to start the Vite development server on
-`$PORT` (default 8443).
+Requires a `.env.local` (gitignored) with `VITE_API_URL` pointing at a
+running backend — either local (`VITE_API_URL=http://localhost:3000/api/v1`,
+with `backend/`'s `pnpm dev` running) or the deployed one
+(`https://s2-nova.onrender.com/api/v1`). Without it, `apiClient.ts` has no
+base URL and every request fails. Run `pnpm dev` from this directory to
+start the Vite development server on `$PORT` (default 8443).
 
 - Preview URL: http://localhost:8443 (or the configured `$PORT`)
 - Hot reload: Changes to source files are reflected immediately

@@ -1,20 +1,22 @@
 # S2 Nova — Backend & Sync Architecture Proposal
 
-Status: **Phases 1–3 implemented and verified** (backend foundation,
-schema/migrations, auth). Phase 5's domain layer (accounts/transactions/
-categories/budgets) and a Goal entity are also implemented, extending the
-§4 schema below — `backend/prisma/schema.prisma` is the current source of
-truth for the exact schema (it now also has `TransactionType.TRANSFER`,
-`TransactionStatus`, `RecurrenceInterval`, `LoanKind`, a `Budget.name`
-field, and a `Goal` model beyond what's written here); this document's
-prose is kept for the original design rationale, not re-synced line by
-line on every schema change. Android (Phase 8) now calls this backend for
-real; Web (Phase 9) does not yet — see `web/AGENTS.md`. This document is
-the reference for moving S2 Nova from two independent mock-data apps to
-two apps sharing one backend, one database, and one user identity. It
-does not replace `android/AGENTS.md` / `web/AGENTS.md` — those stay the
-source of truth for how each client app is built; this document covers
-`backend/` and how both clients integrate with it.
+Status: **All phases (1–9) implemented, verified, and deployed to
+production.** Backend foundation, schema/migrations, auth (incl. Google
+Sign-In and the secure `PATCH /me`/`POST /me/password` account-change
+flows), the domain layer (accounts/transactions/categories/budgets/goals/
+recurring series), and both Android (Phase 8) and Web (Phase 9) calling the
+real backend are all done — see `web/AGENTS.md`/`android/AGENTS.md`.
+`backend/prisma/schema.prisma` is the current source of truth for the exact
+schema (it now also has `TransactionType.TRANSFER`, `TransactionStatus`,
+`RecurrenceInterval`, `LoanKind`, a `Budget.name` field, and a `Goal` model
+beyond what's written here); this document's prose is kept for the
+original design rationale, not re-synced line by line on every schema
+change. The backend runs 24/7 on Render + Aiven for PostgreSQL — see §16.
+This document is the reference for how S2 Nova moved from two independent
+mock-data apps to two apps sharing one backend, one database, and one user
+identity. It does not replace `android/AGENTS.md` / `web/AGENTS.md` — those
+stay the source of truth for how each client app is built; this document
+covers `backend/` and how both clients integrate with it.
 
 Nothing in this document changes `android/` or `web/`'s existing
 architecture, navigation, or design system. Android stays Kotlin +
@@ -375,11 +377,15 @@ Backend
 
 ## 9. Web architecture (integration, not a rewrite)
 
-Today: `src/services/*.ts` are in-memory CRUD modules; `src/state/*`
-(React Context) calls them directly. `web/AGENTS.md` already documents
-this as a deliberate seam: *"A real implementation would swap this
-module for one backed by fetch() calls... every other layer only talks
-to the exported functions below, so the swap is transparent."*
+**Implemented as described below.** `src/services/*.ts` are now thin
+wrappers over `apiClient.ts`'s `fetch()` calls; this section is kept as the
+design rationale, not re-synced line by line.
+
+Before: `src/services/*.ts` were in-memory CRUD modules; `src/state/*`
+(React Context) called them directly. `web/AGENTS.md` documented this as a
+deliberate seam: *"A real implementation would swap this module for one
+backed by fetch() calls... every other layer only talks to the exported
+functions below, so the swap is transparent."*
 
 This seam is exactly what makes the Web migration low-risk: each
 `services/*.ts` file's exported function signatures stay the same;
@@ -417,7 +423,7 @@ complexity for the least product value at this stage.
   Context), so this is a small change to each repository/service, not a
   new pattern.
 - **Web**: refetch dashboard aggregate queries when the filter/date-range
-  context changes (already the trigger today, just against mock data).
+  context changes — implemented, now against the real backend.
 - **Android**: pull-to-refresh on list screens (Home, Transactions,
   Budgets) plus refetch-on-screen-focus, so an expense logged and a
   moment later checked on Web is only as stale as the next Android

@@ -15,27 +15,29 @@ s2_nova/
 ├── android/            Native mobile app (Kotlin + Jetpack Compose)
 │                        → daily ops: expenses, income, transactions,
 │                          budgets, barcode-scanned purchases
-│                        → talks to backend/ for real (auth, accounts,
-│                          transactions, budgets, goals, recurring series)
+│                        → talks to backend/ for real (auth incl. Google
+│                          Sign-In, accounts, transactions, budgets,
+│                          goals, recurring series)
 ├── web/                 Web dashboard (React 19 + TS + Vite + Tailwind v4)
 │                        → analysis: stats, charts, budgets, goals,
 │                          insights, reports
-│                        → still runs on its own in-memory mock data (no
-│                          login screen yet — see §4 below)
+│                        → also talks to backend/ for real now — own
+│                          login/register (+ Google Sign-In), every
+│                          services/*.ts is a fetch() wrapper (see §2)
 ├── backend/             Shared API (Node.js + TS + Fastify + Prisma/
 │                          PostgreSQL) — one user identity, one database
+│                        → deployed 24/7: Render (backend) + Aiven for
+│                          PostgreSQL (database) — see §4
 └── design-reference/    Figma screenshots (source of truth for visuals)
                           + current-implementation screenshots
 ```
 
-Android has been migrated off mock data onto the real backend (see
-`ARCHITECTURE.md`'s phased plan — Phases 1–3, 5, and 8 are done). Web has
-not (Phase 9): its `services/*.ts` are still in-memory CRUD over
-`data/*.ts` seed arrays, on purpose, until Web gets a real login screen to
-authenticate with. Until then, "keeping in sync" between the two clients
-is still a manual, human discipline for anything Web hasn't migrated yet:
-color tokens, category/product/budget seed data, and copy/tone should
-match even though that code is duplicated.
+Both apps are migrated off mock data onto the real backend (see
+`ARCHITECTURE.md`'s phased plan — every phase through 9 is done). "Keeping
+in sync" between the two clients is still a manual, human discipline for
+whatever the backend doesn't own outright: color tokens, category/product
+icon-and-label metadata, and copy/tone should match even though that code
+is duplicated (see §5).
 
 ## 2. Web dashboard (`web/`)
 
@@ -47,12 +49,15 @@ Stack: React 19, TypeScript, Vite 8, Tailwind CSS v4, Recharts-based charts.
 index.html
   → src/main.tsx        mounts <App/> into #root, imports index.css
     → src/App.tsx        wraps the app in context providers, renders the
-                          dashboard route tree at "/"
-      → src/dashboard/routes.tsx   React Router routes, all under
-                                    DashboardLayout
-        → src/dashboard/DashboardLayout.tsx   Sidebar (permanent dark navy)
-                                                + Header + <Outlet/>
-          → src/dashboard/pages/*.tsx          one file per route
+                          route tree at "/"
+      → src/dashboard/routes.tsx   React Router routes:
+          /login, /register        src/auth/*.tsx — outside DashboardLayout,
+                                    reachable when signed out
+          everything else          behind ProtectedRoute (redirects to
+                                    /login if !isAuthenticated), then
+            → src/dashboard/DashboardLayout.tsx   Sidebar (permanent dark
+                                                    navy) + Header + <Outlet/>
+              → src/dashboard/pages/*.tsx          one file per route
 ```
 
 ### Layers, outside-in
@@ -72,23 +77,28 @@ index.html
      bar, line, area) plus a shared `chartTheme.ts`
    - `src/components/transactions/TransactionRow.tsx` — shared row UI
 3. **App-wide state** (`src/state/`) — React Context, not Redux:
-   - `AuthContext` — auto-hydrates a single mock user (no real login)
+   - `AuthContext` — real session: silently restores it on mount via
+     `POST /auth/refresh` (the refresh token is an httpOnly cookie, never
+     touched by JS), exposes `login`/`register`/`loginWithGoogle`/`logout`.
+     No mock user, `user` is legitimately `null` until signed in.
    - `ThemeContext` — light/dark toggle
    - `ToastContext` — toast notifications
-   - `AppDataContext` — the mock in-memory "database" for the session
+   - `AppDataContext` — holds `transactions`/`budgets` fetched from the
+     real API; only loads once `isAuthenticated`, resets on logout.
    - `useCurrency` / `useTranslation` — hooks that read `user.currency`
      and `user.preferences.language`; **always** go through these instead
      of importing `lib/currency.ts` directly or hardcoding copy, so the
      Settings page's toggles actually take effect everywhere.
 4. **Local dashboard state**: `src/dashboard/DashboardFiltersContext.tsx` —
    the date-range filter shared across dashboard pages.
-5. **Mock backend** (`src/services/` + `src/data/`) — `services/*.ts` are
-   the "API layer" (e.g. `transactionService.ts`, `analyticsService.ts`);
-   `data/*.ts` is the seed data they read/mutate in memory. A real
-   `backend/` now exists and Android already calls it, but Web hasn't been
-   migrated yet (gated on Web getting a real login screen — see
-   `ARCHITECTURE.md` §9); when it is, this is the layer that gets swapped
-   for real `fetch()` calls, function signatures unchanged. Several
+5. **API layer** (`src/services/` + `src/lib/apiClient.ts`) —
+   `services/*.ts` (e.g. `transactionService.ts`, `analyticsService.ts`)
+   are thin wrappers around `apiClient`'s `fetch()` calls to the real
+   backend, mapping its wire shape (UUID `categoryId`, uppercase enums) to
+   Web's existing domain types — `src/lib/backendCategories.ts` handles the
+   category slug↔UUID translation. `src/data/` now only holds small
+   Web-only metadata (category icon/color/label, a planning constant) with
+   no backend equivalent, not an in-memory "database" anymore. Several
    services (`accountService`, `goalService`, `budgetService`,
    `recurringService`) are deliberately **read-only** on Web — creating/
    editing wallets, budgets, goals, and recurring series is Android's job.
@@ -190,7 +200,11 @@ src/server.ts            Fastify bootstrap: plugins, route registration, listen
 
 ### Layers
 
-1. **Routes** (`src/routes/`) — `auth.ts`, `me.ts`, `accounts.ts`,
+1. **Routes** (`src/routes/`) — `auth.ts` (register/login/refresh/logout +
+   Google Sign-In, multi-audience token verification for Web and Android),
+   `me.ts` (profile/preferences, plus `PATCH /me` and `POST /me/password`
+   for editing name/email or changing/creating a password — both require
+   the current password and revoke sessions on success), `accounts.ts`,
    `categories.ts`, `transactions.ts`, `budgets.ts`, `goals.ts`,
    `recurringSeries.ts`, `health.ts`. Every route except `auth/*`,
    `health*`, and the public `GET /products/:barcode` lookup requires a
@@ -221,6 +235,15 @@ pnpm dev                      # Fastify on :3000, reloads on change
 `GET /api/v1/health` is a liveness check; `GET /api/v1/health/db` also
 round-trips a query through Prisma to check Postgres connectivity.
 
+### Deployment
+
+Runs 24/7 on **Render** (free Web Service, Docker runtime,
+`backend/Dockerfile`) backed by **Aiven for PostgreSQL** (free plan) — see
+`backend/AGENTS.md`'s "Production deployment" section for the exact steps.
+Render's free tier sleeps after 15 min idle (~30-60s cold start on the next
+request). Web's GitHub Pages deploy points at it via the `VITE_API_URL`
+GitHub Actions repository variable.
+
 ## 5. How the two apps stay visually identical
 
 Web and Android share no UI package, so parity is maintained by
@@ -243,16 +266,19 @@ need to keep matching its field names by convention until Web migrates too.
 ## 6. Running each app
 
 ```bash
-# Web dashboard
+# Web dashboard — needs VITE_API_URL in web/.env.local (see web/AGENTS.md)
 cd web && pnpm dev        # http://localhost:8443
 
-# Android app
+# Android app — needs API_BASE_URL in android/local.properties
 cd android
 ./gradlew assembleDebug   # build debug APK
 ./gradlew installDebug    # build + install on a running emulator/device
 
-# Backend (required for Android to do anything beyond its login screen)
+# Backend — both apps need one reachable to do anything past their login
+# screen. Either run it locally...
 cd backend && docker compose up -d && pnpm dev   # http://localhost:3000
+# ...or point both apps at the deployed one instead (no local backend
+# needed): https://s2-nova.onrender.com/api/v1
 ```
 
 ## 7. Recommended tutorials, in reading order

@@ -49,9 +49,9 @@ it if missing) with `compileSdk 36` / `minSdk 26` platforms installed.
   backend after login/register and after a restored session at cold start.
   `local.properties`' `API_BASE_URL` (gitignored) overrides the default
   `http://10.0.2.2:3000/api/v1` (the emulator's alias for the host
-  machine's `localhost`, where `backend/` runs via `pnpm dev`) — point it at
-  the deployed backend's DuckDNS hostname (see `backend/AGENTS.md`'s
-  "Production deployment" section) once testing against the real 24/7
+  machine's `localhost`, where `backend/` runs via `pnpm dev`) — currently
+  set to the deployed backend on Render (see `backend/AGENTS.md`'s
+  "Production deployment" section), so the app talks to the real 24/7
   server instead of a local/LAN one. Google Sign-In (`GoogleAuthHelper.kt`,
   wired into `LoginScreen`/`RegisterScreen`) is likewise config-gated:
   `local.properties`' `GOOGLE_WEB_CLIENT_ID` must be set to the **Web**
