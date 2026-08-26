@@ -152,8 +152,7 @@ export interface User {
   id: string
   name: string
   email: string
-  phone: string
-  city: string
+  hasPassword: boolean // false for Google-only accounts that haven't set one yet
   avatarInitials: string
   currency: CurrencyCode
   memberSince: string

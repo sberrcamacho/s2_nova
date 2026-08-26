@@ -49,7 +49,23 @@ it if missing) with `compileSdk 36` / `minSdk 26` platforms installed.
   backend after login/register and after a restored session at cold start.
   `local.properties`' `API_BASE_URL` (gitignored) overrides the default
   `http://10.0.2.2:3000/api/v1` (the emulator's alias for the host
-  machine's `localhost`, where `backend/` runs via `pnpm dev`).
+  machine's `localhost`, where `backend/` runs via `pnpm dev`) — point it at
+  the deployed backend's DuckDNS hostname (see `backend/AGENTS.md`'s
+  "Production deployment" section) once testing against the real 24/7
+  server instead of a local/LAN one. Google Sign-In (`GoogleAuthHelper.kt`,
+  wired into `LoginScreen`/`RegisterScreen`) is likewise config-gated:
+  `local.properties`' `GOOGLE_WEB_CLIENT_ID` must be set to the **Web**
+  OAuth client ID from Google Cloud Console (see `build.gradle.kts`'s
+  comment on why — Credential Manager always audiences its ID token to the
+  web client, even on Android) or the button doesn't render at all. The
+  account model is deliberately minimal — name, email, and login method
+  (password and/or Google) only; there's no phone/city on `User`, matching
+  `backend/prisma/schema.prisma`'s `User` model. Editing name/email
+  (`AuthRepository.updateProfile`) and changing/creating a password
+  (`AuthRepository.changePassword`, from Settings) both call the real
+  backend; a successful password change revokes every refresh token
+  server-side, so the app logs itself out and returns to `/login` rather
+  than keep using a session the server will now reject.
 - **Wallets, Budgets, Goals.** "Wallet" in the UI is the backend's
   `Account` resource (`WalletRepository`); a wallet is required on every
   transaction (`AddTransactionScreen` blocks with a "create a wallet

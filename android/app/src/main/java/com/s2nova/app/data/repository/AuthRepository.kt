@@ -7,11 +7,14 @@ import com.s2nova.app.data.model.Currency
 import com.s2nova.app.data.model.User
 import com.s2nova.app.data.model.UserPreferences
 import com.s2nova.app.data.remote.ApiClient
+import com.s2nova.app.data.remote.ChangePasswordRequest
+import com.s2nova.app.data.remote.GoogleLoginRequest
 import com.s2nova.app.data.remote.LoginRequest
 import com.s2nova.app.data.remote.MeResponse
 import com.s2nova.app.data.remote.RefreshRequest
 import com.s2nova.app.data.remote.RegisterRequest
 import com.s2nova.app.data.remote.UpdatePreferencesRequest
+import com.s2nova.app.data.remote.UpdateProfileRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,8 +29,7 @@ private fun MeResponse.toUser(): User {
         id = id,
         name = name,
         email = email,
-        phone = "",
-        city = "",
+        hasPassword = hasPassword,
         avatarInitials = initialsFor(name),
         memberSince = createdAt.take(10),
         preferences = UserPreferences(
@@ -84,6 +86,35 @@ class AuthRepository(private val sessionStore: SessionStore, private val onboard
         val session = ApiClient.authApi.register(RegisterRequest(name.trim(), email.trim(), password))
         sessionStore.saveSession(session.accessToken, session.refreshToken)
         _currentUser.value = fetchAndSyncMe()
+    }
+
+    suspend fun loginWithGoogle(idToken: String): Result<Unit> = runCatching {
+        val session = ApiClient.authApi.loginWithGoogle(GoogleLoginRequest(idToken))
+        sessionStore.saveSession(session.accessToken, session.refreshToken)
+        _currentUser.value = fetchAndSyncMe()
+    }
+
+    // Editing name/email is gated on the current password server-side (see
+    // backend/src/routes/me.ts's PATCH /me) — the caller (SettingsScreen)
+    // is responsible for collecting it when changing email.
+    suspend fun updateProfile(name: String? = null, email: String? = null, currentPassword: String? = null): Result<Unit> =
+        runCatching {
+            val response = ApiClient.api.updateProfile(UpdateProfileRequest(name, email, currentPassword))
+            _currentUser.value = response.toUser()
+        }
+
+    // The backend revokes every refresh token on a successful password
+    // change (see POST /me/password), including this device's — so the
+    // caller must follow a success with logout() rather than keep using a
+    // session the server will now reject.
+    suspend fun changePassword(currentPassword: String?, newPassword: String): Result<Unit> = runCatching {
+        val response = ApiClient.api.changePassword(ChangePasswordRequest(currentPassword, newPassword))
+        // Unlike the fire-and-forget delete endpoints elsewhere in this app,
+        // a wrong current password (401) must surface as an error rather
+        // than silently "succeeding" and logging the user out for nothing.
+        if (!response.isSuccessful) {
+            throw retrofit2.HttpException(response)
+        }
     }
 
     suspend fun logout() {

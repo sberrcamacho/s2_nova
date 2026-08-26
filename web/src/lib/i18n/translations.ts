@@ -51,8 +51,6 @@ const dictionary = {
   'settings.personalInfo': { es: 'Información personal', en: 'Personal information' },
   'settings.fullName': { es: 'Nombre completo', en: 'Full name' },
   'settings.email': { es: 'Correo electrónico', en: 'Email address' },
-  'settings.phone': { es: 'Teléfono', en: 'Phone' },
-  'settings.city': { es: 'Ciudad', en: 'City' },
   'settings.saveChanges': { es: 'Guardar cambios', en: 'Save changes' },
   'settings.accountSummary': { es: 'Resumen de cuenta', en: 'Account summary' },
   'settings.memberSince': { es: 'Miembro desde', en: 'Member since' },
@@ -426,6 +424,38 @@ const dictionary = {
   'settings.manage': { es: 'Gestionar', en: 'Manage' },
   'settings.deleteAccount': { es: 'Eliminar cuenta', en: 'Delete account' },
   'settings.deleteAccountHint': { es: 'Se elimina todo permanentemente', en: 'Permanently removes everything' },
+
+  // Real auth (login/register/change password)
+  'settings.changePasswordTitle': { es: 'Cambiar contraseña', en: 'Change password' },
+  'settings.createPasswordTitle': { es: 'Crear contraseña', en: 'Create password' },
+  'settings.createPasswordHint': {
+    es: 'Iniciaste sesión con Google — crea una contraseña para poder entrar también con tu correo.',
+    en: "You signed in with Google — create a password so you can also log in with your email.",
+  },
+  'settings.currentPassword': { es: 'Contraseña actual', en: 'Current password' },
+  'settings.newPassword': { es: 'Nueva contraseña', en: 'New password' },
+  'settings.confirmNewPassword': { es: 'Confirmar nueva contraseña', en: 'Confirm new password' },
+  'settings.passwordChangedToast': { es: 'Contraseña actualizada. Vuelve a iniciar sesión.', en: 'Password updated. Please log in again.' },
+  'settings.passwordMismatch': { es: 'Las contraseñas no coinciden.', en: "Passwords don't match." },
+
+  'auth.loginTitle': { es: 'Inicia sesión', en: 'Sign in' },
+  'auth.loginSubtitle': { es: 'Bienvenido de vuelta a S2 Nova', en: 'Welcome back to S2 Nova' },
+  'auth.registerTitle': { es: 'Crea tu cuenta', en: 'Create your account' },
+  'auth.registerSubtitle': { es: 'Empieza a controlar tus finanzas', en: 'Start taking control of your finances' },
+  'auth.fullName': { es: 'Nombre completo', en: 'Full name' },
+  'auth.email': { es: 'Correo electrónico', en: 'Email address' },
+  'auth.password': { es: 'Contraseña', en: 'Password' },
+  'auth.confirmPassword': { es: 'Confirmar contraseña', en: 'Confirm password' },
+  'auth.showPassword': { es: 'Mostrar contraseña', en: 'Show password' },
+  'auth.hidePassword': { es: 'Ocultar contraseña', en: 'Hide password' },
+  'auth.submitLogin': { es: 'Iniciar sesión', en: 'Sign in' },
+  'auth.submitRegister': { es: 'Crear cuenta', en: 'Create account' },
+  'auth.noAccount': { es: '¿No tienes cuenta?', en: "Don't have an account?" },
+  'auth.signUpLink': { es: 'Regístrate', en: 'Sign up' },
+  'auth.hasAccount': { es: '¿Ya tienes cuenta?', en: 'Already have an account?' },
+  'auth.signInLink': { es: 'Inicia sesión', en: 'Sign in' },
+  'auth.orDivider': { es: 'o', en: 'or' },
+  'auth.continueWithGoogle': { es: 'Continuar con Google', en: 'Continue with Google' },
 } as const satisfies Record<string, Record<LanguageCode, string>>
 
 export type TranslationKey = keyof typeof dictionary

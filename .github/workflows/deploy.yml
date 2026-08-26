@@ -38,6 +38,12 @@ jobs:
 
       - name: Build
         run: pnpm build
+        env:
+          # Not secrets — VITE_* values are baked into the built JS bundle,
+          # which is public anyway. Set these as repo Variables (not
+          # Secrets) under Settings → Secrets and variables → Actions.
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

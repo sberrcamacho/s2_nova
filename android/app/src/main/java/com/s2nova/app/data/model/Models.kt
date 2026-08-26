@@ -174,8 +174,9 @@ data class User(
     val id: String,
     val name: String,
     val email: String,
-    val phone: String,
-    val city: String,
+    // false for a Google-only account that hasn't set a password yet —
+    // gates whether Settings shows "change password" or "create password".
+    val hasPassword: Boolean,
     val avatarInitials: String,
     val memberSince: String,
     val preferences: UserPreferences,

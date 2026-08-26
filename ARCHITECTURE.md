@@ -536,7 +536,7 @@ explicit "do not rewrite" constraint.
 
 ```
 backend/
-  .env.example        # DATABASE_URL, JWT_SECRET, GOOGLE_CLIENT_ID, PORT
+  .env.example        # DATABASE_URL, JWT_SECRET, GOOGLE_CLIENT_IDS, PORT
   docker-compose.yml   # single `postgres:16` service, local-only
   prisma/schema.prisma
   src/
@@ -563,17 +563,21 @@ question below before Phase 1 work starts, since it decides how
 
 ## 16. Deployment strategy
 
-Not executed as part of this task (no cloud accounts/credentials are
-available to provision), but the architecture is chosen to keep the
-options open and cheap:
+Chosen setup: **Aiven for PostgreSQL** (free plan, always-on, no sleep) +
+**Render** (free Web Service, Docker runtime, `backend/Dockerfile`) — the
+app is a plain Fastify server with no platform-specific code, so this was a
+config choice, not an architecture one. An Oracle Cloud Always Free VM
+(self-hosted Postgres + backend together) was considered first but dropped
+after repeated "out of host capacity" errors provisioning the free ARM
+shape, and to keep that VM free for other uses. Trade-off accepted: Render's
+free tier sleeps after 15 minutes of inactivity (~30-60s cold start on the
+next request) — see `backend/AGENTS.md`'s "Production deployment" section
+for the actual deploy steps.
 
 - **Web**: unchanged — GitHub Pages via the existing
-  `.github/workflows/deploy.yml`, now also given `VITE_API_URL` pointed
-  at the deployed backend.
-- **Backend**: any Node-hosting platform with a managed Postgres add-on
-  (Railway, Render, Fly.io) — the app is a plain Fastify server with no
-  platform-specific code, so this is a config choice, not an
-  architecture one.
+  `.github/workflows/deploy.yml`, now also given `VITE_API_URL` (and
+  `VITE_GOOGLE_CLIENT_ID`) pointed at the deployed backend.
+- **Backend**: Render, config-only (env vars), no platform-specific code.
 - **Android**: unchanged local build/install; a release pipeline is out
   of scope for this task (already noted as a gap in `PROJECT_STATE.md`).
 

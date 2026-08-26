@@ -24,6 +24,35 @@ pnpm dev                        # Fastify on :3000, reloads on change
 `GET /api/v1/health` — liveness only. `GET /api/v1/health/db` — also
 round-trips a query through Prisma, for checking Postgres connectivity.
 
+## Production deployment
+
+Database: **Aiven for PostgreSQL** (free plan — 1GB storage, always-on, no
+sleep). Backend: **Render** (free Web Service, Docker runtime, this repo's
+`Dockerfile`, root directory `backend`) — Render handles TLS and gives a
+public HTTPS URL automatically, no reverse proxy/Caddy/domain setup needed.
+Render injects its own `PORT` env var, which `server.ts` already listens on
+(`env.PORT`, no code change needed).
+
+First-time setup:
+1. Create the Aiven for PostgreSQL service, copy its connection string into
+   `DATABASE_URL` (append `?sslmode=require` if not already present).
+2. On Render, create a new Web Service pointed at this repo, root directory
+   `backend`, runtime **Docker**. Set env vars from `.env.example`:
+   `DATABASE_URL` (from step 1), `JWT_SECRET` (generate with
+   `openssl rand -base64 48`), `GOOGLE_CLIENT_IDS`, `CORS_ORIGINS` (include
+   the deployed GitHub Pages origin), `NODE_ENV=production`.
+3. Deploy. The `Dockerfile`'s `CMD` runs `prisma migrate deploy` before
+   starting the server on every boot (safe/no-op if already up to date —
+   there's no separate migration step on Render, unlike a docker-compose
+   setup).
+4. Seed the global categories once, from a local machine with
+   `DATABASE_URL` pointed at the Aiven instance: `pnpm exec prisma db seed`.
+
+Redeploying after a code change: push to the branch Render is tracking — it
+rebuilds and redeploys automatically. Free tier note: the service sleeps
+after 15 minutes of inactivity; the first request after that takes roughly
+30–60s to wake it back up.
+
 ## Project structure
 
 - `prisma/schema.prisma` — the database schema (source of truth for the

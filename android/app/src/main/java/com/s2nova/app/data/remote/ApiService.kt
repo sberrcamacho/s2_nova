@@ -26,8 +26,17 @@ interface ApiService {
     @POST("auth/logout")
     suspend fun logout(@Body body: RefreshRequest): Response<Unit>
 
+    @POST("auth/google")
+    suspend fun loginWithGoogle(@Body body: GoogleLoginRequest): SessionResponse
+
     @GET("me")
     suspend fun me(): MeResponse
+
+    @PATCH("me")
+    suspend fun updateProfile(@Body body: UpdateProfileRequest): MeResponse
+
+    @POST("me/password")
+    suspend fun changePassword(@Body body: ChangePasswordRequest): Response<Unit>
 
     @PATCH("me/preferences")
     suspend fun updatePreferences(@Body body: UpdatePreferencesRequest): MeResponse

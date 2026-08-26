@@ -15,8 +15,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -27,9 +29,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.s2nova.app.BuildConfig
 import com.s2nova.app.data.AppContainer
 import com.s2nova.app.data.remote.toUserMessage
 import kotlinx.coroutines.launch
@@ -45,7 +49,9 @@ fun RegisterScreen(
     var confirmPassword by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(false) }
+    var googleLoading by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     AuthLayout(title = "Crea tu cuenta", subtitle = "Empieza a controlar tus finanzas hoy") {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -124,6 +130,46 @@ fun RegisterScreen(
                     CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MaterialTheme.colorScheme.onPrimary)
                 } else {
                     Text("Crear cuenta", modifier = Modifier.padding(vertical = 6.dp))
+                }
+            }
+
+            if (BuildConfig.GOOGLE_WEB_CLIENT_ID.isNotBlank()) {
+                Row(
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                ) {
+                    HorizontalDivider(modifier = Modifier.weight(1f))
+                    Text("o", modifier = Modifier.padding(horizontal = 12.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    HorizontalDivider(modifier = Modifier.weight(1f))
+                }
+
+                OutlinedButton(
+                    onClick = {
+                        googleLoading = true
+                        error = null
+                        scope.launch {
+                            GoogleAuthHelper.getIdToken(context, BuildConfig.GOOGLE_WEB_CLIENT_ID)
+                                .mapCatching { idToken -> AppContainer.authRepository.loginWithGoogle(idToken).getOrThrow() }
+                                .onSuccess {
+                                    AppContainer.refreshUserData()
+                                    googleLoading = false
+                                    onRegisterSuccess()
+                                }
+                                .onFailure {
+                                    googleLoading = false
+                                    error = it.toUserMessage("No pudimos iniciar sesión con Google.")
+                                }
+                        }
+                    },
+                    enabled = !googleLoading,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    if (googleLoading) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                    } else {
+                        Text("Continuar con Google", modifier = Modifier.padding(vertical = 6.dp))
+                    }
                 }
             }
 

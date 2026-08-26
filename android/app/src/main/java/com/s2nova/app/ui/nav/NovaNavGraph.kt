@@ -242,6 +242,10 @@ fun NovaApp() {
                             navController.navigateAsRoot(NovaDestinations.ONBOARDING_TUTORIAL)
                         }
                     },
+                    // The password-change flow already logged the local
+                    // session out itself (see SettingsScreen's
+                    // ChangePasswordDialog) — this callback is nav-only.
+                    onPasswordChanged = { navController.navigateAsRoot(NovaDestinations.LOGIN) },
                 )
             }
         }

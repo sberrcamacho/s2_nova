@@ -1,10 +1,11 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
-import { Coins, Download, Globe, Key, Laptop2, Mail, MapPin, Moon, Phone, ShieldAlert, Sun, User, Users } from 'lucide-react'
+import { Coins, Download, Eye, EyeOff, Globe, Key, Laptop2, Lock, Mail, Moon, ShieldAlert, Sun, User, Users } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Switch } from '@/components/ui/Switch'
 import { Button } from '@/components/ui/Button'
 import { Avatar } from '@/components/ui/Avatar'
+import { Modal } from '@/components/ui/Modal'
 import { useAuth } from '@/state/AuthContext'
 import { useTheme } from '@/state/ThemeContext'
 import { useToast } from '@/state/ToastContext'
@@ -24,15 +25,12 @@ export default function SettingsPage() {
 
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(user?.name ?? '')
-  const [phone, setPhone] = useState(user?.phone ?? '')
-  const [city, setCity] = useState(user?.city ?? '')
   const [saving, setSaving] = useState(false)
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false)
 
   useEffect(() => {
     if (!user) return
     setName(user.name)
-    setPhone(user.phone)
-    setCity(user.city)
   }, [user?.id])
 
   if (!user) return null
@@ -40,11 +38,16 @@ export default function SettingsPage() {
   const onSave = async (e: FormEvent) => {
     e.preventDefault()
     setSaving(true)
-    await userService.updateProfile({ name, phone, city })
-    updateUser({ name, phone, city })
-    setSaving(false)
-    setEditing(false)
-    showToast(t('settings.profileUpdatedToast'), 'success')
+    try {
+      const updated = await userService.updateProfile({ name })
+      updateUser(updated)
+      setEditing(false)
+      showToast(t('settings.profileUpdatedToast'), 'success')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : t('settings.profileUpdatedToast'), 'error')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const toggleNotifications = async (checked: boolean) => {
@@ -64,9 +67,7 @@ export default function SettingsPage() {
           <Avatar initials={user.avatarInitials} size="lg" />
           <div className="min-w-0 flex-1">
             <p className="text-base font-extrabold text-ink">{user.name}</p>
-            <p className="text-[12.5px] text-ink-tertiary">
-              {user.email} · {user.city}
-            </p>
+            <p className="text-[12.5px] text-ink-tertiary">{user.email}</p>
             <p className="mt-1 text-[11.5px] text-ink-tertiary">
               {t('settings.memberSincePrefix')} {formatLongDate(user.memberSince, language)}
             </p>
@@ -83,8 +84,6 @@ export default function SettingsPage() {
           <form onSubmit={onSave} className="mt-5 grid grid-cols-1 gap-4 border-t border-border pt-5 sm:grid-cols-2">
             <Input label={t('settings.fullName')} leftIcon={<User className="h-4 w-4" />} value={name} onChange={(e) => setName(e.target.value)} />
             <Input label={t('settings.email')} leftIcon={<Mail className="h-4 w-4" />} value={user.email} disabled />
-            <Input label={t('settings.phone')} leftIcon={<Phone className="h-4 w-4" />} value={phone} onChange={(e) => setPhone(e.target.value)} />
-            <Input label={t('settings.city')} leftIcon={<MapPin className="h-4 w-4" />} value={city} onChange={(e) => setCity(e.target.value)} />
             <Button type="submit" loading={saving} className="sm:col-span-2 sm:w-fit">
               {t('settings.saveChanges')}
             </Button>
@@ -94,7 +93,7 @@ export default function SettingsPage() {
 
       <Card className="p-6">
         <h3 className="text-[15px] font-bold text-ink">{t('settings.preferences')}</h3>
-        <div className="mt-1 flex flex-col divide-y divide-[#16161f]">
+        <div className="mt-1 flex flex-col divide-y divide-border">
           <PreferenceRow icon={<Globe className="h-4 w-4" />} label={t('settings.language')}>
             <Segmented
               value={language}
@@ -148,13 +147,13 @@ export default function SettingsPage() {
 
       <Card className="p-6">
         <h3 className="text-[15px] font-bold text-ink">{t('settings.security')}</h3>
-        <div className="mt-1 flex flex-col divide-y divide-[#16161f]">
+        <div className="mt-1 flex flex-col divide-y divide-border">
           <SecurityRow
             icon={<Key className="h-4 w-4" />}
-            label={t('settings.password')}
-            detail={t('settings.passwordHint')}
+            label={user.hasPassword ? t('settings.password') : t('settings.createPasswordTitle')}
+            detail={user.hasPassword ? t('settings.passwordHint') : t('settings.createPasswordHint')}
             actionLabel={t('settings.change')}
-            onAction={() => showToast(t('common.comingSoon'), 'info')}
+            onAction={() => setPasswordModalOpen(true)}
           />
           <SecurityRow
             icon={<Users className="h-4 w-4" />}
@@ -178,9 +177,111 @@ export default function SettingsPage() {
             onAction={() => showToast(t('common.comingSoon'), 'info')}
           />
         </div>
-        <p className="mt-4 text-xs font-medium text-ink-tertiary">{t('settings.demoDataNote')}</p>
       </Card>
+
+      <ChangePasswordModal open={passwordModalOpen} onClose={() => setPasswordModalOpen(false)} hasPassword={user.hasPassword} />
     </div>
+  )
+}
+
+function ChangePasswordModal({ open, onClose, hasPassword }: { open: boolean; onClose: () => void; hasPassword: boolean }) {
+  const { t } = useTranslation()
+  const { showToast } = useToast()
+  const { logout } = useAuth()
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  const reset = () => {
+    setCurrentPassword('')
+    setNewPassword('')
+    setConfirmPassword('')
+    setError(null)
+  }
+
+  const onClose_ = () => {
+    reset()
+    onClose()
+  }
+
+  const onSubmit = async (e: FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    if (newPassword !== confirmPassword) {
+      setError(t('settings.passwordMismatch'))
+      return
+    }
+    setSaving(true)
+    try {
+      await userService.changePassword({
+        currentPassword: hasPassword ? currentPassword : undefined,
+        newPassword,
+      })
+      onClose_()
+      showToast(t('settings.passwordChangedToast'), 'success')
+      // The backend revokes every refresh token on a password change (see
+      // POST /me/password) — including this session's — so the client must
+      // sign out too rather than keep using a token the server will reject.
+      logout()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('settings.passwordChangedToast'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Modal open={open} onClose={onClose_} title={hasPassword ? t('settings.changePasswordTitle') : t('settings.createPasswordTitle')}>
+      <form onSubmit={onSubmit} className="flex flex-col gap-4">
+        {hasPassword && (
+          <Input
+            type={showPassword ? 'text' : 'password'}
+            label={t('settings.currentPassword')}
+            leftIcon={<Lock className="h-4 w-4" />}
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            autoComplete="current-password"
+            required
+          />
+        )}
+        <Input
+          type={showPassword ? 'text' : 'password'}
+          label={t('settings.newPassword')}
+          leftIcon={<Lock className="h-4 w-4" />}
+          rightIcon={
+            <button type="button" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}>
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          }
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          autoComplete="new-password"
+          minLength={6}
+          required
+        />
+        <Input
+          type={showPassword ? 'text' : 'password'}
+          label={t('settings.confirmNewPassword')}
+          leftIcon={<Lock className="h-4 w-4" />}
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          autoComplete="new-password"
+          minLength={6}
+          required
+        />
+        {error && (
+          <p role="alert" className="text-xs font-medium text-negative">
+            {error}
+          </p>
+        )}
+        <Button type="submit" loading={saving} fullWidth>
+          {t('settings.change')}
+        </Button>
+      </form>
+    </Modal>
   )
 }
 

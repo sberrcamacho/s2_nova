@@ -8,10 +8,20 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
-private val apiBaseUrl: String = Properties().apply {
+private val localProperties = Properties().apply {
     val localPropertiesFile = rootProject.file("local.properties")
     if (localPropertiesFile.exists()) FileInputStream(localPropertiesFile).use { load(it) }
-}.getProperty("API_BASE_URL", "http://10.0.2.2:3000/api/v1")
+}
+private val apiBaseUrl: String = localProperties.getProperty("API_BASE_URL", "http://10.0.2.2:3000/api/v1")
+
+// Google Cloud Console "Web application" OAuth client ID — Credential
+// Manager's Sign-In-with-Google flow always issues its ID token audienced
+// to the *Web* client, even when called from Android (a separate
+// Android-type OAuth client, registered with this app's package name +
+// signing SHA-1, is what authorizes this app to call Sign-In at all; see
+// ARCHITECTURE.md's Google Sign-In section). Empty by default — Google
+// Sign-In is simply not offered until this is set in local.properties.
+private val googleWebClientId: String = localProperties.getProperty("GOOGLE_WEB_CLIENT_ID", "")
 
 android {
     namespace = "com.s2nova.app"
@@ -29,6 +39,7 @@ android {
         // Override by adding API_BASE_URL=... to local.properties (gitignored)
         // once a deployed backend exists.
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
+        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleWebClientId\"")
     }
 
     buildTypes {
@@ -78,6 +89,9 @@ dependencies {
     implementation(libs.mlkit.barcode.scanning)
 
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
     implementation(libs.retrofit.core)
     implementation(libs.retrofit.converter.kotlinx.serialization)
     implementation(libs.okhttp.logging.interceptor)

@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { apiClient } from '@/lib/apiClient'
+import { resetCategoryCache } from '@/lib/backendCategories'
 import { authService } from '@/services/authService'
-import { mockUser } from '@/data/user'
+import { userService } from '@/services/userService'
 import type { AuthCredentials, RegisterInput, User } from '@/types'
 
 interface AuthContextValue {
@@ -11,13 +13,13 @@ interface AuthContextValue {
   error: string | null
   login: (credentials: AuthCredentials) => Promise<boolean>
   register: (input: RegisterInput) => Promise<boolean>
+  loginWithGoogle: (idToken: string) => Promise<boolean>
   logout: () => void
   clearError: () => void
   updateUser: (patch: Partial<User>) => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
-const STORAGE_KEY = 's2nova.session'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
@@ -26,30 +28,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // The web dashboard has no login screen of its own — it's a single-user
-    // demo, so fall back to the mock account instead of leaving `user` null.
-    const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (raw) {
+    // Silent session restore: the refresh token lives in an httpOnly
+    // cookie (never in JS), so on a fresh page load the only way to know
+    // whether a session still exists is to ask the backend for a new
+    // access token with it.
+    let cancelled = false
+    ;(async () => {
       try {
-        setUser(JSON.parse(raw))
+        const response = await apiClient.post<{ accessToken: string }>('/auth/refresh', undefined, { skipAuthRetry: true })
+        apiClient.setAccessToken(response.accessToken)
+        const me = await userService.getCurrentUser()
+        if (!cancelled) setUser(me)
       } catch {
-        window.localStorage.removeItem(STORAGE_KEY)
-        setUser(mockUser)
+        if (!cancelled) setUser(null)
+      } finally {
+        if (!cancelled) setIsInitializing(false)
       }
-    } else {
-      setUser(mockUser)
+    })()
+    return () => {
+      cancelled = true
     }
-    setIsInitializing(false)
   }, [])
-
-  const persist = (nextUser: User | null) => {
-    setUser(nextUser)
-    if (nextUser) {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextUser))
-    } else {
-      window.localStorage.removeItem(STORAGE_KEY)
-    }
-  }
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -63,8 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsSubmitting(true)
         setError(null)
         try {
-          const loggedInUser = await authService.login(credentials)
-          persist(loggedInUser)
+          setUser(await authService.login(credentials))
           return true
         } catch (err) {
           setError(err instanceof Error ? err.message : 'No pudimos iniciar sesión.')
@@ -77,8 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsSubmitting(true)
         setError(null)
         try {
-          const newUser = await authService.register(input)
-          persist(newUser)
+          setUser(await authService.register(input))
           return true
         } catch (err) {
           setError(err instanceof Error ? err.message : 'No pudimos crear tu cuenta.')
@@ -87,16 +84,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsSubmitting(false)
         }
       },
-      // No real session to end (single-user demo, no login screen in the web
-      // app) — re-hydrate the mock account so the UI never lands on a null user.
-      logout: () => persist(mockUser),
+      loginWithGoogle: async (idToken) => {
+        setIsSubmitting(true)
+        setError(null)
+        try {
+          setUser(await authService.loginWithGoogle(idToken))
+          return true
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'No pudimos iniciar sesión con Google.')
+          return false
+        } finally {
+          setIsSubmitting(false)
+        }
+      },
+      logout: () => {
+        void authService.logout()
+        apiClient.setAccessToken(null)
+        resetCategoryCache()
+        setUser(null)
+      },
       updateUser: (patch) => {
-        setUser((prev) => {
-          if (!prev) return prev
-          const next = { ...prev, ...patch }
-          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
-          return next
-        })
+        setUser((prev) => (prev ? { ...prev, ...patch } : prev))
       },
     }),
     [user, isInitializing, isSubmitting, error],

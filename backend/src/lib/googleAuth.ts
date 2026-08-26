@@ -1,7 +1,10 @@
 import { OAuth2Client } from "google-auth-library";
 import { env } from "../env.js";
 
-const client = env.GOOGLE_CLIENT_ID ? new OAuth2Client(env.GOOGLE_CLIENT_ID) : null;
+// Web and Android each register their own OAuth client ID in Google Cloud
+// Console, so a token from either must verify — `verifyIdToken` accepts an
+// array of acceptable audiences for exactly this multi-client case.
+const client = env.GOOGLE_CLIENT_IDS.length > 0 ? new OAuth2Client() : null;
 
 export interface GoogleIdentity {
   sub: string;
@@ -10,7 +13,7 @@ export interface GoogleIdentity {
   name: string;
 }
 
-// Thrown when GOOGLE_CLIENT_ID isn't set — lets the route return 501
+// Thrown when GOOGLE_CLIENT_IDS is empty — lets the route return 501
 // instead of a misleading "invalid token" for an unconfigured server.
 export class GoogleNotConfiguredError extends Error {
   constructor() {
@@ -23,7 +26,7 @@ export async function verifyGoogleIdToken(idToken: string): Promise<GoogleIdenti
     throw new GoogleNotConfiguredError();
   }
 
-  const ticket = await client.verifyIdToken({ idToken, audience: env.GOOGLE_CLIENT_ID });
+  const ticket = await client.verifyIdToken({ idToken, audience: env.GOOGLE_CLIENT_IDS });
   const payload = ticket.getPayload();
 
   if (!payload?.sub || !payload.email) {

@@ -16,6 +16,9 @@ data class LoginRequest(val email: String, val password: String)
 data class RefreshRequest(val refreshToken: String? = null)
 
 @Serializable
+data class GoogleLoginRequest(val idToken: String)
+
+@Serializable
 data class UserDto(val id: String, val name: String, val email: String)
 
 @Serializable
@@ -38,6 +41,7 @@ data class MeResponse(
     val name: String,
     val email: String,
     val createdAt: String,
+    val hasPassword: Boolean = false,
     val preferences: MePreferencesDto? = null,
 )
 
@@ -50,6 +54,27 @@ data class UpdatePreferencesRequest(
     val biometricLogin: Boolean? = null,
     val onboardingCompleted: Boolean? = null,
     val tutorialCompleted: Boolean? = null,
+)
+
+// The account model is deliberately minimal — name, email, password/Google
+// login only (see ARCHITECTURE.md's account-fields decision). Editing name
+// or email requires currentPassword (see backend/src/routes/me.ts) except
+// for a Google-only user renaming themselves, who has no password to prove
+// yet.
+@Serializable
+data class UpdateProfileRequest(
+    val name: String? = null,
+    val email: String? = null,
+    val currentPassword: String? = null,
+)
+
+// currentPassword is omitted (null) only when the user has no PASSWORD
+// identity yet (Google-only account setting a password for the first
+// time) — see backend/src/routes/me.ts's POST /me/password.
+@Serializable
+data class ChangePasswordRequest(
+    val currentPassword: String? = null,
+    val newPassword: String,
 )
 
 @Serializable
