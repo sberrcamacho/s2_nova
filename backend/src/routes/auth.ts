@@ -59,10 +59,21 @@ export async function authRoutes(app: FastifyInstance) {
     });
 
     if (web) {
+      // Web (GitHub Pages) and the API (Render) are different registrable
+      // domains in production, so this is a genuinely cross-site cookie —
+      // SameSite=Lax is silently dropped by browsers on cross-site fetch()
+      // calls (it only survives top-level navigations), which is why a
+      // page reload was landing back on /login instead of restoring the
+      // session. SameSite=None (paired with Secure, which browsers
+      // require for None) fixes that. Local dev keeps Lax since
+      // localhost:8443 and localhost:3000 are same-site (same registrable
+      // domain, different port) and don't need it — also, None without
+      // Secure would be rejected by the browser over plain http://.
+      const crossSite = env.NODE_ENV === "production";
       reply.setCookie(REFRESH_COOKIE, refreshToken, {
         httpOnly: true,
-        secure: env.NODE_ENV === "production",
-        sameSite: "lax",
+        secure: crossSite,
+        sameSite: crossSite ? "none" : "lax",
         path: COOKIE_PATH,
         expires: expiresAt,
       });
