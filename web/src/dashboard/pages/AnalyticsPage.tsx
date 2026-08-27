@@ -240,7 +240,7 @@ function IncomeTab({ range }: { range: AnalyticsRange }) {
               ))}
             </div>
             {hasFreelance && (
-              <p className="mt-4 border-t border-[#16161f] pt-4 text-xs text-ink-tertiary">{t('analytics.freelanceNote')}</p>
+              <p className="mt-4 border-t border-border pt-4 text-xs text-ink-tertiary">{t('analytics.freelanceNote')}</p>
             )}
           </>
         )}
@@ -251,7 +251,7 @@ function IncomeTab({ range }: { range: AnalyticsRange }) {
           data={history.map((m) => ({ month: m.label, [incomeLabel]: m.income }))}
           xKey="month"
           series={[{ key: incomeLabel, label: incomeLabel, color: 'var(--color-positive)' }]}
-          colorForIndex={(i) => (i === history.length - 1 ? 'var(--color-positive)' : 'rgba(50,201,138,.28)')}
+          colorForIndex={(i) => (i === history.length - 1 ? 'var(--color-positive)' : 'var(--chart-positive-soft)')}
         />
       </ChartCard>
     </div>
@@ -328,7 +328,7 @@ function CashFlowTab() {
         </div>
 
         {upcoming.length > 0 && (
-          <p className="mt-4 border-t border-[#16161f] pt-3 text-xs font-semibold text-warning">
+          <p className="mt-4 border-t border-border pt-3 text-xs font-semibold text-warning">
             {t('analytics.cashFlow.lowestProjected')} {format(lowestProjected)}
           </p>
         )}
@@ -410,7 +410,7 @@ const TONE_VALUE_CLASS = { primary: 'text-ink', positive: 'text-positive', negat
 function StatTile({ label, value, tone }: { label: string; value: string; tone?: 'primary' | 'positive' | 'negative' }) {
   if (tone) {
     return (
-      <Card className={cn('p-5', tone === 'primary' ? 'border-[#35305c] bg-gradient-to-br from-accent-soft/60 to-surface' : undefined)}>
+      <Card className={cn('p-5', tone === 'primary' ? 'border-border-accent bg-gradient-to-br from-accent-soft/60 to-surface' : undefined)}>
         <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-ink-tertiary">{label}</p>
         <p className={cn('font-numeric mt-2 text-2xl font-extrabold', TONE_VALUE_CLASS[tone])}>{value}</p>
       </Card>

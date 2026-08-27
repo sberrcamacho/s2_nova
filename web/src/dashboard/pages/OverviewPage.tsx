@@ -37,7 +37,7 @@ const HEALTH_DOT: Record<FinancialHealthCategory['tone'], string> = {
   positive: 'bg-positive',
   warning: 'bg-warning',
   negative: 'bg-negative',
-  neutral: 'bg-[#3a3a4a]',
+  neutral: 'bg-border-strong',
 }
 
 const INSIGHT_ACCENT: Record<Insight['tone'], string> = {
@@ -92,46 +92,61 @@ export default function OverviewPage() {
       {/* Hero row */}
       <div className="grid grid-cols-1 gap-[18px] xl:grid-cols-[1.35fr_1fr]">
         <div
-          className="relative overflow-hidden rounded-[20px] border border-border-strong p-[26px_20px] sm:p-[26px_28px]"
-          style={{ background: 'linear-gradient(150deg, var(--color-bg) 0%, var(--hero-from) 55%, var(--hero-to) 100%)' }}
+          className="relative overflow-hidden rounded-[20px] p-[26px_20px] sm:p-[26px_28px]"
+          style={{
+            border: '1px solid var(--hero-border)',
+            background: 'linear-gradient(150deg, var(--hero-from) 0%, var(--hero-mid) 55%, var(--hero-to) 100%)',
+          }}
         >
           <div
             className="pointer-events-none absolute -right-10 -top-[70px] h-[220px] w-[220px] rounded-full"
-            style={{ background: 'var(--hero-glow)', filter: 'blur(52px)' }}
+            style={{ background: 'rgba(123,111,246,.35)', filter: 'blur(52px)' }}
           />
           <div className="relative">
-            <p className="text-[10.5px] font-bold uppercase tracking-[0.1em] text-highlight">{t('overview.balance')}</p>
+            <p className="text-[10.5px] font-bold uppercase tracking-[0.11em]" style={{ color: '#b9b0ff' }}>
+              {t('overview.balance')}
+            </p>
             <p
               className={cn(
-                'font-numeric mt-2 text-[clamp(32px,5vw,48px)] font-extrabold leading-none tracking-[-0.03em] text-white transition-[filter] duration-150',
+                'font-numeric mt-2.5 text-[clamp(32px,5vw,48px)] font-extrabold leading-none tracking-[-0.03em] text-white transition-[filter] duration-150',
                 hideAmounts && 'blur-md hover:blur-none focus:blur-none',
               )}
               tabIndex={hideAmounts ? 0 : undefined}
             >
               {format(balance)}
             </p>
-            <div className="mt-3 flex items-center gap-2.5">
-              <Badge tone={netThisMonth >= 0 ? 'positive' : 'negative'}>{format(netThisMonth, { signed: true })}</Badge>
-              <span className="text-xs font-medium text-white/60">{t('overview.netThisMonth')}</span>
+            <div className="mt-3 flex items-center gap-2">
+              <span
+                className="inline-flex items-center gap-1 rounded-full px-[9px] py-1 text-[11.5px] font-extrabold"
+                style={{
+                  background: 'rgba(255,255,255,.14)',
+                  color: netThisMonth >= 0 ? '#7cf0bb' : '#ffb0b0',
+                }}
+              >
+                {format(netThisMonth, { signed: true })}
+              </span>
+              <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,.75)' }}>
+                {t('overview.netThisMonth')}
+              </span>
             </div>
 
-            <div className="mt-6 flex h-[66px] items-end gap-[5px]">
+            <div className="mt-[26px] flex h-[66px] items-end gap-[5px]">
               {history.map((m, i) => {
                 const isLast = i === history.length - 1
                 const height = Math.max(6, Math.round((Math.abs(m.savings) / maxAbsSavings) * 66))
-                const tier = i < 2 ? 0.22 : i < 4 ? 0.3 : isLast ? 1 : 0.38
+                const tier = i < 3 ? 0.22 : i < 5 ? 0.3 : isLast ? 1 : 0.38
                 return (
                   <div
                     key={m.month}
-                    className="flex-1 rounded-t-[3px]"
+                    className="flex-1 rounded-[3px]"
                     style={{ height, backgroundColor: isLast ? '#8578ff' : `rgba(165,157,255,${tier})` }}
                   />
                 )
               })}
             </div>
-            <div className="mt-1.5 flex justify-between">
+            <div className="mt-2 flex justify-between">
               {history.map((m) => (
-                <span key={m.month} className="text-[10px] text-white/45">
+                <span key={m.month} className="text-[10px]" style={{ color: 'rgba(255,255,255,.55)' }}>
                   {m.label}
                 </span>
               ))}
@@ -162,7 +177,7 @@ export default function OverviewPage() {
           </h3>
           <p className="mt-0.5 text-xs font-medium text-ink-tertiary">{t('overview.financialHealthSubtitle')}</p>
           {health && (
-            <div className="mt-3 flex flex-col divide-y divide-[#16161f]/60">
+            <div className="mt-3 flex flex-col divide-y divide-border">
               {health.categories.map((c) => (
                 <div key={c.key} className="flex items-center gap-2.5 py-[11px] first:pt-0 last:pb-0">
                   <span className={cn('h-[7px] w-[7px] shrink-0 rounded-full', HEALTH_DOT[c.tone])} />

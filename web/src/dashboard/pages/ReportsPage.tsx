@@ -110,7 +110,7 @@ export default function ReportsPage() {
               <span className="text-right">{monthNameLabel(prevMonthKey, language)}</span>
               <span className="text-right">{t('reports.colChange')}</span>
             </div>
-            <div className="flex flex-col divide-y divide-[#16161f]">
+            <div className="flex flex-col divide-y divide-border">
               {rows.map((row) => {
                 const delta = row.isPct ? row.curr - row.prev : pctChange(row.curr, row.prev)
                 const tone = metricTone(row.key, delta)
@@ -140,7 +140,7 @@ export default function ReportsPage() {
             xKey="day"
             height={220}
             series={[{ key: expensesLabel, label: expensesLabel, color: 'var(--color-primary-secondary)' }]}
-            colorForIndex={(i) => (i === peakDayIndex ? 'var(--color-primary-secondary)' : 'rgba(165,157,255,.28)')}
+            colorForIndex={(i) => (i === peakDayIndex ? 'var(--color-primary-secondary)' : 'var(--chart-primary-soft)')}
           />
         </ChartCard>
 
