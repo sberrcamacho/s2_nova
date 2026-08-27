@@ -23,6 +23,7 @@ fun TransactionRow(
     transaction: Transaction,
     modifier: Modifier = Modifier,
     showDate: Boolean = true,
+    subtitleOverride: String? = null,
     onClick: (() -> Unit)? = null,
 ) {
     val category = categoryMap[transaction.category]
@@ -33,7 +34,7 @@ fun TransactionRow(
             .let { if (onClick != null) it.clickable(onClick = onClick) else it }
             .padding(horizontal = 4.dp, vertical = 10.dp),
     ) {
-        CategoryIcon(category = transaction.category)
+        CategoryIcon(category = transaction.category, size = CategoryIconSize.ROW)
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -46,7 +47,7 @@ fun TransactionRow(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            val subtitle = buildString {
+            val subtitle = subtitleOverride ?: buildString {
                 append(transaction.merchant ?: category?.let { t(categoryStringKey(it.id)) } ?: "")
                 if (showDate) {
                     if (isNotEmpty()) append(" · ")

@@ -15,7 +15,7 @@ Open `android/` as the project root in Android Studio, or from the CLI:
 ```
 
 Requires an Android SDK (`local.properties` → `sdk.dir`, gitignored — create
-it if missing) with `compileSdk 36` / `minSdk 26` platforms installed.
+it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
 
 ## Project structure
 

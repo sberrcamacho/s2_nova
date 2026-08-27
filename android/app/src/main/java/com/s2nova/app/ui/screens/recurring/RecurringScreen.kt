@@ -3,7 +3,6 @@ package com.s2nova.app.ui.screens.recurring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -39,7 +37,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -107,12 +104,7 @@ fun RecurringScreen(onBack: () -> Unit) {
                     NovaCard(modifier = Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier.size(40.dp).clip(CircleShape).background(colors.heroFrom),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Icon(Icons.Filled.Repeat, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
-                                }
+                                com.s2nova.app.ui.components.CategoryIcon(category = item.category, size = com.s2nova.app.ui.components.CategoryIconSize.ROW)
                                 Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
                                     Text(item.name, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
                                     Text(

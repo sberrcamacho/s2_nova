@@ -1,13 +1,22 @@
 package com.s2nova.app.ui.components
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.s2nova.app.data.model.TransactionType
@@ -25,6 +34,28 @@ fun AmountText(amount: Double, type: TransactionType, modifier: Modifier = Modif
         style = MaterialTheme.typography.titleSmall,
         modifier = modifier,
     )
+}
+
+// Track 42x24, knob 18dp white — Material3's stock Switch can't be sized to
+// match the mockup exactly, so this is a small purpose-built replacement.
+@Composable
+fun NovaSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit, modifier: Modifier = Modifier) {
+    val trackColor = if (checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+    val offset by animateDpAsState(targetValue = if (checked) 21.dp else 3.dp, animationSpec = tween(150), label = "switchKnob")
+    Box(
+        modifier = modifier
+            .size(width = 42.dp, height = 24.dp)
+            .clip(RoundedCornerShape(50))
+            .background(trackColor)
+            .clickable { onCheckedChange(!checked) },
+    ) {
+        Box(
+            modifier = Modifier
+                .offset(x = offset, y = 3.dp)
+                .size(18.dp)
+                .background(Color.White, CircleShape),
+        )
+    }
 }
 
 enum class BadgeTone { PRIMARY, POSITIVE, NEGATIVE, WARNING, NEUTRAL }

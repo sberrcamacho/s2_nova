@@ -47,6 +47,13 @@ val OnPrimary = Color(0xFFFFFFFF)
 val HeroFrom = Color(0xFF16123A)
 val HeroTo = Color(0xFF241A5E)
 
+// Home balance hero card border — identical in both themes.
+val HeroBorder = Color(0xFF2B2450)
+
+// Budget card border once a budget crosses 90% utilization.
+val LightNegativeBorder = Color(0xFFF0D2D2)
+val DarkNegativeBorder = Color(0xFF3A2029)
+
 // Permanently-dark surfaces (bottom nav, scanner, sidebar-equivalent chrome)
 // independent of the light/dark app theme — matches the web sidebar.
 val ScanSurface = Color(0xFF000000)

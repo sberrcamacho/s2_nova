@@ -35,7 +35,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -55,6 +54,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
 import com.s2nova.app.data.mock.categoryMap
@@ -70,6 +70,7 @@ import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.categoryStringKey
 import com.s2nova.app.ui.components.CategoryIcon
 import com.s2nova.app.ui.components.CategoryIconSize
+import com.s2nova.app.ui.components.NovaSwitch
 import com.s2nova.app.ui.components.NovaTopBar
 import com.s2nova.app.ui.components.iconFor
 import com.s2nova.app.ui.rememberStrings
@@ -183,7 +184,7 @@ fun AddTransactionScreen(
                                     label,
                                     style = MaterialTheme.typography.labelLarge,
                                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (selected) hero.heroTo else Color.White.copy(alpha = 0.75f),
+                                    color = if (selected) Color(0xFF211A4D) else Color.White.copy(alpha = 0.75f),
                                     maxLines = 1,
                                 )
                             }
@@ -215,11 +216,11 @@ fun AddTransactionScreen(
                             OutlinedTextField(
                                 value = amountText,
                                 onValueChange = { amountText = it.filter { c -> c.isDigit() } },
-                                leadingIcon = { Text("$", fontWeight = FontWeight.Bold, color = Color.White, style = MaterialTheme.typography.headlineSmall) },
+                                leadingIcon = { Text("$", fontWeight = FontWeight.Bold, color = Color.White, style = MaterialTheme.typography.headlineSmall.copy(fontSize = 20.sp)) },
                                 placeholder = { Text("0", color = Color.White.copy(alpha = 0.4f)) },
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                textStyle = MaterialTheme.typography.headlineSmall.copy(color = Color.White),
+                                textStyle = MaterialTheme.typography.headlineSmall.copy(color = Color.White, fontSize = 20.sp),
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedContainerColor = Color.Transparent,
                                     unfocusedContainerColor = Color.Transparent,
@@ -411,6 +412,7 @@ fun AddTransactionScreen(
                 },
                 enabled = !saving,
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp),
                 shape = RoundedCornerShape(14.dp),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -430,7 +432,7 @@ fun AddTransactionScreen(
             Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
                 Text(
                     t(StringKey.ADD_TXN_SELECT_CATEGORY_TITLE),
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 15.sp),
                     color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.padding(bottom = 18.dp),
                 )
@@ -496,7 +498,7 @@ private fun ToggleRow(title: String, subtitle: String, checked: Boolean, onCheck
             Text(title, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onBackground)
             Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        NovaSwitch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 
@@ -510,7 +512,7 @@ private fun SelectChip(label: String, selected: Boolean, onClick: () -> Unit) {
         modifier = Modifier
             .clip(RoundedCornerShape(50))
             .background(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
-            .border(BorderStroke(1.dp, if (selected) Color.Transparent else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)), RoundedCornerShape(50))
+            .border(BorderStroke(1.dp, if (selected) Color.Transparent else MaterialTheme.colorScheme.outlineVariant), RoundedCornerShape(50))
             .selectable(selected = selected, onClick = onClick, role = androidx.compose.ui.semantics.Role.RadioButton)
             .padding(horizontal = 14.dp, vertical = 10.dp),
     )
@@ -524,6 +526,7 @@ private fun CategoryGridItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val categoryColor = categoryMap[categoryId]?.color?.let { Color(it) } ?: MaterialTheme.colorScheme.primary
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier.selectable(selected = selected, onClick = onClick, role = androidx.compose.ui.semantics.Role.RadioButton),
@@ -531,13 +534,13 @@ private fun CategoryGridItem(
         Box(
             modifier = if (selected) {
                 Modifier
-                    .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                    .border(2.dp, categoryColor, CircleShape)
                     .padding(3.dp)
             } else {
                 Modifier.padding(3.dp)
             },
         ) {
-            CategoryIcon(category = categoryId, size = CategoryIconSize.LG)
+            CategoryIcon(category = categoryId, size = CategoryIconSize.GRID, fillAlpha = if (selected) 0.24f else 0.16f)
         }
         Text(
             label,

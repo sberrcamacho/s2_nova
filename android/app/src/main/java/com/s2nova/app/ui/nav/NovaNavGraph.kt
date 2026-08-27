@@ -150,6 +150,13 @@ fun NovaApp() {
                     onOpenNotifications = { navController.navigate(NovaDestinations.NOTIFICATIONS) },
                     onOpenProfile = { navController.navigate(NovaDestinations.PROFILE) },
                     onOpenTransactions = { navController.navigate(NovaDestinations.TRANSACTIONS) },
+                    onOpenBudgets = {
+                        navController.navigate(NovaDestinations.BUDGETS) {
+                            popUpTo(NovaDestinations.HOME) { inclusive = false }
+                            launchSingleTop = true
+                        }
+                    },
+                    onOpenRecurring = { navController.navigate(NovaDestinations.RECURRING) },
                 )
             }
             composable(NovaDestinations.TRANSACTIONS) {

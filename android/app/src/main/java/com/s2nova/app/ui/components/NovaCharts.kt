@@ -65,6 +65,38 @@ fun NovaDonutChart(
     }
 }
 
+// Single-value ring (Goals tab) — same hand-rolled Canvas approach as
+// NovaDonutChart, but one arc + a centered percentage label.
+@Composable
+fun NovaProgressRing(
+    percentage: Int,
+    color: Color,
+    modifier: Modifier = Modifier,
+    diameter: Dp = 62.dp,
+    strokeWidth: Dp = 6.dp,
+    trackColor: Color = color.copy(alpha = 0.18f),
+    centerLabel: String? = null,
+) {
+    Box(modifier = modifier.size(diameter), contentAlignment = Alignment.Center) {
+        Canvas(modifier = Modifier.size(diameter)) {
+            val stroke = Stroke(width = strokeWidth.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
+            val inset = strokeWidth.toPx() / 2
+            val arcSize = Size(size.width - strokeWidth.toPx(), size.height - strokeWidth.toPx())
+            drawArc(color = trackColor, startAngle = -90f, sweepAngle = 360f, useCenter = false, topLeft = Offset(inset, inset), size = arcSize, style = stroke)
+            val sweep = (percentage.coerceIn(0, 100) / 100f) * 360f
+            drawArc(color = color, startAngle = -90f, sweepAngle = sweep, useCenter = false, topLeft = Offset(inset, inset), size = arcSize, style = stroke)
+        }
+        if (centerLabel != null) {
+            Text(
+                centerLabel,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+            )
+        }
+    }
+}
+
 @Composable
 fun NovaSparkline(
     points: List<Float>,
@@ -108,6 +140,7 @@ fun NovaBarPair(
     positiveColor: Color,
     negativeColor: Color,
     modifier: Modifier = Modifier,
+    maxBarHeight: Dp = 80.dp,
 ) {
     androidx.compose.foundation.layout.Column(
         modifier = modifier,
@@ -119,12 +152,12 @@ fun NovaBarPair(
         ) {
             Box(
                 modifier = Modifier
-                    .size(width = 10.dp, height = (80 * (income / maxValue).coerceIn(0f, 1f)).dp)
+                    .size(width = 10.dp, height = maxBarHeight * (income / maxValue).coerceIn(0f, 1f))
                     .background(positiveColor, androidx.compose.foundation.shape.RoundedCornerShape(3.dp)),
             )
             Box(
                 modifier = Modifier
-                    .size(width = 10.dp, height = (80 * (expense / maxValue).coerceIn(0f, 1f)).dp)
+                    .size(width = 10.dp, height = maxBarHeight * (expense / maxValue).coerceIn(0f, 1f))
                     .background(negativeColor, androidx.compose.foundation.shape.RoundedCornerShape(3.dp)),
             )
         }

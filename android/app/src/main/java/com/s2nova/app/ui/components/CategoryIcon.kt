@@ -45,12 +45,16 @@ fun iconFor(category: CategoryId): ImageVector = when (category) {
 
 val ScanIcon = Icons.Filled.ShoppingCart
 
-enum class CategoryIconSize(val box: Int, val icon: Int) { SM(32, 15), MD(40, 18), LG(48, 20) }
+enum class CategoryIconSize(val box: Int, val icon: Int) {
+    SM(32, 15), MD(40, 18), LG(48, 20),
+    ROW(38, 17), GRID(52, 24),
+}
 
 @Composable
 fun CategoryIcon(
     category: CategoryId,
     size: CategoryIconSize = CategoryIconSize.MD,
+    fillAlpha: Float = 0.13f,
     modifier: Modifier = Modifier,
 ) {
     val meta = categoryMap[category]
@@ -59,7 +63,7 @@ fun CategoryIcon(
     Box(
         modifier = modifier
             .size(size.box.dp)
-            .background(color.copy(alpha = 0.13f), CircleShape),
+            .background(color.copy(alpha = fillAlpha), CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         Icon(

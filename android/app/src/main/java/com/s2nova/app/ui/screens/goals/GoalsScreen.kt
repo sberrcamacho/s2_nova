@@ -14,7 +14,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -37,7 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
 import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.components.NovaCard
-import com.s2nova.app.ui.components.NovaProgressBar
+import com.s2nova.app.ui.components.NovaProgressRing
 import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
 import kotlinx.coroutines.launch
@@ -83,26 +82,29 @@ fun GoalsTab(onContribute: (String) -> Unit) {
         items(goals) { goal ->
             NovaCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                        Icon(Icons.Filled.Flag, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                        Text(
-                            goal.name,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier.weight(1f).padding(start = 10.dp),
-                        )
-                    }
-                    Spacer(Modifier.height(10.dp))
-                    Row {
-                        Text(format(goal.currentAmount), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.ExtraBold)
-                        Text(" / ${format(goal.targetAmount)}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Spacer(Modifier.height(8.dp))
                     val percentage = if (goal.targetAmount > 0) ((goal.currentAmount / goal.targetAmount) * 100).toInt().coerceIn(0, 100) else 0
-                    NovaProgressBar(percentage = percentage, color = MaterialTheme.colorScheme.primary)
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = { onContribute(goal.id) }) { Text(t(StringKey.GOALS_CONTRIBUTE)) }
+                    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        NovaProgressRing(
+                            percentage = percentage,
+                            color = MaterialTheme.colorScheme.primary,
+                            centerLabel = "$percentage%",
+                        )
+                        Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
+                            Text(goal.name, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
+                            Row(modifier = Modifier.padding(top = 4.dp)) {
+                                Text(format(goal.currentAmount), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.ExtraBold)
+                                Text(" / ${format(goal.targetAmount)}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            if (goal.targetDate != null) {
+                                Text(goal.targetDate, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
+                            }
+                        }
                     }
+                    Button(
+                        onClick = { onContribute(goal.id) },
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(50),
+                        modifier = Modifier.fillMaxWidth().padding(top = 14.dp),
+                    ) { Text(t(StringKey.GOALS_CONTRIBUTE)) }
                 }
             }
         }

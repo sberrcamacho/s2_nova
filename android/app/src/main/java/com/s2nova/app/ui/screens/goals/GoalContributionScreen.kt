@@ -231,7 +231,7 @@ private fun GoalContributionChip(label: String, selected: Boolean, onClick: () -
         modifier = Modifier
             .clip(RoundedCornerShape(50))
             .background(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
-            .border(BorderStroke(1.dp, if (selected) Color.Transparent else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)), RoundedCornerShape(50))
+            .border(BorderStroke(1.dp, if (selected) Color.Transparent else MaterialTheme.colorScheme.outlineVariant), RoundedCornerShape(50))
             .selectable(selected = selected, onClick = onClick, role = androidx.compose.ui.semantics.Role.RadioButton)
             .padding(horizontal = 14.dp, vertical = 10.dp),
     )

@@ -21,6 +21,8 @@ data class NovaExtraColors(
     val warningSoft: Color,
     val heroFrom: Color,
     val heroTo: Color,
+    val heroBorder: Color,
+    val negativeBorder: Color,
     val navyPanel: Color,
     val scanSurface: Color,
 )
@@ -34,6 +36,8 @@ private val LightExtraColors = NovaExtraColors(
     warningSoft = LightWarning.copy(alpha = 0.12f),
     heroFrom = HeroFrom,
     heroTo = HeroTo,
+    heroBorder = HeroBorder,
+    negativeBorder = LightNegativeBorder,
     navyPanel = NavyPanel,
     scanSurface = Color(0xFF0B0B12),
 )
@@ -47,6 +51,8 @@ private val DarkExtraColors = NovaExtraColors(
     warningSoft = DarkWarning.copy(alpha = 0.14f),
     heroFrom = DarkBg,
     heroTo = Color(0xFF211A4D),
+    heroBorder = HeroBorder,
+    negativeBorder = DarkNegativeBorder,
     navyPanel = NavyPanel,
     scanSurface = ScanSurface,
 )

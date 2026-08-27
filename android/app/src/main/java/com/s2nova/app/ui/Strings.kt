@@ -52,14 +52,15 @@ enum class StringKey {
 
     HOME_GREETING, HOME_BALANCE, HOME_INCOME, HOME_EXPENSES, HOME_SAVINGS,
     HOME_EXPENSE_SUMMARY, HOME_NO_EXPENSES, HOME_RECENT_TXNS, HOME_SEE_ALL,
+    HOME_UPCOMING_PAYMENTS, HOME_WALLET_COUNT_SUFFIX,
 
     NOTIF_MARK_ALL_READ, NOTIF_EMPTY,
 
-    REPORTS_RANGE_WEEK, REPORTS_RANGE_MONTH, REPORTS_RANGE_YEAR, REPORTS_TOTAL_SPENT,
-    REPORTS_AVG_DAILY, REPORTS_HIGHEST_MONTH, REPORTS_SAVINGS_RATE, REPORTS_PERIOD,
-    REPORTS_TOP_SPENDING,
+    REPORTS_RANGE_3M, REPORTS_RANGE_6M, REPORTS_RANGE_12M,
+    REPORTS_SAVINGS_RATE,
+    REPORTS_PERIOD_TOTALS, REPORTS_INCOME_VS_EXPENSES, REPORTS_SPEND_BY_CATEGORY,
 
-    TXN_LIST_SEARCH_PLACEHOLDER, TXN_LIST_FILTER_ALL, TXN_LIST_EMPTY_TITLE, TXN_LIST_EMPTY_SUBTITLE,
+    TXN_LIST_SEARCH_PLACEHOLDER, TXN_LIST_FILTER_ALL, TXN_LIST_FILTER_PENDING, TXN_LIST_EMPTY_TITLE, TXN_LIST_EMPTY_SUBTITLE,
 
     TXN_DETAIL_TITLE, TXN_DETAIL_EDIT_CD, TXN_DETAIL_NOT_FOUND, TXN_DETAIL_DATE,
     TXN_DETAIL_MERCHANT, TXN_DETAIL_NOTE, TXN_DETAIL_DELETE, TXN_DETAIL_DELETE_DIALOG_TITLE,
@@ -79,7 +80,7 @@ enum class StringKey {
     RECURRENCE_WEEKLY, RECURRENCE_MONTHLY, RECURRENCE_YEARLY,
 
     WALLETS_TITLE, WALLETS_NEW, WALLETS_NAME, WALLETS_TYPE, WALLETS_INITIAL_BALANCE,
-    WALLETS_CREATE, WALLETS_EMPTY_TITLE, WALLETS_EMPTY_SUBTITLE,
+    WALLETS_CREATE, WALLETS_EMPTY_TITLE, WALLETS_EMPTY_SUBTITLE, WALLETS_FOOTER_NOTE,
     WALLET_TYPE_CASH, WALLET_TYPE_BANK_DEBIT, WALLET_TYPE_BANK_CREDIT, WALLET_TYPE_SAVINGS,
     WALLET_TYPE_CRYPTO, WALLET_TYPE_NEQUI, WALLET_TYPE_DAVIPLATA, WALLET_TYPE_OTHER,
 
@@ -228,22 +229,23 @@ private val ES: Map<StringKey, String> = mapOf(
     StringKey.HOME_NO_EXPENSES to "Sin gastos este mes.",
     StringKey.HOME_RECENT_TXNS to "Movimientos recientes",
     StringKey.HOME_SEE_ALL to "Ver todos",
+    StringKey.HOME_UPCOMING_PAYMENTS to "Próximos pagos",
+    StringKey.HOME_WALLET_COUNT_SUFFIX to "billeteras",
 
     StringKey.NOTIF_MARK_ALL_READ to "Marcar todo leído",
     StringKey.NOTIF_EMPTY to "No tienes notificaciones.",
 
-    StringKey.REPORTS_RANGE_WEEK to "Semana",
-    StringKey.REPORTS_RANGE_MONTH to "Mes",
-    StringKey.REPORTS_RANGE_YEAR to "Año",
-    StringKey.REPORTS_TOTAL_SPENT to "GASTO TOTAL",
-    StringKey.REPORTS_AVG_DAILY to "Promedio diario",
-    StringKey.REPORTS_HIGHEST_MONTH to "Mes más alto",
+    StringKey.REPORTS_RANGE_3M to "3M",
+    StringKey.REPORTS_RANGE_6M to "6M",
+    StringKey.REPORTS_RANGE_12M to "12M",
     StringKey.REPORTS_SAVINGS_RATE to "Tasa de ahorro",
-    StringKey.REPORTS_PERIOD to "Periodo",
-    StringKey.REPORTS_TOP_SPENDING to "Mayor gasto",
+    StringKey.REPORTS_PERIOD_TOTALS to "Totales del periodo",
+    StringKey.REPORTS_INCOME_VS_EXPENSES to "Ingresos vs gastos",
+    StringKey.REPORTS_SPEND_BY_CATEGORY to "Gasto por categoría",
 
     StringKey.TXN_LIST_SEARCH_PLACEHOLDER to "Buscar por descripción o comercio",
     StringKey.TXN_LIST_FILTER_ALL to "Todos",
+    StringKey.TXN_LIST_FILTER_PENDING to "Pendientes",
     StringKey.TXN_LIST_EMPTY_TITLE to "Sin resultados",
     StringKey.TXN_LIST_EMPTY_SUBTITLE to "Ajusta la búsqueda o los filtros.",
 
@@ -307,6 +309,7 @@ private val ES: Map<StringKey, String> = mapOf(
     StringKey.WALLETS_CREATE to "Crear",
     StringKey.WALLETS_EMPTY_TITLE to "Sin wallets todavía",
     StringKey.WALLETS_EMPTY_SUBTITLE to "Crea tu primera wallet para empezar a registrar movimientos.",
+    StringKey.WALLETS_FOOTER_NOTE to "El saldo total de Inicio es la suma de estas wallets.",
     StringKey.WALLET_TYPE_CASH to "Efectivo",
     StringKey.WALLET_TYPE_BANK_DEBIT to "Cuenta débito",
     StringKey.WALLET_TYPE_BANK_CREDIT to "Tarjeta de crédito",
@@ -513,22 +516,23 @@ private val EN: Map<StringKey, String> = mapOf(
     StringKey.HOME_NO_EXPENSES to "No expenses this month.",
     StringKey.HOME_RECENT_TXNS to "Recent transactions",
     StringKey.HOME_SEE_ALL to "See all",
+    StringKey.HOME_UPCOMING_PAYMENTS to "Upcoming payments",
+    StringKey.HOME_WALLET_COUNT_SUFFIX to "wallets",
 
     StringKey.NOTIF_MARK_ALL_READ to "Mark all as read",
     StringKey.NOTIF_EMPTY to "You have no notifications.",
 
-    StringKey.REPORTS_RANGE_WEEK to "Week",
-    StringKey.REPORTS_RANGE_MONTH to "Month",
-    StringKey.REPORTS_RANGE_YEAR to "Year",
-    StringKey.REPORTS_TOTAL_SPENT to "TOTAL SPENT",
-    StringKey.REPORTS_AVG_DAILY to "Daily average",
-    StringKey.REPORTS_HIGHEST_MONTH to "Highest month",
+    StringKey.REPORTS_RANGE_3M to "3M",
+    StringKey.REPORTS_RANGE_6M to "6M",
+    StringKey.REPORTS_RANGE_12M to "12M",
     StringKey.REPORTS_SAVINGS_RATE to "Savings rate",
-    StringKey.REPORTS_PERIOD to "Period",
-    StringKey.REPORTS_TOP_SPENDING to "Top spending",
+    StringKey.REPORTS_PERIOD_TOTALS to "Period totals",
+    StringKey.REPORTS_INCOME_VS_EXPENSES to "Income vs expenses",
+    StringKey.REPORTS_SPEND_BY_CATEGORY to "Spend by category",
 
     StringKey.TXN_LIST_SEARCH_PLACEHOLDER to "Search by description or merchant",
     StringKey.TXN_LIST_FILTER_ALL to "All",
+    StringKey.TXN_LIST_FILTER_PENDING to "Pending",
     StringKey.TXN_LIST_EMPTY_TITLE to "No results",
     StringKey.TXN_LIST_EMPTY_SUBTITLE to "Adjust your search or filters.",
 
@@ -592,6 +596,7 @@ private val EN: Map<StringKey, String> = mapOf(
     StringKey.WALLETS_CREATE to "Create",
     StringKey.WALLETS_EMPTY_TITLE to "No wallets yet",
     StringKey.WALLETS_EMPTY_SUBTITLE to "Create your first wallet to start recording transactions.",
+    StringKey.WALLETS_FOOTER_NOTE to "Home's total balance is the sum of these wallets.",
     StringKey.WALLET_TYPE_CASH to "Cash",
     StringKey.WALLET_TYPE_BANK_DEBIT to "Debit account",
     StringKey.WALLET_TYPE_BANK_CREDIT to "Credit card",

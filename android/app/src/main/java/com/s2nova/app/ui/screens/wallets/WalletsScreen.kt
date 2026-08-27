@@ -195,6 +195,14 @@ fun WalletsScreen(onBack: () -> Unit) {
                         }
                     }
                 }
+                item {
+                    Text(
+                        t(StringKey.WALLETS_FOOTER_NOTE),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
+                }
                 item { Spacer(Modifier.height(72.dp)) }
             }
         }

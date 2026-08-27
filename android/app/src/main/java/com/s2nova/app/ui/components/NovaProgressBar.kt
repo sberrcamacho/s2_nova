@@ -22,7 +22,8 @@ fun NovaProgressBar(
     percentage: Int,
     color: Color,
     modifier: Modifier = Modifier,
-    height: androidx.compose.ui.unit.Dp = 8.dp,
+    height: androidx.compose.ui.unit.Dp = 6.dp,
+    cornerRadius: androidx.compose.ui.unit.Dp = 3.dp,
 ) {
     val fraction by animateFloatAsState(
         targetValue = (percentage / 100f).coerceIn(0f, 1f),
@@ -33,15 +34,15 @@ fun NovaProgressBar(
         modifier = modifier
             .fillMaxWidth()
             .height(height)
-            .clip(RoundedCornerShape(50))
-            .background(MaterialTheme.colorScheme.surfaceVariant),
+            .clip(RoundedCornerShape(cornerRadius))
+            .background(MaterialTheme.colorScheme.outline),
         contentAlignment = Alignment.CenterStart,
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth(fraction)
                 .fillMaxHeight()
-                .clip(RoundedCornerShape(50))
+                .clip(RoundedCornerShape(cornerRadius))
                 .background(color),
         )
     }

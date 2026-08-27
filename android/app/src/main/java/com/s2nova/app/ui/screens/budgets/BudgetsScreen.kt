@@ -1,6 +1,7 @@
 package com.s2nova.app.ui.screens.budgets
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
 import com.s2nova.app.data.mock.categoryMap
@@ -49,9 +51,9 @@ import com.s2nova.app.data.mock.expenseCategories
 import com.s2nova.app.data.model.BudgetProgress
 import com.s2nova.app.data.model.CategoryId
 import com.s2nova.app.ui.components.CategoryIcon
+import com.s2nova.app.ui.components.CategoryIconSize
 import com.s2nova.app.ui.components.NovaCard
 import com.s2nova.app.ui.components.NovaProgressBar
-import com.s2nova.app.ui.components.NovaTopBar
 import com.s2nova.app.ui.components.StatusBadge
 import com.s2nova.app.ui.components.badgeToneFor
 import com.s2nova.app.ui.components.budgetStatusColor
@@ -70,10 +72,15 @@ fun BudgetsScreen(onContributeToGoal: (String) -> Unit) {
     var tab by remember { mutableStateOf(0) }
 
     Scaffold(
-        topBar = { NovaTopBar(title = t(StringKey.TITLE_BUDGETS)) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
+            Text(
+                t(StringKey.TITLE_BUDGETS),
+                style = MaterialTheme.typography.headlineMedium.copy(fontSize = 21.sp, letterSpacing = (-0.42).sp),
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
+            )
             PrimaryTabRow(selectedTabIndex = tab) {
                 Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text(t(StringKey.TITLE_BUDGETS)) })
                 Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text(t(StringKey.GOALS_TITLE)) })
@@ -98,6 +105,11 @@ private fun BudgetsTab() {
     val totalLimit = progressList.sumOf { it.budget.limit }
     val totalSpent = progressList.sumOf { it.spent }
     val pct = if (totalLimit > 0) ((totalSpent / totalLimit) * 100).toInt() else 0
+    val overallStatus = when {
+        pct >= 100 -> com.s2nova.app.data.model.BudgetStatus.OVER_BUDGET
+        pct >= 80 -> com.s2nova.app.data.model.BudgetStatus.NEAR_LIMIT
+        else -> com.s2nova.app.data.model.BudgetStatus.ON_TRACK
+    }
 
     var editing by remember { mutableStateOf<BudgetProgress?>(null) }
     var creating by remember { mutableStateOf(false) }
@@ -110,18 +122,16 @@ private fun BudgetsTab() {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(
-                            androidx.compose.ui.graphics.Brush.linearGradient(listOf(colors.heroFrom, colors.heroTo)),
-                            RoundedCornerShape(20.dp),
-                        )
+                        .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(20.dp))
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))
                         .padding(20.dp),
                 ) {
-                    Text(t(StringKey.BUDGETS_MONTH_LABEL), style = MaterialTheme.typography.labelMedium, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.6f))
-                    Text(format(totalSpent), style = MaterialTheme.typography.headlineLarge, color = androidx.compose.ui.graphics.Color.White, modifier = Modifier.padding(top = 4.dp))
-                    Text("${t(StringKey.BUDGETS_OF)} ${format(totalLimit)}", style = MaterialTheme.typography.bodyMedium, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.7f))
+                    Text(t(StringKey.BUDGETS_MONTH_LABEL), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(format(totalSpent), style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 4.dp))
+                    Text("${t(StringKey.BUDGETS_OF)} ${format(totalLimit)}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.height(12.dp))
-                    NovaProgressBar(percentage = pct, color = androidx.compose.ui.graphics.Color.White)
-                    Text("$pct% ${t(StringKey.BUDGETS_UTILIZED)}", style = MaterialTheme.typography.bodySmall, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.7f), modifier = Modifier.padding(top = 6.dp))
+                    NovaProgressBar(percentage = pct, color = budgetStatusColor(overallStatus, colors), height = 7.dp, cornerRadius = 4.dp)
+                    Text("$pct% ${t(StringKey.BUDGETS_UTILIZED)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
                 }
             }
 
@@ -136,10 +146,14 @@ private fun BudgetsTab() {
             }
 
             items(progressList) { progress ->
-                NovaCard(modifier = Modifier.fillMaxWidth(), onClick = { editing = progress }) {
+                NovaCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { editing = progress },
+                    borderColor = if (progress.percentage >= 90) colors.negativeBorder else MaterialTheme.colorScheme.outline,
+                ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            CategoryIcon(category = progress.budget.category)
+                            CategoryIcon(category = progress.budget.category, size = CategoryIconSize.ROW)
                             Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
                                 Text(
                                     progress.budget.name ?: categoryMap[progress.budget.category]?.let { t(categoryStringKey(it.id)) } ?: "",

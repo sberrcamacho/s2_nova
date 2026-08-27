@@ -22,7 +22,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -43,6 +42,7 @@ import com.s2nova.app.data.model.Currency
 import com.s2nova.app.data.remote.toUserMessage
 import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.components.NovaCard
+import com.s2nova.app.ui.components.NovaSwitch
 import com.s2nova.app.ui.components.NovaTopBar
 import com.s2nova.app.ui.rememberStrings
 import kotlinx.coroutines.launch
@@ -77,7 +77,21 @@ fun SettingsScreen(onBack: () -> Unit, onReplayTutorial: () -> Unit, onPasswordC
             Spacer(Modifier.height(12.dp))
             OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(t(StringKey.SETTINGS_FULL_NAME)) }, singleLine = true, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(12.dp))
-            OutlinedTextField(value = user?.email ?: "", onValueChange = {}, label = { Text(t(StringKey.SETTINGS_EMAIL)) }, enabled = false, singleLine = true, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(
+                value = user?.email ?: "",
+                onValueChange = {},
+                label = { Text(t(StringKey.SETTINGS_EMAIL)) },
+                enabled = false,
+                singleLine = true,
+                shape = RoundedCornerShape(14.dp),
+                colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    disabledTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    disabledBorderColor = MaterialTheme.colorScheme.outline,
+                    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
+                modifier = Modifier.fillMaxWidth(),
+            )
             Spacer(Modifier.height(16.dp))
             Button(
                 onClick = { scope.launch { AppContainer.authRepository.updateProfile(name = name) } },
@@ -260,7 +274,7 @@ private fun PreferenceRow(label: String, checked: Boolean, onChange: (Boolean) -
         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
     ) {
         Text(label, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onBackground)
-        Switch(checked = checked, onCheckedChange = onChange)
+        NovaSwitch(checked = checked, onCheckedChange = onChange)
     }
 }
 
