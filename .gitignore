@@ -20,5 +20,6 @@ android/**/*.iml
 android/.cxx/
 android/captures/
 android/app/release/
+android/kls_database.db
 *.apk
 *.aab
