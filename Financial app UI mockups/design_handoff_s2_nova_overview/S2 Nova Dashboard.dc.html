@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"><style>body{margin:0;background:#050507;font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#fff}a{color:#a69dff}a:hover{color:#8578ff}.num{font-family:Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:#262635;border-radius:999px}</style></helmet>
+
+<div style="display:flex;min-height:100vh;background:#050507;color:#fff">
+  <aside style="width:212px;flex:none;background:#0b0b14;border-right:1px solid #1c1c28;display:flex;flex-direction:column;position:sticky;top:0;height:100vh">
+    <div style="display:flex;align-items:center;gap:10px;padding:18px 18px 22px">
+      <img src="web/src/assets/logo-mark-dark.png" alt="S2 Nova" style="width:30px;height:30px;border-radius:9px;flex:none;object-fit:cover">
+      <div><div style="font-size:14px;font-weight:800;letter-spacing:-.01em">S2 Nova</div><div style="font-size:9.5px;font-weight:600;letter-spacing:.1em;color:rgba(255,255,255,.4)">PERSONAL FINANCE</div></div>
+    </div>
+    <nav style="display:flex;flex-direction:column;gap:2px;padding:0 10px;flex:1">
+      <sc-for list="{{ nav }}" as="item" hint-placeholder-count="6">
+        <div onClick="{{ item.onClick }}" style="{{ item.style }}">{{ item.icon }}{{ item.label }}</div>
+      </sc-for>
+      <div style="margin-top:auto;padding-top:8px">
+        <sc-for list="{{ navFooter }}" as="item" hint-placeholder-count="1">
+          <div onClick="{{ item.onClick }}" style="{{ item.style }}">{{ item.icon }}{{ item.label }}</div>
+        </sc-for>
+      </div>
+    </nav>
+    <div style="padding:14px">
+      <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.05);border-radius:12px;padding:10px">
+        <div style="width:30px;height:30px;border-radius:50%;background:#6c5ce7;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex:none">MT</div>
+        <div style="min-width:0"><div style="font-size:12.5px;font-weight:700">Mariana Torres</div><div style="font-size:10.5px;color:rgba(255,255,255,.45)">Demo account</div></div>
+      </div>
+    </div>
+  </aside>
+
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 28px;border-bottom:1px solid #1c1c28;position:sticky;top:0;background:#050507;z-index:5">
+      <div style="font-size:12px;color:#6f6f82">S2 Nova <span style="opacity:.5">/</span> <span style="color:#a8a8b8">{{ active }}</span></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:280px;background:#0e0e15;border:1px solid #1c1c28;border-radius:10px;padding:8px 12px;font-size:12px;color:#6f6f82">Search transactions, categories…</div>
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:600;color:#a8a8b8">This month</div>
+      </div>
+    </div>
+
+    <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+    <div style="padding:26px 28px 40px;display:flex;flex-direction:column;gap:18px">
+      <div style="display:grid;grid-template-columns:1.35fr 1fr;gap:18px;align-items:stretch">
+        <div style="position:relative;overflow:hidden;border-radius:20px;border:1px solid #262635;background:linear-gradient(150deg,#050507 0%,#141034 55%,#211a4d 100%);padding:26px 28px">
+          <div style="position:absolute;top:-70px;right:-40px;width:220px;height:220px;border-radius:50%;background:rgba(108,92,231,.35);filter:blur(52px)"></div>
+          <div style="position:relative">
+            <div style="font-size:10.5px;font-weight:700;letter-spacing:.11em;color:#a69dff">CURRENT BALANCE</div>
+            <div class="num" style="font-size:48px;font-weight:800;letter-spacing:-.03em;margin-top:10px">$16.147.300</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
+              <span style="background:rgba(50,201,138,.14);color:#32c98a;font-size:11.5px;font-weight:800;border-radius:999px;padding:4px 9px">+ $2.361.400</span>
+              <span style="font-size:12px;color:#a8a8b8">net this month</span>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:5px;height:66px;margin-top:26px">
+              <div style="flex:1;height:38%;background:rgba(165,157,255,.22);border-radius:3px"></div>
+              <div style="flex:1;height:46%;background:rgba(165,157,255,.22);border-radius:3px"></div>
+              <div style="flex:1;height:41%;background:rgba(165,157,255,.22);border-radius:3px"></div>
+              <div style="flex:1;height:58%;background:rgba(165,157,255,.3);border-radius:3px"></div>
+              <div style="flex:1;height:52%;background:rgba(165,157,255,.3);border-radius:3px"></div>
+              <div style="flex:1;height:64%;background:rgba(165,157,255,.38);border-radius:3px"></div>
+              <div style="flex:1;height:71%;background:rgba(165,157,255,.38);border-radius:3px"></div>
+              <div style="flex:1;height:83%;background:#8578ff;border-radius:3px"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:#6f6f82;margin-top:8px"><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span></div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-rows:repeat(3,1fr);gap:12px">
+          <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:16px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between">
+            <div><div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:#6f6f82">INCOME</div><div class="num" style="font-size:24px;font-weight:800;letter-spacing:-.02em;margin-top:4px">$4.288.500</div></div>
+            <span style="background:rgba(255,98,98,.14);color:#ff6262;font-size:11px;font-weight:800;border-radius:999px;padding:4px 8px">−3%</span>
+          </div>
+          <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:16px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between">
+            <div><div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:#6f6f82">EXPENSES</div><div class="num" style="font-size:24px;font-weight:800;letter-spacing:-.02em;margin-top:4px">$1.927.100</div></div>
+            <span style="background:rgba(50,201,138,.14);color:#32c98a;font-size:11px;font-weight:800;border-radius:999px;padding:4px 8px">−5%</span>
+          </div>
+          <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:16px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between">
+            <div><div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:#6f6f82">SAVINGS</div><div class="num" style="font-size:24px;font-weight:800;letter-spacing:-.02em;margin-top:4px">$2.361.400</div></div>
+            <span style="background:rgba(168,168,184,.12);color:#a8a8b8;font-size:11px;font-weight:800;border-radius:999px;padding:4px 8px">+0%</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1.35fr;gap:18px">
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:16px;padding:20px">
+          <div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Financial health</div>
+          <div style="font-size:11.5px;color:#6f6f82;margin-top:2px">Five checks, updated daily</div>
+          <div style="display:flex;flex-direction:column;margin-top:14px">
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #16161f">
+              <span style="width:7px;height:7px;border-radius:50%;background:#32c98a;flex:none"></span>
+              <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">Savings</div><div style="font-size:11px;color:#6f6f82">Saving 55% of your income this month</div></div>
+              <span style="font-size:11px;font-weight:800;color:#32c98a">Good</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #16161f">
+              <span style="width:7px;height:7px;border-radius:50%;background:#ff6262;flex:none"></span>
+              <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">Budget</div><div style="font-size:11px;color:#6f6f82">1 category over budget</div></div>
+              <span style="font-size:11px;font-weight:800;color:#ff6262">Over</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #16161f">
+              <span style="width:7px;height:7px;border-radius:50%;background:#f0b429;flex:none"></span>
+              <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">Cash flow</div><div style="font-size:11px;color:#6f6f82">Net of $2.361.400 — worse than last month</div></div>
+              <span style="font-size:11px;font-weight:800;color:#f0b429">Watch</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #16161f">
+              <span style="width:7px;height:7px;border-radius:50%;background:#32c98a;flex:none"></span>
+              <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">Goals</div><div style="font-size:11px;color:#6f6f82">All goals are on track</div></div>
+              <span style="font-size:11px;font-weight:800;color:#32c98a">On track</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 0">
+              <span style="width:7px;height:7px;border-radius:50%;background:#3a3a4a;flex:none"></span>
+              <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">Debt</div><div style="font-size:11px;color:#6f6f82">No outstanding debt</div></div>
+              <span style="font-size:11px;font-weight:800;color:#6f6f82">N/A</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:16px;padding:20px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between">
+            <div><div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Suggestions for you</div><div style="font-size:11.5px;color:#6f6f82;margin-top:2px">Ranked by impact this month</div></div>
+            <div onClick="{{ goInsights }}" style="font-size:11.5px;font-weight:800;color:#a69dff;cursor:pointer">View all insights →</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:14px">
+            <div style="display:flex;gap:12px;background:#13131d;border:1px solid #1c1c28;border-radius:12px;padding:13px 15px">
+              <span style="width:3px;border-radius:2px;background:#ff6262;flex:none"></span>
+              <div><div style="font-size:12.5px;font-weight:700">Bills budget will be exceeded in ~5 days</div><div style="font-size:11.5px;color:#6f6f82;margin-top:3px">You're at $412.000 of $450.000 at the current rate.</div></div>
+            </div>
+            <div style="display:flex;gap:12px;background:#13131d;border:1px solid #1c1c28;border-radius:12px;padding:13px 15px">
+              <span style="width:3px;border-radius:2px;background:#f0b429;flex:none"></span>
+              <div><div style="font-size:12.5px;font-weight:700">Transportation up 82% vs last month</div><div style="font-size:11.5px;color:#6f6f82;margin-top:3px">$95.500 this month against $52.500 last month.</div></div>
+            </div>
+            <div style="display:flex;gap:12px;background:#13131d;border:1px solid #1c1c28;border-radius:12px;padding:13px 15px">
+              <span style="width:3px;border-radius:2px;background:#6c5ce7;flex:none"></span>
+              <div><div style="font-size:12.5px;font-weight:700">Subscriptions budget on pace to break in ~3 days</div><div style="font-size:11.5px;color:#6f6f82;margin-top:3px">Netflix, Spotify, iCloud+ and Disney+ renew this week.</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:16px;padding:20px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between">
+          <div><div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Upcoming events</div><div style="font-size:11.5px;color:#6f6f82;margin-top:2px">Next 14 days, from active recurring series</div></div>
+          <span style="font-size:11.5px;font-weight:800;color:#a69dff">Manage in app →</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px">
+          <div style="background:#13131d;border:1px solid #1c1c28;border-radius:12px;padding:14px"><div style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#6f6f82">AUG 24</div><div style="font-size:12.5px;font-weight:700;margin-top:6px">Netflix</div><div class="num" style="font-size:14px;font-weight:800;color:#ff6262;margin-top:4px">−$45.000</div></div>
+          <div style="background:#13131d;border:1px solid #1c1c28;border-radius:12px;padding:14px"><div style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#6f6f82">AUG 26</div><div style="font-size:12.5px;font-weight:700;margin-top:6px">Internet — Claro</div><div class="num" style="font-size:14px;font-weight:800;color:#ff6262;margin-top:4px">−$109.000</div></div>
+          <div style="background:#13131d;border:1px solid #1c1c28;border-radius:12px;padding:14px"><div style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#6f6f82">AUG 30</div><div style="font-size:12.5px;font-weight:700;margin-top:6px">Administración</div><div class="num" style="font-size:14px;font-weight:800;color:#ff6262;margin-top:4px">−$232.000</div></div>
+          <div style="background:#13131d;border:1px solid #6c5ce7;border-radius:12px;padding:14px"><div style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#a69dff">SEP 01</div><div style="font-size:12.5px;font-weight:700;margin-top:6px">Salary</div><div class="num" style="font-size:14px;font-weight:800;color:#32c98a;margin-top:4px">+$4.400.000</div></div>
+        </div>
+      </div>
+
+      <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:16px;padding:20px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px">
+          <div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Recent transactions</div>
+          <span style="font-size:11.5px;font-weight:800;color:#a69dff">View all →</span>
+        </div>
+        <sc-for list="{{ txns }}" as="tx" hint-placeholder-count="5">
+          <div style="display:flex;align-items:center;gap:14px;padding:11px 0;border-bottom:1px solid #16161f">
+            <span style="{{ tx.dot }}"></span>
+            <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">{{ tx.desc }}</div><div style="font-size:11px;color:#6f6f82">{{ tx.merchant }} · {{ tx.date }} · {{ tx.method }}</div></div>
+            <span class="num" style="{{ tx.amountStyle }}">{{ tx.amount }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isInsights }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:26px 28px 40px;display:flex;flex-direction:column;gap:18px">
+      <div>
+        <div style="font-size:24px;font-weight:800;letter-spacing:-.025em">Insights</div>
+        <div style="font-size:12.5px;color:#6f6f82;margin-top:3px">Computed from your last 30 days. Nothing here is a projection.</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px">
+        <sc-for list="{{ insights }}" as="ins" hint-placeholder-count="6">
+          <div style="{{ ins.cardStyle }}">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+              <span style="{{ ins.tagStyle }}">{{ ins.tag }}</span>
+              <span style="font-size:11px;color:#6f6f82">{{ ins.when }}</span>
+            </div>
+            <div style="font-size:14.5px;font-weight:800;letter-spacing:-.01em;margin-top:11px">{{ ins.title }}</div>
+            <div style="font-size:12.5px;color:#a8a8b8;line-height:1.55;margin-top:6px">{{ ins.body }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isAnalytics }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:26px 28px 40px;display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px">
+        <div><div style="font-size:24px;font-weight:800;letter-spacing:-.025em">Analytics</div><div style="font-size:12.5px;color:#6f6f82;margin-top:3px">August 2026 · COP</div></div>
+        <div style="display:flex;gap:8px">
+          <sc-for list="{{ ranges }}" as="r" hint-placeholder-count="3">
+            <div onClick="{{ r.onClick }}" style="{{ r.style }}">{{ r.label }}</div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:4px;border-bottom:1px solid #1c1c28">
+        <sc-for list="{{ tabs }}" as="tb" hint-placeholder-count="4">
+          <div onClick="{{ tb.onClick }}" style="{{ tb.style }}">{{ tb.label }}</div>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{ isSpending }}" hint-placeholder-val="{{ true }}">
+      <div style="display:grid;grid-template-columns:1.45fr 1fr;gap:18px">
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:16px;padding:20px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between">
+            <div><div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Income vs expenses</div><div style="font-size:11.5px;color:#6f6f82;margin-top:2px">{{ rangeSubtitle }}</div></div>
+            <div style="display:flex;gap:12px;font-size:11px;font-weight:700"><span style="display:flex;align-items:center;gap:5px;color:#a8a8b8"><span style="width:8px;height:8px;border-radius:2px;background:#32c98a"></span>Income</span><span style="display:flex;align-items:center;gap:5px;color:#a8a8b8"><span style="width:8px;height:8px;border-radius:2px;background:#ff6262"></span>Expenses</span></div>
+          </div>
+          <div style="display:flex;align-items:flex-end;gap:14px;height:236px;margin-top:22px;border-bottom:1px solid #1c1c28;padding-bottom:2px">
+            <sc-for list="{{ bars }}" as="b" hint-placeholder-count="6">
+              <div style="flex:1;display:flex;align-items:flex-end;gap:4px;height:100%;justify-content:center">
+                <div style="{{ b.incStyle }}"></div>
+                <div style="{{ b.expStyle }}"></div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:14px;margin-top:8px">
+            <sc-for list="{{ bars }}" as="b" hint-placeholder-count="6">
+              <div style="flex:1;text-align:center;font-size:10.5px;font-weight:600;color:#6f6f82">{{ b.label }}</div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:16px;padding:20px">
+          <div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Where the money went</div>
+          <div style="font-size:11.5px;color:#6f6f82;margin-top:2px">Top categories, this month</div>
+          <div style="display:flex;flex-direction:column;gap:14px;margin-top:18px">
+            <sc-for list="{{ categories }}" as="c" hint-placeholder-count="5">
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;margin-bottom:6px"><span>{{ c.label }}</span><span class="num" style="{{ c.amountStyle }}">{{ c.amount }}</span></div>
+                <div style="height:6px;border-radius:3px;background:#1c1c28;overflow:hidden"><div style="{{ c.fillStyle }}"></div></div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:16px;padding:16px 18px"><div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:#6f6f82">AVG DAILY SPEND</div><div class="num" style="font-size:22px;font-weight:800;letter-spacing:-.025em;margin-top:6px">$91.767</div></div>
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:16px;padding:16px 18px"><div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:#6f6f82">BUSIEST WEEKDAY</div><div style="font-size:22px;font-weight:800;letter-spacing:-.025em;margin-top:6px">Saturday</div></div>
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:16px;padding:16px 18px"><div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:#6f6f82">FIXED VS VARIABLE</div><div style="font-size:22px;font-weight:800;letter-spacing:-.025em;margin-top:6px">38 / 62</div></div>
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:16px;padding:16px 18px"><div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:#6f6f82">MONTHS OF RUNWAY</div><div class="num" style="font-size:22px;font-weight:800;letter-spacing:-.025em;margin-top:6px">8.4</div></div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isIncomeTab }}" hint-placeholder-val="{{ false }}">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:16px;padding:20px">
+          <div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Income sources</div>
+          <div style="font-size:11.5px;color:#6f6f82;margin-top:2px">{{ rangeSubtitle }}</div>
+          <div style="display:flex;flex-direction:column;gap:16px;margin-top:20px">
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:7px"><span>Salario — Grupo Éxito</span><span class="num">$4.400.000 <span style="color:#6f6f82;font-weight:600">79%</span></span></div>
+              <div style="height:8px;border-radius:4px;background:#1c1c28;overflow:hidden"><div style="width:79%;height:100%;background:#32c98a"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:7px"><span>Freelance — Estudio Andina</span><span class="num">$880.000 <span style="color:#6f6f82;font-weight:600">16%</span></span></div>
+              <div style="height:8px;border-radius:4px;background:#1c1c28;overflow:hidden"><div style="width:16%;height:100%;background:#6657E8"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:7px"><span>Otros</span><span class="num">$280.000 <span style="color:#6f6f82;font-weight:600">5%</span></span></div>
+              <div style="height:8px;border-radius:4px;background:#1c1c28;overflow:hidden"><div style="width:5%;height:100%;background:#9C9CAA"></div></div>
+            </div>
+          </div>
+          <div style="font-size:11.5px;color:#6f6f82;line-height:1.6;margin-top:22px;border-top:1px solid #16161f;padding-top:14px">Salary is stable month to month; freelance is the volatile part — it ranged from $350.000 to $1.200.000 over six months.</div>
+        </div>
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:16px;padding:20px">
+          <div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Income by month</div>
+          <div style="font-size:11.5px;color:#6f6f82;margin-top:2px">Salary plus everything else</div>
+          <div style="display:flex;align-items:flex-end;gap:14px;height:212px;margin-top:22px;border-bottom:1px solid #1c1c28">
+            <sc-for list="{{ incomeBars }}" as="b" hint-placeholder-count="6">
+              <div style="flex:1;height:100%;display:flex;align-items:flex-end"><div style="{{ b.style }}"></div></div>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:14px;margin-top:8px">
+            <sc-for list="{{ incomeBars }}" as="b" hint-placeholder-count="6">
+              <div style="flex:1;text-align:center;font-size:10.5px;font-weight:600;color:#6f6f82">{{ b.label }}</div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isCashFlow }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:18px">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+          <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:16px;padding:18px 20px"><div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:#6f6f82">MONEY IN</div><div class="num" style="font-size:24px;font-weight:800;letter-spacing:-.025em;margin-top:6px;color:#32c98a">$4.288.500</div></div>
+          <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:16px;padding:18px 20px"><div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:#6f6f82">MONEY OUT</div><div class="num" style="font-size:24px;font-weight:800;letter-spacing:-.025em;margin-top:6px;color:#ff6262">$1.927.100</div></div>
+          <div style="background:linear-gradient(160deg,rgba(108,92,231,.22),#0e0e15 70%);border:1px solid #35305c;border-radius:16px;padding:18px 20px"><div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:#a69dff">NET CASH FLOW</div><div class="num" style="font-size:24px;font-weight:800;letter-spacing:-.025em;margin-top:6px">+$2.361.400</div></div>
+        </div>
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:16px;padding:20px">
+          <div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Impact of upcoming movements</div>
+          <div style="font-size:11.5px;color:#6f6f82;margin-top:2px">Active recurring series, applied to today's balance</div>
+          <div style="display:flex;flex-direction:column;margin-top:16px">
+            <sc-for list="{{ flow }}" as="f" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:16px;padding:13px 0;border-bottom:1px solid #16161f">
+                <span style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:#6f6f82;width:64px;flex:none">{{ f.date }}</span>
+                <span style="flex:1;min-width:0;font-size:13px;font-weight:700">{{ f.label }}</span>
+                <span class="num" style="{{ f.amountStyle }}">{{ f.amount }}</span>
+                <span class="num" style="font-size:12.5px;color:#a8a8b8;width:120px;text-align:right;flex:none">{{ f.running }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="font-size:11.5px;color:#6f6f82;margin-top:14px">Lowest projected balance before payday: <span class="num" style="color:#f0b429;font-weight:700">$15.761.300</span> on Aug 30.</div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isNetWorth }}" hint-placeholder-val="{{ false }}">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:16px;padding:20px">
+          <div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Wallets</div>
+          <div style="font-size:11.5px;color:#6f6f82;margin-top:2px">Balances as of today</div>
+          <div style="display:flex;flex-direction:column;margin-top:16px">
+            <sc-for list="{{ wallets }}" as="w" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid #16161f">
+                <span style="{{ w.dot }}"></span>
+                <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">{{ w.label }}</div><div style="font-size:11px;color:#6f6f82">{{ w.kind }}</div></div>
+                <span class="num" style="font-size:14px;font-weight:800">{{ w.amount }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:16px;padding-top:14px;border-top:1px solid #1c1c28">
+            <span style="font-size:12.5px;font-weight:700;color:#a8a8b8">Net worth</span>
+            <span class="num" style="font-size:22px;font-weight:800;letter-spacing:-.025em">$16.147.300</span>
+          </div>
+        </div>
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:16px;padding:20px">
+          <div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Lent and borrowed</div>
+          <div style="font-size:11.5px;color:#6f6f82;margin-top:2px">Outside the wallet balances above</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px">
+            <div style="background:#13131d;border:1px solid #1c1c28;border-radius:14px;padding:16px"><div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:#6f6f82">LENT OUT</div><div class="num" style="font-size:20px;font-weight:800;margin-top:6px;color:#32c98a">$620.000</div><div style="font-size:11px;color:#6f6f82;margin-top:4px">2 people</div></div>
+            <div style="background:#13131d;border:1px solid #1c1c28;border-radius:14px;padding:16px"><div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:#6f6f82">BORROWED</div><div class="num" style="font-size:20px;font-weight:800;margin-top:6px;color:#6f6f82">—</div><div style="font-size:11px;color:#6f6f82;margin-top:4px">No outstanding debt</div></div>
+          </div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:.1em;color:#6f6f82;margin-top:24px">SIX-MONTH TREND</div>
+          <div style="display:flex;align-items:flex-end;gap:10px;height:120px;margin-top:14px">
+            <div style="flex:1;height:62%;background:rgba(165,157,255,.24);border-radius:4px 4px 0 0"></div>
+            <div style="flex:1;height:68%;background:rgba(165,157,255,.24);border-radius:4px 4px 0 0"></div>
+            <div style="flex:1;height:71%;background:rgba(165,157,255,.24);border-radius:4px 4px 0 0"></div>
+            <div style="flex:1;height:82%;background:rgba(165,157,255,.32);border-radius:4px 4px 0 0"></div>
+            <div style="flex:1;height:90%;background:rgba(165,157,255,.32);border-radius:4px 4px 0 0"></div>
+            <div style="flex:1;height:100%;background:#8578ff;border-radius:4px 4px 0 0"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10.5px;color:#6f6f82;margin-top:8px"><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span></div>
+        </div>
+      </div>
+      </sc-if>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isBudgets }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:26px 28px 40px;display:flex;flex-direction:column;gap:18px">
+      <div>
+        <div style="font-size:24px;font-weight:800;letter-spacing:-.025em">Budgets</div>
+        <div style="font-size:12.5px;color:#6f6f82;margin-top:3px">Read-only here — limits are set in the mobile app. 9 days left in August.</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+        <sc-for list="{{ budgets }}" as="b" hint-placeholder-count="6">
+          <div style="{{ b.cardStyle }}">
+            <div style="display:flex;align-items:baseline;justify-content:space-between">
+              <div style="font-size:13.5px;font-weight:800">{{ b.label }}</div>
+              <span style="{{ b.pctStyle }}">{{ b.pct }}</span>
+            </div>
+            <div class="num" style="font-size:20px;font-weight:800;letter-spacing:-.025em;margin-top:8px">{{ b.spent }}</div>
+            <div style="font-size:11.5px;color:#6f6f82;margin-top:2px">of {{ b.limit }}</div>
+            <div style="height:6px;border-radius:3px;background:#1c1c28;overflow:hidden;margin-top:14px"><div style="{{ b.fillStyle }}"></div></div>
+            <div style="font-size:11.5px;margin-top:10px;color:#a8a8b8">{{ b.note }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isGoals }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:26px 28px 40px;display:flex;flex-direction:column;gap:18px">
+      <div>
+        <div style="font-size:24px;font-weight:800;letter-spacing:-.025em">Goals</div>
+        <div style="font-size:12.5px;color:#6f6f82;margin-top:3px">Progress only. Goals are created and edited in the mobile app.</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px">
+        <sc-for list="{{ goals }}" as="g" hint-placeholder-count="4">
+          <div style="{{ g.cardStyle }}">
+            <div style="display:flex;align-items:center;gap:18px">
+              <div style="{{ g.ringStyle }}">
+                <div style="width:56px;height:56px;border-radius:50%;background:#0e0e15;display:flex;align-items:center;justify-content:center">
+                  <span class="num" style="font-size:14px;font-weight:800">{{ g.pctLabel }}</span>
+                </div>
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:14px;font-weight:800;letter-spacing:-.01em">{{ g.label }}</div>
+                <div class="num" style="font-size:18px;font-weight:800;letter-spacing:-.02em;margin-top:5px">{{ g.current }} <span style="font-size:12px;font-weight:600;color:#6f6f82">of {{ g.target }}</span></div>
+                <div style="font-size:11.5px;color:#6f6f82;margin-top:6px;line-height:1.5">{{ g.note }}</div>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isReports }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:26px 28px 40px;display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px">
+        <div><div style="font-size:24px;font-weight:800;letter-spacing:-.025em">Reports</div><div style="font-size:12.5px;color:#6f6f82;margin-top:3px">August 2026 review · compared with July</div></div>
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;color:#a8a8b8;cursor:pointer">Export PDF</div>
+      </div>
+
+      <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:16px;padding:20px">
+        <div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Period totals</div>
+        <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr .7fr;gap:12px;padding:12px 0;border-bottom:1px solid #1c1c28;font-size:10px;font-weight:700;letter-spacing:.08em;color:#6f6f82;margin-top:8px"><span>METRIC</span><span>AUGUST</span><span>JULY</span><span style="text-align:right">CHANGE</span></div>
+        <sc-for list="{{ reportRows }}" as="r" hint-placeholder-count="5">
+          <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr .7fr;gap:12px;padding:12px 0;border-bottom:1px solid #16161f;font-size:13px;align-items:center">
+            <span style="font-weight:700">{{ r.label }}</span>
+            <span class="num" style="font-weight:800">{{ r.current }}</span>
+            <span class="num" style="color:#6f6f82">{{ r.previous }}</span>
+            <span style="text-align:right"><span style="{{ r.deltaStyle }}">{{ r.delta }}</span></span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:16px;padding:20px">
+          <div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Weekly spending pattern</div>
+          <div style="font-size:11.5px;color:#6f6f82;margin-top:2px">Share of spend by weekday</div>
+          <div style="display:flex;align-items:flex-end;gap:10px;height:150px;margin-top:20px">
+            <sc-for list="{{ week }}" as="w" hint-placeholder-count="7">
+              <div style="flex:1;height:100%;display:flex;align-items:flex-end"><div style="{{ w.barStyle }}"></div></div>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:8px">
+            <sc-for list="{{ week }}" as="w" hint-placeholder-count="7">
+              <div style="flex:1;text-align:center;font-size:10.5px;color:#6f6f82">{{ w.day }}</div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:16px;padding:20px">
+          <div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Budget performance</div>
+          <div style="font-size:11.5px;color:#6f6f82;margin-top:2px">Against this month's limits</div>
+          <div style="display:flex;flex-direction:column;gap:14px;margin-top:18px">
+            <sc-for list="{{ budgets }}" as="b" hint-placeholder-count="6">
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;margin-bottom:6px"><span>{{ b.label }}</span><span class="num" style="color:#a8a8b8">{{ b.spent }} / {{ b.limit }}</span></div>
+                <div style="height:6px;border-radius:3px;background:#1c1c28;overflow:hidden"><div style="{{ b.fillStyle }}"></div></div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:26px 28px 40px;display:flex;flex-direction:column;gap:18px;max-width:920px">
+      <div>
+        <div style="font-size:24px;font-weight:800;letter-spacing:-.025em">Settings</div>
+        <div style="font-size:12.5px;color:#6f6f82;margin-top:3px">Account, preferences and security</div>
+      </div>
+
+      <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:16px;padding:20px">
+        <div style="display:flex;align-items:center;gap:16px">
+          <div style="width:56px;height:56px;border-radius:50%;background:#6c5ce7;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;flex:none">MT</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:16px;font-weight:800;letter-spacing:-.015em">Mariana Torres</div>
+            <div style="font-size:12.5px;color:#6f6f82;margin-top:2px">mariana.torres@example.com · Bogotá, D.C.</div>
+            <div style="font-size:11.5px;color:#6f6f82;margin-top:2px">Member since November 2024</div>
+          </div>
+          <div style="border:1px solid #262635;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;color:#a8a8b8;cursor:pointer">Edit profile</div>
+        </div>
+      </div>
+
+      <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:16px;padding:20px">
+        <div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Preferences</div>
+        <div style="display:flex;flex-direction:column;margin-top:8px">
+          <div style="display:flex;align-items:center;gap:16px;padding:15px 0;border-bottom:1px solid #16161f">
+            <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">Language</div><div style="font-size:11.5px;color:#6f6f82;margin-top:2px">Applies to labels, charts and dates</div></div>
+            <div style="display:flex;gap:6px">
+              <sc-for list="{{ langs }}" as="l" hint-placeholder-count="2">
+                <div onClick="{{ l.onClick }}" style="{{ l.style }}">{{ l.label }}</div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;padding:15px 0;border-bottom:1px solid #16161f">
+            <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">Currency format</div><div style="font-size:11.5px;color:#6f6f82;margin-top:2px">Colombian peso, no decimals</div></div>
+            <div style="background:#13131d;border:1px solid #262635;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;color:#a8a8b8">COP · $16.147.300</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;padding:15px 0;border-bottom:1px solid #16161f">
+            <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">Theme</div><div style="font-size:11.5px;color:#6f6f82;margin-top:2px">Dark is the default on web</div></div>
+            <div style="display:flex;gap:6px">
+              <sc-for list="{{ themes }}" as="th" hint-placeholder-count="3">
+                <div onClick="{{ th.onClick }}" style="{{ th.style }}">{{ th.label }}</div>
+              </sc-for>
+            </div>
+          </div>
+          <sc-for list="{{ toggles }}" as="tg" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:16px;padding:15px 0;border-bottom:1px solid #16161f">
+              <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">{{ tg.label }}</div><div style="font-size:11.5px;color:#6f6f82;margin-top:2px">{{ tg.detail }}</div></div>
+              <div onClick="{{ tg.onClick }}" style="{{ tg.trackStyle }}"><span style="{{ tg.knobStyle }}"></span></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:16px;padding:20px">
+        <div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Security</div>
+        <div style="display:flex;flex-direction:column;margin-top:8px">
+          <div style="display:flex;align-items:center;gap:16px;padding:15px 0;border-bottom:1px solid #16161f">
+            <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">Password</div><div style="font-size:11.5px;color:#6f6f82;margin-top:2px">Last changed 4 months ago</div></div>
+            <div style="border:1px solid #262635;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;color:#a8a8b8;cursor:pointer">Change</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;padding:15px 0;border-bottom:1px solid #16161f">
+            <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">Active sessions</div><div style="font-size:11.5px;color:#6f6f82;margin-top:2px">This browser · Android — Pixel 8</div></div>
+            <div style="border:1px solid #262635;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;color:#a8a8b8;cursor:pointer">Manage</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;padding:15px 0">
+            <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:#ff6262">Delete account</div><div style="font-size:11.5px;color:#6f6f82;margin-top:2px">Removes all transactions, budgets and goals</div></div>
+            <div style="border:1px solid rgba(255,98,98,.35);border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;color:#ff6262;cursor:pointer">Delete</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:980}}">
+const NAV_ICONS = {
+  Overview: ['M3 3h7v7H3z', 'M14 3h7v7h-7z', 'M14 14h7v7h-7z', 'M3 14h7v7H3z'],
+  Insights: ['M9 18h6', 'M10 22h4', 'M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14'],
+  Analytics: ['M3 3v18h18', 'M18 17V9', 'M13 17V5', 'M8 17v-3'],
+  Budgets: ['M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2V5z', 'M2 9v1c0 1.1.9 2 2 2h1'],
+  Goals: ['M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z', 'M4 22v-7'],
+  Reports: ['M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z', 'M14 2v4a2 2 0 0 0 2 2h4', 'M10 9H8', 'M16 13H8', 'M16 17H8'],
+  Settings: ['M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z', 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z'],
+}
+
+const NAV = ['Overview', 'Insights', 'Analytics', 'Budgets', 'Goals', 'Reports']
+
+const BAR_DATA = {
+  '3M': [
+    { label: 'Jun', inc: 4.42, exp: 1.78 },
+    { label: 'Jul', inc: 4.41, exp: 2.03 },
+    { label: 'Aug', inc: 4.29, exp: 1.93 },
+  ],
+  '6M': [
+    { label: 'Mar', inc: 4.21, exp: 1.91 },
+    { label: 'Apr', inc: 4.38, exp: 2.14 },
+    { label: 'May', inc: 4.25, exp: 2.42 },
+    { label: 'Jun', inc: 4.42, exp: 1.78 },
+    { label: 'Jul', inc: 4.41, exp: 2.03 },
+    { label: 'Aug', inc: 4.29, exp: 1.93 },
+  ],
+  '12M': [
+    { label: 'Sep', inc: 4.05, exp: 2.2 },
+    { label: 'Oct', inc: 4.12, exp: 2.31 },
+    { label: 'Nov', inc: 4.18, exp: 2.75 },
+    { label: 'Dec', inc: 5.6, exp: 3.42 },
+    { label: 'Jan', inc: 4.1, exp: 2.05 },
+    { label: 'Feb', inc: 4.16, exp: 1.88 },
+    { label: 'Mar', inc: 4.21, exp: 1.91 },
+    { label: 'Apr', inc: 4.38, exp: 2.14 },
+    { label: 'May', inc: 4.25, exp: 2.42 },
+    { label: 'Jun', inc: 4.42, exp: 1.78 },
+    { label: 'Jul', inc: 4.41, exp: 2.03 },
+    { label: 'Aug', inc: 4.29, exp: 1.93 },
+  ],
+}
+
+const TXNS = [
+  { desc: 'Mercado semanal', merchant: 'Éxito', date: 'Aug 21', method: 'Tarjeta débito', amount: '−$168.500', color: '#E8A23D', neg: true },
+  { desc: 'Viaje en app', merchant: 'Uber', date: 'Aug 20', method: 'Nequi', amount: '−$21.000', color: '#3D8BE8', neg: true },
+  { desc: 'Internet y celular', merchant: 'Claro', date: 'Aug 18', method: 'Transferencia', amount: '−$109.000', color: '#8A8A99', neg: true },
+  { desc: 'Proyecto freelance', merchant: 'Estudio Andina', date: 'Aug 14', method: 'Transferencia', amount: '+$880.000', color: '#6657E8', neg: false },
+  { desc: 'Netflix', merchant: 'Netflix', date: 'Aug 05', method: 'Tarjeta crédito', amount: '−$44.900', color: '#D95DB2', neg: true },
+]
+
+const INSIGHTS = [
+  { tag: 'Budget', tone: '#ff6262', when: 'Today', title: 'Servicios breaks its limit in ~5 days', body: '$412.000 of a $450.000 limit with 9 days left. The next EPM bill alone is $109.000.' },
+  { tag: 'Category', tone: '#f0b429', when: 'Today', title: 'Transporte is up 82% over last month', body: '$95.500 against $52.500, mostly app rides on weekends.' },
+  { tag: 'Subscriptions', tone: '#6c5ce7', when: '2 days ago', title: 'Four subscriptions renew this week', body: 'Netflix, Spotify, iCloud+ and Disney+ total $112.600 per month.' },
+  { tag: 'Savings', tone: '#32c98a', when: '3 days ago', title: 'Best savings month since March', body: 'You kept 55% of your income — 12 points above your six-month average.' },
+  { tag: 'Pattern', tone: '#3DBBA8', when: '5 days ago', title: 'Groceries have been steady for three months', body: 'Around $600.000 each month. A reliable baseline to budget against.' },
+  { tag: 'Cash flow', tone: '#8578ff', when: '1 week ago', title: 'Three bills land before your next salary', body: '$386.000 due between Aug 24 and Aug 30; salary arrives Sep 1.' },
+]
+
+const CATEGORIES = [
+  { label: 'Alimentación', amount: '$612.400', pct: 78, color: '#E8A23D' },
+  { label: 'Servicios', amount: '$486.000', pct: 62, color: '#8A8A99' },
+  { label: 'Compras', amount: '$318.500', pct: 41, color: '#3DBBA8' },
+  { label: 'Suscripciones', amount: '$112.600', pct: 28, color: '#D95DB2' },
+  { label: 'Transporte', amount: '$95.500  +82%', pct: 24, color: '#3D8BE8', alert: true },
+]
+
+const BUDGETS = [
+  { label: 'Servicios', spent: '$412.000', limit: '$450.000', pct: 92, note: 'Breaks in ~5 days at this rate' },
+  { label: 'Alimentación', spent: '$612.400', limit: '$900.000', pct: 68, note: 'On pace to land at $840.000' },
+  { label: 'Suscripciones', spent: '$112.600', limit: '$120.000', pct: 94, note: 'Four renewals still to come' },
+  { label: 'Compras', spent: '$318.500', limit: '$780.000', pct: 41, note: 'Comfortable' },
+  { label: 'Transporte', spent: '$95.500', limit: '$150.000', pct: 64, note: 'Up sharply from last month' },
+  { label: 'Entretenimiento', spent: '$88.000', limit: '$300.000', pct: 29, note: 'Comfortable' },
+]
+
+const GOALS = [
+  { label: 'Fondo de emergencia', target: '$12.000.000', current: '$8.400.000', pct: 70, note: '6 months of expenses. On track for March 2027.', color: '#6c5ce7' },
+  { label: 'Viaje a Perú', target: '$4.500.000', current: '$1.980.000', pct: 44, note: 'Deadline June 2027. Needs $252.000 a month.', color: '#3DBBA8' },
+  { label: 'Portátil nuevo', target: '$5.200.000', current: '$4.680.000', pct: 90, note: 'Two more contributions and it is done.', color: '#E8A23D' },
+  { label: 'Curso de especialización', target: '$3.000.000', current: '$450.000', pct: 15, note: 'Not enough contribution history for a projection.', color: '#8A8A99' },
+]
+
+const REPORT_ROWS = [
+  { label: 'Income', current: '$4.288.500', previous: '$4.410.000', delta: '−3%', neg: true },
+  { label: 'Expenses', current: '$1.927.100', previous: '$2.030.000', delta: '−5%', neg: false },
+  { label: 'Savings', current: '$2.361.400', previous: '$2.380.000', delta: '−1%', neg: true },
+  { label: 'Savings rate', current: '55%', previous: '54%', delta: '+1 pt', neg: false },
+  { label: 'Transactions', current: '68', previous: '74', delta: '−8%', neg: false },
+]
+
+const WEEK_SPEND = [
+  { day: 'Mon', pct: 42 },
+  { day: 'Tue', pct: 38 },
+  { day: 'Wed', pct: 51 },
+  { day: 'Thu', pct: 47 },
+  { day: 'Fri', pct: 76 },
+  { day: 'Sat', pct: 100 },
+  { day: 'Sun', pct: 64 },
+]
+
+class Component extends DCLogic {
+  state = {
+    active: 'Overview',
+    range: '6M',
+    tab: 'Spending',
+    lang: 'Español',
+    theme: 'Dark',
+    notifications: true,
+    biometric: false,
+    hideAmounts: false,
+  }
+
+  icon(label) {
+    return React.createElement(
+      'svg',
+      { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2.1, strokeLinecap: 'round', strokeLinejoin: 'round', style: { flex: 'none' } },
+      NAV_ICONS[label].map((d, i) => React.createElement('path', { key: i, d })),
+    )
+  }
+
+  navItem(label) {
+    const on = this.state.active === label
+    return {
+      label,
+      icon: this.icon(label),
+      onClick: () => this.setState({ active: label }),
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '11px',
+        padding: '9px 12px',
+        borderRadius: '11px',
+        fontSize: '13px',
+        fontWeight: on ? 700 : 600,
+        cursor: 'pointer',
+        color: on ? '#fff' : 'rgba(255,255,255,.55)',
+        background: on ? '#6c5ce7' : 'transparent',
+        boxShadow: on ? '0 8px 24px rgba(108,92,231,.35)' : 'none',
+      },
+    }
+  }
+
+  renderVals() {
+    const { active, range, tab } = this.state
+    const data = BAR_DATA[range]
+    const max = 6
+    return {
+      active,
+      nav: NAV.map((l) => this.navItem(l)),
+      navFooter: [this.navItem('Settings')],
+      goInsights: () => this.setState({ active: 'Insights' }),
+      isOverview: active === 'Overview',
+      isInsights: active === 'Insights',
+      isAnalytics: active === 'Analytics',
+      isBudgets: active === 'Budgets',
+      isGoals: active === 'Goals',
+      isReports: active === 'Reports',
+      isSettings: active === 'Settings',
+      langs: ['Español', 'English'].map((label) => ({
+        label,
+        onClick: () => this.setState({ lang: label }),
+        style: {
+          padding: '7px 13px',
+          borderRadius: '9px',
+          fontSize: '11.5px',
+          fontWeight: 700,
+          cursor: 'pointer',
+          color: this.state.lang === label ? '#fff' : '#6f6f82',
+          background: this.state.lang === label ? '#6c5ce7' : '#13131d',
+          border: '1px solid ' + (this.state.lang === label ? '#6c5ce7' : '#262635'),
+        },
+      })),
+      themes: ['Light', 'Dark', 'System'].map((label) => ({
+        label,
+        onClick: () => this.setState({ theme: label }),
+        style: {
+          padding: '7px 13px',
+          borderRadius: '9px',
+          fontSize: '11.5px',
+          fontWeight: 700,
+          cursor: 'pointer',
+          color: this.state.theme === label ? '#fff' : '#6f6f82',
+          background: this.state.theme === label ? '#6c5ce7' : '#13131d',
+          border: '1px solid ' + (this.state.theme === label ? '#6c5ce7' : '#262635'),
+        },
+      })),
+      toggles: [
+        { key: 'notifications', label: 'Notifications', detail: 'Budget alerts and upcoming charges' },
+        { key: 'biometric', label: 'Biometric login', detail: 'Android only — ignored on web' },
+        { key: 'hideAmounts', label: 'Hide amounts by default', detail: 'Blurs balances until you hover' },
+      ].map((tg) => {
+        const on = this.state[tg.key]
+        return {
+          ...tg,
+          onClick: () => this.setState({ [tg.key]: !on }),
+          trackStyle: {
+            width: '42px',
+            height: '24px',
+            borderRadius: '999px',
+            flex: 'none',
+            cursor: 'pointer',
+            padding: '3px',
+            display: 'flex',
+            justifyContent: on ? 'flex-end' : 'flex-start',
+            background: on ? '#6c5ce7' : '#262635',
+            transition: 'background .2s ease',
+          },
+          knobStyle: { width: '18px', height: '18px', borderRadius: '50%', background: '#fff', display: 'block' },
+        }
+      }),
+      goals: GOALS.map((g) => ({
+        ...g,
+        pctLabel: g.pct + '%',
+        cardStyle: { background: '#0e0e15', border: '1px solid #1c1c28', borderRadius: '16px', padding: '20px' },
+        ringStyle: {
+          width: '72px',
+          height: '72px',
+          borderRadius: '50%',
+          flex: 'none',
+          background: 'conic-gradient(' + g.color + ' ' + g.pct + '%, #1c1c28 0)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+      })),
+      reportRows: REPORT_ROWS.map((r) => ({
+        ...r,
+        deltaStyle: {
+          fontSize: '11.5px',
+          fontWeight: 800,
+          borderRadius: '999px',
+          padding: '3px 8px',
+          color: r.neg ? '#ff6262' : '#32c98a',
+          background: r.neg ? 'rgba(255,98,98,.14)' : 'rgba(50,201,138,.14)',
+        },
+      })),
+      week: WEEK_SPEND.map((w) => ({
+        day: w.day,
+        barStyle: {
+          width: '100%',
+          height: w.pct + '%',
+          background: w.pct >= 90 ? '#8578ff' : 'rgba(165,157,255,.28)',
+          borderRadius: '4px 4px 0 0',
+        },
+      })),
+      txns: TXNS.map((tx) => ({
+        ...tx,
+        dot: { width: '34px', height: '34px', borderRadius: '11px', background: tx.color + '29', flex: 'none' },
+        amountStyle: { fontSize: '13px', fontWeight: 800, color: tx.neg ? '#ff6262' : '#32c98a' },
+      })),
+      insights: INSIGHTS.map((ins) => ({
+        ...ins,
+        cardStyle: { background: '#0e0e15', border: '1px solid #1c1c28', borderLeft: '3px solid ' + ins.tone, borderRadius: '16px', padding: '18px 20px' },
+        tagStyle: { fontSize: '10px', fontWeight: 800, letterSpacing: '.09em', textTransform: 'uppercase', color: ins.tone, background: ins.tone + '1f', borderRadius: '999px', padding: '4px 9px' },
+      })),
+      ranges: ['3M', '6M', '12M'].map((label) => ({
+        label,
+        onClick: () => this.setState({ range: label }),
+        style: {
+          padding: '7px 13px',
+          borderRadius: '9px',
+          fontSize: '11.5px',
+          fontWeight: 700,
+          cursor: 'pointer',
+          color: range === label ? '#fff' : '#6f6f82',
+          background: range === label ? '#6c5ce7' : '#0e0e15',
+          border: '1px solid ' + (range === label ? '#6c5ce7' : '#1c1c28'),
+        },
+      })),
+      tabs: ['Spending', 'Income', 'Cash Flow', 'Net Worth'].map((label) => ({
+        label,
+        onClick: () => this.setState({ tab: label }),
+        style: {
+          padding: '10px 14px',
+          fontSize: '12.5px',
+          fontWeight: tab === label ? 800 : 600,
+          cursor: 'pointer',
+          color: tab === label ? '#fff' : '#6f6f82',
+          borderBottom: '2px solid ' + (tab === label ? '#8578ff' : 'transparent'),
+          marginBottom: '-1px',
+        },
+      })),
+      isSpending: tab === 'Spending',
+      isIncomeTab: tab === 'Income',
+      isCashFlow: tab === 'Cash Flow',
+      isNetWorth: tab === 'Net Worth',
+      incomeBars: data.map((d) => ({
+        label: d.label,
+        style: { width: '100%', height: (d.inc / max) * 100 + '%', background: d.label === 'Aug' ? '#32c98a' : 'rgba(50,201,138,.28)', borderRadius: '4px 4px 0 0', transition: 'height .3s ease' },
+      })),
+      flow: [
+        { date: 'AUG 24', label: 'Netflix', amount: '−$45.000', running: '$16.102.300', neg: true },
+        { date: 'AUG 26', label: 'Internet y celular — Claro', amount: '−$109.000', running: '$15.993.300', neg: true },
+        { date: 'AUG 30', label: 'Administración', amount: '−$232.000', running: '$15.761.300', neg: true },
+        { date: 'SEP 01', label: 'Salario mensual', amount: '+$4.400.000', running: '$20.161.300', neg: false },
+      ].map((f) => ({
+        ...f,
+        amountStyle: { fontSize: '13px', fontWeight: 800, width: '110px', textAlign: 'right', flex: 'none', color: f.neg ? '#ff6262' : '#32c98a' },
+      })),
+      wallets: [
+        { label: 'Bancolombia — Ahorros', kind: 'Savings account', amount: '$13.740.000', color: '#6c5ce7' },
+        { label: 'Nequi', kind: 'Digital wallet', amount: '$1.982.300', color: '#D95DB2' },
+        { label: 'Efectivo', kind: 'Cash', amount: '$425.000', color: '#E8A23D' },
+      ].map((w) => ({
+        ...w,
+        dot: { width: '30px', height: '30px', borderRadius: '10px', background: w.color + '29', flex: 'none' },
+      })),
+      rangeSubtitle: range === '3M' ? 'Last 3 months' : range === '6M' ? 'Last 6 months' : 'Last 12 months',
+      bars: data.map((d) => ({
+        label: d.label,
+        incStyle: { width: '46%', maxWidth: '26px', height: (d.inc / max) * 100 + '%', background: '#32c98a', borderRadius: '4px 4px 0 0', transition: 'height .3s ease' },
+        expStyle: { width: '46%', maxWidth: '26px', height: (d.exp / max) * 100 + '%', background: '#ff6262', borderRadius: '4px 4px 0 0', transition: 'height .3s ease' },
+      })),
+      categories: CATEGORIES.map((c) => ({
+        ...c,
+        amountStyle: { color: c.alert ? '#ff6262' : '#a8a8b8' },
+        fillStyle: { width: c.pct + '%', height: '100%', background: c.color },
+      })),
+      budgets: BUDGETS.map((b) => {
+        const tone = b.pct >= 90 ? '#ff6262' : b.pct >= 65 ? '#f0b429' : '#32c98a'
+        return {
+          ...b,
+          pct: b.pct + '%',
+          cardStyle: { background: '#0e0e15', border: '1px solid ' + (b.pct >= 90 ? '#3a2029' : '#1c1c28'), borderRadius: '16px', padding: '18px 20px' },
+          pctStyle: { fontSize: '11.5px', fontWeight: 800, color: tone, background: tone + '24', borderRadius: '999px', padding: '3px 8px' },
+          fillStyle: { width: Math.min(100, b.pct) + '%', height: '100%', background: tone },
+        }
+      }),
+    }
+  }
+}
+</script>
+</body>
+</html>

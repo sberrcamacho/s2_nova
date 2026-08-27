@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"><style>body{margin:0;background:#e9e9ef;font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#111118;display:flex;justify-content:center;align-items:flex-start;padding:40px 20px;min-height:100vh}.num{font-variant-numeric:tabular-nums}a{color:#7b6ff6}a:hover{color:#7b6ff6}.scroll{flex:1 1 0;min-height:0;overflow-y:auto;display:flex;flex-direction:column}.scroll>*{flex:0 0 auto}.scroll{scrollbar-width:none;-ms-overflow-style:none}.scroll::-webkit-scrollbar{width:0;height:0;display:none}.sheet{position:absolute;left:0;right:0;bottom:0;background:#f7f7fa;border-top:1px solid #dcdce6;border-radius:28px 28px 0 0;padding:8px 20px 26px;box-shadow:0 -16px 48px rgba(17,17,24,.12);z-index:20}.grab{width:32px;height:4px;border-radius:2px;background:#dcdce6;margin:0 auto 16px}</style></helmet>
+
+<div style="display:flex;flex-direction:column;align-items:center;gap:14px">
+  <div style="width:412px;height:892px;background:#ffffff;border:9px solid #23232c;border-radius:44px;box-shadow:0 30px 80px rgba(17,17,24,.22);overflow:hidden;position:relative;display:flex;flex-direction:column">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 24px 6px;font-size:12.5px;font-weight:700;flex:none">
+      <span class="num">9:41</span>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="width:14px;height:9px;border:1.5px solid #666673;border-radius:2px;display:block"></span>
+        <span style="width:18px;height:9px;border:1.5px solid #666673;border-radius:2.5px;display:block;position:relative"><span style="position:absolute;inset:1.5px;right:5px;background:#666673;border-radius:1px;display:block"></span></span>
+      </div>
+    </div>
+
+    <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+    <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px 14px;flex:none">
+        <div style="display:flex;align-items:center;gap:11px">
+          <img src="web/src/assets/logo-mark-light.png" alt="" style="width:34px;height:34px;border-radius:10px;object-fit:cover;flex:none">
+          <div><div style="font-size:11px;color:#666673">Buenas tardes,</div><div style="font-size:16px;font-weight:800;letter-spacing:-.015em">Mariana</div></div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <div onClick="{{ openNotifications }}" style="width:38px;height:38px;border-radius:50%;background:#ffffff;border:1px solid #ebebf2;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer">{{ iconBell }}<span style="position:absolute;top:9px;right:10px;width:7px;height:7px;border-radius:50%;background:#d64545;border:2px solid #ffffff"></span></div>
+          <div onClick="{{ goProfile }}" style="width:38px;height:38px;border-radius:50%;background:#6657e8;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;cursor:pointer">MT</div>
+        </div>
+      </div>
+
+      <div class="scroll" style="padding:0 20px 20px;gap:16px">
+        <div style="position:relative;overflow:hidden;border-radius:24px;color:#fff;border:1px solid #2b2450;background:linear-gradient(150deg,#16123a 0%,#1d1650 60%,#241a5e 100%);padding:22px">
+          <div style="position:absolute;top:-56px;right:-30px;width:170px;height:170px;border-radius:50%;background:rgba(108,92,231,.42);filter:blur(46px)"></div>
+          <div style="position:relative">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#eae7ff">SALDO TOTAL</div>
+              <div style="font-size:10.5px;font-weight:700;color:rgba(255,255,255,.7);background:rgba(255,255,255,.1);border-radius:999px;padding:4px 10px">3 billeteras</div>
+            </div>
+            <div class="num" style="font-size:34px;font-weight:800;letter-spacing:-.03em;margin-top:10px">$16.147.300</div>
+            <div style="display:flex;gap:12px;margin-top:18px">
+              <div style="flex:1;background:rgba(255,255,255,.06);border-radius:14px;padding:11px 13px"><div style="font-size:10px;color:rgba(255,255,255,.7)">Ingresos</div><div class="num" style="font-size:14.5px;font-weight:800;color:#32c98a;margin-top:3px">$4.288.500</div></div>
+              <div style="flex:1;background:rgba(255,255,255,.06);border-radius:14px;padding:11px 13px"><div style="font-size:10px;color:rgba(255,255,255,.7)">Gastos</div><div class="num" style="font-size:14.5px;font-weight:800;color:#ff6262;margin-top:3px">$1.927.100</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:20px;padding:18px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="font-size:13.5px;font-weight:800">Presupuestos</div>
+            <div onClick="{{ goBudgets }}" style="font-size:11.5px;font-weight:700;color:#7b6ff6;cursor:pointer">Ver todos</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:13px;margin-top:14px">
+            <sc-for list="{{ homeBudgets }}" as="b" hint-placeholder-count="3">
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:6px"><span>{{ b.label }}</span><span class="num" style="{{ b.pctStyle }}">{{ b.pct }}</span></div>
+                <div style="height:6px;border-radius:3px;background:#ebebf2;overflow:hidden"><div style="{{ b.fillStyle }}"></div></div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:20px;padding:18px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="font-size:13.5px;font-weight:800">Próximos pagos</div>
+            <div style="font-size:11.5px;font-weight:700;color:#7b6ff6;cursor:pointer">Recurrentes</div>
+          </div>
+          <div style="display:flex;flex-direction:column;margin-top:10px">
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f0f0f5">
+              <div style="width:42px;flex:none;text-align:center"><div style="font-size:9.5px;font-weight:700;color:#666673">AGO</div><div class="num" style="font-size:15px;font-weight:800">24</div></div>
+              <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">Netflix</div><div style="font-size:11px;color:#666673">Serie mensual · confirmar al vencer</div></div>
+              <div class="num" style="font-size:13px;font-weight:800;color:#d64545">−$45.000</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 0">
+              <div style="width:42px;flex:none;text-align:center"><div style="font-size:9.5px;font-weight:700;color:#666673">AGO</div><div class="num" style="font-size:15px;font-weight:800">26</div></div>
+              <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">Internet y celular</div><div style="font-size:11px;color:#666673">Serie mensual · Claro</div></div>
+              <div class="num" style="font-size:13px;font-weight:800;color:#d64545">−$109.000</div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <div style="font-size:13.5px;font-weight:800">Movimientos recientes</div>
+            <div onClick="{{ goTransactions }}" style="font-size:11.5px;font-weight:700;color:#7b6ff6;cursor:pointer">Ver todos</div>
+          </div>
+          <sc-for list="{{ txns }}" as="tx" hint-placeholder-count="4">
+            <div style="display:flex;align-items:center;gap:13px;padding:11px 0;border-bottom:1px solid #f0f0f5">
+              {{ tx.chip }}
+              <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">{{ tx.desc }}</div><div style="font-size:11px;color:#666673">{{ tx.merchant }} · {{ tx.date }}</div></div>
+              <span class="num" style="{{ tx.amountStyle }}">{{ tx.amount }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isReports }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column">
+      <div style="padding:10px 20px 12px;flex:none">
+        <div style="font-size:21px;font-weight:800;letter-spacing:-.02em">Reportes</div>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <sc-for list="{{ reportRanges }}" as="r" hint-placeholder-count="3">
+            <div onClick="{{ r.onClick }}" style="{{ r.style }}">{{ r.label }}</div>
+          </sc-for>
+        </div>
+      </div>
+      <div class="scroll" style="padding:4px 20px 20px;gap:14px">
+        <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:20px;padding:18px">
+          <div style="font-size:13.5px;font-weight:800">Totales del periodo</div>
+          <div style="display:flex;flex-direction:column;margin-top:10px">
+            <sc-for list="{{ reportRows }}" as="r" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f0f0f5">
+                <span style="flex:1;min-width:0;font-size:12.5px;font-weight:700">{{ r.label }}</span>
+                <span class="num" style="font-size:13px;font-weight:800">{{ r.current }}</span>
+                <span style="{{ r.deltaStyle }}">{{ r.delta }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:20px;padding:18px">
+          <div style="font-size:13.5px;font-weight:800">Ingresos vs gastos</div>
+          <div style="font-size:11px;color:#666673;margin-top:2px">{{ reportSubtitle }}</div>
+          <div style="display:flex;align-items:flex-end;gap:10px;height:132px;margin-top:16px;border-bottom:1px solid #ebebf2">
+            <sc-for list="{{ bars }}" as="b" hint-placeholder-count="6">
+              <div style="flex:1;height:100%;display:flex;align-items:flex-end;justify-content:center;gap:3px">
+                <div style="{{ b.incStyle }}"></div>
+                <div style="{{ b.expStyle }}"></div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:7px">
+            <sc-for list="{{ bars }}" as="b" hint-placeholder-count="6">
+              <div style="flex:1;text-align:center;font-size:10px;font-weight:600;color:#666673">{{ b.label }}</div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:20px;padding:18px">
+          <div style="font-size:13.5px;font-weight:800">Gasto por categoría</div>
+          <div style="display:flex;flex-direction:column;gap:13px;margin-top:14px">
+            <sc-for list="{{ categorySpend }}" as="c" hint-placeholder-count="5">
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:6px"><span>{{ c.label }}</span><span class="num" style="color:#666673">{{ c.amount }}</span></div>
+                <div style="height:6px;border-radius:3px;background:#ebebf2;overflow:hidden"><div style="{{ c.fillStyle }}"></div></div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isBudgets }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column">
+      <div style="padding:10px 20px 0;flex:none">
+        <div style="font-size:21px;font-weight:800;letter-spacing:-.02em">Presupuestos</div>
+        <div style="display:flex;gap:4px;margin-top:14px;border-bottom:1px solid #ebebf2">
+          <sc-for list="{{ budgetTabs }}" as="t" hint-placeholder-count="2">
+            <div onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</div>
+          </sc-for>
+        </div>
+      </div>
+
+      <sc-if value="{{ budgetTabIsBudgets }}" hint-placeholder-val="{{ true }}">
+      <div class="scroll" style="padding:16px 20px 20px;gap:12px">
+        <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:18px;padding:16px 18px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline">
+            <div><div style="font-size:11px;color:#666673">Gastado en agosto</div><div class="num" style="font-size:22px;font-weight:800;letter-spacing:-.025em;margin-top:3px">$1.927.100</div></div>
+            <div style="text-align:right"><div style="font-size:11px;color:#666673">Límite total</div><div class="num" style="font-size:13px;font-weight:700;color:#666673">$2.700.000</div></div>
+          </div>
+          <div style="height:7px;border-radius:4px;background:#ebebf2;overflow:hidden;margin-top:14px"><div style="width:71%;height:100%;background:#b5760f"></div></div>
+          <div style="font-size:11px;color:#666673;margin-top:9px">Quedan 9 días y $772.900 disponibles</div>
+        </div>
+        <sc-for list="{{ budgets }}" as="b" hint-placeholder-count="6">
+          <div style="{{ b.cardStyle }}">
+            <div style="display:flex;align-items:center;gap:13px">
+              {{ b.chip }}
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:13px;font-weight:800">{{ b.label }}</span><span style="{{ b.pctStyle }}">{{ b.pct }}</span></div>
+                <div class="num" style="font-size:11.5px;color:#666673;margin-top:3px">{{ b.spent }} de {{ b.limit }}</div>
+              </div>
+            </div>
+            <div style="height:6px;border-radius:3px;background:#ebebf2;overflow:hidden;margin-top:12px"><div style="{{ b.fillStyle }}"></div></div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ budgetTabIsGoals }}" hint-placeholder-val="{{ false }}">
+      <div class="scroll" style="padding:16px 20px 20px;gap:12px">
+        <sc-for list="{{ goals }}" as="g" hint-placeholder-count="4">
+          <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:18px;padding:16px 18px">
+            <div style="display:flex;align-items:center;gap:16px">
+              <div style="{{ g.ringStyle }}"><div style="width:48px;height:48px;border-radius:50%;background:#ffffff;display:flex;align-items:center;justify-content:center"><span class="num" style="font-size:12.5px;font-weight:800">{{ g.pctLabel }}</span></div></div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13.5px;font-weight:800">{{ g.label }}</div>
+                <div class="num" style="font-size:15px;font-weight:800;margin-top:4px">{{ g.current }} <span style="font-size:11px;font-weight:600;color:#666673">de {{ g.target }}</span></div>
+                <div style="font-size:11px;color:#666673;margin-top:3px">{{ g.note }}</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:9px;margin-top:14px">
+              <div style="flex:1;background:#6657e8;color:#fff;border-radius:12px;padding:10px;text-align:center;font-size:12px;font-weight:800;cursor:pointer">Abonar</div>
+              <div style="flex:1;border:1px solid #dcdce6;border-radius:12px;padding:10px;text-align:center;font-size:12px;font-weight:700;color:#666673;cursor:pointer">Detalle</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column">
+      <div style="padding:10px 20px 12px;flex:none;font-size:21px;font-weight:800;letter-spacing:-.02em">Perfil</div>
+      <div class="scroll" style="padding:0 20px 20px;gap:14px">
+        <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:20px;padding:18px;display:flex;align-items:center;gap:14px">
+          <div style="width:54px;height:54px;border-radius:50%;background:#6657e8;color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;flex:none">MT</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:15.5px;font-weight:800;letter-spacing:-.01em">Mariana Torres</div>
+            <div style="font-size:11.5px;color:#666673;margin-top:2px">mariana.torres@example.com</div>
+            <div style="font-size:11px;color:#666673">Bogotá, D.C. · desde nov 2024</div>
+          </div>
+        </div>
+
+        <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:20px;overflow:hidden">
+          <sc-for list="{{ profileRows }}" as="r" hint-placeholder-count="6">
+            <div onClick="{{ r.onClick }}" style="display:flex;align-items:center;gap:14px;padding:15px 18px;border-bottom:1px solid #f0f0f5;cursor:pointer">
+              {{ r.chip }}
+              <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">{{ r.label }}</div><div style="font-size:11px;color:#666673">{{ r.detail }}</div></div>
+              <span style="font-size:15px;color:#666673">›</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="border:1px solid rgba(214,69,69,.3);border-radius:16px;padding:14px;text-align:center;font-size:13px;font-weight:800;color:#d64545;cursor:pointer">Cerrar sesión</div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isTransactions }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column;background:#ffffff">
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 18px 12px;flex:none">
+        <div onClick="{{ goHome }}" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;color:#666673;cursor:pointer">←</div>
+        <div style="font-size:17px;font-weight:800;letter-spacing:-.015em">Movimientos</div>
+      </div>
+      <div style="padding:0 20px 12px;flex:none;display:flex;gap:8px">
+        <sc-for list="{{ txFilters }}" as="f" hint-placeholder-count="4">
+          <div onClick="{{ f.onClick }}" style="{{ f.style }}">{{ f.label }}</div>
+        </sc-for>
+      </div>
+      <div class="scroll" style="padding:0 20px 20px">
+        <div style="font-size:10.5px;font-weight:700;letter-spacing:.1em;color:#9c9caa;padding:12px 0 4px">HOY · <span class="num">−$189.500</span></div>
+        <sc-for list="{{ txnsToday }}" as="tx" hint-placeholder-count="2">
+          <div style="display:flex;align-items:center;gap:13px;padding:12px 0;border-bottom:1px solid #f0f0f5">
+            {{ tx.chip }}
+            <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">{{ tx.desc }}</div><div style="font-size:11px;color:#666673">{{ tx.merchant }} · {{ tx.wallet }}</div></div>
+            <span class="num" style="{{ tx.amountStyle }}">{{ tx.amount }}</span>
+          </div>
+        </sc-for>
+        <div style="font-size:10.5px;font-weight:700;letter-spacing:.1em;color:#9c9caa;padding:18px 0 4px">AYER · <span class="num">−$130.000</span></div>
+        <sc-for list="{{ txnsYesterday }}" as="tx" hint-placeholder-count="2">
+          <div style="display:flex;align-items:center;gap:13px;padding:12px 0;border-bottom:1px solid #f0f0f5">
+            {{ tx.chip }}
+            <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">{{ tx.desc }}</div><div style="font-size:11px;color:#666673">{{ tx.merchant }} · {{ tx.wallet }}</div></div>
+            <span class="num" style="{{ tx.amountStyle }}">{{ tx.amount }}</span>
+          </div>
+        </sc-for>
+        <div style="font-size:10.5px;font-weight:700;letter-spacing:.1em;color:#9c9caa;padding:18px 0 4px">1 DE AGOSTO · <span class="num" style="color:#22a06b">+$4.400.000</span></div>
+        <div style="display:flex;align-items:center;gap:13px;padding:12px 0;border-bottom:1px solid #f0f0f5">
+          <span style="width:38px;height:38px;border-radius:12px;background:rgba(34,160,107,.12);border:1px solid rgba(34,160,107,.24);flex:none;display:block"></span>
+          <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">Salario mensual</div><div style="font-size:11px;color:#666673">Nómina — Grupo Éxito · Bancolombia</div></div>
+          <span class="num" style="font-size:13.5px;font-weight:800;color:#22a06b">+$4.400.000</span>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isAdd }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column;position:relative;z-index:15;background:#ffffff">
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 18px 14px;flex:none">
+        <div onClick="{{ closeAdd }}" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;color:#666673;cursor:pointer">←</div>
+        <div style="font-size:17px;font-weight:800;letter-spacing:-.015em">Nuevo movimiento</div>
+      </div>
+
+      <div class="scroll" style="padding:0 20px 20px;gap:20px">
+        <div style="border-radius:22px;color:#fff;background:linear-gradient(140deg,#16123a,#241a5e);padding:20px">
+          <div style="display:flex;gap:4px;background:rgba(255,255,255,.08);border-radius:999px;padding:4px">
+            <sc-for list="{{ addTypes }}" as="t" hint-placeholder-count="3">
+              <div onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</div>
+            </sc-for>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;margin-top:24px">
+            <div onClick="{{ openCategories }}" style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.14);flex:none;display:flex;align-items:center;justify-content:center;cursor:pointer">{{ selectedCategoryMark }}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:11.5px;color:rgba(255,255,255,.75)">{{ selectedCategory }}</div>
+              <div style="display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.25);border-radius:14px;padding:10px 14px;margin-top:14px">
+                <span class="num" style="font-size:20px;font-weight:800">$</span>
+                <span class="num" style="font-size:20px;font-weight:700">{{ amountDisplay }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-size:11.5px;font-weight:700;color:#666673;margin-bottom:8px">Billetera</div>
+          <div style="display:flex;gap:8px">
+            <sc-for list="{{ wallets }}" as="w" hint-placeholder-count="3">
+              <div onClick="{{ w.onClick }}" style="{{ w.style }}">{{ w.label }}</div>
+            </sc-for>
+          </div>
+          <div style="font-size:11px;color:#666673;margin-top:9px">El método de pago lo deriva el servidor a partir de la billetera.</div>
+        </div>
+
+        <sc-if value="{{ isTransfer }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <div style="font-size:11.5px;font-weight:700;color:#666673;margin-bottom:8px">Transferir a</div>
+          <div style="display:flex;gap:8px">
+            <sc-for list="{{ transferTargets }}" as="w" hint-placeholder-count="2">
+              <div onClick="{{ w.onClick }}" style="{{ w.style }}">{{ w.label }}</div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <div>
+          <div style="font-size:11.5px;font-weight:700;color:#666673;margin-bottom:8px">Descripción</div>
+          <div style="border:1px solid #dcdce6;border-radius:14px;padding:14px 16px;font-size:13.5px;font-weight:600">Mercado semanal</div>
+        </div>
+
+        <div>
+          <div style="font-size:11.5px;font-weight:700;color:#666673;margin-bottom:8px">Nota</div>
+          <div style="border:1px solid #dcdce6;border-radius:14px;padding:14px 16px;font-size:13px;color:#666673">Opcional</div>
+        </div>
+
+        <div onClick="{{ toggleMore }}" style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#7b6ff6;cursor:pointer">Más opciones <span style="font-size:11px">{{ moreCaret }}</span></div>
+
+        <sc-if value="{{ moreOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div>
+            <div style="font-size:11.5px;font-weight:700;color:#666673;margin-bottom:8px">Presupuesto</div>
+            <div style="display:flex;gap:8px">
+              <sc-for list="{{ budgetChips }}" as="b" hint-placeholder-count="3">
+                <div onClick="{{ b.onClick }}" style="{{ b.style }}">{{ b.label }}</div>
+              </sc-for>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11.5px;font-weight:700;color:#666673;margin-bottom:8px">Meta</div>
+            <div style="display:flex;gap:8px">
+              <sc-for list="{{ goalChips }}" as="g" hint-placeholder-count="3">
+                <div onClick="{{ g.onClick }}" style="{{ g.style }}">{{ g.label }}</div>
+              </sc-for>
+            </div>
+          </div>
+          <sc-for list="{{ addToggles }}" as="tg" hint-placeholder-count="2">
+            <div style="display:flex;align-items:center;gap:14px">
+              <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">{{ tg.label }}</div><div style="font-size:11px;color:#666673;margin-top:2px">{{ tg.detail }}</div></div>
+              <div onClick="{{ tg.onClick }}" style="{{ tg.trackStyle }}"><span style="{{ tg.knobStyle }}"></span></div>
+            </div>
+          </sc-for>
+          <div style="font-size:12px;font-weight:600;color:#7b6ff6;cursor:pointer">¿Es un pago recurrente? Gestiónalo en Recurrentes →</div>
+        </div>
+        </sc-if>
+
+        <div style="background:#6657e8;color:#fff;border-radius:14px;padding:16px;text-align:center;font-size:14px;font-weight:800;box-shadow:0 8px 24px rgba(102,87,232,.28);cursor:pointer">Guardar movimiento</div>
+      </div>
+    </div>
+    </sc-if>
+
+
+    <sc-if value="{{ isWallets }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column;background:#ffffff">
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 18px 12px;flex:none">
+        <div onClick="{{ goProfile }}" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;color:#666673;cursor:pointer">←</div>
+        <div style="flex:1;min-width:0;font-size:17px;font-weight:800;letter-spacing:-.015em">Billeteras</div>
+        <div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:300;color:#6657e8;cursor:pointer">+</div>
+      </div>
+      <div class="scroll" style="padding:12px 20px 20px;gap:12px">
+        <sc-for list="{{ walletCards }}" as="w" hint-placeholder-count="3">
+          <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:18px;padding:16px;display:flex;align-items:center;gap:12px">
+            <span style="{{ w.iconStyle }}">{{ w.icon }}</span>
+            <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700">{{ w.label }}</div><div style="font-size:11.5px;color:#666673">{{ w.kind }}</div></div>
+            <span class="num" style="font-size:14.5px;font-weight:800">{{ w.amount }}</span>
+          </div>
+        </sc-for>
+        <div style="font-size:11.5px;color:#9c9caa;padding:2px 4px">El saldo total de Inicio es la suma de estas billeteras.</div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isRecurring }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column;background:#ffffff">
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 18px 12px;flex:none">
+        <div onClick="{{ goProfile }}" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;color:#666673;cursor:pointer">←</div>
+        <div style="flex:1;min-width:0;font-size:17px;font-weight:800;letter-spacing:-.015em">Recurrentes</div>
+        <div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:300;color:#6657e8;cursor:pointer">+</div>
+      </div>
+      <div class="scroll" style="padding:12px 20px 20px;gap:12px">
+        <sc-for list="{{ series }}" as="s" hint-placeholder-count="4">
+          <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:18px;padding:16px">
+            <div style="display:flex;align-items:center;gap:12px">
+              {{ s.chip }}
+              <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700">{{ s.label }}</div><div style="font-size:11.5px;color:#666673;margin-top:2px">{{ s.detail }}</div></div>
+              <span class="num" style="{{ s.amountStyle }}">{{ s.amount }}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;margin-top:12px">
+              <span onClick="{{ s.onToggle }}" style="font-size:12.5px;font-weight:700;color:#6657e8;cursor:pointer">{{ s.action }}</span>
+              <sc-if value="{{ s.dueToday }}" hint-placeholder-val="{{ false }}">
+                <span style="font-size:12.5px;font-weight:700;color:#6657e8;cursor:pointer">Vence hoy · Confirmar</span>
+              </sc-if>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isLoans }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column;background:#ffffff">
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 18px 4px;flex:none">
+        <div onClick="{{ goProfile }}" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;color:#666673;cursor:pointer">←</div>
+        <div style="flex:1;min-width:0;font-size:17px;font-weight:800;letter-spacing:-.015em">Préstamos</div>
+      </div>
+      <div style="display:flex;gap:4px;padding:0 20px;border-bottom:1px solid #ebebf2;flex:none">
+        <sc-for list="{{ loanTabs }}" as="t" hint-placeholder-count="2">
+          <div onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</div>
+        </sc-for>
+      </div>
+      <div class="scroll" style="padding:12px 20px 20px;gap:12px">
+        <sc-for list="{{ loans }}" as="l" hint-placeholder-count="2">
+          <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:18px;padding:16px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700">{{ l.label }}</div><div style="font-size:11.5px;color:#666673;margin-top:2px">{{ l.due }}</div></div>
+              <span class="num" style="font-size:14.5px;font-weight:800">{{ l.amount }}</span>
+            </div>
+            <div style="margin-top:10px;font-size:12.5px;font-weight:700;{{ l.actionColor }};cursor:pointer">{{ l.action }}</div>
+          </div>
+        </sc-for>
+        <sc-if value="{{ loansEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:56px 20px;text-align:center;font-size:13px;color:#666673">No tienes préstamos registrados.</div>
+        </sc-if>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column;background:#ffffff">
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 18px 12px;flex:none">
+        <div onClick="{{ goProfile }}" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;color:#666673;cursor:pointer">←</div>
+        <div style="font-size:17px;font-weight:800;letter-spacing:-.015em">Ajustes</div>
+      </div>
+      <div class="scroll" style="padding:0 20px 24px;gap:12px">
+        <div style="font-size:14px;font-weight:800">Información personal</div>
+        <div style="border:1px solid #dcdce6;border-radius:14px;padding:12px 14px"><div style="font-size:10.5px;color:#666673">Nombre completo</div><div style="font-size:13.5px;font-weight:600;margin-top:3px">Mariana Torres</div></div>
+        <div style="border:1px solid #ebebf2;border-radius:14px;padding:12px 14px;background:#f7f7fa"><div style="font-size:10.5px;color:#9c9caa">Correo</div><div style="font-size:13.5px;font-weight:600;margin-top:3px;color:#9c9caa">mariana.torres@example.com</div></div>
+        <div style="border:1px solid #dcdce6;border-radius:14px;padding:12px 14px"><div style="font-size:10.5px;color:#666673">Teléfono</div><div style="font-size:13.5px;font-weight:600;margin-top:3px">+57 310 555 0134</div></div>
+        <div style="border:1px solid #dcdce6;border-radius:14px;padding:12px 14px"><div style="font-size:10.5px;color:#666673">Ciudad</div><div style="font-size:13.5px;font-weight:600;margin-top:3px">Bogotá, D.C.</div></div>
+        <div style="align-self:flex-start;background:#6657e8;color:#fff;border-radius:14px;padding:12px 20px;font-size:13px;font-weight:800;cursor:pointer;margin-top:4px">Guardar cambios</div>
+
+        <div style="font-size:14px;font-weight:800;margin-top:16px">Preferencias</div>
+        <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:14px">
+          <sc-for list="{{ prefSwitches }}" as="p" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:14px">
+              <span style="font-size:13.5px;font-weight:600">{{ p.label }}</span>
+              <div onClick="{{ p.onClick }}" style="{{ p.trackStyle }}"><span style="{{ p.knobStyle }}"></span></div>
+            </div>
+          </sc-for>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:14px">
+            <span style="font-size:13.5px;font-weight:600">Formato de moneda</span>
+            <div style="display:flex;background:#f7f7fa;border-radius:999px">
+              <sc-for list="{{ currencyOpts }}" as="o" hint-placeholder-count="2">
+                <div onClick="{{ o.onClick }}" style="{{ o.style }}">{{ o.label }}</div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:14px">
+            <span style="font-size:13.5px;font-weight:600">Idioma</span>
+            <div style="display:flex;background:#f7f7fa;border-radius:999px">
+              <sc-for list="{{ languageOpts }}" as="o" hint-placeholder-count="2">
+                <div onClick="{{ o.onClick }}" style="{{ o.style }}">{{ o.label }}</div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:18px;padding:16px;font-size:13.5px;font-weight:600;cursor:pointer;margin-top:8px">Repetir el tutorial</div>
+        <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:18px;padding:16px">
+          <div style="font-size:13px;font-weight:800">Acerca de</div>
+          <div style="font-size:11.5px;color:#666673;margin-top:4px">S2 Nova · v1.0.0 · datos de demostración</div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ addSheetOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeSheets }}" style="position:absolute;inset:0;background:rgba(17,17,24,.5);z-index:19"></div>
+    <div class="sheet">
+      <div class="grab"></div>
+      <div style="display:flex;flex-direction:column">
+        <sc-for list="{{ addActions }}" as="a" hint-placeholder-count="2">
+          <div onClick="{{ a.onClick }}" style="display:flex;align-items:center;gap:14px;padding:14px 4px;cursor:pointer">
+            <span style="width:44px;height:44px;border-radius:50%;background:rgba(102,87,232,.14);flex:none;display:flex;align-items:center;justify-content:center">{{ a.icon }}</span>
+            <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700">{{ a.label }}</div><div style="font-size:11.5px;color:#666673;margin-top:2px">{{ a.detail }}</div></div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ categorySheetOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeSheets }}" style="position:absolute;inset:0;background:rgba(17,17,24,.5);z-index:19"></div>
+    <div class="sheet">
+      <div class="grab"></div>
+      <div style="font-size:15px;font-weight:800;padding:0 4px 18px">Selecciona una categoría</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:18px 10px">
+        <sc-for list="{{ categoryGrid }}" as="c" hint-placeholder-count="8">
+          <div onClick="{{ c.onClick }}" style="display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer">
+            {{ c.chip }}
+            <span style="{{ c.labelStyle }}">{{ c.label }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ showBottomBar }}" hint-placeholder-val="{{ true }}">
+    <div style="flex:none;position:relative;background:#ffffff;border-top:1px solid #ebebf2;padding:8px 8px 4px;display:flex;align-items:center">
+      <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="5">
+        <div onClick="{{ tab.onClick }}" style="{{ tab.style }}">{{ tab.icon }}{{ tab.label }}</div>
+      </sc-for>
+    </div>
+    <div style="flex:none;background:#ffffff;display:flex;justify-content:center;padding:8px 0 10px"><span style="width:108px;height:4px;border-radius:2px;background:#3a3a4a"></span></div>
+    </sc-if>
+  </div>
+
+  <div style="font-size:11px;color:#666673;font-weight:600">Tema claro · pestañas reales: Inicio · Reportes · + · Presupuestos · Perfil</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:520,&quot;height&quot;:1010}}">
+const C = {
+  food: '#E8A23D',
+  transportation: '#3D8BE8',
+  shopping: '#3DBBA8',
+  health: '#E85D6B',
+  education: '#5D6BE8',
+  entertainment: '#B25DE8',
+  bills: '#8A8A99',
+  subscriptions: '#D95DB2',
+  salary: '#22A06B',
+  freelance: '#6657E8',
+  other: '#9C9CAA',
+}
+
+// expenseCategories order from data/mock/MockCategories.kt (mirrors web's categories.ts)
+const EXPENSE_CATEGORIES = [
+  ['Alimentación', C.food],
+  ['Transporte', C.transportation],
+  ['Compras', C.shopping],
+  ['Salud', C.health],
+  ['Educación', C.education],
+  ['Entretenimiento', C.entertainment],
+  ['Servicios', C.bills],
+  ['Suscripciones', C.subscriptions],
+  ['Otros', C.other],
+]
+
+const INCOME_CATEGORIES = [
+  ['Salario', C.salary],
+  ['Freelance', C.freelance],
+  ['Otros', C.other],
+]
+
+const TXNS = [
+  { desc: 'Mercado semanal', merchant: 'Éxito', date: 'Hoy', wallet: 'Bancolombia', amount: '−$168.500', color: C.food, neg: true },
+  { desc: 'Café', merchant: 'Tostao', date: 'Hoy', wallet: 'Efectivo', amount: '−$21.000', color: C.food, neg: true },
+  { desc: 'Viaje en app', merchant: 'Uber', date: 'Ayer', wallet: 'Nequi', amount: '−$21.000', color: C.transportation, neg: true },
+  { desc: 'Internet y celular', merchant: 'Claro', date: 'Ayer', wallet: 'Bancolombia', amount: '−$109.000', color: C.bills, neg: true },
+]
+
+const BUDGETS = [
+  { label: 'Servicios', spent: '$412.000', limit: '$450.000', n: 92, color: C.bills },
+  { label: 'Suscripciones', spent: '$112.600', limit: '$120.000', n: 94, color: C.subscriptions },
+  { label: 'Alimentación', spent: '$612.400', limit: '$900.000', n: 68, color: C.food },
+  { label: 'Transporte', spent: '$95.500', limit: '$150.000', n: 64, color: C.transportation },
+  { label: 'Compras', spent: '$318.500', limit: '$780.000', n: 41, color: C.shopping },
+  { label: 'Entretenimiento', spent: '$88.000', limit: '$300.000', n: 29, color: C.entertainment },
+]
+
+const GOALS = [
+  { label: 'Fondo de emergencia', current: '$8.400.000', target: '$12.000.000', pct: 70, note: '6 meses de gastos', color: '#6657e8' },
+  { label: 'Viaje a Perú', current: '$1.980.000', target: '$4.500.000', pct: 44, note: 'Faltan $252.000 al mes', color: '#3DBBA8' },
+  { label: 'Portátil nuevo', current: '$4.680.000', target: '$5.200.000', pct: 90, note: 'Dos abonos más', color: '#E8A23D' },
+  { label: 'Especialización', current: '$450.000', target: '$3.000.000', pct: 15, note: 'Sin historial suficiente', color: '#8A8A99' },
+]
+
+// Profile's own destinations, per ProfileScreen's callbacks in NovaNavGraph.kt
+const PROFILE_ROWS = [
+  { label: 'Billeteras', detail: '3 activas · $16.147.300', color: '#6657e8' },
+  { label: 'Recurrentes', detail: '6 series activas', color: C.subscriptions },
+  { label: 'Préstamos', detail: 'Prestado $620.000 · sin deudas', color: C.salary },
+  { label: 'Ajustes', detail: 'Idioma, moneda, seguridad', color: C.bills },
+]
+
+// Bottom bar: HOME, REPORTS, [FAB], BUDGETS, PROFILE (BottomNavBar.kt)
+const TABS = ['Inicio', 'Reportes', null, 'Presupuestos', 'Perfil']
+
+const TAB_ICONS = {
+  Inicio: ['M3 10.2 12 3.4l9 6.8V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z'],
+  Reportes: ['M5 21V10', 'M12 21V4', 'M19 21v-7'],
+  Presupuestos: ['M3 8h15a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3H5a2 2 0 0 1-2-2z', 'M3 8V6a2 2 0 0 1 2-2h11', 'M17 14h.01'],
+  Perfil: ['M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', 'M4 21v-1a5 5 0 0 1 5-5h6a5 5 0 0 1 5 5v1'],
+}
+
+const REPORT_BARS = {
+  '3M': [
+    { label: 'Jun', inc: 4.42, exp: 1.78 },
+    { label: 'Jul', inc: 4.41, exp: 2.03 },
+    { label: 'Ago', inc: 4.29, exp: 1.93 },
+  ],
+  '6M': [
+    { label: 'Mar', inc: 4.21, exp: 1.91 },
+    { label: 'Abr', inc: 4.38, exp: 2.14 },
+    { label: 'May', inc: 4.25, exp: 2.42 },
+    { label: 'Jun', inc: 4.42, exp: 1.78 },
+    { label: 'Jul', inc: 4.41, exp: 2.03 },
+    { label: 'Ago', inc: 4.29, exp: 1.93 },
+  ],
+  '12M': [
+    { label: 'Sep', inc: 4.05, exp: 2.2 },
+    { label: 'Nov', inc: 4.18, exp: 2.75 },
+    { label: 'Ene', inc: 4.1, exp: 2.05 },
+    { label: 'Mar', inc: 4.21, exp: 1.91 },
+    { label: 'May', inc: 4.25, exp: 2.42 },
+    { label: 'Ago', inc: 4.29, exp: 1.93 },
+  ],
+}
+
+const svg = (paths, size, color, fill) =>
+  React.createElement(
+    'svg',
+    { width: size, height: size, viewBox: '0 0 24 24', fill: fill || 'none', stroke: color, strokeWidth: 1.9, strokeLinecap: 'round', strokeLinejoin: 'round', style: { flex: 'none' } },
+    paths.map((d, i) => React.createElement('path', { key: i, d })),
+  )
+
+const CAT_GLYPHS = {
+  'Alimentación': ['M3 2v7c0 1.1.9 2 2 2h1a2 2 0 0 0 2-2V2', 'M6 2v20', 'M17 2c-1.7 1.3-3 3.7-3 6 0 1.7.7 3 2 3h2c1.3 0 2-1.3 2-3 0-2.3-1.3-4.7-3-6z', 'M18 11v11'],
+  'Transporte': ['M5 17H3v-5l2-5h14l2 5v5h-2', 'M5 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0z', 'M15 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0z', 'M9 17h6'],
+  'Compras': ['M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z', 'M3 6h18', 'M16 10a4 4 0 0 1-8 0'],
+  'Salud': ['M20.8 6.6a5 5 0 0 0-7.1 0L12 8.3l-1.7-1.7a5 5 0 1 0-7.1 7.1L12 21l8.8-7.3a5 5 0 0 0 0-7.1z'],
+  'Educación': ['M22 9 12 5 2 9l10 4 10-4z', 'M6 11v6c0 1.5 3 3 6 3s6-1.5 6-3v-6'],
+  'Entretenimiento': ['M4 11h16l-1.2 9a2 2 0 0 1-2 1.7H7.2a2 2 0 0 1-2-1.7z', 'M4 11 8 3', 'M12 11 9.5 4', 'M16 11 14 5'],
+  'Servicios': ['M4 2h16v20l-3-2-2 2-3-2-3 2-2-2-3 2z', 'M8 7h8', 'M8 11h8', 'M8 15h5'],
+  'Suscripciones': ['M3 12a9 9 0 0 1 15-6.7L21 8', 'M21 3v5h-5', 'M21 12a9 9 0 0 1-15 6.7L3 16', 'M3 21v-5h5'],
+  'Salario': ['M3 7h18a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12', 'M17 13h.01'],
+  'Freelance': ['M4 5h16v10H4z', 'M2 19h20'],
+  'Otros': ['M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z', 'M8 11h.01', 'M12 11h.01', 'M16 11h.01'],
+  'Billeteras': ['M3 7h18a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12', 'M17 13h.01'],
+  'Recurrentes': ['M3 12a9 9 0 0 1 15-6.7L21 8', 'M21 3v5h-5', 'M21 12a9 9 0 0 1-15 6.7L3 16', 'M3 21v-5h5'],
+  'Préstamos': ['M12 2v20', 'M17 6.5C17 4.6 14.8 3 12 3S7 4.6 7 6.5s2.2 3.5 5 3.5 5 1.6 5 3.5-2.2 3.5-5 3.5-5-1.6-5-3.5'],
+  'Ajustes': ['M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', 'M4.5 9.5a2 2 0 0 1 .3-2.4l.7-.7a2 2 0 0 1 2.4-.3', 'M14.1 4.6a2 2 0 0 1 2.4.3l.7.7a2 2 0 0 1 .3 2.4', 'M19.5 14.5a2 2 0 0 1-.3 2.4l-.7.7a2 2 0 0 1-2.4.3', 'M9.9 19.4a2 2 0 0 1-2.4-.3l-.7-.7a2 2 0 0 1-.3-2.4'],
+}
+
+// CategoryIcon.kt (CircleShape, alpha .13) / CategoryIcon.tsx (rounded-full, color+'22'):
+// low-alpha circle fill with the glyph in the SOLID category color.
+const mark = (label, color, box, alpha) =>
+  React.createElement(
+    'span',
+    { style: { width: box + 'px', height: box + 'px', borderRadius: '50%', background: color + alpha, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' } },
+    React.createElement(
+      'svg',
+      { width: Math.round(box * 0.46), height: Math.round(box * 0.46), viewBox: '0 0 24 24', fill: 'none', stroke: color, strokeWidth: 2.25, strokeLinecap: 'round', strokeLinejoin: 'round' },
+      (CAT_GLYPHS[label] || CAT_GLYPHS['Otros']).map((d, i) => React.createElement('path', { key: i, d })),
+    ),
+  )
+
+const chip = (color, size, radius) => ({
+  width: size + 'px',
+  height: size + 'px',
+  borderRadius: radius + 'px',
+  background: color + '29',
+  border: '1px solid ' + color + '3d',
+  flex: 'none',
+  display: 'block',
+})
+
+
+const WALLET_GLYPHS = {
+  'Bancolombia — Ahorros': ['M12 3 2 8h20z', 'M4 8v9', 'M20 8v9', 'M2 21h20', 'M9 12v5', 'M15 12v5'],
+  'Nequi': ['M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z', 'M11 18h2'],
+  'Efectivo': ['M2 7h20a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z', 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z'],
+}
+const WALLETS_FULL = [
+  { label: 'Bancolombia — Ahorros', kind: 'Cuenta de ahorros', amount: '$13.740.000' },
+  { label: 'Nequi', kind: 'Nequi', amount: '$1.982.300' },
+  { label: 'Efectivo', kind: 'Efectivo', amount: '$425.000' },
+]
+const SERIES = [
+  { label: 'Netflix', detail: 'Mensual · Próximo 24 ago', amount: '−$45.000', color: '#D95DB2', cat: 'Suscripciones', active: true, dueToday: false },
+  { label: 'Internet y celular', detail: 'Mensual · Próximo 26 ago', amount: '−$109.000', color: '#8A8A99', cat: 'Servicios', active: true, dueToday: false },
+  { label: 'Administración', detail: 'Mensual · Vence hoy', amount: '−$232.000', color: '#8A8A99', cat: 'Servicios', active: true, dueToday: true },
+  { label: 'Salario mensual', detail: 'Mensual · Próximo 1 sep', amount: '+$4.400.000', color: '#22A06B', cat: 'Salario', active: true, dueToday: false },
+  { label: 'Gimnasio', detail: 'Pausada', amount: '−$89.000', color: '#B25DE8', cat: 'Entretenimiento', active: false, dueToday: false },
+]
+const LOANS = {
+  'Prestado': [
+    { label: 'Camilo Restrepo', due: 'Vence 15 sep', amount: '$420.000', settled: false },
+    { label: 'Ana María Ruiz', due: 'Sin fecha de vencimiento', amount: '$200.000', settled: true },
+  ],
+  'Recibido': [],
+}
+
+class Component extends DCLogic {
+  state = {
+    screen: 'Inicio',
+    loanTab: 'Prestado',
+    prefDark: false,
+    prefNotifications: true,
+    prefBiometric: false,
+    prefCurrency: 'COP',
+    prefLanguage: 'Español',
+    paused: {},
+    sheet: null,
+    budgetTab: 'Presupuestos',
+    txFilter: 'Todos',
+    reportRange: '6M',
+    addType: 'Gasto',
+    category: 'Alimentación',
+    wallet: 'Bancolombia',
+    transferTo: 'Nequi',
+    budgetLink: 'Ninguno',
+    goalLink: 'Ninguno',
+    moreOpen: false,
+    upcoming: false,
+    loan: false,
+    amount: '168.500',
+  }
+
+  set(patch) {
+    this.setState(patch)
+  }
+
+  pill(label, selected, onClick) {
+    return {
+      label,
+      onClick,
+      style: {
+        padding: '9px 14px',
+        borderRadius: '999px',
+        fontSize: '12px',
+        fontWeight: selected ? 700 : 600,
+        cursor: 'pointer',
+        whiteSpace: 'nowrap',
+        color: selected ? '#fff' : '#111118',
+        background: selected ? '#6657e8' : '#ffffff',
+        border: '1px solid ' + (selected ? 'transparent' : '#dcdce6'),
+      },
+    }
+  }
+
+  renderVals() {
+    const s = this.state
+    const pool = s.addType === 'Ingreso' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
+    const catColor = (pool.concat(EXPENSE_CATEGORIES, INCOME_CATEGORIES).find((c) => c[0] === s.category) || [null, C.other])[1]
+    const bars = REPORT_BARS[s.reportRange]
+
+    return {
+      isHome: s.screen === 'Inicio',
+      isReports: s.screen === 'Reportes',
+      isBudgets: s.screen === 'Presupuestos',
+      isProfile: s.screen === 'Perfil',
+      isTransactions: s.screen === 'Movimientos',
+      isAdd: s.screen === 'Add',
+      showBottomBar: ['Inicio', 'Reportes', 'Presupuestos', 'Perfil'].includes(s.screen),
+      isWallets: s.screen === 'Billeteras',
+      isRecurring: s.screen === 'Recurrentes',
+      isLoans: s.screen === 'Préstamos',
+      isSettings: s.screen === 'Ajustes',
+      walletCards: WALLETS_FULL.map((w) => ({
+        ...w,
+        iconStyle: { width: '44px', height: '44px', borderRadius: '50%', flex: 'none', background: 'linear-gradient(135deg,#16123a,#241a5e)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+        icon: svg(WALLET_GLYPHS[w.label], 20, '#fff'),
+      })),
+      series: SERIES.map((x) => {
+        const active = s.paused[x.label] === undefined ? x.active : !s.paused[x.label]
+        return {
+          label: x.label,
+          detail: active ? x.detail : 'Pausada',
+          amount: x.amount,
+          dueToday: active && x.dueToday,
+          chip: mark(x.cat, x.color, 38, '22'),
+          action: active ? 'Pausar' : 'Reanudar',
+          onToggle: () => this.setState({ paused: { ...s.paused, [x.label]: active } }),
+          amountStyle: { fontSize: '14px', fontWeight: 800, color: x.amount.startsWith('+') ? '#22a06b' : '#d64545' },
+        }
+      }),
+      loanTabs: ['Prestado', 'Recibido'].map((label) => ({
+        label,
+        onClick: () => this.setState({ loanTab: label }),
+        style: {
+          padding: '10px 14px',
+          fontSize: '13px',
+          fontWeight: s.loanTab === label ? 800 : 600,
+          cursor: 'pointer',
+          color: s.loanTab === label ? '#111118' : '#666673',
+          borderBottom: '2px solid ' + (s.loanTab === label ? '#6657e8' : 'transparent'),
+          marginBottom: '-1px',
+        },
+      })),
+      loans: LOANS[s.loanTab].map((l) => ({
+        ...l,
+        action: l.settled ? 'Saldado' : 'Saldar',
+        actionColor: { color: l.settled ? '#22a06b' : '#6657e8' },
+      })),
+      loansEmpty: LOANS[s.loanTab].length === 0,
+      prefSwitches: [
+        { key: 'prefDark', label: 'Modo oscuro' },
+        { key: 'prefNotifications', label: 'Notificaciones' },
+        { key: 'prefBiometric', label: 'Ingreso biométrico' },
+      ].map((p) => {
+        const on = s[p.key]
+        return {
+          label: p.label,
+          onClick: () => this.setState({ [p.key]: !on }),
+          trackStyle: { width: '42px', height: '24px', borderRadius: '999px', flex: 'none', cursor: 'pointer', padding: '3px', display: 'flex', justifyContent: on ? 'flex-end' : 'flex-start', background: on ? '#6657e8' : '#dcdce6', transition: 'background .2s ease' },
+          knobStyle: { width: '18px', height: '18px', borderRadius: '50%', background: '#fff', display: 'block' },
+        }
+      }),
+      currencyOpts: ['COP', 'USD'].map((label) => ({
+        label,
+        onClick: () => this.setState({ prefCurrency: label }),
+        style: { padding: '6px 12px', borderRadius: '999px', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer', color: s.prefCurrency === label ? '#fff' : '#666673', background: s.prefCurrency === label ? '#6657e8' : 'transparent' },
+      })),
+      languageOpts: ['Español', 'English'].map((label) => ({
+        label,
+        onClick: () => this.setState({ prefLanguage: label }),
+        style: { padding: '6px 12px', borderRadius: '999px', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer', color: s.prefLanguage === label ? '#fff' : '#666673', background: s.prefLanguage === label ? '#6657e8' : 'transparent' },
+      })),
+      addSheetOpen: s.sheet === 'add',
+      categorySheetOpen: s.sheet === 'category',
+
+      iconBell: svg(['M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9', 'M10.3 21a1.94 1.94 0 0 0 3.4 0'], 17, '#666673'),
+
+      openNotifications: () => this.set({ sheet: null }),
+      openAddSheet: () => this.set({ sheet: s.sheet === 'add' ? null : 'add' }),
+      openCategories: () => (s.addType === 'Transferencia' ? null : this.set({ sheet: 'category' })),
+      closeSheets: () => this.set({ sheet: null }),
+      closeAdd: () => this.set({ screen: 'Inicio', sheet: null }),
+      goHome: () => this.set({ screen: 'Inicio', sheet: null }),
+      goBudgets: () => this.set({ screen: 'Presupuestos' }),
+      goProfile: () => this.set({ screen: 'Perfil' }),
+      goTransactions: () => this.set({ screen: 'Movimientos' }),
+
+      tabs: TABS.map((label) => {
+        if (label === null) {
+          return {
+            label: '',
+            icon: React.createElement(
+              'div',
+              {
+                onClick: () => this.set({ sheet: this.state.sheet === 'add' ? null : 'add' }),
+                style: {
+                  width: '52px',
+                  height: '52px',
+                  borderRadius: '50%',
+                  background: '#6657e8',
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 8px 24px rgba(102,87,232,.4)',
+                  cursor: 'pointer',
+                },
+              },
+              React.createElement('span', { style: { fontSize: '26px', fontWeight: 300, lineHeight: 1, marginTop: '-2px' } }, '+'),
+            ),
+            onClick: () => this.set({ sheet: 'add' }),
+            style: { flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' },
+          }
+        }
+        const on = s.screen === label
+        return {
+          label,
+          icon: React.createElement(
+            'span',
+            { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '58px', height: '30px', borderRadius: '999px', background: on ? '#eae7ff' : 'transparent' } },
+            svg(TAB_ICONS[label], 22, on ? '#6657e8' : '#666673'),
+          ),
+          onClick: () => this.set({ screen: label, sheet: null }),
+          style: {
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '3px',
+            padding: '2px 0',
+            fontSize: '10px',
+            fontWeight: on ? 700 : 500,
+            color: on ? '#6657e8' : '#666673',
+            cursor: 'pointer',
+          },
+        }
+      }),
+
+      homeBudgets: BUDGETS.slice(0, 3).map((b) => {
+        const tone = b.n >= 90 ? '#d64545' : b.n >= 65 ? '#b5760f' : '#22a06b'
+        return {
+          label: b.label,
+          pct: b.n + '%',
+          pctStyle: { color: tone, fontWeight: 800 },
+          fillStyle: { width: b.n + '%', height: '100%', background: tone },
+        }
+      }),
+
+      txns: TXNS.map((tx) => ({
+        ...tx,
+        chip: mark(tx.desc.includes('Viaje') ? 'Transporte' : tx.desc.includes('Internet') ? 'Servicios' : 'Alimentación', tx.color, 38, '22'),
+        amountStyle: { fontSize: '13px', fontWeight: 800, color: tx.neg ? '#d64545' : '#22a06b' },
+      })),
+      txnsToday: TXNS.slice(0, 2).map((tx) => ({ ...tx, chip: mark(tx.desc.includes('Viaje') ? 'Transporte' : tx.desc.includes('Internet') ? 'Servicios' : 'Alimentación', tx.color, 38, '22'), amountStyle: { fontSize: '13.5px', fontWeight: 800, color: '#d64545' } })),
+      txnsYesterday: TXNS.slice(2).map((tx) => ({ ...tx, chip: mark(tx.desc.includes('Viaje') ? 'Transporte' : tx.desc.includes('Internet') ? 'Servicios' : 'Alimentación', tx.color, 38, '22'), amountStyle: { fontSize: '13.5px', fontWeight: 800, color: '#d64545' } })),
+
+      txFilters: ['Todos', 'Gastos', 'Ingresos', 'Pendientes'].map((label) =>
+        this.pill(label, s.txFilter === label, () => this.set({ txFilter: label })),
+      ),
+
+      reportRanges: ['3M', '6M', '12M'].map((label) => this.pill(label, s.reportRange === label, () => this.set({ reportRange: label }))),
+      reportSubtitle: s.reportRange === '3M' ? 'Últimos 3 meses' : s.reportRange === '6M' ? 'Últimos 6 meses' : 'Últimos 12 meses',
+      reportRows: [
+        { label: 'Ingresos', current: '$4.288.500', delta: '−3%', neg: true },
+        { label: 'Gastos', current: '$1.927.100', delta: '−5%', neg: false },
+        { label: 'Ahorro', current: '$2.361.400', delta: '−1%', neg: true },
+        { label: 'Tasa de ahorro', current: '55%', delta: '+1 pt', neg: false },
+      ].map((r) => ({
+        ...r,
+        deltaStyle: {
+          fontSize: '11px',
+          fontWeight: 800,
+          borderRadius: '999px',
+          padding: '3px 8px',
+          color: r.neg ? '#d64545' : '#22a06b',
+          background: r.neg ? 'rgba(255,98,98,.14)' : 'rgba(50,201,138,.14)',
+        },
+      })),
+      bars: bars.map((d) => ({
+        label: d.label,
+        incStyle: { width: '42%', maxWidth: '16px', height: (d.inc / 6) * 100 + '%', background: '#22a06b', borderRadius: '3px 3px 0 0', transition: 'height .3s ease' },
+        expStyle: { width: '42%', maxWidth: '16px', height: (d.exp / 6) * 100 + '%', background: '#d64545', borderRadius: '3px 3px 0 0', transition: 'height .3s ease' },
+      })),
+      categorySpend: [
+        { label: 'Alimentación', amount: '$612.400', n: 78, color: C.food },
+        { label: 'Servicios', amount: '$486.000', n: 62, color: C.bills },
+        { label: 'Compras', amount: '$318.500', n: 41, color: C.shopping },
+        { label: 'Suscripciones', amount: '$112.600', n: 28, color: C.subscriptions },
+        { label: 'Transporte', amount: '$95.500', n: 24, color: C.transportation },
+      ].map((c) => ({ ...c, fillStyle: { width: c.n + '%', height: '100%', background: c.color } })),
+
+      budgetTabs: ['Presupuestos', 'Metas'].map((label) => ({
+        label,
+        onClick: () => this.set({ budgetTab: label }),
+        style: {
+          padding: '10px 14px',
+          fontSize: '13px',
+          fontWeight: s.budgetTab === label ? 800 : 600,
+          cursor: 'pointer',
+          color: s.budgetTab === label ? '#111118' : '#666673',
+          borderBottom: '2px solid ' + (s.budgetTab === label ? '#6657e8' : 'transparent'),
+          marginBottom: '-1px',
+        },
+      })),
+      budgetTabIsBudgets: s.budgetTab === 'Presupuestos',
+      budgetTabIsGoals: s.budgetTab === 'Metas',
+
+      budgets: BUDGETS.map((b) => {
+        const tone = b.n >= 90 ? '#d64545' : b.n >= 65 ? '#b5760f' : '#22a06b'
+        return {
+          label: b.label,
+          spent: b.spent,
+          limit: b.limit,
+          pct: b.n + '%',
+          chip: mark(b.label, b.color, 38, '22'),
+          cardStyle: { background: '#ffffff', border: '1px solid ' + (b.n >= 90 ? '#f0d2d2' : '#ebebf2'), borderRadius: '18px', padding: '15px 17px' },
+          pctStyle: { fontSize: '11.5px', fontWeight: 800, color: tone, background: tone + '24', borderRadius: '999px', padding: '3px 8px' },
+          fillStyle: { width: Math.min(100, b.n) + '%', height: '100%', background: tone },
+        }
+      }),
+
+      goals: GOALS.map((g) => ({
+        ...g,
+        pctLabel: g.pct + '%',
+        ringStyle: {
+          width: '62px',
+          height: '62px',
+          borderRadius: '50%',
+          flex: 'none',
+          background: 'conic-gradient(' + g.color + ' ' + g.pct + '%, #ebebf2 0)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+      })),
+
+      profileRows: PROFILE_ROWS.map((r) => ({ ...r, chip: mark(r.label, r.color, 34, '22'), onClick: () => this.setState({ screen: r.label }) })),
+
+      // AddActionsSheet.kt has exactly two actions: manual entry and scan.
+      addActions: [
+        {
+          label: 'Registrar manualmente',
+          detail: 'Gasto, ingreso o transferencia',
+          icon: svg(['M12 20h9', 'M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z'], 20, '#7b6ff6'),
+          onClick: () => this.set({ screen: 'Add', sheet: null }),
+        },
+        {
+          label: 'Escanear código',
+          detail: 'Lee el código de barras de un producto',
+          icon: svg(['M3 7V5a2 2 0 0 1 2-2h2', 'M17 3h2a2 2 0 0 1 2 2v2', 'M21 17v2a2 2 0 0 1-2 2h-2', 'M7 21H5a2 2 0 0 1-2-2v-2', 'M3 12h18'], 20, '#7b6ff6'),
+          onClick: () => this.set({ sheet: null }),
+        },
+      ],
+
+      addTypes: ['Gasto', 'Ingreso', 'Transferencia'].map((label) => ({
+        label,
+        onClick: () =>
+          this.set({
+            addType: label,
+            category: label === 'Ingreso' ? 'Salario' : label === 'Gasto' ? 'Alimentación' : s.category,
+          }),
+        style: {
+          flex: 1,
+          textAlign: 'center',
+          padding: '10px 0',
+          borderRadius: '999px',
+          fontSize: '12px',
+          fontWeight: s.addType === label ? 800 : 500,
+          cursor: 'pointer',
+          color: s.addType === label ? '#211a4d' : 'rgba(255,255,255,.75)',
+          background: s.addType === label ? '#fff' : 'transparent',
+        },
+      })),
+      isTransfer: s.addType === 'Transferencia',
+      amountDisplay: s.amount,
+      selectedCategory: s.addType === 'Transferencia' ? 'Transferencia' : s.category,
+      selectedCategoryMark: React.createElement('span', {
+        style: { width: '26px', height: '26px', borderRadius: '8px', background: catColor, display: 'block', opacity: 0.9 },
+      }),
+
+      wallets: ['Bancolombia', 'Nequi', 'Efectivo'].map((label) =>
+        this.pill(label, s.wallet === label, () => this.set({ wallet: label })),
+      ),
+      transferTargets: ['Bancolombia', 'Nequi', 'Efectivo']
+        .filter((w) => w !== s.wallet)
+        .map((label) => this.pill(label, s.transferTo === label, () => this.set({ transferTo: label }))),
+
+      moreOpen: s.moreOpen,
+      moreCaret: s.moreOpen ? '▲' : '▼',
+      toggleMore: () => this.set({ moreOpen: !s.moreOpen }),
+
+      budgetChips: ['Ninguno', 'Alimentación', 'Servicios'].map((label) =>
+        this.pill(label, s.budgetLink === label, () => this.set({ budgetLink: label })),
+      ),
+      goalChips: ['Ninguno', 'Fondo de emergencia', 'Viaje a Perú'].map((label) =>
+        this.pill(label, s.goalLink === label, () => this.set({ goalLink: label })),
+      ),
+      addToggles: [
+        { key: 'upcoming', label: 'Próximo (planeado)', detail: 'No afecta el saldo hasta confirmarlo' },
+        { key: 'loan', label: s.addType === 'Ingreso' ? 'Dinero recibido en préstamo' : 'Dinero prestado', detail: 'Pide contraparte y fecha de vencimiento' },
+      ].map((tg) => {
+        const on = s[tg.key]
+        return {
+          ...tg,
+          onClick: () => this.set({ [tg.key]: !on }),
+          trackStyle: {
+            width: '42px',
+            height: '24px',
+            borderRadius: '999px',
+            flex: 'none',
+            cursor: 'pointer',
+            padding: '3px',
+            display: 'flex',
+            justifyContent: on ? 'flex-end' : 'flex-start',
+            background: on ? '#6657e8' : '#dcdce6',
+            transition: 'background .2s ease',
+          },
+          knobStyle: { width: '18px', height: '18px', borderRadius: '50%', background: '#fff', display: 'block' },
+        }
+      }),
+
+      categoryGrid: pool.map(([label, color]) => {
+        const on = s.category === label
+        return {
+          label,
+          onClick: () => this.set({ category: label, sheet: null }),
+          chip: React.createElement('span', { style: { width: '52px', height: '52px', borderRadius: '50%', background: color + (on ? '3d' : '22'), border: on ? '2px solid ' + color : '1.5px solid transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' } }, mark(label, color, 34, '00')),
+          labelStyle: { fontSize: '10.5px', fontWeight: on ? 800 : 600, color: on ? '#111118' : '#666673', textAlign: 'center', lineHeight: 1.25 },
+        }
+      }),
+    }
+  }
+}
+</script>
+</body>
+</html>
