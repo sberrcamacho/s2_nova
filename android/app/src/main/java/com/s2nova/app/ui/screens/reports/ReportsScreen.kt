@@ -1,17 +1,16 @@
 package com.s2nova.app.ui.screens.reports
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -25,6 +24,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -43,10 +46,10 @@ import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.theme.NovaColors
 
-private enum class RangeOption(val key: StringKey, val months: Int) {
-    R3M(StringKey.REPORTS_RANGE_3M, 3),
-    R6M(StringKey.REPORTS_RANGE_6M, 6),
-    R12M(StringKey.REPORTS_RANGE_12M, 12),
+private enum class RangeOption(val key: StringKey, val subtitleKey: StringKey, val months: Int) {
+    R3M(StringKey.REPORTS_RANGE_3M, StringKey.REPORTS_SUBTITLE_3M, 3),
+    R6M(StringKey.REPORTS_RANGE_6M, StringKey.REPORTS_SUBTITLE_6M, 6),
+    R12M(StringKey.REPORTS_RANGE_12M, StringKey.REPORTS_SUBTITLE_12M, 12),
 }
 
 @Composable
@@ -73,30 +76,32 @@ fun ReportsScreen() {
     fun pctDelta(curr: Double, prev: Double): Int = if (prev != 0.0) (((curr - prev) / prev) * 100).toInt() else 0
 
     val topSpending = AnalyticsHelpers.categoryBreakdown(transactions).take(5)
-    val barScroll = rememberScrollState()
 
     Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
-        LazyColumn(
-            modifier = Modifier.padding(padding),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            item {
+        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
+            // Title + range chips stay fixed above the scrollable content —
+            // mirrors the mockup, where the cards below scroll underneath them.
+            Column(modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 16.dp)) {
                 Text(
                     t(StringKey.TITLE_REPORTS),
                     style = MaterialTheme.typography.headlineMedium.copy(fontSize = 21.sp, letterSpacing = (-0.42).sp),
                     color = MaterialTheme.colorScheme.onBackground,
                 )
-            }
-
-            item {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     RangeOption.entries.forEach { opt ->
                         RangeChip(label = t(opt.key), selected = range == opt, onClick = { range = opt })
                     }
                 }
             }
 
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
             item {
                 NovaCard(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(18.dp)) {
@@ -135,26 +140,65 @@ fun ReportsScreen() {
             item {
                 NovaCard(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(18.dp)) {
-                        Text(t(StringKey.REPORTS_INCOME_VS_EXPENSES), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
-                        Spacer(Modifier.height(14.dp))
+                        Text(
+                            t(StringKey.REPORTS_INCOME_VS_EXPENSES),
+                            style = MaterialTheme.typography.titleMedium.copy(fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold),
+                            color = MaterialTheme.colorScheme.onBackground,
+                        )
+                        Text(
+                            t(range.subtitleKey),
+                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(Modifier.height(16.dp))
+
                         val chartHistory = AnalyticsHelpers.monthlyHistory(transactions, range.months)
-                        val maxValue = chartHistory.maxOfOrNull { maxOf(it.income, it.expenses) }?.toFloat()?.coerceAtLeast(1f) ?: 1f
+                        // Ceiling is fixed to the largest available range (12M) rather
+                        // than the currently visible one, so bars don't rescale when
+                        // switching between 3M/6M/12M.
+                        val ceilingHistory = AnalyticsHelpers.monthlyHistory(transactions, RangeOption.entries.maxOf { it.months })
+                        val maxValue = ceilingHistory.maxOfOrNull { maxOf(it.income, it.expenses) }?.toFloat()?.coerceAtLeast(1f) ?: 1f
+                        val borderColor = MaterialTheme.colorScheme.outline
+
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(132.dp)
-                                .horizontalScroll(barScroll),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                .drawBehind {
+                                    drawLine(
+                                        color = borderColor,
+                                        start = Offset(0f, size.height),
+                                        end = Offset(size.width, size.height),
+                                        strokeWidth = 1.dp.toPx(),
+                                    )
+                                },
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
                             chartHistory.forEach { month ->
                                 NovaBarPair(
-                                    label = month.label,
                                     income = month.income.toFloat(),
                                     expense = month.expenses.toFloat(),
                                     maxValue = maxValue,
                                     positiveColor = colors.positive,
                                     negativeColor = colors.negative,
                                     maxBarHeight = 112.dp,
+                                    modifier = Modifier.weight(1f),
+                                )
+                            }
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 7.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            chartHistory.forEach { month ->
+                                Text(
+                                    month.label,
+                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, fontWeight = FontWeight.SemiBold),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.weight(1f),
                                 )
                             }
                         }
@@ -182,6 +226,7 @@ fun ReportsScreen() {
             }
 
             item { Spacer(Modifier.height(72.dp)) }
+            }
         }
     }
 }

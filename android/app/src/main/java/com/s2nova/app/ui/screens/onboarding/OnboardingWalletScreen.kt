@@ -109,6 +109,10 @@ fun OnboardingWalletScreen(
                         saving = true
                         scope.launch {
                             val wallet = AppContainer.walletRepository.create(name.trim(), type, balanceText.toDoubleOrNull() ?: 0.0)
+                            if (wallet == null) {
+                                saving = false
+                                return@launch
+                            }
                             state.walletId.value = wallet.id
 
                             // "Amount, currency, where it's received" from

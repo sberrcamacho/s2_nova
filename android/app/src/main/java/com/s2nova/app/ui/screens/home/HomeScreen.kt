@@ -1,13 +1,16 @@
 package com.s2nova.app.ui.screens.home
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -30,16 +33,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.s2nova.app.R
 import com.s2nova.app.data.AnalyticsHelpers
 import com.s2nova.app.data.AppContainer
+import com.s2nova.app.data.ThemeController
 import com.s2nova.app.data.model.RecurringSeries
 import com.s2nova.app.data.model.BudgetProgress
 import com.s2nova.app.ui.StringKey
@@ -73,6 +79,8 @@ fun HomeScreen(
     val colors = NovaColors.current
     val format = rememberCurrencyFormatter()
     val t = rememberStrings()
+    val darkOverride by ThemeController.darkOverride.collectAsStateWithLifecycle()
+    val isDark = darkOverride ?: isSystemInDarkTheme()
 
     LaunchedEffect(Unit) {
         AppContainer.budgetRepository.refresh()
@@ -88,77 +96,112 @@ fun HomeScreen(
     val topBudgets = budgetProgress.sortedByDescending { it.percentage }.take(3)
     val upcoming = recurringSeries.filter { it.active }.sortedBy { it.nextOccurrenceDate }.take(2)
 
-    LazyColumn(
+    Column(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
-        item {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(t(StringKey.HOME_GREETING), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(
-                        user?.name?.substringBefore(" ") ?: "👋",
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.onBackground,
-                    )
-                }
-                Box {
-                    Box(
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surface)
-                            .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
-                            .clickable(onClick = onOpenNotifications),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(Icons.Filled.Notifications, contentDescription = t(StringKey.SETTINGS_NOTIFICATIONS), tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(20.dp))
-                    }
-                    if (unreadCount > 0) {
-                        Box(
-                            modifier = Modifier
-                                .size(11.dp)
-                                .align(Alignment.TopEnd)
-                                .background(MaterialTheme.colorScheme.surface, CircleShape)
-                                .padding(2.dp)
-                                .background(colors.negative, CircleShape),
-                        )
-                    }
-                }
+        // Greeting header stays fixed above the scrollable content — mirrors
+        // the mockup, where the hero card scrolls away underneath it.
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 18.dp),
+        ) {
+            Image(
+                painter = painterResource(if (isDark) R.drawable.logo_mark_dark else R.drawable.logo_mark_light),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(RoundedCornerShape(10.dp)),
+            )
+            Column(modifier = Modifier.weight(1f).padding(start = 11.dp)) {
+                Text(t(StringKey.HOME_GREETING), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    user?.name?.substringBefore(" ") ?: "👋",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+            }
+            Box {
                 Box(
                     modifier = Modifier
-                        .padding(start = 10.dp)
                         .size(38.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary)
-                        .clickable(onClick = onOpenProfile),
+                        .background(MaterialTheme.colorScheme.surface)
+                        .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                        .clickable(onClick = onOpenNotifications),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(user?.avatarInitials ?: "US", color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.labelLarge)
+                    Icon(Icons.Filled.Notifications, contentDescription = t(StringKey.SETTINGS_NOTIFICATIONS), tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(20.dp))
                 }
+                if (unreadCount > 0) {
+                    Box(
+                        modifier = Modifier
+                            .size(11.dp)
+                            .align(Alignment.TopEnd)
+                            .background(MaterialTheme.colorScheme.surface, CircleShape)
+                            .padding(2.dp)
+                            .background(colors.negative, CircleShape),
+                    )
+                }
+            }
+            Box(
+                modifier = Modifier
+                    .padding(start = 10.dp)
+                    .size(38.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary)
+                    .clickable(onClick = onOpenProfile),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(user?.avatarInitials ?: "US", color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.labelLarge)
             }
         }
 
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 20.dp, end = 20.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
+        ) {
         item {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(24.dp))
-                    .background(Brush.linearGradient(listOf(colors.heroFrom, colors.heroTo)))
+                    .background(
+                        Brush.linearGradient(
+                            0f to colors.heroFrom,
+                            0.6f to colors.heroMid,
+                            1f to colors.heroTo,
+                        ),
+                    )
                     .border(1.dp, colors.heroBorder, RoundedCornerShape(24.dp)),
             ) {
-                // Glow toward the top-right corner — minSdk 31 guarantees
-                // Modifier.blur() (RenderEffect) is available everywhere.
+                // Glow toward the top-right corner. A radial gradient (rather
+                // than a solid circle + Modifier.blur) fades to fully
+                // transparent at its own bounds, so it reads as a soft glow
+                // instead of a hard-edged square — Modifier.blur's default
+                // Rectangle edge treatment clips the blur to the box's own
+                // layout bounds, which produced a visible straight edge here.
                 Box(
                     modifier = Modifier
                         .size(170.dp)
                         .align(Alignment.TopEnd)
                         .offset(x = 55.dp, y = (-55).dp)
-                        .blur(46.dp)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.40f), CircleShape),
+                        .background(
+                            Brush.radialGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.40f),
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0f),
+                                ),
+                            ),
+                            CircleShape,
+                        ),
                 )
                 Column(modifier = Modifier.padding(22.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
@@ -267,6 +310,7 @@ fun HomeScreen(
         }
 
         item { Spacer(Modifier.height(72.dp)) }
+        }
     }
 }
 

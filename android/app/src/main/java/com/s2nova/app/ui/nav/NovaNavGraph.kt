@@ -237,7 +237,6 @@ fun NovaApp() {
                             navController.navigateAsRoot(NovaDestinations.LOGIN)
                         }
                     },
-                    onShowComingSoon = { },
                 )
             }
             composable(NovaDestinations.SETTINGS) {
@@ -279,7 +278,11 @@ private fun LaunchedSplashNavigation(navController: NavHostController) {
         kotlinx.coroutines.delay(400)
         val loggedIn = AppContainer.authRepository.bootstrap()
         if (loggedIn) {
-            AppContainer.refreshUserData()
+            if (AppContainer.demoModeActive.first()) {
+                AppContainer.enterDemoMode()
+            } else {
+                AppContainer.refreshUserData()
+            }
         }
         val onboardingDone = AppContainer.onboardingStore.onboardingCompleted.first()
         val target = when {

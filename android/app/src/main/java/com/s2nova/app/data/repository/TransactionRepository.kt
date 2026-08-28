@@ -54,10 +54,18 @@ class TransactionRepository(private val categoryRepository: CategoryRepository) 
     fun getById(id: String): Transaction? = _transactions.value.find { it.id == id }
 
     suspend fun refresh() {
+        if (DemoModeFlag.active) return
         _transactions.value = ApiClient.api.getTransactions().mapNotNull { it.toTransaction(categoryRepository) }
     }
 
+    // Overrides the in-memory list with fictitious data for local-only demo
+    // mode — never calls the network. See AppContainer.enterDemoMode().
+    fun loadDemo(transactions: List<Transaction>) {
+        _transactions.value = transactions
+    }
+
     suspend fun add(input: NewTransactionInput): Transaction? {
+        if (DemoModeFlag.active) return null
         val categoryBackendId = categoryRepository.backendIdFor(input.category) ?: return null
         val dto = ApiClient.api.createTransaction(
             CreateTransactionRequest(
@@ -85,6 +93,7 @@ class TransactionRepository(private val categoryRepository: CategoryRepository) 
     }
 
     suspend fun update(id: String, input: NewTransactionInput) {
+        if (DemoModeFlag.active) return
         val categoryBackendId = categoryRepository.backendIdFor(input.category)
         val dto = ApiClient.api.updateTransaction(
             id,
@@ -105,6 +114,7 @@ class TransactionRepository(private val categoryRepository: CategoryRepository) 
     // Realizes an "Upcoming" transaction, or reverts a completed one back to
     // planned — the transition that actually moves/unmoves wallet balance.
     suspend fun setStatus(id: String, status: TransactionStatus) {
+        if (DemoModeFlag.active) return
         val dto = ApiClient.api.updateTransaction(id, UpdateTransactionRequest(status = status.name))
         applyUpdated(id, dto)
     }
@@ -114,6 +124,7 @@ class TransactionRepository(private val categoryRepository: CategoryRepository) 
     // flip, so the wallet balance actually reflects the repayment. Returns
     // the new settlement transaction so the caller can show/refresh it.
     suspend fun settleLoan(id: String): Transaction? {
+        if (DemoModeFlag.active) return null
         val response = ApiClient.api.settleLoan(id, SettleLoanRequest())
         applyUpdated(id, response.original)
         val settlement = response.settlement.toTransaction(categoryRepository)
@@ -124,6 +135,7 @@ class TransactionRepository(private val categoryRepository: CategoryRepository) 
     }
 
     suspend fun delete(id: String) {
+        if (DemoModeFlag.active) return
         ApiClient.api.deleteTransaction(id)
         _transactions.value = _transactions.value.filterNot { it.id == id }
     }

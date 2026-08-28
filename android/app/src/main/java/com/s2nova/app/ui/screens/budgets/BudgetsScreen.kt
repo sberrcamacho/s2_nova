@@ -58,7 +58,6 @@ import com.s2nova.app.ui.components.StatusBadge
 import com.s2nova.app.ui.components.badgeToneFor
 import com.s2nova.app.ui.components.budgetStatusColor
 import com.s2nova.app.ui.StringKey
-import com.s2nova.app.ui.budgetStatusStringKey
 import com.s2nova.app.ui.categoryStringKey
 import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
@@ -166,7 +165,7 @@ private fun BudgetsTab() {
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
-                            StatusBadge(text = t(budgetStatusStringKey(progress.status)), tone = badgeToneFor(progress.status))
+                            StatusBadge(text = "${progress.percentage}%", tone = badgeToneFor(progress.status))
                         }
                         Spacer(Modifier.height(10.dp))
                         Row {

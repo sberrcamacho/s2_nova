@@ -21,10 +21,18 @@ class GoalRepository {
     val goals: StateFlow<List<Goal>> = _goals.asStateFlow()
 
     suspend fun refresh() {
+        if (DemoModeFlag.active) return
         _goals.value = ApiClient.api.getGoals().map { it.toGoal() }
     }
 
-    suspend fun create(name: String, targetAmount: Double, targetDate: String? = null): Goal {
+    // Overrides the in-memory list with fictitious data for local-only demo
+    // mode — never calls the network. See AppContainer.enterDemoMode().
+    fun loadDemo(goals: List<Goal>) {
+        _goals.value = goals
+    }
+
+    suspend fun create(name: String, targetAmount: Double, targetDate: String? = null): Goal? {
+        if (DemoModeFlag.active) return null
         val dto = ApiClient.api.createGoal(CreateGoalRequest(name, targetAmount.toLong(), targetDate))
         val goal = dto.toGoal()
         _goals.value = _goals.value + goal
@@ -32,6 +40,7 @@ class GoalRepository {
     }
 
     suspend fun delete(id: String) {
+        if (DemoModeFlag.active) return
         ApiClient.api.deleteGoal(id)
         _goals.value = _goals.value.filterNot { it.id == id }
     }

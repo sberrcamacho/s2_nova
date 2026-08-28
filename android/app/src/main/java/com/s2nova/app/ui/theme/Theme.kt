@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 
 // Financial-semantic + hero-gradient colors Material3's ColorScheme has no
 // slot for — exposed via CompositionLocal so any screen can reach them the
@@ -20,11 +21,17 @@ data class NovaExtraColors(
     val warning: Color,
     val warningSoft: Color,
     val heroFrom: Color,
+    val heroMid: Color,
     val heroTo: Color,
     val heroBorder: Color,
     val negativeBorder: Color,
     val navyPanel: Color,
     val scanSurface: Color,
+    val loginSurface: Color,
+    val loginBorderFocus: Color,
+    val loginTextMuted: Color,
+    val loginLabel: Color,
+    val loginPrimary: Color,
 )
 
 private val LightExtraColors = NovaExtraColors(
@@ -35,11 +42,17 @@ private val LightExtraColors = NovaExtraColors(
     warning = LightWarning,
     warningSoft = LightWarning.copy(alpha = 0.12f),
     heroFrom = HeroFrom,
+    heroMid = lerp(HeroFrom, HeroTo, 0.6f),
     heroTo = HeroTo,
     heroBorder = HeroBorder,
     negativeBorder = LightNegativeBorder,
     navyPanel = NavyPanel,
     scanSurface = Color(0xFF0B0B12),
+    loginSurface = LoginSurfaceLight,
+    loginBorderFocus = LoginBorderFocusLight,
+    loginTextMuted = LightTextTertiary,
+    loginLabel = LightTextSecondary,
+    loginPrimary = LoginPrimaryFlat,
 )
 
 private val DarkExtraColors = NovaExtraColors(
@@ -50,11 +63,17 @@ private val DarkExtraColors = NovaExtraColors(
     warning = DarkWarning,
     warningSoft = DarkWarning.copy(alpha = 0.14f),
     heroFrom = DarkBg,
+    heroMid = DarkHeroMid,
     heroTo = Color(0xFF211A4D),
     heroBorder = HeroBorder,
     negativeBorder = DarkNegativeBorder,
     navyPanel = NavyPanel,
     scanSurface = ScanSurface,
+    loginSurface = LoginSurfaceDark,
+    loginBorderFocus = HeroTo,
+    loginTextMuted = LoginTextMutedDark,
+    loginLabel = LoginLabelDark,
+    loginPrimary = LoginPrimaryFlat,
 )
 
 val LocalNovaExtraColors = staticCompositionLocalOf { LightExtraColors }

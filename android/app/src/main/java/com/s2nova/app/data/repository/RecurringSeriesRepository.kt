@@ -39,7 +39,14 @@ class RecurringSeriesRepository(private val categoryRepository: CategoryReposito
     val series: StateFlow<List<RecurringSeries>> = _series.asStateFlow()
 
     suspend fun refresh() {
+        if (DemoModeFlag.active) return
         _series.value = ApiClient.api.getRecurringSeries().mapNotNull { it.toModel(categoryRepository) }
+    }
+
+    // Overrides the in-memory list with fictitious data for local-only demo
+    // mode — never calls the network. See AppContainer.enterDemoMode().
+    fun loadDemo(series: List<RecurringSeries>) {
+        _series.value = series
     }
 
     suspend fun create(
@@ -51,6 +58,7 @@ class RecurringSeriesRepository(private val categoryRepository: CategoryReposito
         interval: RecurrenceInterval,
         startDate: String,
     ): RecurringSeries? {
+        if (DemoModeFlag.active) return null
         val categoryBackendId = categoryRepository.backendIdFor(category) ?: return null
         val dto = ApiClient.api.createRecurringSeries(
             CreateRecurringSeriesRequest(
@@ -69,12 +77,14 @@ class RecurringSeriesRepository(private val categoryRepository: CategoryReposito
     }
 
     suspend fun setActive(id: String, active: Boolean) {
+        if (DemoModeFlag.active) return
         val dto = ApiClient.api.updateRecurringSeries(id, UpdateRecurringSeriesRequest(active = active))
         val model = dto.toModel(categoryRepository) ?: return
         _series.value = _series.value.map { if (it.id == id) model else it }
     }
 
     suspend fun delete(id: String) {
+        if (DemoModeFlag.active) return
         ApiClient.api.deleteRecurringSeries(id)
         _series.value = _series.value.filterNot { it.id == id }
     }
@@ -84,6 +94,7 @@ class RecurringSeriesRepository(private val categoryRepository: CategoryReposito
     // ApiService. Callers should also refresh WalletRepository/
     // TransactionRepository afterward since this changes both.
     suspend fun confirmOccurrence(id: String) {
+        if (DemoModeFlag.active) return
         val response = ApiClient.api.confirmRecurringOccurrence(id, ConfirmRecurringOccurrenceRequest())
         val model = response.series.toModel(categoryRepository) ?: return
         _series.value = _series.value.map { if (it.id == id) model else it }

@@ -7,10 +7,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -18,16 +16,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.MonetizationOn
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Repeat
-import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -35,22 +27,26 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
 import com.s2nova.app.data.mock.categoryMap
+import com.s2nova.app.data.model.AppLanguage
 import com.s2nova.app.data.model.CategoryId
+import com.s2nova.app.data.model.LoanKind
 import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.components.NovaCard
-import com.s2nova.app.ui.components.StatusBadge
-import com.s2nova.app.ui.components.BadgeTone
 import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
+import java.time.LocalDate
+import java.time.format.TextStyle
+import java.util.Locale
 
 @Composable
 fun ProfileScreen(
@@ -59,14 +55,41 @@ fun ProfileScreen(
     onOpenRecurring: () -> Unit,
     onOpenLoans: () -> Unit,
     onLogout: () -> Unit,
-    onShowComingSoon: (String) -> Unit,
 ) {
     val user by AppContainer.authRepository.currentUser.collectAsStateWithLifecycle()
+    val wallets by AppContainer.walletRepository.wallets.collectAsStateWithLifecycle()
+    val recurringSeries by AppContainer.recurringSeriesRepository.series.collectAsStateWithLifecycle()
     val transactions by AppContainer.transactionRepository.transactions.collectAsStateWithLifecycle()
-    val budgetProgress by AppContainer.budgetRepository.budgetProgress.collectAsStateWithLifecycle()
-    val savedTotal = budgetProgress.sumOf { it.remaining.coerceAtLeast(0.0) }
     val format = rememberCurrencyFormatter()
     val t = rememberStrings()
+    val language = user?.preferences?.language ?: AppLanguage.ES
+
+    val subscriptionsColor = categoryMap[CategoryId.SUBSCRIPTIONS]?.color?.let { Color(it) } ?: MaterialTheme.colorScheme.primary
+    val salaryColor = categoryMap[CategoryId.SALARY]?.color?.let { Color(it) } ?: MaterialTheme.colorScheme.primary
+    val billsColor = categoryMap[CategoryId.BILLS]?.color?.let { Color(it) } ?: MaterialTheme.colorScheme.primary
+
+    val activeWallets = wallets.size
+    val walletsTotal = wallets.sumOf { it.currentBalance }
+    val walletsDetail = "$activeWallets ${t(StringKey.PROFILE_WALLETS_DETAIL)} · ${format(walletsTotal)}"
+
+    val activeSeriesCount = recurringSeries.count { it.active }
+    val recurringDetail = if (activeSeriesCount > 0) {
+        "$activeSeriesCount ${t(StringKey.PROFILE_RECURRING_DETAIL)}"
+    } else {
+        t(StringKey.PROFILE_RECURRING_DETAIL_EMPTY)
+    }
+
+    val lentTotal = transactions.filter { it.loanKind == LoanKind.LENT && !it.loanSettled }.sumOf { it.amount }
+    val borrowedTotal = transactions.filter { it.loanKind == LoanKind.BORROWED && !it.loanSettled }.sumOf { it.amount }
+    val loansDetail = when {
+        lentTotal == 0.0 && borrowedTotal == 0.0 -> t(StringKey.PROFILE_LOANS_DETAIL_EMPTY)
+        borrowedTotal > 0.0 -> "${t(StringKey.LOANS_LENT_TAB)} ${format(lentTotal)} · ${t(StringKey.PROFILE_LOANS_DETAIL_WITH_DEBT)} ${format(borrowedTotal)}"
+        else -> "${t(StringKey.LOANS_LENT_TAB)} ${format(lentTotal)} · ${t(StringKey.PROFILE_LOANS_DETAIL_NO_DEBT)}"
+    }
+
+    val memberSince = remember(user?.memberSince, language) {
+        user?.memberSince?.let { formatMemberSince(it, language) }
+    }
 
     Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
         Column(
@@ -75,116 +98,95 @@ fun ProfileScreen(
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                Box(
-                    modifier = Modifier
-                        .size(54.dp)
-                        .background(MaterialTheme.colorScheme.primary, CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(user?.avatarInitials ?: "US", color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.titleMedium)
-                }
-                Text(user?.name ?: "", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 12.dp))
-                Text(user?.email ?: "", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                StatusBadge(text = t(StringKey.PROFILE_DEMO_ACCOUNT), tone = BadgeTone.PRIMARY, modifier = Modifier.padding(top = 8.dp))
-            }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 24.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-            ) {
-                ProfileStat(value = transactions.size.toString(), label = t(StringKey.PROFILE_TRANSACTIONS))
-                ProfileStat(value = budgetProgress.size.toString(), label = t(StringKey.PROFILE_BUDGETS))
-                ProfileStat(value = format(savedTotal), label = t(StringKey.PROFILE_AVAILABLE))
-            }
-
-            val subscriptionsColor = categoryMap[CategoryId.SUBSCRIPTIONS]?.color?.let { Color(it) } ?: MaterialTheme.colorScheme.primary
-            val salaryColor = categoryMap[CategoryId.SALARY]?.color?.let { Color(it) } ?: MaterialTheme.colorScheme.primary
-            val billsColor = categoryMap[CategoryId.BILLS]?.color?.let { Color(it) } ?: MaterialTheme.colorScheme.primary
-
-            SectionLabel(t(StringKey.PROFILE_ACCOUNT_SECURITY))
             NovaCard(modifier = Modifier.fillMaxWidth()) {
-                Column {
-                    ProfileRow(Icons.Filled.Wallet, t(StringKey.WALLETS_TITLE), onClick = onOpenWallets)
-                    ProfileRow(Icons.Filled.Repeat, t(StringKey.RECURRING_TITLE), tint = subscriptionsColor, onClick = onOpenRecurring)
-                    ProfileRow(Icons.Filled.MonetizationOn, t(StringKey.LOANS_TITLE), tint = salaryColor, onClick = onOpenLoans)
-                    ProfileRow(Icons.Filled.Person, t(StringKey.PROFILE_EDIT_PROFILE), onClick = onOpenSettings)
-                    ProfileRow(Icons.Filled.Lock, t(StringKey.PROFILE_CHANGE_PASSWORD), onClick = { onShowComingSoon(t(StringKey.PROFILE_CHANGE_PASSWORD)) })
-                    ProfileRow(Icons.Filled.Security, t(StringKey.PROFILE_TWO_FACTOR), onClick = { onShowComingSoon(t(StringKey.PROFILE_TWO_FACTOR)) })
+                Row(modifier = Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(54.dp)
+                            .background(MaterialTheme.colorScheme.primary, CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(user?.avatarInitials ?: "US", color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.titleMedium)
+                    }
+                    Column(modifier = Modifier.padding(start = 14.dp)) {
+                        Text(user?.name ?: "", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
+                        Text(user?.email ?: "", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
+                        if (memberSince != null) {
+                            Text(memberSince, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
                 }
             }
 
-            SectionLabel(t(StringKey.PROFILE_PREFERENCES))
             NovaCard(modifier = Modifier.fillMaxWidth()) {
                 Column {
-                    ProfileRow(Icons.Filled.Settings, t(StringKey.TITLE_SETTINGS), tint = billsColor, onClick = onOpenSettings)
-                    ProfileRow(Icons.Filled.Shield, t(StringKey.PROFILE_PRIVACY), onClick = { onShowComingSoon(t(StringKey.PROFILE_PRIVACY)) })
-                    ProfileRow(Icons.Filled.Fingerprint, t(StringKey.SETTINGS_BIOMETRIC), onClick = { onShowComingSoon(t(StringKey.SETTINGS_BIOMETRIC)) })
+                    ProfileRow(Icons.Filled.Wallet, t(StringKey.WALLETS_TITLE), walletsDetail, onClick = onOpenWallets)
+                    ProfileRow(Icons.Filled.Repeat, t(StringKey.RECURRING_TITLE), recurringDetail, tint = subscriptionsColor, onClick = onOpenRecurring)
+                    ProfileRow(Icons.Filled.MonetizationOn, t(StringKey.LOANS_TITLE), loansDetail, tint = salaryColor, onClick = onOpenLoans)
+                    ProfileRow(Icons.Filled.Settings, t(StringKey.TITLE_SETTINGS), t(StringKey.PROFILE_SETTINGS_DETAIL), tint = billsColor, showDivider = false, onClick = onOpenSettings)
                 }
             }
 
             Row(
                 horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 24.dp, bottom = 24.dp)
                     .clip(RoundedCornerShape(16.dp))
                     .border(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
                     .clickable(onClick = onLogout)
                     .padding(14.dp),
             ) {
-                Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.padding(end = 8.dp))
-                Text(t(StringKey.PROFILE_LOGOUT), color = MaterialTheme.colorScheme.error)
+                Text(t(StringKey.PROFILE_LOGOUT), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyLarge)
             }
         }
     }
 }
 
-@Composable
-private fun ProfileStat(value: String, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.ExtraBold)
-        Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
+private fun formatMemberSince(memberSince: String, language: AppLanguage): String? {
+    val date = runCatching { LocalDate.parse(memberSince.take(10)) }.getOrNull() ?: return null
+    val locale = if (language == AppLanguage.EN) Locale.ENGLISH else Locale.forLanguageTag("es-CO")
+    val month = date.month.getDisplayName(TextStyle.SHORT, locale).trimEnd('.').lowercase(locale)
+    return "${stringForMemberSince(language)} $month ${date.year}"
 }
 
-@Composable
-private fun SectionLabel(text: String) {
-    Text(
-        text,
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(top = 24.dp, bottom = 8.dp),
-    )
-}
+private fun stringForMemberSince(language: AppLanguage): String =
+    com.s2nova.app.ui.stringFor(StringKey.PROFILE_MEMBER_SINCE, language)
 
 @Composable
 private fun ProfileRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     label: String,
-    tint: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.primary,
+    detail: String,
+    tint: Color = MaterialTheme.colorScheme.primary,
+    showDivider: Boolean = true,
     onClick: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
+    Column {
+        Row(
             modifier = Modifier
-                .size(34.dp)
-                .background(tint.copy(alpha = 0.13f), CircleShape),
-            contentAlignment = Alignment.Center,
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(vertical = 15.dp, horizontal = 18.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(16.dp))
+            Box(
+                modifier = Modifier
+                    .size(34.dp)
+                    .background(tint.copy(alpha = 0.13f), CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(16.dp))
+            }
+            Column(modifier = Modifier.weight(1f).padding(start = 14.dp)) {
+                Text(label, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onBackground)
+                Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Text(label, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f).padding(start = 14.dp))
-        Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (showDivider) {
+            androidx.compose.material3.HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f))
+        }
     }
 }

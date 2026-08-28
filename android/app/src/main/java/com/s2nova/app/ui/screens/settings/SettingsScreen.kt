@@ -59,6 +59,7 @@ fun SettingsScreen(onBack: () -> Unit, onReplayTutorial: () -> Unit, onPasswordC
     var showPasswordDialog by remember { mutableStateOf(false) }
     val currency = user?.preferences?.currency ?: Currency.COP
     val language = user?.preferences?.language ?: AppLanguage.ES
+    val demoModeActive by AppContainer.demoModeActive.collectAsStateWithLifecycle(initialValue = false)
     val t = rememberStrings()
     val scope = rememberCoroutineScope()
 
@@ -166,6 +167,32 @@ fun SettingsScreen(onBack: () -> Unit, onReplayTutorial: () -> Unit, onPasswordC
                 }
             }
 
+            NovaCard(modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                    ) {
+                        Text(t(StringKey.SETTINGS_DEMO_MODE), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onBackground)
+                        NovaSwitch(
+                            checked = demoModeActive,
+                            onCheckedChange = { active ->
+                                scope.launch {
+                                    if (active) AppContainer.enterDemoMode() else AppContainer.exitDemoMode()
+                                }
+                            },
+                        )
+                    }
+                    Text(
+                        t(StringKey.SETTINGS_DEMO_MODE_NOTE),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
+                }
+            }
+
             Spacer(Modifier.height(32.dp))
         }
     }
@@ -262,7 +289,7 @@ private fun ChangePasswordDialog(hasPassword: Boolean, onDismiss: () -> Unit, on
                 }
             }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(t(StringKey.COMMON_CANCEL)) } },
     )
 }
 

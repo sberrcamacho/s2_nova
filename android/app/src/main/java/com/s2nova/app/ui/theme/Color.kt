@@ -47,6 +47,11 @@ val OnPrimary = Color(0xFFFFFFFF)
 val HeroFrom = Color(0xFF16123A)
 val HeroTo = Color(0xFF241A5E)
 
+// Home "Saldo total" hero's 60%-stop color (dark theme only, per mockup's
+// linear-gradient(150deg, #050507 0%, #151041 60%, #211a4d 100%)) — deliberately
+// richer/more saturated than a straight lerp between DarkBg and #211A4D would give.
+val DarkHeroMid = Color(0xFF151041)
+
 // Home balance hero card border — identical in both themes.
 val HeroBorder = Color(0xFF2B2450)
 
@@ -58,3 +63,13 @@ val DarkNegativeBorder = Color(0xFF3A2029)
 // independent of the light/dark app theme — matches the web sidebar.
 val ScanSurface = Color(0xFF000000)
 val NavyPanel = Color(0xFF0B0B14)
+
+// Login-screen tokens from the design handoff (s2-nova-mockup/login_handoff/
+// LOGIN.md §1) — kept separate from the values above because several are
+// pixel-exact requirements that don't cleanly match an existing near-equivalent.
+val LoginSurfaceDark = Color(0xFF0B0B14)
+val LoginSurfaceLight = Color(0xFFF6F6FA)
+val LoginBorderFocusLight = Color(0xFF7B6FF6)
+val LoginTextMutedDark = Color(0x80FFFFFF) // rgba(255,255,255,.50)
+val LoginLabelDark = Color(0x8CFFFFFF) // rgba(255,255,255,.55)
+val LoginPrimaryFlat = Color(0xFF7B6FF6) // same value in both themes

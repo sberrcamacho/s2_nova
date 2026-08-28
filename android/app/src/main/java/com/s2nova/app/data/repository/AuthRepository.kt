@@ -47,7 +47,11 @@ private fun MeResponse.toUser(): User {
 // authenticated user. Still StateFlow-based like every other repository,
 // no ViewModel: screens launch these suspend functions via
 // rememberCoroutineScope().launch { ... }.
-class AuthRepository(private val sessionStore: SessionStore, private val onboardingStore: OnboardingStore) {
+class AuthRepository(
+    private val sessionStore: SessionStore,
+    private val onboardingStore: OnboardingStore,
+    private val credentialManager: androidx.credentials.CredentialManager,
+) {
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
 
@@ -71,6 +75,7 @@ class AuthRepository(private val sessionStore: SessionStore, private val onboard
             _currentUser.value = fetchAndSyncMe()
             true
         } catch (error: Exception) {
+            android.util.Log.w("AuthRepository", "Session restore failed, clearing local session", error)
             sessionStore.clear()
             false
         }
@@ -99,6 +104,11 @@ class AuthRepository(private val sessionStore: SessionStore, private val onboard
     // is responsible for collecting it when changing email.
     suspend fun updateProfile(name: String? = null, email: String? = null, currentPassword: String? = null): Result<Unit> =
         runCatching {
+            // The Settings screen edits whatever's in `currentUser`, which
+            // while demo mode is active is the fictitious local persona, not
+            // the signed-in account — never let that write reach the real
+            // backend session. See AppContainer.enterDemoMode().
+            if (DemoModeFlag.active) error("No disponible en modo demo.")
             val response = ApiClient.api.updateProfile(UpdateProfileRequest(name, email, currentPassword))
             _currentUser.value = response.toUser()
         }
@@ -108,6 +118,7 @@ class AuthRepository(private val sessionStore: SessionStore, private val onboard
     // caller must follow a success with logout() rather than keep using a
     // session the server will now reject.
     suspend fun changePassword(currentPassword: String?, newPassword: String): Result<Unit> = runCatching {
+        if (DemoModeFlag.active) error("No disponible en modo demo.")
         val response = ApiClient.api.changePassword(ChangePasswordRequest(currentPassword, newPassword))
         // Unlike the fire-and-forget delete endpoints elsewhere in this app,
         // a wrong current password (401) must surface as an error rather
@@ -118,10 +129,21 @@ class AuthRepository(private val sessionStore: SessionStore, private val onboard
     }
 
     suspend fun logout() {
+        // A stale per-device demo flag must never silently apply to
+        // whichever account signs in next on this device.
+        DemoModeFlag.set(false)
         val refreshToken = sessionStore.refreshTokenOnce()
         runCatching { ApiClient.authApi.logout(RefreshRequest(refreshToken)) }
+        runCatching { credentialManager.clearCredentialState(androidx.credentials.ClearCredentialStateRequest()) }
         sessionStore.clear()
         _currentUser.value = null
+    }
+
+    // Swaps in the fictitious local persona (demo mode) or restores a
+    // previously signed-in user (exiting it) without any network call —
+    // see AppContainer.enterDemoMode()/exitDemoMode().
+    fun setCurrentUserLocally(user: User) {
+        _currentUser.value = user
     }
 
     // Onboarding/tutorial completion is gated locally by OnboardingStore

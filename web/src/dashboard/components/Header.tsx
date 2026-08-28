@@ -1,11 +1,10 @@
 import { useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertTriangle, Bell, Calendar, Check, CheckCircle2, ChevronDown, Info, LogOut, Menu, Moon, Search, Settings, Sun, User } from 'lucide-react'
+import { AlertTriangle, Bell, Calendar, Check, CheckCircle2, ChevronDown, Info, LogOut, Menu, Search, Settings, User } from 'lucide-react'
 import { Avatar } from '@/components/ui/Avatar'
 import { Dropdown } from '@/components/ui/Dropdown'
 import { IconButton } from '@/components/ui/IconButton'
 import { useAuth } from '@/state/AuthContext'
-import { useTheme } from '@/state/ThemeContext'
 import { useToast } from '@/state/ToastContext'
 import { useTranslation } from '@/state/useTranslation'
 import { DATE_RANGE_OPTIONS, useDashboardFilters } from '@/dashboard/DashboardFiltersContext'
@@ -31,7 +30,6 @@ const NOTIFICATION_TONE_CLASSES: Record<AppNotification['tone'], string> = {
 
 export function Header({ title, onMenuClick }: HeaderProps) {
   const { range, setRange, rangeLabelKey } = useDashboardFilters()
-  const { theme, toggleTheme } = useTheme()
   const { user, logout } = useAuth()
   const { showToast } = useToast()
   const { t } = useTranslation()
@@ -93,13 +91,6 @@ export function Header({ title, onMenuClick }: HeaderProps) {
             </div>
           )}
         </div>
-
-        <IconButton
-          icon={theme === 'dark' ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
-          label={t('header.changeTheme')}
-          variant="ghost"
-          onClick={toggleTheme}
-        />
 
         <Dropdown
           align="right"

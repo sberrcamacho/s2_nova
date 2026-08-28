@@ -25,10 +25,21 @@ class WalletRepository {
     val wallets: StateFlow<List<Wallet>> = _wallets.asStateFlow()
 
     suspend fun refresh() {
+        if (DemoModeFlag.active) return
         _wallets.value = ApiClient.api.getAccounts().map { it.toWallet() }
     }
 
-    suspend fun create(name: String, type: WalletType, initialBalance: Double): Wallet {
+    // Overrides the in-memory list with fictitious data for local-only demo
+    // mode — never calls the network. See AppContainer.enterDemoMode().
+    fun loadDemo(wallets: List<Wallet>) {
+        _wallets.value = wallets
+    }
+
+    // Returns null while demo mode is active — see DemoModeFlag's doc
+    // comment for why every mutation must skip the network entirely rather
+    // than reach the real signed-in account.
+    suspend fun create(name: String, type: WalletType, initialBalance: Double): Wallet? {
+        if (DemoModeFlag.active) return null
         val dto = ApiClient.api.createAccount(CreateAccountRequest(name, type.name, initialBalance.toLong()))
         val wallet = dto.toWallet()
         _wallets.value = _wallets.value + wallet
@@ -36,6 +47,7 @@ class WalletRepository {
     }
 
     suspend fun rename(id: String, name: String) {
+        if (DemoModeFlag.active) return
         val dto = ApiClient.api.updateAccount(id, UpdateAccountRequest(name = name))
         _wallets.value = _wallets.value.map { if (it.id == id) dto.toWallet() else it }
     }

@@ -211,7 +211,7 @@ fun AddTransactionScreen(
                                 if (type == TransactionType.TRANSFER) t(StringKey.ADD_TXN_TRANSFER) else t(categoryStringKey(category)),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color.White.copy(alpha = 0.75f),
-                                modifier = Modifier.padding(bottom = 16.dp),
+                                modifier = Modifier.padding(bottom = 8.dp),
                             )
                             OutlinedTextField(
                                 value = amountText,

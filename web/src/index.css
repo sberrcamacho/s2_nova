@@ -63,6 +63,20 @@
 
   --scan-surface: #0b0b12;
   color-scheme: light;
+
+  /* Login screen (design handoff s2-nova-mockup/login_handoff/) — a few
+     pixel-exact tokens that don't cleanly map onto an existing near-
+     equivalent above; kept separate rather than approximated. */
+  --color-login-surface: #ffffff;
+  --color-login-input-text: #111118;
+  --color-login-border-focus: #7b6ff6;
+  --color-login-text-muted: #9c9caa;
+  --color-login-label: #666673;
+  --color-login-primary: #7b6ff6;
+  --color-login-primary-hover: #6c5ce7;
+  --color-login-danger: #d64545;
+  --color-login-divider-label: #9c9caa;
+  --color-login-checkbox-text: #666673;
 }
 
 [data-theme='dark'] {
@@ -120,6 +134,18 @@
 
   --scan-surface: #000000;
   color-scheme: dark;
+
+  /* Login screen (design handoff s2-nova-mockup/login_handoff/) */
+  --color-login-surface: #0b0b14;
+  --color-login-input-text: rgba(255, 255, 255, 0.85);
+  --color-login-border-focus: #241a5e;
+  --color-login-text-muted: rgba(255, 255, 255, 0.5);
+  --color-login-label: rgba(255, 255, 255, 0.55);
+  --color-login-primary: #7b6ff6;
+  --color-login-primary-hover: #8578ff;
+  --color-login-danger: #d64545;
+  --color-login-divider-label: rgba(255, 255, 255, 0.35);
+  --color-login-checkbox-text: rgba(255, 255, 255, 0.6);
 }
 
 /* ── Tailwind v4 theme mapping — CSS vars stay live, so switching
@@ -153,6 +179,17 @@
   --color-negative-soft: var(--color-negative-soft);
   --color-warning: var(--color-warning);
   --color-warning-soft: var(--color-warning-soft);
+
+  --color-login-surface: var(--color-login-surface);
+  --color-login-input-text: var(--color-login-input-text);
+  --color-login-border-focus: var(--color-login-border-focus);
+  --color-login-text-muted: var(--color-login-text-muted);
+  --color-login-label: var(--color-login-label);
+  --color-login-primary: var(--color-login-primary);
+  --color-login-primary-hover: var(--color-login-primary-hover);
+  --color-login-danger: var(--color-login-danger);
+  --color-login-divider-label: var(--color-login-divider-label);
+  --color-login-checkbox-text: var(--color-login-checkbox-text);
 
   --radius-xs: 6px;
   --radius-sm: 10px;

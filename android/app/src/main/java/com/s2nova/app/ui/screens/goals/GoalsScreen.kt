@@ -102,7 +102,7 @@ fun GoalsTab(onContribute: (String) -> Unit) {
                     }
                     Button(
                         onClick = { onContribute(goal.id) },
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(50),
+                        shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth().padding(top = 14.dp),
                     ) { Text(t(StringKey.GOALS_CONTRIBUTE)) }
                 }

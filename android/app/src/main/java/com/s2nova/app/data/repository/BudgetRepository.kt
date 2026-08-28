@@ -30,10 +30,18 @@ class BudgetRepository(private val categoryRepository: CategoryRepository) {
     val budgetProgress: StateFlow<List<BudgetProgress>> = _budgetProgress.asStateFlow()
 
     suspend fun refresh(month: String = currentMonthKey()) {
+        if (DemoModeFlag.active) return
         _budgetProgress.value = ApiClient.api.getBudgets(month).mapNotNull { it.toBudgetProgress(categoryRepository) }
     }
 
+    // Overrides the in-memory list with fictitious data for local-only demo
+    // mode — never calls the network. See AppContainer.enterDemoMode().
+    fun loadDemo(budgetProgress: List<BudgetProgress>) {
+        _budgetProgress.value = budgetProgress
+    }
+
     suspend fun create(name: String?, category: CategoryId, limit: Double, month: String = currentMonthKey()): BudgetProgress? {
+        if (DemoModeFlag.active) return null
         val categoryBackendId = categoryRepository.backendIdFor(category) ?: return null
         val dto = ApiClient.api.createBudget(CreateBudgetRequest(name, categoryBackendId, limit.toLong(), month))
         val progress = dto.toBudgetProgress(categoryRepository) ?: return null
@@ -42,6 +50,7 @@ class BudgetRepository(private val categoryRepository: CategoryRepository) {
     }
 
     suspend fun updateLimit(id: String, limit: Double) {
+        if (DemoModeFlag.active) return
         val dto = ApiClient.api.updateBudget(id, UpdateBudgetRequest(amount = limit.toLong()))
         val progress = dto.toBudgetProgress(categoryRepository) ?: return
         _budgetProgress.value = _budgetProgress.value.map { if (it.budget.id == id) progress else it }

@@ -1,12 +1,22 @@
 package com.s2nova.app.ui.components
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -131,36 +141,54 @@ fun NovaSparkline(
     }
 }
 
+// One income/expense bar pair for a single period slot in the reports
+// "Ingresos vs gastos" chart. Bars only — the caller renders period labels
+// in a separate row below so they stay in one straight line regardless of
+// bar height (see ReportsScreen's income-vs-expenses card).
+private val BarTopCornerShape = RoundedCornerShape(topStart = 3.dp, topEnd = 3.dp, bottomStart = 0.dp, bottomEnd = 0.dp)
+
 @Composable
 fun NovaBarPair(
-    label: String,
     income: Float,
     expense: Float,
     maxValue: Float,
     positiveColor: Color,
     negativeColor: Color,
     modifier: Modifier = Modifier,
-    maxBarHeight: Dp = 80.dp,
+    maxBarHeight: Dp = 112.dp,
 ) {
-    androidx.compose.foundation.layout.Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
+    val incomeHeight by animateDpAsState(
+        targetValue = maxBarHeight * (income / maxValue).coerceIn(0f, 1f),
+        animationSpec = tween(durationMillis = 300),
+        label = "incomeBarHeight",
+    )
+    val expenseHeight by animateDpAsState(
+        targetValue = maxBarHeight * (expense / maxValue).coerceIn(0f, 1f),
+        animationSpec = tween(durationMillis = 300),
+        label = "expenseBarHeight",
+    )
+    Box(
+        modifier = modifier.fillMaxHeight(),
+        contentAlignment = Alignment.BottomCenter,
     ) {
-        androidx.compose.foundation.layout.Row(
+        Row(
             verticalAlignment = Alignment.Bottom,
-            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(3.dp),
+            horizontalArrangement = Arrangement.spacedBy(3.dp),
         ) {
             Box(
                 modifier = Modifier
-                    .size(width = 10.dp, height = maxBarHeight * (income / maxValue).coerceIn(0f, 1f))
-                    .background(positiveColor, androidx.compose.foundation.shape.RoundedCornerShape(3.dp)),
+                    .fillMaxWidth(0.42f)
+                    .widthIn(max = 16.dp)
+                    .height(incomeHeight)
+                    .background(positiveColor, BarTopCornerShape),
             )
             Box(
                 modifier = Modifier
-                    .size(width = 10.dp, height = maxBarHeight * (expense / maxValue).coerceIn(0f, 1f))
-                    .background(negativeColor, androidx.compose.foundation.shape.RoundedCornerShape(3.dp)),
+                    .fillMaxWidth(0.42f)
+                    .widthIn(max = 16.dp)
+                    .height(expenseHeight)
+                    .background(negativeColor, BarTopCornerShape),
             )
         }
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

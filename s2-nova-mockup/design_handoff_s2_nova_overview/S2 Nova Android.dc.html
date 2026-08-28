@@ -7,16 +7,16 @@
 </head>
 <body>
 <x-dc>
-<helmet data-dc-atomics><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"><style>body{margin:0;background:#e9e9ef;font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#111118;display:flex;justify-content:center;align-items:flex-start;padding:40px 20px;min-height:100vh}.num{font-variant-numeric:tabular-nums}a{color:#7b6ff6}a:hover{color:#7b6ff6}.scroll{flex:1 1 0;min-height:0;overflow-y:auto;display:flex;flex-direction:column}.scroll>*{flex:0 0 auto}.scroll{scrollbar-width:none;-ms-overflow-style:none}.scroll::-webkit-scrollbar{width:0;height:0;display:none}.sheet{position:absolute;left:0;right:0;bottom:0;background:#f7f7fa;border-top:1px solid #dcdce6;border-radius:28px 28px 0 0;padding:8px 20px 26px;box-shadow:0 -16px 48px rgba(17,17,24,.12);z-index:20}.grab{width:32px;height:4px;border-radius:2px;background:#dcdce6;margin:0 auto 16px}</style></helmet>
+<helmet data-dc-atomics><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"><style>body{margin:0;background:#141419;font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#fff;display:flex;justify-content:center;align-items:flex-start;padding:40px 20px;min-height:100vh}.num{font-variant-numeric:tabular-nums}a{color:#a69dff}a:hover{color:#8578ff}.scroll{flex:1 1 0;min-height:0;overflow-y:auto;display:flex;flex-direction:column}.scroll>*{flex:0 0 auto}.scroll{scrollbar-width:none;-ms-overflow-style:none}.scroll::-webkit-scrollbar{width:0;height:0;display:none}.sheet{position:absolute;left:0;right:0;bottom:0;background:#13131d;border-top:1px solid #262635;border-radius:28px 28px 0 0;padding:8px 20px 26px;box-shadow:0 -20px 56px rgba(0,0,0,.6);z-index:20}.grab{width:32px;height:4px;border-radius:2px;background:#3a3a4a;margin:0 auto 16px}</style></helmet>
 
 <div style="display:flex;flex-direction:column;align-items:center;gap:14px">
-  <div style="width:412px;height:892px;background:#ffffff;border:9px solid #23232c;border-radius:44px;box-shadow:0 30px 80px rgba(17,17,24,.22);overflow:hidden;position:relative;display:flex;flex-direction:column">
+  <div style="width:412px;height:892px;background:#050507;border:9px solid #23232c;border-radius:44px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;position:relative;display:flex;flex-direction:column">
 
     <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 24px 6px;font-size:12.5px;font-weight:700;flex:none">
       <span class="num">9:41</span>
       <div style="display:flex;align-items:center;gap:6px">
-        <span style="width:14px;height:9px;border:1.5px solid #666673;border-radius:2px;display:block"></span>
-        <span style="width:18px;height:9px;border:1.5px solid #666673;border-radius:2.5px;display:block;position:relative"><span style="position:absolute;inset:1.5px;right:5px;background:#666673;border-radius:1px;display:block"></span></span>
+        <span style="width:14px;height:9px;border:1.5px solid #a8a8b8;border-radius:2px;display:block"></span>
+        <span style="width:18px;height:9px;border:1.5px solid #a8a8b8;border-radius:2.5px;display:block;position:relative"><span style="position:absolute;inset:1.5px;right:5px;background:#a8a8b8;border-radius:1px;display:block"></span></span>
       </div>
     </div>
 
@@ -24,61 +24,61 @@
     <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px 14px;flex:none">
         <div style="display:flex;align-items:center;gap:11px">
-          <img src="web/src/assets/logo-mark-light.png" alt="" style="width:34px;height:34px;border-radius:10px;object-fit:cover;flex:none">
-          <div><div style="font-size:11px;color:#666673">Buenas tardes,</div><div style="font-size:16px;font-weight:800;letter-spacing:-.015em">Mariana</div></div>
+          <img src="web/src/assets/logo-mark-dark.png" alt="" style="width:34px;height:34px;border-radius:10px;object-fit:cover;flex:none">
+          <div><div style="font-size:11px;color:#6f6f82">Buenas tardes,</div><div style="font-size:16px;font-weight:800;letter-spacing:-.015em">Mariana</div></div>
         </div>
         <div style="display:flex;gap:10px">
-          <div onClick="{{ openNotifications }}" style="width:38px;height:38px;border-radius:50%;background:#ffffff;border:1px solid #ebebf2;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer">{{ iconBell }}<span style="position:absolute;top:9px;right:10px;width:7px;height:7px;border-radius:50%;background:#d64545;border:2px solid #ffffff"></span></div>
-          <div onClick="{{ goProfile }}" style="width:38px;height:38px;border-radius:50%;background:#6657e8;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;cursor:pointer">MT</div>
+          <div onClick="{{ openNotifications }}" style="width:38px;height:38px;border-radius:50%;background:#0e0e15;border:1px solid #1c1c28;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer">{{ iconBell }}<span style="position:absolute;top:9px;right:10px;width:7px;height:7px;border-radius:50%;background:#ff6262;border:2px solid #0e0e15"></span></div>
+          <div onClick="{{ goProfile }}" style="width:38px;height:38px;border-radius:50%;background:#6c5ce7;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;cursor:pointer">MT</div>
         </div>
       </div>
 
       <div class="scroll" style="padding:0 20px 20px;gap:16px">
-        <div style="position:relative;overflow:hidden;border-radius:24px;color:#fff;border:1px solid #2b2450;background:linear-gradient(150deg,#16123a 0%,#1d1650 60%,#241a5e 100%);padding:22px">
+        <div style="position:relative;overflow:hidden;border-radius:24px;border:1px solid #2b2450;background:linear-gradient(150deg,#050507 0%,#151041 60%,#211a4d 100%);padding:22px">
           <div style="position:absolute;top:-56px;right:-30px;width:170px;height:170px;border-radius:50%;background:rgba(108,92,231,.42);filter:blur(46px)"></div>
           <div style="position:relative">
             <div style="display:flex;align-items:center;justify-content:space-between">
-              <div style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#eae7ff">SALDO TOTAL</div>
-              <div style="font-size:10.5px;font-weight:700;color:rgba(255,255,255,.7);background:rgba(255,255,255,.1);border-radius:999px;padding:4px 10px">3 billeteras</div>
+              <div style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#a69dff">SALDO TOTAL</div>
+              <div style="font-size:10.5px;font-weight:700;color:#a8a8b8;background:rgba(255,255,255,.08);border-radius:999px;padding:4px 10px">3 billeteras</div>
             </div>
             <div class="num" style="font-size:34px;font-weight:800;letter-spacing:-.03em;margin-top:10px">$16.147.300</div>
             <div style="display:flex;gap:12px;margin-top:18px">
-              <div style="flex:1;background:rgba(255,255,255,.06);border-radius:14px;padding:11px 13px"><div style="font-size:10px;color:rgba(255,255,255,.7)">Ingresos</div><div class="num" style="font-size:14.5px;font-weight:800;color:#32c98a;margin-top:3px">$4.288.500</div></div>
-              <div style="flex:1;background:rgba(255,255,255,.06);border-radius:14px;padding:11px 13px"><div style="font-size:10px;color:rgba(255,255,255,.7)">Gastos</div><div class="num" style="font-size:14.5px;font-weight:800;color:#ff6262;margin-top:3px">$1.927.100</div></div>
+              <div style="flex:1;background:rgba(255,255,255,.06);border-radius:14px;padding:11px 13px"><div style="font-size:10px;color:#a8a8b8">Ingresos</div><div class="num" style="font-size:14.5px;font-weight:800;color:#32c98a;margin-top:3px">$4.288.500</div></div>
+              <div style="flex:1;background:rgba(255,255,255,.06);border-radius:14px;padding:11px 13px"><div style="font-size:10px;color:#a8a8b8">Gastos</div><div class="num" style="font-size:14.5px;font-weight:800;color:#ff6262;margin-top:3px">$1.927.100</div></div>
             </div>
           </div>
         </div>
 
-        <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:20px;padding:18px">
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:20px;padding:18px">
           <div style="display:flex;align-items:center;justify-content:space-between">
             <div style="font-size:13.5px;font-weight:800">Presupuestos</div>
-            <div onClick="{{ goBudgets }}" style="font-size:11.5px;font-weight:700;color:#7b6ff6;cursor:pointer">Ver todos</div>
+            <div onClick="{{ goBudgets }}" style="font-size:11.5px;font-weight:700;color:#a69dff;cursor:pointer">Ver todos</div>
           </div>
           <div style="display:flex;flex-direction:column;gap:13px;margin-top:14px">
             <sc-for list="{{ homeBudgets }}" as="b" hint-placeholder-count="3">
               <div>
                 <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:6px"><span>{{ b.label }}</span><span class="num" style="{{ b.pctStyle }}">{{ b.pct }}</span></div>
-                <div style="height:6px;border-radius:3px;background:#ebebf2;overflow:hidden"><div style="{{ b.fillStyle }}"></div></div>
+                <div style="height:6px;border-radius:3px;background:#1c1c28;overflow:hidden"><div style="{{ b.fillStyle }}"></div></div>
               </div>
             </sc-for>
           </div>
         </div>
 
-        <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:20px;padding:18px">
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:20px;padding:18px">
           <div style="display:flex;align-items:center;justify-content:space-between">
             <div style="font-size:13.5px;font-weight:800">Próximos pagos</div>
-            <div style="font-size:11.5px;font-weight:700;color:#7b6ff6;cursor:pointer">Recurrentes</div>
+            <div style="font-size:11.5px;font-weight:700;color:#a69dff;cursor:pointer">Recurrentes</div>
           </div>
           <div style="display:flex;flex-direction:column;margin-top:10px">
-            <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f0f0f5">
-              <div style="width:42px;flex:none;text-align:center"><div style="font-size:9.5px;font-weight:700;color:#666673">AGO</div><div class="num" style="font-size:15px;font-weight:800">24</div></div>
-              <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">Netflix</div><div style="font-size:11px;color:#666673">Serie mensual · confirmar al vencer</div></div>
-              <div class="num" style="font-size:13px;font-weight:800;color:#d64545">−$45.000</div>
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #16161f">
+              <div style="width:42px;flex:none;text-align:center"><div style="font-size:9.5px;font-weight:700;color:#6f6f82">AGO</div><div class="num" style="font-size:15px;font-weight:800">24</div></div>
+              <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">Netflix</div><div style="font-size:11px;color:#6f6f82">Serie mensual · confirmar al vencer</div></div>
+              <div class="num" style="font-size:13px;font-weight:800;color:#ff6262">−$45.000</div>
             </div>
             <div style="display:flex;align-items:center;gap:12px;padding:10px 0">
-              <div style="width:42px;flex:none;text-align:center"><div style="font-size:9.5px;font-weight:700;color:#666673">AGO</div><div class="num" style="font-size:15px;font-weight:800">26</div></div>
-              <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">Internet y celular</div><div style="font-size:11px;color:#666673">Serie mensual · Claro</div></div>
-              <div class="num" style="font-size:13px;font-weight:800;color:#d64545">−$109.000</div>
+              <div style="width:42px;flex:none;text-align:center"><div style="font-size:9.5px;font-weight:700;color:#6f6f82">AGO</div><div class="num" style="font-size:15px;font-weight:800">26</div></div>
+              <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">Internet y celular</div><div style="font-size:11px;color:#6f6f82">Serie mensual · Claro</div></div>
+              <div class="num" style="font-size:13px;font-weight:800;color:#ff6262">−$109.000</div>
             </div>
           </div>
         </div>
@@ -86,12 +86,12 @@
         <div>
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
             <div style="font-size:13.5px;font-weight:800">Movimientos recientes</div>
-            <div onClick="{{ goTransactions }}" style="font-size:11.5px;font-weight:700;color:#7b6ff6;cursor:pointer">Ver todos</div>
+            <div onClick="{{ goTransactions }}" style="font-size:11.5px;font-weight:700;color:#a69dff;cursor:pointer">Ver todos</div>
           </div>
           <sc-for list="{{ txns }}" as="tx" hint-placeholder-count="4">
-            <div style="display:flex;align-items:center;gap:13px;padding:11px 0;border-bottom:1px solid #f0f0f5">
+            <div style="display:flex;align-items:center;gap:13px;padding:11px 0;border-bottom:1px solid #16161f">
               {{ tx.chip }}
-              <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">{{ tx.desc }}</div><div style="font-size:11px;color:#666673">{{ tx.merchant }} · {{ tx.date }}</div></div>
+              <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">{{ tx.desc }}</div><div style="font-size:11px;color:#6f6f82">{{ tx.merchant }} · {{ tx.date }}</div></div>
               <span class="num" style="{{ tx.amountStyle }}">{{ tx.amount }}</span>
             </div>
           </sc-for>
@@ -111,11 +111,11 @@
         </div>
       </div>
       <div class="scroll" style="padding:4px 20px 20px;gap:14px">
-        <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:20px;padding:18px">
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:20px;padding:18px">
           <div style="font-size:13.5px;font-weight:800">Totales del periodo</div>
           <div style="display:flex;flex-direction:column;margin-top:10px">
             <sc-for list="{{ reportRows }}" as="r" hint-placeholder-count="4">
-              <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f0f0f5">
+              <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #16161f">
                 <span style="flex:1;min-width:0;font-size:12.5px;font-weight:700">{{ r.label }}</span>
                 <span class="num" style="font-size:13px;font-weight:800">{{ r.current }}</span>
                 <span style="{{ r.deltaStyle }}">{{ r.delta }}</span>
@@ -124,10 +124,10 @@
           </div>
         </div>
 
-        <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:20px;padding:18px">
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:20px;padding:18px">
           <div style="font-size:13.5px;font-weight:800">Ingresos vs gastos</div>
-          <div style="font-size:11px;color:#666673;margin-top:2px">{{ reportSubtitle }}</div>
-          <div style="display:flex;align-items:flex-end;gap:10px;height:132px;margin-top:16px;border-bottom:1px solid #ebebf2">
+          <div style="font-size:11px;color:#6f6f82;margin-top:2px">{{ reportSubtitle }}</div>
+          <div style="display:flex;align-items:flex-end;gap:10px;height:132px;margin-top:16px;border-bottom:1px solid #1c1c28">
             <sc-for list="{{ bars }}" as="b" hint-placeholder-count="6">
               <div style="flex:1;height:100%;display:flex;align-items:flex-end;justify-content:center;gap:3px">
                 <div style="{{ b.incStyle }}"></div>
@@ -137,18 +137,18 @@
           </div>
           <div style="display:flex;gap:10px;margin-top:7px">
             <sc-for list="{{ bars }}" as="b" hint-placeholder-count="6">
-              <div style="flex:1;text-align:center;font-size:10px;font-weight:600;color:#666673">{{ b.label }}</div>
+              <div style="flex:1;text-align:center;font-size:10px;font-weight:600;color:#6f6f82">{{ b.label }}</div>
             </sc-for>
           </div>
         </div>
 
-        <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:20px;padding:18px">
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:20px;padding:18px">
           <div style="font-size:13.5px;font-weight:800">Gasto por categoría</div>
           <div style="display:flex;flex-direction:column;gap:13px;margin-top:14px">
             <sc-for list="{{ categorySpend }}" as="c" hint-placeholder-count="5">
               <div>
-                <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:6px"><span>{{ c.label }}</span><span class="num" style="color:#666673">{{ c.amount }}</span></div>
-                <div style="height:6px;border-radius:3px;background:#ebebf2;overflow:hidden"><div style="{{ c.fillStyle }}"></div></div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:6px"><span>{{ c.label }}</span><span class="num" style="color:#a8a8b8">{{ c.amount }}</span></div>
+                <div style="height:6px;border-radius:3px;background:#1c1c28;overflow:hidden"><div style="{{ c.fillStyle }}"></div></div>
               </div>
             </sc-for>
           </div>
@@ -161,7 +161,7 @@
     <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column">
       <div style="padding:10px 20px 0;flex:none">
         <div style="font-size:21px;font-weight:800;letter-spacing:-.02em">Presupuestos</div>
-        <div style="display:flex;gap:4px;margin-top:14px;border-bottom:1px solid #ebebf2">
+        <div style="display:flex;gap:4px;margin-top:14px;border-bottom:1px solid #1c1c28">
           <sc-for list="{{ budgetTabs }}" as="t" hint-placeholder-count="2">
             <div onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</div>
           </sc-for>
@@ -170,13 +170,13 @@
 
       <sc-if value="{{ budgetTabIsBudgets }}" hint-placeholder-val="{{ true }}">
       <div class="scroll" style="padding:16px 20px 20px;gap:12px">
-        <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:18px;padding:16px 18px">
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:18px;padding:16px 18px">
           <div style="display:flex;justify-content:space-between;align-items:baseline">
-            <div><div style="font-size:11px;color:#666673">Gastado en agosto</div><div class="num" style="font-size:22px;font-weight:800;letter-spacing:-.025em;margin-top:3px">$1.927.100</div></div>
-            <div style="text-align:right"><div style="font-size:11px;color:#666673">Límite total</div><div class="num" style="font-size:13px;font-weight:700;color:#666673">$2.700.000</div></div>
+            <div><div style="font-size:11px;color:#6f6f82">Gastado en agosto</div><div class="num" style="font-size:22px;font-weight:800;letter-spacing:-.025em;margin-top:3px">$1.927.100</div></div>
+            <div style="text-align:right"><div style="font-size:11px;color:#6f6f82">Límite total</div><div class="num" style="font-size:13px;font-weight:700;color:#a8a8b8">$2.700.000</div></div>
           </div>
-          <div style="height:7px;border-radius:4px;background:#ebebf2;overflow:hidden;margin-top:14px"><div style="width:71%;height:100%;background:#b5760f"></div></div>
-          <div style="font-size:11px;color:#666673;margin-top:9px">Quedan 9 días y $772.900 disponibles</div>
+          <div style="height:7px;border-radius:4px;background:#1c1c28;overflow:hidden;margin-top:14px"><div style="width:71%;height:100%;background:#f0b429"></div></div>
+          <div style="font-size:11px;color:#6f6f82;margin-top:9px">Quedan 9 días y $772.900 disponibles</div>
         </div>
         <sc-for list="{{ budgets }}" as="b" hint-placeholder-count="6">
           <div style="{{ b.cardStyle }}">
@@ -184,10 +184,10 @@
               {{ b.chip }}
               <div style="flex:1;min-width:0">
                 <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:13px;font-weight:800">{{ b.label }}</span><span style="{{ b.pctStyle }}">{{ b.pct }}</span></div>
-                <div class="num" style="font-size:11.5px;color:#666673;margin-top:3px">{{ b.spent }} de {{ b.limit }}</div>
+                <div class="num" style="font-size:11.5px;color:#6f6f82;margin-top:3px">{{ b.spent }} de {{ b.limit }}</div>
               </div>
             </div>
-            <div style="height:6px;border-radius:3px;background:#ebebf2;overflow:hidden;margin-top:12px"><div style="{{ b.fillStyle }}"></div></div>
+            <div style="height:6px;border-radius:3px;background:#1c1c28;overflow:hidden;margin-top:12px"><div style="{{ b.fillStyle }}"></div></div>
           </div>
         </sc-for>
       </div>
@@ -196,18 +196,17 @@
       <sc-if value="{{ budgetTabIsGoals }}" hint-placeholder-val="{{ false }}">
       <div class="scroll" style="padding:16px 20px 20px;gap:12px">
         <sc-for list="{{ goals }}" as="g" hint-placeholder-count="4">
-          <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:18px;padding:16px 18px">
+          <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:18px;padding:16px 18px">
             <div style="display:flex;align-items:center;gap:16px">
-              <div style="{{ g.ringStyle }}"><div style="width:48px;height:48px;border-radius:50%;background:#ffffff;display:flex;align-items:center;justify-content:center"><span class="num" style="font-size:12.5px;font-weight:800">{{ g.pctLabel }}</span></div></div>
+              <div style="{{ g.ringStyle }}"><div style="width:48px;height:48px;border-radius:50%;background:#0e0e15;display:flex;align-items:center;justify-content:center"><span class="num" style="font-size:12.5px;font-weight:800">{{ g.pctLabel }}</span></div></div>
               <div style="flex:1;min-width:0">
                 <div style="font-size:13.5px;font-weight:800">{{ g.label }}</div>
-                <div class="num" style="font-size:15px;font-weight:800;margin-top:4px">{{ g.current }} <span style="font-size:11px;font-weight:600;color:#666673">de {{ g.target }}</span></div>
-                <div style="font-size:11px;color:#666673;margin-top:3px">{{ g.note }}</div>
+                <div class="num" style="font-size:15px;font-weight:800;margin-top:4px">{{ g.current }} <span style="font-size:11px;font-weight:600;color:#6f6f82">de {{ g.target }}</span></div>
+                <div style="font-size:11px;color:#6f6f82;margin-top:3px">{{ g.note }}</div>
               </div>
             </div>
-            <div style="display:flex;gap:9px;margin-top:14px">
-              <div style="flex:1;background:#6657e8;color:#fff;border-radius:12px;padding:10px;text-align:center;font-size:12px;font-weight:800;cursor:pointer">Abonar</div>
-              <div style="flex:1;border:1px solid #dcdce6;border-radius:12px;padding:10px;text-align:center;font-size:12px;font-weight:700;color:#666673;cursor:pointer">Detalle</div>
+            <div style="margin-top:14px">
+              <div style="background:#6c5ce7;color:#fff;border-radius:12px;padding:11px;text-align:center;font-size:12.5px;font-weight:800;cursor:pointer">Abonar</div>
             </div>
           </div>
         </sc-for>
@@ -220,34 +219,34 @@
     <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column">
       <div style="padding:10px 20px 12px;flex:none;font-size:21px;font-weight:800;letter-spacing:-.02em">Perfil</div>
       <div class="scroll" style="padding:0 20px 20px;gap:14px">
-        <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:20px;padding:18px;display:flex;align-items:center;gap:14px">
-          <div style="width:54px;height:54px;border-radius:50%;background:#6657e8;color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;flex:none">MT</div>
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:20px;padding:18px;display:flex;align-items:center;gap:14px">
+          <div style="width:54px;height:54px;border-radius:50%;background:#6c5ce7;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;flex:none">MT</div>
           <div style="flex:1;min-width:0">
             <div style="font-size:15.5px;font-weight:800;letter-spacing:-.01em">Mariana Torres</div>
-            <div style="font-size:11.5px;color:#666673;margin-top:2px">mariana.torres@example.com</div>
-            <div style="font-size:11px;color:#666673">Bogotá, D.C. · desde nov 2024</div>
+            <div style="font-size:11.5px;color:#6f6f82;margin-top:2px">mariana.torres@example.com</div>
+            <div style="font-size:11px;color:#6f6f82">Bogotá, D.C. · desde nov 2024</div>
           </div>
         </div>
 
-        <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:20px;overflow:hidden">
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:20px;overflow:hidden">
           <sc-for list="{{ profileRows }}" as="r" hint-placeholder-count="6">
-            <div onClick="{{ r.onClick }}" style="display:flex;align-items:center;gap:14px;padding:15px 18px;border-bottom:1px solid #f0f0f5;cursor:pointer">
+            <div onClick="{{ r.onClick }}" style="display:flex;align-items:center;gap:14px;padding:15px 18px;border-bottom:1px solid #16161f;cursor:pointer">
               {{ r.chip }}
-              <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">{{ r.label }}</div><div style="font-size:11px;color:#666673">{{ r.detail }}</div></div>
-              <span style="font-size:15px;color:#666673">›</span>
+              <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">{{ r.label }}</div><div style="font-size:11px;color:#6f6f82">{{ r.detail }}</div></div>
+              <span style="font-size:15px;color:#43434f">›</span>
             </div>
           </sc-for>
         </div>
 
-        <div style="border:1px solid rgba(214,69,69,.3);border-radius:16px;padding:14px;text-align:center;font-size:13px;font-weight:800;color:#d64545;cursor:pointer">Cerrar sesión</div>
+        <div style="border:1px solid rgba(255,98,98,.3);border-radius:16px;padding:14px;text-align:center;font-size:13px;font-weight:800;color:#ff6262;cursor:pointer">Cerrar sesión</div>
       </div>
     </div>
     </sc-if>
 
     <sc-if value="{{ isTransactions }}" hint-placeholder-val="{{ false }}">
-    <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column;background:#ffffff">
+    <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column;background:#050507">
       <div style="display:flex;align-items:center;gap:12px;padding:10px 18px 12px;flex:none">
-        <div onClick="{{ goHome }}" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;color:#666673;cursor:pointer">←</div>
+        <div onClick="{{ goHome }}" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;color:#a8a8b8;cursor:pointer">←</div>
         <div style="font-size:17px;font-weight:800;letter-spacing:-.015em">Movimientos</div>
       </div>
       <div style="padding:0 20px 12px;flex:none;display:flex;gap:8px">
@@ -256,41 +255,41 @@
         </sc-for>
       </div>
       <div class="scroll" style="padding:0 20px 20px">
-        <div style="font-size:10.5px;font-weight:700;letter-spacing:.1em;color:#9c9caa;padding:12px 0 4px">HOY · <span class="num">−$189.500</span></div>
+        <div style="font-size:10.5px;font-weight:700;letter-spacing:.1em;color:#6f6f82;padding:12px 0 4px">HOY · <span class="num">−$189.500</span></div>
         <sc-for list="{{ txnsToday }}" as="tx" hint-placeholder-count="2">
-          <div style="display:flex;align-items:center;gap:13px;padding:12px 0;border-bottom:1px solid #f0f0f5">
+          <div style="display:flex;align-items:center;gap:13px;padding:12px 0;border-bottom:1px solid #16161f">
             {{ tx.chip }}
-            <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">{{ tx.desc }}</div><div style="font-size:11px;color:#666673">{{ tx.merchant }} · {{ tx.wallet }}</div></div>
+            <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">{{ tx.desc }}</div><div style="font-size:11px;color:#6f6f82">{{ tx.merchant }} · {{ tx.wallet }}</div></div>
             <span class="num" style="{{ tx.amountStyle }}">{{ tx.amount }}</span>
           </div>
         </sc-for>
-        <div style="font-size:10.5px;font-weight:700;letter-spacing:.1em;color:#9c9caa;padding:18px 0 4px">AYER · <span class="num">−$130.000</span></div>
+        <div style="font-size:10.5px;font-weight:700;letter-spacing:.1em;color:#6f6f82;padding:18px 0 4px">AYER · <span class="num">−$130.000</span></div>
         <sc-for list="{{ txnsYesterday }}" as="tx" hint-placeholder-count="2">
-          <div style="display:flex;align-items:center;gap:13px;padding:12px 0;border-bottom:1px solid #f0f0f5">
+          <div style="display:flex;align-items:center;gap:13px;padding:12px 0;border-bottom:1px solid #16161f">
             {{ tx.chip }}
-            <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">{{ tx.desc }}</div><div style="font-size:11px;color:#666673">{{ tx.merchant }} · {{ tx.wallet }}</div></div>
+            <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">{{ tx.desc }}</div><div style="font-size:11px;color:#6f6f82">{{ tx.merchant }} · {{ tx.wallet }}</div></div>
             <span class="num" style="{{ tx.amountStyle }}">{{ tx.amount }}</span>
           </div>
         </sc-for>
-        <div style="font-size:10.5px;font-weight:700;letter-spacing:.1em;color:#9c9caa;padding:18px 0 4px">1 DE AGOSTO · <span class="num" style="color:#22a06b">+$4.400.000</span></div>
-        <div style="display:flex;align-items:center;gap:13px;padding:12px 0;border-bottom:1px solid #f0f0f5">
-          <span style="width:38px;height:38px;border-radius:12px;background:rgba(34,160,107,.12);border:1px solid rgba(34,160,107,.24);flex:none;display:block"></span>
-          <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">Salario mensual</div><div style="font-size:11px;color:#666673">Nómina — Grupo Éxito · Bancolombia</div></div>
-          <span class="num" style="font-size:13.5px;font-weight:800;color:#22a06b">+$4.400.000</span>
+        <div style="font-size:10.5px;font-weight:700;letter-spacing:.1em;color:#6f6f82;padding:18px 0 4px">1 DE AGOSTO · <span class="num" style="color:#32c98a">+$4.400.000</span></div>
+        <div style="display:flex;align-items:center;gap:13px;padding:12px 0;border-bottom:1px solid #16161f">
+          <span style="width:38px;height:38px;border-radius:12px;background:rgba(34,160,107,.16);border:1px solid rgba(34,160,107,.24);flex:none;display:block"></span>
+          <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">Salario mensual</div><div style="font-size:11px;color:#6f6f82">Nómina — Grupo Éxito · Bancolombia</div></div>
+          <span class="num" style="font-size:13.5px;font-weight:800;color:#32c98a">+$4.400.000</span>
         </div>
       </div>
     </div>
     </sc-if>
 
     <sc-if value="{{ isAdd }}" hint-placeholder-val="{{ false }}">
-    <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column;position:relative;z-index:15;background:#ffffff">
+    <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column;position:relative;z-index:15;background:#050507">
       <div style="display:flex;align-items:center;gap:12px;padding:10px 18px 14px;flex:none">
-        <div onClick="{{ closeAdd }}" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;color:#666673;cursor:pointer">←</div>
+        <div onClick="{{ closeAdd }}" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;color:#a8a8b8;cursor:pointer">←</div>
         <div style="font-size:17px;font-weight:800;letter-spacing:-.015em">Nuevo movimiento</div>
       </div>
 
       <div class="scroll" style="padding:0 20px 20px;gap:20px">
-        <div style="border-radius:22px;color:#fff;background:linear-gradient(140deg,#16123a,#241a5e);padding:20px">
+        <div style="border-radius:22px;background:linear-gradient(140deg,#050507,#211a4d);padding:20px">
           <div style="display:flex;gap:4px;background:rgba(255,255,255,.08);border-radius:999px;padding:4px">
             <sc-for list="{{ addTypes }}" as="t" hint-placeholder-count="3">
               <div onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</div>
@@ -309,18 +308,18 @@
         </div>
 
         <div>
-          <div style="font-size:11.5px;font-weight:700;color:#666673;margin-bottom:8px">Billetera</div>
+          <div style="font-size:11.5px;font-weight:700;color:#a8a8b8;margin-bottom:8px">Billetera</div>
           <div style="display:flex;gap:8px">
             <sc-for list="{{ wallets }}" as="w" hint-placeholder-count="3">
               <div onClick="{{ w.onClick }}" style="{{ w.style }}">{{ w.label }}</div>
             </sc-for>
           </div>
-          <div style="font-size:11px;color:#666673;margin-top:9px">El método de pago lo deriva el servidor a partir de la billetera.</div>
+          <div style="font-size:11px;color:#6f6f82;margin-top:9px">El método de pago lo deriva el servidor a partir de la billetera.</div>
         </div>
 
         <sc-if value="{{ isTransfer }}" hint-placeholder-val="{{ false }}">
         <div>
-          <div style="font-size:11.5px;font-weight:700;color:#666673;margin-bottom:8px">Transferir a</div>
+          <div style="font-size:11.5px;font-weight:700;color:#a8a8b8;margin-bottom:8px">Transferir a</div>
           <div style="display:flex;gap:8px">
             <sc-for list="{{ transferTargets }}" as="w" hint-placeholder-count="2">
               <div onClick="{{ w.onClick }}" style="{{ w.style }}">{{ w.label }}</div>
@@ -330,21 +329,21 @@
         </sc-if>
 
         <div>
-          <div style="font-size:11.5px;font-weight:700;color:#666673;margin-bottom:8px">Descripción</div>
-          <div style="border:1px solid #dcdce6;border-radius:14px;padding:14px 16px;font-size:13.5px;font-weight:600">Mercado semanal</div>
+          <div style="font-size:11.5px;font-weight:700;color:#a8a8b8;margin-bottom:8px">Descripción</div>
+          <div style="border:1px solid #262635;border-radius:14px;padding:14px 16px;font-size:13.5px;font-weight:600">Mercado semanal</div>
         </div>
 
         <div>
-          <div style="font-size:11.5px;font-weight:700;color:#666673;margin-bottom:8px">Nota</div>
-          <div style="border:1px solid #dcdce6;border-radius:14px;padding:14px 16px;font-size:13px;color:#666673">Opcional</div>
+          <div style="font-size:11.5px;font-weight:700;color:#a8a8b8;margin-bottom:8px">Nota</div>
+          <div style="border:1px solid #262635;border-radius:14px;padding:14px 16px;font-size:13px;color:#6f6f82">Opcional</div>
         </div>
 
-        <div onClick="{{ toggleMore }}" style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#7b6ff6;cursor:pointer">Más opciones <span style="font-size:11px">{{ moreCaret }}</span></div>
+        <div onClick="{{ toggleMore }}" style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#a69dff;cursor:pointer">Más opciones <span style="font-size:11px">{{ moreCaret }}</span></div>
 
         <sc-if value="{{ moreOpen }}" hint-placeholder-val="{{ false }}">
         <div style="display:flex;flex-direction:column;gap:18px">
           <div>
-            <div style="font-size:11.5px;font-weight:700;color:#666673;margin-bottom:8px">Presupuesto</div>
+            <div style="font-size:11.5px;font-weight:700;color:#a8a8b8;margin-bottom:8px">Presupuesto</div>
             <div style="display:flex;gap:8px">
               <sc-for list="{{ budgetChips }}" as="b" hint-placeholder-count="3">
                 <div onClick="{{ b.onClick }}" style="{{ b.style }}">{{ b.label }}</div>
@@ -352,7 +351,7 @@
             </div>
           </div>
           <div>
-            <div style="font-size:11.5px;font-weight:700;color:#666673;margin-bottom:8px">Meta</div>
+            <div style="font-size:11.5px;font-weight:700;color:#a8a8b8;margin-bottom:8px">Meta</div>
             <div style="display:flex;gap:8px">
               <sc-for list="{{ goalChips }}" as="g" hint-placeholder-count="3">
                 <div onClick="{{ g.onClick }}" style="{{ g.style }}">{{ g.label }}</div>
@@ -361,59 +360,59 @@
           </div>
           <sc-for list="{{ addToggles }}" as="tg" hint-placeholder-count="2">
             <div style="display:flex;align-items:center;gap:14px">
-              <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">{{ tg.label }}</div><div style="font-size:11px;color:#666673;margin-top:2px">{{ tg.detail }}</div></div>
+              <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">{{ tg.label }}</div><div style="font-size:11px;color:#6f6f82;margin-top:2px">{{ tg.detail }}</div></div>
               <div onClick="{{ tg.onClick }}" style="{{ tg.trackStyle }}"><span style="{{ tg.knobStyle }}"></span></div>
             </div>
           </sc-for>
-          <div style="font-size:12px;font-weight:600;color:#7b6ff6;cursor:pointer">¿Es un pago recurrente? Gestiónalo en Recurrentes →</div>
+          <div style="font-size:12px;font-weight:600;color:#a69dff;cursor:pointer">¿Es un pago recurrente? Gestiónalo en Recurrentes →</div>
         </div>
         </sc-if>
 
-        <div style="background:#6657e8;color:#fff;border-radius:14px;padding:16px;text-align:center;font-size:14px;font-weight:800;box-shadow:0 8px 24px rgba(102,87,232,.28);cursor:pointer">Guardar movimiento</div>
+        <div style="background:#6c5ce7;border-radius:14px;padding:16px;text-align:center;font-size:14px;font-weight:800;box-shadow:0 8px 24px rgba(108,92,231,.35);cursor:pointer">Guardar movimiento</div>
       </div>
     </div>
     </sc-if>
 
 
     <sc-if value="{{ isWallets }}" hint-placeholder-val="{{ false }}">
-    <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column;background:#ffffff">
+    <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column;background:#050507">
       <div style="display:flex;align-items:center;gap:12px;padding:10px 18px 12px;flex:none">
-        <div onClick="{{ goProfile }}" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;color:#666673;cursor:pointer">←</div>
+        <div onClick="{{ goProfile }}" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;color:#a8a8b8;cursor:pointer">←</div>
         <div style="flex:1;min-width:0;font-size:17px;font-weight:800;letter-spacing:-.015em">Billeteras</div>
-        <div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:300;color:#6657e8;cursor:pointer">+</div>
+        <div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:300;color:#6c5ce7;cursor:pointer">+</div>
       </div>
       <div class="scroll" style="padding:12px 20px 20px;gap:12px">
         <sc-for list="{{ walletCards }}" as="w" hint-placeholder-count="3">
-          <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:18px;padding:16px;display:flex;align-items:center;gap:12px">
+          <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:18px;padding:16px;display:flex;align-items:center;gap:12px">
             <span style="{{ w.iconStyle }}">{{ w.icon }}</span>
-            <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700">{{ w.label }}</div><div style="font-size:11.5px;color:#666673">{{ w.kind }}</div></div>
+            <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700">{{ w.label }}</div><div style="font-size:11.5px;color:#a8a8b8">{{ w.kind }}</div></div>
             <span class="num" style="font-size:14.5px;font-weight:800">{{ w.amount }}</span>
           </div>
         </sc-for>
-        <div style="font-size:11.5px;color:#9c9caa;padding:2px 4px">El saldo total de Inicio es la suma de estas billeteras.</div>
+        <div style="font-size:11.5px;color:#6f6f82;padding:2px 4px">El saldo total de Inicio es la suma de estas billeteras.</div>
       </div>
     </div>
     </sc-if>
 
     <sc-if value="{{ isRecurring }}" hint-placeholder-val="{{ false }}">
-    <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column;background:#ffffff">
+    <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column;background:#050507">
       <div style="display:flex;align-items:center;gap:12px;padding:10px 18px 12px;flex:none">
-        <div onClick="{{ goProfile }}" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;color:#666673;cursor:pointer">←</div>
+        <div onClick="{{ goProfile }}" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;color:#a8a8b8;cursor:pointer">←</div>
         <div style="flex:1;min-width:0;font-size:17px;font-weight:800;letter-spacing:-.015em">Recurrentes</div>
-        <div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:300;color:#6657e8;cursor:pointer">+</div>
+        <div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:300;color:#6c5ce7;cursor:pointer">+</div>
       </div>
       <div class="scroll" style="padding:12px 20px 20px;gap:12px">
         <sc-for list="{{ series }}" as="s" hint-placeholder-count="4">
-          <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:18px;padding:16px">
+          <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:18px;padding:16px">
             <div style="display:flex;align-items:center;gap:12px">
               {{ s.chip }}
-              <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700">{{ s.label }}</div><div style="font-size:11.5px;color:#666673;margin-top:2px">{{ s.detail }}</div></div>
+              <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700">{{ s.label }}</div><div style="font-size:11.5px;color:#a8a8b8;margin-top:2px">{{ s.detail }}</div></div>
               <span class="num" style="{{ s.amountStyle }}">{{ s.amount }}</span>
             </div>
             <div style="display:flex;align-items:center;gap:16px;margin-top:12px">
-              <span onClick="{{ s.onToggle }}" style="font-size:12.5px;font-weight:700;color:#6657e8;cursor:pointer">{{ s.action }}</span>
+              <span onClick="{{ s.onToggle }}" style="font-size:12.5px;font-weight:700;color:#6c5ce7;cursor:pointer">{{ s.action }}</span>
               <sc-if value="{{ s.dueToday }}" hint-placeholder-val="{{ false }}">
-                <span style="font-size:12.5px;font-weight:700;color:#6657e8;cursor:pointer">Vence hoy · Confirmar</span>
+                <span style="font-size:12.5px;font-weight:700;color:#6c5ce7;cursor:pointer">Vence hoy · Confirmar</span>
               </sc-if>
             </div>
           </div>
@@ -423,49 +422,49 @@
     </sc-if>
 
     <sc-if value="{{ isLoans }}" hint-placeholder-val="{{ false }}">
-    <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column;background:#ffffff">
+    <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column;background:#050507">
       <div style="display:flex;align-items:center;gap:12px;padding:10px 18px 4px;flex:none">
-        <div onClick="{{ goProfile }}" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;color:#666673;cursor:pointer">←</div>
+        <div onClick="{{ goProfile }}" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;color:#a8a8b8;cursor:pointer">←</div>
         <div style="flex:1;min-width:0;font-size:17px;font-weight:800;letter-spacing:-.015em">Préstamos</div>
       </div>
-      <div style="display:flex;gap:4px;padding:0 20px;border-bottom:1px solid #ebebf2;flex:none">
+      <div style="display:flex;gap:4px;padding:0 20px;border-bottom:1px solid #1c1c28;flex:none">
         <sc-for list="{{ loanTabs }}" as="t" hint-placeholder-count="2">
           <div onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</div>
         </sc-for>
       </div>
       <div class="scroll" style="padding:12px 20px 20px;gap:12px">
         <sc-for list="{{ loans }}" as="l" hint-placeholder-count="2">
-          <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:18px;padding:16px">
+          <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:18px;padding:16px">
             <div style="display:flex;align-items:center;gap:12px">
-              <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700">{{ l.label }}</div><div style="font-size:11.5px;color:#666673;margin-top:2px">{{ l.due }}</div></div>
+              <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700">{{ l.label }}</div><div style="font-size:11.5px;color:#a8a8b8;margin-top:2px">{{ l.due }}</div></div>
               <span class="num" style="font-size:14.5px;font-weight:800">{{ l.amount }}</span>
             </div>
             <div style="margin-top:10px;font-size:12.5px;font-weight:700;{{ l.actionColor }};cursor:pointer">{{ l.action }}</div>
           </div>
         </sc-for>
         <sc-if value="{{ loansEmpty }}" hint-placeholder-val="{{ false }}">
-          <div style="padding:56px 20px;text-align:center;font-size:13px;color:#666673">No tienes préstamos registrados.</div>
+          <div style="padding:56px 20px;text-align:center;font-size:13px;color:#a8a8b8">No tienes préstamos registrados.</div>
         </sc-if>
       </div>
     </div>
     </sc-if>
 
     <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
-    <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column;background:#ffffff">
+    <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column;background:#050507">
       <div style="display:flex;align-items:center;gap:12px;padding:10px 18px 12px;flex:none">
-        <div onClick="{{ goProfile }}" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;color:#666673;cursor:pointer">←</div>
+        <div onClick="{{ goProfile }}" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;color:#a8a8b8;cursor:pointer">←</div>
         <div style="font-size:17px;font-weight:800;letter-spacing:-.015em">Ajustes</div>
       </div>
       <div class="scroll" style="padding:0 20px 24px;gap:12px">
         <div style="font-size:14px;font-weight:800">Información personal</div>
-        <div style="border:1px solid #dcdce6;border-radius:14px;padding:12px 14px"><div style="font-size:10.5px;color:#666673">Nombre completo</div><div style="font-size:13.5px;font-weight:600;margin-top:3px">Mariana Torres</div></div>
-        <div style="border:1px solid #ebebf2;border-radius:14px;padding:12px 14px;background:#f7f7fa"><div style="font-size:10.5px;color:#9c9caa">Correo</div><div style="font-size:13.5px;font-weight:600;margin-top:3px;color:#9c9caa">mariana.torres@example.com</div></div>
-        <div style="border:1px solid #dcdce6;border-radius:14px;padding:12px 14px"><div style="font-size:10.5px;color:#666673">Teléfono</div><div style="font-size:13.5px;font-weight:600;margin-top:3px">+57 310 555 0134</div></div>
-        <div style="border:1px solid #dcdce6;border-radius:14px;padding:12px 14px"><div style="font-size:10.5px;color:#666673">Ciudad</div><div style="font-size:13.5px;font-weight:600;margin-top:3px">Bogotá, D.C.</div></div>
-        <div style="align-self:flex-start;background:#6657e8;color:#fff;border-radius:14px;padding:12px 20px;font-size:13px;font-weight:800;cursor:pointer;margin-top:4px">Guardar cambios</div>
+        <div style="border:1px solid #262635;border-radius:14px;padding:12px 14px"><div style="font-size:10.5px;color:#a8a8b8">Nombre completo</div><div style="font-size:13.5px;font-weight:600;margin-top:3px">Mariana Torres</div></div>
+        <div style="border:1px solid #1c1c28;border-radius:14px;padding:12px 14px;background:#09090e"><div style="font-size:10.5px;color:#6f6f82">Correo</div><div style="font-size:13.5px;font-weight:600;margin-top:3px;color:#6f6f82">mariana.torres@example.com</div></div>
+        <div style="border:1px solid #262635;border-radius:14px;padding:12px 14px"><div style="font-size:10.5px;color:#a8a8b8">Teléfono</div><div style="font-size:13.5px;font-weight:600;margin-top:3px">+57 310 555 0134</div></div>
+        <div style="border:1px solid #262635;border-radius:14px;padding:12px 14px"><div style="font-size:10.5px;color:#a8a8b8">Ciudad</div><div style="font-size:13.5px;font-weight:600;margin-top:3px">Bogotá, D.C.</div></div>
+        <div style="align-self:flex-start;background:#6c5ce7;color:#fff;border-radius:14px;padding:12px 20px;font-size:13px;font-weight:800;cursor:pointer;margin-top:4px">Guardar cambios</div>
 
         <div style="font-size:14px;font-weight:800;margin-top:16px">Preferencias</div>
-        <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:14px">
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:14px">
           <sc-for list="{{ prefSwitches }}" as="p" hint-placeholder-count="3">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:14px">
               <span style="font-size:13.5px;font-weight:600">{{ p.label }}</span>
@@ -474,7 +473,7 @@
           </sc-for>
           <div style="display:flex;align-items:center;justify-content:space-between;gap:14px">
             <span style="font-size:13.5px;font-weight:600">Formato de moneda</span>
-            <div style="display:flex;background:#f7f7fa;border-radius:999px">
+            <div style="display:flex;background:#09090e;border-radius:999px">
               <sc-for list="{{ currencyOpts }}" as="o" hint-placeholder-count="2">
                 <div onClick="{{ o.onClick }}" style="{{ o.style }}">{{ o.label }}</div>
               </sc-for>
@@ -482,7 +481,7 @@
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;gap:14px">
             <span style="font-size:13.5px;font-weight:600">Idioma</span>
-            <div style="display:flex;background:#f7f7fa;border-radius:999px">
+            <div style="display:flex;background:#09090e;border-radius:999px">
               <sc-for list="{{ languageOpts }}" as="o" hint-placeholder-count="2">
                 <div onClick="{{ o.onClick }}" style="{{ o.style }}">{{ o.label }}</div>
               </sc-for>
@@ -490,24 +489,24 @@
           </div>
         </div>
 
-        <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:18px;padding:16px;font-size:13.5px;font-weight:600;cursor:pointer;margin-top:8px">Repetir el tutorial</div>
-        <div style="background:#ffffff;border:1px solid #ebebf2;border-radius:18px;padding:16px">
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:18px;padding:16px;font-size:13.5px;font-weight:600;cursor:pointer;margin-top:8px">Repetir el tutorial</div>
+        <div style="background:#0e0e15;border:1px solid #1c1c28;border-radius:18px;padding:16px">
           <div style="font-size:13px;font-weight:800">Acerca de</div>
-          <div style="font-size:11.5px;color:#666673;margin-top:4px">S2 Nova · v1.0.0 · datos de demostración</div>
+          <div style="font-size:11.5px;color:#a8a8b8;margin-top:4px">S2 Nova · v1.0.0 · datos de demostración</div>
         </div>
       </div>
     </div>
     </sc-if>
 
     <sc-if value="{{ addSheetOpen }}" hint-placeholder-val="{{ false }}">
-    <div onClick="{{ closeSheets }}" style="position:absolute;inset:0;background:rgba(17,17,24,.5);z-index:19"></div>
+    <div onClick="{{ closeSheets }}" style="position:absolute;inset:0;background:rgba(0,0,0,.65);z-index:19"></div>
     <div class="sheet">
       <div class="grab"></div>
       <div style="display:flex;flex-direction:column">
         <sc-for list="{{ addActions }}" as="a" hint-placeholder-count="2">
           <div onClick="{{ a.onClick }}" style="display:flex;align-items:center;gap:14px;padding:14px 4px;cursor:pointer">
-            <span style="width:44px;height:44px;border-radius:50%;background:rgba(102,87,232,.14);flex:none;display:flex;align-items:center;justify-content:center">{{ a.icon }}</span>
-            <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700">{{ a.label }}</div><div style="font-size:11.5px;color:#666673;margin-top:2px">{{ a.detail }}</div></div>
+            <span style="width:44px;height:44px;border-radius:50%;background:rgba(108,92,231,.22);flex:none;display:flex;align-items:center;justify-content:center">{{ a.icon }}</span>
+            <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700">{{ a.label }}</div><div style="font-size:11.5px;color:#6f6f82;margin-top:2px">{{ a.detail }}</div></div>
           </div>
         </sc-for>
       </div>
@@ -515,7 +514,7 @@
     </sc-if>
 
     <sc-if value="{{ categorySheetOpen }}" hint-placeholder-val="{{ false }}">
-    <div onClick="{{ closeSheets }}" style="position:absolute;inset:0;background:rgba(17,17,24,.5);z-index:19"></div>
+    <div onClick="{{ closeSheets }}" style="position:absolute;inset:0;background:rgba(0,0,0,.65);z-index:19"></div>
     <div class="sheet">
       <div class="grab"></div>
       <div style="font-size:15px;font-weight:800;padding:0 4px 18px">Selecciona una categoría</div>
@@ -531,16 +530,16 @@
     </sc-if>
 
     <sc-if value="{{ showBottomBar }}" hint-placeholder-val="{{ true }}">
-    <div style="flex:none;position:relative;background:#ffffff;border-top:1px solid #ebebf2;padding:8px 8px 4px;display:flex;align-items:center">
+    <div style="flex:none;position:relative;background:#0e0e15;border-top:1px solid #1c1c28;padding:8px 8px 4px;display:flex;align-items:center">
       <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="5">
         <div onClick="{{ tab.onClick }}" style="{{ tab.style }}">{{ tab.icon }}{{ tab.label }}</div>
       </sc-for>
     </div>
-    <div style="flex:none;background:#ffffff;display:flex;justify-content:center;padding:8px 0 10px"><span style="width:108px;height:4px;border-radius:2px;background:#3a3a4a"></span></div>
+    <div style="flex:none;background:#0e0e15;display:flex;justify-content:center;padding:8px 0 10px"><span style="width:108px;height:4px;border-radius:2px;background:#3a3a4a"></span></div>
     </sc-if>
   </div>
 
-  <div style="font-size:11px;color:#666673;font-weight:600">Tema claro · pestañas reales: Inicio · Reportes · + · Presupuestos · Perfil</div>
+  <div style="font-size:11px;color:#6f6f82;font-weight:600">Pestañas reales: Inicio · Reportes · + · Presupuestos · Perfil</div>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:520,&quot;height&quot;:1010}}">
@@ -594,7 +593,7 @@ const BUDGETS = [
 ]
 
 const GOALS = [
-  { label: 'Fondo de emergencia', current: '$8.400.000', target: '$12.000.000', pct: 70, note: '6 meses de gastos', color: '#6657e8' },
+  { label: 'Fondo de emergencia', current: '$8.400.000', target: '$12.000.000', pct: 70, note: '6 meses de gastos', color: '#6c5ce7' },
   { label: 'Viaje a Perú', current: '$1.980.000', target: '$4.500.000', pct: 44, note: 'Faltan $252.000 al mes', color: '#3DBBA8' },
   { label: 'Portátil nuevo', current: '$4.680.000', target: '$5.200.000', pct: 90, note: 'Dos abonos más', color: '#E8A23D' },
   { label: 'Especialización', current: '$450.000', target: '$3.000.000', pct: 15, note: 'Sin historial suficiente', color: '#8A8A99' },
@@ -602,7 +601,7 @@ const GOALS = [
 
 // Profile's own destinations, per ProfileScreen's callbacks in NovaNavGraph.kt
 const PROFILE_ROWS = [
-  { label: 'Billeteras', detail: '3 activas · $16.147.300', color: '#6657e8' },
+  { label: 'Billeteras', detail: '3 activas · $16.147.300', color: '#6c5ce7' },
   { label: 'Recurrentes', detail: '6 series activas', color: C.subscriptions },
   { label: 'Préstamos', detail: 'Prestado $620.000 · sin deudas', color: C.salary },
   { label: 'Ajustes', detail: 'Idioma, moneda, seguridad', color: C.bills },
@@ -720,7 +719,7 @@ class Component extends DCLogic {
   state = {
     screen: 'Inicio',
     loanTab: 'Prestado',
-    prefDark: false,
+    prefDark: true,
     prefNotifications: true,
     prefBiometric: false,
     prefCurrency: 'COP',
@@ -757,9 +756,9 @@ class Component extends DCLogic {
         fontWeight: selected ? 700 : 600,
         cursor: 'pointer',
         whiteSpace: 'nowrap',
-        color: selected ? '#fff' : '#111118',
-        background: selected ? '#6657e8' : '#ffffff',
-        border: '1px solid ' + (selected ? 'transparent' : '#dcdce6'),
+        color: selected ? '#fff' : '#e6e6ee',
+        background: selected ? '#6c5ce7' : '#13131d',
+        border: '1px solid ' + (selected ? 'transparent' : 'rgba(111,111,130,.4)'),
       },
     }
   }
@@ -784,7 +783,7 @@ class Component extends DCLogic {
       isSettings: s.screen === 'Ajustes',
       walletCards: WALLETS_FULL.map((w) => ({
         ...w,
-        iconStyle: { width: '44px', height: '44px', borderRadius: '50%', flex: 'none', background: 'linear-gradient(135deg,#16123a,#241a5e)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+        iconStyle: { width: '44px', height: '44px', borderRadius: '50%', flex: 'none', background: 'linear-gradient(135deg,#050507,#211a4d)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
         icon: svg(WALLET_GLYPHS[w.label], 20, '#fff'),
       })),
       series: SERIES.map((x) => {
@@ -794,10 +793,10 @@ class Component extends DCLogic {
           detail: active ? x.detail : 'Pausada',
           amount: x.amount,
           dueToday: active && x.dueToday,
-          chip: mark(x.cat, x.color, 38, '22'),
+          chip: mark(x.cat, x.color, 38, '29'),
           action: active ? 'Pausar' : 'Reanudar',
           onToggle: () => this.setState({ paused: { ...s.paused, [x.label]: active } }),
-          amountStyle: { fontSize: '14px', fontWeight: 800, color: x.amount.startsWith('+') ? '#22a06b' : '#d64545' },
+          amountStyle: { fontSize: '14px', fontWeight: 800, color: x.amount.startsWith('+') ? '#32c98a' : '#ff6262' },
         }
       }),
       loanTabs: ['Prestado', 'Recibido'].map((label) => ({
@@ -808,15 +807,15 @@ class Component extends DCLogic {
           fontSize: '13px',
           fontWeight: s.loanTab === label ? 800 : 600,
           cursor: 'pointer',
-          color: s.loanTab === label ? '#111118' : '#666673',
-          borderBottom: '2px solid ' + (s.loanTab === label ? '#6657e8' : 'transparent'),
+          color: s.loanTab === label ? '#fff' : '#a8a8b8',
+          borderBottom: '2px solid ' + (s.loanTab === label ? '#6c5ce7' : 'transparent'),
           marginBottom: '-1px',
         },
       })),
       loans: LOANS[s.loanTab].map((l) => ({
         ...l,
         action: l.settled ? 'Saldado' : 'Saldar',
-        actionColor: { color: l.settled ? '#22a06b' : '#6657e8' },
+        actionColor: { color: l.settled ? '#32c98a' : '#6c5ce7' },
       })),
       loansEmpty: LOANS[s.loanTab].length === 0,
       prefSwitches: [
@@ -828,24 +827,24 @@ class Component extends DCLogic {
         return {
           label: p.label,
           onClick: () => this.setState({ [p.key]: !on }),
-          trackStyle: { width: '42px', height: '24px', borderRadius: '999px', flex: 'none', cursor: 'pointer', padding: '3px', display: 'flex', justifyContent: on ? 'flex-end' : 'flex-start', background: on ? '#6657e8' : '#dcdce6', transition: 'background .2s ease' },
+          trackStyle: { width: '42px', height: '24px', borderRadius: '999px', flex: 'none', cursor: 'pointer', padding: '3px', display: 'flex', justifyContent: on ? 'flex-end' : 'flex-start', background: on ? '#6c5ce7' : '#262635', transition: 'background .2s ease' },
           knobStyle: { width: '18px', height: '18px', borderRadius: '50%', background: '#fff', display: 'block' },
         }
       }),
       currencyOpts: ['COP', 'USD'].map((label) => ({
         label,
         onClick: () => this.setState({ prefCurrency: label }),
-        style: { padding: '6px 12px', borderRadius: '999px', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer', color: s.prefCurrency === label ? '#fff' : '#666673', background: s.prefCurrency === label ? '#6657e8' : 'transparent' },
+        style: { padding: '6px 12px', borderRadius: '999px', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer', color: s.prefCurrency === label ? '#fff' : '#a8a8b8', background: s.prefCurrency === label ? '#6c5ce7' : 'transparent' },
       })),
       languageOpts: ['Español', 'English'].map((label) => ({
         label,
         onClick: () => this.setState({ prefLanguage: label }),
-        style: { padding: '6px 12px', borderRadius: '999px', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer', color: s.prefLanguage === label ? '#fff' : '#666673', background: s.prefLanguage === label ? '#6657e8' : 'transparent' },
+        style: { padding: '6px 12px', borderRadius: '999px', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer', color: s.prefLanguage === label ? '#fff' : '#a8a8b8', background: s.prefLanguage === label ? '#6c5ce7' : 'transparent' },
       })),
       addSheetOpen: s.sheet === 'add',
       categorySheetOpen: s.sheet === 'category',
 
-      iconBell: svg(['M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9', 'M10.3 21a1.94 1.94 0 0 0 3.4 0'], 17, '#666673'),
+      iconBell: svg(['M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9', 'M10.3 21a1.94 1.94 0 0 0 3.4 0'], 17, '#a8a8b8'),
 
       openNotifications: () => this.set({ sheet: null }),
       openAddSheet: () => this.set({ sheet: s.sheet === 'add' ? null : 'add' }),
@@ -869,12 +868,11 @@ class Component extends DCLogic {
                   width: '52px',
                   height: '52px',
                   borderRadius: '50%',
-                  background: '#6657e8',
-                  color: '#fff',
+                  background: '#6c5ce7',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 8px 24px rgba(102,87,232,.4)',
+                  boxShadow: '0 8px 24px rgba(108,92,231,.45)',
                   cursor: 'pointer',
                 },
               },
@@ -889,8 +887,8 @@ class Component extends DCLogic {
           label,
           icon: React.createElement(
             'span',
-            { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '58px', height: '30px', borderRadius: '999px', background: on ? '#eae7ff' : 'transparent' } },
-            svg(TAB_ICONS[label], 22, on ? '#6657e8' : '#666673'),
+            { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '58px', height: '30px', borderRadius: '999px', background: on ? 'rgba(108,92,231,.16)' : 'transparent' } },
+            svg(TAB_ICONS[label], 22, on ? '#6c5ce7' : '#a8a8b8'),
           ),
           onClick: () => this.set({ screen: label, sheet: null }),
           style: {
@@ -902,14 +900,14 @@ class Component extends DCLogic {
             padding: '2px 0',
             fontSize: '10px',
             fontWeight: on ? 700 : 500,
-            color: on ? '#6657e8' : '#666673',
+            color: on ? '#6c5ce7' : '#a8a8b8',
             cursor: 'pointer',
           },
         }
       }),
 
       homeBudgets: BUDGETS.slice(0, 3).map((b) => {
-        const tone = b.n >= 90 ? '#d64545' : b.n >= 65 ? '#b5760f' : '#22a06b'
+        const tone = b.n >= 90 ? '#ff6262' : b.n >= 65 ? '#f0b429' : '#32c98a'
         return {
           label: b.label,
           pct: b.n + '%',
@@ -920,11 +918,11 @@ class Component extends DCLogic {
 
       txns: TXNS.map((tx) => ({
         ...tx,
-        chip: mark(tx.desc.includes('Viaje') ? 'Transporte' : tx.desc.includes('Internet') ? 'Servicios' : 'Alimentación', tx.color, 38, '22'),
-        amountStyle: { fontSize: '13px', fontWeight: 800, color: tx.neg ? '#d64545' : '#22a06b' },
+        chip: mark(tx.desc.includes('Viaje') ? 'Transporte' : tx.desc.includes('Internet') ? 'Servicios' : 'Alimentación', tx.color, 38, '29'),
+        amountStyle: { fontSize: '13px', fontWeight: 800, color: tx.neg ? '#ff6262' : '#32c98a' },
       })),
-      txnsToday: TXNS.slice(0, 2).map((tx) => ({ ...tx, chip: mark(tx.desc.includes('Viaje') ? 'Transporte' : tx.desc.includes('Internet') ? 'Servicios' : 'Alimentación', tx.color, 38, '22'), amountStyle: { fontSize: '13.5px', fontWeight: 800, color: '#d64545' } })),
-      txnsYesterday: TXNS.slice(2).map((tx) => ({ ...tx, chip: mark(tx.desc.includes('Viaje') ? 'Transporte' : tx.desc.includes('Internet') ? 'Servicios' : 'Alimentación', tx.color, 38, '22'), amountStyle: { fontSize: '13.5px', fontWeight: 800, color: '#d64545' } })),
+      txnsToday: TXNS.slice(0, 2).map((tx) => ({ ...tx, chip: mark(tx.desc.includes('Viaje') ? 'Transporte' : tx.desc.includes('Internet') ? 'Servicios' : 'Alimentación', tx.color, 38, '29'), amountStyle: { fontSize: '13.5px', fontWeight: 800, color: '#ff6262' } })),
+      txnsYesterday: TXNS.slice(2).map((tx) => ({ ...tx, chip: mark(tx.desc.includes('Viaje') ? 'Transporte' : tx.desc.includes('Internet') ? 'Servicios' : 'Alimentación', tx.color, 38, '29'), amountStyle: { fontSize: '13.5px', fontWeight: 800, color: '#ff6262' } })),
 
       txFilters: ['Todos', 'Gastos', 'Ingresos', 'Pendientes'].map((label) =>
         this.pill(label, s.txFilter === label, () => this.set({ txFilter: label })),
@@ -944,14 +942,14 @@ class Component extends DCLogic {
           fontWeight: 800,
           borderRadius: '999px',
           padding: '3px 8px',
-          color: r.neg ? '#d64545' : '#22a06b',
+          color: r.neg ? '#ff6262' : '#32c98a',
           background: r.neg ? 'rgba(255,98,98,.14)' : 'rgba(50,201,138,.14)',
         },
       })),
       bars: bars.map((d) => ({
         label: d.label,
-        incStyle: { width: '42%', maxWidth: '16px', height: (d.inc / 6) * 100 + '%', background: '#22a06b', borderRadius: '3px 3px 0 0', transition: 'height .3s ease' },
-        expStyle: { width: '42%', maxWidth: '16px', height: (d.exp / 6) * 100 + '%', background: '#d64545', borderRadius: '3px 3px 0 0', transition: 'height .3s ease' },
+        incStyle: { width: '42%', maxWidth: '16px', height: (d.inc / 6) * 100 + '%', background: '#32c98a', borderRadius: '3px 3px 0 0', transition: 'height .3s ease' },
+        expStyle: { width: '42%', maxWidth: '16px', height: (d.exp / 6) * 100 + '%', background: '#ff6262', borderRadius: '3px 3px 0 0', transition: 'height .3s ease' },
       })),
       categorySpend: [
         { label: 'Alimentación', amount: '$612.400', n: 78, color: C.food },
@@ -969,8 +967,8 @@ class Component extends DCLogic {
           fontSize: '13px',
           fontWeight: s.budgetTab === label ? 800 : 600,
           cursor: 'pointer',
-          color: s.budgetTab === label ? '#111118' : '#666673',
-          borderBottom: '2px solid ' + (s.budgetTab === label ? '#6657e8' : 'transparent'),
+          color: s.budgetTab === label ? '#ffffff' : '#a8a8b8',
+          borderBottom: '2px solid ' + (s.budgetTab === label ? '#6c5ce7' : 'transparent'),
           marginBottom: '-1px',
         },
       })),
@@ -978,14 +976,14 @@ class Component extends DCLogic {
       budgetTabIsGoals: s.budgetTab === 'Metas',
 
       budgets: BUDGETS.map((b) => {
-        const tone = b.n >= 90 ? '#d64545' : b.n >= 65 ? '#b5760f' : '#22a06b'
+        const tone = b.n >= 90 ? '#ff6262' : b.n >= 65 ? '#f0b429' : '#32c98a'
         return {
           label: b.label,
           spent: b.spent,
           limit: b.limit,
           pct: b.n + '%',
-          chip: mark(b.label, b.color, 38, '22'),
-          cardStyle: { background: '#ffffff', border: '1px solid ' + (b.n >= 90 ? '#f0d2d2' : '#ebebf2'), borderRadius: '18px', padding: '15px 17px' },
+          chip: mark(b.label, b.color, 38, '29'),
+          cardStyle: { background: '#0e0e15', border: '1px solid ' + (b.n >= 90 ? '#3a2029' : '#1c1c28'), borderRadius: '18px', padding: '15px 17px' },
           pctStyle: { fontSize: '11.5px', fontWeight: 800, color: tone, background: tone + '24', borderRadius: '999px', padding: '3px 8px' },
           fillStyle: { width: Math.min(100, b.n) + '%', height: '100%', background: tone },
         }
@@ -999,27 +997,27 @@ class Component extends DCLogic {
           height: '62px',
           borderRadius: '50%',
           flex: 'none',
-          background: 'conic-gradient(' + g.color + ' ' + g.pct + '%, #ebebf2 0)',
+          background: 'conic-gradient(' + g.color + ' ' + g.pct + '%, #1c1c28 0)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
         },
       })),
 
-      profileRows: PROFILE_ROWS.map((r) => ({ ...r, chip: mark(r.label, r.color, 34, '22'), onClick: () => this.setState({ screen: r.label }) })),
+      profileRows: PROFILE_ROWS.map((r) => ({ ...r, chip: mark(r.label, r.color, 34, '29'), onClick: () => this.setState({ screen: r.label }) })),
 
       // AddActionsSheet.kt has exactly two actions: manual entry and scan.
       addActions: [
         {
           label: 'Registrar manualmente',
           detail: 'Gasto, ingreso o transferencia',
-          icon: svg(['M12 20h9', 'M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z'], 20, '#7b6ff6'),
+          icon: svg(['M12 20h9', 'M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z'], 20, '#a69dff'),
           onClick: () => this.set({ screen: 'Add', sheet: null }),
         },
         {
           label: 'Escanear código',
           detail: 'Lee el código de barras de un producto',
-          icon: svg(['M3 7V5a2 2 0 0 1 2-2h2', 'M17 3h2a2 2 0 0 1 2 2v2', 'M21 17v2a2 2 0 0 1-2 2h-2', 'M7 21H5a2 2 0 0 1-2-2v-2', 'M3 12h18'], 20, '#7b6ff6'),
+          icon: svg(['M3 7V5a2 2 0 0 1 2-2h2', 'M17 3h2a2 2 0 0 1 2 2v2', 'M21 17v2a2 2 0 0 1-2 2h-2', 'M7 21H5a2 2 0 0 1-2-2v-2', 'M3 12h18'], 20, '#a69dff'),
           onClick: () => this.set({ sheet: null }),
         },
       ],
@@ -1084,7 +1082,7 @@ class Component extends DCLogic {
             padding: '3px',
             display: 'flex',
             justifyContent: on ? 'flex-end' : 'flex-start',
-            background: on ? '#6657e8' : '#dcdce6',
+            background: on ? '#6c5ce7' : '#262635',
             transition: 'background .2s ease',
           },
           knobStyle: { width: '18px', height: '18px', borderRadius: '50%', background: '#fff', display: 'block' },
@@ -1096,8 +1094,8 @@ class Component extends DCLogic {
         return {
           label,
           onClick: () => this.set({ category: label, sheet: null }),
-          chip: React.createElement('span', { style: { width: '52px', height: '52px', borderRadius: '50%', background: color + (on ? '3d' : '22'), border: on ? '2px solid ' + color : '1.5px solid transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' } }, mark(label, color, 34, '00')),
-          labelStyle: { fontSize: '10.5px', fontWeight: on ? 800 : 600, color: on ? '#111118' : '#666673', textAlign: 'center', lineHeight: 1.25 },
+          chip: React.createElement('span', { style: { width: '52px', height: '52px', borderRadius: '50%', background: color + (on ? '3d' : '29'), border: on ? '2px solid ' + color : '1.5px solid transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' } }, mark(label, color, 34, '00')),
+          labelStyle: { fontSize: '10.5px', fontWeight: on ? 800 : 600, color: on ? '#fff' : '#a8a8b8', textAlign: 'center', lineHeight: 1.25 },
         }
       }),
     }

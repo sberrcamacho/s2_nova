@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
-import { Coins, Download, Eye, EyeOff, Globe, Key, Laptop2, Lock, Mail, Moon, ShieldAlert, Sun, User, Users } from 'lucide-react'
+import { Coins, Download, Eye, EyeOff, Globe, Key, Lock, Mail, ShieldAlert, User, Users } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Switch } from '@/components/ui/Switch'
@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/Button'
 import { Avatar } from '@/components/ui/Avatar'
 import { Modal } from '@/components/ui/Modal'
 import { useAuth } from '@/state/AuthContext'
-import { useTheme } from '@/state/ThemeContext'
 import { useToast } from '@/state/ToastContext'
 import { useCurrency } from '@/state/useCurrency'
 import { useTranslation } from '@/state/useTranslation'
@@ -18,7 +17,6 @@ import type { CurrencyCode, LanguageCode } from '@/types'
 
 export default function SettingsPage() {
   const { user, updateUser } = useAuth()
-  const { mode, setMode } = useTheme()
   const { showToast } = useToast()
   const { currency, setCurrency } = useCurrency()
   const { t, language, setLanguage } = useTranslation()
@@ -112,21 +110,6 @@ export default function SettingsPage() {
               options={[
                 { value: 'COP', label: 'COP' },
                 { value: 'USD', label: 'USD' },
-              ]}
-            />
-          </PreferenceRow>
-
-          <PreferenceRow
-            icon={mode === 'dark' ? <Moon className="h-4 w-4" /> : mode === 'light' ? <Sun className="h-4 w-4" /> : <Laptop2 className="h-4 w-4" />}
-            label={t('settings.theme')}
-          >
-            <Segmented
-              value={mode}
-              onChange={(v) => setMode(v as 'light' | 'dark' | 'system')}
-              options={[
-                { value: 'light', label: t('settings.light') },
-                { value: 'dark', label: t('settings.dark') },
-                { value: 'system', label: t('settings.system') },
               ]}
             />
           </PreferenceRow>
