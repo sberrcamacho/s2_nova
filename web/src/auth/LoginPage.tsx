@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Logo } from '@/components/ui/Logo'
@@ -265,11 +266,10 @@ export default function LoginPage() {
                     <button
                       type="button"
                       onClick={() => setShowPassword((v) => !v)}
-                      aria-label={showPassword ? t('auth.hidePasswordShort') : t('auth.showPasswordShort')}
-                      className="text-[11px] font-bold"
+                      aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                       style={{ color: 'var(--color-login-text-muted)' }}
                     >
-                      {showPassword ? t('auth.hidePasswordShort') : t('auth.showPasswordShort')}
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   }
                   value={password}

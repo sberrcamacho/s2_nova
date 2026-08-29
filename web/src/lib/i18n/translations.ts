@@ -448,8 +448,6 @@ const dictionary = {
   'auth.orDivider': { es: 'o', en: 'or' },
   'auth.orWithEmail': { es: 'O CON TU CORREO', en: 'OR WITH YOUR EMAIL' },
   'auth.continueWithGoogle': { es: 'Continuar con Google', en: 'Continue with Google' },
-  'auth.showPasswordShort': { es: 'Ver', en: 'Show' },
-  'auth.hidePasswordShort': { es: 'Ocultar', en: 'Hide' },
   'auth.forgotPassword': { es: '¿Olvidaste?', en: 'Forgot?' },
   'auth.rememberMe': { es: 'Mantener sesión iniciada', en: 'Keep me signed in' },
   'auth.encryptedData': { es: 'Datos cifrados de extremo a extremo', en: 'End-to-end encrypted data' },
