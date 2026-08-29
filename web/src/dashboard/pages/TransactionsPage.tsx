@@ -6,6 +6,7 @@ import { Select } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { Skeleton } from '@/components/ui/Skeleton'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { AmountText } from '@/components/ui/AmountText'
 import { useAppData } from '@/state/AppDataContext'
@@ -13,6 +14,7 @@ import { categories, paymentMethods } from '@/data/categories'
 import { formatLongDate } from '@/lib/date'
 import { cn } from '@/lib/cn'
 import { useTranslation } from '@/state/useTranslation'
+import type { TranslationKey } from '@/lib/i18n/translations'
 
 type SortKey = 'date' | 'amount'
 const PAGE_SIZE = 10
@@ -21,7 +23,7 @@ const PAGE_SIZE = 10
 // management) — Web (macro-analysis) only lists, filters, and sorts them.
 // See root AGENTS.md's Android/Web responsibility split.
 export default function TransactionsPage() {
-  const { transactions } = useAppData()
+  const { transactions, isLoading } = useAppData()
   const { t, tCategory, tPaymentMethod, language } = useTranslation()
 
   const [search, setSearch] = useState('')
@@ -108,22 +110,48 @@ export default function TransactionsPage() {
       </Card>
 
       <Card className="overflow-hidden">
-        {pageItems.length === 0 ? (
+        {isLoading ? (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[840px] border-collapse text-sm">
+              <TransactionsTableHead sortKey={sortKey} sortDir={sortDir} toggleSort={toggleSort} t={t} />
+              <tbody>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={i} className="border-b border-border last:border-0">
+                    <td className="px-4 py-3.5">
+                      <Skeleton className="h-3.5 w-20" />
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center gap-2.5">
+                        <Skeleton className="h-8 w-8 rounded-full" />
+                        <Skeleton className="h-3.5 w-32" />
+                      </div>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <Skeleton className="h-5 w-20 rounded-full" />
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <Skeleton className="h-5 w-16 rounded-full" />
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <Skeleton className="h-3.5 w-16" />
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <Skeleton className="h-3.5 w-20" />
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <Skeleton className="h-5 w-20 rounded-full" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : pageItems.length === 0 ? (
           <EmptyState icon={<Search className="h-6 w-6" />} title={t('txn.emptyTitle')} description={t('txn.emptyDescription')} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[840px] border-collapse text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-[11px] font-bold uppercase tracking-wide text-ink-tertiary">
-                  <SortableTh label={t('txn.colDate')} active={sortKey === 'date'} dir={sortDir} onClick={() => toggleSort('date')} />
-                  <th className="px-4 py-3">{t('txn.colDescription')}</th>
-                  <th className="px-4 py-3">{t('txn.colCategory')}</th>
-                  <th className="px-4 py-3">{t('txn.colType')}</th>
-                  <SortableTh label={t('txn.colAmount')} active={sortKey === 'amount'} dir={sortDir} onClick={() => toggleSort('amount')} />
-                  <th className="px-4 py-3">{t('txn.colMethod')}</th>
-                  <th className="px-4 py-3">{t('txn.colStatus')}</th>
-                </tr>
-              </thead>
+              <TransactionsTableHead sortKey={sortKey} sortDir={sortDir} toggleSort={toggleSort} t={t} />
               <tbody>
                 {pageItems.map((txn) => (
                   <tr key={txn.id} className="border-b border-border last:border-0 hover:bg-bg-secondary">
@@ -181,6 +209,32 @@ export default function TransactionsPage() {
         )}
       </Card>
     </div>
+  )
+}
+
+function TransactionsTableHead({
+  sortKey,
+  sortDir,
+  toggleSort,
+  t,
+}: {
+  sortKey: SortKey
+  sortDir: 'asc' | 'desc'
+  toggleSort: (key: SortKey) => void
+  t: (key: TranslationKey) => string
+}) {
+  return (
+    <thead>
+      <tr className="border-b border-border text-left text-[11px] font-bold uppercase tracking-wide text-ink-tertiary">
+        <SortableTh label={t('txn.colDate')} active={sortKey === 'date'} dir={sortDir} onClick={() => toggleSort('date')} />
+        <th className="px-4 py-3">{t('txn.colDescription')}</th>
+        <th className="px-4 py-3">{t('txn.colCategory')}</th>
+        <th className="px-4 py-3">{t('txn.colType')}</th>
+        <SortableTh label={t('txn.colAmount')} active={sortKey === 'amount'} dir={sortDir} onClick={() => toggleSort('amount')} />
+        <th className="px-4 py-3">{t('txn.colMethod')}</th>
+        <th className="px-4 py-3">{t('txn.colStatus')}</th>
+      </tr>
+    </thead>
   )
 }
 

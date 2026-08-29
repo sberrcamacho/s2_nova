@@ -4,6 +4,7 @@ import { ChartCard } from '@/components/ui/ChartCard'
 import { Card } from '@/components/ui/Card'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { Skeleton } from '@/components/ui/Skeleton'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { Tabs } from '@/components/ui/Tabs'
 import { Sparkles } from 'lucide-react'
@@ -365,20 +366,31 @@ function NetWorthTab() {
         </h3>
         {!isLoading && wallets.length === 0 && <p className="mt-4 text-sm text-ink-tertiary">{t('wallets.emptyTitle')}</p>}
         <div className="mt-3 flex flex-col divide-y divide-border">
-          {wallets.map((wallet) => (
-            <div key={wallet.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-              <span className="h-[30px] w-[30px] shrink-0 rounded-full" style={{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 16%, transparent)' }} />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-bold text-ink">{wallet.name}</p>
-                <p className="text-[11px] text-ink-tertiary">{t(walletTypeTranslationKey(wallet.type))}</p>
-              </div>
-              <p className="font-numeric text-sm font-extrabold text-ink">{format(wallet.currentBalance)}</p>
-            </div>
-          ))}
+          {isLoading
+            ? Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                  <Skeleton className="h-[30px] w-[30px] shrink-0 rounded-full" />
+                  <div className="min-w-0 flex-1">
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="mt-1.5 h-2.5 w-16" />
+                  </div>
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              ))
+            : wallets.map((wallet) => (
+                <div key={wallet.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                  <span className="h-[30px] w-[30px] shrink-0 rounded-full" style={{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 16%, transparent)' }} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13px] font-bold text-ink">{wallet.name}</p>
+                    <p className="text-[11px] text-ink-tertiary">{t(walletTypeTranslationKey(wallet.type))}</p>
+                  </div>
+                  <p className="font-numeric text-sm font-extrabold text-ink">{format(wallet.currentBalance)}</p>
+                </div>
+              ))}
         </div>
         <div className="mt-3 flex items-center justify-between border-t border-border pt-4">
           <span className="text-[13px] font-bold text-ink">{t('netWorth.total')}</span>
-          <span className="font-numeric text-[22px] font-extrabold text-ink">{format(netWorth)}</span>
+          {isLoading ? <Skeleton className="h-6 w-20" /> : <span className="font-numeric text-[22px] font-extrabold text-ink">{format(netWorth)}</span>}
         </div>
       </Card>
 

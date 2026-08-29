@@ -4,6 +4,7 @@ import { ArrowRight, Calendar, HeartPulse, Lightbulb, Sparkles } from 'lucide-re
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { Skeleton, SkeletonRows } from '@/components/ui/Skeleton'
 import { TransactionRow } from '@/components/transactions/TransactionRow'
 import { useAppData } from '@/state/AppDataContext'
 import { useAuth } from '@/state/AuthContext'
@@ -48,7 +49,7 @@ const INSIGHT_ACCENT: Record<Insight['tone'], string> = {
 }
 
 export default function OverviewPage() {
-  const { transactions } = useAppData()
+  const { transactions, isLoading } = useAppData()
   const { format } = useCurrency()
   const { t, language } = useTranslation()
   const { monthKeys } = useDashboardFilters()
@@ -106,15 +107,19 @@ export default function OverviewPage() {
             <p className="text-[10.5px] font-bold uppercase tracking-[0.11em]" style={{ color: '#b9b0ff' }}>
               {t('overview.balance')}
             </p>
-            <p
-              className={cn(
-                'font-numeric mt-2.5 text-[clamp(32px,5vw,48px)] font-extrabold leading-none tracking-[-0.03em] text-white transition-[filter] duration-150',
-                hideAmounts && 'blur-md hover:blur-none focus:blur-none',
-              )}
-              tabIndex={hideAmounts ? 0 : undefined}
-            >
-              {format(balance)}
-            </p>
+            {isLoading ? (
+              <Skeleton tone="inverted" className="mt-2.5 h-[clamp(32px,5vw,48px)] w-40" />
+            ) : (
+              <p
+                className={cn(
+                  'font-numeric mt-2.5 text-[clamp(32px,5vw,48px)] font-extrabold leading-none tracking-[-0.03em] text-white transition-[filter] duration-150',
+                  hideAmounts && 'blur-md hover:blur-none focus:blur-none',
+                )}
+                tabIndex={hideAmounts ? 0 : undefined}
+              >
+                {format(balance)}
+              </p>
+            )}
             <div className="mt-3 flex items-center gap-2">
               <span
                 className="inline-flex items-center gap-1 rounded-full px-[9px] py-1 text-[11.5px] font-extrabold"
@@ -155,17 +160,27 @@ export default function OverviewPage() {
         </div>
 
         <div className="flex flex-col gap-3">
-          {comparison?.overall.map((entry) => (
-            <Card key={entry.key} className="flex items-center justify-between p-[16px_18px]">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-ink-tertiary">{t(CHANGE_LABEL_KEY[entry.key])}</p>
-                <p className="font-numeric mt-1 text-2xl font-extrabold tracking-[-0.02em] text-ink">{format(entry.current)}</p>
-              </div>
-              <Badge tone={changeTone(entry.key, entry.pctChange)}>
-                {entry.pctChange === null ? t('overview.noPreviousData') : `${entry.pctChange >= 0 ? '+' : ''}${entry.pctChange}%`}
-              </Badge>
-            </Card>
-          ))}
+          {isLoading || !comparison
+            ? Array.from({ length: 3 }).map((_, i) => (
+                <Card key={i} className="flex items-center justify-between p-[16px_18px]">
+                  <div className="flex flex-col gap-2">
+                    <Skeleton className="h-2.5 w-20" />
+                    <Skeleton className="h-6 w-24" />
+                  </div>
+                  <Skeleton className="h-5 w-12 rounded-full" />
+                </Card>
+              ))
+            : comparison.overall.map((entry) => (
+                <Card key={entry.key} className="flex items-center justify-between p-[16px_18px]">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-ink-tertiary">{t(CHANGE_LABEL_KEY[entry.key])}</p>
+                    <p className="font-numeric mt-1 text-2xl font-extrabold tracking-[-0.02em] text-ink">{format(entry.current)}</p>
+                  </div>
+                  <Badge tone={changeTone(entry.key, entry.pctChange)}>
+                    {entry.pctChange === null ? t('overview.noPreviousData') : `${entry.pctChange >= 0 ? '+' : ''}${entry.pctChange}%`}
+                  </Badge>
+                </Card>
+              ))}
         </div>
       </div>
 
@@ -266,13 +281,19 @@ export default function OverviewPage() {
             {t('overview.viewAllTransactions')} <ArrowRight className="h-3.5 w-3.5" />
           </button>
         </div>
-        <div className="flex flex-col divide-y divide-border">
-          {recent.map((tx) => (
-            <TransactionRow key={tx.id} transaction={tx} />
-          ))}
-        </div>
-        {recent.length === 0 && (
-          <EmptyState icon={<Sparkles className="h-6 w-6" />} title={t('overview.emptyTransactionsTitle')} description={t('overview.emptyTransactionsDescription')} />
+        {isLoading ? (
+          <SkeletonRows count={4} />
+        ) : (
+          <>
+            <div className="flex flex-col divide-y divide-border">
+              {recent.map((tx) => (
+                <TransactionRow key={tx.id} transaction={tx} />
+              ))}
+            </div>
+            {recent.length === 0 && (
+              <EmptyState icon={<Sparkles className="h-6 w-6" />} title={t('overview.emptyTransactionsTitle')} description={t('overview.emptyTransactionsDescription')} />
+            )}
+          </>
         )}
       </Card>
     </div>

@@ -1,11 +1,21 @@
 import { cn } from '@/lib/cn'
 
-export function Skeleton({ className }: { className?: string }) {
+// `tone="inverted"` swaps the theme-reactive gray shimmer for a white-based
+// one, for permanently-dark surfaces (the balance hero card, the login
+// brand panel) — same "inverted" convention `Logo`/`LogoMark` already use.
+export function Skeleton({ className, tone = 'default' }: { className?: string; tone?: 'default' | 'inverted' }) {
   return (
     <div
-      className={cn('animate-shimmer rounded-[var(--radius-sm)] bg-bg-secondary bg-[length:200%_100%]', className)}
+      className={cn(
+        'animate-shimmer rounded-[var(--radius-sm)] bg-[length:200%_100%]',
+        tone === 'default' && 'bg-bg-secondary',
+        className,
+      )}
       style={{
-        backgroundImage: 'linear-gradient(90deg, var(--color-bg-secondary) 25%, var(--color-border) 50%, var(--color-bg-secondary) 75%)',
+        backgroundImage:
+          tone === 'inverted'
+            ? 'linear-gradient(90deg, rgba(255,255,255,.12) 25%, rgba(255,255,255,.24) 50%, rgba(255,255,255,.12) 75%)'
+            : 'linear-gradient(90deg, var(--color-bg-secondary) 25%, var(--color-border) 50%, var(--color-bg-secondary) 75%)',
       }}
       aria-hidden="true"
     />

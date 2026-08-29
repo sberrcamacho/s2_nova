@@ -177,6 +177,10 @@ function ChangePasswordModal({ open, onClose, hasPassword }: { open: boolean; on
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  // Bumped on every failed attempt so the form can be re-keyed — remounting
+  // it is what replays the `animate-shake` CSS animation, since re-applying
+  // the same class name a second time is a no-op.
+  const [shakeKey, setShakeKey] = useState(0)
 
   const reset = () => {
     setCurrentPassword('')
@@ -195,6 +199,7 @@ function ChangePasswordModal({ open, onClose, hasPassword }: { open: boolean; on
     setError(null)
     if (newPassword !== confirmPassword) {
       setError(t('settings.passwordMismatch'))
+      setShakeKey((k) => k + 1)
       return
     }
     setSaving(true)
@@ -211,6 +216,7 @@ function ChangePasswordModal({ open, onClose, hasPassword }: { open: boolean; on
       logout()
     } catch (err) {
       setError(err instanceof Error ? err.message : t('settings.passwordChangedToast'))
+      setShakeKey((k) => k + 1)
     } finally {
       setSaving(false)
     }
@@ -218,7 +224,7 @@ function ChangePasswordModal({ open, onClose, hasPassword }: { open: boolean; on
 
   return (
     <Modal open={open} onClose={onClose_} title={hasPassword ? t('settings.changePasswordTitle') : t('settings.createPasswordTitle')}>
-      <form onSubmit={onSubmit} className="flex flex-col gap-4">
+      <form key={shakeKey} onSubmit={onSubmit} className={cn('flex flex-col gap-4', shakeKey > 0 && 'animate-shake')}>
         {hasPassword && (
           <Input
             type={showPassword ? 'text' : 'password'}

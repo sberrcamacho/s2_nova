@@ -7,6 +7,7 @@ import { Logo } from '@/components/ui/Logo'
 import { GoogleSignInButton } from '@/auth/GoogleSignInButton'
 import { useAuth } from '@/state/AuthContext'
 import { useTranslation } from '@/state/useTranslation'
+import { cn } from '@/lib/cn'
 
 const BRAND_PANEL_GRADIENT = 'linear-gradient(150deg,#16123a 0%,#1d1650 55%,#241a5e 100%)'
 
@@ -161,6 +162,10 @@ export default function LoginPage() {
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [emailFocused, setEmailFocused] = useState(false)
   const [passwordFocused, setPasswordFocused] = useState(false)
+  // Bumped on every failed attempt so the form can be re-keyed — remounting
+  // it is what replays the `animate-shake` CSS animation, since re-applying
+  // the same class name a second time is a no-op.
+  const [shakeKey, setShakeKey] = useState(0)
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -171,14 +176,25 @@ export default function LoginPage() {
     const nextPasswordError = password.length >= 8 ? null : t('auth.passwordTooShort')
     setEmailError(nextEmailError)
     setPasswordError(nextPasswordError)
-    if (nextEmailError || nextPasswordError) return
+    if (nextEmailError || nextPasswordError) {
+      setShakeKey((k) => k + 1)
+      return
+    }
 
-    if (await login({ email, password })) navigate('/overview', { replace: true })
+    if (await login({ email, password })) {
+      navigate('/overview', { replace: true })
+    } else {
+      setShakeKey((k) => k + 1)
+    }
   }
 
   const onGoogleToken = async (idToken: string) => {
     clearError()
-    if (await loginWithGoogle(idToken)) navigate('/overview', { replace: true })
+    if (await loginWithGoogle(idToken)) {
+      navigate('/overview', { replace: true })
+    } else {
+      setShakeKey((k) => k + 1)
+    }
   }
 
   return (
@@ -207,7 +223,12 @@ export default function LoginPage() {
             <div className="h-px flex-1 bg-border" />
           </div>
 
-          <form onSubmit={onSubmit} className="flex flex-col gap-[18px]" noValidate>
+          <form
+            key={shakeKey}
+            onSubmit={onSubmit}
+            className={cn('flex flex-col gap-[18px]', shakeKey > 0 && 'animate-shake')}
+            noValidate
+          >
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1.5">
                 <label

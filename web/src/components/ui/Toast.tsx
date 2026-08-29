@@ -23,7 +23,8 @@ export function ToastViewport() {
           key={toast.id}
           role="status"
           className={cn(
-            'pointer-events-auto flex w-full max-w-sm animate-toast-in items-center gap-2.5 rounded-[var(--radius-md)] border border-border bg-surface-elevated px-4 py-3 shadow-[var(--shadow-lg)]',
+            'pointer-events-auto flex w-full max-w-sm items-center gap-2.5 rounded-[var(--radius-md)] border border-border bg-surface-elevated px-4 py-3 shadow-[var(--shadow-lg)]',
+            toast.variant === 'error' ? 'animate-toast-in-error' : 'animate-toast-in',
           )}
         >
           {ICONS[toast.variant]}
