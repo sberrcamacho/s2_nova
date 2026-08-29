@@ -63,7 +63,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <Avatar initials={user?.avatarInitials ?? 'US'} size="sm" className="h-[30px] w-[30px] text-[11px]" />
             <div className="min-w-0">
               <p className="truncate text-[12.5px] font-bold text-white">{user?.name ?? t('sidebar.fallbackUserName')}</p>
-              <p className="text-[10.5px] font-medium text-white/45">{t('sidebar.demoAccount')}</p>
+              <p className="truncate text-[10.5px] font-medium text-white/45">{user?.email ?? ''}</p>
             </div>
           </div>
         </div>
