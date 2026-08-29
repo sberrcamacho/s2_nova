@@ -38,6 +38,7 @@ fun GoogleSignInButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     loading: Boolean = false,
+    text: String = "Continuar con Google",
 ) {
     val darkOverride by ThemeController.darkOverride.collectAsStateWithLifecycle()
     val isDark = darkOverride ?: isSystemInDarkTheme()
@@ -66,7 +67,7 @@ fun GoogleSignInButton(
                     modifier = Modifier.size(20.dp),
                 )
                 Text(
-                    text = "Continuar con Google",
+                    text = text,
                     color = GoogleButtonTextColor,
                     fontSize = 14.5.sp,
                     fontWeight = FontWeight.Bold,

@@ -435,12 +435,8 @@ const dictionary = {
 
   'auth.loginTitle': { es: 'Iniciar sesión', en: 'Sign in' },
   'auth.loginSubtitle': { es: 'Bienvenida de vuelta, Mariana.', en: 'Welcome back, Mariana.' },
-  'auth.registerTitle': { es: 'Crea tu cuenta', en: 'Create your account' },
-  'auth.registerSubtitle': { es: 'Empieza a controlar tus finanzas', en: 'Start taking control of your finances' },
-  'auth.fullName': { es: 'Nombre completo', en: 'Full name' },
-  'auth.email': { es: 'Correo electrónico', en: 'Email address' },
-  'auth.password': { es: 'Contraseña', en: 'Password' },
-  'auth.confirmPassword': { es: 'Confirmar contraseña', en: 'Confirm password' },
+  'auth.registerTitle': { es: 'Crear cuenta', en: 'Create account' },
+  'auth.registerSubtitle': { es: 'Gratis, sin tarjeta de crédito.', en: 'Free, no credit card required.' },
   'auth.showPassword': { es: 'Mostrar contraseña', en: 'Show password' },
   'auth.hidePassword': { es: 'Ocultar contraseña', en: 'Hide password' },
   'auth.submitLogin': { es: 'Entrar', en: 'Sign in' },
@@ -461,6 +457,22 @@ const dictionary = {
   'auth.passwordTooShort': { es: 'La contraseña debe tener al menos 8 caracteres.', en: 'Password must be at least 8 characters.' },
   'auth.emailFieldLabel': { es: 'CORREO', en: 'EMAIL' },
   'auth.passwordFieldLabel': { es: 'CONTRASEÑA', en: 'PASSWORD' },
+  'auth.nameFieldLabel': { es: 'NOMBRE', en: 'NAME' },
+  'auth.registerWithGoogle': { es: 'Registrarse con Google', en: 'Sign up with Google' },
+  'auth.passwordStrengthSecure': { es: 'Segura', en: 'Strong' },
+  'auth.passwordHint': {
+    es: 'Mínimo 8 caracteres, una mayúscula y un número.',
+    en: 'At least 8 characters, one uppercase letter, and one number.',
+  },
+  'auth.termsPrefix': { es: 'Acepto los ', en: 'I accept the ' },
+  'auth.termsLink': { es: 'Términos', en: 'Terms' },
+  'auth.termsMiddle': { es: ' y la ', en: ' and the ' },
+  'auth.privacyLink': { es: 'Política de privacidad', en: 'Privacy Policy' },
+  'auth.termsRequired': {
+    es: 'Debes aceptar los Términos para continuar.',
+    en: 'You must accept the Terms to continue.',
+  },
+  'auth.nameRequired': { es: 'Ingresa tu nombre.', en: 'Enter your name.' },
 } as const satisfies Record<string, Record<LanguageCode, string>>
 
 export type TranslationKey = keyof typeof dictionary

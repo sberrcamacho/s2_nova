@@ -129,6 +129,19 @@ left a visible stray border, which is why it's not done that way).
 from `design-reference/suggestions/logo-dark.png` /`logo-light.png` if the
 mark ever changes, rather than re-deriving one from the other.
 
+`LoginPage.tsx`/`RegisterPage.tsx` (`src/auth/`) follow the design handoff
+in `s2-nova-mockup/auth_handoff/`: a fixed 452px dark brand panel (always
+dark in both themes — the app theme only affects the form column) plus a
+340px form column, built as self-contained components rather than through
+a shared shell. Pixel-exact values that don't map onto an existing token
+live under a dedicated `--color-login-*` prefix in `src/index.css`
+(surface/border-focus/text-muted/label/primary/divider/checkbox-text, plus
+`positive`/`positive-bg` for Register's password-strength meter) — extend
+that prefix rather than approximating with a nearby general-purpose token
+when adding to either screen. `GoogleSignInButton` (`src/auth/`) takes an
+optional `label` prop so Register can show "Registrarse con Google" instead
+of Login's default text.
+
 ## Code quality
 
 - Use double quotes for strings containing apostrophes (`"We're here to help"`), or escape them in single-quoted strings. An unescaped apostrophe in a single-quoted string breaks the build.

@@ -95,6 +95,13 @@ New since the last snapshot — **real backend, real auth**:
   Budgets, Goals, and Recurring series stays Android's job.
 - **Transaction deletion still absent from the dashboard** —
   `TransactionsPage` is list/filter/sort only.
+- **Login/Register visual redesign** per `s2-nova-mockup/auth_handoff/`: both
+  `/login` and `/register` now share the same two-column layout (a fixed
+  452px dark brand panel + a 340px form column), replacing the old single-
+  column `AuthShell` (now deleted). Register adds a name field, a
+  password-strength meter, and a Terms/Privacy checkbox; both screens pull
+  their pixel-exact values from a `--color-login-*` token prefix in
+  `index.css`.
 
 Unchanged: light/dark theme, currency format preference (fixed reference
 rate, not live FX), language preference/i18n coverage, theme-specific logo,
@@ -120,6 +127,13 @@ New since the last snapshot:
   a successful change (the backend already revoked every refresh token).
 - **`API_BASE_URL` now points at the deployed backend** (Render), not a
   dev-machine LAN IP.
+- **Login/Register visual redesign** per `s2-nova-mockup/auth_handoff/`:
+  both screens build their own header/scroll/footer skeleton (no more
+  shared `AuthLayout`, which is now used only by `ForgotPasswordScreen`),
+  reusing `NovaTextField`/`NovaPrimaryButton`/`GoogleSignInButton` and a
+  `loginXxx` token family on `NovaExtraColors`. Register adds a name
+  field, a `PasswordStrengthMeter`, and a `TermsCheckbox` — both new
+  `ui/components/` composables.
 
 Unchanged: real login/session against the backend (`AuthRepository` +
 `SessionStore`, still plain DataStore, not yet encrypted — a known
@@ -171,10 +185,14 @@ currency/language parity, barcode scanning, manual DI via `AppContainer`.
   FX feed — documented, not fabricated data.
 - **Translation coverage is partial by design** on both platforms (chrome +
   every dashboard page's own copy on Web; chrome + Settings on Android),
-  documented in both `AGENTS.md` files. Web's new `/login`/`/register`
-  screens follow the same convention Android's auth screens already used:
-  hardcoded Spanish copy, not run through `useTranslation()` (no user/
-  language preference exists yet before login).
+  documented in both `AGENTS.md` files. Web's `/login`/`/register` screens
+  run their labelled copy through `useTranslation()`/`t()` like the rest of
+  the dashboard (only the brand panel's decorative chart labels/stat
+  sentence are hardcoded Spanish, same treatment as any other seeded
+  content); Android's auth screens are the one exception on that platform
+  — `LoginScreen`/`RegisterScreen`/`ForgotPasswordScreen` hardcode Spanish
+  entirely, not run through `rememberStrings()` (no user/language
+  preference exists yet before login).
 - **User Management / multi-user/team admin** (present in the Figma
   source) was deliberately dropped — nothing else in the product implies
   multi-user accounts.

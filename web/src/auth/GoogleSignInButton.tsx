@@ -51,7 +51,13 @@ function loadGoogleScript(): Promise<void> {
 // full-size and transparent, so a click always lands on Google's real
 // button and fires the genuine credential flow — GIS has no API to trigger
 // the ID-token flow programmatically from an arbitrary click handler.
-export function GoogleSignInButton({ onToken }: { onToken: (idToken: string) => void }) {
+export function GoogleSignInButton({
+  onToken,
+  label,
+}: {
+  onToken: (idToken: string) => void
+  label?: string
+}) {
   const { t } = useTranslation()
   const { theme } = useTheme()
   // Exact hover shades from the mockup: the button itself is always white,
@@ -135,7 +141,7 @@ export function GoogleSignInButton({ onToken }: { onToken: (idToken: string) => 
             d="M24 10.8c3.2 0 6.1 1.1 8.4 3.3l6.3-6.3C34.9 4.2 29.9 2 24 2 15.4 2 7.9 7 4.4 14.2l7.3 5.7c1.7-5.2 6.6-9.1 12.3-9.1z"
           />
         </svg>
-        {t('auth.continueWithGoogle')}
+        {label ?? t('auth.continueWithGoogle')}
       </div>
       {/* Real Google button — invisible, full-size, receives the actual click. */}
       <div

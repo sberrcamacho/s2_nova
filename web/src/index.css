@@ -64,8 +64,8 @@
   --scan-surface: #0b0b12;
   color-scheme: light;
 
-  /* Login screen (design handoff s2-nova-mockup/login_handoff/) — a few
-     pixel-exact tokens that don't cleanly map onto an existing near-
+  /* Login/signup screens (design handoff s2-nova-mockup/auth_handoff/) — a
+     few pixel-exact tokens that don't cleanly map onto an existing near-
      equivalent above; kept separate rather than approximated. */
   --color-login-surface: #ffffff;
   --color-login-input-text: #111118;
@@ -77,6 +77,9 @@
   --color-login-danger: #d64545;
   --color-login-divider-label: #9c9caa;
   --color-login-checkbox-text: #666673;
+  /* Signup password-strength meter — doesn't match --color-positive exactly */
+  --color-login-positive: #12b981;
+  --color-login-positive-bg: #e6e6ee;
 }
 
 [data-theme='dark'] {
@@ -135,7 +138,7 @@
   --scan-surface: #000000;
   color-scheme: dark;
 
-  /* Login screen (design handoff s2-nova-mockup/login_handoff/) */
+  /* Login/signup screens (design handoff s2-nova-mockup/auth_handoff/) */
   --color-login-surface: #0b0b14;
   --color-login-input-text: rgba(255, 255, 255, 0.85);
   --color-login-border-focus: #241a5e;
@@ -146,6 +149,8 @@
   --color-login-danger: #d64545;
   --color-login-divider-label: rgba(255, 255, 255, 0.35);
   --color-login-checkbox-text: rgba(255, 255, 255, 0.6);
+  --color-login-positive: #7cf0bb;
+  --color-login-positive-bg: rgba(255, 255, 255, 0.12);
 }
 
 /* ── Tailwind v4 theme mapping — CSS vars stay live, so switching
@@ -190,6 +195,8 @@
   --color-login-danger: var(--color-login-danger);
   --color-login-divider-label: var(--color-login-divider-label);
   --color-login-checkbox-text: var(--color-login-checkbox-text);
+  --color-login-positive: var(--color-login-positive);
+  --color-login-positive-bg: var(--color-login-positive-bg);
 
   --radius-xs: 6px;
   --radius-sm: 10px;

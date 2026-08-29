@@ -66,6 +66,22 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   backend; a successful password change revokes every refresh token
   server-side, so the app logs itself out and returns to `/login` rather
   than keep using a session the server will now reject.
+- **Login/Register visual system** (`ui/screens/auth/LoginScreen.kt`,
+  `RegisterScreen.kt`), per the design handoff in
+  `s2-nova-mockup/auth_handoff/`: both build their own header/scroll/footer
+  skeleton directly (no `AuthLayout` — that wrapper is now used only by
+  `ForgotPasswordScreen`), reusing `NovaTextField`, `NovaPrimaryButton`, and
+  `GoogleSignInButton` (`ui/components/`) plus a family of `loginXxx` color
+  tokens on `NovaExtraColors` (`ui/theme/Color.kt`/`Theme.kt`) that don't
+  cleanly map onto the app's general positive/negative/highlight tokens.
+  Register additionally uses two auth-only composables introduced for its
+  extra fields — `PasswordStrengthMeter` (a 4-segment score from length/
+  uppercase/digit/symbol criteria, using `loginPositive`/`loginPositiveBg`)
+  and `TermsCheckbox` (an inline-bold Términos/Privacidad row, using
+  `loginHighlight`, Android's counterpart to web's `--color-highlight` —
+  there's no navigable Terms/Privacy destination yet, so those two spans
+  are inert). `GoogleSignInButton` takes an optional `text` param so
+  Register can show "Registrarse con Google" instead of Login's default.
 - **Wallets, Budgets, Goals.** "Wallet" in the UI is the backend's
   `Account` resource (`WalletRepository`); a wallet is required on every
   transaction (`AddTransactionScreen` blocks with a "create a wallet

@@ -64,12 +64,25 @@ val DarkNegativeBorder = Color(0xFF3A2029)
 val ScanSurface = Color(0xFF000000)
 val NavyPanel = Color(0xFF0B0B14)
 
-// Login-screen tokens from the design handoff (s2-nova-mockup/login_handoff/
-// LOGIN.md §1) — kept separate from the values above because several are
-// pixel-exact requirements that don't cleanly match an existing near-equivalent.
+// Login/signup-screen tokens from the design handoff
+// (s2-nova-mockup/auth_handoff/LOGIN.md §1) — kept separate from the values
+// above because several are pixel-exact requirements that don't cleanly
+// match an existing near-equivalent.
 val LoginSurfaceDark = Color(0xFF0B0B14)
 val LoginSurfaceLight = Color(0xFFF6F6FA)
 val LoginBorderFocusLight = Color(0xFF7B6FF6)
 val LoginTextMutedDark = Color(0x80FFFFFF) // rgba(255,255,255,.50)
 val LoginLabelDark = Color(0x8CFFFFFF) // rgba(255,255,255,.55)
 val LoginPrimaryFlat = Color(0xFF7B6FF6) // same value in both themes
+
+// Signup password-strength meter — neither matches the general positive/
+// negative semantic tokens.
+val LoginPositiveLight = Color(0xFF12B981)
+val LoginPositiveDark = Color(0xFF7CF0BB)
+val LoginPositiveBgLight = Color(0xFFE6E6EE)
+val LoginPositiveBgDark = Color(0x1FFFFFFF) // rgba(255,255,255,.12)
+
+// Signup terms/privacy links + Register's footer link — Android has no
+// existing dark/light "highlight" pair the way web's --color-highlight does.
+val LoginHighlightLight = Color(0xFF7B6FF6)
+val LoginHighlightDark = Color(0xFFA69DFF)
