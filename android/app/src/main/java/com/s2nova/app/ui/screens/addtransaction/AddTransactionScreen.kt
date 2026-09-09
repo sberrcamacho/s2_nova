@@ -50,6 +50,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -64,6 +65,7 @@ import com.s2nova.app.data.mock.incomeCategories
 import com.s2nova.app.data.model.CategoryId
 import com.s2nova.app.data.model.LoanKind
 import com.s2nova.app.data.model.NewTransactionInput
+import com.s2nova.app.data.model.Subcategory
 import com.s2nova.app.data.model.TransactionStatus
 import com.s2nova.app.data.model.TransactionType
 import com.s2nova.app.data.todayISO
@@ -72,9 +74,11 @@ import com.s2nova.app.ui.ThousandsGroupingVisualTransformation
 import com.s2nova.app.ui.categoryStringKey
 import com.s2nova.app.ui.components.CategoryIcon
 import com.s2nova.app.ui.components.CategoryIconSize
+import com.s2nova.app.ui.components.IconCircle
 import com.s2nova.app.ui.components.NovaSwitch
 import com.s2nova.app.ui.components.NovaTopBar
 import com.s2nova.app.ui.components.iconFor
+import com.s2nova.app.ui.components.iconForSubcategory
 import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.screens.wallets.labelFor
 import com.s2nova.app.ui.theme.NovaColors
@@ -126,6 +130,7 @@ fun AddTransactionScreen(
     var error by remember { mutableStateOf<String?>(null) }
     var saving by remember { mutableStateOf(false) }
     var showCategorySheet by remember { mutableStateOf(false) }
+    var subcategoryPickerFor by remember { mutableStateOf<CategoryId?>(null) }
     var showMoreOptions by remember { mutableStateOf(editing?.budgetId != null || editing?.goalId != null || isUpcoming || isLoan) }
 
     val categoriesForType = if (type == TransactionType.INCOME) incomeCategories else expenseCategories
@@ -226,8 +231,13 @@ fun AddTransactionScreen(
                             )
                         }
                         Column(modifier = Modifier.padding(start = 14.dp).weight(1f)) {
+                            val subcategoryName = subcategoryId?.let { AppContainer.categoryRepository.subcategoryById(it)?.name }
                             Text(
-                                if (type == TransactionType.TRANSFER) t(StringKey.ADD_TXN_TRANSFER) else t(categoryStringKey(category)),
+                                when {
+                                    type == TransactionType.TRANSFER -> t(StringKey.ADD_TXN_TRANSFER)
+                                    subcategoryName != null -> "${t(categoryStringKey(category))} · $subcategoryName"
+                                    else -> t(categoryStringKey(category))
+                                },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color.White.copy(alpha = 0.75f),
                                 modifier = Modifier.padding(bottom = 8.dp),
@@ -254,17 +264,6 @@ fun AddTransactionScreen(
                                 modifier = Modifier.fillMaxWidth(),
                             )
                         }
-                    }
-                }
-            }
-
-            val subcategories = if (type == TransactionType.TRANSFER) emptyList() else AppContainer.categoryRepository.subcategoriesFor(category)
-            if (subcategories.isNotEmpty()) {
-                Text(t(StringKey.ADD_TXN_SUBCATEGORY), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 20.dp, bottom = 6.dp))
-                Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SelectChip(label = t(StringKey.ADD_TXN_SUBCATEGORY_NONE), selected = subcategoryId == null, onClick = { subcategoryId = null })
-                    subcategories.forEach { sub ->
-                        SelectChip(label = sub.name, selected = subcategoryId == sub.id, onClick = { subcategoryId = sub.id })
                     }
                 }
             }
@@ -482,6 +481,46 @@ fun AddTransactionScreen(
                                     category = cat.id
                                     subcategoryId = null
                                     showCategorySheet = false
+                                    val subs = AppContainer.categoryRepository.subcategoriesFor(cat.id)
+                                    if (subs.isNotEmpty()) subcategoryPickerFor = cat.id
+                                },
+                                modifier = Modifier.width(68.dp),
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+            }
+        }
+    }
+
+    val subcategoryPickerCategory = subcategoryPickerFor
+    if (subcategoryPickerCategory != null) {
+        val subcategoryColor = categoryMap[subcategoryPickerCategory]?.color?.let { Color(it) } ?: MaterialTheme.colorScheme.primary
+        ModalBottomSheet(onDismissRequest = { subcategoryPickerFor = null }) {
+            Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
+                Text(
+                    t(StringKey.ADD_TXN_SUBCATEGORY),
+                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 15.sp),
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.padding(bottom = 18.dp),
+                )
+                val subcategories = AppContainer.categoryRepository.subcategoriesFor(subcategoryPickerCategory)
+                val items = listOf<Subcategory?>(null) + subcategories
+                items.chunked(4).forEach { row ->
+                    Row(
+                        modifier = Modifier.padding(bottom = 18.dp),
+                        horizontalArrangement = Arrangement.spacedBy(18.dp),
+                    ) {
+                        row.forEach { sub ->
+                            SubcategoryGridItem(
+                                icon = if (sub == null) iconFor(subcategoryPickerCategory) else iconForSubcategory(sub.slug, subcategoryPickerCategory),
+                                color = subcategoryColor,
+                                label = sub?.name ?: t(StringKey.ADD_TXN_SUBCATEGORY_NONE),
+                                selected = subcategoryId == sub?.id,
+                                onClick = {
+                                    subcategoryId = sub?.id
+                                    subcategoryPickerFor = null
                                 },
                                 modifier = Modifier.width(68.dp),
                             )
@@ -574,6 +613,40 @@ private fun CategoryGridItem(
             },
         ) {
             CategoryIcon(category = categoryId, size = CategoryIconSize.GRID, fillAlpha = if (selected) 0.24f else 0.16f)
+        }
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onBackground,
+            maxLines = 1,
+            modifier = Modifier.padding(top = 6.dp),
+        )
+    }
+}
+
+@Composable
+private fun SubcategoryGridItem(
+    icon: ImageVector,
+    color: Color,
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier.selectable(selected = selected, onClick = onClick, role = androidx.compose.ui.semantics.Role.RadioButton),
+    ) {
+        Box(
+            modifier = if (selected) {
+                Modifier
+                    .border(2.dp, color, CircleShape)
+                    .padding(3.dp)
+            } else {
+                Modifier.padding(3.dp)
+            },
+        ) {
+            IconCircle(icon = icon, color = color, size = CategoryIconSize.GRID, fillAlpha = if (selected) 0.24f else 0.16f)
         }
         Text(
             label,

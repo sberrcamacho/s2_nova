@@ -176,7 +176,7 @@ private val ES: Map<StringKey, String> = mapOf(
     StringKey.ADD_TXN_ERROR_DESCRIPTION to "Ingresa una descripción.",
     StringKey.ADD_TXN_SELECT_CATEGORY_TITLE to "Elige una categoría",
     StringKey.ADD_TXN_SUBCATEGORY to "Subcategoría",
-    StringKey.ADD_TXN_SUBCATEGORY_NONE to "Sin subcategoría",
+    StringKey.ADD_TXN_SUBCATEGORY_NONE to "Ninguna",
     StringKey.ADD_TXN_CHANGE_CATEGORY_CD to "Cambiar categoría",
 
     StringKey.ADD_ACTION_MANUAL_TITLE to "Agregar manualmente",
@@ -487,7 +487,7 @@ private val EN: Map<StringKey, String> = mapOf(
     StringKey.ADD_TXN_ERROR_DESCRIPTION to "Enter a description.",
     StringKey.ADD_TXN_SELECT_CATEGORY_TITLE to "Choose a category",
     StringKey.ADD_TXN_SUBCATEGORY to "Subcategory",
-    StringKey.ADD_TXN_SUBCATEGORY_NONE to "No subcategory",
+    StringKey.ADD_TXN_SUBCATEGORY_NONE to "None",
     StringKey.ADD_TXN_CHANGE_CATEGORY_CD to "Change category",
 
     StringKey.ADD_ACTION_MANUAL_TITLE to "Add manually",
