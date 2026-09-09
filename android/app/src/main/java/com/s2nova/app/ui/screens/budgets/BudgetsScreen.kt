@@ -3,6 +3,7 @@ package com.s2nova.app.ui.screens.budgets
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,12 +13,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -42,6 +45,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -52,9 +57,11 @@ import com.s2nova.app.data.mock.categoryMap
 import com.s2nova.app.data.mock.expenseCategories
 import com.s2nova.app.data.model.BudgetProgress
 import com.s2nova.app.data.model.CategoryId
+import com.s2nova.app.ui.components.BudgetGoalThemePicker
 import com.s2nova.app.ui.components.CategoryIcon
 import com.s2nova.app.ui.components.CategoryIconSize
 import com.s2nova.app.ui.components.NovaCard
+import com.s2nova.app.ui.components.budgetGoalThemeFor
 import com.s2nova.app.ui.components.NovaProgressBar
 import com.s2nova.app.ui.components.StatusBadge
 import com.s2nova.app.ui.components.badgeToneFor
@@ -100,7 +107,7 @@ private fun BudgetsTab() {
     val t = rememberStrings()
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) { AppContainer.budgetRepository.refresh() }
+    LaunchedEffect(Unit) { runCatching { AppContainer.budgetRepository.refresh() } }
 
     val progressList = budgetProgress.sortedByDescending { it.percentage }
 
@@ -115,6 +122,7 @@ private fun BudgetsTab() {
 
     var editing by remember { mutableStateOf<BudgetProgress?>(null) }
     var creating by remember { mutableStateOf(false) }
+    var deleting by remember { mutableStateOf<BudgetProgress?>(null) }
 
     LazyColumn(
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
@@ -155,7 +163,17 @@ private fun BudgetsTab() {
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            CategoryIcon(category = progress.budget.category, size = CategoryIconSize.ROW)
+                            val theme = budgetGoalThemeFor(progress.budget.themeIcon)
+                            if (theme != null) {
+                                Box(
+                                    modifier = Modifier.size(38.dp).clip(CircleShape).background(Color(theme.color).copy(alpha = 0.16f)),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(theme.icon, contentDescription = null, tint = Color(theme.color), modifier = Modifier.size(17.dp))
+                                }
+                            } else {
+                                CategoryIcon(category = progress.budget.category, size = CategoryIconSize.ROW)
+                            }
                             Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
                                 Text(
                                     progress.budget.name ?: categoryMap[progress.budget.category]?.let { t(categoryStringKey(it.id)) } ?: "",
@@ -194,9 +212,14 @@ private fun BudgetsTab() {
         EditBudgetDialog(
             categoryId = editing!!.budget.category,
             initialLimit = editing!!.budget.limit.toInt().toString(),
+            initialThemeIcon = editing!!.budget.themeIcon,
             onDismiss = { editing = null },
-            onSave = { newLimit ->
-                scope.launch { AppContainer.budgetRepository.updateLimit(editing!!.budget.id, newLimit) }
+            onSave = { newLimit, themeIcon ->
+                scope.launch { AppContainer.budgetRepository.updateLimit(editing!!.budget.id, newLimit, themeIcon) }
+                editing = null
+            },
+            onDelete = {
+                deleting = editing
                 editing = null
             },
         )
@@ -207,45 +230,83 @@ private fun BudgetsTab() {
         CreateBudgetDialog(
             availableCategories = available.map { it.id },
             onDismiss = { creating = false },
-            onCreate = { name, category, limit ->
-                scope.launch { AppContainer.budgetRepository.create(name, category, limit) }
+            onCreate = { name, category, limit, themeIcon ->
+                scope.launch { AppContainer.budgetRepository.create(name, category, limit, themeIcon = themeIcon) }
                 creating = false
             },
+        )
+    }
+
+    if (deleting != null) {
+        AlertDialog(
+            onDismissRequest = { deleting = null },
+            title = { Text(t(StringKey.BUDGETS_DELETE_CONFIRM_TITLE)) },
+            text = { Text(t(StringKey.BUDGETS_DELETE_CONFIRM_BODY)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    val id = deleting!!.budget.id
+                    scope.launch { AppContainer.budgetRepository.delete(id) }
+                    deleting = null
+                }) { Text(t(StringKey.BUDGETS_DELETE), color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { deleting = null }) { Text(t(StringKey.COMMON_CANCEL)) } },
         )
     }
 }
 
 @Composable
-private fun EditBudgetDialog(categoryId: CategoryId, initialLimit: String, onDismiss: () -> Unit, onSave: (Double) -> Unit) {
+private fun EditBudgetDialog(
+    categoryId: CategoryId,
+    initialLimit: String,
+    initialThemeIcon: String?,
+    onDismiss: () -> Unit,
+    onSave: (Double, String?) -> Unit,
+    onDelete: () -> Unit,
+) {
     var limitText by remember { mutableStateOf(initialLimit) }
+    var themeIcon by remember { mutableStateOf(initialThemeIcon) }
     val t = rememberStrings()
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("${t(StringKey.BUDGETS_EDIT_TITLE_PREFIX)} ${categoryMap[categoryId]?.let { t(categoryStringKey(it.id)) }}") },
         text = {
-            OutlinedTextField(
-                value = limitText,
-                onValueChange = { limitText = it.filter { c -> c.isDigit() } },
-                leadingIcon = { Text("$") },
-                label = { Text(t(StringKey.BUDGETS_MONTHLY_LIMIT)) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                visualTransformation = ThousandsGroupingVisualTransformation(),
-            )
+            Column {
+                OutlinedTextField(
+                    value = limitText,
+                    onValueChange = { limitText = it.filter { c -> c.isDigit() } },
+                    leadingIcon = { Text("$") },
+                    label = { Text(t(StringKey.BUDGETS_MONTHLY_LIMIT)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    visualTransformation = ThousandsGroupingVisualTransformation(),
+                )
+                Text(
+                    t(StringKey.BUDGETS_THEME_LABEL),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 14.dp, bottom = 8.dp),
+                )
+                BudgetGoalThemePicker(selected = themeIcon, onSelect = { themeIcon = it })
+                TextButton(onClick = onDelete, modifier = Modifier.padding(top = 8.dp)) {
+                    Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.padding(end = 6.dp).size(18.dp))
+                    Text(t(StringKey.BUDGETS_DELETE), color = MaterialTheme.colorScheme.error)
+                }
+            }
         },
         confirmButton = {
-            TextButton(onClick = { limitText.toDoubleOrNull()?.let { if (it > 0) onSave(it) } }) { Text(t(StringKey.COMMON_SAVE)) }
+            TextButton(onClick = { limitText.toDoubleOrNull()?.let { if (it > 0) onSave(it, themeIcon) } }) { Text(t(StringKey.COMMON_SAVE)) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(t(StringKey.COMMON_CANCEL)) } },
     )
 }
 
 @Composable
-private fun CreateBudgetDialog(availableCategories: List<CategoryId>, onDismiss: () -> Unit, onCreate: (String?, CategoryId, Double) -> Unit) {
+private fun CreateBudgetDialog(availableCategories: List<CategoryId>, onDismiss: () -> Unit, onCreate: (String?, CategoryId, Double, String?) -> Unit) {
     var name by remember { mutableStateOf("") }
     var selected by remember { mutableStateOf(availableCategories.firstOrNull()) }
     var limitText by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
+    var themeIcon by remember { mutableStateOf<String?>(null) }
     val t = rememberStrings()
 
     AlertDialog(
@@ -302,13 +363,20 @@ private fun CreateBudgetDialog(availableCategories: List<CategoryId>, onDismiss:
                     visualTransformation = ThousandsGroupingVisualTransformation(),
                     modifier = Modifier.padding(top = 12.dp),
                 )
+                Text(
+                    t(StringKey.BUDGETS_THEME_LABEL),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 14.dp, bottom = 8.dp),
+                )
+                BudgetGoalThemePicker(selected = themeIcon, onSelect = { themeIcon = it })
             }
         },
         confirmButton = {
             TextButton(onClick = {
                 val cat = selected
                 val limit = limitText.toDoubleOrNull()
-                if (cat != null && limit != null && limit > 0) onCreate(name.trim().ifBlank { null }, cat, limit)
+                if (cat != null && limit != null && limit > 0) onCreate(name.trim().ifBlank { null }, cat, limit, themeIcon)
             }) { Text(t(StringKey.BUDGETS_CREATE)) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(t(StringKey.COMMON_CANCEL)) } },

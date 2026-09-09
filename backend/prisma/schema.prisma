@@ -153,12 +153,12 @@ model User {
 // future 'passkey' provider slots in without a schema change.
 // See ARCHITECTURE.md §7 for the link-or-create flow this table supports.
 model AuthIdentity {
-  id              String       @id @default(uuid())
-  userId          String       @map("user_id")
-  provider        AuthProvider
-  providerUserId  String?      @map("provider_user_id")
-  credentialHash  String?      @map("credential_hash")
-  createdAt       DateTime     @default(now()) @map("created_at")
+  id             String       @id @default(uuid())
+  userId         String       @map("user_id")
+  provider       AuthProvider
+  providerUserId String?      @map("provider_user_id")
+  credentialHash String?      @map("credential_hash")
+  createdAt      DateTime     @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -184,15 +184,15 @@ model RefreshToken {
 }
 
 model UserPreferences {
-  userId                  String          @id @map("user_id")
-  language                String          @default("es")
-  currency                Currency        @default(COP)
-  theme                   ThemePreference @default(SYSTEM)
-  notifications           Boolean         @default(true)
-  biometricLogin          Boolean         @default(false) @map("biometric_login")
-  onboardingCompletedAt   DateTime?       @map("onboarding_completed_at")
-  tutorialCompletedAt     DateTime?       @map("tutorial_completed_at")
-  updatedAt               DateTime        @updatedAt @map("updated_at")
+  userId                String          @id @map("user_id")
+  language              String          @default("es")
+  currency              Currency        @default(COP)
+  theme                 ThemePreference @default(SYSTEM)
+  notifications         Boolean         @default(true)
+  biometricLogin        Boolean         @default(false) @map("biometric_login")
+  onboardingCompletedAt DateTime?       @map("onboarding_completed_at")
+  tutorialCompletedAt   DateTime?       @map("tutorial_completed_at")
+  updatedAt             DateTime        @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -203,19 +203,19 @@ model UserPreferences {
 // that's the table this project already had; no rename, just a UI-facing
 // label difference (see backend/AGENTS.md).
 model Account {
-  id                 String      @id @default(uuid())
-  userId             String      @map("user_id")
-  name               String
-  type               AccountType
-  initialBalanceMinor BigInt     @map("initial_balance_minor")
-  currentBalanceMinor BigInt     @map("current_balance_minor")
-  createdAt          DateTime    @default(now()) @map("created_at")
-  updatedAt          DateTime    @updatedAt @map("updated_at")
+  id                  String      @id @default(uuid())
+  userId              String      @map("user_id")
+  name                String
+  type                AccountType
+  initialBalanceMinor BigInt      @map("initial_balance_minor")
+  currentBalanceMinor BigInt      @map("current_balance_minor")
+  createdAt           DateTime    @default(now()) @map("created_at")
+  updatedAt           DateTime    @updatedAt @map("updated_at")
 
-  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactions     Transaction[] @relation("SourceAccount")
-  incomingTransfers Transaction[] @relation("TransferDestination")
-  recurringSeries  RecurringSeries[]
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions      Transaction[]     @relation("SourceAccount")
+  incomingTransfers Transaction[]     @relation("TransferDestination")
+  recurringSeries   RecurringSeries[]
 
   @@index([userId])
   @@map("accounts")
@@ -224,9 +224,16 @@ model Account {
 // user_id NULL = system-seeded category visible to every user (the fixed
 // category list both clients already hardcode); non-null = reserved for a
 // future user-defined category, not created by any flow yet.
+//
+// parentId NULL = a top-level category (the fixed 11 both clients hardcode);
+// non-null = a subcategory hanging off one of those (e.g. "Taxi" under
+// "Transportation"). Subcategories are additive only — Android's CategoryId
+// enum still drives every top-level icon/label; a subcategory is resolved
+// through its parent's slug, never given its own enum entry.
 model Category {
   id        String       @id @default(uuid())
   userId    String?      @map("user_id")
+  parentId  String?      @map("parent_id")
   slug      String       @unique
   name      String
   icon      String
@@ -234,13 +241,17 @@ model Category {
   kind      CategoryKind
   createdAt DateTime     @default(now()) @map("created_at")
 
-  user                   User?                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactions           Transaction[]
-  budgets                Budget[]
-  products               Product[]
-  recurringSeries        RecurringSeries[]
+  user                    User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent                  Category?         @relation("CategoryParent", fields: [parentId], references: [id], onDelete: Cascade)
+  children                Category[]        @relation("CategoryParent")
+  transactions            Transaction[]     @relation("TransactionCategory")
+  subcategoryTransactions Transaction[]     @relation("TransactionSubcategory")
+  budgets                 Budget[]
+  products                Product[]
+  recurringSeries         RecurringSeries[]
 
   @@index([userId])
+  @@index([parentId])
   @@map("categories")
 }
 
@@ -264,61 +275,69 @@ model Product {
 }
 
 model Transaction {
-  id                  String             @id @default(uuid())
-  userId              String             @map("user_id")
-  accountId           String             @map("account_id")
+  id                     String            @id @default(uuid())
+  userId                 String            @map("user_id")
+  accountId              String            @map("account_id")
   // Destination wallet; required only when type = TRANSFER (enforced in
   // the route layer, not the DB, since it's conditional on `type`).
-  transferToAccountId String?            @map("transfer_to_account_id")
-  type                TransactionType
-  status              TransactionStatus  @default(COMPLETED)
-  amountMinor         BigInt             @map("amount_minor")
-  categoryId          String             @map("category_id")
-  productId           String?            @map("product_id")
+  transferToAccountId    String?           @map("transfer_to_account_id")
+  type                   TransactionType
+  status                 TransactionStatus @default(COMPLETED)
+  amountMinor            BigInt            @map("amount_minor")
+  categoryId             String            @map("category_id")
+  // Optional refinement under `categoryId` (e.g. "Taxi" under
+  // "Transportation") — must be one of categoryId's own `children` (enforced
+  // in the route layer, not the DB). categoryId always stays the top-level
+  // category so existing budget/analytics aggregation-by-category is
+  // unaffected by this field's presence or absence.
+  subcategoryId          String?           @map("subcategory_id")
+  productId              String?           @map("product_id")
   // Optional links — a transaction never has to belong to a budget or a
   // goal, per the product requirement that neither relation is mandatory.
-  budgetId            String?            @map("budget_id")
-  goalId              String?            @map("goal_id")
+  budgetId               String?           @map("budget_id")
+  goalId                 String?           @map("goal_id")
   // Set only when this transaction was materialized from a recurring
   // definition (see RecurringSeries) — the series' own interval/next-due
   // date live there, not here, so "definition" and "occurrence" can't be
   // conflated into one row.
-  recurringSeriesId   String?            @map("recurring_series_id")
+  recurringSeriesId      String?           @map("recurring_series_id")
   // Lent/Borrowed only.
-  loanKind            LoanKind?          @map("loan_kind")
-  counterpartyName    String?            @map("counterparty_name")
-  dueDate             DateTime?          @map("due_date") @db.Date
-  loanSettledAt       DateTime?          @map("loan_settled_at")
+  loanKind               LoanKind?         @map("loan_kind")
+  counterpartyName       String?           @map("counterparty_name")
+  dueDate                DateTime?         @map("due_date") @db.Date
+  loanSettledAt          DateTime?         @map("loan_settled_at")
   // The repayment transaction created when this loan was settled — a real
   // opposite-direction transaction (see backend/src/routes/transactions.ts
   // `settleLoan`), not just a status flag, so the wallet balance actually
   // reflects the money coming back (LENT) or going out (BORROWED) without
   // touching or duplicating this original row.
-  settledByTransactionId String?         @unique @map("settled_by_transaction_id")
-  paymentMethod       PaymentMethod      @map("payment_method")
-  description         String
-  merchant             String?
-  note                String?
-  transactionDate     DateTime           @map("transaction_date") @db.Date
-  createdAt           DateTime           @default(now()) @map("created_at")
-  updatedAt           DateTime           @updatedAt @map("updated_at")
+  settledByTransactionId String?           @unique @map("settled_by_transaction_id")
+  paymentMethod          PaymentMethod     @map("payment_method")
+  description            String
+  merchant               String?
+  note                   String?
+  transactionDate        DateTime          @map("transaction_date") @db.Date
+  createdAt              DateTime          @default(now()) @map("created_at")
+  updatedAt              DateTime          @updatedAt @map("updated_at")
 
-  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  account           Account          @relation("SourceAccount", fields: [accountId], references: [id], onDelete: Cascade)
-  transferToAccount Account?         @relation("TransferDestination", fields: [transferToAccountId], references: [id], onDelete: SetNull)
-  category          Category         @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  product           Product?         @relation(fields: [productId], references: [id], onDelete: SetNull)
-  budget            Budget?          @relation(fields: [budgetId], references: [id], onDelete: SetNull)
-  goal              Goal?            @relation(fields: [goalId], references: [id], onDelete: SetNull)
-  recurringSeries   RecurringSeries? @relation(fields: [recurringSeriesId], references: [id], onDelete: SetNull)
-  settledByTransaction  Transaction? @relation("LoanSettlement", fields: [settledByTransactionId], references: [id], onDelete: SetNull)
-  originalLoanTransaction Transaction? @relation("LoanSettlement")
+  user                    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account                 Account          @relation("SourceAccount", fields: [accountId], references: [id], onDelete: Cascade)
+  transferToAccount       Account?         @relation("TransferDestination", fields: [transferToAccountId], references: [id], onDelete: SetNull)
+  category                Category         @relation("TransactionCategory", fields: [categoryId], references: [id], onDelete: Restrict)
+  subcategory             Category?        @relation("TransactionSubcategory", fields: [subcategoryId], references: [id], onDelete: SetNull)
+  product                 Product?         @relation(fields: [productId], references: [id], onDelete: SetNull)
+  budget                  Budget?          @relation(fields: [budgetId], references: [id], onDelete: SetNull)
+  goal                    Goal?            @relation(fields: [goalId], references: [id], onDelete: SetNull)
+  recurringSeries         RecurringSeries? @relation(fields: [recurringSeriesId], references: [id], onDelete: SetNull)
+  settledByTransaction    Transaction?     @relation("LoanSettlement", fields: [settledByTransactionId], references: [id], onDelete: SetNull)
+  originalLoanTransaction Transaction?     @relation("LoanSettlement")
 
   @@index([userId, transactionDate])
   @@index([accountId])
   @@index([budgetId])
   @@index([goalId])
   @@index([recurringSeriesId])
+  @@index([subcategoryId])
   @@map("transactions")
 }
 
@@ -369,6 +388,10 @@ model Budget {
   period      BudgetPeriod @default(MONTHLY)
   startDate   DateTime     @map("start_date") @db.Date
   endDate     DateTime?    @map("end_date") @db.Date
+  // Optional cosmetic override from a small fixed client-side palette (see
+  // android BudgetGoalTheme.kt) — purely visual, decoupled from `category`,
+  // which stays the sole driver of spend-progress computation.
+  themeIcon   String?      @map("theme_icon")
   createdAt   DateTime     @default(now()) @map("created_at")
   updatedAt   DateTime     @updatedAt @map("updated_at")
 
@@ -385,15 +408,15 @@ model Budget {
 // correct for every user — accepting one is a separate action that creates
 // real Budget rows (see ARCHITECTURE.md §"Budget suggestions").
 model BudgetRecommendation {
-  id                  String    @id @default(uuid())
-  userId              String    @map("user_id")
-  strategy            String    @default("50-30-20")
-  needsPct            Decimal   @map("needs_pct") @db.Decimal(5, 2)
-  wantsPct            Decimal   @map("wants_pct") @db.Decimal(5, 2)
-  savingsPct          Decimal   @map("savings_pct") @db.Decimal(5, 2)
-  basedOnIncomeMinor  BigInt?   @map("based_on_income_minor")
-  acceptedAt          DateTime? @map("accepted_at")
-  createdAt           DateTime  @default(now()) @map("created_at")
+  id                 String    @id @default(uuid())
+  userId             String    @map("user_id")
+  strategy           String    @default("50-30-20")
+  needsPct           Decimal   @map("needs_pct") @db.Decimal(5, 2)
+  wantsPct           Decimal   @map("wants_pct") @db.Decimal(5, 2)
+  savingsPct         Decimal   @map("savings_pct") @db.Decimal(5, 2)
+  basedOnIncomeMinor BigInt?   @map("based_on_income_minor")
+  acceptedAt         DateTime? @map("accepted_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -411,6 +434,9 @@ model Goal {
   name              String
   targetAmountMinor BigInt    @map("target_amount_minor")
   targetDate        DateTime? @map("target_date") @db.Date
+  // Optional cosmetic pick from the same fixed palette as Budget.themeIcon —
+  // purely visual, Goal has no category of its own to derive an icon from.
+  themeIcon         String?   @map("theme_icon")
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")
 

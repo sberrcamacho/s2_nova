@@ -40,6 +40,7 @@ const createTransactionSchema = z
     status: transactionStatusEnum.default("COMPLETED"),
     amount: z.number().int().positive(),
     categoryId: z.string().uuid(),
+    subcategoryId: z.string().uuid().optional(),
     productId: z.string().uuid().optional(),
     budgetId: z.string().uuid().optional(),
     goalId: z.string().uuid().optional(),
@@ -73,6 +74,7 @@ const createTransactionSchema = z
 const updateTransactionSchema = z.object({
   amount: z.number().int().positive().optional(),
   categoryId: z.string().uuid().optional(),
+  subcategoryId: z.string().uuid().nullable().optional(),
   productId: z.string().uuid().nullable().optional(),
   budgetId: z.string().uuid().nullable().optional(),
   goalId: z.string().uuid().nullable().optional(),
@@ -143,6 +145,7 @@ function serializeTransaction(row: {
   status: string;
   amountMinor: bigint;
   categoryId: string;
+  subcategoryId: string | null;
   productId: string | null;
   budgetId: string | null;
   goalId: string | null;
@@ -168,6 +171,7 @@ function serializeTransaction(row: {
     status: row.status,
     amount: row.amountMinor,
     categoryId: row.categoryId,
+    subcategoryId: row.subcategoryId,
     productId: row.productId,
     budgetId: row.budgetId,
     goalId: row.goalId,
@@ -192,6 +196,16 @@ async function assertOwned(userId: string, table: "account" | "category" | "budg
   const row = await (prisma[table] as { findFirst: (args: unknown) => Promise<unknown> }).findFirst({ where: scoped });
   if (!row) {
     throw Object.assign(new Error(`Unknown or inaccessible ${table}.`), { statusCode: 422 });
+  }
+}
+
+// zod alone can't check the parent/child relationship between two ids, so
+// this runs a real lookup: subcategoryId must be a Category row whose
+// parentId is exactly the transaction's (possibly just-updated) categoryId.
+async function assertValidSubcategory(userId: string, subcategoryId: string, categoryId: string) {
+  const subcategory = await prisma.category.findFirst({ where: { id: subcategoryId, OR: [{ userId: null }, { userId }] } });
+  if (!subcategory || subcategory.parentId !== categoryId) {
+    throw Object.assign(new Error("subcategoryId must be a subcategory of categoryId."), { statusCode: 422 });
   }
 }
 
@@ -244,6 +258,7 @@ export async function transactionRoutes(app: FastifyInstance) {
     await assertOwned(userId, "category", body.categoryId);
     if (body.budgetId) await assertOwned(userId, "budget", body.budgetId);
     if (body.goalId) await assertOwned(userId, "goal", body.goalId);
+    if (body.subcategoryId) await assertValidSubcategory(userId, body.subcategoryId, body.categoryId);
 
     const paymentMethod = paymentMethodForAccountType(account.type);
     const transactionDate = parseDateOnly(body.date);
@@ -258,6 +273,7 @@ export async function transactionRoutes(app: FastifyInstance) {
           status: body.status,
           amountMinor: BigInt(body.amount),
           categoryId: body.categoryId,
+          subcategoryId: body.subcategoryId ?? null,
           productId: body.productId,
           budgetId: body.budgetId,
           goalId: body.goalId,
@@ -300,6 +316,9 @@ export async function transactionRoutes(app: FastifyInstance) {
     if (body.categoryId) await assertOwned(userId, "category", body.categoryId);
     if (body.budgetId) await assertOwned(userId, "budget", body.budgetId);
     if (body.goalId) await assertOwned(userId, "goal", body.goalId);
+    if (body.subcategoryId) {
+      await assertValidSubcategory(userId, body.subcategoryId, body.categoryId ?? existing.categoryId);
+    }
 
     const nextAmount = body.amount !== undefined ? BigInt(body.amount) : existing.amountMinor;
     const nextStatus = body.status ?? existing.status;
@@ -324,6 +343,7 @@ export async function transactionRoutes(app: FastifyInstance) {
         data: {
           amountMinor: nextAmount,
           categoryId: body.categoryId,
+          subcategoryId: body.subcategoryId,
           productId: body.productId,
           budgetId: body.budgetId,
           goalId: body.goalId,

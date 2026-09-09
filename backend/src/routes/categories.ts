@@ -17,6 +17,7 @@ export async function categoryRoutes(app: FastifyInstance) {
       icon: category.icon,
       color: category.color,
       kind: category.kind,
+      parentId: category.parentId,
     }));
   });
 }

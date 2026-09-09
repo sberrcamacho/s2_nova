@@ -1,20 +1,24 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { currentMonthKey, monthEnd, monthStart } from "../lib/dates.js";
+import { BUDGET_GOAL_THEME_IDS } from "../lib/budgetGoalThemes.js";
 import { prisma } from "../lib/prisma.js";
 
 const monthKeySchema = z.string().regex(/^\d{4}-\d{2}$/);
+const themeIconSchema = z.enum(BUDGET_GOAL_THEME_IDS);
 
 const createBudgetSchema = z.object({
   name: z.string().trim().min(1).max(80).optional(),
   categoryId: z.string().uuid(),
   amount: z.number().int().positive(),
   month: monthKeySchema.optional(),
+  themeIcon: themeIconSchema.optional(),
 });
 
 const updateBudgetSchema = z.object({
   name: z.string().trim().min(1).max(80).nullable().optional(),
   amount: z.number().int().positive().optional(),
+  themeIcon: themeIconSchema.nullable().optional(),
 });
 
 const recommendationSchema = z.object({
@@ -55,6 +59,7 @@ async function serializeBudget(userId: string, budget: {
   name: string | null;
   categoryId: string;
   amountMinor: bigint;
+  themeIcon: string | null;
   startDate: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -73,6 +78,7 @@ async function serializeBudget(userId: string, budget: {
     remaining: limit - spent,
     percentage,
     status,
+    themeIcon: budget.themeIcon,
     month: `${budget.startDate.getUTCFullYear()}-${String(budget.startDate.getUTCMonth() + 1).padStart(2, "0")}`,
     createdAt: budget.createdAt,
     updatedAt: budget.updatedAt,
@@ -108,6 +114,7 @@ export async function budgetRoutes(app: FastifyInstance) {
         amountMinor: BigInt(body.amount),
         period: "MONTHLY",
         startDate: monthStart(body.month ?? currentMonthKey()),
+        themeIcon: body.themeIcon,
       },
     });
     reply.status(201);
@@ -128,9 +135,25 @@ export async function budgetRoutes(app: FastifyInstance) {
       data: {
         name: body.name,
         amountMinor: body.amount !== undefined ? BigInt(body.amount) : undefined,
+        themeIcon: body.themeIcon,
       },
     });
     return serializeBudget(request.userId!, budget);
+  });
+
+  // Budgets hold no money of their own — a budget is just a spend limit
+  // computed by summing matching transactions (see computeSpent above), so
+  // deleting one is a plain delete with no wallet-reassignment step.
+  // Linked transactions keep their history; budgetId is set null
+  // (onDelete: SetNull), same pattern as goals.ts.
+  app.delete("/budgets/:id", { preHandler: app.authenticate }, async (request, reply) => {
+    const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
+    const existing = await prisma.budget.findFirst({ where: { id, userId: request.userId } });
+    if (!existing) {
+      return reply.status(404).send({ error: "Budget not found." });
+    }
+    await prisma.budget.delete({ where: { id } });
+    return reply.status(204).send();
   });
 
   // Computes a split suggestion and stores it — never creates real budgets.

@@ -112,6 +112,10 @@ fun TransactionDetailScreen(
 
             DetailRow(t(StringKey.TXN_DETAIL_DATE), formatLongDate(transaction.date))
             DetailRow(t(StringKey.ADD_TXN_CATEGORY), category?.let { t(categoryStringKey(it.id)) } ?: "—")
+            if (transaction.subcategoryId != null) {
+                val subcategoryName = AppContainer.categoryRepository.subcategoryById(transaction.subcategoryId)?.name
+                if (subcategoryName != null) DetailRow(t(StringKey.ADD_TXN_SUBCATEGORY), subcategoryName)
+            }
             DetailRow(t(StringKey.ADD_TXN_PAYMENT_METHOD), paymentMethodMap[transaction.paymentMethod]?.let { t(paymentMethodStringKey(it.id)) } ?: "—")
             if (!transaction.merchant.isNullOrBlank()) DetailRow(t(StringKey.TXN_DETAIL_MERCHANT), transaction.merchant)
             if (!transaction.note.isNullOrBlank()) DetailRow(t(StringKey.TXN_DETAIL_NOTE), transaction.note)

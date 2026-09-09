@@ -26,6 +26,7 @@ private fun TransactionDto.toTransaction(categoryRepository: CategoryRepository)
         type = TransactionType.valueOf(type),
         status = TransactionStatus.valueOf(status),
         category = categoryId,
+        subcategoryId = subcategoryId,
         date = date.take(10),
         paymentMethod = PaymentMethod.valueOf(paymentMethod),
         merchant = merchant,
@@ -75,6 +76,7 @@ class TransactionRepository(private val categoryRepository: CategoryRepository) 
                 status = input.status.name,
                 amount = input.amount.toLong(),
                 categoryId = categoryBackendId,
+                subcategoryId = input.subcategoryId,
                 productId = input.productId,
                 budgetId = input.budgetId,
                 goalId = input.goalId,
@@ -100,6 +102,7 @@ class TransactionRepository(private val categoryRepository: CategoryRepository) 
             UpdateTransactionRequest(
                 amount = input.amount.toLong(),
                 categoryId = categoryBackendId,
+                subcategoryId = input.subcategoryId,
                 budgetId = input.budgetId,
                 goalId = input.goalId,
                 description = input.description,

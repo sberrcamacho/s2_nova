@@ -59,6 +59,16 @@ data class Category(
 
 data class PaymentMethodOption(val id: PaymentMethod, val label: String)
 
+// A refinement under a top-level CategoryId (e.g. "Taxi" under
+// TRANSPORTATION) — dynamic, fetched from the backend, unlike CategoryId
+// itself. name is Spanish-only for now (see CategoryRepository.kt).
+data class Subcategory(
+    val id: String,
+    val slug: String,
+    val name: String,
+    val parentCategoryId: CategoryId,
+)
+
 data class Transaction(
     val id: String,
     val walletId: String,
@@ -68,6 +78,7 @@ data class Transaction(
     val type: TransactionType,
     val status: TransactionStatus = TransactionStatus.COMPLETED,
     val category: CategoryId,
+    val subcategoryId: String? = null,
     val date: String, // ISO yyyy-MM-dd
     val paymentMethod: PaymentMethod,
     val merchant: String? = null,
@@ -93,6 +104,7 @@ data class NewTransactionInput(
     val type: TransactionType,
     val status: TransactionStatus = TransactionStatus.COMPLETED,
     val category: CategoryId,
+    val subcategoryId: String? = null,
     val date: String,
     val merchant: String? = null,
     val note: String? = null,
@@ -129,6 +141,7 @@ data class CategoryBudget(
     val category: CategoryId,
     val limit: Double,
     val month: String, // YYYY-MM
+    val themeIcon: String? = null,
 )
 
 data class Goal(
@@ -137,6 +150,7 @@ data class Goal(
     val targetAmount: Double,
     val currentAmount: Double,
     val targetDate: String? = null,
+    val themeIcon: String? = null,
 )
 
 enum class BudgetStatus { ON_TRACK, NEAR_LIMIT, OVER_BUDGET }

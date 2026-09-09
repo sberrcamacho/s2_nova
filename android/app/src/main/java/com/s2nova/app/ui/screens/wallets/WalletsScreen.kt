@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.CurrencyBitcoin
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.Savings
@@ -61,6 +62,7 @@ import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.ThousandsGroupingVisualTransformation
 import com.s2nova.app.ui.components.NovaCard
 import com.s2nova.app.ui.components.NovaTopBar
+import com.s2nova.app.ui.components.WalletPickerDialog
 import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.theme.NovaColors
@@ -129,8 +131,10 @@ fun WalletsScreen(onBack: () -> Unit) {
     val colors = NovaColors.current
     val scope = rememberCoroutineScope()
     var creating by remember { mutableStateOf(false) }
+    var deleting by remember { mutableStateOf<Wallet?>(null) }
+    var blockedDelete by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) { AppContainer.walletRepository.refresh() }
+    LaunchedEffect(Unit) { runCatching { AppContainer.walletRepository.refresh() } }
 
     Scaffold(
         topBar = {
@@ -193,6 +197,9 @@ fun WalletsScreen(onBack: () -> Unit) {
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onBackground,
                             )
+                            IconButton(onClick = { if (wallets.size <= 1) blockedDelete = true else deleting = wallet }) {
+                                Icon(Icons.Filled.Delete, contentDescription = t(StringKey.WALLETS_DELETE), tint = colors.negativeBorder)
+                            }
                         }
                     }
                 }
@@ -217,6 +224,32 @@ fun WalletsScreen(onBack: () -> Unit) {
                         creating = false
                     }
                 },
+            )
+        }
+
+        val walletToDelete = deleting
+        if (walletToDelete != null) {
+            WalletPickerDialog(
+                title = t(StringKey.WALLETS_DELETE_CONFIRM_TITLE),
+                bodyText = t(StringKey.WALLETS_DELETE_REASSIGN_LABEL),
+                wallets = wallets.filterNot { it.id == walletToDelete.id },
+                confirmLabel = t(StringKey.WALLETS_DELETE_CONFIRM),
+                onDismiss = { deleting = null },
+                onConfirm = { destinationId ->
+                    scope.launch {
+                        AppContainer.walletRepository.delete(walletToDelete.id, destinationId)
+                        deleting = null
+                    }
+                },
+            )
+        }
+
+        if (blockedDelete) {
+            AlertDialog(
+                onDismissRequest = { blockedDelete = false },
+                title = { Text(t(StringKey.WALLETS_DELETE_CONFIRM_TITLE)) },
+                text = { Text(t(StringKey.WALLETS_DELETE_ONLY_WALLET)) },
+                confirmButton = { TextButton(onClick = { blockedDelete = false }) { Text(t(StringKey.COMMON_BACK)) } },
             )
         }
     }

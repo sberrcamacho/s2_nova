@@ -2,6 +2,8 @@ package com.s2nova.app.ui.nav
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,6 +45,8 @@ import com.s2nova.app.ui.screens.splash.SplashScreen
 import com.s2nova.app.ui.screens.transactions.TransactionDetailScreen
 import com.s2nova.app.ui.screens.transactions.TransactionsScreen
 import com.s2nova.app.ui.screens.wallets.WalletsScreen
+import com.s2nova.app.ui.StringKey
+import com.s2nova.app.ui.rememberStrings
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -54,6 +58,8 @@ fun NovaApp() {
     var showAddSheet by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val onboardingFlowState = remember { OnboardingFlowState() }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val t = rememberStrings()
 
     // Where a freshly authenticated session lands: onboarding for a user
     // who hasn't completed it yet (fresh register, or an existing account
@@ -65,7 +71,19 @@ fun NovaApp() {
         navController.navigateAsRoot(if (done) NovaDestinations.HOME else NovaDestinations.ONBOARDING_WELCOME)
     }
 
+    // Fires whenever ApiClient's Authenticator gives up because the refresh
+    // token is also dead (see SessionStore.expire()) — redirects to Login
+    // from wherever the user happens to be, instead of letting the
+    // triggering screen's refresh() throw an uncaught HttpException.
+    LaunchedEffect(Unit) {
+        AppContainer.sessionStore.sessionExpired.collect {
+            navController.navigateAsRoot(NovaDestinations.LOGIN)
+            snackbarHostState.showSnackbar(t(StringKey.COMMON_SESSION_EXPIRED))
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             if (bottomBarVisibleFor(currentRoute)) {
                 NovaBottomBar(

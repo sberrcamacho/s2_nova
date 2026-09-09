@@ -81,8 +81,8 @@ fun GoalContributionScreen(
     val wallets by AppContainer.walletRepository.wallets.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        AppContainer.goalRepository.refresh()
-        AppContainer.walletRepository.refresh()
+        runCatching { AppContainer.goalRepository.refresh() }
+        runCatching { AppContainer.walletRepository.refresh() }
     }
 
     val goal = goals.find { it.id == goalId }

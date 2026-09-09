@@ -95,7 +95,18 @@ data class CreateAccountRequest(val name: String, val type: String, val initialB
 data class UpdateAccountRequest(val name: String? = null, val type: String? = null)
 
 @Serializable
-data class CategoryDto(val id: String, val slug: String, val name: String, val icon: String, val color: String, val kind: String)
+data class DeleteAccountRequest(val reassignToAccountId: String)
+
+@Serializable
+data class CategoryDto(
+    val id: String,
+    val slug: String,
+    val name: String,
+    val icon: String,
+    val color: String,
+    val kind: String,
+    val parentId: String? = null,
+)
 
 @Serializable
 data class TransactionDto(
@@ -106,6 +117,7 @@ data class TransactionDto(
     val status: String,
     val amount: Long,
     val categoryId: String,
+    val subcategoryId: String? = null,
     val productId: String? = null,
     val budgetId: String? = null,
     val goalId: String? = null,
@@ -136,6 +148,7 @@ data class CreateTransactionRequest(
     val status: String = "COMPLETED",
     val amount: Long,
     val categoryId: String,
+    val subcategoryId: String? = null,
     val productId: String? = null,
     val budgetId: String? = null,
     val goalId: String? = null,
@@ -152,6 +165,7 @@ data class CreateTransactionRequest(
 data class UpdateTransactionRequest(
     val amount: Long? = null,
     val categoryId: String? = null,
+    val subcategoryId: String? = null,
     val budgetId: String? = null,
     val goalId: String? = null,
     val status: String? = null,
@@ -225,16 +239,23 @@ data class BudgetDto(
     val remaining: Long,
     val percentage: Int,
     val status: String,
+    val themeIcon: String? = null,
     val month: String,
     val createdAt: String,
     val updatedAt: String,
 )
 
 @Serializable
-data class CreateBudgetRequest(val name: String? = null, val categoryId: String, val amount: Long, val month: String? = null)
+data class CreateBudgetRequest(
+    val name: String? = null,
+    val categoryId: String,
+    val amount: Long,
+    val month: String? = null,
+    val themeIcon: String? = null,
+)
 
 @Serializable
-data class UpdateBudgetRequest(val name: String? = null, val amount: Long? = null)
+data class UpdateBudgetRequest(val name: String? = null, val amount: Long? = null, val themeIcon: String? = null)
 
 @Serializable
 data class BudgetRecommendationRequest(
@@ -270,13 +291,27 @@ data class GoalDto(
     val currentAmount: Long,
     val remaining: Long,
     val percentage: Int,
+    val themeIcon: String? = null,
     val targetDate: String? = null,
     val createdAt: String,
     val updatedAt: String,
 )
 
 @Serializable
-data class CreateGoalRequest(val name: String, val targetAmount: Long, val targetDate: String? = null)
+data class CreateGoalRequest(
+    val name: String,
+    val targetAmount: Long,
+    val targetDate: String? = null,
+    val themeIcon: String? = null,
+)
 
 @Serializable
-data class UpdateGoalRequest(val name: String? = null, val targetAmount: Long? = null, val targetDate: String? = null)
+data class UpdateGoalRequest(
+    val name: String? = null,
+    val targetAmount: Long? = null,
+    val targetDate: String? = null,
+    val themeIcon: String? = null,
+)
+
+@Serializable
+data class DeleteGoalRequest(val returnToAccountId: String? = null)

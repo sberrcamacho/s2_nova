@@ -228,25 +228,27 @@ fun ScannerScreen(
                     val walletId = wallets.firstOrNull()?.id
                     if (walletId != null) {
                         scope.launch {
-                            AppContainer.transactionRepository.add(
-                                NewTransactionInput(
-                                    walletId = walletId,
-                                    description = found.product.name,
-                                    amount = found.product.price,
-                                    type = TransactionType.EXPENSE,
-                                    category = found.product.category,
-                                    date = todayISO(),
-                                    merchant = found.product.brand,
-                                    productId = found.product.barcode,
-                                ),
-                            )
-                            AppContainer.walletRepository.refresh()
-                            AppContainer.notificationRepository.add(
-                                title = t(StringKey.SCANNER_NOTIF_TITLE),
-                                message = "${t(StringKey.SCANNER_NOTIF_MESSAGE_PREFIX)}${found.product.name}${t(StringKey.SCANNER_NOTIF_MESSAGE_MIDDLE)}${format(found.product.price)}.",
-                                tone = NotificationTone.INFO,
-                            )
-                            onPurchaseRegistered()
+                            runCatching {
+                                AppContainer.transactionRepository.add(
+                                    NewTransactionInput(
+                                        walletId = walletId,
+                                        description = found.product.name,
+                                        amount = found.product.price,
+                                        type = TransactionType.EXPENSE,
+                                        category = found.product.category,
+                                        date = todayISO(),
+                                        merchant = found.product.brand,
+                                        productId = found.product.barcode,
+                                    ),
+                                )
+                                AppContainer.walletRepository.refresh()
+                                AppContainer.notificationRepository.add(
+                                    title = t(StringKey.SCANNER_NOTIF_TITLE),
+                                    message = "${t(StringKey.SCANNER_NOTIF_MESSAGE_PREFIX)}${found.product.name}${t(StringKey.SCANNER_NOTIF_MESSAGE_MIDDLE)}${format(found.product.price)}.",
+                                    tone = NotificationTone.INFO,
+                                )
+                                onPurchaseRegistered()
+                            }
                         }
                     }
                 },

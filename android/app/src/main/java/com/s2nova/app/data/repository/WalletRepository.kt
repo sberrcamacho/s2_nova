@@ -5,6 +5,7 @@ import com.s2nova.app.data.model.WalletType
 import com.s2nova.app.data.remote.AccountDto
 import com.s2nova.app.data.remote.ApiClient
 import com.s2nova.app.data.remote.CreateAccountRequest
+import com.s2nova.app.data.remote.DeleteAccountRequest
 import com.s2nova.app.data.remote.UpdateAccountRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -50,5 +51,17 @@ class WalletRepository {
         if (DemoModeFlag.active) return
         val dto = ApiClient.api.updateAccount(id, UpdateAccountRequest(name = name))
         _wallets.value = _wallets.value.map { if (it.id == id) dto.toWallet() else it }
+    }
+
+    // Everything the wallet touches (its transactions, any transfer that
+    // named it as a destination, and any active recurring series on it) is
+    // reassigned to reassignToAccountId server-side before deletion, along
+    // with its balance — see backend/src/routes/accounts.ts. refresh()
+    // afterward picks up the destination wallet's new balance.
+    suspend fun delete(id: String, reassignToAccountId: String) {
+        if (DemoModeFlag.active) return
+        ApiClient.api.deleteAccount(id, DeleteAccountRequest(reassignToAccountId))
+        _wallets.value = _wallets.value.filterNot { it.id == id }
+        refresh()
     }
 }

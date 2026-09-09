@@ -71,7 +71,7 @@ object ApiClient {
                 }
 
                 if (refreshed == null) {
-                    runBlocking { sessionStore.clear() }
+                    runBlocking { sessionStore.expire() }
                     return@authenticator null
                 }
 

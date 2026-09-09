@@ -5,6 +5,9 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
@@ -37,6 +40,19 @@ class SessionStore private constructor(context: Context) {
 
     suspend fun clear() {
         this.context.sessionDataStore.edit { it.clear() }
+    }
+
+    private val _sessionExpired = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    // Emitted when the OkHttp Authenticator (see ApiClient.kt) gives up on a
+    // 401 because the refresh token is also dead — distinct from clear(),
+    // which AuthRepository.logout() also calls for an explicit sign-out and
+    // handles its own navigation, so logout() must not also fire this.
+    val sessionExpired: SharedFlow<Unit> = _sessionExpired.asSharedFlow()
+
+    suspend fun expire() {
+        clear()
+        _sessionExpired.tryEmit(Unit)
     }
 
     companion object {

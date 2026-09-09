@@ -72,8 +72,8 @@ fun RecurringScreen(onBack: () -> Unit) {
     var confirmingId by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
-        AppContainer.recurringSeriesRepository.refresh()
-        AppContainer.walletRepository.refresh()
+        runCatching { AppContainer.recurringSeriesRepository.refresh() }
+        runCatching { AppContainer.walletRepository.refresh() }
     }
 
     Scaffold(

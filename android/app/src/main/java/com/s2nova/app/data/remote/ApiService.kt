@@ -50,6 +50,9 @@ interface ApiService {
     @PATCH("accounts/{id}")
     suspend fun updateAccount(@Path("id") id: String, @Body body: UpdateAccountRequest): AccountDto
 
+    @DELETE("accounts/{id}")
+    suspend fun deleteAccount(@Path("id") id: String, @Body body: DeleteAccountRequest): Response<Unit>
+
     @GET("categories")
     suspend fun getCategories(): List<CategoryDto>
 
@@ -97,6 +100,9 @@ interface ApiService {
     @PATCH("budgets/{id}")
     suspend fun updateBudget(@Path("id") id: String, @Body body: UpdateBudgetRequest): BudgetDto
 
+    @DELETE("budgets/{id}")
+    suspend fun deleteBudget(@Path("id") id: String): Response<Unit>
+
     @POST("budgets/recommendations")
     suspend fun createBudgetRecommendation(@Body body: BudgetRecommendationRequest): BudgetRecommendationResponse
 
@@ -113,5 +119,5 @@ interface ApiService {
     suspend fun updateGoal(@Path("id") id: String, @Body body: UpdateGoalRequest): GoalDto
 
     @DELETE("goals/{id}")
-    suspend fun deleteGoal(@Path("id") id: String): Response<Unit>
+    suspend fun deleteGoal(@Path("id") id: String, @Body body: DeleteGoalRequest): Response<Unit>
 }

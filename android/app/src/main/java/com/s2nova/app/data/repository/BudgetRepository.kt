@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 private fun BudgetDto.toBudgetProgress(categoryRepository: CategoryRepository): BudgetProgress? {
     val categoryId = categoryRepository.categoryIdForBackendId(categoryId) ?: return null
-    val budget = CategoryBudget(id = id, name = name, category = categoryId, limit = amount.toDouble(), month = month)
+    val budget = CategoryBudget(id = id, name = name, category = categoryId, limit = amount.toDouble(), month = month, themeIcon = themeIcon)
     val status = runCatching { BudgetStatus.valueOf(status) }.getOrDefault(BudgetStatus.ON_TRACK)
     return BudgetProgress(budget, spent.toDouble(), remaining.toDouble(), percentage, status)
 }
@@ -40,19 +40,31 @@ class BudgetRepository(private val categoryRepository: CategoryRepository) {
         _budgetProgress.value = budgetProgress
     }
 
-    suspend fun create(name: String?, category: CategoryId, limit: Double, month: String = currentMonthKey()): BudgetProgress? {
+    suspend fun create(
+        name: String?,
+        category: CategoryId,
+        limit: Double,
+        month: String = currentMonthKey(),
+        themeIcon: String? = null,
+    ): BudgetProgress? {
         if (DemoModeFlag.active) return null
         val categoryBackendId = categoryRepository.backendIdFor(category) ?: return null
-        val dto = ApiClient.api.createBudget(CreateBudgetRequest(name, categoryBackendId, limit.toLong(), month))
+        val dto = ApiClient.api.createBudget(CreateBudgetRequest(name, categoryBackendId, limit.toLong(), month, themeIcon))
         val progress = dto.toBudgetProgress(categoryRepository) ?: return null
         _budgetProgress.value = _budgetProgress.value + progress
         return progress
     }
 
-    suspend fun updateLimit(id: String, limit: Double) {
+    suspend fun updateLimit(id: String, limit: Double, themeIcon: String? = null) {
         if (DemoModeFlag.active) return
-        val dto = ApiClient.api.updateBudget(id, UpdateBudgetRequest(amount = limit.toLong()))
+        val dto = ApiClient.api.updateBudget(id, UpdateBudgetRequest(amount = limit.toLong(), themeIcon = themeIcon))
         val progress = dto.toBudgetProgress(categoryRepository) ?: return
         _budgetProgress.value = _budgetProgress.value.map { if (it.budget.id == id) progress else it }
+    }
+
+    suspend fun delete(id: String) {
+        if (DemoModeFlag.active) return
+        ApiClient.api.deleteBudget(id)
+        _budgetProgress.value = _budgetProgress.value.filterNot { it.budget.id == id }
     }
 }

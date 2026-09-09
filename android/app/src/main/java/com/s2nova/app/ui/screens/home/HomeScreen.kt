@@ -83,8 +83,8 @@ fun HomeScreen(
     val isDark = darkOverride ?: isSystemInDarkTheme()
 
     LaunchedEffect(Unit) {
-        AppContainer.budgetRepository.refresh()
-        AppContainer.recurringSeriesRepository.refresh()
+        runCatching { AppContainer.budgetRepository.refresh() }
+        runCatching { AppContainer.recurringSeriesRepository.refresh() }
     }
 
     val totalIncome = transactions.filter { it.type == com.s2nova.app.data.model.TransactionType.INCOME }.sumOf { it.amount }

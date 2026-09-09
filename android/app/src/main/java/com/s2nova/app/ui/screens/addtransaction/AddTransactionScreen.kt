@@ -26,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -96,17 +97,23 @@ fun AddTransactionScreen(
     val wallets by AppContainer.walletRepository.wallets.collectAsStateWithLifecycle()
     val budgets by AppContainer.budgetRepository.budgetProgress.collectAsStateWithLifecycle()
     val goals by AppContainer.goalRepository.goals.collectAsStateWithLifecycle()
+    // Collected (not read directly) just to make this composable
+    // recompose when categories refresh — subcategoriesFor() below reads
+    // the repository's current snapshot each time this recomposes.
+    AppContainer.categoryRepository.categories.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        AppContainer.walletRepository.refresh()
-        AppContainer.budgetRepository.refresh()
-        AppContainer.goalRepository.refresh()
+        runCatching { AppContainer.walletRepository.refresh() }
+        runCatching { AppContainer.budgetRepository.refresh() }
+        runCatching { AppContainer.goalRepository.refresh() }
+        runCatching { AppContainer.categoryRepository.refresh() }
     }
 
     var type by remember { mutableStateOf(editing?.type ?: TransactionType.EXPENSE) }
     var amountText by remember { mutableStateOf(editing?.amount?.toInt()?.toString() ?: "") }
     var description by remember { mutableStateOf(editing?.description ?: "") }
     var category by remember { mutableStateOf(editing?.category ?: expenseCategories.first().id) }
+    var subcategoryId by remember { mutableStateOf(editing?.subcategoryId) }
     var note by remember { mutableStateOf(editing?.note ?: "") }
     var walletId by remember(wallets) { mutableStateOf(editing?.walletId ?: wallets.firstOrNull()?.id) }
     var transferToWalletId by remember { mutableStateOf(editing?.transferToWalletId) }
@@ -174,6 +181,7 @@ fun AddTransactionScreen(
                                             val pool = if (txnType == TransactionType.INCOME) incomeCategories else expenseCategories
                                             if (categoryMap[category]?.let { it.isExpense != (txnType == TransactionType.EXPENSE) } != false) {
                                                 category = pool.first().id
+                                                subcategoryId = null
                                             }
                                         }
                                         if (txnType != TransactionType.EXPENSE && txnType != TransactionType.INCOME) isLoan = false
@@ -210,7 +218,12 @@ fun AddTransactionScreen(
                                 .semantics { contentDescription = t(StringKey.ADD_TXN_CHANGE_CATEGORY_CD) },
                             contentAlignment = Alignment.Center,
                         ) {
-                            Icon(iconFor(category), contentDescription = null, tint = categoryColor, modifier = Modifier.size(26.dp))
+                            Icon(
+                                imageVector = if (type == TransactionType.TRANSFER) Icons.Filled.SwapHoriz else iconFor(category),
+                                contentDescription = null,
+                                tint = categoryColor,
+                                modifier = Modifier.size(26.dp),
+                            )
                         }
                         Column(modifier = Modifier.padding(start = 14.dp).weight(1f)) {
                             Text(
@@ -241,6 +254,17 @@ fun AddTransactionScreen(
                                 modifier = Modifier.fillMaxWidth(),
                             )
                         }
+                    }
+                }
+            }
+
+            val subcategories = if (type == TransactionType.TRANSFER) emptyList() else AppContainer.categoryRepository.subcategoriesFor(category)
+            if (subcategories.isNotEmpty()) {
+                Text(t(StringKey.ADD_TXN_SUBCATEGORY), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 20.dp, bottom = 6.dp))
+                Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SelectChip(label = t(StringKey.ADD_TXN_SUBCATEGORY_NONE), selected = subcategoryId == null, onClick = { subcategoryId = null })
+                    subcategories.forEach { sub ->
+                        SelectChip(label = sub.name, selected = subcategoryId == sub.id, onClick = { subcategoryId = sub.id })
                     }
                 }
             }
@@ -396,6 +420,7 @@ fun AddTransactionScreen(
                         type = type,
                         status = if (isUpcoming) TransactionStatus.PLANNED else TransactionStatus.COMPLETED,
                         category = category,
+                        subcategoryId = if (type == TransactionType.TRANSFER) null else subcategoryId,
                         date = editing?.date ?: todayISO(),
                         note = note.ifBlank { null },
                         budgetId = budgetId,
@@ -455,6 +480,7 @@ fun AddTransactionScreen(
                                 selected = category == cat.id,
                                 onClick = {
                                     category = cat.id
+                                    subcategoryId = null
                                     showCategorySheet = false
                                 },
                                 modifier = Modifier.width(68.dp),

@@ -1,6 +1,7 @@
 package com.s2nova.app.data.repository
 
 import com.s2nova.app.data.model.CategoryId
+import com.s2nova.app.data.model.Subcategory
 import com.s2nova.app.data.remote.ApiClient
 import com.s2nova.app.data.remote.CategoryDto
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,5 +27,22 @@ class CategoryRepository {
     fun categoryIdForBackendId(backendId: String): CategoryId? {
         val slug = _categories.value.find { it.id == backendId }?.slug ?: return null
         return CategoryId.entries.find { it.name.lowercase() == slug }
+    }
+
+    // Rows whose parentId matches this CategoryId's backend row — never
+    // collides with the top-level bridge above since a subcategory's own
+    // slug (e.g. "food-groceries") never equals a CategoryId enum name.
+    fun subcategoriesFor(categoryId: CategoryId): List<Subcategory> {
+        val parentBackendId = backendIdFor(categoryId) ?: return emptyList()
+        return _categories.value
+            .filter { it.parentId == parentBackendId }
+            .map { Subcategory(id = it.id, slug = it.slug, name = it.name, parentCategoryId = categoryId) }
+    }
+
+    fun subcategoryById(id: String): Subcategory? {
+        val dto = _categories.value.find { it.id == id } ?: return null
+        val parentId = dto.parentId ?: return null
+        val parentCategoryId = categoryIdForBackendId(parentId) ?: return null
+        return Subcategory(id = dto.id, slug = dto.slug, name = dto.name, parentCategoryId = parentCategoryId)
     }
 }
