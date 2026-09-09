@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
 import com.s2nova.app.ui.StringKey
+import com.s2nova.app.ui.ThousandsGroupingVisualTransformation
 import com.s2nova.app.ui.components.NovaCard
 import com.s2nova.app.ui.components.NovaProgressRing
 import com.s2nova.app.ui.rememberCurrencyFormatter
@@ -149,6 +150,7 @@ private fun CreateGoalDialog(onDismiss: () -> Unit, onCreate: (String, Double) -
                     label = { Text(t(StringKey.GOALS_TARGET_AMOUNT)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    visualTransformation = ThousandsGroupingVisualTransformation(),
                     modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
                 )
             }

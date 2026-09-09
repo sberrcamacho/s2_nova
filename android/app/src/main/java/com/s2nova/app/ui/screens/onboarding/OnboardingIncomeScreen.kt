@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.s2nova.app.ui.StringKey
+import com.s2nova.app.ui.ThousandsGroupingVisualTransformation
 import com.s2nova.app.ui.rememberStrings
 
 // "Do NOT assume every user has a fixed salary" — this step only collects
@@ -65,6 +66,7 @@ fun OnboardingIncomeScreen(
                     leadingIcon = { Text("$") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    visualTransformation = ThousandsGroupingVisualTransformation(),
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.fillMaxWidth(),
                 )

@@ -47,6 +47,7 @@ import com.s2nova.app.data.model.NewTransactionInput
 import com.s2nova.app.data.model.TransactionType
 import com.s2nova.app.data.todayISO
 import com.s2nova.app.ui.StringKey
+import com.s2nova.app.ui.ThousandsGroupingVisualTransformation
 import com.s2nova.app.ui.components.NovaCard
 import com.s2nova.app.ui.components.NovaProgressBar
 import com.s2nova.app.ui.components.NovaTopBar
@@ -130,6 +131,7 @@ fun GoalContributionScreen(
                 placeholder = { Text("0") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                visualTransformation = ThousandsGroupingVisualTransformation(),
                 shape = RoundedCornerShape(14.dp),
                 modifier = Modifier.fillMaxWidth(),
             )

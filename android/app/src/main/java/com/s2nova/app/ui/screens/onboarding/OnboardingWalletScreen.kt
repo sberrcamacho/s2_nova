@@ -33,6 +33,7 @@ import com.s2nova.app.data.model.TransactionType
 import com.s2nova.app.data.model.WalletType
 import com.s2nova.app.data.todayISO
 import com.s2nova.app.ui.StringKey
+import com.s2nova.app.ui.ThousandsGroupingVisualTransformation
 import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.screens.wallets.WalletTypeSelector
 import com.s2nova.app.ui.screens.wallets.labelFor
@@ -94,6 +95,7 @@ fun OnboardingWalletScreen(
                     leadingIcon = { Text("$") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    visualTransformation = ThousandsGroupingVisualTransformation(),
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
                 )

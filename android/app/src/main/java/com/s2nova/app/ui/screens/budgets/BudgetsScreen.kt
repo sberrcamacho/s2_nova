@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -42,6 +43,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -58,6 +60,7 @@ import com.s2nova.app.ui.components.StatusBadge
 import com.s2nova.app.ui.components.badgeToneFor
 import com.s2nova.app.ui.components.budgetStatusColor
 import com.s2nova.app.ui.StringKey
+import com.s2nova.app.ui.ThousandsGroupingVisualTransformation
 import com.s2nova.app.ui.categoryStringKey
 import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
@@ -226,6 +229,8 @@ private fun EditBudgetDialog(categoryId: CategoryId, initialLimit: String, onDis
                 leadingIcon = { Text("$") },
                 label = { Text(t(StringKey.BUDGETS_MONTHLY_LIMIT)) },
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                visualTransformation = ThousandsGroupingVisualTransformation(),
             )
         },
         confirmButton = {
@@ -293,6 +298,8 @@ private fun CreateBudgetDialog(availableCategories: List<CategoryId>, onDismiss:
                     leadingIcon = { Text("$") },
                     label = { Text(t(StringKey.BUDGETS_MONTHLY_LIMIT)) },
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    visualTransformation = ThousandsGroupingVisualTransformation(),
                     modifier = Modifier.padding(top = 12.dp),
                 )
             }

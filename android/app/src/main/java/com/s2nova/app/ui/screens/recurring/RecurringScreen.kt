@@ -51,6 +51,7 @@ import com.s2nova.app.data.model.TransactionType
 import com.s2nova.app.data.model.Wallet
 import com.s2nova.app.data.todayISO
 import com.s2nova.app.ui.StringKey
+import com.s2nova.app.ui.ThousandsGroupingVisualTransformation
 import com.s2nova.app.ui.categoryStringKey
 import com.s2nova.app.ui.components.NovaCard
 import com.s2nova.app.ui.components.NovaTopBar
@@ -233,6 +234,7 @@ private fun CreateRecurringDialog(
                     label = { Text(t(StringKey.RECURRING_AMOUNT)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    visualTransformation = ThousandsGroupingVisualTransformation(),
                     modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
                 )
                 if (wallets.isNotEmpty()) {

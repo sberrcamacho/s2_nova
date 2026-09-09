@@ -67,6 +67,7 @@ import com.s2nova.app.data.model.TransactionStatus
 import com.s2nova.app.data.model.TransactionType
 import com.s2nova.app.data.todayISO
 import com.s2nova.app.ui.StringKey
+import com.s2nova.app.ui.ThousandsGroupingVisualTransformation
 import com.s2nova.app.ui.categoryStringKey
 import com.s2nova.app.ui.components.CategoryIcon
 import com.s2nova.app.ui.components.CategoryIconSize
@@ -195,16 +196,21 @@ fun AddTransactionScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(top = 24.dp),
                     ) {
+                        val categoryColor = if (type == TransactionType.TRANSFER) {
+                            Color.White
+                        } else {
+                            categoryMap[category]?.color?.let { Color(it) } ?: Color.White
+                        }
                         Box(
                             modifier = Modifier
                                 .size(56.dp)
                                 .clip(CircleShape)
-                                .background(Color.White.copy(alpha = 0.14f))
+                                .background(categoryColor.copy(alpha = 0.28f))
                                 .clickable(enabled = type != TransactionType.TRANSFER, onClick = { showCategorySheet = true })
                                 .semantics { contentDescription = t(StringKey.ADD_TXN_CHANGE_CATEGORY_CD) },
                             contentAlignment = Alignment.Center,
                         ) {
-                            Icon(iconFor(category), contentDescription = null, tint = Color.White, modifier = Modifier.size(26.dp))
+                            Icon(iconFor(category), contentDescription = null, tint = categoryColor, modifier = Modifier.size(26.dp))
                         }
                         Column(modifier = Modifier.padding(start = 14.dp).weight(1f)) {
                             Text(
@@ -220,6 +226,7 @@ fun AddTransactionScreen(
                                 placeholder = { Text("0", color = Color.White.copy(alpha = 0.4f)) },
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                visualTransformation = ThousandsGroupingVisualTransformation(),
                                 textStyle = MaterialTheme.typography.headlineSmall.copy(color = Color.White, fontSize = 20.sp),
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedContainerColor = Color.Transparent,
