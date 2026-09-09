@@ -53,6 +53,19 @@ rebuilds and redeploys automatically. Free tier note: the service sleeps
 after 15 minutes of inactivity; the first request after that takes roughly
 30–60s to wake it back up.
 
+**Keeping it awake**: a GitHub Actions `schedule`-triggered workflow was
+tried first (ping `GET /api/v1/health` every 10 minutes) but removed —
+GitHub Actions' free scheduler does not honor high-frequency cron cadences
+reliably, especially on low-activity repos; verified runs landed 2–5 hours
+apart instead of every 10 minutes, far past Render's 15-minute sleep
+threshold, so the backend still cold-started on the first real request (the
+"2-4 attempts on cold start" symptom). The actual keep-warm mechanism is an
+external pinger with its own scheduler: **cron-job.org** (free), hitting
+`https://s2-nova.onrender.com/api/v1/health` every 5 minutes. UptimeRobot's
+free monitor (5-minute interval) works the same way. This is configured
+directly in that external service's dashboard — nothing in this repo to set
+up beyond pointing it at the URL above.
+
 ## Project structure
 
 - `prisma/schema.prisma` — the database schema (source of truth for the
