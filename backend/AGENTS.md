@@ -73,7 +73,11 @@ up beyond pointing it at the URL above.
 - `prisma/seed.ts` — seeds the global (`user_id = null`) categories every
   user sees, matching `web/src/data/categories.ts` /
   `android/.../data/mock/MockCategories.kt` by `slug` — keep these three
-  in sync if the category list ever changes
+  in sync if the category list ever changes. Subcategories (rows with a
+  non-null `parentId`) are additive-only under `EXPENSE`-kind parents
+  today — `INCOME`-kind categories (`salary`, `freelance`, `gift`)
+  intentionally have none, so don't add subcategory rows for a new income
+  category unless the product explicitly calls for that granularity.
 - `src/env.ts` — Zod-validated environment config; import `env` from here
   rather than reading `process.env` directly elsewhere
 - `src/lib/prisma.ts` — the shared `PrismaClient` singleton; import this

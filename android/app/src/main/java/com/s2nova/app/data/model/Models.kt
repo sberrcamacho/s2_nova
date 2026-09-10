@@ -34,7 +34,7 @@ data class Wallet(
 
 enum class CategoryId {
     FOOD, TRANSPORTATION, SHOPPING, HEALTH, EDUCATION, ENTERTAINMENT,
-    BILLS, SUBSCRIPTIONS, SALARY, FREELANCE, OTHER,
+    BILLS, SUBSCRIPTIONS, SALARY, FREELANCE, GIFT, OTHER,
 }
 
 // A transaction's payment method is never chosen independently by the user

@@ -108,7 +108,15 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   existing bottom bar; budget/goal progress is computed server-side and
   read directly (`BudgetRepository.budgetProgress`), never recomputed
   client-side. Wallets/Recurring/Loans are reachable from Profile, same
-  pattern as Settings.
+  pattern as Settings. A budget's list icon (`BudgetsScreen.kt`'s
+  `BudgetsTab`) is always its category's real icon (`CategoryIcon`) —
+  never the small decorative theme palette in
+  `ui/components/BudgetGoalTheme.kt`, since a budget already has a
+  category to derive an icon from. That palette
+  (`BudgetGoalThemePicker`) is offered only in the Goal create/edit
+  dialogs, which have no category and therefore need an explicit icon
+  choice; don't reintroduce a theme picker in the budget create/edit
+  dialogs.
 - **Wallet type ↔ payment method coherence.** `WalletType`
   (`data/model/Models.kt`) is `CASH, BANK_DEBIT, BANK_CREDIT, SAVINGS,
   CRYPTO, NEQUI, DAVIPLATA, OTHER` — mirrors backend's `AccountType`
@@ -248,7 +256,22 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   grid reads better than a horizontally-scrolling row once a category list
   gets long; it reuses the existing `CategoryIcon` per-category color
   tokens rather than the reference's flat icon tiles, to stay visually
-  distinct from that source.
+  distinct from that source. **Subcategory selection** follows the same
+  grid pattern one level down (`SubcategoryGridItem`, opened automatically
+  right after picking a category that has children); its icon comes from
+  `iconForSubcategory(slug, parentCategoryId)` (`ui/components/
+  CategoryIcon.kt`) — a client-side lookup keyed by subcategory slug, since
+  the backend row's own `icon` column just mirrors its parent's and is
+  never read. The hero icon at the top of the form must stay in sync with
+  whichever level is actually selected: it shows `iconForSubcategory(...)`
+  once a subcategory is chosen, not just the parent's `iconFor(category)` —
+  this used to silently fall back to the parent icon even with a
+  subcategory selected, which is the bug to watch for if the hero and the
+  picker ever diverge again. Every label in these grids, and in
+  `SelectChip`, sets `maxLines = 1` together with `overflow =
+  TextOverflow.Ellipsis` — Compose's default `TextOverflow.Clip` cuts a
+  long name off mid-word instead of showing "…", so never drop the
+  explicit `overflow` when adding a new chip/grid label.
 
 ## Keeping in sync with the web app
 
@@ -256,3 +279,19 @@ Both apps intentionally diverge in navigation/layout (mobile vs. dashboard),
 but should share: the color palette (`ui/theme/Color.kt` ↔ `web/src/index.css`),
 category/product/budget seed data (`data/mock/*.kt` ↔ `web/src/data/*.ts`),
 and copy/tone. When one changes, check whether the other needs updating.
+
+Adding a new top-level category (e.g. the `GIFT`/"Obsequio" income
+category) touches both apps and the backend seed in lockstep: on Android,
+the `CategoryId` enum (`data/model/Models.kt`), the `Category` row in
+`data/mock/MockCategories.kt`, its `iconFor()` case in
+`ui/components/CategoryIcon.kt`, and its `categoryStringKey()` case plus
+ES/EN entries in `ui/Strings.kt`; on Web, the `CategoryId` union and
+`Category` row in `web/src/types/index.ts`/`web/src/data/categories.ts`,
+its entry in `web/src/components/ui/CategoryIcon.tsx`'s `ICONS` map, and
+its `category.<id>` key in `web/src/lib/i18n/translations.ts`; and a
+matching row in `backend/prisma/seed.ts`. `CategoryId.name.lowercase()`
+must equal the seeded `slug` exactly — `CategoryRepository.kt`'s
+`backendIdFor` relies on that match, with no separate ID-mapping table. A
+category only needs subcategories if it's `EXPENSE`-kind and the product
+actually wants that granularity; `INCOME`-kind categories (`salary`,
+`freelance`, `gift`) intentionally have none today.

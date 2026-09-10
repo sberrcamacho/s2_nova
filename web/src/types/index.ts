@@ -65,6 +65,7 @@ export type CategoryId =
   | 'subscriptions'
   | 'salary'
   | 'freelance'
+  | 'gift'
   | 'other'
 
 export interface Category {

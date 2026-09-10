@@ -14,6 +14,7 @@ export const categories: Category[] = [
   { id: 'subscriptions', label: 'Suscripciones', icon: 'RefreshCcw', color: '#D95DB2', kind: 'expense' },
   { id: 'salary', label: 'Salario', icon: 'Wallet', color: '#22A06B', kind: 'income' },
   { id: 'freelance', label: 'Freelance', icon: 'Laptop', color: '#6657E8', kind: 'income' },
+  { id: 'gift', label: 'Obsequio', icon: 'Gift', color: '#E85D9C', kind: 'income' },
   { id: 'other', label: 'Otros', icon: 'CircleEllipsis', color: '#9C9CAA', kind: 'both' },
 ]
 

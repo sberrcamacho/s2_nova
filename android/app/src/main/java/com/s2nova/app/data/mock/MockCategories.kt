@@ -18,6 +18,7 @@ val categories: List<Category> = listOf(
     Category(CategoryId.SUBSCRIPTIONS, "Suscripciones", "RefreshCcw", 0xFFD95DB2, isExpense = true, isIncome = false),
     Category(CategoryId.SALARY, "Salario", "Wallet", 0xFF22A06B, isExpense = false, isIncome = true),
     Category(CategoryId.FREELANCE, "Freelance", "Laptop", 0xFF6657E8, isExpense = false, isIncome = true),
+    Category(CategoryId.GIFT, "Obsequio", "Gift", 0xFFE85D9C, isExpense = false, isIncome = true),
     Category(CategoryId.OTHER, "Otros", "CircleEllipsis", 0xFF9C9CAA, isExpense = true, isIncome = true),
 )
 

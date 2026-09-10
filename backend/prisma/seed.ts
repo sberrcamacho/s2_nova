@@ -17,6 +17,7 @@ const categories: { slug: string; name: string; icon: string; color: string; kin
   { slug: "subscriptions", name: "Suscripciones", icon: "RefreshCcw", color: "#D95DB2", kind: CategoryKind.EXPENSE },
   { slug: "salary", name: "Salario", icon: "Wallet", color: "#22A06B", kind: CategoryKind.INCOME },
   { slug: "freelance", name: "Freelance", icon: "Laptop", color: "#6657E8", kind: CategoryKind.INCOME },
+  { slug: "gift", name: "Obsequio", icon: "Gift", color: "#E85D9C", kind: CategoryKind.INCOME },
   { slug: "other", name: "Otros", icon: "CircleEllipsis", color: "#9C9CAA", kind: CategoryKind.BOTH },
 ];
 

@@ -55,6 +55,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -184,7 +185,13 @@ fun AddTransactionScreen(
                                         type = txnType
                                         if (txnType != TransactionType.TRANSFER) {
                                             val pool = if (txnType == TransactionType.INCOME) incomeCategories else expenseCategories
-                                            if (categoryMap[category]?.let { it.isExpense != (txnType == TransactionType.EXPENSE) } != false) {
+                                            val meta = categoryMap[category]
+                                            val validForNewType = when (txnType) {
+                                                TransactionType.INCOME -> meta?.isIncome == true
+                                                TransactionType.EXPENSE -> meta?.isExpense == true
+                                                else -> true
+                                            }
+                                            if (!validForNewType) {
                                                 category = pool.first().id
                                                 subcategoryId = null
                                             }
@@ -214,6 +221,7 @@ fun AddTransactionScreen(
                         } else {
                             categoryMap[category]?.color?.let { Color(it) } ?: Color.White
                         }
+                        val selectedSubcategory = subcategoryId?.let { AppContainer.categoryRepository.subcategoryById(it) }
                         Box(
                             modifier = Modifier
                                 .size(56.dp)
@@ -224,18 +232,21 @@ fun AddTransactionScreen(
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
-                                imageVector = if (type == TransactionType.TRANSFER) Icons.Filled.SwapHoriz else iconFor(category),
+                                imageVector = when {
+                                    type == TransactionType.TRANSFER -> Icons.Filled.SwapHoriz
+                                    selectedSubcategory != null -> iconForSubcategory(selectedSubcategory.slug, category)
+                                    else -> iconFor(category)
+                                },
                                 contentDescription = null,
                                 tint = categoryColor,
                                 modifier = Modifier.size(26.dp),
                             )
                         }
                         Column(modifier = Modifier.padding(start = 14.dp).weight(1f)) {
-                            val subcategoryName = subcategoryId?.let { AppContainer.categoryRepository.subcategoryById(it)?.name }
                             Text(
                                 when {
                                     type == TransactionType.TRANSFER -> t(StringKey.ADD_TXN_TRANSFER)
-                                    subcategoryName != null -> "${t(categoryStringKey(category))} · $subcategoryName"
+                                    selectedSubcategory != null -> "${t(categoryStringKey(category))} · ${selectedSubcategory.name}"
                                     else -> t(categoryStringKey(category))
                                 },
                                 style = MaterialTheme.typography.bodySmall,
@@ -581,6 +592,7 @@ private fun SelectChip(label: String, selected: Boolean, onClick: () -> Unit) {
         style = MaterialTheme.typography.bodyMedium,
         color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
         maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
         modifier = Modifier
             .clip(RoundedCornerShape(50))
             .background(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
@@ -619,6 +631,7 @@ private fun CategoryGridItem(
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onBackground,
             maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(top = 6.dp),
         )
     }
@@ -653,6 +666,7 @@ private fun SubcategoryGridItem(
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onBackground,
             maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(top = 6.dp),
         )
     }

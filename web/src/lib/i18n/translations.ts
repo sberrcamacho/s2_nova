@@ -128,6 +128,7 @@ const dictionary = {
   "category.subscriptions": { es: "Suscripciones", en: "Subscriptions" },
   "category.salary": { es: "Salario", en: "Salary" },
   "category.freelance": { es: "Freelance", en: "Freelance" },
+  "category.gift": { es: "Obsequio", en: "Gift" },
   "category.other": { es: "Otros", en: "Other" },
 
   "paymentMethod.cash": { es: "Efectivo", en: "Cash" },

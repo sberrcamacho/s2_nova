@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Apartment
 import androidx.compose.material.icons.filled.Autorenew
+import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.Chair
 import androidx.compose.material.icons.filled.Checkroom
 import androidx.compose.material.icons.filled.Class
@@ -67,6 +68,7 @@ fun iconFor(category: CategoryId): ImageVector = when (category) {
     CategoryId.SUBSCRIPTIONS -> Icons.Filled.Autorenew
     CategoryId.SALARY -> Icons.Filled.AccountBalanceWallet
     CategoryId.FREELANCE -> Icons.Filled.Laptop
+    CategoryId.GIFT -> Icons.Filled.CardGiftcard
     CategoryId.OTHER -> Icons.Filled.MoreHoriz
 }
 

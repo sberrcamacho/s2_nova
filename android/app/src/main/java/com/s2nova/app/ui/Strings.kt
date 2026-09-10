@@ -41,7 +41,7 @@ enum class StringKey {
 
     CATEGORY_FOOD, CATEGORY_TRANSPORTATION, CATEGORY_SHOPPING, CATEGORY_HEALTH,
     CATEGORY_EDUCATION, CATEGORY_ENTERTAINMENT, CATEGORY_BILLS, CATEGORY_SUBSCRIPTIONS,
-    CATEGORY_SALARY, CATEGORY_FREELANCE, CATEGORY_OTHER,
+    CATEGORY_SALARY, CATEGORY_FREELANCE, CATEGORY_GIFT, CATEGORY_OTHER,
 
     PAYMENT_CASH, PAYMENT_DEBIT_CARD, PAYMENT_CREDIT_CARD, PAYMENT_BANK_TRANSFER,
     PAYMENT_NEQUI, PAYMENT_DAVIPLATA,
@@ -74,7 +74,7 @@ enum class StringKey {
     BUDGETS_EDIT_TITLE_PREFIX, BUDGETS_CREATE, BUDGETS_OF, BUDGETS_REMAINING, BUDGETS_OVER_LIMIT,
     BUDGET_STATUS_OVER, BUDGET_STATUS_NEAR, BUDGET_STATUS_ON_TRACK,
     BUDGETS_NAME_OPTIONAL, BUDGETS_NAME_PLACEHOLDER,
-    BUDGETS_DELETE, BUDGETS_DELETE_CONFIRM_TITLE, BUDGETS_DELETE_CONFIRM_BODY, BUDGETS_THEME_LABEL,
+    BUDGETS_DELETE, BUDGETS_DELETE_CONFIRM_TITLE, BUDGETS_DELETE_CONFIRM_BODY,
 
     ADD_TXN_TRANSFER, ADD_TXN_TRANSFER_TO, ADD_TXN_WALLET, ADD_TXN_MORE_OPTIONS,
     ADD_TXN_BUDGET, ADD_TXN_GOAL, ADD_TXN_NONE, ADD_TXN_UPCOMING, ADD_TXN_UPCOMING_HINT,
@@ -204,6 +204,7 @@ private val ES: Map<StringKey, String> = mapOf(
     StringKey.CATEGORY_SUBSCRIPTIONS to "Suscripciones",
     StringKey.CATEGORY_SALARY to "Salario",
     StringKey.CATEGORY_FREELANCE to "Freelance",
+    StringKey.CATEGORY_GIFT to "Obsequio",
     StringKey.CATEGORY_OTHER to "Otros",
 
     StringKey.PAYMENT_CASH to "Efectivo",
@@ -292,7 +293,6 @@ private val ES: Map<StringKey, String> = mapOf(
     StringKey.BUDGETS_DELETE to "Eliminar presupuesto",
     StringKey.BUDGETS_DELETE_CONFIRM_TITLE to "Eliminar presupuesto",
     StringKey.BUDGETS_DELETE_CONFIRM_BODY to "Se dejará de rastrear esta categoría. Esta acción no se puede deshacer.",
-    StringKey.BUDGETS_THEME_LABEL to "Ícono",
 
     StringKey.ADD_TXN_TRANSFER to "Transferencia",
     StringKey.ADD_TXN_TRANSFER_TO to "Transferir a",
@@ -515,6 +515,7 @@ private val EN: Map<StringKey, String> = mapOf(
     StringKey.CATEGORY_SUBSCRIPTIONS to "Subscriptions",
     StringKey.CATEGORY_SALARY to "Salary",
     StringKey.CATEGORY_FREELANCE to "Freelance",
+    StringKey.CATEGORY_GIFT to "Gift",
     StringKey.CATEGORY_OTHER to "Other",
 
     StringKey.PAYMENT_CASH to "Cash",
@@ -603,7 +604,6 @@ private val EN: Map<StringKey, String> = mapOf(
     StringKey.BUDGETS_DELETE to "Delete budget",
     StringKey.BUDGETS_DELETE_CONFIRM_TITLE to "Delete budget",
     StringKey.BUDGETS_DELETE_CONFIRM_BODY to "This category will stop being tracked. This action can't be undone.",
-    StringKey.BUDGETS_THEME_LABEL to "Icon",
 
     StringKey.ADD_TXN_TRANSFER to "Transfer",
     StringKey.ADD_TXN_TRANSFER_TO to "Transfer to",
@@ -766,6 +766,7 @@ fun categoryStringKey(id: CategoryId): StringKey = when (id) {
     CategoryId.SUBSCRIPTIONS -> StringKey.CATEGORY_SUBSCRIPTIONS
     CategoryId.SALARY -> StringKey.CATEGORY_SALARY
     CategoryId.FREELANCE -> StringKey.CATEGORY_FREELANCE
+    CategoryId.GIFT -> StringKey.CATEGORY_GIFT
     CategoryId.OTHER -> StringKey.CATEGORY_OTHER
 }
 
