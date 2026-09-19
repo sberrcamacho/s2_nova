@@ -9,6 +9,8 @@ function serializeMe(user: {
   id: string;
   name: string;
   email: string;
+  phone: string | null;
+  city: string | null;
   createdAt: Date;
   authIdentities: { provider: string }[];
   preferences: {
@@ -17,6 +19,8 @@ function serializeMe(user: {
     theme: string;
     notifications: boolean;
     biometricLogin: boolean;
+    blurBalance: boolean;
+    autoLockMinutes: number;
     onboardingCompletedAt: Date | null;
     tutorialCompletedAt: Date | null;
   } | null;
@@ -25,6 +29,8 @@ function serializeMe(user: {
     id: user.id,
     name: user.name,
     email: user.email,
+    phone: user.phone,
+    city: user.city,
     createdAt: user.createdAt,
     hasPassword: user.authIdentities.some((identity) => identity.provider === "PASSWORD"),
     preferences: user.preferences
@@ -34,6 +40,8 @@ function serializeMe(user: {
           theme: user.preferences.theme,
           notifications: user.preferences.notifications,
           biometricLogin: user.preferences.biometricLogin,
+          blurBalance: user.preferences.blurBalance,
+          autoLockMinutes: user.preferences.autoLockMinutes,
           onboardingCompleted: user.preferences.onboardingCompletedAt !== null,
           tutorialCompleted: user.preferences.tutorialCompletedAt !== null,
         }
@@ -44,6 +52,8 @@ function serializeMe(user: {
 const updateProfileSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
   email: z.string().trim().email().optional(),
+  phone: z.string().trim().max(30).optional(),
+  city: z.string().trim().max(80).optional(),
   currentPassword: z.string().min(1).optional(),
 });
 
@@ -52,14 +62,29 @@ const setPasswordSchema = z.object({
   newPassword: z.string().min(6).max(200),
 });
 
+// 0 stands for "Nunca"/Never (no auto-lock) — mirrors the mockup's
+// LOCK_OPTS, and keeps the column a plain non-nullable Int rather than
+// needing a separate "enabled" flag alongside it.
+const AUTO_LOCK_MINUTE_OPTIONS = [0, 1, 5, 15, 60] as const;
+
 const updatePreferencesSchema = z.object({
   language: z.string().min(2).max(5).optional(),
   currency: z.enum(["COP", "USD"]).optional(),
   theme: z.enum(["LIGHT", "DARK", "SYSTEM"]).optional(),
   notifications: z.boolean().optional(),
   biometricLogin: z.boolean().optional(),
+  blurBalance: z.boolean().optional(),
+  autoLockMinutes: z
+    .number()
+    .int()
+    .refine((v) => (AUTO_LOCK_MINUTE_OPTIONS as readonly number[]).includes(v))
+    .optional(),
   onboardingCompleted: z.boolean().optional(),
   tutorialCompleted: z.boolean().optional(),
+});
+
+const verifyPasswordSchema = z.object({
+  password: z.string().min(1),
 });
 
 // First protected routes — GET /me exists since Phase 3 to prove the
@@ -121,6 +146,8 @@ export async function meRoutes(app: FastifyInstance) {
         data: {
           name: body.name,
           email: body.email?.toLowerCase(),
+          phone: body.phone,
+          city: body.city,
         },
         include: { preferences: true, authIdentities: { where: { provider: "PASSWORD" }, select: { provider: true } } },
       });
@@ -172,6 +199,29 @@ export async function meRoutes(app: FastifyInstance) {
     },
   );
 
+  // A standalone "is this still you?" re-auth check for the app's
+  // auto-lock overlay (see android/.../ui/components/AppLockGate.kt) — it
+  // must never mutate account state or rotate tokens the way POST
+  // /me/password and POST /auth/login do, since it's called on every
+  // unlock attempt, not just an intentional password change.
+  app.post(
+    "/me/verify-password",
+    { preHandler: app.authenticate, config: { rateLimit: ACCOUNT_RATE_LIMIT } },
+    async (request, reply) => {
+      const body = verifyPasswordSchema.parse(request.body);
+
+      const identity = await prisma.authIdentity.findUnique({
+        where: { userId_provider: { userId: request.userId!, provider: "PASSWORD" } },
+      });
+
+      if (!identity || !identity.credentialHash || !(await verifyPassword(identity.credentialHash, body.password))) {
+        return reply.status(401).send({ error: "Incorrect password." });
+      }
+
+      return reply.status(204).send();
+    },
+  );
+
   app.patch("/me/preferences", { preHandler: app.authenticate }, async (request, reply) => {
     const body = updatePreferencesSchema.parse(request.body);
 
@@ -184,6 +234,8 @@ export async function meRoutes(app: FastifyInstance) {
         theme: body.theme,
         notifications: body.notifications,
         biometricLogin: body.biometricLogin,
+        blurBalance: body.blurBalance,
+        autoLockMinutes: body.autoLockMinutes,
         onboardingCompletedAt: body.onboardingCompleted ? new Date() : undefined,
         tutorialCompletedAt: body.tutorialCompleted ? new Date() : undefined,
       },
@@ -193,6 +245,8 @@ export async function meRoutes(app: FastifyInstance) {
         theme: body.theme,
         notifications: body.notifications,
         biometricLogin: body.biometricLogin,
+        blurBalance: body.blurBalance,
+        autoLockMinutes: body.autoLockMinutes,
         onboardingCompletedAt: body.onboardingCompleted === undefined ? undefined : body.onboardingCompleted ? new Date() : null,
         tutorialCompletedAt: body.tutorialCompleted === undefined ? undefined : body.tutorialCompleted ? new Date() : null,
       },

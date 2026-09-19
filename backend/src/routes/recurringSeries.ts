@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { addInterval, parseDateOnly } from "../lib/dates.js";
 import { prisma } from "../lib/prisma.js";
+import { dateOnlySchema } from "../lib/validation.js";
 import { paymentMethodForAccountType } from "./transactions.js";
 
 // Recurring definitions ("Netflix, $45,000/month") — see schema.prisma's
@@ -12,7 +13,7 @@ import { paymentMethodForAccountType } from "./transactions.js";
 
 const intervalEnum = z.enum(["WEEKLY", "MONTHLY", "YEARLY"]);
 const seriesTypeEnum = z.enum(["INCOME", "EXPENSE"]);
-const dateOnly = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const dateOnly = dateOnlySchema;
 
 const createSeriesSchema = z.object({
   name: z.string().trim().min(1).max(120),
@@ -26,7 +27,12 @@ const createSeriesSchema = z.object({
 
 const updateSeriesSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
+  type: seriesTypeEnum.optional(),
   amount: z.number().int().positive().optional(),
+  accountId: z.string().uuid().optional(),
+  categoryId: z.string().uuid().optional(),
+  interval: intervalEnum.optional(),
+  nextOccurrenceDate: dateOnly.optional(),
   active: z.boolean().optional(),
 });
 
@@ -107,15 +113,36 @@ export async function recurringSeriesRoutes(app: FastifyInstance) {
   app.patch("/recurring-series/:id", { preHandler: app.authenticate }, async (request, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
     const body = updateSeriesSchema.parse(request.body);
+    const userId = request.userId!;
 
-    const existing = await prisma.recurringSeries.findFirst({ where: { id, userId: request.userId } });
+    const existing = await prisma.recurringSeries.findFirst({ where: { id, userId } });
     if (!existing) return reply.status(404).send({ error: "Recurring series not found." });
+
+    // Changing wallet re-derives paymentMethod from the new wallet's type,
+    // same as creation — a series' payment method must never disagree with
+    // the wallet it's actually on.
+    let paymentMethod: ReturnType<typeof paymentMethodForAccountType> | undefined;
+    if (body.accountId) {
+      const account = await prisma.account.findFirst({ where: { id: body.accountId, userId } });
+      if (!account) return reply.status(422).send({ error: "Unknown wallet." });
+      paymentMethod = paymentMethodForAccountType(account.type);
+    }
+    if (body.categoryId) {
+      const category = await prisma.category.findFirst({ where: { id: body.categoryId, OR: [{ userId: null }, { userId }] } });
+      if (!category) return reply.status(422).send({ error: "Unknown category." });
+    }
 
     const series = await prisma.recurringSeries.update({
       where: { id },
       data: {
         name: body.name,
+        type: body.type,
         amountMinor: body.amount !== undefined ? BigInt(body.amount) : undefined,
+        accountId: body.accountId,
+        categoryId: body.categoryId,
+        paymentMethod,
+        interval: body.interval,
+        nextOccurrenceDate: body.nextOccurrenceDate ? parseDateOnly(body.nextOccurrenceDate) : undefined,
         active: body.active,
       },
     });

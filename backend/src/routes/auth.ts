@@ -161,6 +161,19 @@ export async function authRoutes(app: FastifyInstance) {
         });
         userId = linkableUser.id;
       } else {
+        // An UNVERIFIED Google email can't auto-link (see the comment
+        // above — anyone can claim an unverified email at Google), but a
+        // `users.email` row for it may already exist from a different
+        // account. Attempting to INSERT a second user with that same email
+        // would hit the column's unique constraint and 500 instead of
+        // failing cleanly, so check for it explicitly and reject with 409.
+        const emailTaken = await prisma.user.findUnique({ where: { email: identity.email } });
+        if (emailTaken) {
+          return reply.status(409).send({
+            error: "An account with that email already exists. Sign in with your password, or verify this email with Google first.",
+          });
+        }
+
         const created = await prisma.user.create({
           data: {
             name: identity.name,
@@ -189,7 +202,24 @@ export async function authRoutes(app: FastifyInstance) {
     const tokenHash = hashRefreshToken(presentedToken);
     const stored = await prisma.refreshToken.findUnique({ where: { tokenHash } });
 
-    if (!stored || stored.revokedAt || stored.expiresAt < new Date()) {
+    if (!stored) {
+      return reply.status(401).send({ error: "Refresh token is invalid or expired." });
+    }
+
+    if (stored.revokedAt) {
+      // Presenting an already-revoked (but not expired) token means either
+      // a stale client retried an old refresh, or someone else is replaying
+      // a stolen one — standard rotation-reuse-detection mitigation is to
+      // treat it as compromise and revoke every other active session for
+      // this user too, not just reject this one request.
+      await prisma.refreshToken.updateMany({
+        where: { userId: stored.userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+      return reply.status(401).send({ error: "Refresh token is invalid or expired." });
+    }
+
+    if (stored.expiresAt < new Date()) {
       return reply.status(401).send({ error: "Refresh token is invalid or expired." });
     }
 

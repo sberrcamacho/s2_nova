@@ -3,13 +3,14 @@ import type { Prisma, PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import { parseDateOnly } from "../lib/dates.js";
 import { prisma } from "../lib/prisma.js";
+import { dateOnlySchema } from "../lib/validation.js";
 
 type Tx = Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">;
 
 const transactionTypeEnum = z.enum(["INCOME", "EXPENSE", "TRANSFER"]);
 const transactionStatusEnum = z.enum(["COMPLETED", "PLANNED"]);
 const loanKindEnum = z.enum(["LENT", "BORROWED"]);
-const dateOnly = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const dateOnly = dateOnlySchema;
 
 // A transaction's payment method is never chosen by the client — it's
 // derived from its wallet's AccountType, so "which wallet" and "how it was
@@ -63,6 +64,10 @@ const createTransactionSchema = z
   .refine((data) => !data.transferToAccountId || data.transferToAccountId !== data.accountId, {
     message: "transferToAccountId must differ from accountId.",
     path: ["transferToAccountId"],
+  })
+  .refine((data) => !data.loanKind || data.type === (data.loanKind === "LENT" ? "EXPENSE" : "INCOME"), {
+    message: "loanKind LENT requires type EXPENSE, and BORROWED requires type INCOME.",
+    path: ["loanKind"],
   });
 
 // accountId/type/transferToAccountId are fixed at creation — changing the
@@ -79,6 +84,12 @@ const updateTransactionSchema = z.object({
   budgetId: z.string().uuid().nullable().optional(),
   goalId: z.string().uuid().nullable().optional(),
   status: transactionStatusEnum.optional(),
+  // Loan edits only — the account a Lent/Borrowed record lives in, and its
+  // direction (which flips `type` too: LENT↔EXPENSE, BORROWED↔INCOME). See
+  // the PATCH handler below for why this composes safely with the existing
+  // reverse-then-reapply balance logic.
+  accountId: z.string().uuid().optional(),
+  loanKind: loanKindEnum.optional(),
   counterpartyName: z.string().trim().min(1).max(120).nullable().optional(),
   dueDate: dateOnly.nullable().optional(),
   description: z.string().trim().min(1).max(200).optional(),
@@ -155,6 +166,7 @@ function serializeTransaction(row: {
   dueDate: Date | null;
   loanSettledAt: Date | null;
   settledByTransactionId: string | null;
+  parentLoanId: string | null;
   paymentMethod: string;
   description: string;
   merchant: string | null;
@@ -181,6 +193,7 @@ function serializeTransaction(row: {
     dueDate: row.dueDate,
     loanSettledAt: row.loanSettledAt,
     settledByTransactionId: row.settledByTransactionId,
+    parentLoanId: row.parentLoanId,
     paymentMethod: row.paymentMethod,
     description: row.description,
     merchant: row.merchant,
@@ -316,13 +329,27 @@ export async function transactionRoutes(app: FastifyInstance) {
     if (body.categoryId) await assertOwned(userId, "category", body.categoryId);
     if (body.budgetId) await assertOwned(userId, "budget", body.budgetId);
     if (body.goalId) await assertOwned(userId, "goal", body.goalId);
+    if (body.accountId) await assertOwned(userId, "account", body.accountId);
     if (body.subcategoryId) {
       await assertValidSubcategory(userId, body.subcategoryId, body.categoryId ?? existing.categoryId);
+    }
+    if (body.loanKind && !existing.loanKind) {
+      return reply.status(422).send({ error: "This transaction isn't a Lent/Borrowed record." });
+    }
+    // transferToAccountId itself isn't PATCH-able, but accountId is (for
+    // loan-record edits) — without this check, patching accountId to equal
+    // a TRANSFER's existing (immutable) transferToAccountId would silently
+    // net the balance effect to zero (applyBalanceEffect decrements then
+    // increments the same account) while still storing a nonsensical
+    // same-account transfer.
+    if (existing.type === "TRANSFER" && body.accountId && body.accountId === existing.transferToAccountId) {
+      return reply.status(422).send({ error: "accountId must differ from this transfer's destination account." });
     }
 
     const nextAmount = body.amount !== undefined ? BigInt(body.amount) : existing.amountMinor;
     const nextStatus = body.status ?? existing.status;
     const nextDate = body.date ? parseDateOnly(body.date) : existing.transactionDate;
+    const nextType = body.loanKind ? (body.loanKind === "LENT" ? "EXPENSE" : "INCOME") : existing.type;
 
     const updated = await prisma.$transaction(async (tx) => {
       if (existing.status === "COMPLETED") {
@@ -348,6 +375,9 @@ export async function transactionRoutes(app: FastifyInstance) {
           budgetId: body.budgetId,
           goalId: body.goalId,
           status: nextStatus,
+          accountId: body.accountId,
+          loanKind: body.loanKind,
+          type: nextType,
           counterpartyName: body.counterpartyName,
           dueDate: body.dueDate === undefined ? undefined : body.dueDate ? parseDateOnly(body.dueDate) : null,
           description: body.description,
@@ -378,7 +408,9 @@ export async function transactionRoutes(app: FastifyInstance) {
   // so it can't be double-counted.
   app.post("/transactions/:id/settle-loan", { preHandler: app.authenticate }, async (request, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
-    const body = z.object({ date: dateOnly.optional() }).parse(request.body ?? {});
+    const body = z
+      .object({ date: dateOnly.optional(), amount: z.number().int().positive().optional(), accountId: z.string().uuid().optional() })
+      .parse(request.body ?? {});
     const userId = request.userId!;
 
     const existing = await prisma.transaction.findFirst({ where: { id, userId } });
@@ -388,9 +420,17 @@ export async function transactionRoutes(app: FastifyInstance) {
     if (!existing.loanKind) {
       return reply.status(422).send({ error: "This transaction isn't a Lent/Borrowed record." });
     }
+    // A PLANNED loan was never disbursed/received — it never called
+    // applyBalanceEffect, so settling it would still create a real,
+    // balance-affecting settlement transaction for money that never
+    // actually moved.
+    if (existing.status !== "COMPLETED") {
+      return reply.status(422).send({ error: "This loan hasn't been confirmed yet — nothing to settle." });
+    }
     if (existing.loanSettledAt) {
       return reply.status(409).send({ error: "This loan has already been settled." });
     }
+    if (body.accountId) await assertOwned(userId, "account", body.accountId);
 
     // LENT was money leaving your wallet (EXPENSE) — repayment brings it
     // back (INCOME). BORROWED was money entering your wallet (INCOME) —
@@ -406,18 +446,40 @@ export async function transactionRoutes(app: FastifyInstance) {
         : "Pago de préstamo realizado";
 
     const result = await prisma.$transaction(async (tx) => {
+      // Row-lock the original loan for the duration of this transaction so
+      // two concurrent settle-loan calls (e.g. a double-submit) can't both
+      // read the same `paidSoFar` before either writes — without this, both
+      // could pass the `<= outstanding` check below and jointly overpay.
+      // Partial repayments are tracked as their own settlement rows linked
+      // by parentLoanId (see schema.prisma) rather than a running "paid"
+      // column, so `outstanding` has to be a live sum read under this lock,
+      // not something computed once outside the transaction.
+      await tx.$queryRaw`SELECT id FROM transactions WHERE id = ${existing.id} FOR UPDATE`;
+
+      const paidSoFar = await tx.transaction.aggregate({
+        where: { parentLoanId: existing.id },
+        _sum: { amountMinor: true },
+      });
+      const outstandingMinor = existing.amountMinor - (paidSoFar._sum.amountMinor ?? BigInt(0));
+      const amountMinor = body.amount !== undefined ? BigInt(body.amount) : outstandingMinor;
+      if (amountMinor <= BigInt(0) || amountMinor > outstandingMinor) {
+        throw Object.assign(new Error("Invalid settlement amount."), { statusCode: 422 });
+      }
+      const isFinalPayment = amountMinor === outstandingMinor;
+
       const settlement = await tx.transaction.create({
         data: {
           userId,
-          accountId: existing.accountId,
+          accountId: body.accountId ?? existing.accountId,
           type: settlementType,
           status: "COMPLETED",
-          amountMinor: existing.amountMinor,
+          amountMinor,
           categoryId: existing.categoryId,
           paymentMethod: existing.paymentMethod,
           description,
           counterpartyName: existing.counterpartyName,
           transactionDate: settlementDate,
+          parentLoanId: existing.id,
         },
       });
 
@@ -427,10 +489,12 @@ export async function transactionRoutes(app: FastifyInstance) {
         1,
       );
 
-      const updatedOriginal = await tx.transaction.update({
-        where: { id: existing.id },
-        data: { loanSettledAt: new Date(), settledByTransactionId: settlement.id },
-      });
+      const updatedOriginal = isFinalPayment
+        ? await tx.transaction.update({
+            where: { id: existing.id },
+            data: { loanSettledAt: new Date(), settledByTransactionId: settlement.id },
+          })
+        : existing;
 
       return { settlement, updatedOriginal };
     });

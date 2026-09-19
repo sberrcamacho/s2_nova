@@ -130,6 +130,8 @@ model User {
   id              String    @id @default(uuid())
   name            String
   email           String    @unique
+  phone           String?
+  city            String?
   emailVerifiedAt DateTime? @map("email_verified_at")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
@@ -190,6 +192,8 @@ model UserPreferences {
   theme                 ThemePreference @default(SYSTEM)
   notifications         Boolean         @default(true)
   biometricLogin        Boolean         @default(false) @map("biometric_login")
+  blurBalance           Boolean         @default(false) @map("blur_balance")
+  autoLockMinutes       Int             @default(5) @map("auto_lock_minutes")
   onboardingCompletedAt DateTime?       @map("onboarding_completed_at")
   tutorialCompletedAt   DateTime?       @map("tutorial_completed_at")
   updatedAt             DateTime        @updatedAt @map("updated_at")
@@ -312,6 +316,13 @@ model Transaction {
   // reflects the money coming back (LENT) or going out (BORROWED) without
   // touching or duplicating this original row.
   settledByTransactionId String?           @unique @map("settled_by_transaction_id")
+  // Set on every settlement transaction created by POST
+  // /transactions/:id/settle-loan (partial or final) — points back at the
+  // original Lent/Borrowed row. `paid` for a loan is the sum of every
+  // transaction with parentLoanId = that loan's id, which is how partial
+  // repayments are tracked without a running balance column that could
+  // drift out of sync with the settlement transactions themselves.
+  parentLoanId           String?           @map("parent_loan_id")
   paymentMethod          PaymentMethod     @map("payment_method")
   description            String
   merchant               String?
@@ -331,6 +342,8 @@ model Transaction {
   recurringSeries         RecurringSeries? @relation(fields: [recurringSeriesId], references: [id], onDelete: SetNull)
   settledByTransaction    Transaction?     @relation("LoanSettlement", fields: [settledByTransactionId], references: [id], onDelete: SetNull)
   originalLoanTransaction Transaction?     @relation("LoanSettlement")
+  parentLoan              Transaction?     @relation("LoanPartialSettlements", fields: [parentLoanId], references: [id], onDelete: SetNull)
+  partialSettlements      Transaction[]    @relation("LoanPartialSettlements")
 
   @@index([userId, transactionDate])
   @@index([accountId])
@@ -338,6 +351,7 @@ model Transaction {
   @@index([goalId])
   @@index([recurringSeriesId])
   @@index([subcategoryId])
+  @@index([parentLoanId])
   @@map("transactions")
 }
 
@@ -434,8 +448,13 @@ model Goal {
   name              String
   targetAmountMinor BigInt    @map("target_amount_minor")
   targetDate        DateTime? @map("target_date") @db.Date
-  // Optional cosmetic pick from the same fixed palette as Budget.themeIcon —
-  // purely visual, Goal has no category of its own to derive an icon from.
+  // A goal's own category (Emergency, Travel, ...) — distinct from the
+  // shared decorative Budget/Goal theme palette and from the transaction
+  // Category table, since a goal describes what it's *for*, not what it's
+  // spent on. Kept in the same column/name for backward compatibility, but
+  // validated against GOAL_CATEGORY_IDS (see src/lib/goalCategories.ts),
+  // not BUDGET_GOAL_THEME_IDS. Budget.themeIcon (below) still uses the
+  // generic decorative palette.
   themeIcon         String?   @map("theme_icon")
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")

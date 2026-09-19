@@ -24,10 +24,42 @@ export function monthKeyOf(date: Date): string {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
+// Last valid UTC day-of-month for `year`/`month` (0-indexed month, same as
+// Date's own convention) — day 0 of the *following* month is always the
+// last day of `month`.
+function lastDayOfUtcMonth(year: number, month: number): number {
+  return new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+}
+
+// `Date.prototype.setUTCMonth`/`setUTCFullYear` silently overflow into the
+// next month when the target month has fewer days than `date`'s
+// day-of-month (e.g. Jan 31 + 1 month natively becomes Mar 3, skipping
+// February entirely instead of landing on Feb 28) — a real bug for a
+// MONTHLY/YEARLY RecurringSeries, which would permanently drift off its
+// original day. Clamp to the target month's last valid day instead, the
+// standard "add a calendar interval" semantics (also matches how most
+// billing systems handle a monthly charge anchored to day 29-31).
 export function addInterval(date: Date, interval: "WEEKLY" | "MONTHLY" | "YEARLY"): Date {
-  const result = new Date(date);
-  if (interval === "WEEKLY") result.setUTCDate(result.getUTCDate() + 7);
-  if (interval === "MONTHLY") result.setUTCMonth(result.getUTCMonth() + 1);
-  if (interval === "YEARLY") result.setUTCFullYear(result.getUTCFullYear() + 1);
-  return result;
+  if (interval === "WEEKLY") {
+    const result = new Date(date);
+    result.setUTCDate(result.getUTCDate() + 7);
+    return result;
+  }
+
+  const day = date.getUTCDate();
+  const targetYear = interval === "YEARLY" ? date.getUTCFullYear() + 1 : date.getUTCFullYear();
+  const targetMonth = interval === "YEARLY" ? date.getUTCMonth() : date.getUTCMonth() + 1;
+  const clampedDay = Math.min(day, lastDayOfUtcMonth(targetYear, targetMonth));
+
+  return new Date(
+    Date.UTC(
+      targetYear,
+      targetMonth,
+      clampedDay,
+      date.getUTCHours(),
+      date.getUTCMinutes(),
+      date.getUTCSeconds(),
+      date.getUTCMilliseconds(),
+    ),
+  );
 }

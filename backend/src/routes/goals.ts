@@ -1,29 +1,23 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { BUDGET_GOAL_THEME_IDS } from "../lib/budgetGoalThemes.js";
+import { GOAL_CATEGORY_IDS } from "../lib/goalCategories.js";
 import { paymentMethodForAccountType } from "./transactions.js";
 import { prisma } from "../lib/prisma.js";
+import { dateOnlySchema } from "../lib/validation.js";
 
-const themeIconSchema = z.enum(BUDGET_GOAL_THEME_IDS);
+const themeIconSchema = z.enum(GOAL_CATEGORY_IDS);
 
 const createGoalSchema = z.object({
   name: z.string().trim().min(1).max(80),
   targetAmount: z.number().int().positive(),
-  targetDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/)
-    .optional(),
+  targetDate: dateOnlySchema.optional(),
   themeIcon: themeIconSchema.optional(),
 });
 
 const updateGoalSchema = z.object({
   name: z.string().trim().min(1).max(80).optional(),
   targetAmount: z.number().int().positive().optional(),
-  targetDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/)
-    .nullable()
-    .optional(),
+  targetDate: dateOnlySchema.nullable().optional(),
   themeIcon: themeIconSchema.nullable().optional(),
 });
 

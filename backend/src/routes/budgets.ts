@@ -3,8 +3,8 @@ import { z } from "zod";
 import { currentMonthKey, monthEnd, monthStart } from "../lib/dates.js";
 import { BUDGET_GOAL_THEME_IDS } from "../lib/budgetGoalThemes.js";
 import { prisma } from "../lib/prisma.js";
+import { monthKeySchema } from "../lib/validation.js";
 
-const monthKeySchema = z.string().regex(/^\d{4}-\d{2}$/);
 const themeIconSchema = z.enum(BUDGET_GOAL_THEME_IDS);
 
 const createBudgetSchema = z.object({
@@ -52,6 +52,29 @@ async function computeSpent(userId: string, budget: { id: string; categoryId: st
     select: { amountMinor: true },
   });
   return rows.reduce((sum, row) => sum + row.amountMinor, 0n);
+}
+
+// Splits `total` into integer amounts proportional to `percentages`
+// (summing to ~100) that themselves sum EXACTLY to `total` — three
+// independent `Math.round`s (the previous implementation) can under/
+// overshoot the total by a few units (e.g. splitting 100 into 33.3/33.3/
+// 33.4 rounds to 33/33/33 = 99, losing 1). This is the standard
+// largest-remainder allocation: floor every share, then hand the leftover
+// units to the shares with the largest fractional remainder, in order.
+function allocateByPercentage(total: number, percentages: number[]): number[] {
+  const raw = percentages.map((pct) => (total * pct) / 100);
+  const floors = raw.map(Math.floor);
+  const remainders = raw.map((value, index) => ({ index, fraction: value - floors[index]! }));
+  let leftover = total - floors.reduce((sum, value) => sum + value, 0);
+
+  remainders.sort((a, b) => b.fraction - a.fraction);
+  const amounts = [...floors];
+  for (const { index } of remainders) {
+    if (leftover <= 0) break;
+    amounts[index]! += 1;
+    leftover -= 1;
+  }
+  return amounts;
 }
 
 async function serializeBudget(userId: string, budget: {
@@ -106,6 +129,18 @@ export async function budgetRoutes(app: FastifyInstance) {
       return reply.status(422).send({ error: "Unknown category." });
     }
 
+    const startDate = monthStart(body.month ?? currentMonthKey());
+    // Nothing else stops two Budget rows for the same category/month, and
+    // computeSpent's fallback (unlinked transactions matched by
+    // category+month) would then count the same spend toward both budgets
+    // at once — reject the duplicate instead of silently double-counting.
+    const duplicate = await prisma.budget.findFirst({
+      where: { userId: request.userId, categoryId: body.categoryId, startDate },
+    });
+    if (duplicate) {
+      return reply.status(409).send({ error: "A budget for this category and month already exists." });
+    }
+
     const budget = await prisma.budget.create({
       data: {
         userId: request.userId!,
@@ -113,7 +148,7 @@ export async function budgetRoutes(app: FastifyInstance) {
         categoryId: body.categoryId,
         amountMinor: BigInt(body.amount),
         period: "MONTHLY",
-        startDate: monthStart(body.month ?? currentMonthKey()),
+        startDate,
         themeIcon: body.themeIcon,
       },
     });
@@ -162,7 +197,11 @@ export async function budgetRoutes(app: FastifyInstance) {
   // explicit user action via the normal POST /budgets endpoint.
   app.post("/budgets/recommendations", { preHandler: app.authenticate }, async (request, reply) => {
     const body = recommendationSchema.parse(request.body);
-    if (body.needsPct + body.wantsPct + body.savingsPct !== 100) {
+    // A plain `!== 100` equality check on floats rejects mathematically-
+    // valid splits due to binary floating-point representation (e.g.
+    // 33.33 + 33.33 + 33.34 can fail to land on exactly 100) — compare
+    // within a small epsilon instead.
+    if (Math.abs(body.needsPct + body.wantsPct + body.savingsPct - 100) > 0.01) {
       return reply.status(422).send({ error: "needsPct + wantsPct + savingsPct must total 100." });
     }
 
@@ -177,6 +216,12 @@ export async function budgetRoutes(app: FastifyInstance) {
       },
     });
 
+    const [needsAmount, wantsAmount, savingsAmount] = allocateByPercentage(Number(body.monthlyIncome), [
+      body.needsPct,
+      body.wantsPct,
+      body.savingsPct,
+    ]);
+
     reply.status(201);
     return {
       id: recommendation.id,
@@ -185,9 +230,9 @@ export async function budgetRoutes(app: FastifyInstance) {
       wantsPct: recommendation.wantsPct,
       savingsPct: recommendation.savingsPct,
       basedOnIncome: recommendation.basedOnIncomeMinor,
-      needsAmount: Math.round((Number(body.monthlyIncome) * body.needsPct) / 100),
-      wantsAmount: Math.round((Number(body.monthlyIncome) * body.wantsPct) / 100),
-      savingsAmount: Math.round((Number(body.monthlyIncome) * body.savingsPct) / 100),
+      needsAmount,
+      wantsAmount,
+      savingsAmount,
       acceptedAt: recommendation.acceptedAt,
       createdAt: recommendation.createdAt,
     };
