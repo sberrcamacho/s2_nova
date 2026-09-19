@@ -1,14 +1,42 @@
-# Handoff: S2 Nova — Overview redesign + full web dashboard
+# Handoff: S2 Nova — app Android + dashboard web
+
+## ⚠ La interfaz debe quedar IDÉNTICA a los mockups
+
+Esto no es una guía de inspiración ni un punto de partida. Los archivos `.dc.html` de este
+paquete son el diseño de récord y la app debe reproducirlos **exactamente**: cada medida,
+radio, color, peso tipográfico, texto, estado vacío, orden de secciones y transición.
+
+- Si una tabla dice 13.5px / ExtraBold / `-0.02em`, es ese valor, no "algo parecido".
+- Si un texto dice "Aún no tienes presupuestos. Crea el primero y se asignará una
+  categoría según el nombre.", va literal.
+- Si un elemento no está en el mockup, no se agrega. Nada de secciones, tarjetas, iconos ni
+  copy de relleno inventados.
+- Ante cualquier duda, **abre el `.dc.html` en un navegador y míralo**. El archivo manda sobre
+  cualquier interpretación de esta documentación.
+
+**Única excepción:** el selector Dark/Light que rodea el teléfono en el mockup de Android no se
+implementa. Es el control del prototipo para poder revisar ambos temas en una sola página, no
+parte del producto: es una app móvil y sigue el tema del sistema. Ambos temas sí deben verse
+idénticos a como los muestra el mockup en cada posición del selector.
 
 ## Overview
 
-A redesign of the S2 Nova web dashboard (`web/` in `sberrcamacho/s2_nova`), starting from the
-Overview page and extended across all seven nav destinations. The core move is
-**balance-first**: one large gradient hero owns the current balance and its six-month trend,
-the three secondary metrics collapse into a compact stacked column, and the five financial-health
-checks become a readable one-per-row list instead of five side-by-side cards.
+Dos entregables que comparten tokens, categorías y modelo de datos:
 
-Target: replace / restyle `web/src/dashboard/pages/*.tsx` and `web/src/dashboard/components/Sidebar.tsx`.
+1. **App Android** (`S2 Nova Android.dc.html`) — la app completa: Login, Inicio, Reportes,
+   Movimientos, Nuevo movimiento, Planes (Presupuestos · Metas · Préstamos) y Perfil con sus
+   tres destinos (Billeteras, Recurrentes, Ajustes), más once hojas modales. Es el prototipo
+   más avanzado y el que tiene toda la interacción real: CRUD completo de presupuestos, metas,
+   préstamos, billeteras y series recurrentes; notificaciones derivadas del estado; selector de
+   fecha con calendario; y los ajustes de privacidad y sesión.
+2. **Dashboard web** (`S2 Nova Dashboard.dc.html`) — rediseño de `web/` partiendo de Overview y
+   extendido a las siete destinaciones de navegación. El eje es **balance-first**.
+
+Para Android, lee `ANDROID.md` (cómo se ve) y `INTERACCIONES.md` (qué hace, estado y flujos).
+El resto de este README documenta el dashboard web.
+
+Target web: reemplazar / re-estilar `web/src/dashboard/pages/*.tsx` y
+`web/src/dashboard/components/Sidebar.tsx`.
 
 ## About the Design Files
 
@@ -27,7 +55,7 @@ existing services (`analyticsService`, `insightsService`, `budgetService`, `goal
 `recurringService`, `accountService`) and every label goes through `useTranslation()` /
 `useCurrency()`. No hardcoded strings, no hardcoded currency formatting.
 
-## Fidelity
+## Fidelity (web)
 
 **High-fidelity.** Final colors, typography, spacing, and interaction states. Recreate pixel-for-pixel
 using the codebase's tokens and components. Only the copy inside cards is placeholder-real: it was
@@ -35,17 +63,34 @@ written to match what the services actually compute, but it is not literal servi
 
 ## Files
 
-- `S2 Nova Dashboard.dc.html` — the main prototype: all 7 screens, clickable nav, working Analytics
-  tabs and range switcher, working Settings toggles. **This is the design of record.**
-- `S2 Nova Overview (options).dc.html` — the three explored Overview directions (`1a` balance-first,
-  `1b` dense analytical, `1c` editorial) plus a mobile screen (`1d`). `1a` was chosen and became the
-  main prototype. Keep for context on what was rejected and why.
-- `support.js` — runtime for the two `.dc.html` files. Needed only to open them locally; not part of the design.
-- `assets/logo-mark-dark.png` — the real logo tile, taken from `web/src/assets/logo-mark-dark.png`.
+**Android**
 
-Open either HTML file directly in a browser.
+- `S2 Nova Android.dc.html` — **el diseño de récord de la app móvil.** Interactivo: recorre
+  los flujos antes de escribir código.
+- `ANDROID.md` — tokens, tipografía, geometría y descripción pantalla por pantalla, en dp.
+- `INTERACCIONES.md` — modelo de estado, CRUD, validaciones, navegación y hojas modales.
+- `S2 Nova Android Light.dc.html` — variante clara previa; el archivo principal ya trae los dos
+  temas, así que este queda solo como referencia histórica.
 
-## Design Tokens
+**Web**
+
+- `S2 Nova Dashboard.dc.html` — el prototipo web: las 7 pantallas, navegación clickeable, tabs
+  y range switcher de Analytics, toggles de Settings. **Diseño de récord del dashboard.**
+- `S2 Nova Overview (options).dc.html` — las tres direcciones exploradas de Overview (`1a`
+  balance-first, `1b` densa analítica, `1c` editorial) más una pantalla móvil (`1d`). Se eligió
+  `1a`. Se conserva como contexto de lo descartado.
+- `S2 Nova Dashboard Light.dc.html` — el dashboard en tema claro.
+
+**Comunes**
+
+- `support.js` — runtime de los `.dc.html`. Necesario solo para abrirlos localmente; no es
+  parte del diseño.
+- `assets/logo-mark-dark.png`, `assets/logo-mark-light.png` — el logo real, tomado de
+  `web/src/assets/`.
+
+Abre cualquier `.dc.html` directamente en un navegador.
+
+## Design Tokens (web)
 
 All values below already exist in `web/src/index.css` under `[data-theme='dark']`. The prototype is
 dark-only; the light palette in `:root` still applies and the redesign must survive the theme toggle,

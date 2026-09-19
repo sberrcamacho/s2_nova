@@ -3,6 +3,13 @@
 Referencia visual: `S2 Nova Android.dc.html` (oscuro) y `S2 Nova Android Light.dc.html` (claro).
 Son la misma app en los dos temas. Las medidas de abajo son las del mockup, en dp.
 
+**La interfaz debe quedar idéntica al mockup.** Las tablas de este documento son el valor
+exacto, no un rango aceptable. Lo único que no se implementa es el selector Dark/Light que
+rodea el teléfono: es el control del prototipo. La app sigue el tema del sistema.
+
+El comportamiento — estado, CRUD, validaciones, navegación y hojas modales — está en
+`INTERACCIONES.md`. Este archivo cubre cómo se ve; ese otro, qué hace.
+
 Todos los colores salen de `ui/theme/Color.kt` a través de `MaterialTheme.colorScheme` y
 `NovaColors.current`. Las tablas nombran el token, no el hex, salvo donde el hex es el valor
 literal de un token.
@@ -57,7 +64,8 @@ Plus Jakarta Sans. Los montos van con la fuente numérica y `tabular-nums`.
 - Padding: pantalla horizontal 20; tarjeta 16–18; campo 12–14 vertical.
 - Gaps: 12–16 entre tarjetas, 13–14 dentro de un grupo.
 - Barras de progreso: 6 de alto, 3 de radio, track `border`. La del total en Presupuestos es de 7.
-- Anillo de meta: 62, `conic-gradient` con círculo interior de 48 en color de superficie.
+- Anillo de meta: 62, `conic-gradient` con círculo interior de 48 en color de superficie, y el
+  icono de la categoría de 22 al centro.
 - Marca de categoría: círculo de 38 (34 en filas de Perfil), relleno al 13% del color y glifo
   al 46% del diámetro en el color sólido. Es `CategoryIcon`, no un cuadro de color.
 - Sombra del FAB: `0 8dp 24dp` primario al 40–45%.
@@ -67,14 +75,14 @@ Plus Jakarta Sans. Los montos van con la fuente numérica y `tabular-nums`.
 ### Barra inferior — `NavigationBar`
 
 `containerColor = colorScheme.surface`, borde superior de 1 en `border`, padding 8/8/4.
-Cinco ranuras: **Inicio · Reportes · [FAB] · Presupuestos · Perfil**. La ranura central no es
+Cinco ranuras: **Inicio · Reportes · [FAB] · Planes · Perfil**. La ranura central no es
 un ítem: es el FAB de 52, `CircleShape`, primario, que abre `AddActionsSheet`.
 
 Ítem: icono de 22 dentro de una píldora de 58×30 (`primaryContainer` si está activo, si no
 transparente), etiqueta debajo con gap 3. Activo `primary`, inactivo `onSurfaceVariant`.
 
-La barra se oculta en las pantallas apiladas (Movimientos, Nuevo movimiento y las cuatro de
-Perfil), que en su lugar llevan encabezado con flecha atrás de 38.
+La barra se oculta en las pantallas apiladas (Movimientos, Nuevo movimiento y los tres
+destinos de Perfil), que en su lugar llevan encabezado con flecha atrás de 38.
 
 ### Hoja del FAB — `AddActionsSheet`
 
@@ -87,14 +95,15 @@ título de 14 y detalle de 11.5. No agregues más acciones.
 ### Inicio
 
 Encabezado: logo de 34 (radio 10) + saludo de 11 sobre nombre de 16/ExtraBold; a la derecha
-campana de 38 con punto de notificación de 7 en `negative`, y avatar de 38 en primario.
+campana de 38 con punto de notificación de 7 en `negative` — visible solo si hay no leídas —
+y avatar de 38 en primario.
 
 **Hero de saldo** — superficie oscura en ambos temas, así que su texto va en `Color.White`
 explícito. Radio 24, borde `#2B2450`, padding 22, gradiente `heroFrom → heroTo`, y un glow
 de 170 desenfocado 46 en primario al 38–42%, desplazado arriba a la derecha.
-Dentro: cejilla "SALDO TOTAL" en `#EAE7FF`; chip "3 billeteras" en blanco al 10% con texto al
-70%; saldo de 34; y dos cajas de igual ancho (blanco al 6%, radio 14) con Ingresos en
-`positive` y Gastos en `negative`.
+Dentro: cejilla "SALDO TOTAL" en `#EAE7FF`; chip con el conteo de billeteras en blanco al 10%
+con texto al 70%; saldo de 34, difuminado según el ajuste de privacidad; y dos cajas de igual
+ancho (blanco al 6%, radio 14) con Ingresos en `positive` y Gastos en `negative`.
 
 Luego tres tarjetas: **Presupuestos** (tres barras con porcentaje, enlace "Ver todos"),
 **Próximos pagos** (columna de fecha de 42 con mes de 9.5 y día de 15, nombre, monto) y
@@ -109,18 +118,25 @@ Título de 21 y tres chips de rango `3M / 6M / 12M`. Tres tarjetas: totales del 
 (cuatro filas con valor y pill de cambio, donde el tono sigue el significado y no el signo),
 ingresos vs gastos (pares de barras de 16 máx., alto 132) y gasto por categoría (cinco barras).
 
-### Presupuestos
+### Planes
 
-`PrimaryTabRow` con **Presupuestos** y **Metas** — colores por defecto: activa `onSurface`,
-inactiva `onSurfaceVariant`, indicador `primary`.
+`PrimaryTabRow` con **Presupuestos**, **Metas** y **Préstamos** — colores por defecto: activa
+`onSurface`, inactiva `onSurfaceVariant`, indicador `primary`.
 
-Pestaña Presupuestos: tarjeta de resumen (gastado, límite, barra de 7, días y saldo restante)
-y una tarjeta por presupuesto con marca de categoría, porcentaje en pill, `gastado de límite`
-y barra. El borde de la tarjeta cambia a `#F0D2D2` / `#3A2029` cuando pasa del 90%.
+Pestaña Presupuestos: tarjeta de resumen (gastado, límite, barra de 7, días y saldo restante),
+fila punteada "+ Nuevo presupuesto" (borde discontinuo de 1.5, radio 16, texto `primary`) y
+una tarjeta por presupuesto con marca de categoría, porcentaje en pill, lápiz de 15,
+`gastado de límite` y barra. El borde de la tarjeta cambia a `#F0D2D2` / `#3A2029` cuando pasa
+del 90%. La tarjeta completa es tocable y abre la hoja de edición.
 
-Pestaña Metas: anillo de 62 con porcentaje al centro, nombre, `actual de objetivo`, nota, y un
-botón **Abonar** a todo el ancho. No hay pantalla de detalle de metas, así que no hay segundo
-botón.
+Pestaña Metas: la misma fila punteada "+ Nueva meta", y por meta un anillo de 62 con el
+**icono de la categoría al centro** en su color, nombre con lápiz a la derecha,
+`actual de objetivo`, nota, y un botón **Abonar** a todo el ancho.
+
+Pestaña Préstamos: segmentado de pills Prestado/Recibido, tarjeta de resumen ("Te deben" /
+"Debes"), fila punteada "+ Registrar préstamo" / "+ Registrar deuda", y una tarjeta por
+registro con contraparte, vencimiento, pendiente, barra de progreso y las acciones
+"Registrar abono" y "Editar" (o "Saldado" en `positive`).
 
 ### Movimientos
 
@@ -144,21 +160,23 @@ según el tipo: nueve categorías de gasto, tres de ingreso.
 
 Switch: track 42×24, knob de 18 blanco, `primary` encendido y `border.strong` apagado.
 
-### Perfil y sus cuatro destinos
+### Perfil y sus tres destinos
 
 Perfil: tarjeta de identidad (avatar de 54, nombre de 15.5, correo, ciudad y antigüedad),
-lista de cuatro filas navegables con marca de 34 y chevron, y "Cerrar sesión" en `negative`.
+lista de tres filas navegables con marca de 34 y chevron, y "Cerrar sesión" en `negative`.
+Los subtítulos de las filas son datos reales, no texto fijo: conteo y total de billeteras,
+series activas.
 
 - **Billeteras** — encabezado con `+`. Una tarjeta por billetera: círculo de 44 con el
-  gradiente hero e icono blanco según `WalletType`, nombre, tipo y saldo. Al pie, la nota de
-  que el saldo total de Inicio es la suma de estas billeteras.
+  gradiente hero e icono blanco según `WalletType`, nombre, tipo, saldo y lápiz. Al pie, la
+  nota de que el saldo total de Inicio es la suma de estas billeteras.
 - **Recurrentes** — encabezado con `+`. Una tarjeta por serie: marca de categoría, nombre,
-  `intervalo · próxima fecha` (o "Pausada"), monto con signo, y la acción Pausar/Reanudar.
-  Cuando la serie vence hoy aparece además "Vence hoy · Confirmar".
-- **Préstamos** — `PrimaryTabRow` Prestado/Recibido. Tarjetas con contraparte, vencimiento
-  (o "Sin fecha de vencimiento"), monto y la acción Saldar, que pasa a "Saldado" en `positive`.
-  Recibido está vacío y muestra su estado vacío real.
+  `intervalo · próxima fecha` (o "Pausada"), monto con signo, y las acciones Pausar/Reanudar
+  y Editar. Cuando la serie vence hoy aparece además "Vence hoy · Confirmar".
 - **Ajustes** — datos personales en campos de 14 de radio, con el correo deshabilitado sobre
-  `surfaceVariant`; botón Guardar cambios; tarjeta de preferencias con los switches de modo
-  oscuro, notificaciones e ingreso biométrico más los selectores COP/USD e idioma en el patrón
-  de dos pills; "Repetir el tutorial"; y la tarjeta Acerca de.
+  `surfaceVariant`; botón Guardar cambios; tarjeta de preferencias con los switches de
+  notificaciones e ingreso biométrico más los selectores COP/USD e idioma en el patrón de dos
+  pills; tarjeta **Privacidad y sesión** (difuminar saldo, cierre de sesión automático);
+  "Repetir el tutorial" como fila navegable; y la tarjeta Acerca de.
+
+Préstamos ya no vive en Perfil: se movió a Planes.
