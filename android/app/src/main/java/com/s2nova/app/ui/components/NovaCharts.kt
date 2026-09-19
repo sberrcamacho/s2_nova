@@ -86,6 +86,11 @@ fun NovaProgressRing(
     strokeWidth: Dp = 6.dp,
     trackColor: Color = color.copy(alpha = 0.18f),
     centerLabel: String? = null,
+    // Takes priority over centerLabel when provided — e.g. Goals shows the
+    // goal category's icon at the ring's center instead of the percentage
+    // (see design_handoff_s2_nova_overview/ANDROID.md: "the ring itself is
+    // the percentage"), while the ring's own fill sweep still is the pct.
+    centerContent: (@Composable () -> Unit)? = null,
 ) {
     Box(modifier = modifier.size(diameter), contentAlignment = Alignment.Center) {
         Canvas(modifier = Modifier.size(diameter)) {
@@ -96,7 +101,9 @@ fun NovaProgressRing(
             val sweep = (percentage.coerceIn(0, 100) / 100f) * 360f
             drawArc(color = color, startAngle = -90f, sweepAngle = sweep, useCenter = false, topLeft = Offset(inset, inset), size = arcSize, style = stroke)
         }
-        if (centerLabel != null) {
+        if (centerContent != null) {
+            centerContent()
+        } else if (centerLabel != null) {
             Text(
                 centerLabel,
                 style = MaterialTheme.typography.labelLarge,

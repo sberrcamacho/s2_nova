@@ -92,6 +92,10 @@ data class Transaction(
     val dueDate: String? = null,
     val loanSettled: Boolean = false,
     val settledByTransactionId: String? = null,
+    // Set on a settlement transaction created by settleLoan — points back
+    // at the original Lent/Borrowed row. A loan's paid-so-far amount is the
+    // sum of every transaction whose parentLoanId equals its id.
+    val parentLoanId: String? = null,
 )
 
 // No paymentMethod field — the backend derives it from the wallet
@@ -149,6 +153,13 @@ data class Goal(
     val name: String,
     val targetAmount: Double,
     val currentAmount: Double,
+    // Server-computed (see backend/src/routes/goals.ts's computeProgress) —
+    // never recompute these client-side from currentAmount/targetAmount, or
+    // they drift from the backend's own rounding (regression: GoalRepository
+    // used to drop both fields entirely, forcing every call site to
+    // recompute a truncated percentage itself).
+    val remaining: Double = 0.0,
+    val percentage: Int = 0,
     val targetDate: String? = null,
     val themeIcon: String? = null,
 )
@@ -180,6 +191,17 @@ data class UserPreferences(
     val darkTheme: Boolean,
     val notifications: Boolean,
     val biometricLogin: Boolean,
+    // Home hides the total balance behind a blur until tapped; Settings'
+    // "Difuminar el saldo total" switch controls this default state.
+    val blurBalance: Boolean = false,
+    // Minutes of inactivity before the app re-asks for the password (or
+    // biometrics) — 0 means "Nunca" (auto-lock disabled). See
+    // ui/components/AppLockGate.kt for the enforcement. Defaults to 0, not
+    // the DB row's own default of 5, so a missing/not-yet-fetched value
+    // never silently turns on a password gate for an account whose PASSWORD
+    // credential the user (e.g. a Google-primary user) doesn't use day to
+    // day.
+    val autoLockMinutes: Int = 0,
     val currency: Currency = Currency.COP,
     val language: AppLanguage = AppLanguage.ES,
 )
@@ -188,6 +210,8 @@ data class User(
     val id: String,
     val name: String,
     val email: String,
+    val phone: String? = null,
+    val city: String? = null,
     // false for a Google-only account that hasn't set a password yet —
     // gates whether Settings shows "change password" or "create password".
     val hasPassword: Boolean,

@@ -1,0 +1,44 @@
+name: Android CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "android/**"
+      - ".github/workflows/android-ci.yml"
+  pull_request:
+    paths:
+      - "android/**"
+      - ".github/workflows/android-ci.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # No local.properties needed: AGP reads ANDROID_HOME (preinstalled on
+      # GitHub-hosted ubuntu-latest runners) when sdk.dir is absent, and
+      # API_BASE_URL/GOOGLE_WEB_CLIENT_ID both default in build.gradle.kts
+      # when local.properties doesn't set them — neither JVM unit tests nor
+      # assembleDebug talk to a real backend or Google Sign-In.
+      - name: Run JVM unit tests (app/src/test — no emulator, see android/AGENTS.md)
+        run: ./gradlew test --console=plain
+
+      - name: Assemble debug APK
+        run: ./gradlew assembleDebug --console=plain

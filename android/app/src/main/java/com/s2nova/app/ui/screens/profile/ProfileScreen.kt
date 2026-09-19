@@ -17,7 +17,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Wallet
@@ -39,7 +38,6 @@ import com.s2nova.app.data.AppContainer
 import com.s2nova.app.data.mock.categoryMap
 import com.s2nova.app.data.model.AppLanguage
 import com.s2nova.app.data.model.CategoryId
-import com.s2nova.app.data.model.LoanKind
 import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.components.NovaCard
 import com.s2nova.app.ui.rememberCurrencyFormatter
@@ -53,19 +51,16 @@ fun ProfileScreen(
     onOpenSettings: () -> Unit,
     onOpenWallets: () -> Unit,
     onOpenRecurring: () -> Unit,
-    onOpenLoans: () -> Unit,
     onLogout: () -> Unit,
 ) {
     val user by AppContainer.authRepository.currentUser.collectAsStateWithLifecycle()
     val wallets by AppContainer.walletRepository.wallets.collectAsStateWithLifecycle()
     val recurringSeries by AppContainer.recurringSeriesRepository.series.collectAsStateWithLifecycle()
-    val transactions by AppContainer.transactionRepository.transactions.collectAsStateWithLifecycle()
     val format = rememberCurrencyFormatter()
     val t = rememberStrings()
     val language = user?.preferences?.language ?: AppLanguage.ES
 
     val subscriptionsColor = categoryMap[CategoryId.SUBSCRIPTIONS]?.color?.let { Color(it) } ?: MaterialTheme.colorScheme.primary
-    val salaryColor = categoryMap[CategoryId.SALARY]?.color?.let { Color(it) } ?: MaterialTheme.colorScheme.primary
     val billsColor = categoryMap[CategoryId.BILLS]?.color?.let { Color(it) } ?: MaterialTheme.colorScheme.primary
 
     val activeWallets = wallets.size
@@ -79,16 +74,14 @@ fun ProfileScreen(
         t(StringKey.PROFILE_RECURRING_DETAIL_EMPTY)
     }
 
-    val lentTotal = transactions.filter { it.loanKind == LoanKind.LENT && !it.loanSettled }.sumOf { it.amount }
-    val borrowedTotal = transactions.filter { it.loanKind == LoanKind.BORROWED && !it.loanSettled }.sumOf { it.amount }
-    val loansDetail = when {
-        lentTotal == 0.0 && borrowedTotal == 0.0 -> t(StringKey.PROFILE_LOANS_DETAIL_EMPTY)
-        borrowedTotal > 0.0 -> "${t(StringKey.LOANS_LENT_TAB)} ${format(lentTotal)} · ${t(StringKey.PROFILE_LOANS_DETAIL_WITH_DEBT)} ${format(borrowedTotal)}"
-        else -> "${t(StringKey.LOANS_LENT_TAB)} ${format(lentTotal)} · ${t(StringKey.PROFILE_LOANS_DETAIL_NO_DEBT)}"
-    }
-
-    val memberSince = remember(user?.memberSince, language) {
-        user?.memberSince?.let { formatMemberSince(it, language) }
+    val memberSince = remember(user?.memberSince, user?.city, language) {
+        val since = user?.memberSince?.let { formatMemberSince(it, language) }
+        val city = user?.city?.takeIf { it.isNotBlank() }
+        when {
+            city != null && since != null -> "$city · $since"
+            city != null -> city
+            else -> since
+        }
     }
 
     Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
@@ -124,7 +117,6 @@ fun ProfileScreen(
                 Column {
                     ProfileRow(Icons.Filled.Wallet, t(StringKey.WALLETS_TITLE), walletsDetail, onClick = onOpenWallets)
                     ProfileRow(Icons.Filled.Repeat, t(StringKey.RECURRING_TITLE), recurringDetail, tint = subscriptionsColor, onClick = onOpenRecurring)
-                    ProfileRow(Icons.Filled.MonetizationOn, t(StringKey.LOANS_TITLE), loansDetail, tint = salaryColor, onClick = onOpenLoans)
                     ProfileRow(Icons.Filled.Settings, t(StringKey.TITLE_SETTINGS), t(StringKey.PROFILE_SETTINGS_DETAIL), tint = billsColor, showDivider = false, onClick = onOpenSettings)
                 }
             }

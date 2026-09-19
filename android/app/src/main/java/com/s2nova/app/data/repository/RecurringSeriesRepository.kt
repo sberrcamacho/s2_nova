@@ -5,6 +5,7 @@ import com.s2nova.app.data.model.RecurrenceInterval
 import com.s2nova.app.data.model.RecurringSeries
 import com.s2nova.app.data.model.TransactionType
 import com.s2nova.app.data.remote.ApiClient
+import com.s2nova.app.data.remote.ApiService
 import com.s2nova.app.data.remote.ConfirmRecurringOccurrenceRequest
 import com.s2nova.app.data.remote.CreateRecurringSeriesRequest
 import com.s2nova.app.data.remote.RecurringSeriesDto
@@ -13,7 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-private fun RecurringSeriesDto.toModel(categoryRepository: CategoryRepository): RecurringSeries? {
+internal fun RecurringSeriesDto.toModel(categoryRepository: CategoryRepository): RecurringSeries? {
     val categoryId = categoryRepository.categoryIdForBackendId(categoryId) ?: return null
     return RecurringSeries(
         id = id,
@@ -34,13 +35,16 @@ private fun RecurringSeriesDto.toModel(categoryRepository: CategoryRepository): 
 // backend/src/routes/recurringSeries.ts. Confirming a due occurrence is an
 // explicit user action (confirmOccurrence), never automatic, so opening
 // the app never silently creates a duplicate transaction.
-class RecurringSeriesRepository(private val categoryRepository: CategoryRepository) {
+class RecurringSeriesRepository(
+    private val categoryRepository: CategoryRepository,
+    private val api: ApiService = ApiClient.api,
+) {
     private val _series = MutableStateFlow<List<RecurringSeries>>(emptyList())
     val series: StateFlow<List<RecurringSeries>> = _series.asStateFlow()
 
     suspend fun refresh() {
         if (DemoModeFlag.active) return
-        _series.value = ApiClient.api.getRecurringSeries().mapNotNull { it.toModel(categoryRepository) }
+        _series.value = api.getRecurringSeries().mapNotNull { it.toModel(categoryRepository) }
     }
 
     // Overrides the in-memory list with fictitious data for local-only demo
@@ -60,7 +64,7 @@ class RecurringSeriesRepository(private val categoryRepository: CategoryReposito
     ): RecurringSeries? {
         if (DemoModeFlag.active) return null
         val categoryBackendId = categoryRepository.backendIdFor(category) ?: return null
-        val dto = ApiClient.api.createRecurringSeries(
+        val dto = api.createRecurringSeries(
             CreateRecurringSeriesRequest(
                 name = name,
                 type = type.name,
@@ -76,16 +80,48 @@ class RecurringSeriesRepository(private val categoryRepository: CategoryReposito
         return model
     }
 
+    // Full edit — name, type, amount, wallet, category, interval and next
+    // occurrence date all change together from one dialog (see
+    // RecurringScreen.kt's EditRecurringDialog / ANDROID.md's hoja modal
+    // table). Changing the wallet re-derives paymentMethod server-side.
+    suspend fun update(
+        id: String,
+        name: String,
+        type: TransactionType,
+        amount: Double,
+        walletId: String,
+        category: com.s2nova.app.data.model.CategoryId,
+        interval: RecurrenceInterval,
+        nextOccurrenceDate: String,
+    ) {
+        if (DemoModeFlag.active) return
+        val categoryBackendId = categoryRepository.backendIdFor(category) ?: return
+        val dto = api.updateRecurringSeries(
+            id,
+            UpdateRecurringSeriesRequest(
+                name = name,
+                type = type.name,
+                amount = amount.toLong(),
+                accountId = walletId,
+                categoryId = categoryBackendId,
+                interval = interval.name,
+                nextOccurrenceDate = nextOccurrenceDate,
+            ),
+        )
+        val model = dto.toModel(categoryRepository) ?: return
+        _series.value = _series.value.map { if (it.id == id) model else it }
+    }
+
     suspend fun setActive(id: String, active: Boolean) {
         if (DemoModeFlag.active) return
-        val dto = ApiClient.api.updateRecurringSeries(id, UpdateRecurringSeriesRequest(active = active))
+        val dto = api.updateRecurringSeries(id, UpdateRecurringSeriesRequest(active = active))
         val model = dto.toModel(categoryRepository) ?: return
         _series.value = _series.value.map { if (it.id == id) model else it }
     }
 
     suspend fun delete(id: String) {
         if (DemoModeFlag.active) return
-        ApiClient.api.deleteRecurringSeries(id)
+        api.deleteRecurringSeries(id)
         _series.value = _series.value.filterNot { it.id == id }
     }
 
@@ -95,7 +131,7 @@ class RecurringSeriesRepository(private val categoryRepository: CategoryReposito
     // TransactionRepository afterward since this changes both.
     suspend fun confirmOccurrence(id: String) {
         if (DemoModeFlag.active) return
-        val response = ApiClient.api.confirmRecurringOccurrence(id, ConfirmRecurringOccurrenceRequest())
+        val response = api.confirmRecurringOccurrence(id, ConfirmRecurringOccurrenceRequest())
         val model = response.series.toModel(categoryRepository) ?: return
         _series.value = _series.value.map { if (it.id == id) model else it }
     }

@@ -3,6 +3,7 @@ package com.s2nova.app.data
 import com.s2nova.app.data.model.CategoryId
 import com.s2nova.app.data.model.MonthlySummary
 import com.s2nova.app.data.model.Transaction
+import com.s2nova.app.data.model.TransactionStatus
 import com.s2nova.app.data.model.TransactionType
 
 // Mirrors web/src/services/analyticsService.ts — pure functions over an
@@ -10,11 +11,17 @@ import com.s2nova.app.data.model.TransactionType
 // justify a suspend/coroutine-based API for mock data.
 object AnalyticsHelpers {
 
+    // PLANNED ("Upcoming") transactions haven't moved money yet — see
+    // Transaction.status's doc comment — so every aggregate here must only
+    // ever sum COMPLETED ones, the same rule the backend's own summaries
+    // enforce server-side.
+    private fun completedOnly(transactions: List<Transaction>) = transactions.filter { it.status == TransactionStatus.COMPLETED }
+
     fun monthlyHistory(transactions: List<Transaction>, months: Int = 6): List<MonthlySummary> =
         lastNMonthKeys(months).map { key -> summarizeMonth(transactions, key) }
 
     private fun summarizeMonth(transactions: List<Transaction>, monthKey: String): MonthlySummary {
-        val items = transactions.filter { isSameMonth(it.date, monthKey) }
+        val items = completedOnly(transactions).filter { isSameMonth(it.date, monthKey) }
         val income = items.filter { it.type == TransactionType.INCOME }.sumOf { it.amount }
         val expenses = items.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount }
         return MonthlySummary(monthKey, monthLabel(monthKey), income, expenses)
@@ -23,7 +30,7 @@ object AnalyticsHelpers {
     data class CategoryBreakdownEntry(val category: CategoryId, val amount: Double, val percentage: Int)
 
     fun categoryBreakdown(transactions: List<Transaction>, monthKey: String = currentMonthKey()): List<CategoryBreakdownEntry> {
-        val items = transactions.filter { it.type == TransactionType.EXPENSE && isSameMonth(it.date, monthKey) }
+        val items = completedOnly(transactions).filter { it.type == TransactionType.EXPENSE && isSameMonth(it.date, monthKey) }
         val total = items.sumOf { it.amount }
         return items.groupBy { it.category }
             .map { (category, txns) ->
@@ -47,7 +54,7 @@ object AnalyticsHelpers {
 
     fun weeklySpending(transactions: List<Transaction>, monthKey: String = currentMonthKey()): List<WeekPoint> {
         val buckets = DoubleArray(5)
-        transactions
+        completedOnly(transactions)
             .filter { it.type == TransactionType.EXPENSE && isSameMonth(it.date, monthKey) }
             .forEach { t ->
                 val day = t.date.substring(8, 10).toInt()

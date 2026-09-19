@@ -6,6 +6,7 @@ import com.s2nova.app.data.model.BudgetStatus
 import com.s2nova.app.data.model.CategoryBudget
 import com.s2nova.app.data.model.CategoryId
 import com.s2nova.app.data.remote.ApiClient
+import com.s2nova.app.data.remote.ApiService
 import com.s2nova.app.data.remote.BudgetDto
 import com.s2nova.app.data.remote.CreateBudgetRequest
 import com.s2nova.app.data.remote.UpdateBudgetRequest
@@ -13,7 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-private fun BudgetDto.toBudgetProgress(categoryRepository: CategoryRepository): BudgetProgress? {
+internal fun BudgetDto.toBudgetProgress(categoryRepository: CategoryRepository): BudgetProgress? {
     val categoryId = categoryRepository.categoryIdForBackendId(categoryId) ?: return null
     val budget = CategoryBudget(id = id, name = name, category = categoryId, limit = amount.toDouble(), month = month, themeIcon = themeIcon)
     val status = runCatching { BudgetStatus.valueOf(status) }.getOrDefault(BudgetStatus.ON_TRACK)
@@ -25,13 +26,16 @@ private fun BudgetDto.toBudgetProgress(categoryRepository: CategoryRepository): 
 // transactions linked directly via budgetId, not just category+month
 // matching. Keeping that logic in one place (the backend) avoids it
 // drifting from a client-side reimplementation.
-class BudgetRepository(private val categoryRepository: CategoryRepository) {
+class BudgetRepository(
+    private val categoryRepository: CategoryRepository,
+    private val api: ApiService = ApiClient.api,
+) {
     private val _budgetProgress = MutableStateFlow<List<BudgetProgress>>(emptyList())
     val budgetProgress: StateFlow<List<BudgetProgress>> = _budgetProgress.asStateFlow()
 
     suspend fun refresh(month: String = currentMonthKey()) {
         if (DemoModeFlag.active) return
-        _budgetProgress.value = ApiClient.api.getBudgets(month).mapNotNull { it.toBudgetProgress(categoryRepository) }
+        _budgetProgress.value = api.getBudgets(month).mapNotNull { it.toBudgetProgress(categoryRepository) }
     }
 
     // Overrides the in-memory list with fictitious data for local-only demo
@@ -49,22 +53,22 @@ class BudgetRepository(private val categoryRepository: CategoryRepository) {
     ): BudgetProgress? {
         if (DemoModeFlag.active) return null
         val categoryBackendId = categoryRepository.backendIdFor(category) ?: return null
-        val dto = ApiClient.api.createBudget(CreateBudgetRequest(name, categoryBackendId, limit.toLong(), month, themeIcon))
+        val dto = api.createBudget(CreateBudgetRequest(name, categoryBackendId, limit.toLong(), month, themeIcon))
         val progress = dto.toBudgetProgress(categoryRepository) ?: return null
         _budgetProgress.value = _budgetProgress.value + progress
         return progress
     }
 
-    suspend fun updateLimit(id: String, limit: Double, themeIcon: String? = null) {
+    suspend fun update(id: String, name: String?, limit: Double, themeIcon: String? = null) {
         if (DemoModeFlag.active) return
-        val dto = ApiClient.api.updateBudget(id, UpdateBudgetRequest(amount = limit.toLong(), themeIcon = themeIcon))
+        val dto = api.updateBudget(id, UpdateBudgetRequest(name = name, amount = limit.toLong(), themeIcon = themeIcon))
         val progress = dto.toBudgetProgress(categoryRepository) ?: return
         _budgetProgress.value = _budgetProgress.value.map { if (it.budget.id == id) progress else it }
     }
 
     suspend fun delete(id: String) {
         if (DemoModeFlag.active) return
-        ApiClient.api.deleteBudget(id)
+        api.deleteBudget(id)
         _budgetProgress.value = _budgetProgress.value.filterNot { it.budget.id == id }
     }
 }

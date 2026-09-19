@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -53,10 +56,19 @@ import com.s2nova.app.data.todayISO
 import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.ThousandsGroupingVisualTransformation
 import com.s2nova.app.ui.categoryStringKey
+import com.s2nova.app.ui.components.CategoryIcon
+import com.s2nova.app.ui.components.CategoryIconSize
+import com.s2nova.app.ui.components.ColorPill
+import com.s2nova.app.ui.components.DraftSheetDeleteRow
+import com.s2nova.app.ui.components.DraftSheetPrimaryButton
 import com.s2nova.app.ui.components.NovaCard
+import com.s2nova.app.ui.components.NovaDatePickerField
+import com.s2nova.app.ui.components.NovaDraftSheet
 import com.s2nova.app.ui.components.NovaTopBar
 import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
+import com.s2nova.app.ui.suggestExpenseCategory
+import com.s2nova.app.ui.suggestIncomeCategory
 import com.s2nova.app.ui.theme.NovaColors
 import kotlinx.coroutines.launch
 
@@ -68,12 +80,27 @@ fun RecurringScreen(onBack: () -> Unit) {
     val t = rememberStrings()
     val colors = NovaColors.current
     val scope = rememberCoroutineScope()
-    var creating by remember { mutableStateOf(false) }
+    var draft by remember { mutableStateOf<RecurringDraft?>(null) }
     var confirmingId by remember { mutableStateOf<String?>(null) }
+    var deleting by remember { mutableStateOf<RecurringSeries?>(null) }
 
     LaunchedEffect(Unit) {
         runCatching { AppContainer.recurringSeriesRepository.refresh() }
         runCatching { AppContainer.walletRepository.refresh() }
+    }
+
+    fun openCreate() {
+        draft = RecurringDraft(
+            id = null,
+            name = "",
+            type = TransactionType.EXPENSE,
+            amountText = "",
+            walletId = wallets.firstOrNull()?.id,
+            category = expenseCategories.first().id,
+            userPickedCategory = false,
+            interval = RecurrenceInterval.MONTHLY,
+            nextDate = todayISO(),
+        )
     }
 
     Scaffold(
@@ -81,7 +108,7 @@ fun RecurringScreen(onBack: () -> Unit) {
             NovaTopBar(
                 title = t(StringKey.RECURRING_TITLE),
                 onBack = onBack,
-                actions = { IconButton(onClick = { creating = true }) { Icon(Icons.Filled.Add, contentDescription = t(StringKey.RECURRING_NEW)) } },
+                actions = { IconButton(onClick = { openCreate() }) { Icon(Icons.Filled.Add, contentDescription = t(StringKey.RECURRING_NEW)) } },
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -102,10 +129,25 @@ fun RecurringScreen(onBack: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 items(series, key = { it.id }) { item ->
-                    NovaCard(modifier = Modifier.fillMaxWidth()) {
+                    NovaCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            draft = RecurringDraft(
+                                id = item.id,
+                                name = item.name,
+                                type = item.type,
+                                amountText = item.amount.toInt().toString(),
+                                walletId = item.walletId,
+                                category = item.category,
+                                userPickedCategory = true,
+                                interval = item.interval,
+                                nextDate = item.nextOccurrenceDate,
+                            )
+                        },
+                    ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                com.s2nova.app.ui.components.CategoryIcon(category = item.category, size = com.s2nova.app.ui.components.CategoryIconSize.ROW)
+                                CategoryIcon(category = item.category, size = CategoryIconSize.ROW)
                                 Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
                                     Text(item.name, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
                                     Text(
@@ -141,22 +183,49 @@ fun RecurringScreen(onBack: () -> Unit) {
             }
         }
 
-        if (creating) {
-            CreateRecurringDialog(
+        val d = draft
+        if (d != null) {
+            RecurringDraftSheet(
+                draft = d,
                 wallets = wallets,
-                onDismiss = { creating = false },
-                onCreate = { name, type, amount, walletId, category, interval, startDate ->
-                    scope.launch {
-                        AppContainer.recurringSeriesRepository.create(
-                            name = name,
-                            type = type,
-                            amount = amount,
-                            walletId = walletId,
-                            category = category,
-                            interval = interval,
-                            startDate = startDate,
-                        )
-                        creating = false
+                onDraftChange = { draft = it },
+                onDismiss = { draft = null },
+                onSave = {
+                    val amount = d.amountText.toDoubleOrNull()
+                    val walletId = d.walletId
+                    if (d.name.isNotBlank() && amount != null && amount > 0 && walletId != null && d.nextDate.isNotBlank()) {
+                        scope.launch {
+                            if (d.id == null) {
+                                AppContainer.recurringSeriesRepository.create(
+                                    name = d.name.trim(),
+                                    type = d.type,
+                                    amount = amount,
+                                    walletId = walletId,
+                                    category = d.category,
+                                    interval = d.interval,
+                                    startDate = d.nextDate,
+                                )
+                            } else {
+                                AppContainer.recurringSeriesRepository.update(
+                                    id = d.id,
+                                    name = d.name.trim(),
+                                    type = d.type,
+                                    amount = amount,
+                                    walletId = walletId,
+                                    category = d.category,
+                                    interval = d.interval,
+                                    nextOccurrenceDate = d.nextDate,
+                                )
+                            }
+                        }
+                        draft = null
+                    }
+                },
+                onRequestDelete = {
+                    val target = series.firstOrNull { it.id == d.id }
+                    if (target != null) {
+                        deleting = target
+                        draft = null
                     }
                 },
             )
@@ -181,6 +250,22 @@ fun RecurringScreen(onBack: () -> Unit) {
                 dismissButton = { TextButton(onClick = { confirmingId = null }) { Text(t(StringKey.COMMON_CANCEL)) } },
             )
         }
+
+        if (deleting != null) {
+            val target = deleting!!
+            AlertDialog(
+                onDismissRequest = { deleting = null },
+                title = { Text(t(StringKey.RECURRING_DELETE_CONFIRM_TITLE)) },
+                text = { Text(t(StringKey.RECURRING_DELETE_CONFIRM_BODY)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        scope.launch { AppContainer.recurringSeriesRepository.delete(target.id) }
+                        deleting = null
+                    }) { Text(t(StringKey.RECURRING_DELETE), color = MaterialTheme.colorScheme.error) }
+                },
+                dismissButton = { TextButton(onClick = { deleting = null }) { Text(t(StringKey.COMMON_CANCEL)) } },
+            )
+        }
     }
 }
 
@@ -191,94 +276,148 @@ private fun intervalLabel(interval: RecurrenceInterval, t: (StringKey) -> String
     RecurrenceInterval.YEARLY -> t(StringKey.RECURRENCE_YEARLY)
 }
 
+// Draft state backing the recurring-series create/edit sheet. `id == null`
+// means "creating".
+private data class RecurringDraft(
+    val id: String?,
+    val name: String,
+    val type: TransactionType,
+    val amountText: String,
+    val walletId: String?,
+    val category: CategoryId,
+    val userPickedCategory: Boolean,
+    val interval: RecurrenceInterval,
+    val nextDate: String,
+)
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-private fun CreateRecurringDialog(
+private fun RecurringDraftSheet(
+    draft: RecurringDraft,
     wallets: List<Wallet>,
+    onDraftChange: (RecurringDraft) -> Unit,
     onDismiss: () -> Unit,
-    onCreate: (String, TransactionType, Double, String, CategoryId, RecurrenceInterval, String) -> Unit,
+    onSave: () -> Unit,
+    onRequestDelete: () -> Unit,
 ) {
     val t = rememberStrings()
-    var name by remember { mutableStateOf("") }
-    var type by remember { mutableStateOf(TransactionType.EXPENSE) }
-    var amountText by remember { mutableStateOf("") }
-    var walletId by remember { mutableStateOf(wallets.firstOrNull()?.id) }
-    var category by remember { mutableStateOf(expenseCategories.first().id) }
-    var interval by remember { mutableStateOf(RecurrenceInterval.MONTHLY) }
-    var startDate by remember { mutableStateOf(todayISO()) }
+    val isEdit = draft.id != null
+    val pool = if (draft.type == TransactionType.INCOME) incomeCategories else expenseCategories
+    val guessed = if (draft.type == TransactionType.INCOME) suggestIncomeCategory(draft.name) else suggestExpenseCategory(draft.name)
+    val showAutoNote = !draft.userPickedCategory && guessed != null
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(t(StringKey.RECURRING_NEW)) },
-        text = {
-            Column {
+    NovaDraftSheet(
+        onDismiss = onDismiss,
+        title = t(if (isEdit) StringKey.RECURRING_EDIT_TITLE else StringKey.RECURRING_NEW),
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
+                    value = draft.name,
+                    onValueChange = { newName ->
+                        val g = if (!draft.userPickedCategory) {
+                            if (draft.type == TransactionType.INCOME) suggestIncomeCategory(newName) else suggestExpenseCategory(newName)
+                        } else null
+                        onDraftChange(draft.copy(name = newName, category = g ?: draft.category))
+                    },
                     label = { Text(t(StringKey.RECURRING_NAME)) },
                     placeholder = { Text(t(StringKey.RECURRING_NAME_PLACEHOLDER)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                Row(modifier = Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    if (showAutoNote) t(StringKey.RECURRING_CATEGORY_AUTO_NOTE) else "",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(t(StringKey.RECURRING_TYPE), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(TransactionType.EXPENSE to t(StringKey.ADD_TXN_EXPENSE), TransactionType.INCOME to t(StringKey.ADD_TXN_INCOME)).forEach { (value, label) ->
-                        RecurringChip(label, selected = type == value) {
-                            type = value
-                            category = (if (value == TransactionType.INCOME) incomeCategories else expenseCategories).first().id
+                        RecurringTypePill(label, selected = draft.type == value) {
+                            val newPool = if (value == TransactionType.INCOME) incomeCategories else expenseCategories
+                            onDraftChange(draft.copy(type = value, category = newPool.first().id, userPickedCategory = false))
                         }
                     }
                 }
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(t(StringKey.ADD_TXN_CATEGORY), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    pool.forEach { c ->
+                        ColorPill(
+                            label = t(categoryStringKey(c.id)),
+                            color = androidx.compose.ui.graphics.Color(c.color),
+                            selected = draft.category == c.id,
+                            onClick = { onDraftChange(draft.copy(category = c.id, userPickedCategory = true)) },
+                        )
+                    }
+                }
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(t(StringKey.RECURRING_AMOUNT), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 OutlinedTextField(
-                    value = amountText,
-                    onValueChange = { amountText = it.filter { c -> c.isDigit() } },
+                    value = draft.amountText,
+                    onValueChange = { onDraftChange(draft.copy(amountText = it.filter { c -> c.isDigit() })) },
                     leadingIcon = { Text("$") },
-                    label = { Text(t(StringKey.RECURRING_AMOUNT)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     visualTransformation = ThousandsGroupingVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+                    modifier = Modifier.fillMaxWidth(),
                 )
-                if (wallets.isNotEmpty()) {
-                    Text(t(StringKey.ADD_TXN_WALLET), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 10.dp, bottom = 4.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            }
+
+            if (wallets.isNotEmpty()) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(t(StringKey.ADD_TXN_WALLET), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         wallets.forEach { wallet ->
-                            RecurringChip(wallet.name, selected = walletId == wallet.id) { walletId = wallet.id }
+                            RecurringTypePill(wallet.name, selected = draft.walletId == wallet.id) { onDraftChange(draft.copy(walletId = wallet.id)) }
                         }
                     }
                 }
-                Text(t(StringKey.RECURRING_INTERVAL), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 10.dp, bottom = 4.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(t(StringKey.RECURRING_INTERVAL), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(
                         RecurrenceInterval.WEEKLY to t(StringKey.RECURRENCE_WEEKLY),
                         RecurrenceInterval.MONTHLY to t(StringKey.RECURRENCE_MONTHLY),
                         RecurrenceInterval.YEARLY to t(StringKey.RECURRENCE_YEARLY),
                     ).forEach { (value, label) ->
-                        RecurringChip(label, selected = interval == value) { interval = value }
+                        RecurringTypePill(label, selected = draft.interval == value) { onDraftChange(draft.copy(interval = value)) }
                     }
                 }
-                OutlinedTextField(
-                    value = startDate,
-                    onValueChange = { startDate = it.filter { c -> c.isDigit() || c == '-' } },
-                    label = { Text(t(StringKey.RECURRING_START_DATE)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
-                )
             }
-        },
-        confirmButton = {
-            TextButton(onClick = {
-                val amount = amountText.toDoubleOrNull()
-                val wallet = walletId
-                if (name.isNotBlank() && amount != null && amount > 0 && wallet != null && startDate.isNotBlank()) {
-                    onCreate(name.trim(), type, amount, wallet, category, interval, startDate)
-                }
-            }) { Text(t(StringKey.RECURRING_CREATE)) }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(t(StringKey.COMMON_CANCEL)) } },
-    )
+
+            NovaDatePickerField(
+                label = t(StringKey.RECURRING_START_DATE),
+                value = draft.nextDate,
+                onValueChange = { onDraftChange(draft.copy(nextDate = it ?: draft.nextDate)) },
+                allowClear = false,
+            )
+
+            val amount = draft.amountText.toDoubleOrNull()
+            DraftSheetPrimaryButton(
+                label = t(StringKey.COMMON_SAVE),
+                enabled = draft.name.isNotBlank() && amount != null && amount > 0 && draft.walletId != null && draft.nextDate.isNotBlank(),
+                onClick = onSave,
+            )
+
+            if (isEdit) {
+                DraftSheetDeleteRow(label = t(StringKey.RECURRING_DELETE), onClick = onRequestDelete)
+            }
+        }
+    }
 }
 
 @Composable
-private fun RecurringChip(label: String, selected: Boolean, onClick: () -> Unit) {
+private fun RecurringTypePill(label: String, selected: Boolean, onClick: () -> Unit) {
     Text(
         label,
         style = MaterialTheme.typography.bodySmall,

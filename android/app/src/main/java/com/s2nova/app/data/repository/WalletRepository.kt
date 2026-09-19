@@ -4,6 +4,7 @@ import com.s2nova.app.data.model.Wallet
 import com.s2nova.app.data.model.WalletType
 import com.s2nova.app.data.remote.AccountDto
 import com.s2nova.app.data.remote.ApiClient
+import com.s2nova.app.data.remote.ApiService
 import com.s2nova.app.data.remote.CreateAccountRequest
 import com.s2nova.app.data.remote.DeleteAccountRequest
 import com.s2nova.app.data.remote.UpdateAccountRequest
@@ -11,7 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-private fun AccountDto.toWallet() = Wallet(
+internal fun AccountDto.toWallet() = Wallet(
     id = id,
     name = name,
     type = runCatching { WalletType.valueOf(type) }.getOrDefault(WalletType.OTHER),
@@ -21,13 +22,13 @@ private fun AccountDto.toWallet() = Wallet(
 
 // "Wallet" everywhere in the UI — backed by the same /accounts resource
 // ARCHITECTURE.md's Account model describes; see backend/src/routes/accounts.ts.
-class WalletRepository {
+class WalletRepository(private val api: ApiService = ApiClient.api) {
     private val _wallets = MutableStateFlow<List<Wallet>>(emptyList())
     val wallets: StateFlow<List<Wallet>> = _wallets.asStateFlow()
 
     suspend fun refresh() {
         if (DemoModeFlag.active) return
-        _wallets.value = ApiClient.api.getAccounts().map { it.toWallet() }
+        _wallets.value = api.getAccounts().map { it.toWallet() }
     }
 
     // Overrides the in-memory list with fictitious data for local-only demo
@@ -41,15 +42,15 @@ class WalletRepository {
     // than reach the real signed-in account.
     suspend fun create(name: String, type: WalletType, initialBalance: Double): Wallet? {
         if (DemoModeFlag.active) return null
-        val dto = ApiClient.api.createAccount(CreateAccountRequest(name, type.name, initialBalance.toLong()))
+        val dto = api.createAccount(CreateAccountRequest(name, type.name, initialBalance.toLong()))
         val wallet = dto.toWallet()
         _wallets.value = _wallets.value + wallet
         return wallet
     }
 
-    suspend fun rename(id: String, name: String) {
+    suspend fun update(id: String, name: String, type: WalletType) {
         if (DemoModeFlag.active) return
-        val dto = ApiClient.api.updateAccount(id, UpdateAccountRequest(name = name))
+        val dto = api.updateAccount(id, UpdateAccountRequest(name = name, type = type.name))
         _wallets.value = _wallets.value.map { if (it.id == id) dto.toWallet() else it }
     }
 
@@ -60,7 +61,7 @@ class WalletRepository {
     // afterward picks up the destination wallet's new balance.
     suspend fun delete(id: String, reassignToAccountId: String) {
         if (DemoModeFlag.active) return
-        ApiClient.api.deleteAccount(id, DeleteAccountRequest(reassignToAccountId))
+        api.deleteAccount(id, DeleteAccountRequest(reassignToAccountId))
         _wallets.value = _wallets.value.filterNot { it.id == id }
         refresh()
     }

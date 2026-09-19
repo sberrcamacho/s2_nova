@@ -1,11 +1,14 @@
 package com.s2nova.app.data.repository
 
+import com.s2nova.app.data.formatShortDate
 import com.s2nova.app.data.model.AppNotification
 import com.s2nova.app.data.model.BudgetProgress
 import com.s2nova.app.data.model.BudgetStatus
 import com.s2nova.app.data.model.Goal
+import com.s2nova.app.data.model.LoanKind
 import com.s2nova.app.data.model.NotificationTone
 import com.s2nova.app.data.model.RecurringSeries
+import com.s2nova.app.data.model.Transaction
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,6 +33,10 @@ class NotificationRepository {
         _notifications.value = _notifications.value.map { it.copy(read = true) }
     }
 
+    fun markRead(id: String) {
+        _notifications.value = _notifications.value.map { if (it.id == id) it.copy(read = true) else it }
+    }
+
     fun add(title: String, message: String, tone: NotificationTone = NotificationTone.INFO) {
         val notification = AppNotification(
             id = "n_${UUID.randomUUID()}",
@@ -45,9 +52,32 @@ class NotificationRepository {
     // Recomputes the actionable set from live data and merges it with
     // whatever's already in the inbox (preserving read state and any
     // scanner-posted notification), deduping by id.
-    fun refreshFromData(budgets: List<BudgetProgress>, goals: List<Goal>, recurringSeries: List<RecurringSeries>) {
+    fun refreshFromData(
+        budgets: List<BudgetProgress>,
+        goals: List<Goal>,
+        recurringSeries: List<RecurringSeries>,
+        loans: List<Transaction> = emptyList(),
+    ) {
         val generated = mutableListOf<AppNotification>()
         val today = LocalDate.now()
+
+        for (loan in loans) {
+            if (loan.loanKind == null || loan.loanSettled || loan.dueDate == null) continue
+            val counterparty = loan.counterpartyName
+            val title = when {
+                loan.loanKind == LoanKind.LENT && counterparty != null -> "$counterparty te debe"
+                loan.loanKind == LoanKind.LENT -> "Te deben un préstamo"
+                counterparty != null -> "Le debes a $counterparty"
+                else -> "Tienes una deuda pendiente"
+            }
+            val dueLabel = runCatching { formatShortDate(loan.dueDate) }.getOrDefault(loan.dueDate)
+            generated += notification(
+                id = "loan_${loan.id}_${loan.dueDate}",
+                title = title,
+                message = "vence $dueLabel",
+                tone = NotificationTone.INFO,
+            )
+        }
 
         for (budget in budgets) {
             if (budget.status == BudgetStatus.OVER_BUDGET) {
@@ -68,7 +98,7 @@ class NotificationRepository {
         }
 
         for (goal in goals) {
-            val percentage = if (goal.targetAmount > 0) ((goal.currentAmount / goal.targetAmount) * 100).toInt() else 0
+            val percentage = goal.percentage
             val milestone = GOAL_MILESTONES.lastOrNull { percentage >= it }
             if (milestone != null) {
                 generated += notification(

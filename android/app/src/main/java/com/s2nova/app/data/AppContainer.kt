@@ -2,6 +2,7 @@ package com.s2nova.app.data
 
 import android.content.Context
 import com.s2nova.app.data.local.DemoModeStore
+import com.s2nova.app.data.local.IdleTimeoutStore
 import com.s2nova.app.data.local.OnboardingStore
 import com.s2nova.app.data.local.SessionStore
 import com.s2nova.app.data.mock.DemoData
@@ -35,6 +36,8 @@ object AppContainer {
         private set
     lateinit var demoModeStore: DemoModeStore
         private set
+    lateinit var idleTimeoutStore: IdleTimeoutStore
+        private set
 
     val categoryRepository = CategoryRepository()
     val walletRepository = WalletRepository()
@@ -50,6 +53,20 @@ object AppContainer {
 
     private var initialized = false
 
+    // Guards against Compose Navigation's own process-death restoration:
+    // rememberNavController() persists its back stack via the Activity's
+    // saved-instance-state Bundle, so when the OS kills a backgrounded app
+    // and the user reopens it, NavHost can restore straight to a screen
+    // like Home instead of SPLASH — even though this fresh process just
+    // recreated every repository singleton at its empty default. Without
+    // this flag, LaunchedSplashNavigation (the only place bootstrap()/
+    // refreshUserData() run) never fires, so Home renders a null user and
+    // empty StateFlows: a real account looking wiped out, even though
+    // SessionStore's tokens were never touched. NovaApp() checks this flag
+    // on every fresh composition and forces the restored back stack back
+    // to SPLASH when it's still false for this process.
+    var sessionBootstrapped: Boolean = false
+
     // Call once, from MainActivity.onCreate, before any repository or
     // screen touches the network.
     fun init(context: Context) {
@@ -59,6 +76,7 @@ object AppContainer {
         sessionStore = SessionStore.getInstance(context)
         onboardingStore = OnboardingStore.getInstance(context)
         demoModeStore = DemoModeStore.getInstance(context)
+        idleTimeoutStore = IdleTimeoutStore.getInstance(context)
         val credentialManager = androidx.credentials.CredentialManager.create(context.applicationContext)
         authRepository = AuthRepository(sessionStore, onboardingStore, credentialManager)
     }
@@ -134,6 +152,7 @@ object AppContainer {
                 budgets = budgetRepository.budgetProgress.value,
                 goals = goalRepository.goals.value,
                 recurringSeries = recurringSeriesRepository.series.value,
+                loans = transactionRepository.transactions.value.filter { it.loanKind != null },
             )
         }
     }

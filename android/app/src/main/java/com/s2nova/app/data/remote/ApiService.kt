@@ -38,6 +38,9 @@ interface ApiService {
     @POST("me/password")
     suspend fun changePassword(@Body body: ChangePasswordRequest): Response<Unit>
 
+    @POST("me/verify-password")
+    suspend fun verifyPassword(@Body body: VerifyPasswordRequest): Response<Unit>
+
     @PATCH("me/preferences")
     suspend fun updatePreferences(@Body body: UpdatePreferencesRequest): MeResponse
 

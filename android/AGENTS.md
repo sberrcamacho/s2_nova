@@ -21,13 +21,13 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
 
 - `app/src/main/java/com/s2nova/app/MainActivity.kt` — single Activity, hosts the whole Compose UI
 - `app/src/main/java/com/s2nova/app/ui/nav/NovaNavGraph.kt` — the app's one `NavHost`: all routes, the bottom bar, and the FAB's add-actions sheet live here
-- `app/src/main/java/com/s2nova/app/ui/screens/` — one package per screen (auth, home, transactions, addtransaction, scanner, budgets, reports, notifications, profile, settings)
-- `app/src/main/java/com/s2nova/app/ui/components/` — shared composables (cards, charts, category icons, progress bars, top bar, bottom nav)
+- `app/src/main/java/com/s2nova/app/ui/screens/` — one package per screen (auth, home, transactions, addtransaction, scanner, budgets, loans, recurring, wallets, reports, notifications, profile, settings)
+- `app/src/main/java/com/s2nova/app/ui/components/` — shared composables (cards, charts, category icons, progress bars, top bar, bottom nav, `NovaDraftSheet` — the shared `ModalBottomSheet` shell every create/edit/delete form uses, `AppLockGate` — the auto-lock overlay wrapping the nav graph)
 - `app/src/main/java/com/s2nova/app/ui/theme/` — Color/Theme/Type — ported 1:1 from `web/src/index.css`'s design tokens so both apps share one visual identity
 - `app/src/main/java/com/s2nova/app/data/model/` — data classes mirroring `web/src/types/index.ts`
 - `app/src/main/java/com/s2nova/app/data/mock/` — remaining seed data for entities not yet backend-backed (categories, products/barcodes) — mirrors `web/src/data/*.ts`
 - `app/src/main/java/com/s2nova/app/data/remote/` — `ApiClient` (Retrofit + OkHttp, auth interceptor, refresh-on-401 `Authenticator`), `ApiService` (endpoint interface), `Dto.kt` (wire types matching `backend/src/routes/*.ts` JSON exactly)
-- `app/src/main/java/com/s2nova/app/data/local/` — `SessionStore` (DataStore: access/refresh tokens) and `OnboardingStore` (DataStore: onboarding/tutorial completion flags)
+- `app/src/main/java/com/s2nova/app/data/local/` — `SessionStore` (DataStore: access/refresh tokens), `OnboardingStore` (DataStore: onboarding/tutorial completion flags), `IdleTimeoutStore` (DataStore: last-foreground timestamp, backs the auto-lock overlay)
 - `app/src/main/java/com/s2nova/app/data/repository/` — repositories backed by the real backend (`AuthRepository`, `WalletRepository`, `TransactionRepository`, `BudgetRepository`, `GoalRepository`, `CategoryRepository`); `ProductRepository`/`NotificationRepository` remain in-memory mock (barcode/product lookup and notifications are out of scope for the current backend integration pass)
 - `app/src/main/java/com/s2nova/app/data/AppContainer.kt` — manual DI: a single object holding the repository singletons every screen reads from; call `AppContainer.init(context)` once (done in `MainActivity.onCreate`) before any repository touches the network
 
@@ -47,6 +47,23 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   an encrypted store; a known follow-up, see `ARCHITECTURE.md` §14).
   `AppContainer.refreshUserData()` reloads every domain repository from the
   backend after login/register and after a restored session at cold start.
+  That cold-start rehydration only happens inside `NovaNavGraph.kt`'s
+  `LaunchedSplashNavigation`, gated by `AppContainer.sessionBootstrapped`
+  (starts `false` every process) — `NovaApp()` force-navigates back to
+  `SPLASH` whenever that flag is still `false`, because Compose Navigation's
+  `rememberNavController()` persists its back stack across OS-initiated
+  process death and would otherwise restore straight to whatever screen
+  (e.g. Home) the user was last on, skipping bootstrap entirely and
+  rendering a freshly-recreated, still-empty `AppContainer` — a real
+  account looking wiped (null user, zero balances) even though
+  `SessionStore`'s tokens were untouched. Don't remove this guard or key the
+  splash gate on anything that itself survives process death (e.g. a
+  `rememberSaveable` flag) — it needs to reset to `false` exactly when the
+  repositories do. Relatedly, `AuthRepository.bootstrap()` only clears the
+  stored session on a real `HttpException` (the server rejecting the
+  token); a plain network/timeout exception (e.g. Render's backend still
+  waking up, see `backend/AGENTS.md`) leaves the tokens alone so the next
+  bootstrap can still restore the session instead of forcing a fresh login.
   `local.properties`' `API_BASE_URL` (gitignored) overrides the default
   `http://10.0.2.2:3000/api/v1` (the emulator's alias for the host
   machine's `localhost`, where `backend/` runs via `pnpm dev`) — currently
@@ -58,14 +75,36 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   OAuth client ID from Google Cloud Console (see `build.gradle.kts`'s
   comment on why — Credential Manager always audiences its ID token to the
   web client, even on Android) or the button doesn't render at all. The
-  account model is deliberately minimal — name, email, and login method
-  (password and/or Google) only; there's no phone/city on `User`, matching
-  `backend/prisma/schema.prisma`'s `User` model. Editing name/email
-  (`AuthRepository.updateProfile`) and changing/creating a password
+  account model is name, email, login method (password and/or Google), plus
+  optional `phone`/`city` (`User`, matching `backend/prisma/schema.prisma`'s
+  `User` model) — both editable from `SettingsScreen` and shown on
+  `ProfileScreen` as `"{city} · desde {mes} {año}"`, per the mockup. Editing
+  name/email (`AuthRepository.updateProfile`, now also carrying
+  `phone`/`city`) and changing/creating a password
   (`AuthRepository.changePassword`, from Settings) both call the real
   backend; a successful password change revokes every refresh token
   server-side, so the app logs itself out and returns to `/login` rather
   than keep using a session the server will now reject.
+- **Privacy and session preferences** (`UserPreferences.blurBalance`/
+  `.autoLockMinutes`, `SettingsScreen`'s "Privacidad y sesión" card, per the
+  mockup): `blurBalance` puts a `Modifier.blur` over Home's total-balance
+  figure with a "Toca para mostrar" tap-to-reveal, re-hiding on the next
+  composition rather than staying revealed forever. `autoLockMinutes` (one
+  of `0` "Nunca", `1`, `5`, `15`, `60`) is enforced by `AppLockGate`
+  (`ui/components/AppLockGate.kt`, wrapping the whole nav graph in
+  `NovaNavGraph.kt`): it records a timestamp via `IdleTimeoutStore` on the
+  single Activity's `ON_STOP` and, on the next `ON_START`, shows a
+  full-screen password challenge (`POST /me/verify-password`, a
+  password-check endpoint that never rotates tokens) if the elapsed time
+  exceeds the preference. Deliberately password-only — there's no
+  `androidx.biometric` dependency in this app, so a biometric re-entry
+  option isn't wired up (`UserPreferences.biometricLogin` itself has no
+  enforcement anywhere in the app yet either); a user with no password set
+  (Google-only sign-in) is never locked, since there'd be no way back in.
+  Both preferences persist through the same `PATCH /me/preferences` call as
+  every other toggle on that screen — see the next bullet, this was also
+  the fix for a real bug where Settings' notification/biometric/currency/
+  language toggles updated local state only and never reached the backend.
 - **Login/Register visual system** (`ui/screens/auth/LoginScreen.kt`,
   `RegisterScreen.kt`), per the design handoff in
   `s2-nova-mockup/auth_handoff/`: both build their own header/scroll/footer
@@ -99,16 +138,24 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   conflation was this screen's original design; it was replaced because
   "definition" and "occurrence" need to stay separate — see
   `RecurringSeries`'s doc comment in `data/model/Models.kt`). Settling a
-  Lent/Borrowed transaction (`ui/screens/loans/LoansScreen.kt`) creates a
-  real opposite-direction settlement transaction
+  Lent/Borrowed transaction (`LoansTab` in `ui/screens/loans/LoansScreen.kt`)
+  creates a real opposite-direction settlement transaction
   (`TransactionRepository.settleLoan`) — never just flips a flag,
-  otherwise the wallet balance would never reflect the repayment. Budgets
-  and Goals share a tab (`BudgetsScreen` + `ui/screens/goals/GoalsScreen.kt`'s
-  `GoalsTab`) rather than a new bottom-nav item, to avoid changing the
-  existing bottom bar; budget/goal progress is computed server-side and
-  read directly (`BudgetRepository.budgetProgress`), never recomputed
-  client-side. Wallets/Recurring/Loans are reachable from Profile, same
-  pattern as Settings. A budget's list icon (`BudgetsScreen.kt`'s
+  otherwise the wallet balance would never reflect the repayment; it also
+  supports **partial** repayments (an optional `amount` less than the
+  outstanding balance), tracked via `Transaction.parentLoanId` — a loan's
+  paid-so-far is always the live sum of every transaction linked to it that
+  way (`TransactionRepository.paidSoFar`/`outstandingFor`), never a stored
+  running total that could drift. The 4th bottom-nav slot is **Planes**
+  (`PlanesScreen.kt`, per the design handoff in
+  `design_handoff_s2_nova_overview/`), three tabs: Presupuestos, Metas
+  (`GoalsTab`), and Préstamos (`LoansTab`) — Loans moved out of Profile and
+  is no longer its own stacked destination. Budget/goal progress is
+  computed server-side and read directly
+  (`BudgetRepository.budgetProgress`), never recomputed client-side.
+  Wallets and Recurring are reachable from Profile (now down to three rows:
+  Billeteras, Recurrentes, Ajustes), same pattern as Settings. A budget's
+  list icon (`PlanesScreen.kt`'s
   `BudgetsTab`) is always its category's real icon (`CategoryIcon`) —
   never the small decorative theme palette in
   `ui/components/BudgetGoalTheme.kt`, since a budget already has a
@@ -139,9 +186,13 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   wallet picker of its own either, always uses the first wallet) rather
   than removed, since giving Scanner a real wallet picker was out of
   scope for this pass.
-- **Goal contributions** (`ui/screens/goals/GoalContributionScreen.kt`,
-  reached via a goal card's "Abonar" button in `GoalsTab`) are a dedicated
-  flow, separate from the general Add Transaction form, for moving money
+- **Goal contributions** (`GoalPaySheet`, a private composable inside
+  `ui/screens/goals/GoalsScreen.kt`, reached via a goal card's "Abonar"
+  button in `GoalsTab` — not its own screen/nav destination, per the
+  mockup's "Abonar" flow being a bottom sheet rather than a full page;
+  there used to be a dedicated `GoalContributionScreen.kt`, now deleted)
+  are a dedicated flow, separate from the general Add Transaction form,
+  for moving money
   from a wallet straight into a goal's progress — no category picker (it
   posts under `CategoryId.OTHER` without ever showing that choice).
   Mechanically it's nothing new: a normal `EXPENSE` transaction with
@@ -272,6 +323,37 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   TextOverflow.Ellipsis` — Compose's default `TextOverflow.Clip` cuts a
   long name off mid-word instead of showing "…", so never drop the
   explicit `overflow` when adding a new chip/grid label.
+- **Create/edit/delete forms are `ModalBottomSheet`s, not `AlertDialog`s**,
+  per the mockup's `.sheet` treatment (28px top corners, grab handle, 65%
+  black scrim) — `ui/components/NovaDraftSheet.kt` is the shared shell
+  (`NovaDraftSheet`, `ColorPill`, `DraftSheetPrimaryButton`,
+  `DraftSheetDeleteRow`) used by Wallets, Budgets (`BudgetsTab`'s
+  `BudgetDraftSheet`), Goals (`GoalDraftSheet`/`GoalDeleteSheet`/
+  `GoalPaySheet`), Loans (`LoanDraftSheet`/`LoanPaySheet`), and Recurring
+  (`RecurringDraftSheet`, now shared by create *and* edit — edit didn't
+  exist before). Notifications (`NotificationsSheet`) converted the same
+  way, from a full screen/nav destination to a sheet opened from Home's
+  bell icon. Plain yes/no confirmations (delete confirmations, a blocked
+  wallet-delete notice, the recurring "confirm occurrence" prompt, the
+  change-password dialog) stay `AlertDialog` — only the mockup's draft/edit
+  *forms* are sheets, not every dialog.
+- **The shared `CategoryIcon` composable is subcategory-aware everywhere a
+  transaction is shown.** `CategoryIcon(category, subcategoryId, ...)`
+  (`ui/components/CategoryIcon.kt`) takes an optional `subcategoryId`; when
+  set, it resolves the row via `AppContainer.categoryRepository
+  .subcategoryById()` and renders `iconForSubcategory(slug, category)`
+  instead of the parent's `iconFor(category)`. `TransactionRow.kt` (used by
+  both Home's recent-movements list and the full `TransactionsScreen`) and
+  `TransactionDetailScreen.kt`'s hero icon pass `transaction.subcategoryId`
+  through for this reason. Budgets (`PlanesScreen.kt`'s `BudgetsTab`), recurring series
+  (`RecurringScreen.kt`), scanned products (`ScannerScreen.kt`), and
+  Reports/statistics deliberately omit it and keep the plain category icon
+  — their underlying models (`CategoryBudget`, `RecurringSeries`,
+  `Product`) have no `subcategoryId` at all, and Reports intentionally
+  aggregates at the category level only. Don't add a subcategory icon to
+  Reports even if a per-category breakdown grows subcategory data later —
+  that screen's icon-less category rows are an explicit product choice,
+  not an oversight.
 
 ## Keeping in sync with the web app
 

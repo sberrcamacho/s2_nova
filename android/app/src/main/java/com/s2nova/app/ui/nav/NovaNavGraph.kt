@@ -24,11 +24,8 @@ import com.s2nova.app.ui.screens.addtransaction.AddTransactionScreen
 import com.s2nova.app.ui.screens.auth.ForgotPasswordScreen
 import com.s2nova.app.ui.screens.auth.LoginScreen
 import com.s2nova.app.ui.screens.auth.RegisterScreen
-import com.s2nova.app.ui.screens.budgets.BudgetsScreen
-import com.s2nova.app.ui.screens.goals.GoalContributionScreen
+import com.s2nova.app.ui.screens.budgets.PlanesScreen
 import com.s2nova.app.ui.screens.home.HomeScreen
-import com.s2nova.app.ui.screens.loans.LoansScreen
-import com.s2nova.app.ui.screens.notifications.NotificationsScreen
 import com.s2nova.app.ui.screens.onboarding.OnboardingBudgetScreen
 import com.s2nova.app.ui.screens.onboarding.OnboardingFlowState
 import com.s2nova.app.ui.screens.onboarding.OnboardingIncomeScreen
@@ -61,6 +58,18 @@ fun NovaApp() {
     val snackbarHostState = remember { SnackbarHostState() }
     val t = rememberStrings()
 
+    // If this process's NavHost was just recreated from a saved back stack
+    // (process death while backgrounded, not an explicit relaunch) without
+    // ever having run this process's own splash bootstrap, force it back to
+    // SPLASH so AuthRepository.bootstrap()/AppContainer.refreshUserData()
+    // actually run before any screen reads the (currently empty) repository
+    // StateFlows. See AppContainer.sessionBootstrapped's doc comment.
+    LaunchedEffect(Unit) {
+        if (!AppContainer.sessionBootstrapped) {
+            navController.navigateAsRoot(NovaDestinations.SPLASH)
+        }
+    }
+
     // Where a freshly authenticated session lands: onboarding for a user
     // who hasn't completed it yet (fresh register, or an existing account
     // whose local onboarding flag isn't set on this device), Home
@@ -82,6 +91,7 @@ fun NovaApp() {
         }
     }
 
+    com.s2nova.app.ui.components.AppLockGate {
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
@@ -165,7 +175,6 @@ fun NovaApp() {
 
             composable(NovaDestinations.HOME) {
                 HomeScreen(
-                    onOpenNotifications = { navController.navigate(NovaDestinations.NOTIFICATIONS) },
                     onOpenProfile = { navController.navigate(NovaDestinations.PROFILE) },
                     onOpenTransactions = { navController.navigate(NovaDestinations.TRANSACTIONS) },
                     onOpenBudgets = {
@@ -222,33 +231,15 @@ fun NovaApp() {
                     onPurchaseRegistered = { navController.navigateAsRoot(NovaDestinations.HOME) },
                 )
             }
-            composable(NovaDestinations.BUDGETS) {
-                BudgetsScreen(onContributeToGoal = { goalId -> navController.navigate(NovaDestinations.goalContribution(goalId)) })
-            }
-            composable(
-                NovaDestinations.GOAL_CONTRIBUTION,
-                arguments = listOf(navArgument("goalId") { type = androidx.navigation.NavType.StringType }),
-            ) { entry ->
-                val goalId = entry.arguments?.getString("goalId").orEmpty()
-                GoalContributionScreen(
-                    goalId = goalId,
-                    onDone = { navController.popBackStack() },
-                    onBack = { navController.popBackStack() },
-                )
-            }
+            composable(NovaDestinations.BUDGETS) { PlanesScreen() }
             composable(NovaDestinations.WALLETS) { WalletsScreen(onBack = { navController.popBackStack() }) }
             composable(NovaDestinations.RECURRING) { RecurringScreen(onBack = { navController.popBackStack() }) }
-            composable(NovaDestinations.LOANS) { LoansScreen(onBack = { navController.popBackStack() }) }
             composable(NovaDestinations.REPORTS) { ReportsScreen() }
-            composable(NovaDestinations.NOTIFICATIONS) {
-                NotificationsScreen(onBack = { navController.popBackStack() })
-            }
             composable(NovaDestinations.PROFILE) {
                 ProfileScreen(
                     onOpenSettings = { navController.navigate(NovaDestinations.SETTINGS) },
                     onOpenWallets = { navController.navigate(NovaDestinations.WALLETS) },
                     onOpenRecurring = { navController.navigate(NovaDestinations.RECURRING) },
-                    onOpenLoans = { navController.navigate(NovaDestinations.LOANS) },
                     onLogout = {
                         scope.launch {
                             AppContainer.authRepository.logout()
@@ -288,11 +279,13 @@ fun NovaApp() {
             },
         )
     }
+    }
 }
 
 @Composable
 private fun LaunchedSplashNavigation(navController: NavHostController) {
     LaunchedEffect(Unit) {
+        AppContainer.sessionBootstrapped = true
         kotlinx.coroutines.delay(400)
         val loggedIn = AppContainer.authRepository.bootstrap()
         if (loggedIn) {
@@ -303,13 +296,16 @@ private fun LaunchedSplashNavigation(navController: NavHostController) {
             }
         }
         val onboardingDone = AppContainer.onboardingStore.onboardingCompleted.first()
-        val target = when {
-            !loggedIn -> NovaDestinations.LOGIN
-            !onboardingDone -> NovaDestinations.ONBOARDING_WELCOME
-            else -> NovaDestinations.HOME
-        }
-        navController.navigateAsRoot(target)
+        navController.navigateAsRoot(splashDestinationFor(loggedIn, onboardingDone))
     }
+}
+
+// Pure — kept separate from LaunchedSplashNavigation's suspend/NavHost body
+// so this routing decision is unit-testable without a NavController.
+internal fun splashDestinationFor(loggedIn: Boolean, onboardingDone: Boolean): String = when {
+    !loggedIn -> NovaDestinations.LOGIN
+    !onboardingDone -> NovaDestinations.ONBOARDING_WELCOME
+    else -> NovaDestinations.HOME
 }
 
 private fun NavHostController.navigateAsRoot(route: String) {

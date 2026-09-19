@@ -30,9 +30,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -64,12 +67,13 @@ import java.util.Locale
 
 @Composable
 fun HomeScreen(
-    onOpenNotifications: () -> Unit,
     onOpenProfile: () -> Unit,
     onOpenTransactions: () -> Unit,
     onOpenBudgets: () -> Unit,
     onOpenRecurring: () -> Unit,
 ) {
+    var showNotifications by remember { mutableStateOf(false) }
+    var balanceRevealed by remember { mutableStateOf(false) }
     val transactions by AppContainer.transactionRepository.transactions.collectAsStateWithLifecycle()
     val user by AppContainer.authRepository.currentUser.collectAsStateWithLifecycle()
     val notifications by AppContainer.notificationRepository.notifications.collectAsStateWithLifecycle()
@@ -87,11 +91,15 @@ fun HomeScreen(
         runCatching { AppContainer.recurringSeriesRepository.refresh() }
     }
 
-    val totalIncome = transactions.filter { it.type == com.s2nova.app.data.model.TransactionType.INCOME }.sumOf { it.amount }
-    val totalExpenses = transactions.filter { it.type == com.s2nova.app.data.model.TransactionType.EXPENSE }.sumOf { it.amount }
-    val balance = totalIncome - totalExpenses
+    // Sums each wallet's own currentBalance rather than re-deriving it from
+    // the transaction list — the backend already excludes PLANNED ("Upcoming")
+    // transactions' effects from that balance (they haven't moved money yet),
+    // so re-summing income/expenses here used to silently count them anyway.
+    val balance = wallets.sumOf { it.currentBalance }
 
     val thisMonth = AnalyticsHelpers.monthlyHistory(transactions, 1).last()
+    val blurBalancePref = user?.preferences?.blurBalance ?: false
+    val isBalanceBlurred = blurBalancePref && !balanceRevealed
     val unreadCount = notifications.count { !it.read }
     val topBudgets = budgetProgress.sortedByDescending { it.percentage }.take(3)
     val upcoming = recurringSeries.filter { it.active }.sortedBy { it.nextOccurrenceDate }.take(2)
@@ -132,7 +140,7 @@ fun HomeScreen(
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.surface)
                         .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
-                        .clickable(onClick = onOpenNotifications),
+                        .clickable(onClick = { showNotifications = true }),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(Icons.Filled.Notifications, contentDescription = t(StringKey.SETTINGS_NOTIFICATIONS), tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(20.dp))
@@ -227,8 +235,22 @@ fun HomeScreen(
                         format(balance),
                         style = MaterialTheme.typography.headlineLarge.copy(fontSize = 34.sp, letterSpacing = (-1.02).sp),
                         color = Color.White,
-                        modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+                        modifier = Modifier
+                            .padding(top = 4.dp)
+                            .then(if (isBalanceBlurred) Modifier.blur(11.dp) else Modifier)
+                            .clickable(enabled = blurBalancePref) { balanceRevealed = !balanceRevealed },
                     )
+                    if (isBalanceBlurred) {
+                        Text(
+                            t(StringKey.HOME_BALANCE_TAP_TO_REVEAL),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color(0xFFEAE7FF),
+                            modifier = Modifier
+                                .padding(top = 8.dp)
+                                .clickable { balanceRevealed = !balanceRevealed },
+                        )
+                    }
+                    Spacer(Modifier.height(16.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         HeroStatTile(label = t(StringKey.HOME_INCOME), value = format(thisMonth.income), valueColor = colors.positive, modifier = Modifier.weight(1f))
                         HeroStatTile(label = t(StringKey.HOME_EXPENSES), value = format(thisMonth.expenses), valueColor = colors.negative, modifier = Modifier.weight(1f))
@@ -311,6 +333,14 @@ fun HomeScreen(
 
         item { Spacer(Modifier.height(72.dp)) }
         }
+    }
+
+    if (showNotifications) {
+        com.s2nova.app.ui.screens.notifications.NotificationsSheet(
+            onDismiss = { showNotifications = false },
+            onOpenPlanes = onOpenBudgets,
+            onOpenRecurring = onOpenRecurring,
+        )
     }
 }
 

@@ -12,6 +12,7 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.create
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import java.util.concurrent.TimeUnit
 
 // Manual DI, matching AppContainer's existing pattern — no Hilt. Call
 // ApiClient.init(context) once (from MainActivity.onCreate) before any
@@ -30,6 +31,17 @@ object ApiClient {
         level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE
     }
 
+    // OkHttp's 10s defaults are too tight for the deployed backend: Render's
+    // free tier sleeps after 15 minutes idle and takes roughly 30-60s to
+    // wake on the first request after that (see backend/AGENTS.md's
+    // "Production deployment" section). Without this, that first request —
+    // often exactly the /me call AuthRepository.bootstrap() makes at cold
+    // start — times out well before the backend finishes waking up.
+    private fun OkHttpClient.Builder.applyTimeouts(): OkHttpClient.Builder = this
+        .connectTimeout(45, TimeUnit.SECONDS)
+        .readTimeout(45, TimeUnit.SECONDS)
+        .writeTimeout(45, TimeUnit.SECONDS)
+
     // Unauthenticated — used for register/login (no token exists yet) and
     // for refresh/logout (authorized by the refresh token, not the access
     // token). Also used internally by `api`'s Authenticator to perform the
@@ -37,7 +49,7 @@ object ApiClient {
     val authApi: ApiService by lazy {
         Retrofit.Builder()
             .baseUrl(ensureTrailingSlash(BuildConfig.API_BASE_URL))
-            .client(OkHttpClient.Builder().addInterceptor(loggingInterceptor()).build())
+            .client(OkHttpClient.Builder().addInterceptor(loggingInterceptor()).applyTimeouts().build())
             .addConverterFactory(json.asConverterFactory(contentType))
             .build()
             .create()
@@ -49,6 +61,7 @@ object ApiClient {
     val api: ApiService by lazy {
         val sessionStore = SessionStore.getInstance(appContext)
         val client = OkHttpClient.Builder()
+            .applyTimeouts()
             .addInterceptor(loggingInterceptor())
             .addInterceptor { chain ->
                 val token = runBlocking { sessionStore.accessTokenOnce() }

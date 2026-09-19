@@ -25,14 +25,12 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.CurrencyBitcoin
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -60,11 +58,15 @@ import com.s2nova.app.data.model.Wallet
 import com.s2nova.app.data.model.WalletType
 import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.ThousandsGroupingVisualTransformation
+import com.s2nova.app.ui.components.DraftSheetDeleteRow
+import com.s2nova.app.ui.components.DraftSheetPrimaryButton
 import com.s2nova.app.ui.components.NovaCard
+import com.s2nova.app.ui.components.NovaDraftSheet
 import com.s2nova.app.ui.components.NovaTopBar
 import com.s2nova.app.ui.components.WalletPickerDialog
 import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
+import com.s2nova.app.ui.suggestWalletType
 import com.s2nova.app.ui.theme.NovaColors
 import kotlinx.coroutines.launch
 
@@ -123,6 +125,15 @@ fun WalletTypeSelector(selected: WalletType, onSelect: (WalletType) -> Unit) {
     }
 }
 
+// Draft state backing the create/edit sheet. `id == null` means "creating".
+private data class WalletDraft(
+    val id: String?,
+    val name: String,
+    val type: WalletType,
+    val userPickedType: Boolean,
+    val balanceText: String,
+)
+
 @Composable
 fun WalletsScreen(onBack: () -> Unit) {
     val wallets by AppContainer.walletRepository.wallets.collectAsStateWithLifecycle()
@@ -130,18 +141,22 @@ fun WalletsScreen(onBack: () -> Unit) {
     val t = rememberStrings()
     val colors = NovaColors.current
     val scope = rememberCoroutineScope()
-    var creating by remember { mutableStateOf(false) }
+    var draft by remember { mutableStateOf<WalletDraft?>(null) }
     var deleting by remember { mutableStateOf<Wallet?>(null) }
     var blockedDelete by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) { runCatching { AppContainer.walletRepository.refresh() } }
+
+    fun openCreate() {
+        draft = WalletDraft(id = null, name = "", type = WalletType.CASH, userPickedType = false, balanceText = "")
+    }
 
     Scaffold(
         topBar = {
             NovaTopBar(
                 title = t(StringKey.WALLETS_TITLE),
                 onBack = onBack,
-                actions = { IconButton(onClick = { creating = true }) { Icon(Icons.Filled.Add, contentDescription = t(StringKey.WALLETS_NEW)) } },
+                actions = { IconButton(onClick = { openCreate() }) { Icon(Icons.Filled.Add, contentDescription = t(StringKey.WALLETS_NEW)) } },
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -165,7 +180,7 @@ fun WalletsScreen(onBack: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp),
                 )
-                Button(onClick = { creating = true }, shape = RoundedCornerShape(14.dp), modifier = Modifier.padding(top = 20.dp)) {
+                Button(onClick = { openCreate() }, shape = RoundedCornerShape(14.dp), modifier = Modifier.padding(top = 20.dp)) {
                     Text(t(StringKey.WALLETS_NEW))
                 }
             }
@@ -176,7 +191,21 @@ fun WalletsScreen(onBack: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 items(wallets) { wallet ->
-                    NovaCard(modifier = Modifier.fillMaxWidth()) {
+                    // Whole row is tappable and opens the same sheet in edit
+                    // mode — per the mockup there's no separate pencil/delete
+                    // icon on the row itself.
+                    NovaCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            draft = WalletDraft(
+                                id = wallet.id,
+                                name = wallet.name,
+                                type = wallet.type,
+                                userPickedType = true,
+                                balanceText = wallet.currentBalance.toLong().toString(),
+                            )
+                        },
+                    ) {
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(16.dp)) {
                             Box(
                                 modifier = Modifier
@@ -197,9 +226,6 @@ fun WalletsScreen(onBack: () -> Unit) {
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onBackground,
                             )
-                            IconButton(onClick = { if (wallets.size <= 1) blockedDelete = true else deleting = wallet }) {
-                                Icon(Icons.Filled.Delete, contentDescription = t(StringKey.WALLETS_DELETE), tint = colors.negativeBorder)
-                            }
                         }
                     }
                 }
@@ -215,14 +241,26 @@ fun WalletsScreen(onBack: () -> Unit) {
             }
         }
 
-        if (creating) {
-            CreateWalletDialog(
-                onDismiss = { creating = false },
-                onCreate = { name, type, balance ->
+        val d = draft
+        if (d != null) {
+            WalletDraftSheet(
+                draft = d,
+                onDraftChange = { draft = it },
+                onDismiss = { draft = null },
+                onSave = {
                     scope.launch {
-                        AppContainer.walletRepository.create(name, type, balance)
-                        creating = false
+                        if (d.id == null) {
+                            AppContainer.walletRepository.create(d.name.trim(), d.type, d.balanceText.toDoubleOrNull() ?: 0.0)
+                        } else {
+                            AppContainer.walletRepository.update(d.id, d.name.trim(), d.type)
+                        }
+                        draft = null
                     }
+                },
+                onRequestDelete = {
+                    val id = d.id ?: return@WalletDraftSheet
+                    draft = null
+                    if (wallets.size <= 1) blockedDelete = true else deleting = wallets.first { it.id == id }
                 },
             )
         }
@@ -255,49 +293,91 @@ fun WalletsScreen(onBack: () -> Unit) {
     }
 }
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-private fun CreateWalletDialog(onDismiss: () -> Unit, onCreate: (String, WalletType, Double) -> Unit) {
+private fun WalletDraftSheet(
+    draft: WalletDraft,
+    onDraftChange: (WalletDraft) -> Unit,
+    onDismiss: () -> Unit,
+    onSave: () -> Unit,
+    onRequestDelete: () -> Unit,
+) {
     val t = rememberStrings()
-    var name by remember { mutableStateOf("") }
-    var type by remember { mutableStateOf(WalletType.CASH) }
-    var balanceText by remember { mutableStateOf("") }
+    val colors = NovaColors.current
+    val isEdit = draft.id != null
+    val wGuessedNote = !draft.userPickedType && suggestWalletType(draft.name) != null
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(t(StringKey.WALLETS_NEW)) },
-        text = {
-            Column {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text(t(StringKey.WALLETS_NAME)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+    NovaDraftSheet(
+        onDismiss = onDismiss,
+        title = t(if (isEdit) StringKey.WALLETS_EDIT_TITLE else StringKey.WALLETS_NEW),
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(androidx.compose.ui.graphics.Brush.linearGradient(listOf(colors.heroFrom, colors.heroTo))),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(iconFor(draft.type), contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                    }
+                    OutlinedTextField(
+                        value = draft.name,
+                        onValueChange = { newName ->
+                            val guessed = if (!draft.userPickedType) suggestWalletType(newName) else null
+                            onDraftChange(draft.copy(name = newName, type = guessed ?: draft.type))
+                        },
+                        label = { Text(t(StringKey.WALLETS_NAME)) },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
                 Text(
-                    t(StringKey.WALLETS_TYPE),
-                    style = MaterialTheme.typography.labelLarge,
+                    t(if (wGuessedNote) StringKey.WALLETS_TYPE_AUTO_NOTE else StringKey.WALLETS_TYPE_NOTE),
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 14.dp, bottom = 8.dp),
                 )
-                WalletTypeSelector(selected = type, onSelect = { type = it })
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(t(StringKey.WALLETS_TYPE), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                WalletTypeSelector(
+                    selected = draft.type,
+                    onSelect = { onDraftChange(draft.copy(type = it, userPickedType = true)) },
+                )
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(t(StringKey.WALLETS_CURRENT_BALANCE), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                // Editing an existing wallet's balance directly isn't
+                // supported server-side (PATCH /accounts only accepts
+                // name/type) — a direct overwrite would also desync the
+                // balance from its transaction history. So this field is
+                // only editable while creating; in edit mode it's a
+                // read-only display of the current balance.
                 OutlinedTextField(
-                    value = balanceText,
-                    onValueChange = { balanceText = it.filter { c -> c.isDigit() } },
-                    label = { Text(t(StringKey.WALLETS_INITIAL_BALANCE)) },
+                    value = draft.balanceText,
+                    onValueChange = { onDraftChange(draft.copy(balanceText = it.filter { c -> c.isDigit() })) },
+                    enabled = !isEdit,
                     leadingIcon = { Text("$") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     visualTransformation = ThousandsGroupingVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
-        },
-        confirmButton = {
-            TextButton(onClick = { if (name.isNotBlank()) onCreate(name.trim(), type, balanceText.toDoubleOrNull() ?: 0.0) }) {
-                Text(t(StringKey.WALLETS_CREATE))
+
+            DraftSheetPrimaryButton(
+                label = t(StringKey.COMMON_SAVE),
+                enabled = draft.name.isNotBlank(),
+                onClick = onSave,
+            )
+
+            if (isEdit) {
+                DraftSheetDeleteRow(label = t(StringKey.WALLETS_DELETE), onClick = onRequestDelete)
             }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(t(StringKey.COMMON_CANCEL)) } },
-    )
+        }
+    }
 }

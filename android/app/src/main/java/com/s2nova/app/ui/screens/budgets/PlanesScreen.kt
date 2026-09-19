@@ -70,20 +70,23 @@ import com.s2nova.app.ui.categoryStringKey
 import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.screens.goals.GoalsTab
+import com.s2nova.app.ui.screens.loans.LoansTab
 import com.s2nova.app.ui.theme.NovaColors
 import kotlinx.coroutines.launch
 
 @Composable
-fun BudgetsScreen(onContributeToGoal: (String) -> Unit) {
+fun PlanesScreen() {
     val t = rememberStrings()
     var tab by remember { mutableStateOf(0) }
+    val snackbarHostState = remember { androidx.compose.material3.SnackbarHostState() }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { androidx.compose.material3.SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
             Text(
-                t(StringKey.TITLE_BUDGETS),
+                t(StringKey.TITLE_PLANS),
                 style = MaterialTheme.typography.headlineMedium.copy(fontSize = 21.sp, letterSpacing = (-0.42).sp),
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
@@ -91,8 +94,13 @@ fun BudgetsScreen(onContributeToGoal: (String) -> Unit) {
             PrimaryTabRow(selectedTabIndex = tab) {
                 Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text(t(StringKey.TITLE_BUDGETS)) })
                 Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text(t(StringKey.GOALS_TITLE)) })
+                Tab(selected = tab == 2, onClick = { tab = 2 }, text = { Text(t(StringKey.PLANS_TAB)) })
             }
-            if (tab == 0) BudgetsTab() else GoalsTab(onContribute = onContributeToGoal)
+            when (tab) {
+                0 -> BudgetsTab()
+                1 -> GoalsTab(snackbarHostState = snackbarHostState)
+                else -> LoansTab()
+            }
         }
     }
 }
@@ -118,9 +126,9 @@ private fun BudgetsTab() {
         else -> com.s2nova.app.data.model.BudgetStatus.ON_TRACK
     }
 
-    var editing by remember { mutableStateOf<BudgetProgress?>(null) }
-    var creating by remember { mutableStateOf(false) }
+    var draft by remember { mutableStateOf<BudgetDraft?>(null) }
     var deleting by remember { mutableStateOf<BudgetProgress?>(null) }
+    fun unnamedAvailable() = expenseCategories.filter { c -> progressList.none { it.budget.category == c.id && it.budget.name == null } }
 
     LazyColumn(
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
@@ -145,8 +153,13 @@ private fun BudgetsTab() {
 
             item {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    val available = expenseCategories.filter { c -> progressList.none { it.budget.category == c.id } }
-                    TextButton(onClick = { creating = true }, enabled = available.isNotEmpty()) {
+                    val available = unnamedAvailable()
+                    TextButton(
+                        onClick = {
+                            draft = BudgetDraft(id = null, name = "", category = available.first().id, userPickedCategory = false, limitText = "")
+                        },
+                        enabled = available.isNotEmpty(),
+                    ) {
                         Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
                         Text(t(StringKey.BUDGETS_NEW))
                     }
@@ -156,7 +169,15 @@ private fun BudgetsTab() {
             items(progressList) { progress ->
                 NovaCard(
                     modifier = Modifier.fillMaxWidth(),
-                    onClick = { editing = progress },
+                    onClick = {
+                        draft = BudgetDraft(
+                            id = progress.budget.id,
+                            name = progress.budget.name ?: "",
+                            category = progress.budget.category,
+                            userPickedCategory = true,
+                            limitText = progress.budget.limit.toInt().toString(),
+                        )
+                    },
                     borderColor = if (progress.percentage >= 90) colors.negativeBorder else MaterialTheme.colorScheme.outline,
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -196,30 +217,32 @@ private fun BudgetsTab() {
             item { Spacer(Modifier.height(72.dp)) }
     }
 
-    if (editing != null) {
-        EditBudgetDialog(
-            categoryId = editing!!.budget.category,
-            initialLimit = editing!!.budget.limit.toInt().toString(),
-            onDismiss = { editing = null },
-            onSave = { newLimit ->
-                scope.launch { AppContainer.budgetRepository.updateLimit(editing!!.budget.id, newLimit) }
-                editing = null
+    val d = draft
+    if (d != null) {
+        BudgetDraftSheet(
+            draft = d,
+            onDraftChange = { draft = it },
+            onDismiss = { draft = null },
+            onSave = {
+                val limit = d.limitText.toDoubleOrNull()
+                if (limit != null && limit > 0) {
+                    val name = d.name.trim().ifBlank { null }
+                    scope.launch {
+                        if (d.id == null) {
+                            AppContainer.budgetRepository.create(name, d.category, limit)
+                        } else {
+                            AppContainer.budgetRepository.update(d.id, name, limit)
+                        }
+                    }
+                    draft = null
+                }
             },
-            onDelete = {
-                deleting = editing
-                editing = null
-            },
-        )
-    }
-
-    if (creating) {
-        val available = expenseCategories.filter { c -> progressList.none { it.budget.category == c.id && it.budget.name == null } }
-        CreateBudgetDialog(
-            availableCategories = available.map { it.id },
-            onDismiss = { creating = false },
-            onCreate = { name, category, limit ->
-                scope.launch { AppContainer.budgetRepository.create(name, category, limit) }
-                creating = false
+            onRequestDelete = {
+                val id = d.id
+                if (id != null) {
+                    deleting = progressList.firstOrNull { it.budget.id == id }
+                    draft = null
+                }
             },
         )
     }
@@ -241,114 +264,100 @@ private fun BudgetsTab() {
     }
 }
 
+// Draft state backing the budget create/edit sheet. `id == null` means
+// "creating". Category can only be chosen while creating — the backend's
+// PATCH /budgets/:id has no categoryId field, so an existing budget's
+// category is permanent; the chip row still renders in edit mode (matching
+// the mockup) but is non-interactive there.
+private data class BudgetDraft(
+    val id: String?,
+    val name: String,
+    val category: CategoryId,
+    val userPickedCategory: Boolean,
+    val limitText: String,
+)
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-private fun EditBudgetDialog(
-    categoryId: CategoryId,
-    initialLimit: String,
+private fun BudgetDraftSheet(
+    draft: BudgetDraft,
+    onDraftChange: (BudgetDraft) -> Unit,
     onDismiss: () -> Unit,
-    onSave: (Double) -> Unit,
-    onDelete: () -> Unit,
+    onSave: () -> Unit,
+    onRequestDelete: () -> Unit,
 ) {
-    var limitText by remember { mutableStateOf(initialLimit) }
     val t = rememberStrings()
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("${t(StringKey.BUDGETS_EDIT_TITLE_PREFIX)} ${categoryMap[categoryId]?.let { t(categoryStringKey(it.id)) }}") },
-        text = {
-            Column {
-                OutlinedTextField(
-                    value = limitText,
-                    onValueChange = { limitText = it.filter { c -> c.isDigit() } },
-                    leadingIcon = { Text("$") },
-                    label = { Text(t(StringKey.BUDGETS_MONTHLY_LIMIT)) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    visualTransformation = ThousandsGroupingVisualTransformation(),
-                )
-                TextButton(onClick = onDelete, modifier = Modifier.padding(top = 8.dp)) {
-                    Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.padding(end = 6.dp).size(18.dp))
-                    Text(t(StringKey.BUDGETS_DELETE), color = MaterialTheme.colorScheme.error)
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = { limitText.toDoubleOrNull()?.let { if (it > 0) onSave(it) } }) { Text(t(StringKey.COMMON_SAVE)) }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(t(StringKey.COMMON_CANCEL)) } },
-    )
-}
+    val isEdit = draft.id != null
+    val guessedCategory = com.s2nova.app.ui.suggestExpenseCategory(draft.name)
+    val showAutoNote = !draft.userPickedCategory && guessedCategory != null
 
-@Composable
-private fun CreateBudgetDialog(availableCategories: List<CategoryId>, onDismiss: () -> Unit, onCreate: (String?, CategoryId, Double) -> Unit) {
-    var name by remember { mutableStateOf("") }
-    var selected by remember { mutableStateOf(availableCategories.firstOrNull()) }
-    var limitText by remember { mutableStateOf("") }
-    var expanded by remember { mutableStateOf(false) }
-    val t = rememberStrings()
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(t(StringKey.BUDGETS_NEW)) },
-        text = {
-            Column {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text(t(StringKey.BUDGETS_NAME_OPTIONAL)) },
-                    placeholder = { Text(t(StringKey.BUDGETS_NAME_PLACEHOLDER)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
-                )
-                Box {
+    com.s2nova.app.ui.components.NovaDraftSheet(
+        onDismiss = onDismiss,
+        title = t(if (isEdit) StringKey.BUDGETS_EDIT_TITLE else StringKey.BUDGETS_NEW),
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    CategoryIcon(category = draft.category, size = CategoryIconSize.MD)
                     OutlinedTextField(
-                        value = selected?.let { id -> categoryMap[id]?.let { t(categoryStringKey(it.id)) } } ?: "",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text(t(StringKey.ADD_TXN_CATEGORY)) },
-                        trailingIcon = {
-                            Icon(
-                                Icons.Filled.KeyboardArrowDown,
-                                contentDescription = null,
-                                modifier = Modifier.clickable { expanded = true },
-                            )
+                        value = draft.name,
+                        onValueChange = { newName ->
+                            val guessed = if (!draft.userPickedCategory) com.s2nova.app.ui.suggestExpenseCategory(newName) else null
+                            onDraftChange(draft.copy(name = newName, category = guessed ?: draft.category))
                         },
-                        modifier = Modifier.fillMaxWidth().clickable { expanded = true },
-                        enabled = false,
-                        colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                            disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                            disabledBorderColor = MaterialTheme.colorScheme.outline,
-                            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        ),
+                        label = { Text(t(StringKey.BUDGETS_NAME_OPTIONAL)) },
+                        placeholder = { Text(t(StringKey.BUDGETS_NAME_PLACEHOLDER)) },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
                     )
-                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                        availableCategories.forEach { c ->
-                            DropdownMenuItem(
-                                text = { Text(categoryMap[c]?.let { t(categoryStringKey(it.id)) } ?: "") },
-                                onClick = { selected = c; expanded = false },
-                            )
-                        }
+                }
+                Text(
+                    t(if (showAutoNote) StringKey.BUDGETS_CATEGORY_AUTO_NOTE else StringKey.BUDGETS_CATEGORY_NOTE),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(t(StringKey.ADD_TXN_CATEGORY), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                androidx.compose.foundation.layout.FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    expenseCategories.forEach { c ->
+                        com.s2nova.app.ui.components.ColorPill(
+                            label = t(categoryStringKey(c.id)),
+                            color = Color(c.color),
+                            selected = draft.category == c.id,
+                            enabled = !isEdit,
+                            onClick = { onDraftChange(draft.copy(category = c.id, userPickedCategory = true)) },
+                        )
                     }
                 }
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(t(StringKey.BUDGETS_MONTHLY_LIMIT), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 OutlinedTextField(
-                    value = limitText,
-                    onValueChange = { limitText = it.filter { c -> c.isDigit() } },
+                    value = draft.limitText,
+                    onValueChange = { onDraftChange(draft.copy(limitText = it.filter { c -> c.isDigit() })) },
                     leadingIcon = { Text("$") },
-                    label = { Text(t(StringKey.BUDGETS_MONTHLY_LIMIT)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     visualTransformation = ThousandsGroupingVisualTransformation(),
-                    modifier = Modifier.padding(top = 12.dp),
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
-        },
-        confirmButton = {
-            TextButton(onClick = {
-                val cat = selected
-                val limit = limitText.toDoubleOrNull()
-                if (cat != null && limit != null && limit > 0) onCreate(name.trim().ifBlank { null }, cat, limit)
-            }) { Text(t(StringKey.BUDGETS_CREATE)) }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(t(StringKey.COMMON_CANCEL)) } },
-    )
+
+            com.s2nova.app.ui.components.DraftSheetPrimaryButton(
+                label = t(StringKey.COMMON_SAVE),
+                enabled = (draft.limitText.toDoubleOrNull() ?: 0.0) > 0,
+                onClick = onSave,
+            )
+
+            if (isEdit) {
+                com.s2nova.app.ui.components.DraftSheetDeleteRow(label = t(StringKey.BUDGETS_DELETE), onClick = onRequestDelete)
+            }
+        }
+    }
 }

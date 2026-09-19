@@ -3,6 +3,7 @@ package com.s2nova.app.data.repository
 import com.s2nova.app.data.model.CategoryId
 import com.s2nova.app.data.model.Subcategory
 import com.s2nova.app.data.remote.ApiClient
+import com.s2nova.app.data.remote.ApiService
 import com.s2nova.app.data.remote.CategoryDto
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,12 +14,12 @@ import kotlinx.coroutines.flow.asStateFlow
 // backend's real category rows, matched by `slug` (CategoryId.name in
 // lowercase == the seeded category's slug, e.g. FOOD <-> "food"). Nothing
 // else in the UI needs to know a category is now backed by a UUID.
-class CategoryRepository {
+class CategoryRepository(private val api: ApiService = ApiClient.api) {
     private val _categories = MutableStateFlow<List<CategoryDto>>(emptyList())
     val categories: StateFlow<List<CategoryDto>> = _categories.asStateFlow()
 
     suspend fun refresh() {
-        _categories.value = ApiClient.api.getCategories()
+        _categories.value = api.getCategories()
     }
 
     fun backendIdFor(categoryId: CategoryId): String? =

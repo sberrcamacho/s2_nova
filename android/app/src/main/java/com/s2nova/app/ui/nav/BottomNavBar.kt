@@ -41,7 +41,7 @@ private data class BottomTab(val route: String, val labelKey: StringKey, val ico
 private val TABS = listOf(
     BottomTab(NovaDestinations.HOME, StringKey.NAV_HOME, Icons.Filled.Home),
     BottomTab(NovaDestinations.REPORTS, StringKey.NAV_REPORTS, Icons.Filled.BarChart),
-    BottomTab(NovaDestinations.BUDGETS, StringKey.NAV_BUDGETS, Icons.Filled.Wallet),
+    BottomTab(NovaDestinations.BUDGETS, StringKey.NAV_PLANS, Icons.Filled.Wallet),
     BottomTab(NovaDestinations.PROFILE, StringKey.NAV_PROFILE, Icons.Filled.Person),
 )
 

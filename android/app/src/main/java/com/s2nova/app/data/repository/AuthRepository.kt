@@ -23,12 +23,14 @@ private fun initialsFor(name: String): String =
     name.trim().split(Regex("\\s+")).filter { it.isNotBlank() }.take(2)
         .joinToString("") { it.first().uppercase() }.ifBlank { "US" }
 
-private fun MeResponse.toUser(): User {
+internal fun MeResponse.toUser(): User {
     val prefs = preferences
     return User(
         id = id,
         name = name,
         email = email,
+        phone = phone,
+        city = city,
         hasPassword = hasPassword,
         avatarInitials = initialsFor(name),
         memberSince = createdAt.take(10),
@@ -36,6 +38,8 @@ private fun MeResponse.toUser(): User {
             darkTheme = prefs?.theme == "DARK",
             notifications = prefs?.notifications ?: true,
             biometricLogin = prefs?.biometricLogin ?: false,
+            blurBalance = prefs?.blurBalance ?: false,
+            autoLockMinutes = prefs?.autoLockMinutes ?: 0,
             currency = prefs?.currency?.let { runCatching { Currency.valueOf(it) }.getOrNull() } ?: Currency.COP,
             language = prefs?.language?.let { runCatching { AppLanguage.valueOf(it.uppercase()) }.getOrNull() } ?: AppLanguage.ES,
         ),
@@ -74,9 +78,21 @@ class AuthRepository(
         return try {
             _currentUser.value = fetchAndSyncMe()
             true
-        } catch (error: Exception) {
-            android.util.Log.w("AuthRepository", "Session restore failed, clearing local session", error)
+        } catch (error: retrofit2.HttpException) {
+            // The server itself rejected the token (401/403 etc.) — it's
+            // genuinely invalid, so there's nothing to gain by keeping it.
+            android.util.Log.w("AuthRepository", "Session restore rejected by server, clearing local session", error)
             sessionStore.clear()
+            false
+        } catch (error: Exception) {
+            // Network-level failure (timeout, no connectivity, backend
+            // still cold-starting on Render — see backend/AGENTS.md's
+            // "30-60s to wake it back up") — not proof the session is
+            // invalid. Leave the stored tokens alone so the next bootstrap
+            // (e.g. the user reopening the app once the backend is warm)
+            // can restore the session normally instead of forcing a full
+            // re-login every time the first request after a while times out.
+            android.util.Log.w("AuthRepository", "Session restore failed due to network error, keeping local session", error)
             false
         }
     }
@@ -102,16 +118,39 @@ class AuthRepository(
     // Editing name/email is gated on the current password server-side (see
     // backend/src/routes/me.ts's PATCH /me) — the caller (SettingsScreen)
     // is responsible for collecting it when changing email.
-    suspend fun updateProfile(name: String? = null, email: String? = null, currentPassword: String? = null): Result<Unit> =
+    suspend fun updateProfile(
+        name: String? = null,
+        email: String? = null,
+        phone: String? = null,
+        city: String? = null,
+        currentPassword: String? = null,
+    ): Result<Unit> =
         runCatching {
             // The Settings screen edits whatever's in `currentUser`, which
             // while demo mode is active is the fictitious local persona, not
             // the signed-in account — never let that write reach the real
             // backend session. See AppContainer.enterDemoMode().
             if (DemoModeFlag.active) error("No disponible en modo demo.")
-            val response = ApiClient.api.updateProfile(UpdateProfileRequest(name, email, currentPassword))
+            val response = ApiClient.api.updateProfile(UpdateProfileRequest(name, email, phone, city, currentPassword))
             _currentUser.value = response.toUser()
         }
+
+    // "Is this still you?" check for the auto-lock overlay — never rotates
+    // tokens, so a wrong guess just re-shows the prompt.
+    suspend fun verifyPassword(password: String): Boolean {
+        if (DemoModeFlag.active) return true
+        val response = ApiClient.api.verifyPassword(com.s2nova.app.data.remote.VerifyPasswordRequest(password))
+        return response.isSuccessful
+    }
+
+    // Best-effort remote mirror for a preference toggle already applied
+    // locally via updateUser() — every Settings switch/choice needs this so
+    // the choice survives a re-login or a second device, not just the
+    // current in-memory session.
+    suspend fun persistPreferences(request: com.s2nova.app.data.remote.UpdatePreferencesRequest) {
+        if (DemoModeFlag.active) return
+        runCatching { ApiClient.api.updatePreferences(request) }
+    }
 
     // The backend revokes every refresh token on a successful password
     // change (see POST /me/password), including this device's — so the

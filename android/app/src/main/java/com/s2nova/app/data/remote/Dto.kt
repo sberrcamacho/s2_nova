@@ -31,6 +31,15 @@ data class MePreferencesDto(
     val theme: String,
     val notifications: Boolean,
     val biometricLogin: Boolean,
+    val blurBalance: Boolean = false,
+    // Defaults to 0 ("Nunca"), not the DB's own default of 5, because this
+    // default only ever kicks in when the field is absent from the /me
+    // response — i.e. a backend deployed before this preference existed.
+    // Defaulting to "locked every 5 minutes" would silently turn on a
+    // password gate nobody asked for, for any account that has a PASSWORD
+    // identity (including Google users who added one), using a credential
+    // they likely never use day to day.
+    val autoLockMinutes: Int = 0,
     val onboardingCompleted: Boolean,
     val tutorialCompleted: Boolean,
 )
@@ -40,6 +49,8 @@ data class MeResponse(
     val id: String,
     val name: String,
     val email: String,
+    val phone: String? = null,
+    val city: String? = null,
     val createdAt: String,
     val hasPassword: Boolean = false,
     val preferences: MePreferencesDto? = null,
@@ -52,21 +63,31 @@ data class UpdatePreferencesRequest(
     val theme: String? = null,
     val notifications: Boolean? = null,
     val biometricLogin: Boolean? = null,
+    val blurBalance: Boolean? = null,
+    val autoLockMinutes: Int? = null,
     val onboardingCompleted: Boolean? = null,
     val tutorialCompleted: Boolean? = null,
 )
 
-// The account model is deliberately minimal — name, email, password/Google
-// login only (see ARCHITECTURE.md's account-fields decision). Editing name
-// or email requires currentPassword (see backend/src/routes/me.ts) except
-// for a Google-only user renaming themselves, who has no password to prove
-// yet.
+// The account model is deliberately minimal — name, email, phone, city,
+// password/Google login only (see ARCHITECTURE.md's account-fields
+// decision). Editing name or email requires currentPassword (see
+// backend/src/routes/me.ts) except for a Google-only user renaming
+// themselves, who has no password to prove yet; phone/city need no
+// password since they aren't identity fields.
 @Serializable
 data class UpdateProfileRequest(
     val name: String? = null,
     val email: String? = null,
+    val phone: String? = null,
+    val city: String? = null,
     val currentPassword: String? = null,
 )
+
+// A standalone re-auth check for the auto-lock overlay — never rotates
+// tokens or mutates the account, unlike ChangePasswordRequest.
+@Serializable
+data class VerifyPasswordRequest(val password: String)
 
 // currentPassword is omitted (null) only when the user has no PASSWORD
 // identity yet (Google-only account setting a password for the first
@@ -127,6 +148,7 @@ data class TransactionDto(
     val dueDate: String? = null,
     val loanSettledAt: String? = null,
     val settledByTransactionId: String? = null,
+    val parentLoanId: String? = null,
     val paymentMethod: String,
     val description: String,
     val merchant: String? = null,
@@ -169,14 +191,24 @@ data class UpdateTransactionRequest(
     val budgetId: String? = null,
     val goalId: String? = null,
     val status: String? = null,
+    // Loan edits only — see backend/src/routes/transactions.ts's PATCH
+    // handler doc comment.
+    val accountId: String? = null,
+    val loanKind: String? = null,
+    val counterpartyName: String? = null,
+    val dueDate: String? = null,
     val description: String? = null,
     val merchant: String? = null,
     val note: String? = null,
     val date: String? = null,
 )
 
+// amount is optional — omitted (or equal to the outstanding balance) fully
+// settles the loan; a lower amount records a partial payment instead (see
+// backend/src/routes/transactions.ts's settle-loan route). accountId lets
+// the repayment land in a different wallet than the original loan's.
 @Serializable
-data class SettleLoanRequest(val date: String? = null)
+data class SettleLoanRequest(val date: String? = null, val amount: Long? = null, val accountId: String? = null)
 
 @Serializable
 data class SettleLoanResponse(val original: TransactionDto, val settlement: TransactionDto)
@@ -210,7 +242,16 @@ data class CreateRecurringSeriesRequest(
 )
 
 @Serializable
-data class UpdateRecurringSeriesRequest(val name: String? = null, val amount: Long? = null, val active: Boolean? = null)
+data class UpdateRecurringSeriesRequest(
+    val name: String? = null,
+    val type: String? = null,
+    val amount: Long? = null,
+    val accountId: String? = null,
+    val categoryId: String? = null,
+    val interval: String? = null,
+    val nextOccurrenceDate: String? = null,
+    val active: Boolean? = null,
+)
 
 @Serializable
 data class ConfirmRecurringOccurrenceRequest(val date: String? = null, val amount: Long? = null)

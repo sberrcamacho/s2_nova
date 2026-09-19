@@ -34,7 +34,7 @@ fun TransactionRow(
             .let { if (onClick != null) it.clickable(onClick = onClick) else it }
             .padding(horizontal = 4.dp, vertical = 10.dp),
     ) {
-        CategoryIcon(category = transaction.category, size = CategoryIconSize.ROW)
+        CategoryIcon(category = transaction.category, subcategoryId = transaction.subcategoryId, size = CategoryIconSize.ROW)
         Column(
             modifier = Modifier
                 .weight(1f)

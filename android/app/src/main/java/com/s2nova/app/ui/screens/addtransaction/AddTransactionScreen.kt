@@ -80,8 +80,12 @@ import com.s2nova.app.ui.components.NovaSwitch
 import com.s2nova.app.ui.components.NovaTopBar
 import com.s2nova.app.ui.components.iconFor
 import com.s2nova.app.ui.components.iconForSubcategory
+import com.s2nova.app.ui.components.NovaDatePickerField
+import com.s2nova.app.ui.rememberAppLanguage
 import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.screens.wallets.labelFor
+import com.s2nova.app.ui.suggestTransactionTitle
+import com.s2nova.app.data.model.AppLanguage
 import com.s2nova.app.ui.theme.NovaColors
 import kotlinx.coroutines.launch
 
@@ -135,6 +139,17 @@ fun AddTransactionScreen(
     var showMoreOptions by remember { mutableStateOf(editing?.budgetId != null || editing?.goalId != null || isUpcoming || isLoan) }
 
     val categoriesForType = if (type == TransactionType.INCOME) incomeCategories else expenseCategories
+    val isEnglish = rememberAppLanguage() == AppLanguage.EN
+    val selectedSubcategoryForTitle = subcategoryId?.let { AppContainer.categoryRepository.subcategoryById(it) }
+    val suggestedTitle = suggestTransactionTitle(
+        amountText = amountText,
+        category = category,
+        subcategorySlug = selectedSubcategoryForTitle?.slug,
+        subcategoryName = selectedSubcategoryForTitle?.name,
+        type = type,
+        isEnglish = isEnglish,
+    )
+    val titleIsSuggested = description.isBlank()
 
     if (wallets.isEmpty()) {
         NoWalletState(onAddWallet = onAddWallet, onBack = onBack)
@@ -288,6 +303,12 @@ fun AddTransactionScreen(
                     })
                 }
             }
+            Text(
+                t(StringKey.ADD_TXN_WALLET_METHOD_NOTE),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 9.dp),
+            )
 
             if (type == TransactionType.TRANSFER) {
                 Text(t(StringKey.ADD_TXN_TRANSFER_TO), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 20.dp, bottom = 6.dp))
@@ -298,14 +319,34 @@ fun AddTransactionScreen(
                 }
             }
 
-            Text(t(StringKey.ADD_TXN_DESCRIPTION), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 20.dp, bottom = 6.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 20.dp, bottom = 6.dp)) {
+                Text(t(StringKey.ADD_TXN_DESCRIPTION), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (titleIsSuggested) {
+                    Text(
+                        t(StringKey.ADD_TXN_SUGGESTED_BADGE),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .clip(RoundedCornerShape(50))
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.18f))
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                    )
+                }
+            }
             OutlinedTextField(
                 value = description,
                 onValueChange = { description = it },
-                placeholder = { Text(t(StringKey.ADD_TXN_DESCRIPTION_PLACEHOLDER)) },
+                placeholder = { Text(suggestedTitle) },
                 singleLine = true,
                 shape = RoundedCornerShape(14.dp),
                 modifier = Modifier.fillMaxWidth(),
+            )
+            Text(
+                t(StringKey.ADD_TXN_TITLE_SUGGESTION_NOTE),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 9.dp),
             )
 
             Text(t(StringKey.ADD_TXN_NOTE), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 20.dp, bottom = 6.dp))
@@ -384,14 +425,12 @@ fun AddTransactionScreen(
                             shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                         )
-                        OutlinedTextField(
-                            value = dueDate,
-                            onValueChange = { dueDate = it.filter { c -> c.isDigit() || c == '-' } },
-                            label = { Text(t(StringKey.ADD_TXN_DUE_DATE)) },
-                            placeholder = { Text("YYYY-MM-DD") },
-                            singleLine = true,
-                            shape = RoundedCornerShape(14.dp),
-                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        NovaDatePickerField(
+                            label = t(StringKey.ADD_TXN_DUE_DATE),
+                            value = dueDate.ifBlank { null },
+                            onValueChange = { dueDate = it ?: "" },
+                            allowClear = true,
+                            modifier = Modifier.padding(top = 8.dp),
                         )
                     }
                 }
@@ -409,10 +448,6 @@ fun AddTransactionScreen(
                         error = t(StringKey.ADD_TXN_ERROR_AMOUNT)
                         return@Button
                     }
-                    if (description.isBlank()) {
-                        error = t(StringKey.ADD_TXN_ERROR_DESCRIPTION)
-                        return@Button
-                    }
                     if (selectedWallet == null) {
                         error = t(StringKey.ADD_TXN_ERROR_WALLET)
                         return@Button
@@ -425,7 +460,7 @@ fun AddTransactionScreen(
                     val input = NewTransactionInput(
                         walletId = selectedWallet,
                         transferToWalletId = if (type == TransactionType.TRANSFER) transferToWalletId else null,
-                        description = description.trim(),
+                        description = description.trim().ifBlank { suggestedTitle },
                         amount = amount,
                         type = type,
                         status = if (isUpcoming) TransactionStatus.PLANNED else TransactionStatus.COMPLETED,

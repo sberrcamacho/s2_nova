@@ -39,6 +39,7 @@ import com.s2nova.app.data.AppContainer
 import com.s2nova.app.data.ThemeController
 import com.s2nova.app.data.model.AppLanguage
 import com.s2nova.app.data.model.Currency
+import com.s2nova.app.data.remote.UpdatePreferencesRequest
 import com.s2nova.app.data.remote.toUserMessage
 import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.components.NovaCard
@@ -54,8 +55,12 @@ fun SettingsScreen(onBack: () -> Unit, onReplayTutorial: () -> Unit, onPasswordC
     val isDark = darkOverride ?: androidx.compose.foundation.isSystemInDarkTheme()
 
     var name by remember { mutableStateOf(user?.name ?: "") }
+    var phone by remember { mutableStateOf(user?.phone ?: "") }
+    var city by remember { mutableStateOf(user?.city ?: "") }
     var notifications by remember { mutableStateOf(user?.preferences?.notifications ?: true) }
     var biometric by remember { mutableStateOf(user?.preferences?.biometricLogin ?: false) }
+    var blurBalance by remember { mutableStateOf(user?.preferences?.blurBalance ?: false) }
+    var autoLockMinutes by remember { mutableStateOf(user?.preferences?.autoLockMinutes ?: 5) }
     var showPasswordDialog by remember { mutableStateOf(false) }
     val currency = user?.preferences?.currency ?: Currency.COP
     val language = user?.preferences?.language ?: AppLanguage.ES
@@ -93,9 +98,13 @@ fun SettingsScreen(onBack: () -> Unit, onReplayTutorial: () -> Unit, onPasswordC
                 ),
                 modifier = Modifier.fillMaxWidth(),
             )
+            Spacer(Modifier.height(12.dp))
+            OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text(t(StringKey.SETTINGS_PHONE)) }, singleLine = true, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth())
+            Spacer(Modifier.height(12.dp))
+            OutlinedTextField(value = city, onValueChange = { city = it }, label = { Text(t(StringKey.SETTINGS_CITY)) }, singleLine = true, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(16.dp))
             Button(
-                onClick = { scope.launch { AppContainer.authRepository.updateProfile(name = name) } },
+                onClick = { scope.launch { AppContainer.authRepository.updateProfile(name = name, phone = phone.trim().ifBlank { null }, city = city.trim().ifBlank { null }) } },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 shape = RoundedCornerShape(14.dp),
             ) { Text(t(StringKey.SETTINGS_SAVE_CHANGES), modifier = Modifier.padding(vertical = 4.dp)) }
@@ -122,25 +131,95 @@ fun SettingsScreen(onBack: () -> Unit, onReplayTutorial: () -> Unit, onPasswordC
                     PreferenceRow(t(StringKey.SETTINGS_NOTIFICATIONS), notifications) {
                         notifications = it
                         AppContainer.authRepository.updateUser { u -> u.copy(preferences = u.preferences.copy(notifications = it)) }
+                        scope.launch { AppContainer.authRepository.persistPreferences(UpdatePreferencesRequest(notifications = it)) }
                     }
                     Spacer(Modifier.height(14.dp))
                     PreferenceRow(t(StringKey.SETTINGS_BIOMETRIC), biometric) {
                         biometric = it
                         AppContainer.authRepository.updateUser { u -> u.copy(preferences = u.preferences.copy(biometricLogin = it)) }
+                        scope.launch { AppContainer.authRepository.persistPreferences(UpdatePreferencesRequest(biometricLogin = it)) }
                     }
                     Spacer(Modifier.height(14.dp))
                     PreferenceChoiceRow(
                         label = t(StringKey.SETTINGS_CURRENCY_FORMAT),
                         options = listOf(Currency.COP to "COP", Currency.USD to "USD"),
                         selected = currency,
-                        onSelect = { AppContainer.authRepository.updateUser { u -> u.copy(preferences = u.preferences.copy(currency = it)) } },
+                        onSelect = {
+                            AppContainer.authRepository.updateUser { u -> u.copy(preferences = u.preferences.copy(currency = it)) }
+                            scope.launch { AppContainer.authRepository.persistPreferences(UpdatePreferencesRequest(currency = it.name)) }
+                        },
                     )
                     Spacer(Modifier.height(14.dp))
                     PreferenceChoiceRow(
                         label = t(StringKey.SETTINGS_LANGUAGE),
                         options = listOf(AppLanguage.ES to "Español", AppLanguage.EN to "English"),
                         selected = language,
-                        onSelect = { AppContainer.authRepository.updateUser { u -> u.copy(preferences = u.preferences.copy(language = it)) } },
+                        onSelect = {
+                            AppContainer.authRepository.updateUser { u -> u.copy(preferences = u.preferences.copy(language = it)) }
+                            scope.launch { AppContainer.authRepository.persistPreferences(UpdatePreferencesRequest(language = it.name.lowercase())) }
+                        },
+                    )
+                }
+            }
+
+            Text(t(StringKey.SETTINGS_PRIVACY_SESSION), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 28.dp, bottom = 12.dp))
+            NovaCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    PreferenceRow(t(StringKey.SETTINGS_BLUR_BALANCE), blurBalance) {
+                        blurBalance = it
+                        AppContainer.authRepository.updateUser { u -> u.copy(preferences = u.preferences.copy(blurBalance = it)) }
+                        scope.launch { AppContainer.authRepository.persistPreferences(UpdatePreferencesRequest(blurBalance = it)) }
+                    }
+                    Text(
+                        t(if (blurBalance) StringKey.SETTINGS_BLUR_BALANCE_HELP_ON else StringKey.SETTINGS_BLUR_BALANCE_HELP_OFF),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    androidx.compose.material3.HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+                    Spacer(Modifier.height(16.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        Text(t(StringKey.SETTINGS_AUTO_LOCK), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onBackground)
+                        Text(
+                            if (autoLockMinutes == 0) t(StringKey.SETTINGS_AUTO_LOCK_NEVER) else "$autoLockMinutes ${t(StringKey.SETTINGS_AUTO_LOCK_MINUTES_SUFFIX)}",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                    androidx.compose.foundation.layout.FlowRow(
+                        modifier = Modifier.padding(top = 11.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        listOf(1, 5, 15, 60, 0).forEach { minutes ->
+                            val label = if (minutes == 0) t(StringKey.SETTINGS_AUTO_LOCK_NEVER) else "$minutes ${t(StringKey.SETTINGS_AUTO_LOCK_MINUTES_SUFFIX)}"
+                            val active = autoLockMinutes == minutes
+                            Text(
+                                label,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(50))
+                                    .background(if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
+                                    .clickable {
+                                        autoLockMinutes = minutes
+                                        AppContainer.authRepository.updateUser { u -> u.copy(preferences = u.preferences.copy(autoLockMinutes = minutes)) }
+                                        scope.launch { AppContainer.authRepository.persistPreferences(UpdatePreferencesRequest(autoLockMinutes = minutes)) }
+                                    }
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                            )
+                        }
+                    }
+                    Text(
+                        t(
+                            if (autoLockMinutes == 0) StringKey.SETTINGS_AUTO_LOCK_HELP_NEVER
+                            else if (biometric) StringKey.SETTINGS_AUTO_LOCK_HELP_BIOMETRIC
+                            else StringKey.SETTINGS_AUTO_LOCK_HELP_PASSWORD,
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 10.dp),
                     )
                 }
             }

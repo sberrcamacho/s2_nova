@@ -59,6 +59,11 @@ val HeroBorder = Color(0xFF2B2450)
 val LightNegativeBorder = Color(0xFFF0D2D2)
 val DarkNegativeBorder = Color(0xFF3A2029)
 
+// Bottom-sheet drag handle ("grip" in the design handoff) — distinct from
+// every existing border/outline token, so it gets its own pair.
+val LightSheetGrip = Color(0xFFC4C4D0)
+val DarkSheetGrip = Color(0xFF3A3A4A)
+
 // Permanently-dark surfaces (bottom nav, scanner, sidebar-equivalent chrome)
 // independent of the light/dark app theme — matches the web sidebar.
 val ScanSurface = Color(0xFF000000)

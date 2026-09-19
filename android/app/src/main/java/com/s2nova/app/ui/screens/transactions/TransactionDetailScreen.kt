@@ -93,7 +93,7 @@ fun TransactionDetailScreen(
                 .padding(20.dp),
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)) {
-                CategoryIcon(category = transaction.category, size = CategoryIconSize.LG)
+                CategoryIcon(category = transaction.category, subcategoryId = transaction.subcategoryId, size = CategoryIconSize.LG)
                 Text(
                     transaction.description,
                     style = MaterialTheme.typography.titleLarge,

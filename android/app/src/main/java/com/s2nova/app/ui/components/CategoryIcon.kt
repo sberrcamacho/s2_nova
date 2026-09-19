@@ -52,6 +52,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.s2nova.app.data.AppContainer
 import com.s2nova.app.data.mock.categoryMap
 import com.s2nova.app.data.model.CategoryId
 import com.s2nova.app.ui.categoryStringKey
@@ -138,9 +139,18 @@ fun IconCircle(
     }
 }
 
+// subcategoryId is optional and, when present, resolved to its own icon
+// (iconForSubcategory) instead of the parent category's — this is what
+// makes a transaction's subcategory icon (e.g. "Restaurantes" instead of
+// the generic "Alimentación") show up anywhere a transaction is rendered:
+// recent movements, the full transaction list, transaction detail, etc.
+// Screens with no per-transaction subcategory to show (budgets, reports/
+// statistics, recurring series, products) simply omit it and keep getting
+// the plain category icon, unchanged.
 @Composable
 fun CategoryIcon(
     category: CategoryId,
+    subcategoryId: String? = null,
     size: CategoryIconSize = CategoryIconSize.MD,
     fillAlpha: Float = 0.13f,
     modifier: Modifier = Modifier,
@@ -148,12 +158,13 @@ fun CategoryIcon(
     val meta = categoryMap[category]
     val color = meta?.let { Color(it.color) } ?: Color(0xFF9C9CAA)
     val t = rememberStrings()
+    val subcategory = subcategoryId?.let { AppContainer.categoryRepository.subcategoryById(it) }
     IconCircle(
-        icon = iconFor(category),
+        icon = if (subcategory != null) iconForSubcategory(subcategory.slug, category) else iconFor(category),
         color = color,
         size = size,
         fillAlpha = fillAlpha,
-        contentDescription = t(categoryStringKey(category)),
+        contentDescription = subcategory?.name ?: t(categoryStringKey(category)),
         modifier = modifier,
     )
 }

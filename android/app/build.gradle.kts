@@ -96,4 +96,12 @@ dependencies {
     implementation(libs.retrofit.converter.kotlinx.serialization)
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.kotlinx.serialization.json)
+
+    // JVM-only unit tests (no Robolectric/Espresso — no emulator in this
+    // pass; see android/AGENTS.md and TESTING.md's Phase 3 section).
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.turbine)
+    testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(kotlin("test"))
 }
