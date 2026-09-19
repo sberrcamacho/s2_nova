@@ -1,0 +1,70 @@
+name: Backend CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          package_json_file: backend/package.json
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: backend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm exec prisma generate
+
+      # Started via the repo's own docker-compose.yml (not a GitHub Actions
+      # `services:` container) so tests/globalSetup.ts's `docker compose
+      # exec postgres ...` call — the same one local dev relies on per
+      # AGENTS.md — works unmodified in CI too.
+      - name: Start Postgres
+        run: docker compose up -d
+
+      - name: Wait for Postgres to accept connections
+        run: |
+          for i in $(seq 1 30); do
+            if docker compose exec -T postgres pg_isready -U s2nova -d s2nova > /dev/null 2>&1; then
+              echo "Postgres is ready."
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Postgres did not become ready in time." >&2
+          exit 1
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      # tests/globalSetup.ts creates the s2nova_test database, applies every
+      # migration, and seeds the global categories against it before the
+      # suite runs — see backend/vitest.config.ts and backend/AGENTS.md.
+      - name: Run tests
+        run: pnpm test

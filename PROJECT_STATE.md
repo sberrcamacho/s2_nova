@@ -1,18 +1,29 @@
 # S2 Nova — Project State
 
 Snapshot of what exists, what works, and what's outstanding as of
-**2026-08-26** (`main` @ `a4d21f0`). This is a point-in-time record, not
-living documentation — for how to build/run/structure each app, see the
-`AGENTS.md` files, which stay current by definition. Update or replace this
-file at the next major milestone rather than trying to keep it perfectly in
-sync with every commit.
+**2026-09-18** (`main`, uncommitted at this snapshot — see the note below).
+This is a point-in-time record, not living documentation — for how to
+build/run/structure each app, see the `AGENTS.md` files, which stay current
+by definition. Update or replace this file at the next major milestone
+rather than trying to keep it perfectly in sync with every commit.
 
 **Uncommitted state note**: at this snapshot, `web/src/dashboard/pages/
 AnalyticsPage.tsx`, `OverviewPage.tsx`, `ReportsPage.tsx`, and
 `web/src/index.css` have uncommitted local changes not covered by this
 snapshot (an in-progress redesign pass, separate from the real-backend
-migration described below) — check `git status`/`git diff` before assuming
-those files match what's described here.
+migration described below); the entire Android app, plus the `phone`/`city`/
+`blurBalance`/`autoLockMinutes` backend additions described below, are also
+still uncommitted, from a session that reconciled Android against all 12
+screens of `design_handoff_s2_nova_overview/S2 Nova Android.dc.html` — check
+`git status`/`git diff` before assuming those files match what's described
+here, or before assuming any of it is on a pushed branch.
+
+**Pending**: the same mockup reconciliation has **not** been done for
+`web/` — Web's screens have not been checked against
+`design_handoff_s2_nova_overview/` (that handoff is an Android-only
+prototype; a Web-side design handoff, if one exists, hasn't been reconciled
+either). Treat Web's current UI as unverified against any mockup until that
+pass happens.
 
 ## Architecture
 
@@ -46,9 +57,12 @@ login/register, Google Sign-In, every `services/*.ts` swapped from mock to
 Fastify + TypeScript API over PostgreSQL via Prisma. Routes
 (`backend/src/routes/`): `auth` (register/login/refresh/logout,
 email/password + Google Sign-In with multi-audience token verification),
-`me` (profile, preferences, and — new — secure `PATCH /me` for name/email
-and `POST /me/password` for changing/creating a password, both requiring
-the current password and revoking sessions on success), `accounts`,
+`me` (profile — now including optional `phone`/`city` — preferences —
+now including `blurBalance`/`autoLockMinutes` —, secure `PATCH /me` for
+name/email and `POST /me/password` for changing/creating a password, both
+requiring the current password and revoking sessions on success, and
+`POST /me/verify-password` — a lightweight password check with no token
+rotation, backing Android's auto-lock re-entry screen), `accounts`,
 `categories`, `transactions` (expense/income/transfer, upcoming, budget/goal
 links, loan settlement as a real opposite-direction transaction), `budgets`
 (server-computed progress + 50/30/20-style recommendations), `goals`,
@@ -66,8 +80,9 @@ server-side from the verified token, never from a client-supplied field.
 Local dev: `docker compose up -d` for Postgres, `pnpm prisma:migrate` +
 `pnpm exec prisma db seed`, `pnpm dev` for Fastify on `:3000`.
 
-Not yet built: OpenAPI docs generation from the Zod schemas, automated
-tests.
+Automated tests exist now (`backend/tests/`, Vitest — `pnpm test`), still
+uncommitted at this snapshot. Not yet built: OpenAPI docs generation from
+the Zod schemas.
 
 ## Web dashboard — implemented
 
@@ -87,8 +102,10 @@ New since the last snapshot — **real backend, real auth**:
   (`web/src/lib/backendCategories.ts` handles the category slug↔UUID
   translation the backend uses).
 - **Account model trimmed to name/email/password** — no phone/city (the
-  backend never had those fields); Settings gained a change/create-password
-  flow requiring the current password.
+  backend didn't have those fields at the time; it now does, added for
+  Android's Settings/Profile screens — Web's Settings page hasn't picked
+  them up); Settings gained a change/create-password flow requiring the
+  current password.
 - **Read-only constraints preserved**: `accountService`/`goalService`/
   `budgetService`/`recurringService` still expose no
   `create*`/`set*`-style mutating functions — creating/editing Wallets,
@@ -118,11 +135,39 @@ Scanner, Budgets (shares a tab with Goals), Wallets, Recurring, Loans,
 Reports, Notifications, Profile, Settings.
 
 New since the last snapshot:
+- **Full reconciliation against all 12 screens of the interactive
+  prototype** (`design_handoff_s2_nova_overview/S2 Nova Android.dc.html`,
+  now the mockup's single source of truth per `AGENTS.md`'s UI rules).
+  Every `AlertDialog`-based create/edit/delete form (Wallets, Budgets,
+  Goals, Loans, Recurring) converted to a `ModalBottomSheet` via a new
+  shared shell, `ui/components/NovaDraftSheet.kt` — plain confirmations
+  (delete prompts, the blocked-wallet-delete notice, change-password) stay
+  `AlertDialog`s, only the draft/edit forms moved. Goal contributions
+  (formerly `GoalContributionScreen.kt`, now deleted) and Notifications
+  (formerly its own screen/nav destination) both became sheets too
+  (`GoalPaySheet` inside `GoalsScreen.kt`; `NotificationsSheet`, opened from
+  Home's bell icon) — neither is a nav destination anymore. Recurring
+  gained an edit sheet it never had before, plus a category picker and
+  delete action. Add Transaction gained a live-suggested title
+  (`ui/TitleSuggestion.kt`) with a "SUGERIDO" badge, replacing the old
+  free-text "Descripción" field.
+- **Three new full-stack features**, previously only in the mockup: a
+  blur-total-balance privacy toggle (Home's balance gets a
+  `Modifier.blur` + tap-to-reveal), an auto-lock session-timeout picker
+  enforced by a new `ui/components/AppLockGate.kt` wrapping the whole nav
+  graph (password-only re-entry via a new `POST /me/verify-password`
+  endpoint — no biometric prompt wired up, see `android/AGENTS.md`), and
+  optional `phone`/`city` profile fields (shown on `ProfileScreen` as
+  `"{city} · desde {mes} {año}"`, per the mockup). All three round-tripped
+  through `prisma/schema.prisma` (`User.phone`/`.city`,
+  `UserPreferences.blurBalance`/`.autoLockMinutes`) and a real migration.
+  As a byproduct, fixed a real bug where Settings' notification/biometric/
+  currency/language toggles updated local state only and never persisted
+  to the backend.
 - **Google Sign-In** via Credential Manager (`GoogleAuthHelper.kt`), wired
   into Login/Register — gated on `local.properties`' `GOOGLE_WEB_CLIENT_ID`
   being set (no button shown otherwise).
-- **Account model trimmed to name/email/password** — `User` no longer has
-  `phone`/`city`. Settings gained a change/create-password dialog
+- Settings gained a change/create-password dialog
   (`AuthRepository.changePassword`) that logs the device out locally after
   a successful change (the backend already revoked every refresh token).
 - **`API_BASE_URL` now points at the deployed backend** (Render), not a
@@ -171,11 +216,20 @@ currency/language parity, barcode scanning, manual DI via `AppContainer`.
 
 ## Known gaps / explicitly out of scope
 
+- **Pending: Web has not been reconciled against a mockup.** Android's
+  screens were just fully reconciled against
+  `design_handoff_s2_nova_overview/S2 Nova Android.dc.html`; the same pass
+  hasn't been done for `web/` — its current UI is unverified against any
+  design source. Flagged here as the next mockup-fidelity task, not done as
+  part of this snapshot's Android work.
 - **Android's refresh token lives in plain DataStore**, not yet an
   encrypted store — a named follow-up, not an oversight.
 - **Biometric login** — `UserPreferences.biometricLogin` exists in the
-  schema (today just a local Android toggle); wiring a real biometric/
-  passkey flow is deferred to a future phase.
+  schema (today just a local Android toggle); the new auto-lock overlay
+  (`AppLockGate`) re-authenticates with password only, deliberately not
+  wired to `biometricLogin` either — wiring a real biometric/passkey flow
+  (would need an `androidx.biometric` dependency this app doesn't have yet)
+  is deferred to a future phase.
 - **Aiven's database password was pasted in plaintext during setup** (a
   chat session, not committed to the repo) and hasn't been rotated since —
   low risk at this stage (no real financial data yet, TLS-only access), but
@@ -196,8 +250,9 @@ currency/language parity, barcode scanning, manual DI via `AppContainer`.
 - **User Management / multi-user/team admin** (present in the Figma
   source) was deliberately dropped — nothing else in the product implies
   multi-user accounts.
-- Android has no automated tests and no CI. Backend has no automated tests
-  yet either.
+- Android has no automated tests and no CI. Backend now has a Vitest suite
+  (`backend/tests/`, `pnpm test`, uncommitted at this snapshot) but no CI
+  wired to run it yet.
 - No OpenAPI docs generated from the backend's Zod schemas yet.
 - Web's `authService.requestPasswordReset` has no backend endpoint behind
   it yet — a known gap, not wired to any UI.

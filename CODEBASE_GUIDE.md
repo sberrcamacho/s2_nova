@@ -140,7 +140,9 @@ MainActivity.kt          single Activity, installs the splash screen,
 2. **Shared composables** (`ui/components/`) — NovaCard, NovaCharts
    (hand-rolled Canvas donut/sparkline/bar-pair — no Compose charting
    library), NovaProgressBar, NovaTopBar, TransactionRow, CategoryIcon,
-   AddActionsSheet.
+   AddActionsSheet, NovaDraftSheet (the shared `ModalBottomSheet` shell
+   every create/edit/delete form uses, per the mockup's sheet treatment),
+   AppLockGate (the auto-lock overlay wrapping the nav graph).
 3. **Theme** (`ui/theme/`) — Color/Theme/Type, ported 1:1 from
    `web/src/index.css`'s tokens so both apps look identical.
 4. **Data layer** (`data/`):
@@ -150,8 +152,10 @@ MainActivity.kt          single Activity, installs the splash screen,
    - `data/remote/` — `ApiClient` (Retrofit + OkHttp, auth interceptor,
      refresh-on-401 `Authenticator`), `ApiService` (endpoint interface),
      `Dto.kt` (wire types matching `backend/src/routes/*.ts` JSON exactly)
-   - `data/local/` — `SessionStore` (DataStore: access/refresh tokens) and
-     `OnboardingStore` (DataStore: onboarding/tutorial completion flags)
+   - `data/local/` — `SessionStore` (DataStore: access/refresh tokens),
+     `OnboardingStore` (DataStore: onboarding/tutorial completion flags),
+     `IdleTimeoutStore` (DataStore: last-foreground timestamp, backs the
+     auto-lock overlay)
    - `data/repository/*.kt` — `StateFlow`-backed repositories; most
      (`AuthRepository`, `WalletRepository`, `TransactionRepository`,
      `BudgetRepository`, `GoalRepository`, `CategoryRepository`) now call

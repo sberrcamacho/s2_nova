@@ -100,6 +100,8 @@ users
   name               text
   email              citext unique
   email_verified_at  timestamptz null
+  phone              text null
+  city               text null
   created_at         timestamptz
   updated_at         timestamptz
 
@@ -129,6 +131,8 @@ user_preferences
   theme              text default 'system'
   notifications      boolean default true
   biometric_login    boolean default false
+  blur_balance       boolean default false   -- Android: blurs Home's total balance until tapped
+  auto_lock_minutes  integer default 5       -- Android: 0 = never; password-only re-entry, see android/AGENTS.md
   onboarding_completed_at  timestamptz null   -- drives first-launch gating
   tutorial_completed_at    timestamptz null   -- re-openable from Settings
   updated_at         timestamptz
