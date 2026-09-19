@@ -103,6 +103,10 @@ const dictionary = {
   "settings.language": { es: "Idioma", en: "Language" },
   "settings.spanish": { es: "Español", en: "Spanish" },
   "settings.english": { es: "Inglés", en: "English" },
+  "settings.theme": { es: "Tema", en: "Theme" },
+  "settings.themeLight": { es: "Claro", en: "Light" },
+  "settings.themeDark": { es: "Oscuro", en: "Dark" },
+  "settings.themeSystem": { es: "Sistema", en: "System" },
   "settings.dataPrivacy": { es: "Datos y privacidad", en: "Data & privacy" },
   "settings.exportData": { es: "Exportar mis datos", en: "Export my data" },
   "settings.privacySecurity": {
@@ -693,6 +697,7 @@ const dictionary = {
   "txn.typeExpense": { es: "Gasto", en: "Expense" },
   "txn.typeTransfer": { es: "Transferencia", en: "Transfer" },
   "txn.statusCompleted": { es: "Completado", en: "Completed" },
+  "txn.statusPlanned": { es: "Próximo", en: "Upcoming" },
 
   "dateRange.thisMonth": { es: "Este mes", en: "This month" },
   "dateRange.lastMonth": { es: "Mes pasado", en: "Last month" },

@@ -10,6 +10,12 @@ are thin wrappers around `fetch()` calls, not mock data (see
 `ARCHITECTURE.md` §9). `ProtectedRoute` gates every dashboard route behind
 a real session; a signed-out visitor lands on `/login`.
 
+**Pending**: unlike `android/`, which was just fully reconciled against
+`design_handoff_s2_nova_overview/S2 Nova Android.dc.html` (see
+`PROJECT_STATE.md`'s "Known gaps" section), this app's screens have not
+been checked against a mockup — treat Web's current UI as unverified
+design fidelity until that reconciliation pass happens.
+
 ## Development Server
 
 Requires a `.env.local` (gitignored) with `VITE_API_URL` pointing at a

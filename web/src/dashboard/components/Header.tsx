@@ -43,20 +43,20 @@ export function Header({ title, onMenuClick }: HeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-border bg-surface/90 px-4 backdrop-blur sm:px-6">
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-border bg-bg px-4 sm:px-7">
       <div className="flex min-w-0 items-center gap-3">
         <IconButton icon={<Menu className="h-5 w-5" />} label={t('header.openMenu')} variant="ghost" className="lg:hidden" onClick={onMenuClick} />
-        <p className="hidden truncate text-xs font-semibold text-ink-tertiary sm:block">
-          <span className="text-ink-secondary">S2 Nova</span> / {title}
+        <p className="hidden truncate text-xs font-medium text-ink-tertiary sm:block">
+          S2 Nova <span className="opacity-50">/</span> <span className="text-ink-secondary">{title}</span>
         </p>
       </div>
 
-      <div className="relative hidden max-w-sm flex-1 md:block">
+      <div className="relative hidden w-[280px] shrink-0 md:block">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-tertiary" />
         <input
           type="search"
           placeholder={t('header.search')}
-          className="w-full rounded-[var(--radius-md)] border border-border bg-bg-secondary py-2 pl-9 pr-3 text-[13px] font-medium text-ink placeholder:text-ink-tertiary focus:border-primary focus:outline-none"
+          className="w-full rounded-[var(--radius-sm)] border border-border bg-surface py-2 pl-9 pr-3 text-[12px] font-medium text-ink placeholder:text-ink-tertiary focus:border-primary focus:outline-none"
         />
       </div>
 
@@ -64,7 +64,7 @@ export function Header({ title, onMenuClick }: HeaderProps) {
         <div className="relative hidden sm:block">
           <button
             onClick={() => setRangeOpen((o) => !o)}
-            className="flex items-center gap-2 rounded-[var(--radius-md)] border border-border bg-surface px-3 py-2 text-[13px] font-semibold text-ink-secondary transition-colors hover:border-border-strong"
+            className="flex items-center gap-2 rounded-[var(--radius-sm)] border border-border bg-surface px-3 py-2 text-[12px] font-semibold text-ink-secondary transition-colors hover:border-border-strong"
           >
             <Calendar className="h-4 w-4" />
             {t(rangeLabelKey)}

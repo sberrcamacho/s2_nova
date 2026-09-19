@@ -6,6 +6,7 @@ import {
   translate,
   type TranslationKey,
 } from '@/lib/i18n/translations'
+import { userService } from '@/services/userService'
 import type { CategoryId, LanguageCode, PaymentMethod } from '@/types'
 
 // Reads the user's language preference (`user.preferences.language`) and
@@ -25,6 +26,7 @@ export function useTranslation() {
     (next: LanguageCode) => {
       if (!user) return
       updateUser({ preferences: { ...user.preferences, language: next } })
+      void userService.updatePreferences({ language: next })
     },
     [user, updateUser],
   )

@@ -180,7 +180,9 @@ export default function TransactionsPage() {
                       {tPaymentMethod(txn.paymentMethod)}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3.5">
-                      <Badge tone="positive">{t('txn.statusCompleted')}</Badge>
+                      <Badge tone={txn.status === 'planned' ? 'neutral' : 'positive'}>
+                        {txn.status === 'planned' ? t('txn.statusPlanned') : t('txn.statusCompleted')}
+                      </Badge>
                     </td>
                   </tr>
                 ))}

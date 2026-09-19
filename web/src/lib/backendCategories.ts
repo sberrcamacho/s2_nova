@@ -17,15 +17,25 @@ let cache: Promise<{ slugToId: Map<CategoryId, string>; idToSlug: Map<string, Ca
 
 function load() {
   if (!cache) {
-    cache = apiClient.get<BackendCategory[]>('/categories').then((categories) => {
-      const slugToId = new Map<CategoryId, string>()
-      const idToSlug = new Map<string, CategoryId>()
-      for (const category of categories) {
-        slugToId.set(category.slug as CategoryId, category.id)
-        idToSlug.set(category.id, category.slug as CategoryId)
-      }
-      return { slugToId, idToSlug }
-    })
+    cache = apiClient
+      .get<BackendCategory[]>('/categories')
+      .then((categories) => {
+        const slugToId = new Map<CategoryId, string>()
+        const idToSlug = new Map<string, CategoryId>()
+        for (const category of categories) {
+          slugToId.set(category.slug as CategoryId, category.id)
+          idToSlug.set(category.id, category.slug as CategoryId)
+        }
+        return { slugToId, idToSlug }
+      })
+      .catch((err) => {
+        // Don't wedge every future call behind this one failed request —
+        // clear the cache so the next categoryIdFor/categorySlugFor call
+        // retries the fetch instead of re-throwing this same rejection
+        // for the rest of the session.
+        cache = null
+        throw err
+      })
   }
   return cache
 }

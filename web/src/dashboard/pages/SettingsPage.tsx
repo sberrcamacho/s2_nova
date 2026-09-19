@@ -9,6 +9,7 @@ import { Modal } from '@/components/ui/Modal'
 import { useAuth } from '@/state/AuthContext'
 import { useToast } from '@/state/ToastContext'
 import { useCurrency } from '@/state/useCurrency'
+import { useTheme, type ThemePreference } from '@/state/ThemeContext'
 import { useTranslation } from '@/state/useTranslation'
 import { userService } from '@/services/userService'
 import { formatLongDate } from '@/lib/date'
@@ -19,6 +20,7 @@ export default function SettingsPage() {
   const { user, updateUser } = useAuth()
   const { showToast } = useToast()
   const { currency, setCurrency } = useCurrency()
+  const { preference: themePreference, setPreference: setThemePreference } = useTheme()
   const { t, language, setLanguage } = useTranslation()
 
   const [editing, setEditing] = useState(false)
@@ -48,14 +50,37 @@ export default function SettingsPage() {
     }
   }
 
+  const onThemeChange = async (pref: ThemePreference) => {
+    const previous = themePreference
+    setThemePreference(pref)
+    updateUser({ preferences: { ...user.preferences, theme: pref } })
+    try {
+      await userService.updatePreferences({ theme: pref })
+    } catch (err) {
+      setThemePreference(previous)
+      updateUser({ preferences: { ...user.preferences, theme: previous } })
+      showToast(err instanceof Error ? err.message : t('settings.profileUpdatedToast'), 'error')
+    }
+  }
+
   const toggleNotifications = async (checked: boolean) => {
     updateUser({ preferences: { ...user.preferences, notifications: checked } })
-    await userService.updatePreferences({ notifications: checked })
+    try {
+      await userService.updatePreferences({ notifications: checked })
+    } catch (err) {
+      updateUser({ preferences: { ...user.preferences, notifications: !checked } })
+      showToast(err instanceof Error ? err.message : t('settings.profileUpdatedToast'), 'error')
+    }
   }
 
   const toggleHideAmounts = async (checked: boolean) => {
     updateUser({ preferences: { ...user.preferences, hideAmounts: checked } })
-    await userService.updatePreferences({ hideAmounts: checked })
+    try {
+      await userService.updatePreferences({ hideAmounts: checked })
+    } catch (err) {
+      updateUser({ preferences: { ...user.preferences, hideAmounts: !checked } })
+      showToast(err instanceof Error ? err.message : t('settings.profileUpdatedToast'), 'error')
+    }
   }
 
   return (
@@ -110,6 +135,18 @@ export default function SettingsPage() {
               options={[
                 { value: 'COP', label: 'COP' },
                 { value: 'USD', label: 'USD' },
+              ]}
+            />
+          </PreferenceRow>
+
+          <PreferenceRow label={t('settings.theme')}>
+            <Segmented
+              value={themePreference}
+              onChange={(v) => onThemeChange(v as ThemePreference)}
+              options={[
+                { value: 'light', label: t('settings.themeLight') },
+                { value: 'dark', label: t('settings.themeDark') },
+                { value: 'system', label: t('settings.themeSystem') },
               ]}
             />
           </PreferenceRow>
@@ -197,6 +234,15 @@ function ChangePasswordModal({ open, onClose, hasPassword }: { open: boolean; on
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError(null)
+    // Same policy Register enforces for a new account's password — a
+    // second, weaker path to set a password for the same kind of account
+    // would defeat the point of Register's rule.
+    const isNewPasswordValid = newPassword.length >= 8 && /[A-Z]/.test(newPassword) && /[0-9]/.test(newPassword)
+    if (!isNewPasswordValid) {
+      setError(t('auth.passwordTooShort'))
+      setShakeKey((k) => k + 1)
+      return
+    }
     if (newPassword !== confirmPassword) {
       setError(t('settings.passwordMismatch'))
       setShakeKey((k) => k + 1)
@@ -248,7 +294,7 @@ function ChangePasswordModal({ open, onClose, hasPassword }: { open: boolean; on
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
           autoComplete="new-password"
-          minLength={6}
+          minLength={8}
           required
         />
         <Input
@@ -258,7 +304,7 @@ function ChangePasswordModal({ open, onClose, hasPassword }: { open: boolean; on
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           autoComplete="new-password"
-          minLength={6}
+          minLength={8}
           required
         />
         {error && (

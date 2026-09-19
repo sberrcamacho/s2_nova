@@ -37,7 +37,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       )}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-[234px] shrink-0 flex-col border-r border-[#1c1c28] bg-[#0b0b14] transition-transform duration-200 lg:static lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 flex w-[212px] shrink-0 flex-col border-r border-[#1c1c28] bg-[#0b0b14] transition-transform duration-200 lg:static lg:translate-x-0',
           open ? 'translate-x-0' : '-translate-x-full',
         )}
       >
@@ -59,7 +59,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         </nav>
 
         <div className="border-t border-white/10 p-3">
-          <div className="flex items-center gap-2.5 rounded-[var(--radius-md)] bg-white/5 p-3">
+          <div className="flex items-center gap-2.5 rounded-[12px] bg-white/5 p-3">
             <Avatar initials={user?.avatarInitials ?? 'US'} size="sm" className="h-[30px] w-[30px] text-[11px]" />
             <div className="min-w-0">
               <p className="truncate text-[12.5px] font-bold text-white">{user?.name ?? t('sidebar.fallbackUserName')}</p>

@@ -104,7 +104,7 @@ export default function OverviewPage() {
             style={{ background: 'rgba(123,111,246,.35)', filter: 'blur(52px)' }}
           />
           <div className="relative">
-            <p className="text-[10.5px] font-bold uppercase tracking-[0.11em]" style={{ color: '#b9b0ff' }}>
+            <p className="text-[10.5px] font-bold uppercase tracking-[0.11em]" style={{ color: '#a69dff' }}>
               {t('overview.balance')}
             </p>
             {isLoading ? (
