@@ -59,6 +59,7 @@ import com.s2nova.app.data.model.BudgetProgress
 import com.s2nova.app.data.model.CategoryId
 import com.s2nova.app.ui.components.CategoryIcon
 import com.s2nova.app.ui.components.CategoryIconSize
+import com.s2nova.app.ui.components.DashedNewRow
 import com.s2nova.app.ui.components.NovaCard
 import com.s2nova.app.ui.components.NovaProgressBar
 import com.s2nova.app.ui.components.StatusBadge
@@ -135,35 +136,47 @@ private fun BudgetsTab() {
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         item {
+                val today = java.time.LocalDate.now()
+                val daysLeft = today.lengthOfMonth() - today.dayOfMonth
+                val available = (totalLimit - totalSpent).coerceAtLeast(0.0)
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(20.dp))
-                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))
-                        .padding(20.dp),
+                        .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(18.dp))
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(18.dp))
+                        .padding(horizontal = 18.dp, vertical = 16.dp),
                 ) {
-                    Text(t(StringKey.BUDGETS_MONTH_LABEL), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(format(totalSpent), style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 4.dp))
-                    Text("${t(StringKey.BUDGETS_OF)} ${format(totalLimit)}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(Modifier.height(12.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
+                        Column {
+                            Text(t(StringKey.BUDGETS_SPENT_LABEL), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(format(totalSpent), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 3.dp))
+                        }
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(t(StringKey.BUDGETS_LIMIT_TOTAL), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(format(totalLimit), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    Spacer(Modifier.height(14.dp))
                     NovaProgressBar(percentage = pct, color = budgetStatusColor(overallStatus, colors), height = 7.dp, cornerRadius = 4.dp)
-                    Text("$pct% ${t(StringKey.BUDGETS_UTILIZED)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
+                    Text(
+                        String.format(t(StringKey.BUDGETS_DAYS_LEFT_NOTE), daysLeft, format(available)),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 9.dp),
+                    )
                 }
             }
 
             item {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    val available = unnamedAvailable()
-                    TextButton(
-                        onClick = {
+                val available = unnamedAvailable()
+                DashedNewRow(
+                    label = t(StringKey.BUDGETS_NEW),
+                    onClick = {
+                        if (available.isNotEmpty()) {
                             draft = BudgetDraft(id = null, name = "", category = available.first().id, userPickedCategory = false, limitText = "")
-                        },
-                        enabled = available.isNotEmpty(),
-                    ) {
-                        Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
-                        Text(t(StringKey.BUDGETS_NEW))
-                    }
-                }
+                        }
+                    },
+                )
             }
 
             items(progressList) { progress ->

@@ -49,6 +49,7 @@ import com.s2nova.app.data.model.Transaction
 import com.s2nova.app.data.model.Wallet
 import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.ThousandsGroupingVisualTransformation
+import com.s2nova.app.ui.components.DashedNewRow
 import com.s2nova.app.ui.components.NovaCard
 import com.s2nova.app.ui.components.NovaDatePickerField
 import com.s2nova.app.ui.components.NovaProgressBar
@@ -269,24 +270,6 @@ private fun <T> SegmentedPills(options: List<Pair<T, String>>, selected: T, onSe
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun DashedNewRow(label: String, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .dashedBorder(MaterialTheme.colorScheme.primary)
-            .clickable(onClick = onClick)
-            .padding(16.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(end = 6.dp))
-            Text(label, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -522,15 +505,3 @@ private fun LoanPaySheet(
     }
 }
 
-private fun Modifier.dashedBorder(color: Color): Modifier = this.drawBehind {
-    val strokeWidth = 1.5.dp.toPx()
-    val cornerRadius = 16.dp.toPx()
-    drawRoundRect(
-        color = color,
-        style = androidx.compose.ui.graphics.drawscope.Stroke(
-            width = strokeWidth,
-            pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(8f, 6f), 0f),
-        ),
-        cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius, cornerRadius),
-    )
-}

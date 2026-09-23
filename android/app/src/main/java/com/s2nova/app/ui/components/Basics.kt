@@ -6,18 +6,26 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.s2nova.app.data.model.TransactionType
 import com.s2nova.app.ui.rememberCurrencyFormatter
@@ -93,4 +101,37 @@ fun badgeToneFor(status: com.s2nova.app.data.model.BudgetStatus): BadgeTone = wh
     com.s2nova.app.data.model.BudgetStatus.OVER_BUDGET -> BadgeTone.NEGATIVE
     com.s2nova.app.data.model.BudgetStatus.NEAR_LIMIT -> BadgeTone.WARNING
     com.s2nova.app.data.model.BudgetStatus.ON_TRACK -> BadgeTone.POSITIVE
+}
+
+fun Modifier.dashedBorder(color: Color): Modifier = this.drawBehind {
+    val strokeWidth = 1.5.dp.toPx()
+    val cornerRadius = 16.dp.toPx()
+    drawRoundRect(
+        color = color,
+        style = androidx.compose.ui.graphics.drawscope.Stroke(
+            width = strokeWidth,
+            pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(8f, 6f), 0f),
+        ),
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius, cornerRadius),
+    )
+}
+
+// Dashed "+ <label>" row for adding a new budget/goal/loan — spec: 1.5dp
+// dashed border, 16dp corner radius, primary-colored icon and text.
+@Composable
+fun DashedNewRow(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .dashedBorder(MaterialTheme.colorScheme.primary)
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Filled.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(end = 6.dp))
+            Text(label, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+        }
+    }
 }

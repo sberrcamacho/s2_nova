@@ -55,6 +55,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -218,8 +219,8 @@ fun AddTransactionScreen(
                             ) {
                                 Text(
                                     label,
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                    fontSize = 12.sp,
+                                    fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Medium,
                                     color = if (selected) Color(0xFF211A4D) else Color.White.copy(alpha = 0.75f),
                                     maxLines = 1,
                                 )
@@ -241,7 +242,7 @@ fun AddTransactionScreen(
                             modifier = Modifier
                                 .size(56.dp)
                                 .clip(CircleShape)
-                                .background(categoryColor.copy(alpha = 0.28f))
+                                .background(Color.White.copy(alpha = 0.14f))
                                 .clickable(enabled = type != TransactionType.TRANSFER, onClick = { showCategorySheet = true })
                                 .semantics { contentDescription = t(StringKey.ADD_TXN_CHANGE_CATEGORY_CD) },
                             contentAlignment = Alignment.Center,
@@ -294,7 +295,7 @@ fun AddTransactionScreen(
                 }
             }
 
-            Text(t(StringKey.ADD_TXN_WALLET), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 20.dp, bottom = 6.dp))
+            Text(t(StringKey.ADD_TXN_WALLET), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 20.dp, bottom = 6.dp))
             Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 wallets.forEach { wallet ->
                     SelectChip(label = wallet.name, selected = walletId == wallet.id, onClick = {
@@ -311,7 +312,7 @@ fun AddTransactionScreen(
             )
 
             if (type == TransactionType.TRANSFER) {
-                Text(t(StringKey.ADD_TXN_TRANSFER_TO), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 20.dp, bottom = 6.dp))
+                Text(t(StringKey.ADD_TXN_TRANSFER_TO), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 20.dp, bottom = 6.dp))
                 Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     wallets.filter { it.id != walletId }.forEach { wallet ->
                         SelectChip(label = wallet.name, selected = transferToWalletId == wallet.id, onClick = { transferToWalletId = wallet.id })
@@ -320,7 +321,7 @@ fun AddTransactionScreen(
             }
 
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 20.dp, bottom = 6.dp)) {
-                Text(t(StringKey.ADD_TXN_DESCRIPTION), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(t(StringKey.ADD_TXN_DESCRIPTION), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (titleIsSuggested) {
                     Text(
                         t(StringKey.ADD_TXN_SUGGESTED_BADGE),
@@ -349,7 +350,7 @@ fun AddTransactionScreen(
                 modifier = Modifier.padding(top = 9.dp),
             )
 
-            Text(t(StringKey.ADD_TXN_NOTE), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 20.dp, bottom = 6.dp))
+            Text(t(StringKey.ADD_TXN_NOTE), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 20.dp, bottom = 6.dp))
             OutlinedTextField(
                 value = note,
                 onValueChange = { note = it },
@@ -367,24 +368,20 @@ fun AddTransactionScreen(
             }
 
             if (showMoreOptions) {
-                if (budgets.isNotEmpty()) {
-                    Text(t(StringKey.ADD_TXN_BUDGET), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp, bottom = 6.dp))
-                    Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        SelectChip(label = t(StringKey.ADD_TXN_NONE), selected = budgetId == null, onClick = { budgetId = null })
-                        budgets.forEach { progress ->
-                            val label = progress.budget.name ?: t(categoryStringKey(progress.budget.category))
-                            SelectChip(label = label, selected = budgetId == progress.budget.id, onClick = { budgetId = progress.budget.id })
-                        }
+                Text(t(StringKey.ADD_TXN_BUDGET), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp, bottom = 6.dp))
+                Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SelectChip(label = t(StringKey.ADD_TXN_NONE), selected = budgetId == null, onClick = { budgetId = null })
+                    budgets.forEach { progress ->
+                        val label = progress.budget.name ?: t(categoryStringKey(progress.budget.category))
+                        SelectChip(label = label, selected = budgetId == progress.budget.id, onClick = { budgetId = progress.budget.id })
                     }
                 }
 
-                if (goals.isNotEmpty()) {
-                    Text(t(StringKey.ADD_TXN_GOAL), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 16.dp, bottom = 6.dp))
-                    Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        SelectChip(label = t(StringKey.ADD_TXN_NONE), selected = goalId == null, onClick = { goalId = null })
-                        goals.forEach { goal ->
-                            SelectChip(label = goal.name, selected = goalId == goal.id, onClick = { goalId = goal.id })
-                        }
+                Text(t(StringKey.ADD_TXN_GOAL), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 16.dp, bottom = 6.dp))
+                Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SelectChip(label = t(StringKey.ADD_TXN_NONE), selected = goalId == null, onClick = { goalId = null })
+                    goals.forEach { goal ->
+                        SelectChip(label = goal.name, selected = goalId == goal.id, onClick = { goalId = goal.id })
                     }
                 }
 
@@ -545,12 +542,23 @@ fun AddTransactionScreen(
         val subcategoryColor = categoryMap[subcategoryPickerCategory]?.color?.let { Color(it) } ?: MaterialTheme.colorScheme.primary
         ModalBottomSheet(onDismissRequest = { subcategoryPickerFor = null }) {
             Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
-                Text(
-                    t(StringKey.ADD_TXN_SUBCATEGORY),
-                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 15.sp),
-                    color = MaterialTheme.colorScheme.onBackground,
+                Row(
+                    verticalAlignment = Alignment.Bottom,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.padding(bottom = 18.dp),
-                )
+                ) {
+                    Text(
+                        t(StringKey.ADD_TXN_SUBCATEGORY),
+                        style = MaterialTheme.typography.titleLarge.copy(fontSize = 15.sp),
+                        color = MaterialTheme.colorScheme.onBackground,
+                    )
+                    Text(
+                        t(categoryStringKey(subcategoryPickerCategory)),
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 val subcategories = AppContainer.categoryRepository.subcategoriesFor(subcategoryPickerCategory)
                 val items = listOf<Subcategory?>(null) + subcategories
                 items.chunked(4).forEach { row ->
@@ -573,7 +581,18 @@ fun AddTransactionScreen(
                         }
                     }
                 }
-                Spacer(Modifier.height(8.dp))
+                Text(
+                    t(StringKey.ADD_TXN_CHANGE_CATEGORY),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier
+                        .clickable {
+                            subcategoryPickerFor = null
+                            showCategorySheet = true
+                        }
+                        .padding(top = 18.dp, bottom = 8.dp),
+                )
             }
         }
     }
@@ -624,7 +643,8 @@ private fun ToggleRow(title: String, subtitle: String, checked: Boolean, onCheck
 private fun SelectChip(label: String, selected: Boolean, onClick: () -> Unit) {
     Text(
         label,
-        style = MaterialTheme.typography.bodyMedium,
+        fontSize = 12.sp,
+        fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
         color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
@@ -633,7 +653,7 @@ private fun SelectChip(label: String, selected: Boolean, onClick: () -> Unit) {
             .background(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
             .border(BorderStroke(1.dp, if (selected) Color.Transparent else MaterialTheme.colorScheme.outlineVariant), RoundedCornerShape(50))
             .selectable(selected = selected, onClick = onClick, role = androidx.compose.ui.semantics.Role.RadioButton)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+            .padding(horizontal = 14.dp, vertical = 9.dp),
     )
 }
 
@@ -663,9 +683,11 @@ private fun CategoryGridItem(
         }
         Text(
             label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onBackground,
-            maxLines = 1,
+            fontSize = 10.5.sp,
+            fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.SemiBold,
+            color = if (selected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(top = 6.dp),
         )
@@ -698,9 +720,11 @@ private fun SubcategoryGridItem(
         }
         Text(
             label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onBackground,
-            maxLines = 1,
+            fontSize = 10.5.sp,
+            fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.SemiBold,
+            color = if (selected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(top = 6.dp),
         )

@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="./doc-page.js"></script>
+<style>
+doc-page:not(:defined){visibility:hidden}
+doc-page,doc-page *{font-family:'Plus Jakarta Sans',system-ui,sans-serif}
+body{margin:0;font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#1d1b29}
+a{color:#5b4bd6}a:hover{color:#3f31b0}
+doc-page h1{font-size:30px;font-weight:800;letter-spacing:-.025em;line-height:1.15;margin:0 0 6px}
+doc-page h2{font-size:19px;font-weight:800;letter-spacing:-.015em;margin:34px 0 10px;padding-top:14px;border-top:1px solid #e4e2ee}
+doc-page h3{font-size:14.5px;font-weight:800;margin:20px 0 6px}
+doc-page p,doc-page li{font-size:13.5px;line-height:1.62}
+doc-page p{margin:0 0 10px}
+doc-page ul,doc-page ol{margin:0 0 10px;padding-left:20px}
+doc-page li{margin-bottom:4px}
+doc-page table{width:100%;border-collapse:collapse;margin:8px 0 14px;font-size:12.5px;line-height:1.5}
+doc-page th{text-align:left;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:#6d6a80;font-weight:700;padding:7px 10px 7px 0;border-bottom:1.5px solid #cfcce0;vertical-align:bottom}
+doc-page td{padding:8px 10px 8px 0;border-bottom:1px solid #eceaf3;vertical-align:top}
+doc-page td:first-child{font-weight:700}
+</style>
+</helmet>
+<doc-page size="letter" margin="0.75in">
+  <h1>S2 Nova: multiplatform product architecture</h1>
+  <p style="font-size:13px;color:#6d6a80;margin-bottom:8px">Stage 1 · Conceptual architecture before Android and Web interface design · Revised 23 Sep 2026 against the repository (sberrcamacho/s2_nova@main)</p>
+  <p style="font-size:12.5px;color:#6d6a80;margin-bottom:22px">Convention: this document is in English. Text in quotes (e.g. "Nuevo movimiento") is Spanish UI copy and must be implemented verbatim.</p>
+
+  <h2 style="border-top:none;padding-top:0;margin-top:10px">0. Premises to adjust</h2>
+  <p>Five points in the brief cause conflicts if taken literally.</p>
+  <ol>
+    <li><strong>"Personal and business".</strong> Business finance means invoicing, taxes, multiple users with permissions and cost centers. That is a different product. <strong>Decision:</strong> business finance is out of scope. S2 Nova is personal finance only.</li>
+    <li><strong>Full parity for barcode scanning.</strong> Scanning depends on the phone camera. What is shared is the result (a purchase with line items), not the capture method. Web can view and edit a purchase but cannot scan.</li>
+    <li><strong>Budget periods and renewal.</strong> The backend supports <code>MONTHLY</code> only (<code>BudgetPeriod</code> enum), with an implicit reset each month. <strong>Decision:</strong> the MVP keeps monthly budgets as implemented. Section 9 lists other periods as future extensions.</li>
+    <li><strong>Wallets, recurring items and loans.</strong> They are not in the brief's core list, but all three are implemented in the backend and on Android. <strong>Decision:</strong> wallets, Programados and Préstamos are MVP. An earlier draft of this document moved loans to phase 2; that is withdrawn.</li>
+    <li><strong>COP/USD currency.</strong> Today it is a format switch. Real multi-currency needs exchange rates and historical conversion. For the MVP it is a display currency.</li>
+  </ol>
+
+
+  <h2>0.1 Existing implementation (repository inventory)</h2>
+  <p>Source: <code>README.md</code>, <code>PROJECT_STATE.md</code> (18 Sep 2026), <code>ARCHITECTURE.md</code>, <code>backend/prisma/schema.prisma</code>, <code>backend/src/routes/transactions.ts</code>. The backend is shared and deployed; both clients use it in production.</p>
+  <table>
+    <thead><tr><th style="width:18%">Domain</th><th style="width:42%">Backend (shared)</th><th style="width:20%">Android</th><th>Web today</th></tr></thead>
+    <tbody>
+      <tr><td>Auth &amp; profile</td><td>Email/password, Google Sign-In, refresh rotation, <code>PATCH /me</code>, change password, verify password; phone, city</td><td>Full, plus auto-lock</td><td>Login/register, change password; no phone/city</td></tr>
+      <tr><td>Preferences</td><td>Language, currency COP/USD (fixed rate), theme (default SYSTEM), notifications, blurBalance, autoLockMinutes, biometricLogin (not wired)</td><td>Full</td><td>Theme, currency, language</td></tr>
+      <tr><td>Wallets</td><td><code>Account</code>: CASH, BANK_DEBIT, BANK_CREDIT, SAVINGS, CRYPTO, NEQUI, DAVIPLATA, OTHER; balance maintained per transaction</td><td>CRUD</td><td>Read-only</td></tr>
+      <tr><td>Transactions</td><td>INCOME / EXPENSE / TRANSFER; status COMPLETED or PLANNED ("Próximo"); optional budget, goal, product, subcategory links; payment method derived from wallet type</td><td>CRUD</td><td>List/filter/sort; no delete</td></tr>
+      <tr><td>Loans</td><td>A transaction with <code>loanKind</code> LENT (expense) or BORROWED (income), <code>counterpartyName</code>, <code>dueDate</code>. <code>POST /transactions/:id/settle-loan</code> records partial or final repayments as real opposite-direction transactions linked by <code>parentLoanId</code>, optionally into another wallet; the final one sets <code>loanSettledAt</code>. Editable: amount, wallet, direction, counterparty, due date. A PLANNED loan cannot be settled</td><td>"Préstamos" tab in Planes: create, edit, "Registrar abono", settled state</td><td>Outstanding lent/borrowed only in Net Worth and Insights</td></tr>
+      <tr><td>Categories</td><td>System categories with subcategories; user categories reserved in schema, no flow creates them</td><td>Pick</td><td>Pick</td></tr>
+      <tr><td>Budgets</td><td>Monthly, one category, optional name and theme icon, server-computed progress; 50/30/20 recommendations</td><td>CRUD</td><td>Read-only</td></tr>
+      <tr><td>Goals</td><td>Target, optional date, category; progress = linked transactions</td><td>CRUD, contributions</td><td>Read-only</td></tr>
+      <tr><td>Recurring</td><td><code>RecurringSeries</code> WEEKLY / MONTHLY / YEARLY; a transaction is created only on explicit confirm</td><td>CRUD, confirm</td><td>Read-only</td></tr>
+      <tr><td>Products</td><td>Global barcode catalog; 404 leads to manual entry, which registers the product for everyone</td><td>Scanner (CameraX + ML Kit)</td><td>—</td></tr>
+      <tr><td>Onboarding</td><td>Flags in preferences</td><td>Welcome, income, wallet, budget suggestion, tutorial</td><td>—</td></tr>
+    </tbody>
+  </table>
+  <h3>Classification</h3>
+  <table>
+    <thead><tr><th style="width:18%">Class</th><th>Items</th></tr></thead>
+    <tbody>
+      <tr><td>Preserve</td><td>Shared backend and data model; wallets; transactions incl. transfers and PLANNED; loans with partial abonos; recurring series with explicit confirm; monthly budgets and 50/30/20 recommendations; goals with contributions; global barcode catalog; Android onboarding; privacy blur and auto-lock; theme, language and currency preferences.</td></tr>
+      <tr><td>Redesign</td><td>Web navigation (7 pages → 4 primary destinations); Web Overview → Inicio; Web from read-only to full client for wallets, budgets, goals, recurring, loans and transaction delete (requires lifting the read-only rule in <code>web/AGENTS.md</code>); Android bottom bar (Movimientos in, Perfil to avatar); "Recurrentes" renamed "Programados".</td></tr>
+      <tr><td>Deprecate</td><td>Web's separate Insights and Reports pages (merged into Reportes); Web's 0–100 financial-health score and per-category health summary (replaced by Alertas); Web's biometric toggle (removed; stays deferred on Android).</td></tr>
+      <tr><td>New</td><td>User-defined categories (schema supports it, no flow yet); Open Food Facts lookup before manual entry; Web "Nuevo movimiento" side panel; Web Billeteras and Categorías pages; CSV export.</td></tr>
+    </tbody>
+  </table>
+  <p>Mismatch to resolve: Android's recurring form offers "Quincenal", which the backend's <code>RecurrenceInterval</code> does not have.</p>
+
+  <h2>1. Value proposition</h2>
+  <p style="font-size:16px;font-weight:700;line-height:1.5;color:#3f31b0;margin:12px 0 12px">Know how much money you have, where it goes and whether you will meet your plans: log in seconds from your phone, analyze in depth from your computer.</p>
+  <p>The product rests on one habit, logging transactions, and two questions that habit answers: "how am I doing this month?" (budgets) and "will I get there?" (goals). Everything else serves those two questions or is out.</p>
+
+  <h2>2. Shared mental model</h2>
+  <p>A user should be able to explain S2 Nova in one sentence: <strong>everything starts with a transaction</strong>. A transaction leaves or enters a wallet, has a category, and that category feeds a budget. Goals receive contributions, which are also transactions.</p>
+  <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:14px 0 16px;break-inside:avoid">
+    <div style="border:1.5px solid #cfcce0;border-radius:12px;padding:10px 12px"><div style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#6d6a80">WHERE FROM</div><div style="font-size:13.5px;font-weight:800;margin-top:3px">Wallet</div><div style="font-size:11.5px;color:#6d6a80;margin-top:2px">"Billetera"</div></div>
+    <div style="border:1.5px solid #6c5ce7;background:#f3f1ff;border-radius:12px;padding:10px 12px"><div style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#5b4bd6">WHAT HAPPENED</div><div style="font-size:13.5px;font-weight:800;margin-top:3px">Transaction</div><div style="font-size:11.5px;color:#6d6a80;margin-top:2px">"Movimiento": expense, income or transfer</div></div>
+    <div style="border:1.5px solid #cfcce0;border-radius:12px;padding:10px 12px"><div style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#6d6a80">ON WHAT</div><div style="font-size:13.5px;font-weight:800;margin-top:3px">Category</div><div style="font-size:11.5px;color:#6d6a80;margin-top:2px">"Categoría"</div></div>
+    <div style="border:1.5px solid #cfcce0;border-radius:12px;padding:10px 12px"><div style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#6d6a80">HOW MUCH I CAN</div><div style="font-size:13.5px;font-weight:800;margin-top:3px">Budget</div><div style="font-size:11.5px;color:#6d6a80;margin-top:2px">"Presupuesto": limit per period</div></div>
+    <div style="border:1.5px solid #cfcce0;border-radius:12px;padding:10px 12px"><div style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#6d6a80">SAVING FOR</div><div style="font-size:13.5px;font-weight:800;margin-top:3px">Goal</div><div style="font-size:11.5px;color:#6d6a80;margin-top:2px">"Meta": target with contributions</div></div>
+  </div>
+  <p>Rules both platforms follow without exception:</p>
+  <ul>
+    <li>Total balance is the sum of wallet balances. No other balance exists.</li>
+    <li>A budget holds no money: it measures spending in its categories within its period.</li>
+    <li>A goal contribution is a transaction out of a wallet. Withdrawing from a goal returns money to a wallet.</li>
+    <li>A scanned purchase is an expense with attached line items, not a separate entity.</li>
+    <li>Budgets, goals and loans are the three kinds of <em>Plan</em>: amounts the user tracks over time against a target.</li>
+    <li>A loan is a transaction with a counterparty. Lending takes money out of a wallet; each "abono" received brings money back into a wallet (the same one or another). Borrowing works in reverse.</li>
+  </ul>
+  <h3>Single vocabulary</h3>
+  <p>Web currently uses Overview, Insights, Analytics, Budgets, Goals and Reports; Android uses Inicio, Reportes, Planes and Perfil. One vocabulary applies to both, localized by the language setting, never by platform. UI terms below are the Spanish labels to implement.</p>
+  <table>
+    <thead><tr><th style="width:18%">UI term</th><th style="width:18%">Code name</th><th>Meaning</th><th style="width:28%">Replaces</th></tr></thead>
+    <tbody>
+      <tr><td>Inicio</td><td style="font-weight:400">Home</td><td>Summary of current state</td><td>Overview</td></tr>
+      <tr><td>Movimiento</td><td style="font-weight:400">Transaction</td><td>Expense, income or transfer</td><td>Separate expense/income sections</td></tr>
+      <tr><td>Planes</td><td style="font-weight:400">Plans</td><td>Budgets, goals and loans</td><td>Budgets and Goals as separate Web sections</td></tr>
+      <tr><td>Reportes</td><td style="font-weight:400">Reports</td><td>Analysis over a period</td><td>Insights, Analytics, Reports</td></tr>
+      <tr><td>Alerta</td><td style="font-weight:400">Alert</td><td>Actionable notice generated by rules</td><td>Insight, Suggestion, Financial health</td></tr>
+      <tr><td>Billetera</td><td style="font-weight:400">Wallet</td><td>Where money is held</td><td>Account</td></tr>
+      <tr><td>Aporte</td><td style="font-weight:400">Contribution</td><td>Money moved into a goal</td><td>"Contribución"</td></tr>
+      <tr><td>Préstamo</td><td style="font-weight:400">Loan</td><td>Money lent ("Prestado") or borrowed ("Recibido"), outstanding until settled</td><td>—</td></tr>
+      <tr><td>Abono</td><td style="font-weight:400">Loan payment</td><td>Partial or final repayment of a loan</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <h2>3. System modules</h2>
+  <table>
+    <thead><tr><th style="width:22%">Module</th><th>Contains</th><th style="width:16%">Scope</th></tr></thead>
+    <tbody>
+      <tr><td>Home</td><td>Balance, current month, alerts, at-risk plans, upcoming items, recent transactions</td><td>MVP</td></tr>
+      <tr><td>Transactions</td><td>Expenses, income and transfers; history, search, filters, detail; scanned purchases</td><td>MVP</td></tr>
+      <tr><td>Plans</td><td>Budgets (monthly limit per category), goals (target, date, contributions) and loans (counterparty, due date, abonos)</td><td>MVP</td></tr>
+      <tr><td>Reports</td><td>Trend, spending by category, period comparison, plan analysis, export</td><td>Basic MVP</td></tr>
+      <tr><td>Categories</td><td>Create, edit, archive; icon, color, type (expense or income)</td><td>MVP</td></tr>
+      <tr><td>Wallets</td><td>Create, edit, opening balance, type</td><td>MVP</td></tr>
+      <tr><td>Profile &amp; settings</td><td>User data, language, currency, theme, privacy, security, sessions</td><td>MVP</td></tr>
+      <tr><td>Scheduled</td><td>Repeating transactions, labeled "Programados" (currently "Recurrentes")</td><td>MVP</td></tr>
+    </tbody>
+  </table>
+  <p>Barcode scanning is not a module. It is a capture method inside Transactions.</p>
+
+  <h2>4. Platform parity</h2>
+  <p><strong>Android and Web are the same application functionally.</strong> They share one account, one backend and one dataset, and every financial operation is available on both. What differs is <em>how</em> each operation is done, not <em>whether</em> it can be done. Android is S2 Nova tuned for daily use. Web is S2 Nova tuned for management and deep analysis.</p>
+  <table>
+    <thead><tr><th style="width:40%">Capability</th><th style="width:15%">Android</th><th style="width:15%">Web</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td>Account, sign-in, profile, preferences</td><td style="font-weight:400">Yes</td><td style="font-weight:400">Yes</td><td>Same user and same preferences record</td></tr>
+      <tr><td>Wallets (create, edit, delete)</td><td style="font-weight:400">Yes</td><td style="font-weight:400">Yes</td><td></td></tr>
+      <tr><td>Log expense / income / transfer</td><td style="font-weight:400">Yes</td><td style="font-weight:400">Yes</td><td>Includes "Próximo" (PLANNED)</td></tr>
+      <tr><td>Edit / delete transactions</td><td style="font-weight:400">Yes</td><td style="font-weight:400">Yes</td><td>Budgets, goals and wallet balances recompute server-side</td></tr>
+      <tr><td>Budgets (CRUD, progress)</td><td style="font-weight:400">Yes</td><td style="font-weight:400">Yes</td><td></td></tr>
+      <tr><td>Goals (CRUD, contributions)</td><td style="font-weight:400">Yes</td><td style="font-weight:400">Yes</td><td></td></tr>
+      <tr><td>Loans (CRUD, "Prestado" / "Recibido")</td><td style="font-weight:400">Yes</td><td style="font-weight:400">Yes</td><td></td></tr>
+      <tr><td>Abonos (partial and final)</td><td style="font-weight:400">Yes</td><td style="font-weight:400">Yes</td><td><code>settle-loan</code></td></tr>
+      <tr><td>Programados (CRUD, pause, confirm)</td><td style="font-weight:400">Yes</td><td style="font-weight:400">Yes</td><td>A transaction is created only on confirm</td></tr>
+      <tr><td>Categories</td><td style="font-weight:400">Yes</td><td style="font-weight:400">Yes</td><td></td></tr>
+      <tr><td>Reports</td><td style="font-weight:400">Yes</td><td style="font-weight:400">Yes, deeper</td><td>Same figures; Web adds comparisons and more views</td></tr>
+      <tr><td>CSV export</td><td style="font-weight:400">—</td><td style="font-weight:400">Yes</td><td>Files are used on a computer</td></tr>
+      <tr><td>Scan a purchase</td><td style="font-weight:400">Yes</td><td style="font-weight:400">No</td><td>Hardware exception (phone camera), not a product difference</td></tr>
+      <tr><td>View / edit a scanned purchase</td><td style="font-weight:400">Yes</td><td style="font-weight:400">Yes</td><td>Web works with the scan's result</td></tr>
+    </tbody>
+  </table>
+  <h3>Cross-platform consistency</h3>
+  <ul>
+    <li>The backend is the only source of truth. Neither client keeps data the other can't see.</li>
+    <li>Examples that must hold: a loan created on Android appears on Web; an abono made on Web is visible on Android; deleting a transaction on Web updates the affected budget, goal and wallet, and Android shows the change.</li>
+    <li>Propagation, as implemented (<code>ARCHITECTURE.md</code> §10): every mutation refetches its affected lists on the client that made it. The other client picks up the change when it refetches: Android on screen focus and pull-to-refresh, Web on route change and window focus. There is no push or real-time channel today. "Immediately" therefore means "on the next screen visit". Real-time would need SSE, which is out of scope for the MVP.</li>
+    <li>No financial capability is exclusive to one platform. Web-only items are depth (more charts, comparisons, history per item) and CSV. Android-only items are hardware (camera) and mobile affordances (push, auto-lock).</li>
+  </ul>
+  <h3>How each platform executes the same operation</h3>
+  <table>
+    <thead><tr><th style="width:19%">Feature</th><th style="width:40%">Android</th><th>Web</th></tr></thead>
+    <tbody>
+      <tr><td>Log transaction</td><td>Center button; amount-first sheet; category suggested by keyword; last wallet preselected</td><td>Always-visible "Nuevo movimiento" button and N shortcut; side panel that keeps the current view</td></tr>
+      <tr><td>Barcode purchase</td><td>Camera, line items, total, save as expense</td><td>View and edit line items; no scanning</td></tr>
+      <tr><td>History</td><td>List grouped by day with daily total</td><td>Sortable table with pagination and filter totals</td></tr>
+      <tr><td>Search &amp; filters</td><td>Text search and chips (type, category, wallet, period)</td><td>Combinable, saveable filter bar; global search</td></tr>
+      <tr><td>Edit &amp; delete</td><td>Tap to edit; swipe to delete with undo</td><td>Detail panel; multi-select to recategorize or delete</td></tr>
+      <tr><td>Categories</td><td>Grid picker; management from Profile</td><td>Dedicated page with usage per category and merge</td></tr>
+      <tr><td>Budgets</td><td>Card with spent, limit and bar</td><td>Same card plus remaining, monthly trend and end-of-period projection</td></tr>
+      <tr><td>Goals</td><td>Ring and "Aportar" button</td><td>Ring, contribution history, estimated completion date</td></tr>
+      <tr><td>Loans</td><td>"Prestado"/"Recibido" toggle, outstanding, "Registrar abono"</td><td>Same records plus abono history, due-date list, totals owed to you / by you</td></tr>
+      <tr><td>Reports</td><td>Three summary views with 3M/6M/12M range</td><td>Full views, period comparison, CSV export</td></tr>
+      <tr><td>Alerts</td><td>Push notification opening the affected item</td><td>Alert list on Home</td></tr>
+    </tbody>
+  </table>
+
+  <h2>5. Information architecture</h2>
+  <div style="column-count:2;column-gap:28px;font-size:13px;line-height:1.65;margin-bottom:10px">
+    <div style="break-inside:avoid;margin-bottom:10px"><strong>Inicio</strong> (Home)<br>Balance · Current month · Alerts · At-risk plans · Upcoming · Recent</div>
+    <div style="break-inside:avoid;margin-bottom:10px"><strong>Movimientos</strong> (Transactions)<br>All · Expenses · Income · Transfers · Scheduled<br>Detail › Line items (scanned purchases)</div>
+    <div style="break-inside:avoid;margin-bottom:10px"><strong>Planes</strong> (Plans)<br>Budgets › Detail › Budget transactions<br>Goals › Detail › Contributions<br>Loans › Detail › Abonos</div>
+    <div style="break-inside:avoid;margin-bottom:10px"><strong>Reportes</strong> (Reports)<br>Summary · By category · Cash flow · Plans · Export</div>
+    <div style="break-inside:avoid;margin-bottom:10px"><strong>Billeteras</strong> (Wallets)<br>List › Detail › Wallet transactions</div>
+    <div style="break-inside:avoid;margin-bottom:10px"><strong>Perfil y ajustes</strong> (Profile &amp; settings)<br>Profile · Categories · Preferences (language, currency, theme) · Privacy · Security · Sessions · Delete account</div>
+  </div>
+  <p>Every detail view links to the transactions that compose it. This cross-navigation is what holds the model together: from any number, the user can reach the transactions that explain it.</p>
+
+  <h2>6. Android navigation</h2>
+  <p>Bottom bar: <strong>Inicio · Movimientos · [+] · Planes · Reportes</strong>. Profile opens from the header avatar.</p>
+  <ul>
+    <li>Transactions moves from a stacked screen to a tab: after logging, checking history is the most frequent action.</li>
+    <li>Profile leaves the bar because it is rarely visited; a header avatar is a familiar pattern.</li>
+    <li>The center button keeps two actions: "Nuevo movimiento" and "Escanear compra". Type (expense, income, transfer) is chosen inside the form.</li>
+    <li>Wallets open from the wallet chip on the Home balance card and from Profile.</li>
+  </ul>
+
+  <h2>7. Web navigation</h2>
+  <p>Sidebar with the same four primary destinations in the same order, plus the destinations Android keeps inside Profile:</p>
+  <p style="font-size:13px;line-height:1.8;border:1px solid #e4e2ee;border-radius:12px;padding:12px 16px;break-inside:avoid"><strong>Inicio · Movimientos · Planes · Reportes</strong><br>—<br>Billeteras · Categorías<br>—<br>Ajustes (includes profile)</p>
+  <ul>
+    <li>Global header with transaction search, a period selector scoped to the current view, and the "Nuevo movimiento" button.</li>
+    <li>Create and edit forms open as a side panel so the table or budget stays visible.</li>
+    <li>Insights, Analytics and Reports merge into Reportes. Suggestions become Alerts on Home.</li>
+    <li>Budgets and Goals merge into Planes with three tabs, "Presupuestos", "Metas" and "Préstamos", matching Android.</li>
+  </ul>
+
+  <h2>8. Primary user flows</h2>
+  <h3>F1. Log an expense (Android)</h3>
+  <p>[+] › "Nuevo movimiento" › amount › description (category is suggested: "mercado" → Alimentación) › preselected wallet › "Guardar". Target: under 10 seconds, at most three taps after typing the amount.</p>
+  <h3>F2. Log a purchase by barcode (Android)</h3>
+  <p>[+] › "Escanear compra" › camera reads each product › lookup order: (1) S2 Nova's global catalog (<code>GET /products/:barcode</code>); (2) Open Food Facts, name only; (3) no match: the user types name, category and price, and <code>POST /products</code> registers it for everyone › review list and total › wallet › "Guardar". Result: one expense linked to its product.</p>
+  <h3>F3. Review and correct the month (Web)</h3>
+  <p>Movimientos › filter by period and category › select several rows › recategorize or delete › affected budgets recalculate, and the change appears on Android on next sync.</p>
+  <h3>F4. Create a budget (both)</h3>
+  <p>Planes › "Nuevo presupuesto" › name › category (suggested from the name) › monthly limit › "Guardar". Alerts at 90%.</p>
+  <h3>F5. Create a goal and contribute (both)</h3>
+  <p>Planes › Metas › "Nueva meta" › target, date, source wallet. Contribute: goal card › "Aportar" › amount › deducted from the wallet. Web additionally shows progress over time and estimated date.</p>
+  <h3>F6. Cross-platform continuity</h3>
+  <p>The phone receives "Alimentación llegó al 90%". The user taps the notification and sees the budget. That evening they open Web, go to the same budget and review which transactions drove it there.</p>
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:12px;margin:10px 0 16px;break-inside:avoid">
+    <div style="border:1px solid #e4e2ee;border-radius:14px;padding:14px">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#6d6a80">ANDROID</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:8px"><span style="font-size:13.5px;font-weight:800">Alimentación</span><span style="font-size:11px;font-weight:800;color:#b7791f">70%</span></div>
+      <div style="font-size:12.5px;margin-top:3px;font-variant-numeric:tabular-nums">$420.000 / $600.000</div>
+      <div style="height:6px;border-radius:3px;background:#eceaf3;margin-top:8px"><div style="width:70%;height:100%;border-radius:3px;background:#d69e2e"></div></div>
+    </div>
+    <div style="border:1px solid #e4e2ee;border-radius:14px;padding:14px">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.08em;color:#6d6a80">WEB</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:8px"><span style="font-size:13.5px;font-weight:800">Alimentación</span><span style="font-size:11px;font-weight:800;color:#b7791f">70%</span></div>
+      <div style="height:6px;border-radius:3px;background:#eceaf3;margin-top:8px"><div style="width:70%;height:100%;border-radius:3px;background:#d69e2e"></div></div>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px;font-size:11.5px;font-variant-numeric:tabular-nums">
+        <div><div style="color:#6d6a80">Gastado</div><div style="font-weight:800">$420.000</div></div>
+        <div><div style="color:#6d6a80">Presupuesto</div><div style="font-weight:800">$600.000</div></div>
+        <div><div style="color:#6d6a80">Disponible</div><div style="font-weight:800">$180.000</div></div>
+      </div>
+      <div style="font-size:11.5px;color:#6d6a80;margin-top:8px">+ monthly trend, end-of-period projection and period transactions</div>
+    </div>
+  </div>
+  <p>Same name, same percentage, same status color. Web adds information; it never reinterprets it.</p>
+  <h3>F8. Lend money and record abonos (both)</h3>
+  <p>Planes › Préstamos › "Prestado" › "+ Registrar préstamo" › person, amount, wallet, optional due date › "Guardar": the amount leaves the wallet. Later: loan card › "Registrar abono" › amount (defaults to the outstanding balance), destination wallet › "Guardar": a repayment transaction enters that wallet; at zero outstanding the card shows "Saldado". Borrowing uses "Recibido" with directions reversed. Both platforms alert when a due date is near; Web adds the abono history per loan.</p>
+  <h3>F7. Monthly analysis (Web)</h3>
+  <p>Reportes › period › compare with previous › review categories with the largest change › export CSV.</p>
+
+  <h2>9. Budget model</h2>
+  <table>
+    <thead><tr><th style="width:22%">Attribute</th><th>Options</th><th style="width:20%">Scope</th></tr></thead>
+    <tbody>
+      <tr><td>Period</td><td>Monthly (implemented). Weekly or biweekly would need a backend enum change</td><td>Monthly in MVP; others future</td></tr>
+      <tr><td>Renewal</td><td>Implicit reset each month (implemented). Carry-over would need new backend logic</td><td>Reset in MVP; carry-over secondary</td></tr>
+      <tr><td>Categories</td><td>One category per budget (implemented); duplicates are rejected to avoid double counting</td><td>MVP</td></tr>
+      <tr><td>Status</td><td>Healthy (&lt;65%), watch (65–89%), at risk (≥90%), exceeded (&gt;100%)</td><td>MVP</td></tr>
+    </tbody>
+  </table>
+
+  <h2>10. Home content</h2>
+  <p>Rule: every Android block exists on Web, in the same order. Web adds depth, never blocks with a different meaning.</p>
+  <table>
+    <thead><tr><th style="width:22%">Block</th><th style="width:36%">Android</th><th>Web</th></tr></thead>
+    <tbody>
+      <tr><td>Balance</td><td>Hideable total; month income and expenses</td><td>Same, plus 6-month trend and balance per wallet</td></tr>
+      <tr><td>Alerts</td><td>The most important one</td><td>Full list, dismissible</td></tr>
+      <tr><td>Plans</td><td>Three highest-risk budgets</td><td>All budgets with projection; goals with estimated date; loans summary (owed to you / by you)</td></tr>
+      <tr><td>Spending by category</td><td>Not shown; lives in Reportes</td><td>Current month distribution</td></tr>
+      <tr><td>Upcoming</td><td>Next 7 days</td><td>Next 14 days with projected balance</td></tr>
+      <tr><td>Recent</td><td>5 transactions</td><td>10 transactions with link to history</td></tr>
+    </tbody>
+  </table>
+
+  <h2>11. Shared design system</h2>
+  <p><strong>Foundations:</strong> S2 Nova brand, palette with semantic roles (primary, positive, negative, warning, surfaces), Plus Jakarta Sans with tabular figures for amounts, radius and spacing scales, line iconography, one fixed icon and color per category, light and dark themes.</p>
+  <p><strong>Conceptual components</strong>, one implementation per platform:</p>
+  <table>
+    <thead><tr><th style="width:26%">Component</th><th style="width:37%">Android</th><th>Web</th></tr></thead>
+    <tbody>
+      <tr><td>Amount</td><td colspan="2" style="font-weight:400">Currency format, sign, color by type, hidden mode. Identical on both.</td></tr>
+      <tr><td>Category mark</td><td colspan="2" style="font-weight:400">Icon on its color at 16%. Identical on both.</td></tr>
+      <tr><td>Budget bar</td><td colspan="2" style="font-weight:400">Same thresholds and status colors.</td></tr>
+      <tr><td>Goal ring</td><td colspan="2" style="font-weight:400">Category icon centered, progress in the goal color.</td></tr>
+      <tr><td>Transaction</td><td>List row</td><td>Table row</td></tr>
+      <tr><td>Form</td><td>Bottom sheet or screen</td><td>Side panel</td></tr>
+      <tr><td>Pickers</td><td>Category grid, wallet chips, calendar</td><td>Searchable menu, range calendar</td></tr>
+      <tr><td>Filters</td><td>Chips</td><td>Filter bar</td></tr>
+      <tr><td>Alert</td><td>Notification and card</td><td>Dismissible card</td></tr>
+      <tr><td>Destructive confirmation</td><td>Dialog; undo in snackbar</td><td>Dialog; undo in toast</td></tr>
+      <tr><td>Empty state</td><td colspan="2" style="font-weight:400">Same copy and same primary action on both.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>12. Justified UX differences</h2>
+  <table>
+    <thead><tr><th style="width:18%">Aspect</th><th style="width:26%">Android</th><th style="width:26%">Web</th><th>Reason</th></tr></thead>
+    <tbody>
+      <tr><td>Capture</td><td>Center button</td><td>Global button and shortcut</td><td>Thumb vs keyboard</td></tr>
+      <tr><td>Editing</td><td>Screen or sheet</td><td>Side panel</td><td>Desktop has room to keep context</td></tr>
+      <tr><td>Lists</td><td>Grouped by day</td><td>Sortable table</td><td>Quick reading vs comparison</td></tr>
+      <tr><td>Bulk actions</td><td>No</td><td>Multi-select</td><td>Batch correction happens seated</td></tr>
+      <tr><td>Charts</td><td>One or two per view</td><td>Several, comparative</td><td>Screen size</td></tr>
+      <tr><td>Scanning</td><td>Yes</td><td>No</td><td>Needs a camera at the point of purchase</td></tr>
+      <tr><td>Export</td><td>No</td><td>CSV</td><td>Files are used on a computer</td></tr>
+      <tr><td>Notices</td><td>Push</td><td>Alerts on Home</td><td>The phone travels with you; Web is visited</td></tr>
+      <tr><td>Privacy</td><td>Balance hidden by default</td><td>Configurable</td><td>Phones are used in public</td></tr>
+    </tbody>
+  </table>
+
+  <h2>13. MVP and secondary features</h2>
+  <div style="column-count:2;column-gap:28px">
+    <h3 style="margin-top:0">MVP</h3>
+    <ul>
+      <li>Sign-up, sign-in and cross-platform sync</li>
+      <li>Wallets with balance</li>
+      <li>Transactions: create, read, update, delete</li>
+      <li>History with search and filters</li>
+      <li>Manageable categories with keyword suggestion</li>
+      <li>Monthly budgets and 50/30/20 recommendation</li>
+      <li>Goals with contributions and withdrawals</li>
+      <li>Loans: lend, borrow, partial abonos, settle</li>
+      <li>Barcode purchase on Android</li>
+      <li>Home on both platforms</li>
+      <li>Web reports: trend, by category, month-over-month, plans</li>
+      <li>CSV export</li>
+      <li>Programados (scheduled transactions)</li>
+      <li>Profile, language, display currency, theme, sessions</li>
+    </ul>
+    <h3>Secondary</h3>
+    <ul>
+      <li>Budget carry-over</li>
+      <li>Alerts beyond budget thresholds</li>
+      <li>Saved filters and bulk editing</li>
+      <li>Multi-currency with conversion</li>
+      <li>PDF export</li>
+    </ul>
+  </div>
+
+  <h2>14. Remove, merge or reorganize</h2>
+  <table>
+    <thead><tr><th style="width:36%">Today</th><th>Proposal</th></tr></thead>
+    <tbody>
+      <tr><td>Physical / IoT piggy bank</td><td>Removed from product and documentation</td></tr>
+      <tr><td>Web: Overview, Insights, Analytics, Reports</td><td>Inicio and Reportes; suggestions become Alerts on Home</td></tr>
+      <tr><td>Web: separate Budgets and Goals</td><td>Planes with two tabs, as on Android</td></tr>
+      <tr><td>Web without a transactions section</td><td>Movimientos as a primary destination</td></tr>
+      <tr><td>Android: stacked Movimientos, Perfil in the bar</td><td>Movimientos into the bar; Perfil to the avatar</td></tr>
+      <tr><td>Wallets and Recurring inside Profile</td><td>Wallets as its own destination; recurring becomes a "Repetir" option on the transaction, listed under Movimientos › Programados</td></tr>
+      <tr><td>Loans as third tab of Planes (Android)</td><td>Preserved. Web gains the same "Préstamos" tab; loan due dates feed Alertas</td></tr>
+      <tr><td>Financial health with five checks</td><td>Absorbed into Alertas; loans are covered by due-date alerts</td></tr>
+      <tr><td>Web UI in English with Spanish data</td><td>Web UI in Spanish, same vocabulary as Android</td></tr>
+      <tr><td>Theme: Android follows system, Web has a switch</td><td>"Claro", "Oscuro" and "Sistema" available on both; default "Sistema" on both</td></tr>
+      <tr><td>COP/USD switch</td><td>Display currency; real conversion in phase 2</td></tr>
+    </tbody>
+  </table>
+
+  <h2>15. Resolved decisions</h2>
+  <table>
+    <thead><tr><th style="width:30%">Decision</th><th>Outcome</th></tr></thead>
+    <tbody>
+      <tr><td>Business scope</td><td>Out of scope. No Negocio wallet.</td></tr>
+      <tr><td>MVP extras</td><td>Programados and Préstamos are MVP (both already implemented). Budget carry-over and Web bulk editing stay secondary.</td></tr>
+      <tr><td>Budget model</td><td>Monthly, as implemented (section 9).</td></tr>
+      <tr><td>Barcode data</td><td>S2 Nova's global product catalog first (implemented), then Open Food Facts (new), then manual entry, which registers the product globally (implemented).</td></tr>
+      <tr><td>Default theme</td><td>"Sistema" on Android and Web.</td></tr>
+      <tr><td>Design order</td><td>Screen by screen, both platforms together, starting with Inicio.</td></tr>
+    </tbody>
+  </table>
+</doc-page>
+</x-dc>
+</body>
+</html>

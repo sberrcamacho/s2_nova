@@ -1,32 +1,46 @@
 # S2 Nova
 
-S2 Nova is a personal finance product made of **two separate applications**
-that share a visual identity, one backend, and one database, but are
-built, run, and deployed independently:
+S2 Nova is **one personal finance product with two clients** that share one
+backend, one database, one user identity and one domain model:
 
-- `android/` — the native mobile app (Kotlin + Jetpack Compose). Owns daily
-  financial operations: recording expenses/income, transactions, purchases,
-  and barcode-scanning. See `android/AGENTS.md`.
-- `web/` — the web dashboard (React + TypeScript + Vite). Owns financial
-  analysis: statistics, charts, budgets, categories, trends, reports. See
-  `web/AGENTS.md`.
+- `android/` — native mobile client (Kotlin + Jetpack Compose), tuned for
+  everyday mobile use: quick entry, quick review, notifications, barcode
+  scanning. See `android/AGENTS.md`.
+- `web/` — web client (React + TypeScript + Vite), tuned for desktop
+  management and deeper analysis: tables, side panels, richer charts, CSV
+  export. See `web/AGENTS.md`.
 - `backend/` — the shared API (Node.js + TypeScript + Fastify + Prisma/
-  PostgreSQL) both apps talk to: one user identity, one database, no
-  separate backends per platform. See `backend/AGENTS.md`.
-- `design-reference/` — Figma screenshots (`figma/`, the visual source of
-  truth) and current-implementation screenshots (`current/`), used to check
-  visual fidelity for both apps.
+  PostgreSQL). It is the single source of truth for financial data and
+  business rules. See `backend/AGENTS.md`.
+- `s2_nova_stage2_handoff/` — the approved product architecture
+  (`S2 Nova Product Architecture.dc.html`), stage specs (`STAGE-*.md`) and
+  the v2 interactive mockups (`S2 Nova Android v2.dc.html`,
+  `S2 Nova Dashboard v2.dc.html`) — the visual source of truth.
 
-Do not reintroduce a single "responsive web app that is also the mobile
-app" — that was the old architecture and is intentionally not how this
-product is built anymore. See `ARCHITECTURE.md` for the full backend/
-database/auth/sync design and the phased migration plan off each app's
-mock data — migration is incremental per `ARCHITECTURE.md`, so until an
-app's repository/service layer is explicitly migrated, it may still run
-on its own local mock data.
+**Functional parity.** Android and Web are functionally the same
+application: every operation that changes the user's financial data
+(wallets, transactions, categories, budgets, goals, loans and abonos,
+Programados, profile and preferences) must be available on both. The only
+platform-specific capability is barcode *capture* (Android camera); the
+resulting purchase is ordinary shared data that Web can view and edit.
+Differences between the clients are UX, never capability.
 
-For work inside either app, read that app's own `AGENTS.md` first — it has
-the concrete dev commands, structure, and conventions.
+**Business rules live in the backend.** When both clients need the same
+figure or rule (balances, budget progress, loan outstanding, alerts,
+monthly aggregates), implement it once in `backend/` and consume it from
+both clients instead of duplicating the logic.
+
+**Vocabulary.** UI copy is Spanish and shared across platforms: Inicio,
+Movimientos, Planes (Presupuestos · Metas · Préstamos), Reportes,
+Billeteras, Categorías, Alertas, Programados, Abono, Aporte. Technical
+documentation stays in English. Out of scope: business finance and the
+physical IoT piggy bank.
+
+The two clients are still separate codebases, built and deployed
+independently. Do not reintroduce a single "responsive web app that is
+also the mobile app". See `ARCHITECTURE.md` for the backend/database/auth/
+sync design. For work inside either app, read that app's own `AGENTS.md`
+first — it has the concrete dev commands, structure, and conventions.
 
 # UI IMPLEMENTATION RULES
 

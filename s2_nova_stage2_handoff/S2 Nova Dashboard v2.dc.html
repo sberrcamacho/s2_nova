@@ -1,0 +1,1945 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"><style>.thm{--bg:#050507;--sidebar:#0b0b14;--surface:#0e0e15;--surface2:#13131d;--subtle:#16161f;--line:#1c1c28;--line2:#262635;--grip:#3a3a4a;--text:#fff;--muted:#a8a8b8;--dim:#6f6f82;--accent:#6c5ce7;--accent2:#a69dff;--accent3:#8578ff;--pos:#32c98a;--neg:#ff6262;--warn:#f0b429;--neg-soft:#3a2029;--hero-a:#050507;--hero-b:#141034;--hero-c:#211a4d;--hero-line:#35305c}
+.thm[data-theme="light"]{--bg:#f7f7fa;--sidebar:#ffffff;--surface:#ffffff;--surface2:#f0f0f5;--subtle:#f7f7fa;--line:#ebebf2;--line2:#dcdce6;--grip:#c4c4d0;--text:#111118;--muted:#666673;--dim:#767686;--accent:#6657e8;--accent2:#5a4ad6;--accent3:#4a3cc4;--pos:#22a06b;--neg:#d64545;--warn:#b5760f;--neg-soft:#f0d2d2;--hero-a:#16123a;--hero-b:#1d1650;--hero-c:#241a5e;--hero-line:#35305c}</style><style>body{margin:0;background:#050507;font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#fff}a{color:var(--accent2)}a:hover{color:var(--accent3)}.num{font-family:Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-thumb{background:#262635;border-radius:999px}</style></helmet>
+
+<div class="thm" data-theme="{{ themeAttr }}" style="display:flex;min-height:100vh;background:var(--bg);color:var(--text)">
+  <sc-if value="{{ isLogin }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1;min-width:0;display:flex;align-items:center;justify-content:center;padding:40px;background:var(--bg)">
+    <div style="width:1120px;max-width:100%;height:700px;display:flex;border-radius:22px;overflow:hidden;border:1px solid var(--line);background:var(--bg);color:var(--text)">
+<div style="width:452px;flex:none;position:relative;overflow:hidden;background:linear-gradient(150deg,#16123a 0%,#1d1650 55%,#241a5e 100%);padding:38px;display:flex;flex-direction:column;justify-content:space-between">
+          <div style="position:absolute;top:-80px;right:-60px;width:260px;height:260px;border-radius:50%;background:rgba(123,111,246,.4);filter:blur(60px)"></div>
+          <div style="position:relative;display:flex;align-items:center;gap:10px">
+            <img src="design_handoff_s2_nova_overview/assets/logo-mark-dark.png" alt="S2 Nova" style="width:32px;height:32px;border-radius:9px;flex:none;object-fit:cover">
+            <div><div style="font-size:15px;font-weight:800;letter-spacing:-.01em">S2 Nova</div><div style="font-size:9.5px;font-weight:600;letter-spacing:.1em;color:rgba(255,255,255,.42)">PERSONAL FINANCE</div></div>
+          </div>
+          <div style="position:relative;display:flex;flex-direction:column;gap:22px">
+            <div style="font-size:34px;font-weight:800;letter-spacing:-.03em;line-height:1.14;text-wrap:pretty">Todo tu dinero,<br>en una sola vista.</div>
+            <div style="display:flex;flex-direction:column;gap:18px">
+              <svg viewBox="0 0 376 132" width="100%" height="132" style="display:block;overflow:visible">
+                <defs>
+                  <linearGradient id="loginAreaB" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#8578ff" stop-opacity=".55"></stop>
+                    <stop offset="100%" stop-color="#8578ff" stop-opacity="0"></stop>
+                  </linearGradient>
+                </defs>
+                <line x1="0" y1="33" x2="376" y2="33" stroke="rgba(255,255,255,.08)" stroke-width="1"></line>
+                <line x1="0" y1="76" x2="376" y2="76" stroke="rgba(255,255,255,.08)" stroke-width="1"></line>
+                <line x1="0" y1="119" x2="376" y2="119" stroke="rgba(255,255,255,.08)" stroke-width="1"></line>
+                <path d="M0 104 C 34 96, 46 68, 78 66 S 130 88, 156 74 S 208 34, 235 40 S 292 30, 313 20 S 358 14, 376 8 L 376 132 L 0 132 Z" fill="url(#loginAreaB)"></path>
+                <path d="M0 104 C 34 96, 46 68, 78 66 S 130 88, 156 74 S 208 34, 235 40 S 292 30, 313 20 S 358 14, 376 8" fill="none" stroke="#a59dff" stroke-width="2.5" stroke-linecap="round"></path>
+                <path d="M0 122 C 40 118, 62 112, 96 110 S 152 106, 188 100 S 250 96, 292 86 S 350 82, 376 76" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="2" stroke-dasharray="5 6" stroke-linecap="round"></path>
+                <circle cx="376" cy="8" r="5" fill="#050507" stroke="#a59dff" stroke-width="2.5"></circle>
+              </svg>
+              <div style="display:flex;align-items:center;gap:18px">
+                <svg width="66" height="66" viewBox="0 0 66 66" style="flex:none;transform:rotate(-90deg)">
+                  <circle cx="33" cy="33" r="27" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="8"></circle>
+                  <circle cx="33" cy="33" r="27" fill="none" stroke="#8578ff" stroke-width="8" stroke-linecap="round" stroke-dasharray="98 172"></circle>
+                  <circle cx="33" cy="33" r="27" fill="none" stroke="#7cf0bb" stroke-width="8" stroke-linecap="round" stroke-dasharray="42 172" stroke-dashoffset="-104"></circle>
+                </svg>
+                <div style="display:flex;flex-direction:column;gap:8px;flex:1">
+                  <div style="display:flex;align-items:center;gap:9px"><span style="width:7px;height:7px;border-radius:50%;background:#8578ff;flex:none"></span><span style="font-size:12.5px;color:rgba(255,255,255,.72)">Gastos por categoría</span></div>
+                  <div style="display:flex;align-items:center;gap:9px"><span style="width:7px;height:7px;border-radius:50%;background:#7cf0bb;flex:none"></span><span style="font-size:12.5px;color:rgba(255,255,255,.72)">Ahorro del mes</span></div>
+                  <div style="display:flex;align-items:center;gap:9px"><span style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.22);flex:none"></span><span style="font-size:12.5px;color:rgba(255,255,255,.72)">Proyección</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="position:relative;font-size:11.5px;color:rgba(255,255,255,.45)">Datos cifrados de extremo a extremo</div>
+        </div>
+
+        <div style="flex:1;min-width:0;display:flex;align-items:center;justify-content:center;padding:38px">
+          <div style="width:340px;display:flex;flex-direction:column;gap:18px">
+            <div>
+              <div style="font-size:26px;font-weight:800;letter-spacing:-.025em">Iniciar sesión</div>
+              <div style="font-size:12.5px;color:var(--dim);margin-top:5px">Bienvenida de vuelta, Mariana.</div>
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:center;gap:10px;height:46px;border-radius:12px;background:#ffffff;color:#1f1f28;font-size:13.5px;font-weight:700;cursor:pointer" style-hover="background:#f0f0f5">
+              <svg width="18" height="18" viewBox="0 0 48 48" style="flex:none"><path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-3.2-.4-4.7H24v8.9h11.8c-.5 2.8-2.1 5.1-4.4 6.7v5.5h7.1c4.2-3.8 6.6-9.5 6.6-16.4z"></path><path fill="#34A853" d="M24 46c6 0 11-2 14.5-5.4l-7.1-5.5c-2 1.3-4.5 2.1-7.4 2.1-5.7 0-10.6-3.9-12.3-9.1H4.4v5.7C7.9 41 15.4 46 24 46z"></path><path fill="#FBBC05" d="M11.7 28.1c-.4-1.3-.7-2.7-.7-4.1s.2-2.8.7-4.1v-5.7H4.4C2.9 17.1 2 20.4 2 24s.9 6.9 2.4 9.8l7.3-5.7z"></path><path fill="#EA4335" d="M24 10.8c3.2 0 6.1 1.1 8.4 3.3l6.3-6.3C34.9 4.2 29.9 2 24 2 15.4 2 7.9 7 4.4 14.2l7.3 5.7c1.7-5.2 6.6-9.1 12.3-9.1z"></path></svg>
+              Continuar con Google
+            </div>
+
+            <div style="display:flex;align-items:center;gap:12px"><div style="flex:1;height:1px;background:var(--line)"></div><span style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--dim)">O CON TU CORREO</span><div style="flex:1;height:1px;background:var(--line)"></div></div>
+
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <label style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted)">CORREO</label>
+                <div style="height:46px;display:flex;align-items:center;padding:0 14px;border-radius:12px;background:var(--sidebar);border:1px solid var(--line);font-size:13px;color:var(--text)">mariana@s2nova.co</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <label style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted)">CONTRASEÑA</label>
+                  <span onClick="{{ goSignup }}" style="font-weight:700;color:var(--accent2);cursor:pointer">¿Olvidaste?</span>
+                </div>
+                <div style="height:46px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;border-radius:12px;background:var(--sidebar);border:1px solid var(--line2);font-size:13px;color:var(--text)">
+                  <span style="letter-spacing:.22em">••••••••••</span>
+                  <span aria-label="Mostrar contraseña" style="display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;width:26px;height:26px;margin-right:-4px"><svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M1.8 10S4.7 4.8 10 4.8 18.2 10 18.2 10 15.3 15.2 10 15.2 1.8 10 1.8 10Z" stroke="var(--dim)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="10" cy="10" r="2.6" stroke="var(--dim)" stroke-width="1.6"></circle></svg></span>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:9px">
+              <span style="width:16px;height:16px;border-radius:5px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex:none"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6.3l2.2 2.2 4.8-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+              <span style="font-size:12px;color:var(--muted)">Mantener sesión iniciada</span>
+            </div>
+
+            <div style="height:48px;border-radius:12px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;letter-spacing:-.01em;cursor:pointer" style-hover="background:#8578ff">Entrar</div>
+
+            <div style="font-size:12px;color:var(--dim);text-align:center">¿Nuevo en S2 Nova? <span onClick="{{ goSignup }}" style="font-weight:700;color:var(--accent2);cursor:pointer">Crear cuenta</span></div>
+          </div>
+        </div>
+    </div>
+  </div>
+  </sc-if>
+  <sc-if value="{{ isSignup }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1;min-width:0;display:flex;align-items:center;justify-content:center;padding:40px;background:var(--bg)">
+    <div style="width:1120px;max-width:100%;height:700px;display:flex;border-radius:22px;overflow:hidden;border:1px solid var(--line);background:var(--bg);color:var(--text)">
+<div style="width:452px;flex:none;position:relative;overflow:hidden;background:linear-gradient(150deg,#16123a 0%,#1d1650 55%,#241a5e 100%);padding:38px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between">
+          <div aria-hidden="true" style="position:absolute;top:-80px;right:-60px;width:260px;height:260px;border-radius:50%;background:rgba(123,111,246,.4);filter:blur(60px)"></div>
+          <div style="position:relative;display:flex;align-items:center;gap:10px">
+            <img src="design_handoff_s2_nova_overview/assets/logo-mark-dark.png" alt="S2 Nova" style="width:32px;height:32px;border-radius:9px;flex:none;object-fit:cover">
+            <div><div style="font-size:15px;font-weight:800;letter-spacing:-.01em">S2 Nova</div><div style="font-size:9.5px;font-weight:600;letter-spacing:.1em;color:rgba(255,255,255,.42)">PERSONAL FINANCE</div></div>
+          </div>
+          <div style="position:relative;display:flex;flex-direction:column;gap:26px">
+            <div style="font-size:34px;font-weight:800;letter-spacing:-.03em;line-height:1.14;text-wrap:pretty">Empieza a ordenar<br>tus finanzas hoy.</div>
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <div style="display:flex;align-items:baseline;justify-content:space-between">
+                <div style="font-size:10px;font-weight:700;letter-spacing:.11em;color:#b9b0ff">INGRESOS VS. GASTOS</div>
+                <div style="font-size:11px;color:rgba(255,255,255,.45)">Últimos 6 meses</div>
+              </div>
+              <div style="display:flex;align-items:flex-end;gap:12px">
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:9px">
+                  <div style="width:100%;height:124px;display:flex;align-items:flex-end;gap:4px">
+                    <div style="flex:1;height:56%;background:#8578ff;border-radius:3px"></div>
+                    <div style="flex:1;height:44%;background:rgba(255,255,255,.2);border-radius:3px"></div>
+                  </div>
+                  <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.45)">Mar</div>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:9px">
+                  <div style="width:100%;height:124px;display:flex;align-items:flex-end;gap:4px">
+                    <div style="flex:1;height:64%;background:#8578ff;border-radius:3px"></div>
+                    <div style="flex:1;height:49%;background:rgba(255,255,255,.2);border-radius:3px"></div>
+                  </div>
+                  <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.45)">Abr</div>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:9px">
+                  <div style="width:100%;height:124px;display:flex;align-items:flex-end;gap:4px">
+                    <div style="flex:1;height:60%;background:#8578ff;border-radius:3px"></div>
+                    <div style="flex:1;height:41%;background:rgba(255,255,255,.2);border-radius:3px"></div>
+                  </div>
+                  <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.45)">May</div>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:9px">
+                  <div style="width:100%;height:124px;display:flex;align-items:flex-end;gap:4px">
+                    <div style="flex:1;height:73%;background:#8578ff;border-radius:3px"></div>
+                    <div style="flex:1;height:52%;background:rgba(255,255,255,.2);border-radius:3px"></div>
+                  </div>
+                  <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.45)">Jun</div>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:9px">
+                  <div style="width:100%;height:124px;display:flex;align-items:flex-end;gap:4px">
+                    <div style="flex:1;height:81%;background:#8578ff;border-radius:3px"></div>
+                    <div style="flex:1;height:46%;background:rgba(255,255,255,.2);border-radius:3px"></div>
+                  </div>
+                  <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.45)">Jul</div>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:9px">
+                  <div style="width:100%;height:124px;display:flex;align-items:flex-end;gap:4px">
+                    <div style="flex:1;height:94%;background:#8578ff;border-radius:3px"></div>
+                    <div style="flex:1;height:48%;background:rgba(255,255,255,.2);border-radius:3px"></div>
+                  </div>
+                  <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.45)">Ago</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:18px">
+                <div style="display:flex;align-items:center;gap:9px"><span style="width:7px;height:7px;border-radius:50%;background:#8578ff;flex:none"></span><span style="font-size:12.5px;color:rgba(255,255,255,.72)">Ingresos</span></div>
+                <div style="display:flex;align-items:center;gap:9px"><span style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.2);flex:none"></span><span style="font-size:12.5px;color:rgba(255,255,255,.72)">Gastos</span></div>
+              </div>
+              <div style="font-size:13px;color:rgba(255,255,255,.6);line-height:1.5;text-wrap:pretty">Los usuarios de S2 Nova ahorran en promedio un 18% más en su tercer mes, con todas sus cuentas en un solo balance.</div>
+            </div>
+          </div>
+          <div style="position:relative;font-size:11.5px;color:rgba(255,255,255,.45)">Datos cifrados de extremo a extremo</div>
+        </div>
+
+        <div style="flex:1;min-width:0;display:flex;align-items:center;justify-content:center;padding:38px;box-sizing:border-box">
+          <div style="width:340px;display:flex;flex-direction:column;gap:18px">
+            <div>
+              <div onClick="{{ doLogin }}" style="font-size:26px;font-weight:800;letter-spacing:-.025em;cursor:pointer">Crear cuenta</div>
+              <div style="font-size:12.5px;color:rgba(255,255,255,.5);margin-top:5px">Gratis, sin tarjeta de crédito.</div>
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:center;gap:10px;height:46px;border-radius:12px;background:#ffffff;color:#1f1f28;font-size:13.5px;font-weight:700;cursor:pointer" style-hover="background:#f0f0f5">
+              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 48 48" style="flex:none"><path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-3.2-.4-4.7H24v8.9h11.8c-.5 2.8-2.1 5.1-4.4 6.7v5.5h7.1c4.2-3.8 6.6-9.5 6.6-16.4z"></path><path fill="#34A853" d="M24 46c6 0 11-2 14.5-5.4l-7.1-5.5c-2 1.3-4.5 2.1-7.4 2.1-5.7 0-10.6-3.9-12.3-9.1H4.4v5.7C7.9 41 15.4 46 24 46z"></path><path fill="#FBBC05" d="M11.7 28.1c-.4-1.3-.7-2.7-.7-4.1s.2-2.8.7-4.1v-5.7H4.4C2.9 17.1 2 20.4 2 24s.9 6.9 2.4 9.8l7.3-5.7z"></path><path fill="#EA4335" d="M24 10.8c3.2 0 6.1 1.1 8.4 3.3l6.3-6.3C34.9 4.2 29.9 2 24 2 15.4 2 7.9 7 4.4 14.2l7.3 5.7c1.7-5.2 6.6-9.1 12.3-9.1z"></path></svg>
+              Registrarse con Google
+            </div>
+
+            <div style="display:flex;align-items:center;gap:12px"><div style="flex:1;height:1px;background:#1c1c28"></div><span style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:rgba(255,255,255,.35)">O CON TU CORREO</span><div style="flex:1;height:1px;background:#1c1c28"></div></div>
+
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <label style="font-size:11px;font-weight:700;letter-spacing:.06em;color:rgba(255,255,255,.55)">NOMBRE</label>
+                <div style="height:46px;display:flex;align-items:center;padding:0 14px;border-radius:12px;background:#0b0b14;border:1px solid #1c1c28;font-size:13px;color:rgba(255,255,255,.85)">Mariana Restrepo</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <label style="font-size:11px;font-weight:700;letter-spacing:.06em;color:rgba(255,255,255,.55)">CORREO</label>
+                <div style="height:46px;display:flex;align-items:center;padding:0 14px;border-radius:12px;background:#0b0b14;border:1px solid #1c1c28;font-size:13px;color:rgba(255,255,255,.85)">mariana@s2nova.co</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <label style="font-size:11px;font-weight:700;letter-spacing:.06em;color:rgba(255,255,255,.55)">CONTRASEÑA</label>
+                <div style="height:46px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;border-radius:12px;background:#0b0b14;border:1px solid #241a5e;font-size:13px;color:rgba(255,255,255,.85)">
+                  <span style="letter-spacing:.22em">••••••••••</span>
+                  <span aria-label="Mostrar contraseña" style="display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;width:26px;height:26px;margin-right:-4px"><svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M1.8 10S4.7 4.8 10 4.8 18.2 10 18.2 10 15.3 15.2 10 15.2 1.8 10 1.8 10Z" stroke="rgba(255,255,255,.5)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="10" cy="10" r="2.6" stroke="rgba(255,255,255,.5)" stroke-width="1.6"></circle></svg></span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:2px">
+                  <div style="flex:1;display:flex;gap:4px">
+                    <div style="flex:1;height:3px;border-radius:2px;background:#7cf0bb"></div>
+                    <div style="flex:1;height:3px;border-radius:2px;background:#7cf0bb"></div>
+                    <div style="flex:1;height:3px;border-radius:2px;background:#7cf0bb"></div>
+                    <div style="flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.12)"></div>
+                  </div>
+                  <span style="font-size:10.5px;font-weight:700;color:#7cf0bb">Segura</span>
+                </div>
+                <div style="font-size:11px;color:rgba(255,255,255,.4)">Mínimo 8 caracteres, una mayúscula y un número.</div>
+              </div>
+            </div>
+
+            <div style="display:flex;align-items:flex-start;gap:9px">
+              <span style="width:16px;height:16px;border-radius:5px;background:#7b6ff6;display:flex;align-items:center;justify-content:center;flex:none;margin-top:1px"><svg aria-hidden="true" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6.3l2.2 2.2 4.8-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+              <span style="font-size:12px;color:rgba(255,255,255,.6);line-height:1.45">Acepto los <span onClick="{{ goLogin }}" style="font-weight:700;color:var(--accent2);cursor:pointer">Términos</span> y la <span onClick="{{ goLogin }}" style="font-weight:700;color:var(--accent2);cursor:pointer">Política de privacidad</span></span>
+            </div>
+
+            <div style="height:48px;border-radius:12px;background:#7b6ff6;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;letter-spacing:-.01em;cursor:pointer" style-hover="background:#8578ff">Crear cuenta</div>
+
+            <div style="font-size:12px;color:rgba(255,255,255,.5);text-align:center">¿Ya tienes cuenta? <span onClick="{{ goLogin }}" style="font-weight:700;color:var(--accent2);cursor:pointer">Iniciar sesión</span></div>
+          </div>
+        </div>
+    </div>
+  </div>
+  </sc-if>
+  <sc-if value="{{ isApp }}" hint-placeholder-val="{{ true }}">
+  <div style="flex:1;min-width:0;display:flex">
+  <aside style="width:212px;flex:none;background:var(--sidebar);border-right:1px solid var(--line);display:flex;flex-direction:column;position:sticky;top:0;height:100vh">
+    <div style="display:flex;align-items:center;gap:10px;padding:18px 18px 22px">
+      <img src="design_handoff_s2_nova_overview/assets/logo-mark-dark.png" alt="S2 Nova" style="width:30px;height:30px;border-radius:9px;flex:none;object-fit:cover">
+      <div><div style="font-size:14px;font-weight:800;letter-spacing:-.01em">S2 Nova</div><div style="font-size:9.5px;font-weight:600;letter-spacing:.1em;color:var(--dim)">PERSONAL FINANCE</div></div>
+    </div>
+    <nav style="display:flex;flex-direction:column;gap:2px;padding:0 10px;flex:1">
+      <sc-for list="{{ nav }}" as="item" hint-placeholder-count="6">
+        <div onClick="{{ item.onClick }}" style="{{ item.style }}">{{ item.icon }}{{ item.label }}</div>
+      </sc-for>
+      <div style="margin-top:auto;padding-top:8px">
+        <sc-for list="{{ navFooter }}" as="item" hint-placeholder-count="1">
+          <div onClick="{{ item.onClick }}" style="{{ item.style }}">{{ item.icon }}{{ item.label }}</div>
+        </sc-for>
+      </div>
+    </nav>
+    <div style="padding:14px">
+      <div style="display:flex;align-items:center;gap:10px;background:var(--subtle);border-radius:12px;padding:10px">
+        <div onClick="{{ goProfile }}" title="Edit profile" style="width:30px;height:30px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex:none;cursor:pointer">{{ initials }}</div>
+        <div style="min-width:0;flex:1"><div onClick="{{ goProfile }}" style="font-size:12.5px;font-weight:700;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ profileName }}</div><div onClick="{{ logout }}" style="font-size:10.5px;color:var(--accent2);cursor:pointer;font-weight:700">Cerrar sesión</div></div>
+      </div>
+    </div>
+  </aside>
+
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 28px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:5">
+      <div style="font-size:12px;color:var(--dim)">S2 Nova <span style="opacity:.5">/</span> <span style="color:var(--muted)">{{ activeLabel }}</span></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:280px;height:34px;box-sizing:border-box;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:0 12px;color:var(--dim)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z M21 21l-4.3-4.3"></path></svg>
+          <input value="{{ query }}" onChange="{{ onQuery }}" placeholder="Buscar movimientos, categorías…" style="flex:1;min-width:0;background:transparent;border:none;outline:none;color:var(--text);font-size:12px;font-family:inherit">
+        </div>
+        <sc-if value="{{ showPeriod }}" hint-placeholder-val="{{ false }}">
+        <div style="position:relative">
+          <div onClick="{{ togglePeriod }}" style="height:34px;box-sizing:border-box;display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:0 12px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer" style-hover="border-color:var(--line2);color:var(--text)">{{ periodLabel }}<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M6 9l6 6 6-6"></path></svg></div>
+          <sc-if value="{{ periodOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;top:40px;right:0;width:180px;background:var(--surface);border:1px solid var(--line2);border-radius:12px;padding:6px;box-shadow:0 16px 40px rgba(0,0,0,.35);z-index:20;display:flex;flex-direction:column;gap:2px">
+              <sc-for list="{{ periodOptions }}" as="po" hint-placeholder-count="3">
+                <div onClick="{{ po.onClick }}" style="{{ po.style }}" style-hover="background:var(--subtle)">{{ po.label }}</div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+        </sc-if>
+        <div onClick="{{ openNewTx }}" style="height:34px;box-sizing:border-box;display:flex;align-items:center;gap:7px;background:var(--accent);color:#fff;border-radius:10px;padding:0 14px;font-size:12.5px;font-weight:700;cursor:pointer;box-shadow:0 8px 24px rgba(108,92,231,.35)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M12 5v14 M5 12h14"></path></svg>Nuevo movimiento</div>
+      </div>
+    </div>
+
+    <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+    <div style="padding:26px 28px 40px;display:flex;flex-direction:column;gap:18px">
+      <div style="display:grid;grid-template-columns:1.35fr 1fr;gap:18px;align-items:stretch">
+        <div style="position:relative;overflow:hidden;border-radius:20px;border:1px solid var(--line2);background:linear-gradient(150deg,var(--hero-a) 0%,var(--hero-b) 55%,var(--hero-c) 100%);padding:26px 28px;color:#fff">
+          <div style="position:absolute;top:-70px;right:-40px;width:220px;height:220px;border-radius:50%;background:rgba(108,92,231,.35);filter:blur(52px)"></div>
+          <div style="position:relative">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+              <div style="font-size:10.5px;font-weight:700;letter-spacing:.11em;color:#a69dff">SALDO TOTAL</div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="font-size:10.5px;font-weight:700;color:rgba(255,255,255,.7);background:rgba(255,255,255,.08);border-radius:999px;padding:4px 10px">{{ walletCountLabel }}</div>
+                <div onClick="{{ toggleHide }}" title="{{ hideTitle }}" style="width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,.75)" style-hover="background:rgba(255,255,255,.14)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="{{ eyePath }}"></path></svg></div>
+              </div>
+            </div>
+            <div class="num" style="font-size:48px;font-weight:800;letter-spacing:-.03em;margin-top:10px;filter:{{ blur }}">{{ balanceLabel }}</div>
+            <div style="display:flex;gap:12px;margin-top:16px">
+              <div style="flex:1;background:rgba(255,255,255,.06);border-radius:14px;padding:11px 14px"><div style="font-size:10.5px;color:rgba(255,255,255,.62)">Ingresos del mes</div><div class="num" style="font-size:16px;font-weight:800;color:#32c98a;margin-top:3px;filter:{{ blur }}">$4.288.500</div></div>
+              <div style="flex:1;background:rgba(255,255,255,.06);border-radius:14px;padding:11px 14px"><div style="font-size:10.5px;color:rgba(255,255,255,.62)">Gastos del mes</div><div class="num" style="font-size:16px;font-weight:800;color:#ff6262;margin-top:3px;filter:{{ blur }}">$1.927.100</div></div>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:5px;height:56px;margin-top:22px">
+                <div style="flex:1;height:38%;background:rgba(165,157,255,0.22);border-radius:3px"></div>
+                <div style="flex:1;height:46%;background:rgba(165,157,255,0.26);border-radius:3px"></div>
+                <div style="flex:1;height:58%;background:rgba(165,157,255,0.29);border-radius:3px"></div>
+                <div style="flex:1;height:64%;background:rgba(165,157,255,0.33);border-radius:3px"></div>
+                <div style="flex:1;height:71%;background:rgba(165,157,255,0.36);border-radius:3px"></div>
+                <div style="flex:1;height:83%;background:var(--accent3);border-radius:3px"></div>
+            </div>
+            <div style="display:flex;font-size:10px;color:rgba(255,255,255,.5);margin-top:8px;gap:5px"><span style="flex:1;text-align:center">Mar</span><span style="flex:1;text-align:center">Abr</span><span style="flex:1;text-align:center">May</span><span style="flex:1;text-align:center">Jun</span><span style="flex:1;text-align:center">Jul</span><span style="flex:1;text-align:center">Ago</span></div>
+          </div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">
+            <div><div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Billeteras</div><div style="font-size:11.5px;color:var(--dim);margin-top:2px">El saldo total es la suma de tus billeteras</div></div>
+            
+          </div>
+          <div style="display:flex;flex-direction:column;margin-top:10px;flex:1;justify-content:center">
+            <sc-for list="{{ walletRows }}" as="w" hint-placeholder-count="3">
+              <div onClick="{{ w.onClick }}" style="{{ w.rowStyle }}" style-hover="background:var(--subtle)">
+                <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(150deg,var(--hero-b),var(--accent));color:#fff;display:flex;align-items:center;justify-content:center;flex:none"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="{{ w.iconPath }}"></path></svg></div>
+                <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">{{ w.label }}</div><div style="font-size:11px;color:var(--dim)">{{ w.kind }}</div></div>
+                <div style="text-align:right"><div class="num" style="font-size:13.5px;font-weight:800;filter:{{ blur }}">{{ w.amount }}</div><div class="num" style="font-size:10.5px;color:var(--dim)">{{ w.share }}</div></div>
+                <span style="color:var(--dim);display:flex"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M9 18l6-6-6-6"></path></svg></span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <sc-if value="{{ hasAlerts }}" hint-placeholder-val="{{ true }}">
+      <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">
+            <div><div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Alertas</div><div style="font-size:11.5px;color:var(--dim);margin-top:2px">{{ alertCountLabel }}</div></div>
+            
+          </div>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px">
+          <sc-for list="{{ alerts }}" as="sg" hint-placeholder-count="3">
+            <div onClick="{{ sg.onOpen }}" style="display:flex;align-items:flex-start;gap:12px;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:13px 10px 13px 13px;cursor:pointer" style-hover="border-color:var(--line2)">
+              {{ sg.chip }}
+              <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">{{ sg.title }}</div><div style="font-size:11.5px;color:var(--dim);margin-top:3px;line-height:1.45">{{ sg.body }}</div></div>
+              <div onClick="{{ sg.onDismiss }}" title="Descartar" style="width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--dim);flex:none" style-hover="background:var(--subtle);color:var(--text)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M18 6L6 18 M6 6l12 12"></path></svg></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+      <sc-if value="{{ noAlerts }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:12px;color:var(--dim);padding:0 4px">Sin alertas pendientes. <span onClick="{{ restoreAlerts }}" style="color:var(--accent2);font-weight:700;cursor:pointer">Restaurar</span></div>
+      </sc-if>
+
+      <div style="display:grid;grid-template-columns:1.35fr 1fr;gap:18px">
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">
+            <div><div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Presupuestos</div><div style="font-size:11.5px;color:var(--dim);margin-top:2px">Quedan 10 días de agosto · ordenados por riesgo</div></div>
+            <div onClick="{{ goBudgets }}" style="font-size:11.5px;font-weight:800;color:var(--accent2);cursor:pointer;white-space:nowrap">Ver en Planes →</div>
+          </div>
+          <div style="display:flex;flex-direction:column;margin-top:10px">
+            <sc-for list="{{ homeBudgets }}" as="b" hint-placeholder-count="6">
+              <div onClick="{{ goBudgets }}" style="{{ b.rowStyle }}" style-hover="background:var(--subtle)">
+                {{ b.chip }}
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px">
+                  <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px"><span style="font-size:12.5px;font-weight:700">{{ b.label }}</span><span class="num" style="font-size:11.5px;color:var(--muted);filter:{{ blur }}">{{ b.spent }} / {{ b.limit }}</span></div>
+                  <div style="height:6px;border-radius:3px;background:var(--line);overflow:hidden"><div style="{{ b.fillStyle }}"></div></div>
+                  <div style="display:flex;justify-content:space-between;gap:10px;font-size:11px;color:var(--dim)"><span>{{ b.note }}</span><span class="num" style="filter:{{ blur }}">{{ b.left }}</span></div>
+                </div>
+                <span class="num" style="{{ b.pctStyle }}">{{ b.pct }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:18px">
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">
+            <div><div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Metas</div><div style="font-size:11.5px;color:var(--dim);margin-top:2px">Aportes acumulados y fecha estimada</div></div>
+            <div onClick="{{ goGoals }}" style="font-size:11.5px;font-weight:800;color:var(--accent2);cursor:pointer;white-space:nowrap">Ver en Planes →</div>
+          </div>
+          <div style="display:flex;flex-direction:column;margin-top:10px">
+            <sc-for list="{{ homeGoals }}" as="g" hint-placeholder-count="4">
+              <div onClick="{{ goGoals }}" style="{{ g.rowStyle }}" style-hover="background:var(--subtle)">
+                <div style="{{ g.ringStyle }}"><div style="{{ g.ringInner }}">{{ g.glyph }}</div></div>
+                <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">{{ g.label }}</div><div class="num" style="font-size:11.5px;color:var(--muted);margin-top:2px;filter:{{ blur }}">{{ g.current }} de {{ g.target }}</div><div style="font-size:11px;color:var(--dim);margin-top:2px">{{ g.eta }}</div></div>
+                <span class="num" style="font-size:12px;font-weight:800;color:var(--muted)">{{ g.pctLabel }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">
+            <div><div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Préstamos</div><div style="font-size:11.5px;color:var(--dim);margin-top:2px">{{ loansOpenLabel }}</div></div>
+            <div onClick="{{ goLoans }}" style="font-size:11.5px;font-weight:800;color:var(--accent2);cursor:pointer;white-space:nowrap">Ver en Planes →</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
+            <div style="background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:11px 13px"><div style="font-size:10.5px;color:var(--dim)">Te deben</div><div class="num" style="font-size:16px;font-weight:800;color:var(--pos);margin-top:2px;filter:{{ blur }}">{{ owedToYou }}</div></div>
+            <div style="background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:11px 13px"><div style="font-size:10.5px;color:var(--dim)">Debes</div><div class="num" style="font-size:16px;font-weight:800;color:var(--neg);margin-top:2px;filter:{{ blur }}">{{ youOwe }}</div></div>
+          </div>
+          <sc-if value="{{ nextLoan }}" hint-placeholder-val="{{ true }}">
+            <div onClick="{{ goLoans }}" style="display:flex;align-items:center;gap:12px;padding:12px 8px 0;margin:4px -8px 0;cursor:pointer">
+              {{ nextLoan.chip }}
+              <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">{{ nextLoan.title }}</div><div style="font-size:11px;color:var(--dim)">{{ nextLoan.detail }}</div></div>
+              <span class="num" style="font-size:13px;font-weight:800;filter:{{ blur }}">{{ nextLoan.amount }}</span>
+            </div>
+          </sc-if>
+        </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1.35fr;gap:18px">
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">
+            <div><div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Gasto por categoría</div><div style="font-size:11.5px;color:var(--dim);margin-top:2px">Agosto 2026</div></div>
+            <div onClick="{{ goSpending }}" style="font-size:11.5px;font-weight:800;color:var(--accent2);cursor:pointer;white-space:nowrap">Ver en Reportes →</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:13px;margin-top:16px">
+            <sc-for list="{{ homeCats }}" as="c" hint-placeholder-count="6">
+              <div style="display:flex;align-items:center;gap:12px">
+                {{ c.chip }}
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px">
+                  <div style="display:flex;justify-content:space-between;gap:10px;font-size:12px"><span style="font-weight:700">{{ c.label }}</span><span class="num" style="color:var(--muted);filter:{{ blur }}">{{ c.amount }}</span></div>
+                  <div style="height:6px;border-radius:3px;background:var(--line);overflow:hidden"><div style="{{ c.fillStyle }}"></div></div>
+                </div>
+                <span class="num" style="width:34px;text-align:right;font-size:11px;font-weight:800;color:var(--dim)">{{ c.share }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">
+            <div><div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Próximos 14 días</div><div style="font-size:11.5px;color:var(--dim);margin-top:2px">Desde tus programados · con saldo proyectado</div></div>
+            <div onClick="{{ goTransactions }}" style="font-size:11.5px;font-weight:800;color:var(--accent2);cursor:pointer;white-space:nowrap">Ver en Movimientos →</div>
+          </div>
+          <div style="display:flex;flex-direction:column;margin-top:10px">
+            <sc-for list="{{ events }}" as="ev" hint-placeholder-count="5">
+              <div onClick="{{ ev.onClick }}" style="{{ ev.rowStyle }}" style-hover="background:var(--subtle)">
+                <div style="width:42px;flex:none;text-align:center"><div style="{{ ev.monStyle }}">{{ ev.mon }}</div><div class="num" style="font-size:15px;font-weight:800">{{ ev.day }}</div></div>
+                <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">{{ ev.label }}</div><div style="font-size:11px;color:var(--dim)">{{ ev.detail }}</div></div>
+                <div style="text-align:right"><div class="num" style="{{ ev.amountStyle }}">{{ ev.amount }}</div><div class="num" style="font-size:10.5px;color:var(--dim);filter:{{ blur }}">Saldo {{ ev.running }}</div></div>
+              </div>
+            </sc-for>
+            <sc-if value="{{ noEvents }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:14px 0 4px;font-size:12.5px;color:var(--dim)">Nada programado en los próximos 14 días.</div>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isTransactions }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:26px 28px 40px;display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
+        <div><div style="font-size:24px;font-weight:800;letter-spacing:-.025em">Movimientos</div><div style="font-size:12.5px;color:var(--dim);margin-top:3px">{{ txCount }}</div></div>
+        <div style="display:flex;gap:6px">
+          <sc-for list="{{ txFilters }}" as="f" hint-placeholder-count="3">
+            <div onClick="{{ f.onClick }}" style="{{ f.style }}">{{ f.label }}</div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:8px 20px">
+        <sc-for list="{{ allTxns }}" as="tx" hint-placeholder-count="6">
+          <div onClick="{{ tx.onClick }}" style="{{ tx.rowStyle }}" style-hover="background:var(--subtle)">
+            {{ tx.chip }}
+            <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">{{ tx.desc }}</div><div style="font-size:11px;color:var(--dim)">{{ tx.merchant }} · {{ tx.date }} · {{ tx.method }}</div></div>
+            <span class="num" style="{{ tx.amountStyle }}">{{ tx.amount }}</span>
+          </div>
+        </sc-for>
+        <sc-if value="{{ noTxns }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:30px 0;text-align:center;font-size:12.5px;color:var(--dim)">{{ noTxnsLabel }}</div>
+        </sc-if>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isAnalytics }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:26px 28px 40px;display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px">
+        <div><div style="font-size:24px;font-weight:800;letter-spacing:-.025em">Reportes</div><div style="font-size:12.5px;color:var(--dim);margin-top:3px">Agosto 2026</div></div>
+        <div style="display:flex;gap:8px">
+          <sc-for list="{{ ranges }}" as="r" hint-placeholder-count="3">
+            <div onClick="{{ r.onClick }}" style="{{ r.style }}">{{ r.label }}</div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:4px;border-bottom:1px solid var(--line)">
+        <sc-for list="{{ tabs }}" as="tb" hint-placeholder-count="4">
+          <div onClick="{{ tb.onClick }}" style="{{ tb.style }}">{{ tb.text }}</div>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{ isSpending }}" hint-placeholder-val="{{ true }}">
+      <div style="display:grid;grid-template-columns:1.45fr 1fr;gap:18px">
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between">
+            <div><div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Ingresos vs gastos</div><div style="font-size:11.5px;color:var(--dim);margin-top:2px">{{ rangeSubtitle }}</div></div>
+            <div style="display:flex;gap:12px;font-size:11px;font-weight:700"><span style="display:flex;align-items:center;gap:5px;color:var(--muted)"><span style="width:8px;height:8px;border-radius:2px;background:var(--pos)"></span>Ingresos</span><span style="display:flex;align-items:center;gap:5px;color:var(--muted)"><span style="width:8px;height:8px;border-radius:2px;background:var(--neg)"></span>Gastos</span></div>
+          </div>
+          <div style="display:flex;align-items:flex-end;gap:14px;height:236px;margin-top:22px;border-bottom:1px solid var(--line);padding-bottom:2px">
+            <sc-for list="{{ bars }}" as="b" hint-placeholder-count="6">
+              <div style="flex:1;display:flex;align-items:flex-end;gap:4px;height:100%;justify-content:center">
+                <div style="{{ b.incStyle }}"></div>
+                <div style="{{ b.expStyle }}"></div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:14px;margin-top:8px">
+            <sc-for list="{{ bars }}" as="b" hint-placeholder-count="6">
+              <div style="flex:1;text-align:center;font-size:10.5px;font-weight:600;color:var(--dim)">{{ b.label }}</div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px">
+          <div style="font-size:14px;font-weight:800;letter-spacing:-.01em">En qué se fue el dinero</div>
+          <div style="font-size:11.5px;color:var(--dim);margin-top:2px">Principales categorías del mes</div>
+          <div style="display:flex;flex-direction:column;gap:14px;margin-top:18px">
+            <sc-for list="{{ categories }}" as="c" hint-placeholder-count="5">
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;margin-bottom:6px"><span>{{ c.label }}</span><span class="num" style="{{ c.amountStyle }}">{{ c.amount }}</span></div>
+                <div style="height:6px;border-radius:3px;background:var(--line);overflow:hidden"><div style="{{ c.fillStyle }}"></div></div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px"><div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--dim)">GASTO DIARIO PROMEDIO</div><div class="num" style="font-size:22px;font-weight:800;letter-spacing:-.025em;margin-top:6px">$91.767</div></div>
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px"><div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--dim)">DÍA CON MÁS GASTO</div><div style="font-size:22px;font-weight:800;letter-spacing:-.025em;margin-top:6px">Sábado</div></div>
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px"><div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--dim)">FIJO VS VARIABLE</div><div style="font-size:22px;font-weight:800;letter-spacing:-.025em;margin-top:6px">38 / 62</div></div>
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px"><div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--dim)">MESES DE RESPALDO</div><div class="num" style="font-size:22px;font-weight:800;letter-spacing:-.025em;margin-top:6px">8,4</div></div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isIncomeTab }}" hint-placeholder-val="{{ false }}">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px">
+          <div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Fuentes de ingreso</div>
+          <div style="font-size:11.5px;color:var(--dim);margin-top:2px">{{ rangeSubtitle }}</div>
+          <div style="display:flex;flex-direction:column;gap:16px;margin-top:20px">
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:7px"><span>Salario — Grupo Éxito</span><span class="num">$4.400.000 <span style="color:var(--dim);font-weight:600">79%</span></span></div>
+              <div style="height:8px;border-radius:4px;background:var(--line);overflow:hidden"><div style="width:79%;height:100%;background:var(--pos)"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:7px"><span>Freelance — Estudio Andina</span><span class="num">$880.000 <span style="color:var(--dim);font-weight:600">16%</span></span></div>
+              <div style="height:8px;border-radius:4px;background:var(--line);overflow:hidden"><div style="width:16%;height:100%;background:#6657E8"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:7px"><span>Otros</span><span class="num">$280.000 <span style="color:var(--dim);font-weight:600">5%</span></span></div>
+              <div style="height:8px;border-radius:4px;background:var(--line);overflow:hidden"><div style="width:5%;height:100%;background:#9C9CAA"></div></div>
+            </div>
+          </div>
+          <div style="font-size:11.5px;color:var(--dim);line-height:1.6;margin-top:22px;border-top:1px solid var(--subtle);padding-top:14px">El salario es estable mes a mes; lo freelance es la parte variable: osciló entre $350.000 y $1.200.000 en seis meses.</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px">
+          <div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Ingresos por mes</div>
+          <div style="font-size:11.5px;color:var(--dim);margin-top:2px">Salario y demás ingresos</div>
+          <div style="display:flex;align-items:flex-end;gap:14px;height:212px;margin-top:22px;border-bottom:1px solid var(--line)">
+            <sc-for list="{{ incomeBars }}" as="b" hint-placeholder-count="6">
+              <div style="flex:1;height:100%;display:flex;align-items:flex-end"><div style="{{ b.style }}"></div></div>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:14px;margin-top:8px">
+            <sc-for list="{{ incomeBars }}" as="b" hint-placeholder-count="6">
+              <div style="flex:1;text-align:center;font-size:10.5px;font-weight:600;color:var(--dim)">{{ b.label }}</div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isCashFlow }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:18px">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+          <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 20px"><div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--dim)">ENTRADAS</div><div class="num" style="font-size:24px;font-weight:800;letter-spacing:-.025em;margin-top:6px;color:var(--pos)">$4.288.500</div></div>
+          <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 20px"><div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--dim)">SALIDAS</div><div class="num" style="font-size:24px;font-weight:800;letter-spacing:-.025em;margin-top:6px;color:var(--neg)">$1.927.100</div></div>
+          <div style="background:linear-gradient(160deg,rgba(108,92,231,.22),var(--surface) 70%);border:1px solid var(--hero-line);border-radius:16px;padding:18px 20px"><div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--accent2)">FLUJO NETO</div><div class="num" style="font-size:24px;font-weight:800;letter-spacing:-.025em;margin-top:6px">+$2.361.400</div></div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px">
+          <div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Efecto de los próximos movimientos</div>
+          <div style="font-size:11.5px;color:var(--dim);margin-top:2px">Programados activos aplicados al saldo de hoy</div>
+          <div style="display:flex;flex-direction:column;margin-top:16px">
+            <sc-for list="{{ flow }}" as="f" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:16px;padding:13px 0;border-bottom:1px solid var(--subtle)">
+                <span style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--dim);width:64px;flex:none">{{ f.date }}</span>
+                <span style="flex:1;min-width:0;font-size:13px;font-weight:700">{{ f.label }}</span>
+                <span class="num" style="{{ f.amountStyle }}">{{ f.amount }}</span>
+                <span class="num" style="font-size:12.5px;color:var(--muted);width:120px;text-align:right;flex:none">{{ f.running }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="font-size:11.5px;color:var(--dim);margin-top:14px">Saldo proyectado más bajo antes del salario: <span class="num" style="color:var(--warn);font-weight:700">$15.761.300</span> el 26 ago.</div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isNetWorth }}" hint-placeholder-val="{{ false }}">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px">
+          <div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Billeteras</div>
+          <div style="font-size:11.5px;color:var(--dim);margin-top:2px">Saldos a hoy</div>
+          <div style="display:flex;flex-direction:column;margin-top:16px">
+            <sc-for list="{{ wallets }}" as="w" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--subtle)">
+                <span style="{{ w.dot }}"></span>
+                <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">{{ w.label }}</div><div style="font-size:11px;color:var(--dim)">{{ w.kind }}</div></div>
+                <span class="num" style="font-size:14px;font-weight:800">{{ w.amount }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)">
+            <span style="font-size:12.5px;font-weight:700;color:var(--muted)">Patrimonio</span>
+            <span class="num" style="font-size:22px;font-weight:800;letter-spacing:-.025em">$16.147.300</span>
+          </div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px">
+          <div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Prestado y recibido en préstamo</div>
+          <div style="font-size:11.5px;color:var(--dim);margin-top:2px">Fuera de los saldos de billeteras</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px">
+            <div style="background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:16px"><div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--dim)">PRESTADO</div><div class="num" style="font-size:20px;font-weight:800;margin-top:6px;color:var(--pos)">$420.000</div><div style="font-size:11px;color:var(--dim);margin-top:4px">1 persona · 1 saldado</div></div>
+            <div style="background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:16px"><div style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--dim)">RECIBIDO</div><div class="num" style="font-size:20px;font-weight:800;margin-top:6px;color:var(--dim)">—</div><div style="font-size:11px;color:var(--dim);margin-top:4px">Sin deudas pendientes</div></div>
+          </div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--dim);margin-top:24px">ÚLTIMOS SEIS MESES</div>
+          <div style="display:flex;align-items:flex-end;gap:10px;height:120px;margin-top:14px">
+            <div style="flex:1;height:62%;background:rgba(165,157,255,.24);border-radius:4px 4px 0 0"></div>
+            <div style="flex:1;height:68%;background:rgba(165,157,255,.24);border-radius:4px 4px 0 0"></div>
+            <div style="flex:1;height:71%;background:rgba(165,157,255,.24);border-radius:4px 4px 0 0"></div>
+            <div style="flex:1;height:82%;background:rgba(165,157,255,.32);border-radius:4px 4px 0 0"></div>
+            <div style="flex:1;height:90%;background:rgba(165,157,255,.32);border-radius:4px 4px 0 0"></div>
+            <div style="flex:1;height:100%;background:var(--accent3);border-radius:4px 4px 0 0"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--dim);margin-top:8px"><span>Mar</span><span>Abr</span><span>May</span><span>Jun</span><span>Jul</span><span>Ago</span></div>
+        </div>
+      </div>
+      </sc-if>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isBudgets }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:26px 28px 40px;display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div><div style="font-size:24px;font-weight:800;letter-spacing:-.025em">Planes</div><div style="font-size:12.5px;color:var(--dim);margin-top:3px">Presupuestos, metas y préstamos. Los mismos que ves en Android.</div></div>
+        <div style="display:flex;border-bottom:1px solid var(--line)">
+          <sc-for list="{{ planTabs }}" as="pt" hint-placeholder-count="3">
+            <div onClick="{{ pt.onClick }}" style="{{ pt.style }}">{{ pt.label }}</div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+        <sc-for list="{{ budgets }}" as="b" hint-placeholder-count="6">
+          <div style="{{ b.cardStyle }}">
+            <div style="display:flex;align-items:baseline;justify-content:space-between">
+              <div style="font-size:13.5px;font-weight:800">{{ b.label }}</div>
+              <span style="{{ b.pctStyle }}">{{ b.pct }}</span>
+            </div>
+            <div class="num" style="font-size:20px;font-weight:800;letter-spacing:-.025em;margin-top:8px">{{ b.spent }}</div>
+            <div style="font-size:11.5px;color:var(--dim);margin-top:2px">de {{ b.limit }}</div>
+            <div style="height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:14px"><div style="{{ b.fillStyle }}"></div></div>
+            <div style="font-size:11.5px;margin-top:10px;color:var(--muted)">{{ b.note }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isGoals }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:26px 28px 40px;display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div><div style="font-size:24px;font-weight:800;letter-spacing:-.025em">Planes</div><div style="font-size:12.5px;color:var(--dim);margin-top:3px">Presupuestos, metas y préstamos. Los mismos que ves en Android.</div></div>
+        <div style="display:flex;border-bottom:1px solid var(--line)">
+          <sc-for list="{{ planTabs }}" as="pt" hint-placeholder-count="3">
+            <div onClick="{{ pt.onClick }}" style="{{ pt.style }}">{{ pt.label }}</div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px">
+        <sc-for list="{{ goals }}" as="g" hint-placeholder-count="4">
+          <div style="{{ g.cardStyle }}">
+            <div style="display:flex;align-items:center;gap:18px">
+              <div style="{{ g.ringStyle }}">
+                <div style="width:56px;height:56px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center">
+                  <span class="num" style="font-size:14px;font-weight:800">{{ g.pctLabel }}</span>
+                </div>
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:14px;font-weight:800;letter-spacing:-.01em">{{ g.label }}</div>
+                <div class="num" style="font-size:18px;font-weight:800;letter-spacing:-.02em;margin-top:5px">{{ g.current }} <span style="font-size:12px;font-weight:600;color:var(--dim)">de {{ g.target }}</span></div>
+                <div style="font-size:11.5px;color:var(--dim);margin-top:6px;line-height:1.5">{{ g.note }}</div>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isLoans }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:26px 28px 40px;display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div><div style="font-size:24px;font-weight:800;letter-spacing:-.025em">Planes</div><div style="font-size:12.5px;color:var(--dim);margin-top:3px">Presupuestos, metas y préstamos. Los mismos que ves en Android.</div></div>
+        <div style="display:flex;border-bottom:1px solid var(--line)">
+          <sc-for list="{{ planTabs }}" as="pt" hint-placeholder-count="3">
+            <div onClick="{{ pt.onClick }}" style="{{ pt.style }}">{{ pt.label }}</div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+        <div style="display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px">
+          <sc-for list="{{ loanSides }}" as="ls" hint-placeholder-count="2">
+            <div onClick="{{ ls.onClick }}" style="{{ ls.style }}">{{ ls.label }}</div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px">
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px"><div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--dim)">{{ loanSummary.pendingLabel }}</div><div class="num" style="font-size:24px;font-weight:800;letter-spacing:-.02em;margin-top:6px;filter:{{ blur }}">{{ loanSummary.pending }}</div></div>
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px"><div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--dim)">{{ loanSummary.paidLabel }}</div><div class="num" style="font-size:24px;font-weight:800;letter-spacing:-.02em;margin-top:6px;filter:{{ blur }}">{{ loanSummary.paid }}</div></div>
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px"><div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--dim)">PRÓXIMO VENCIMIENTO</div><div style="font-size:15px;font-weight:800;margin-top:8px">{{ loanSummary.nextDue }}</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px">
+        <sc-for list="{{ loanCards }}" as="l" hint-placeholder-count="2">
+          <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;align-items:center;gap:12px">
+              {{ l.chip }}
+              <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:800">{{ l.person }}</div><div style="font-size:11.5px;color:var(--dim);margin-top:2px">{{ l.meta }}</div></div>
+              <span style="{{ l.statusStyle }}">{{ l.status }}</span>
+            </div>
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px"><span class="num" style="font-size:20px;font-weight:800;filter:{{ blur }}">{{ l.outstanding }}</span><span class="num" style="font-size:11.5px;color:var(--dim);filter:{{ blur }}">{{ l.progressLabel }}</span></div>
+            <div style="height:6px;border-radius:3px;background:var(--line);overflow:hidden"><div style="{{ l.fillStyle }}"></div></div>
+            <div style="display:flex;flex-direction:column;border-top:1px solid var(--subtle);padding-top:8px">
+              <div style="font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--dim);padding:4px 0">HISTORIAL</div>
+              <sc-for list="{{ l.history }}" as="hi" hint-placeholder-count="1">
+                <div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;font-size:12px"><span style="color:var(--muted)">{{ hi.label }}</span><span class="num" style="{{ hi.amountStyle }}">{{ hi.amount }}</span></div>
+              </sc-for>
+            </div>
+            <sc-if value="{{ l.open }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;gap:8px;justify-content:flex-end">
+                <div onClick="{{ l.onPay }}" style="background:var(--accent);border-radius:10px;padding:9px 14px;font-size:12px;font-weight:700;color:#fff;cursor:pointer">Registrar abono</div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+      <sc-if value="{{ loansEmpty }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:12.5px;color:var(--dim);text-align:center;padding:20px">{{ loansEmptyLabel }}</div>
+      </sc-if>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isSettingsMain }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:26px 28px 40px;display:flex;flex-direction:column;gap:18px;max-width:920px">
+      <div>
+        <div style="font-size:24px;font-weight:800;letter-spacing:-.025em">Ajustes</div>
+        <div style="font-size:12.5px;color:var(--dim);margin-top:3px">Cuenta, preferencias y seguridad</div>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px">
+        <div style="display:flex;align-items:center;gap:16px">
+          <div style="width:56px;height:56px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;flex:none">{{ initials }}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:16px;font-weight:800;letter-spacing:-.015em">{{ profileName }}</div>
+            <div style="font-size:12.5px;color:var(--dim);margin-top:2px">{{ profileEmail }} · {{ profileCity }}</div>
+            <div style="font-size:11.5px;color:var(--dim);margin-top:2px">Miembro desde noviembre 2024</div>
+          </div>
+          <div onClick="{{ goProfile }}" style="border:1px solid var(--line2);border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer" style-hover="color:var(--text)">Editar perfil</div>
+        </div>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px">
+        <div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Preferencias</div>
+        <div style="display:flex;flex-direction:column;margin-top:8px">
+          <div style="display:flex;align-items:center;gap:16px;padding:15px 0;border-bottom:1px solid var(--subtle)">
+            <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">Idioma</div><div style="font-size:11.5px;color:var(--dim);margin-top:2px">Aplica a textos, gráficos y fechas</div></div>
+            <div style="display:flex;gap:6px">
+              <sc-for list="{{ langs }}" as="l" hint-placeholder-count="2">
+                <div onClick="{{ l.onClick }}" style="{{ l.style }}">{{ l.label }}</div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;padding:15px 0;border-bottom:1px solid var(--subtle)">
+            <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">Moneda</div><div style="font-size:11.5px;color:var(--dim);margin-top:2px">{{ currencyDetail }}</div></div>
+            <div style="display:flex;gap:6px">
+              <sc-for list="{{ currencies }}" as="cu" hint-placeholder-count="2">
+                <div onClick="{{ cu.onClick }}" style="{{ cu.style }}">{{ cu.label }}</div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;padding:15px 0;border-bottom:1px solid var(--subtle)">
+            <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">Tema</div><div style="font-size:11.5px;color:var(--dim);margin-top:2px">Por defecto sigue el tema del sistema</div></div>
+            <div style="display:flex;gap:6px">
+              <sc-for list="{{ themes }}" as="th" hint-placeholder-count="3">
+                <div onClick="{{ th.onClick }}" style="{{ th.style }}">{{ th.text }}</div>
+              </sc-for>
+            </div>
+          </div>
+          <sc-for list="{{ toggles }}" as="tg" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:16px;padding:15px 0;border-bottom:1px solid var(--subtle)">
+              <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">{{ tg.label }}</div><div style="font-size:11.5px;color:var(--dim);margin-top:2px">{{ tg.detail }}</div></div>
+              <div onClick="{{ tg.onClick }}" style="{{ tg.trackStyle }}"><span style="{{ tg.knobStyle }}"></span></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px">
+        <div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Seguridad</div>
+        <div style="display:flex;flex-direction:column;margin-top:8px">
+          <div style="display:flex;align-items:center;gap:16px;padding:15px 0;border-bottom:1px solid var(--subtle)">
+            <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">Contraseña</div><div style="font-size:11.5px;color:var(--dim);margin-top:2px">{{ pwChanged }}</div></div>
+            <div onClick="{{ goPassword }}" style="border:1px solid var(--line2);border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer" style-hover="color:var(--text)">Cambiar</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;padding:15px 0;border-bottom:1px solid var(--subtle)">
+            <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">Sesiones activas</div><div style="font-size:11.5px;color:var(--dim);margin-top:2px">{{ sessionsSummary }}</div></div>
+            <div onClick="{{ goSessions }}" style="border:1px solid var(--line2);border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer" style-hover="color:var(--text)">Administrar</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;padding:15px 0">
+            <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:var(--neg)">Eliminar cuenta</div><div style="font-size:11.5px;color:var(--dim);margin-top:2px">Borra movimientos, presupuestos, metas y préstamos</div></div>
+            <div onClick="{{ goDelete }}" style="border:1px solid rgba(255,98,98,.35);border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;color:var(--neg);cursor:pointer" style-hover="background:rgba(255,98,98,.1)">Eliminar</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isSettingsPassword }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:26px 28px 40px;display:flex;flex-direction:column;gap:18px;max-width:620px">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div onClick="{{ goSettingsMain }}" style="font-size:12px;font-weight:700;color:var(--accent2);cursor:pointer;align-self:flex-start">← Ajustes</div>
+        <div>
+          <div style="font-size:24px;font-weight:800;letter-spacing:-.025em">Cambiar contraseña</div>
+          <div style="font-size:12.5px;color:var(--dim);margin-top:3px">Al cambiarla se cierran las sesiones en tus otros dispositivos.</div>
+        </div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <label style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted)">CONTRASEÑA ACTUAL</label>
+          <input type="password" value="{{ pwCurrent }}" onChange="{{ onPwCurrent }}" placeholder="••••••••" style="height:46px;padding:0 14px;border-radius:12px;background:var(--sidebar);border:1px solid var(--line);font-size:13px;color:var(--text);font-family:inherit;outline:none" style-focus="border-color:var(--accent)">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <label style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted)">NUEVA CONTRASEÑA</label>
+          <input type="password" value="{{ pwNext }}" onChange="{{ onPwNext }}" placeholder="Mínimo 8 caracteres" style="height:46px;padding:0 14px;border-radius:12px;background:var(--sidebar);border:1px solid var(--line);font-size:13px;color:var(--text);font-family:inherit;outline:none" style-focus="border-color:var(--accent)">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <label style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted)">CONFIRMAR NUEVA CONTRASEÑA</label>
+          <input type="password" value="{{ pwConfirm }}" onChange="{{ onPwConfirm }}" placeholder="Repite la nueva contraseña" style="height:46px;padding:0 14px;border-radius:12px;background:var(--sidebar);border:1px solid var(--line);font-size:13px;color:var(--text);font-family:inherit;outline:none" style-focus="border-color:var(--accent)">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <sc-for list="{{ pwRules }}" as="rule" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:9px;font-size:12px"><span style="{{ rule.dotStyle }}"></span><span style="{{ rule.textStyle }}">{{ rule.label }}</span></div>
+          </sc-for>
+        </div>
+        <sc-if value="{{ pwMsg }}" hint-placeholder-val="{{ false }}">
+          <div style="{{ pwMsgStyle }}">{{ pwMsg }}</div>
+        </sc-if>
+        <div style="display:flex;justify-content:flex-end;gap:8px;padding-top:4px">
+          <div onClick="{{ goSettingsMain }}" style="border:1px solid var(--line2);border-radius:10px;padding:10px 16px;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer">Cancelar</div>
+          <div onClick="{{ submitPassword }}" style="background:var(--accent);border-radius:10px;padding:10px 16px;font-size:12.5px;font-weight:700;color:#fff;cursor:pointer">Actualizar contraseña</div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isSettingsSessions }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:26px 28px 40px;display:flex;flex-direction:column;gap:18px;max-width:760px">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div onClick="{{ goSettingsMain }}" style="font-size:12px;font-weight:700;color:var(--accent2);cursor:pointer;align-self:flex-start">← Ajustes</div>
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px">
+          <div>
+            <div style="font-size:24px;font-weight:800;letter-spacing:-.025em">Sesiones activas</div>
+            <div style="font-size:12.5px;color:var(--dim);margin-top:3px">Dispositivos con tu cuenta abierta.</div>
+          </div>
+          <sc-if value="{{ hasOtherSessions }}" hint-placeholder-val="{{ true }}">
+            <div onClick="{{ signOutOthers }}" style="border:1px solid rgba(255,98,98,.35);border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;color:var(--neg);cursor:pointer">Cerrar las demás</div>
+          </sc-if>
+        </div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:6px 20px">
+        <sc-for list="{{ sessions }}" as="s" hint-placeholder-count="3">
+          <div style="{{ s.rowStyle }}">
+            <div style="width:40px;height:40px;border-radius:11px;background:var(--surface2);border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;flex:none;color:var(--muted)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ s.iconPath }}"></path></svg>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-size:13px;font-weight:700">{{ s.device }}</span><sc-if value="{{ s.current }}" hint-placeholder-val="{{ false }}"><span style="font-size:10.5px;font-weight:700;color:var(--pos);background:rgba(124,240,187,.12);border-radius:6px;padding:2px 7px">Este dispositivo</span></sc-if></div>
+              <div style="font-size:11.5px;color:var(--dim);margin-top:2px">{{ s.detail }}</div>
+            </div>
+            <sc-if value="{{ s.canSignOut }}" hint-placeholder-val="{{ true }}">
+              <div onClick="{{ s.onSignOut }}" style="border:1px solid var(--line2);border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer" style-hover="color:var(--neg)">Cerrar sesión</div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isSettingsProfile }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:26px 28px 40px;display:flex;flex-direction:column;gap:18px;max-width:680px">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div onClick="{{ goSettingsMain }}" style="font-size:12px;font-weight:700;color:var(--accent2);cursor:pointer;align-self:flex-start">← Ajustes</div>
+        <div>
+          <div style="font-size:24px;font-weight:800;letter-spacing:-.025em">Editar perfil</div>
+          <div style="font-size:12.5px;color:var(--dim);margin-top:3px">Se muestra en tu cuenta, en Android y en los reportes exportados.</div>
+        </div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:18px">
+        <div style="display:flex;align-items:center;gap:16px">
+          <div style="width:64px;height:64px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;flex:none;color:#fff">{{ draftInitials }}</div>
+          <div style="font-size:12px;color:var(--dim)">Tus iniciales se usan como avatar.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px">
+          <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+            <label style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted)">NOMBRE COMPLETO</label>
+            <input type="text" value="{{ draftName }}" onChange="{{ onDraftName }}" placeholder="Tu nombre" style="height:46px;padding:0 14px;border-radius:12px;background:var(--sidebar);border:1px solid var(--line);font-size:13px;color:var(--text);font-family:inherit;outline:none;width:100%;box-sizing:border-box" style-focus="border-color:var(--accent)">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+            <label style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted)">CORREO</label>
+            <input type="email" value="{{ draftEmail }}" onChange="{{ onDraftEmail }}" placeholder="nombre@correo.com" style="height:46px;padding:0 14px;border-radius:12px;background:var(--sidebar);border:1px solid var(--line);font-size:13px;color:var(--text);font-family:inherit;outline:none;width:100%;box-sizing:border-box" style-focus="border-color:var(--accent)">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+            <label style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted)">TELÉFONO</label>
+            <input type="tel" value="{{ draftPhone }}" onChange="{{ onDraftPhone }}" placeholder="+57 300 000 0000" style="height:46px;padding:0 14px;border-radius:12px;background:var(--sidebar);border:1px solid var(--line);font-size:13px;color:var(--text);font-family:inherit;outline:none;width:100%;box-sizing:border-box" style-focus="border-color:var(--accent)">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+            <label style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted)">CIUDAD</label>
+            <input type="text" value="{{ draftCity }}" onChange="{{ onDraftCity }}" placeholder="Ciudad" style="height:46px;padding:0 14px;border-radius:12px;background:var(--sidebar);border:1px solid var(--line);font-size:13px;color:var(--text);font-family:inherit;outline:none;width:100%;box-sizing:border-box" style-focus="border-color:var(--accent)">
+          </div>
+        </div>
+        <sc-if value="{{ profileErr }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:12px;font-weight:700;border-radius:10px;padding:10px 12px;color:var(--neg);background:rgba(255,98,98,.1)">{{ profileErr }}</div>
+        </sc-if>
+        <div style="display:flex;justify-content:flex-end;gap:8px">
+          <div onClick="{{ goSettingsMain }}" style="border:1px solid var(--line2);border-radius:10px;padding:10px 16px;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer">Cancelar</div>
+          <div onClick="{{ saveProfile }}" style="background:var(--accent);border-radius:10px;padding:10px 16px;font-size:12.5px;font-weight:700;color:#fff;cursor:pointer">Guardar cambios</div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isSettingsDelete }}" hint-placeholder-val="{{ false }}">
+    <div style="padding:26px 28px 40px;display:flex;flex-direction:column;gap:18px;max-width:620px">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div onClick="{{ goSettingsMain }}" style="font-size:12px;font-weight:700;color:var(--accent2);cursor:pointer;align-self:flex-start">← Ajustes</div>
+        <div>
+          <div style="font-size:24px;font-weight:800;letter-spacing:-.025em;color:var(--neg)">Eliminar cuenta</div>
+          <div style="font-size:12.5px;color:var(--dim);margin-top:3px">Borra de forma permanente tus datos de S2 Nova en Web y Android.</div>
+        </div>
+      </div>
+      <div style="background:var(--surface);border:1px solid rgba(255,98,98,.3);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:12px">
+        <div style="font-size:14px;font-weight:800;letter-spacing:-.01em">Qué se borra</div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:12.5px"><span style="width:6px;height:6px;border-radius:50%;background:var(--neg);flex:none"></span>68 movimientos y todo su historial</div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:12.5px"><span style="width:6px;height:6px;border-radius:50%;background:var(--neg);flex:none"></span>6 presupuestos, 4 metas y 2 préstamos</div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:12.5px"><span style="width:6px;height:6px;border-radius:50%;background:var(--neg);flex:none"></span>3 billeteras y todos tus programados</div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:12.5px"><span style="width:6px;height:6px;border-radius:50%;background:var(--neg);flex:none"></span>Tu perfil y tus sesiones en todos los dispositivos</div>
+        <div style="display:flex;align-items:center;gap:16px;padding-top:12px;margin-top:4px;border-top:1px solid var(--subtle)">
+          <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">Guardar una copia</div><div style="font-size:11.5px;color:var(--dim);margin-top:2px">CSV con movimientos, presupuestos, metas y préstamos</div></div>
+          <div onClick="{{ exportData }}" style="border:1px solid var(--line2);border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer" style-hover="color:var(--text)">Exportar datos</div>
+        </div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+            <label style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted)">ESCRIBE ELIMINAR PARA CONFIRMAR</label>
+            <input type="text" value="{{ delConfirm }}" onChange="{{ onDelConfirm }}" placeholder="ELIMINAR" style="height:46px;padding:0 14px;border-radius:12px;background:var(--sidebar);border:1px solid var(--line);font-size:13px;color:var(--text);font-family:inherit;outline:none;width:100%;box-sizing:border-box" style-focus="border-color:var(--accent)">
+          </div>
+        <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+            <label style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted)">CONTRASEÑA ACTUAL</label>
+            <input type="password" value="{{ delPw }}" onChange="{{ onDelPw }}" placeholder="••••••••" style="height:46px;padding:0 14px;border-radius:12px;background:var(--sidebar);border:1px solid var(--line);font-size:13px;color:var(--text);font-family:inherit;outline:none;width:100%;box-sizing:border-box" style-focus="border-color:var(--accent)">
+          </div>
+        <div onClick="{{ toggleDelAck }}" style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:12.5px">
+          <span style="{{ ackBoxStyle }}"><sc-if value="{{ delAck }}" hint-placeholder-val="{{ false }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M20 6L9 17l-5-5"></path></svg></sc-if></span>
+          <span>Entiendo que esto no se puede deshacer.</span>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:8px">
+          <div onClick="{{ goSettingsMain }}" style="border:1px solid var(--line2);border-radius:10px;padding:10px 16px;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer">Cancelar</div>
+          <div onClick="{{ doDelete }}" style="{{ deleteBtnStyle }}">Eliminar cuenta definitivamente</div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+  </main>
+  <sc-if value="{{ newTxOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeNewTx }}" style="position:fixed;inset:0;background:rgba(6,6,12,.5);z-index:40"></div>
+  <div style="position:fixed;top:0;right:0;bottom:0;width:420px;max-width:100%;background:var(--surface);border-left:1px solid var(--line2);z-index:41;display:flex;flex-direction:column;box-shadow:-24px 0 60px rgba(0,0,0,.4)">
+    <div style="display:flex;align-items:center;gap:12px;padding:18px 22px;border-bottom:1px solid var(--line)">
+      <div style="flex:1;font-size:16px;font-weight:800;letter-spacing:-.015em">Nuevo movimiento</div>
+      <div onClick="{{ closeNewTx }}" style="width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--dim)" style-hover="background:var(--subtle);color:var(--text)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M18 6L6 18 M6 6l12 12"></path></svg></div>
+    </div>
+    <div style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:20px 22px;display:grid;grid-auto-rows:max-content;align-content:start;gap:18px">
+      <div style="display:flex;gap:4px;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:4px">
+        <sc-for list="{{ ntTypes }}" as="ty" hint-placeholder-count="3">
+          <div onClick="{{ ty.onClick }}" style="{{ ty.style }}">{{ ty.label }}</div>
+        </sc-for>
+      </div>
+      <div style="position:relative;overflow:hidden;border-radius:18px;border:1px solid #2b2450;background:linear-gradient(150deg,var(--hero-a) 0%,var(--hero-b) 60%,var(--hero-c) 100%);padding:18px 20px;color:#fff;display:flex;flex-direction:column;gap:6px">
+        <div style="font-size:10.5px;font-weight:700;letter-spacing:.11em;color:#a69dff">MONTO</div>
+        <div style="display:flex;align-items:center;gap:6px"><span class="num" style="font-size:28px;font-weight:800;color:rgba(255,255,255,.6)">$</span><input value="{{ ntAmount }}" onChange="{{ onNtAmount }}" placeholder="0" inputmode="numeric" class="num" style="flex:1;min-width:0;background:transparent;border:none;outline:none;color:#fff;font-size:30px;font-weight:800;font-family:inherit;letter-spacing:-.02em"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted)">DESCRIPCIÓN</label>
+        <input value="{{ ntDesc }}" onChange="{{ onNtDesc }}" placeholder="Ej. Mercado semanal" style="height:44px;padding:0 14px;border-radius:12px;background:var(--sidebar);border:1px solid var(--line);font-size:13px;color:var(--text);font-family:inherit;outline:none;width:100%;box-sizing:border-box" style-focus="border-color:var(--accent)">
+        <sc-if value="{{ ntGuessLabel }}" hint-placeholder-val="{{ false }}"><div style="font-size:11.5px;color:var(--accent2);font-weight:700">{{ ntGuessLabel }}</div></sc-if>
+      </div>
+      <sc-if value="{{ ntShowCategory }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <label style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted)">CATEGORÍA</label>
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">
+          <sc-for list="{{ ntCats }}" as="c" hint-placeholder-count="8">
+            <div onClick="{{ c.onClick }}" style="{{ c.style }}">{{ c.chip }}<span style="font-size:10.5px;font-weight:700;text-align:center;line-height:1.2">{{ c.label }}</span></div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <label style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted)">{{ ntWalletLabel }}</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <sc-for list="{{ ntWallets }}" as="w" hint-placeholder-count="3">
+            <div onClick="{{ w.onClick }}" style="{{ w.style }}">{{ w.label }}</div>
+          </sc-for>
+        </div>
+      </div>
+      <sc-if value="{{ ntIsTransfer }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <label style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted)">TRANSFERIR A</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <sc-for list="{{ ntTargets }}" as="w" hint-placeholder-count="2">
+            <div onClick="{{ w.onClick }}" style="{{ w.style }}">{{ w.label }}</div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+      <sc-if value="{{ ntErr }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;font-weight:700;border-radius:10px;padding:10px 12px;color:var(--neg);background:rgba(255,98,98,.1)">{{ ntErr }}</div></sc-if>
+    </div>
+    <div style="padding:16px 22px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end">
+      <div onClick="{{ closeNewTx }}" style="border:1px solid var(--line2);border-radius:10px;padding:10px 16px;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer">Cancelar</div>
+      <div onClick="{{ saveNewTx }}" style="background:var(--accent);border-radius:10px;padding:10px 16px;font-size:12.5px;font-weight:700;color:#fff;cursor:pointer">Guardar movimiento</div>
+    </div>
+  </div>
+  </sc-if>
+  <sc-if value="{{ payOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closePay }}" style="position:fixed;inset:0;background:rgba(6,6,12,.62);display:flex;align-items:center;justify-content:center;z-index:50;padding:24px">
+    <div onClick="{{ stop }}" style="width:420px;max-width:100%;background:var(--surface);border:1px solid var(--line2);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 24px 60px rgba(0,0,0,.45)">
+      <div><div style="font-size:15px;font-weight:800">Registrar abono</div><div style="font-size:11.5px;color:var(--dim);margin-top:2px">{{ pay.sub }}</div></div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted)">MONTO</label>
+        <input value="{{ pay.amount }}" onChange="{{ pay.onAmount }}" inputmode="numeric" class="num" style="height:44px;padding:0 14px;border-radius:12px;background:var(--sidebar);border:1px solid var(--line);font-size:13px;color:var(--text);font-family:inherit;outline:none;width:100%;box-sizing:border-box" style-focus="border-color:var(--accent)">
+        <div style="font-size:11px;color:var(--dim)">{{ pay.hint }}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <label style="font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted)">{{ pay.walletLabel }}</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <sc-for list="{{ pay.wallets }}" as="w" hint-placeholder-count="3"><div onClick="{{ w.onClick }}" style="{{ w.style }}">{{ w.label }}</div></sc-for>
+        </div>
+      </div>
+      <sc-if value="{{ pay.err }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;font-weight:700;border-radius:10px;padding:10px 12px;color:var(--neg);background:rgba(255,98,98,.1)">{{ pay.err }}</div></sc-if>
+      <div style="display:flex;justify-content:flex-end;gap:8px">
+        <div onClick="{{ closePay }}" style="border:1px solid var(--line2);border-radius:10px;padding:10px 16px;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer">Cancelar</div>
+        <div onClick="{{ pay.onSave }}" style="background:var(--accent);border-radius:10px;padding:10px 16px;font-size:12.5px;font-weight:700;color:#fff;cursor:pointer">Guardar abono</div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+  <sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeModal }}" style="position:fixed;inset:0;background:rgba(6,6,12,.62);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:50;padding:24px">
+    <div onClick="{{ stop }}" style="width:420px;max-width:100%;background:var(--surface);border:1px solid var(--line2);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 24px 60px rgba(0,0,0,.45)">
+      <div style="display:flex;align-items:center;gap:12px">
+        {{ modal.chip }}<div style="display:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="{{ modal.iconPath }}"></path></svg></div>
+        <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:800;letter-spacing:-.01em">{{ modal.title }}</div><div style="font-size:11.5px;color:var(--dim);margin-top:2px">{{ modal.sub }}</div></div>
+        <div onClick="{{ closeModal }}" style="width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--dim)" style-hover="background:var(--subtle);color:var(--text)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M18 6L6 18 M6 6l12 12"></path></svg></div>
+      </div>
+      <div class="num" style="{{ modal.amountStyle }}">{{ modal.amount }}</div>
+      <div style="display:flex;flex-direction:column">
+        <sc-for list="{{ modal.rows }}" as="r" hint-placeholder-count="4">
+          <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--subtle);font-size:12.5px"><span style="color:var(--dim)">{{ r.label }}</span><span style="font-weight:700;text-align:right">{{ r.value }}</span></div>
+        </sc-for>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px">
+        <sc-for list="{{ modal.actions }}" as="ac" hint-placeholder-count="2">
+          <div onClick="{{ ac.onClick }}" style="{{ ac.style }}">{{ ac.label }}</div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--text);color:var(--bg);font-size:12.5px;font-weight:700;border-radius:12px;padding:11px 16px;z-index:60;box-shadow:0 12px 32px rgba(0,0,0,.35)">{{ toast }}</div>
+  </sc-if>
+  </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:980}}">
+const NAV_ICONS = {
+  Overview: ['M3 3h7v7H3z', 'M14 3h7v7h-7z', 'M14 14h7v7h-7z', 'M3 14h7v7H3z'],
+  Insights: ['M9 18h6', 'M10 22h4', 'M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14'],
+  Analytics: ['M3 3v18h18', 'M18 17V9', 'M13 17V5', 'M8 17v-3'],
+  Budgets: ['M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2V5z', 'M2 9v1c0 1.1.9 2 2 2h1'],
+  Goals: ['M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z', 'M4 22v-7'],
+  Reports: ['M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z', 'M14 2v4a2 2 0 0 0 2 2h4', 'M10 9H8', 'M16 13H8', 'M16 17H8'],
+  Transactions: ['M8 6h13', 'M8 12h13', 'M8 18h13', 'M3.5 6h.01', 'M3.5 12h.01', 'M3.5 18h.01'],
+  Plans: ['M3 8h15a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3H5a2 2 0 0 1-2-2z', 'M3 8V6a2 2 0 0 1 2-2h11', 'M17 14h.01'],
+  Settings: ['M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z', 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z'],
+}
+
+// Architecture v2: same four primary destinations as Android, in the same order.
+const NAV = ['Overview', 'Transactions', 'Plans', 'Reports']
+const NAV_LABEL = { Overview: 'Inicio', Transactions: 'Movimientos', Plans: 'Planes', Reports: 'Reportes', Settings: 'Ajustes' }
+NAV_ICONS.Reports = NAV_ICONS.Analytics
+
+const BAR_DATA = {
+  '3M': [
+    { label: 'Jun', inc: 4.42, exp: 1.78 },
+    { label: 'Jul', inc: 4.41, exp: 2.03 },
+    { label: 'Ago', inc: 4.29, exp: 1.93 },
+  ],
+  '6M': [
+    { label: 'Mar', inc: 4.21, exp: 1.91 },
+    { label: 'Abr', inc: 4.38, exp: 2.14 },
+    { label: 'May', inc: 4.25, exp: 2.42 },
+    { label: 'Jun', inc: 4.42, exp: 1.78 },
+    { label: 'Jul', inc: 4.41, exp: 2.03 },
+    { label: 'Ago', inc: 4.29, exp: 1.93 },
+  ],
+  '12M': [
+    { label: 'Sep', inc: 4.05, exp: 2.2 },
+    { label: 'Oct', inc: 4.12, exp: 2.31 },
+    { label: 'Nov', inc: 4.18, exp: 2.75 },
+    { label: 'Dic', inc: 5.6, exp: 3.42 },
+    { label: 'Ene', inc: 4.1, exp: 2.05 },
+    { label: 'Feb', inc: 4.16, exp: 1.88 },
+    { label: 'Mar', inc: 4.21, exp: 1.91 },
+    { label: 'Abr', inc: 4.38, exp: 2.14 },
+    { label: 'May', inc: 4.25, exp: 2.42 },
+    { label: 'Jun', inc: 4.42, exp: 1.78 },
+    { label: 'Jul', inc: 4.41, exp: 2.03 },
+    { label: 'Ago', inc: 4.29, exp: 1.93 },
+  ],
+}
+
+// Category glyphs and colors: same set as S2 Nova Android (CAT_GLYPHS / C).
+const C = { food: '#E8A23D', transportation: '#3D8BE8', shopping: '#3DBBA8', health: '#E85D6B', education: '#5D6BE8', entertainment: '#B25DE8', bills: '#8A8A99', subscriptions: '#D95DB2', salary: '#22A06B', freelance: '#6657E8', other: '#9C9CAA' }
+const CAT_COLORS = { Alimentación: C.food, Transporte: C.transportation, Compras: C.shopping, Salud: C.health, Educación: C.education, Entretenimiento: C.entertainment, Servicios: C.bills, Suscripciones: C.subscriptions, Salario: C.salary, Freelance: C.freelance, Otros: C.other, Transferencia: '#6c5ce7' }
+const CAT_GLYPHS = {
+  Alimentación: ['M3 2v7c0 1.1.9 2 2 2h1a2 2 0 0 0 2-2V2', 'M6 2v20', 'M17 2c-1.7 1.3-3 3.7-3 6 0 1.7.7 3 2 3h2c1.3 0 2-1.3 2-3 0-2.3-1.3-4.7-3-6z', 'M18 11v11'],
+  Transporte: ['M5 17H3v-5l2-5h14l2 5v5h-2', 'M5 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0z', 'M15 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0z', 'M9 17h6'],
+  Compras: ['M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z', 'M3 6h18', 'M16 10a4 4 0 0 1-8 0'],
+  Salud: ['M20.8 6.6a5 5 0 0 0-7.1 0L12 8.3l-1.7-1.7a5 5 0 1 0-7.1 7.1L12 21l8.8-7.3a5 5 0 0 0 0-7.1z'],
+  Educación: ['M22 9 12 5 2 9l10 4 10-4z', 'M6 11v6c0 1.5 3 3 6 3s6-1.5 6-3v-6'],
+  Entretenimiento: ['M4 11h16l-1.2 9a2 2 0 0 1-2 1.7H7.2a2 2 0 0 1-2-1.7z', 'M4 11 8 3', 'M12 11 9.5 4', 'M16 11 14 5'],
+  Servicios: ['M4 2h16v20l-3-2-2 2-3-2-3 2-2-2-3 2z', 'M8 7h8', 'M8 11h8', 'M8 15h5'],
+  Suscripciones: ['M3 12a9 9 0 0 1 15-6.7L21 8', 'M21 3v5h-5', 'M21 12a9 9 0 0 1-15 6.7L3 16', 'M3 21v-5h5'],
+  Salario: ['M3 7h18a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12', 'M17 13h.01'],
+  Freelance: ['M4 5h16v10H4z', 'M2 19h20'],
+  Otros: ['M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z', 'M8 11h.01', 'M12 11h.01', 'M16 11h.01'],
+  Transferencia: ['M7 7h13', 'M16 3l4 4-4 4', 'M17 17H4', 'M8 13l-4 4 4 4'],
+}
+const EXPENSE_CATS = ['Alimentación', 'Transporte', 'Compras', 'Salud', 'Educación', 'Entretenimiento', 'Servicios', 'Suscripciones']
+const INCOME_CATS = ['Salario', 'Freelance', 'Otros']
+const KEYWORDS = [
+  ['Alimentación', ['mercado', 'comida', 'almuerzo', 'desayuno', 'cena', 'restaurante', 'cafe', 'café', 'super', 'domicilio']],
+  ['Transporte', ['taxi', 'uber', 'gasolina', 'bus', 'metro', 'peaje', 'parqueadero', 'viaje en app']],
+  ['Servicios', ['luz', 'agua', 'gas', 'internet', 'arriendo', 'celular', 'factura', 'administración', 'administracion']],
+  ['Suscripciones', ['netflix', 'spotify', 'suscrip', 'icloud', 'disney']],
+  ['Entretenimiento', ['cine', 'concierto', 'fiesta', 'viaje', 'hotel']],
+  ['Compras', ['ropa', 'zapato', 'regalo', 'tecnolog']],
+  ['Salud', ['farmacia', 'droguería', 'medico', 'médico', 'gym', 'gimnasio']],
+  ['Salario', ['salario', 'nómina', 'nomina', 'sueldo']],
+  ['Freelance', ['freelance', 'proyecto', 'honorarios']],
+]
+const guessCat = (t) => { const n = (t || '').toLowerCase(); if (!n.trim()) return null; const k = KEYWORDS.find(([, ks]) => ks.some((w) => n.includes(w))); return k ? k[0] : null }
+const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+const fmtMoney = (n) => '$' + Math.round(n || 0).toLocaleString('es-CO')
+const ICONS = {
+  eye: 'M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
+  eyeOff: 'M17.9 17.9A10 10 0 0 1 12 20c-7 0-11-8-11-8a18 18 0 0 1 5.1-5.9 M9.9 4.2A9 9 0 0 1 12 4c7 0 11 8 11 8a18 18 0 0 1-2.2 3.2 M14.1 14.1a3 3 0 1 1-4.2-4.2 M1 1l22 22',
+  bank: 'M3 10h18 M5 10v8 M9.5 10v8 M14.5 10v8 M19 10v8 M3 21h18 M12 3l9 5H3z',
+  phone: 'M7 2h10a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z M11 18h2',
+  cash: 'M2 6h20v12H2z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M6 12h.01 M18 12h.01',
+}
+
+const WALLETS = [
+  { id: 'Bancolombia', label: 'Bancolombia — Ahorros', kind: 'Cuenta de ahorros', amount: 13740000, icon: 'bank' },
+  { id: 'Nequi', label: 'Nequi', kind: 'Billetera digital', amount: 1982300, icon: 'phone' },
+  { id: 'Efectivo', label: 'Efectivo', kind: 'Efectivo', amount: 425000, icon: 'cash' },
+]
+
+// Same records as S2 Nova Android (TXNS). TODAY = 21 ago 2026.
+const TXNS = [
+  { id: 1, desc: 'Mercado semanal', merchant: 'Éxito', date: '21 ago', method: 'Bancolombia', amount: '−$168.500', cat: 'Alimentación', neg: true },
+  { id: 2, desc: 'Café', merchant: 'Tostao', date: '21 ago', method: 'Efectivo', amount: '−$21.000', cat: 'Alimentación', neg: true },
+  { id: 3, desc: 'Viaje en app', merchant: 'Uber', date: '20 ago', method: 'Nequi', amount: '−$21.000', cat: 'Transporte', neg: true },
+  { id: 4, desc: 'Internet y celular', merchant: 'Claro', date: '20 ago', method: 'Bancolombia', amount: '−$109.000', cat: 'Servicios', neg: true },
+  { id: 5, desc: 'Proyecto freelance', merchant: 'Estudio Andina', date: '14 ago', method: 'Bancolombia', amount: '+$880.000', cat: 'Freelance', neg: false },
+  { id: 6, desc: 'Almuerzo', merchant: 'Crepes & Waffles', date: '12 ago', method: 'Nequi', amount: '−$58.300', cat: 'Alimentación', neg: true },
+  { id: 7, desc: 'Gasolina', merchant: 'Terpel', date: '10 ago', method: 'Bancolombia', amount: '−$74.500', cat: 'Transporte', neg: true },
+  { id: 8, desc: 'Ropa', merchant: 'Arturo Calle', date: '08 ago', method: 'Bancolombia', amount: '−$189.900', cat: 'Compras', neg: true },
+  { id: 9, desc: 'Cine', merchant: 'Cine Colombia', date: '05 ago', method: 'Nequi', amount: '−$36.000', cat: 'Entretenimiento', neg: true },
+]
+
+// Same series as S2 Nova Android (SERIES_SEED). Administración is due today.
+const EVENTS = [
+  { id: 'e3', iso: '2026-08-21', dueToday: true, label: 'Administración', merchant: 'Conjunto', value: -232000, cat: 'Servicios', wallet: 'Bancolombia' },
+  { id: 'e1', iso: '2026-08-24', label: 'Netflix', merchant: 'Netflix', value: -45000, cat: 'Suscripciones', wallet: 'Bancolombia' },
+  { id: 'e2', iso: '2026-08-26', label: 'Internet y celular', merchant: 'Claro', value: -109000, cat: 'Servicios', wallet: 'Bancolombia' },
+  { id: 'e4', iso: '2026-09-01', label: 'Salario mensual', merchant: 'Empleador', value: 4400000, cat: 'Salario', wallet: 'Bancolombia' },
+]
+
+// Same rules as Android notifications: budgets ≥90%, goals ≥90%, series due today. Web adds one trend alert.
+const ALERTS = [
+  { id: 'a1', cat: 'Suscripciones', title: 'Suscripciones al 94% del límite', body: '$112.600 de $120.000 este mes.', to: 'Plans', planTab: 'Presupuestos' },
+  { id: 'a2', cat: 'Servicios', title: 'Servicios al 92% del límite', body: '$412.000 de $450.000 este mes. A este ritmo se supera en ~5 días.', to: 'Plans', planTab: 'Presupuestos' },
+  { id: 'a3', cat: 'Servicios', title: 'Administración vence hoy', body: '$232.000 · confírmalo para que afecte el saldo.', event: 'e3' },
+  { id: 'a4', cat: 'Compras', title: 'Portátil nuevo está al 90%', body: 'Faltan $520.000 para cumplirla.', to: 'Plans', planTab: 'Metas' },
+  { id: 'a6', cat: 'Otros', title: 'Camilo Restrepo te debe', body: '$420.000 · vence 15 sep.', to: 'Plans', planTab: 'Préstamos' },
+  { id: 'a5', cat: 'Transporte', title: 'Transporte subió 82% frente a julio', body: '$95.500 este mes contra $52.500 en julio.', to: 'Reports', tab: 'Spending' },
+]
+
+// Same records as S2 Nova Android (LOAN_SEED). side: Prestado = LENT, Recibido = BORROWED.
+const LOANS = [
+  { id: 1, side: 'Prestado', person: 'Camilo Restrepo', principal: 420000, due: '2026-09-15', wallet: 'Bancolombia', date: '02 ago', payments: [] },
+  { id: 2, side: 'Prestado', person: 'Ana María Ruiz', principal: 200000, due: '', wallet: 'Nequi', date: '10 jul', payments: [{ date: '28 jul', amount: 120000, wallet: 'Nequi' }, { date: '09 ago', amount: 80000, wallet: 'Nequi' }] },
+]
+
+const HOME_GOALS = [
+  { label: 'Fondo de emergencia', current: 8400000, target: 12000000, cat: 'Salud', color: '#E85D6B', eta: 'Estimada: marzo 2027' },
+  { label: 'Viaje a Perú', current: 1980000, target: 4500000, cat: 'Entretenimiento', color: '#3DBBA8', eta: 'Estimada: julio 2027 · meta junio 2027' },
+  { label: 'Portátil nuevo', current: 4680000, target: 5200000, cat: 'Compras', color: '#6657E8', eta: 'Estimada: octubre 2026' },
+  { label: 'Especialización', current: 450000, target: 3000000, cat: 'Educación', color: '#5D6BE8', eta: 'Sin historial suficiente para estimar' },
+]
+
+const HOME_CATS = [
+  ['Alimentación', 612400], ['Servicios', 412000], ['Compras', 318500], ['Suscripciones', 112600], ['Transporte', 95500], ['Entretenimiento', 88000], ['Otros', 288100],
+]
+
+const INSIGHTS = [
+  { tag: 'Budget', tone: 'var(--neg)', when: 'Today', title: 'Servicios breaks its limit in ~5 days', body: '$412.000 of a $450.000 limit with 9 days left. The next EPM bill alone is $109.000.' },
+  { tag: 'Category', tone: 'var(--warn)', when: 'Today', title: 'Transporte is up 82% over last month', body: '$95.500 against $52.500, mostly app rides on weekends.' },
+  { tag: 'Subscriptions', tone: 'var(--accent)', when: '2 days ago', title: 'Four subscriptions renew this week', body: 'Netflix, Spotify, iCloud+ and Disney+ total $112.600 per month.' },
+  { tag: 'Savings', tone: 'var(--pos)', when: '3 days ago', title: 'Best savings month since March', body: 'You kept 55% of your income — 12 points above your six-month average.' },
+  { tag: 'Pattern', tone: '#3DBBA8', when: '5 days ago', title: 'Groceries have been steady for three months', body: 'Around $600.000 each month. A reliable baseline to budget against.' },
+  { tag: 'Cash flow', tone: 'var(--accent3)', when: '1 week ago', title: 'Three bills land before your next salary', body: '$386.000 due between Aug 24 and Aug 30; salary arrives Sep 1.' },
+]
+
+const CATEGORIES = [
+  { label: 'Alimentación', amount: '$612.400', pct: 100, color: '#E8A23D' },
+  { label: 'Servicios', amount: '$412.000', pct: 67, color: '#8A8A99' },
+  { label: 'Compras', amount: '$318.500', pct: 52, color: '#3DBBA8' },
+  { label: 'Suscripciones', amount: '$112.600', pct: 18, color: '#D95DB2' },
+  { label: 'Transporte', amount: '$95.500 · +82%', pct: 16, color: '#3D8BE8', alert: true },
+]
+
+const BUDGETS = [
+  { label: 'Servicios', spent: '$412.000', limit: '$450.000', pct: 92, note: 'Se supera en ~5 días a este ritmo' },
+  { label: 'Alimentación', spent: '$612.400', limit: '$900.000', pct: 68, note: 'Cerraría en ~$840.000' },
+  { label: 'Suscripciones', spent: '$112.600', limit: '$120.000', pct: 94, note: 'Faltan cuatro renovaciones' },
+  { label: 'Compras', spent: '$318.500', limit: '$780.000', pct: 41, note: 'Holgado' },
+  { label: 'Transporte', spent: '$95.500', limit: '$150.000', pct: 64, note: 'Subió frente a julio' },
+  { label: 'Entretenimiento', spent: '$88.000', limit: '$300.000', pct: 29, note: 'Holgado' },
+]
+
+const GOALS = [
+  { label: 'Fondo de emergencia', target: '$12.000.000', current: '$8.400.000', pct: 70, note: '6 meses de gastos. Va para marzo 2027.', color: 'var(--accent)' },
+  { label: 'Viaje a Perú', target: '$4.500.000', current: '$1.980.000', pct: 44, note: 'Meta: junio 2027. Faltan $252.000 al mes.', color: '#3DBBA8' },
+  { label: 'Portátil nuevo', target: '$5.200.000', current: '$4.680.000', pct: 90, note: 'Dos aportes más y se cumple.', color: '#E8A23D' },
+  { label: 'Especialización', target: '$3.000.000', current: '$450.000', pct: 15, note: 'Sin historial suficiente para estimar.', color: '#8A8A99' },
+]
+
+const REPORT_ROWS = [
+  { label: 'Income', current: '$4.288.500', previous: '$4.410.000', delta: '−3%', neg: true },
+  { label: 'Expenses', current: '$1.927.100', previous: '$2.030.000', delta: '−5%', neg: false },
+  { label: 'Savings', current: '$2.361.400', previous: '$2.380.000', delta: '−1%', neg: true },
+  { label: 'Savings rate', current: '55%', previous: '54%', delta: '+1 pt', neg: false },
+  { label: 'Transactions', current: '68', previous: '74', delta: '−8%', neg: false },
+]
+
+const WEEK_SPEND = [
+  { day: 'Mon', pct: 42 },
+  { day: 'Tue', pct: 38 },
+  { day: 'Wed', pct: 51 },
+  { day: 'Thu', pct: 47 },
+  { day: 'Fri', pct: 76 },
+  { day: 'Sat', pct: 100 },
+  { day: 'Sun', pct: 64 },
+]
+
+class Component extends DCLogic {
+  securityVals(active) {
+    const st = this.state;
+    const others = st.sessions.filter((s) => !s.current);
+    const rules = [
+      ['Mínimo 8 caracteres', st.pwNext.length >= 8],
+      ['Incluye un número', /\d/.test(st.pwNext)],
+      ['Las contraseñas coinciden', st.pwNext.length > 0 && st.pwNext === st.pwConfirm],
+    ];
+    const field = (k) => (e) => this.setState({ [k]: e.target.value, pwMsg: '' });
+    return {
+      isSettingsPassword: active === 'Settings' && st.settingsView === 'password',
+      isSettingsSessions: active === 'Settings' && st.settingsView === 'sessions',
+      goSettingsMain: () => this.setState({ settingsView: 'main', pwCurrent: '', pwNext: '', pwConfirm: '', pwMsg: '' }),
+      goPassword: () => this.setState({ settingsView: 'password' }),
+      goSessions: () => this.setState({ settingsView: 'sessions' }),
+      pwChanged: st.pwChanged,
+      pwCurrent: st.pwCurrent, pwNext: st.pwNext, pwConfirm: st.pwConfirm,
+      onPwCurrent: field('pwCurrent'), onPwNext: field('pwNext'), onPwConfirm: field('pwConfirm'),
+      pwRules: rules.map(([label, ok]) => ({
+        label,
+        dotStyle: { width: '7px', height: '7px', borderRadius: '50%', flex: 'none', background: ok ? 'var(--pos)' : 'var(--line2)' },
+        textStyle: { color: ok ? 'var(--text)' : 'var(--dim)' },
+      })),
+      pwMsg: st.pwMsg,
+      pwMsgStyle: { fontSize: '12px', fontWeight: 700, borderRadius: '10px', padding: '10px 12px', color: st.pwOk ? 'var(--pos)' : 'var(--neg)', background: st.pwOk ? 'rgba(124,240,187,.1)' : 'rgba(255,98,98,.1)' },
+      submitPassword: () => {
+        let err = '';
+        if (!st.pwCurrent) err = 'Escribe tu contraseña actual.';
+        else if (!rules.every((r) => r[1])) err = 'La nueva contraseña no cumple todos los requisitos.';
+        else if (st.pwNext === st.pwCurrent) err = 'La nueva contraseña debe ser distinta de la actual.';
+        if (err) return this.setState({ pwMsg: err, pwOk: false });
+        this.setState({ pwMsg: 'Contraseña actualizada. Cerramos tus otras sesiones.', pwOk: true, pwCurrent: '', pwNext: '', pwConfirm: '', pwChanged: 'Cambiada hace un momento', sessions: st.sessions.filter((s) => s.current) });
+      },
+      sessionsSummary: st.sessions.map((s) => (s.current ? 'Este navegador' : s.device)).join(' · '),
+      hasOtherSessions: others.length > 0,
+      signOutOthers: () => this.setState({ sessions: st.sessions.filter((s) => s.current) }),
+      sessions: st.sessions.map((s, i) => ({
+        device: s.device, detail: s.detail, iconPath: s.icon, current: !!s.current, canSignOut: !s.current,
+        onSignOut: () => this.setState({ sessions: this.state.sessions.filter((x) => x.id !== s.id) }),
+        rowStyle: { display: 'flex', alignItems: 'center', gap: '14px', padding: '15px 0', borderBottom: i < st.sessions.length - 1 ? '1px solid var(--subtle)' : 'none' },
+      })),
+    };
+  }
+
+  state = {
+    active: 'Overview',
+    range: '6M',
+    tab: 'Spending',
+    lang: 'Español',
+    currency: 'COP',
+    theme: 'System',
+    screen: 'App',
+    notifications: true,
+    settingsView: 'main',
+    pwCurrent: '', pwNext: '', pwConfirm: '', pwMsg: '', pwOk: false, pwChanged: 'Cambiada hace 4 meses',
+    sessions: [
+      { id: 1, device: 'Chrome · Windows', detail: 'Bogotá, CO · Activa ahora', icon: 'M2 4h20v12H2z M8 20h8 M12 16v4', current: true },
+      { id: 2, device: 'S2 Nova app · Pixel 8', detail: 'Bogotá, CO · hace 2 horas', icon: 'M7 2h10v20H7z M11 18h2' },
+      { id: 3, device: 'Safari · iPad', detail: 'Medellín, CO · hace 3 días', icon: 'M5 2h14v20H5z M11 18h2' },
+    ],
+    hideAmounts: false,
+    txns: TXNS, events: EVENTS, dismissed: [], planTab: 'Presupuestos', newTx: null, loans: LOANS, loanSide: 'Prestado', pay: null, modal: null, toast: '', query: '', txFilter: 'All', period: 'Agosto 2026', periodOpen: false,
+    profile: { name: 'Mariana Torres', email: 'mariana.torres@example.com', phone: '+57 310 482 1937', city: 'Bogotá, D.C.' },
+    draft: null, profileErr: '', delConfirm: '', delPw: '', delAck: false,
+  }
+
+  componentWillUnmount() { clearTimeout(this._toastT) }
+
+  mark(cat, box) {
+    const c = CAT_COLORS[cat] || C.other
+    return React.createElement('span', { style: { width: box + 'px', height: box + 'px', borderRadius: '50%', background: c + '29', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' } },
+      React.createElement('svg', { width: Math.round(box * 0.46), height: Math.round(box * 0.46), viewBox: '0 0 24 24', fill: 'none', stroke: c, strokeWidth: 2.25, strokeLinecap: 'round', strokeLinejoin: 'round' },
+        (CAT_GLYPHS[cat] || CAT_GLYPHS.Otros).map((d, i) => React.createElement('path', { key: i, d }))))
+  }
+
+  showToast(msg) {
+    clearTimeout(this._toastT)
+    this.setState({ toast: msg })
+    this._toastT = setTimeout(() => this.setState({ toast: '' }), 2600)
+  }
+
+  btn(kind) {
+    const base = { borderRadius: '10px', padding: '10px 16px', fontSize: '12.5px', fontWeight: 700, cursor: 'pointer' }
+    if (kind === 'primary') return { ...base, background: 'var(--accent)', color: '#fff' }
+    if (kind === 'danger') return { ...base, border: '1px solid rgba(255,98,98,.35)', color: 'var(--neg)' }
+    return { ...base, border: '1px solid var(--line2)', color: 'var(--muted)' }
+  }
+
+  tile(cat, size) {
+    const c = CAT_COLORS[cat] || '#8A8A99'
+    return { width: size + 'px', height: size + 'px', borderRadius: Math.round(size / 3) + 'px', background: c + '29', color: c, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }
+  }
+
+  overviewVals(active) {
+    const st = this.state
+    const go = (a, extra) => () => this.setState({ active: a, settingsView: 'main', query: '', ...(extra || {}) })
+    const blur = st.hideAmounts ? 'blur(9px)' : 'none'
+    const q = st.query.trim().toLowerCase()
+    const close = () => this.setState({ modal: null })
+    const rowBase = (i, n) => ({ display: 'flex', alignItems: 'center', gap: '14px', padding: '11px 8px', margin: '0 -8px', borderRadius: '10px', cursor: 'pointer', borderBottom: i < n - 1 ? '1px solid var(--subtle)' : 'none' })
+    const row = (tx, i, arr) => ({
+      ...tx,
+      chip: this.mark(tx.cat, 38),
+      amountStyle: { fontSize: '13px', fontWeight: 800, color: tx.transfer ? 'var(--text)' : tx.neg ? 'var(--neg)' : 'var(--pos)', filter: blur },
+      rowStyle: rowBase(i, arr.length),
+      onClick: () => this.setState({ modal: { kind: 'txn', id: tx.id } }),
+    })
+    const filtered = st.txns.filter((tx) =>
+      st.period === 'Agosto 2026' &&
+      (st.txFilter === 'All' || (st.txFilter === 'Income' ? !tx.neg : tx.neg)) &&
+      (!q || (tx.desc + ' ' + tx.merchant + ' ' + tx.cat + ' ' + tx.method).toLowerCase().includes(q)))
+    const alerts = ALERTS.filter((a) => !st.dismissed.includes(a.id) && (!a.event || st.events.some((e) => e.id === a.event)))
+    const walletTotal = WALLETS.reduce((s, w) => s + w.amount, 0)
+    const evFmt = (v) => (v < 0 ? '−' : '+') + fmtMoney(Math.abs(v))
+
+    let modal = { rows: [], actions: [] }
+    const m = st.modal
+    if (m && m.kind === 'txn') {
+      const tx = st.txns.find((t) => t.id === m.id)
+      if (tx) modal = {
+        title: tx.desc, sub: tx.merchant, amount: tx.amount, chip: this.mark(tx.cat, 40),
+        rows: [{ label: 'Fecha', value: tx.date + ' 2026' }, { label: 'Categoría', value: tx.cat }, { label: 'Billetera', value: tx.method }, { label: 'Tipo', value: tx.transfer ? 'Transferencia' : tx.neg ? 'Gasto' : 'Ingreso' }],
+        actions: [
+          { label: 'Eliminar', style: this.btn('danger'), onClick: () => { this.setState((s) => ({ txns: s.txns.filter((t) => t.id !== tx.id), modal: null })); this.showToast('Movimiento eliminado') } },
+          { label: 'Cerrar', style: this.btn('primary'), onClick: close },
+        ],
+        neg: tx.neg,
+      }
+    } else if (m && m.kind === 'event') {
+      const ev = st.events.find((e) => e.id === m.id)
+      if (ev) {
+        const inc = ev.value > 0
+        const [, mo, d] = ev.iso.split('-').map(Number)
+        modal = {
+          title: ev.label, sub: 'Programado · mensual', amount: evFmt(ev.value), chip: this.mark(ev.cat, 40),
+          rows: [{ label: 'Fecha', value: ev.dueToday ? 'Hoy' : d + ' ' + MONTHS[mo - 1] + ' 2026' }, { label: 'Categoría', value: ev.cat }, { label: 'Billetera', value: ev.wallet }, { label: 'Siguiente', value: d + ' ' + MONTHS[mo % 12] }],
+          actions: [
+            { label: 'Omitir esta vez', style: this.btn(), onClick: () => { this.setState((s) => ({ events: s.events.filter((e) => e.id !== ev.id), modal: null })); this.showToast(ev.label + ' omitido este mes') } },
+            { label: inc ? 'Confirmar ingreso' : 'Confirmar pago', style: this.btn('primary'), onClick: () => {
+              this.setState((s) => ({
+                events: s.events.filter((e) => e.id !== ev.id),
+                txns: [{ id: Date.now(), desc: ev.label, merchant: ev.merchant, date: '21 ago', method: ev.wallet, amount: evFmt(ev.value), cat: ev.cat, neg: !inc }, ...s.txns],
+                modal: null,
+              }))
+              this.showToast(ev.label + ' confirmado')
+            } },
+          ],
+          neg: !inc,
+        }
+      }
+    }
+    modal.amountStyle = { fontSize: '30px', fontWeight: 800, letterSpacing: '-.02em', color: modal.neg ? 'var(--neg)' : 'var(--pos)', filter: blur }
+
+    let running = walletTotal
+    const evs = st.events.slice().sort((a, b) => (a.iso < b.iso ? -1 : 1))
+
+    return {
+      blur,
+      balanceLabel: fmtMoney(walletTotal),
+      walletCountLabel: WALLETS.length + ' billeteras',
+      eyePath: st.hideAmounts ? ICONS.eyeOff : ICONS.eye,
+      hideTitle: st.hideAmounts ? 'Mostrar montos' : 'Ocultar montos',
+      toggleHide: () => this.setState({ hideAmounts: !st.hideAmounts }),
+      goIncome: go('Reports', { tab: 'Income' }),
+      goSpending: go('Reports', { tab: 'Spending' }),
+      goCashFlow: go('Reports', { tab: 'Cash Flow' }),
+      goReports: go('Reports'),
+      goBudgets: go('Plans', { planTab: 'Presupuestos' }),
+      goGoals: go('Plans', { planTab: 'Metas' }),
+      goTransactions: go('Transactions'),
+      goInsights: go('Reports'),
+      isTransactions: active === 'Transactions',
+      query: st.query,
+      onQuery: (e) => { const v = e.target.value; this.setState(v.trim() ? { query: v, active: 'Transactions' } : { query: v }) },
+      walletRows: WALLETS.map((w, i) => ({
+        ...w,
+        amount: fmtMoney(w.amount),
+        share: Math.round((w.amount / walletTotal) * 100) + '% del total',
+        iconPath: ICONS[w.icon],
+        rowStyle: rowBase(i, WALLETS.length),
+        onClick: () => this.setState({ active: 'Transactions', query: w.id }),
+      })),
+      alerts: alerts.map((a) => ({
+        ...a,
+        chip: this.mark(a.cat, 32),
+        onOpen: a.event ? () => this.setState({ modal: { kind: 'event', id: a.event } }) : go(a.to, a.planTab ? { planTab: a.planTab } : a.tab ? { tab: a.tab } : null),
+        onDismiss: (e) => { e.stopPropagation(); this.setState((x) => ({ dismissed: [...x.dismissed, a.id] })) },
+      })),
+      hasAlerts: alerts.length > 0,
+      noAlerts: alerts.length === 0,
+      alertCountLabel: alerts.length === 1 ? '1 pendiente' : alerts.length + ' pendientes',
+      restoreAlerts: () => this.setState({ dismissed: [] }),
+      homeBudgets: BUDGETS.slice().sort((a, b) => b.pct - a.pct).map((b, i, arr) => {
+        const tone = b.pct >= 90 ? 'var(--neg)' : b.pct >= 65 ? 'var(--warn)' : 'var(--pos)'
+        const left = Number(b.limit.replace(/\D/g, '')) - Number(b.spent.replace(/\D/g, ''))
+        return {
+          ...b,
+          chip: this.mark(b.label, 34),
+          pct: b.pct + '%',
+          left: 'Disponible ' + fmtMoney(left),
+          note: ({ Servicios: 'Se supera en ~5 días a este ritmo', Suscripciones: 'Faltan cuatro renovaciones', Alimentación: 'Cerraría en ~$840.000', Compras: 'Holgado', Transporte: 'Subió frente a julio', Entretenimiento: 'Holgado' })[b.label] || b.note,
+          rowStyle: { ...rowBase(i, arr.length), gap: '12px' },
+          pctStyle: { fontSize: '11.5px', fontWeight: 800, color: tone, background: 'color-mix(in oklab, ' + tone + ' 14%, transparent)', borderRadius: '999px', padding: '3px 8px', flex: 'none', minWidth: '34px', textAlign: 'center' },
+          fillStyle: { width: Math.min(100, b.pct) + '%', height: '100%', background: tone },
+        }
+      }),
+      homeGoals: HOME_GOALS.map((g, i) => {
+        const pct = Math.round((g.current / g.target) * 100)
+        return {
+          ...g,
+          current: fmtMoney(g.current), target: fmtMoney(g.target), pctLabel: pct + '%',
+          glyph: React.createElement('svg', { width: 17, height: 17, viewBox: '0 0 24 24', fill: 'none', stroke: g.color, strokeWidth: 2.25, strokeLinecap: 'round', strokeLinejoin: 'round' }, CAT_GLYPHS[g.cat].map((d, k) => React.createElement('path', { key: k, d }))),
+          rowStyle: { ...rowBase(i, HOME_GOALS.length), gap: '14px' },
+          ringStyle: { width: '50px', height: '50px', borderRadius: '50%', flex: 'none', background: 'conic-gradient(' + g.color + ' ' + pct + '%, var(--line) 0)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+          ringInner: { width: '40px', height: '40px', borderRadius: '50%', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+        }
+      }),
+      homeCats: (() => {
+        const tot = HOME_CATS.reduce((s, c) => s + c[1], 0), max = HOME_CATS[0][1]
+        return HOME_CATS.map(([label, v]) => ({ label, amount: fmtMoney(v), share: Math.round((v / tot) * 100) + '%', chip: this.mark(label, 30), fillStyle: { width: Math.round((v / max) * 100) + '%', height: '100%', background: CAT_COLORS[label] } }))
+      })(),
+      events: evs.map((ev, i) => {
+        running += ev.value
+        const [, mo, d] = ev.iso.split('-').map(Number)
+        return {
+          label: ev.label,
+          mon: ev.dueToday ? 'HOY' : MONTHS[mo - 1].toUpperCase(),
+          day: String(d).padStart(2, '0'),
+          detail: ev.dueToday ? 'Vence hoy · por confirmar' : ev.cat + ' · ' + ev.wallet,
+          amount: evFmt(ev.value),
+          running: fmtMoney(running),
+          monStyle: { fontSize: '9.5px', fontWeight: 700, letterSpacing: '.06em', color: ev.dueToday ? 'var(--warn)' : 'var(--dim)' },
+          amountStyle: { fontSize: '13px', fontWeight: 800, color: ev.value < 0 ? 'var(--neg)' : 'var(--pos)', filter: blur },
+          rowStyle: rowBase(i, evs.length),
+          onClick: () => this.setState({ modal: { kind: 'event', id: ev.id } }),
+        }
+      }),
+      noEvents: evs.length === 0,
+      allTxns: filtered.map(row),
+      // Period selector scopes Movimientos only. Inicio shows current state (balance, alerts, upcoming) and Reportes has its own 3M/6M/12M range.
+      showPeriod: active === 'Transactions',
+      periodLabel: st.period,
+      periodOpen: st.periodOpen,
+      togglePeriod: () => this.setState({ periodOpen: !st.periodOpen }),
+      periodOptions: ['Agosto 2026', 'Julio 2026', 'Junio 2026'].map((label) => ({
+        label,
+        onClick: () => this.setState({ period: label, periodOpen: false }),
+        style: { padding: '9px 10px', borderRadius: '8px', fontSize: '12.5px', fontWeight: st.period === label ? 800 : 600, color: st.period === label ? 'var(--text)' : 'var(--muted)', background: st.period === label ? 'var(--subtle)' : 'transparent', cursor: 'pointer' },
+      })),
+      noTxns: filtered.length === 0,
+      noTxnsLabel: st.period !== 'Agosto 2026' ? 'Sin movimientos en ' + st.period.toLowerCase() + ' en este prototipo.' : 'Ningún movimiento coincide con la búsqueda.',
+      txCount: q ? filtered.length + ' resultados para “' + st.query.trim() + '”' : st.period + ' · ' + filtered.length + ' movimientos',
+      txFilters: [['All', 'Todos'], ['Expenses', 'Gastos'], ['Income', 'Ingresos']].map(([key, label]) => ({
+        label,
+        onClick: () => this.setState({ txFilter: key }),
+        style: { padding: '7px 13px', borderRadius: '9px', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer', color: st.txFilter === key ? '#fff' : 'var(--dim)', background: st.txFilter === key ? 'var(--accent)' : 'var(--surface)', border: '1px solid ' + (st.txFilter === key ? 'var(--accent)' : 'var(--line)') },
+      })),
+      modalOpen: !!(m && modal.title),
+      modal,
+      closeModal: close,
+      stop: (e) => e.stopPropagation(),
+      toast: st.toast,
+      ...this.newTxVals(),
+      ...this.loanVals(go, blur),
+    }
+  }
+
+  loanVals(go, blur) {
+    const st = this.state
+    const paidOf = (l) => l.payments.reduce((s, p) => s + p.amount, 0)
+    const outOf = (l) => Math.max(0, l.principal - paidOf(l))
+    const lent = st.loans.filter((l) => l.side === 'Prestado'), borrowed = st.loans.filter((l) => l.side === 'Recibido')
+    const sum = (arr) => arr.reduce((s, l) => s + outOf(l), 0)
+    const fmtIso = (iso) => { if (!iso) return ''; const [, m, d] = iso.split('-').map(Number); return d + ' ' + MONTHS[m - 1] }
+    const open = st.loans.filter((l) => outOf(l) > 0 && l.due).sort((a, b) => (a.due < b.due ? -1 : 1))
+    const nx = open[0]
+    const side = st.loans.filter((l) => l.side === st.loanSide)
+    const isLent = st.loanSide === 'Prestado'
+    const nextSide = side.filter((l) => outOf(l) > 0 && l.due).sort((a, b) => (a.due < b.due ? -1 : 1))[0]
+    const p = st.pay
+    const payLoan = p && st.loans.find((l) => l.id === p.id)
+    const walletChip = (on) => ({ padding: '8px 13px', borderRadius: '10px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', color: on ? '#fff' : 'var(--muted)', background: on ? 'var(--accent)' : 'var(--surface2)', border: '1px solid ' + (on ? 'var(--accent)' : 'var(--line2)') })
+    return {
+      goLoans: go('Plans', { planTab: 'Préstamos' }),
+      owedToYou: fmtMoney(sum(lent)),
+      youOwe: fmtMoney(sum(borrowed)),
+      loansOpenLabel: st.loans.filter((l) => outOf(l) > 0).length + ' abiertos · ' + st.loans.filter((l) => outOf(l) === 0).length + ' saldados',
+      nextLoan: nx ? { chip: this.mark('Otros', 34), title: nx.side === 'Prestado' ? nx.person + ' te debe' : 'Le debes a ' + nx.person, detail: 'Vence ' + fmtIso(nx.due) + ' · ' + nx.wallet, amount: fmtMoney(outOf(nx)) } : null,
+      loanSides: ['Prestado', 'Recibido'].map((label) => ({ label, onClick: () => this.setState({ loanSide: label }), style: { padding: '7px 16px', borderRadius: '999px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', color: st.loanSide === label ? '#fff' : 'var(--dim)', background: st.loanSide === label ? 'var(--accent)' : 'transparent' } })),
+      loanSummary: {
+        pendingLabel: isLent ? 'TE DEBEN' : 'DEBES',
+        pending: fmtMoney(sum(side)),
+        paidLabel: isLent ? 'YA TE PAGARON' : 'YA PAGASTE',
+        paid: fmtMoney(side.reduce((s, l) => s + paidOf(l), 0)),
+        nextDue: nextSide ? nextSide.person + ' · ' + fmtIso(nextSide.due) : 'Sin vencimientos',
+      },
+      loanCards: side.map((l) => {
+        const out = outOf(l), paid = paidOf(l), done = out === 0, pct = Math.round((paid / l.principal) * 100)
+        return {
+          person: l.person,
+          chip: this.mark('Otros', 38),
+          meta: (isLent ? 'Prestado desde ' : 'Recibido en ') + l.wallet + ' · ' + l.date + (l.due ? ' · vence ' + fmtIso(l.due) : ''),
+          status: done ? 'Saldado' : 'Pendiente',
+          statusStyle: { fontSize: '11px', fontWeight: 800, borderRadius: '999px', padding: '3px 9px', color: done ? 'var(--pos)' : 'var(--warn)', background: done ? 'rgba(50,201,138,.14)' : 'rgba(240,180,41,.14)' },
+          outstanding: done ? fmtMoney(l.principal) : fmtMoney(out) + ' pendiente',
+          progressLabel: fmtMoney(paid) + ' de ' + fmtMoney(l.principal) + ' · ' + pct + '%',
+          fillStyle: { width: pct + '%', height: '100%', background: done ? 'var(--pos)' : 'var(--accent3)' },
+          history: [{ label: l.date + ' · ' + (isLent ? 'Préstamo desde ' : 'Recibido en ') + l.wallet, amount: (isLent ? '−' : '+') + fmtMoney(l.principal), amountStyle: { fontWeight: 800, color: isLent ? 'var(--neg)' : 'var(--pos)', filter: blur } }]
+            .concat(l.payments.map((pm) => ({ label: pm.date + ' · Abono en ' + pm.wallet, amount: (isLent ? '+' : '−') + fmtMoney(pm.amount), amountStyle: { fontWeight: 800, color: isLent ? 'var(--pos)' : 'var(--neg)', filter: blur } }))),
+          open: !done,
+          onPay: () => this.setState({ pay: { id: l.id, amount: String(out), wallet: l.wallet, err: '' } }),
+        }
+      }),
+      loansEmpty: side.length === 0,
+      loansEmptyLabel: isLent ? 'No tienes préstamos a otras personas.' : 'No tienes deudas registradas.',
+      payOpen: !!payLoan,
+      closePay: () => this.setState({ pay: null }),
+      pay: payLoan ? {
+        sub: payLoan.person + ' · pendiente ' + fmtMoney(outOf(payLoan)),
+        amount: p.amount ? Number(p.amount).toLocaleString('es-CO') : '',
+        onAmount: (e) => this.setState({ pay: { ...this.state.pay, amount: e.target.value.replace(/\D/g, '').slice(0, 11), err: '' } }),
+        hint: 'Por defecto, el saldo pendiente completo. Puedes registrar un abono parcial.',
+        walletLabel: payLoan.side === 'Prestado' ? 'RECIBIR EN' : 'PAGAR DESDE',
+        wallets: WALLETS.map((w) => ({ label: w.id, onClick: () => this.setState({ pay: { ...this.state.pay, wallet: w.id } }), style: walletChip(p.wallet === w.id) })),
+        err: p.err,
+        onSave: () => {
+          const amt = Number(p.amount), out = outOf(payLoan)
+          if (!amt || amt > out) return this.setState({ pay: { ...p, err: 'El abono debe ser mayor que 0 y no superar ' + fmtMoney(out) + '.' } })
+          this.setState((s) => ({ loans: s.loans.map((l) => (l.id === payLoan.id ? { ...l, payments: [...l.payments, { date: '21 ago', amount: amt, wallet: p.wallet }] } : l)), pay: null }))
+          this.showToast(amt === out ? 'Préstamo saldado' : 'Abono registrado')
+        },
+      } : { wallets: [] },
+    }
+  }
+
+  newTxVals() {
+    const st = this.state
+    const n = st.newTx
+    const set = (patch) => this.setState({ newTx: { ...this.state.newTx, ...patch, err: '' } })
+    const chipStyle = (on) => ({ padding: '8px 13px', borderRadius: '10px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', color: on ? '#fff' : 'var(--muted)', background: on ? 'var(--accent)' : 'var(--surface2)', border: '1px solid ' + (on ? 'var(--accent)' : 'var(--line2)') })
+    if (!n) return { newTxOpen: false, openNewTx: () => this.setState({ newTx: { type: 'Gasto', amount: '', desc: '', cat: null, wallet: 'Bancolombia', to: 'Nequi', err: '' } }), closeNewTx: () => this.setState({ newTx: null }) }
+    const isTransfer = n.type === 'Transferencia'
+    const pool = n.type === 'Ingreso' ? INCOME_CATS : EXPENSE_CATS
+    const guess = guessCat(n.desc)
+    const cat = n.cat || (guess && pool.includes(guess) ? guess : null)
+    return {
+      newTxOpen: true,
+      openNewTx: () => {},
+      closeNewTx: () => this.setState({ newTx: null }),
+      ntTypes: ['Gasto', 'Ingreso', 'Transferencia'].map((label) => ({
+        label,
+        onClick: () => set({ type: label, cat: null }),
+        style: { flex: 1, textAlign: 'center', padding: '8px 0', borderRadius: '9px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', color: n.type === label ? 'var(--text)' : 'var(--dim)', background: n.type === label ? 'var(--surface)' : 'transparent', boxShadow: n.type === label ? '0 1px 0 var(--line2)' : 'none' },
+      })),
+      ntAmount: n.amount ? Number(n.amount).toLocaleString('es-CO') : '',
+      onNtAmount: (e) => set({ amount: e.target.value.replace(/\D/g, '').slice(0, 11) }),
+      ntDesc: n.desc,
+      onNtDesc: (e) => set({ desc: e.target.value }),
+      ntGuessLabel: !isTransfer && !n.cat && guess && pool.includes(guess) ? 'Categoría sugerida: ' + guess : '',
+      ntShowCategory: !isTransfer,
+      ntCats: pool.map((label) => {
+        const on = cat === label, c = CAT_COLORS[label]
+        return { label, chip: this.mark(label, 36), onClick: () => set({ cat: label }), style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', padding: '10px 4px', borderRadius: '12px', cursor: 'pointer', color: on ? 'var(--text)' : 'var(--muted)', background: on ? 'color-mix(in oklab, ' + c + ' 14%, transparent)' : 'var(--surface2)', border: '1.5px solid ' + (on ? c : 'var(--line)') } }
+      }),
+      ntWalletLabel: isTransfer ? 'DESDE' : 'BILLETERA',
+      ntWallets: WALLETS.map((w) => ({ label: w.id, onClick: () => set({ wallet: w.id, to: w.id === n.to ? WALLETS.find((x) => x.id !== w.id).id : n.to }), style: chipStyle(n.wallet === w.id) })),
+      ntIsTransfer: isTransfer,
+      ntTargets: WALLETS.filter((w) => w.id !== n.wallet).map((w) => ({ label: w.id, onClick: () => set({ to: w.id }), style: chipStyle(n.to === w.id) })),
+      ntErr: n.err,
+      saveNewTx: () => {
+        const amt = Number(n.amount)
+        if (!amt) return this.setState({ newTx: { ...n, err: 'Escribe el monto.' } })
+        if (!n.desc.trim()) return this.setState({ newTx: { ...n, err: 'Escribe una descripción.' } })
+        if (!isTransfer && !cat) return this.setState({ newTx: { ...n, err: 'Elige una categoría.' } })
+        const neg = n.type !== 'Ingreso'
+        const rec = { id: Date.now(), desc: n.desc.trim(), merchant: isTransfer ? n.wallet + ' → ' + n.to : n.desc.trim(), date: '21 ago', method: n.wallet, amount: (isTransfer ? '' : neg ? '−' : '+') + fmtMoney(amt), cat: isTransfer ? 'Transferencia' : cat, neg, transfer: isTransfer }
+        this.setState((s) => ({ txns: [rec, ...s.txns], newTx: null }))
+        this.showToast('Movimiento guardado')
+      },
+    }
+  }
+
+  accountVals(active) {
+    const st = this.state
+    const p = st.profile
+    const d = st.draft || p
+    const ini = (n) => (n || '').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('') || '?'
+    const setD = (k) => (e) => this.setState({ draft: { ...(this.state.draft || this.state.profile), [k]: e.target.value }, profileErr: '' })
+    const canDelete = st.delConfirm.trim().toUpperCase() === 'ELIMINAR' && st.delPw.length > 0 && st.delAck
+    return {
+      profileName: p.name, profileEmail: p.email, profileCity: p.city, initials: ini(p.name),
+      isSettingsProfile: active === 'Settings' && st.settingsView === 'profile',
+      isSettingsDelete: active === 'Settings' && st.settingsView === 'delete',
+      goProfile: () => this.setState({ active: 'Settings', settingsView: 'profile', draft: { ...this.state.profile }, profileErr: '', query: '' }),
+      goDelete: () => this.setState({ settingsView: 'delete', delConfirm: '', delPw: '', delAck: false }),
+      draftName: d.name, draftEmail: d.email, draftPhone: d.phone, draftCity: d.city, draftInitials: ini(d.name),
+      onDraftName: setD('name'), onDraftEmail: setD('email'), onDraftPhone: setD('phone'), onDraftCity: setD('city'),
+      profileErr: st.profileErr,
+      saveProfile: () => {
+        if (!d.name.trim()) return this.setState({ profileErr: 'Escribe tu nombre completo.' })
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email.trim())) return this.setState({ profileErr: 'Escribe un correo válido.' })
+        this.setState({ profile: { name: d.name.trim(), email: d.email.trim(), phone: d.phone.trim(), city: d.city.trim() }, settingsView: 'main', draft: null })
+        this.showToast('Perfil actualizado')
+      },
+      exportData: () => this.showToast('Exportación iniciada. El CSV llegará a tu correo.'),
+      delConfirm: st.delConfirm, delPw: st.delPw, delAck: st.delAck,
+      onDelConfirm: (e) => this.setState({ delConfirm: e.target.value }),
+      onDelPw: (e) => this.setState({ delPw: e.target.value }),
+      toggleDelAck: () => this.setState({ delAck: !st.delAck }),
+      ackBoxStyle: { width: '18px', height: '18px', borderRadius: '5px', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', border: '1.5px solid ' + (st.delAck ? 'var(--neg)' : 'var(--line2)'), background: st.delAck ? 'var(--neg)' : 'transparent', boxSizing: 'border-box' },
+      deleteBtnStyle: { borderRadius: '10px', padding: '10px 16px', fontSize: '12.5px', fontWeight: 700, background: 'var(--neg)', color: '#fff', opacity: canDelete ? 1 : 0.4, cursor: canDelete ? 'pointer' : 'not-allowed' },
+      doDelete: () => { if (canDelete) this.setState({ screen: 'Login', active: 'Overview', settingsView: 'main', delConfirm: '', delPw: '', delAck: false }) },
+    }
+  }
+
+  icon(label) {
+    return React.createElement(
+      'svg',
+      { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2.1, strokeLinecap: 'round', strokeLinejoin: 'round', style: { flex: 'none' } },
+      NAV_ICONS[label].map((d, i) => React.createElement('path', { key: i, d })),
+    )
+  }
+
+  navItem(label) {
+    const on = this.state.active === label
+    return {
+      label: NAV_LABEL[label] || label,
+      icon: this.icon(label),
+      onClick: () => this.setState({ active: label, settingsView: 'main', query: '' }),
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '11px',
+        padding: '9px 12px',
+        borderRadius: '11px',
+        fontSize: '13px',
+        fontWeight: on ? 700 : 600,
+        cursor: 'pointer',
+        color: on ? '#fff' : 'var(--muted)',
+        background: on ? 'var(--accent)' : 'transparent',
+        boxShadow: on ? '0 8px 24px rgba(108,92,231,.35)' : 'none',
+      },
+    }
+  }
+
+  renderVals() {
+    const { active, range, tab } = this.state
+    const data = BAR_DATA[range]
+    const max = 6
+    return {
+      active,
+      themeAttr: this.state.theme === 'Light' ? 'light' : this.state.theme === 'Dark' ? 'dark' : (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'),
+      isLogin: this.state.screen === 'Login',
+      isSignup: this.state.screen === 'Signup',
+      isApp: !this.state.screen || this.state.screen === 'App',
+      goLogin: () => this.setState({ screen: 'Login' }),
+      goSignup: () => this.setState({ screen: 'Signup' }),
+      doLogin: () => this.setState({ screen: 'App' }),
+      logout: () => this.setState({ screen: 'Login' }),
+      nav: NAV.map((l) => this.navItem(l)),
+      navFooter: [this.navItem('Settings')],
+      activeLabel: NAV_LABEL[active] || active,
+      goInsights: () => this.setState({ active: 'Insights', query: '' }),
+      isOverview: active === 'Overview',
+      isInsights: active === 'Insights',
+      isAnalytics: active === 'Reports',
+      isBudgets: active === 'Plans' && this.state.planTab === 'Presupuestos',
+      isGoals: active === 'Plans' && this.state.planTab === 'Metas',
+      isReports: false,
+      isLoans: active === 'Plans' && this.state.planTab === 'Préstamos',
+      planTabs: ['Presupuestos', 'Metas', 'Préstamos'].map((label) => ({
+        label,
+        onClick: () => this.setState({ planTab: label }),
+        style: { padding: '10px 14px', fontSize: '12.5px', fontWeight: this.state.planTab === label ? 800 : 600, cursor: 'pointer', color: this.state.planTab === label ? 'var(--text)' : 'var(--dim)', borderBottom: '2px solid ' + (this.state.planTab === label ? 'var(--accent3)' : 'transparent'), marginBottom: '-1px' },
+      })),
+      isSettingsMain: active === 'Settings' && this.state.settingsView === 'main',
+      ...this.securityVals(active),
+      langs: ['Español', 'English'].map((label) => ({
+        label,
+        onClick: () => this.setState({ lang: label }),
+        style: {
+          padding: '7px 13px',
+          borderRadius: '9px',
+          fontSize: '11.5px',
+          fontWeight: 700,
+          cursor: 'pointer',
+          color: this.state.lang === label ? '#fff' : 'var(--dim)',
+          background: this.state.lang === label ? 'var(--accent)' : 'var(--surface2)',
+          border: '1px solid ' + (this.state.lang === label ? 'var(--accent)' : 'var(--line2)'),
+        },
+      })),
+      currencyDetail: this.state.currency === 'COP' ? 'Peso colombiano, sin decimales · $16.147.300' : 'Dólar, 2 decimales, tasa de referencia fija · US$4,036.83',
+      currencies: [['COP', 'Peso colombiano'], ['USD', 'Dólar']].map(([code, name]) => ({
+        label: code + ' · ' + name,
+        onClick: () => this.setState({ currency: code }),
+        style: {
+          padding: '7px 13px',
+          borderRadius: '9px',
+          fontSize: '11.5px',
+          fontWeight: 700,
+          cursor: 'pointer',
+          color: this.state.currency === code ? '#fff' : 'var(--dim)',
+          background: this.state.currency === code ? 'var(--accent)' : 'var(--surface2)',
+          border: '1px solid ' + (this.state.currency === code ? 'var(--accent)' : 'var(--line2)'),
+        },
+      })),
+      themes: ['Light', 'Dark', 'System'].map((label) => ({
+        text: ({ Light: 'Claro', Dark: 'Oscuro', System: 'Sistema' })[label],
+        onClick: () => this.setState({ theme: label }),
+        style: {
+          padding: '7px 13px',
+          borderRadius: '9px',
+          fontSize: '11.5px',
+          fontWeight: 700,
+          cursor: 'pointer',
+          color: this.state.theme === label ? '#fff' : 'var(--dim)',
+          background: this.state.theme === label ? 'var(--accent)' : 'var(--surface2)',
+          border: '1px solid ' + (this.state.theme === label ? 'var(--accent)' : 'var(--line2)'),
+        },
+      })),
+      toggles: [
+        { key: 'notifications', label: 'Notificaciones', detail: 'Presupuestos, vencimientos de programados y préstamos' },
+        { key: 'hideAmounts', label: 'Ocultar montos', detail: 'Difumina los montos hasta que los muestres con el ojo del saldo' },
+      ].map((tg) => {
+        const on = this.state[tg.key]
+        return {
+          ...tg,
+          onClick: () => this.setState({ [tg.key]: !on }),
+          trackStyle: {
+            width: '42px',
+            height: '24px',
+            borderRadius: '999px',
+            flex: 'none',
+            cursor: 'pointer',
+            padding: '3px',
+            display: 'flex',
+            justifyContent: on ? 'flex-end' : 'flex-start',
+            background: on ? 'var(--accent)' : 'var(--line2)',
+            transition: 'background .2s ease',
+          },
+          knobStyle: { width: '18px', height: '18px', borderRadius: '50%', background: '#fff', display: 'block' },
+        }
+      }),
+      goals: GOALS.map((g) => ({
+        ...g,
+        pctLabel: g.pct + '%',
+        cardStyle: { background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: '16px', padding: '20px' },
+        ringStyle: {
+          width: '72px',
+          height: '72px',
+          borderRadius: '50%',
+          flex: 'none',
+          background: 'conic-gradient(' + g.color + ' ' + g.pct + '%, var(--line) 0)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+      })),
+      reportRows: REPORT_ROWS.map((r) => ({
+        ...r,
+        deltaStyle: {
+          fontSize: '11.5px',
+          fontWeight: 800,
+          borderRadius: '999px',
+          padding: '3px 8px',
+          color: r.neg ? 'var(--neg)' : 'var(--pos)',
+          background: r.neg ? 'rgba(255,98,98,.14)' : 'rgba(50,201,138,.14)',
+        },
+      })),
+      week: WEEK_SPEND.map((w) => ({
+        day: w.day,
+        barStyle: {
+          width: '100%',
+          height: w.pct + '%',
+          background: w.pct >= 90 ? 'var(--accent3)' : 'rgba(165,157,255,.28)',
+          borderRadius: '4px 4px 0 0',
+        },
+      })),
+      ...this.overviewVals(active),
+      ...this.accountVals(active),
+      insights: INSIGHTS.map((ins) => ({
+        ...ins,
+        cardStyle: { background: 'var(--surface)', border: '1px solid var(--line)', borderLeft: '3px solid ' + ins.tone, borderRadius: '16px', padding: '18px 20px' },
+        tagStyle: { fontSize: '10px', fontWeight: 800, letterSpacing: '.09em', textTransform: 'uppercase', color: ins.tone, background: ins.tone + '1f', borderRadius: '999px', padding: '4px 9px' },
+      })),
+      ranges: ['3M', '6M', '12M'].map((label) => ({
+        label,
+        onClick: () => this.setState({ range: label }),
+        style: {
+          padding: '7px 13px',
+          borderRadius: '9px',
+          fontSize: '11.5px',
+          fontWeight: 700,
+          cursor: 'pointer',
+          color: range === label ? 'var(--text)' : 'var(--dim)',
+          background: range === label ? 'var(--accent)' : 'var(--surface)',
+          border: '1px solid ' + (range === label ? 'var(--accent)' : 'var(--line)'),
+        },
+      })),
+      tabs: ['Spending', 'Income', 'Cash Flow', 'Net Worth'].map((label) => ({
+        text: ({ Spending: 'Gastos', Income: 'Ingresos', 'Cash Flow': 'Flujo de caja', 'Net Worth': 'Patrimonio' })[label],
+        label,
+        onClick: () => this.setState({ tab: label }),
+        style: {
+          padding: '10px 14px',
+          fontSize: '12.5px',
+          fontWeight: tab === label ? 800 : 600,
+          cursor: 'pointer',
+          color: tab === label ? 'var(--text)' : 'var(--dim)',
+          borderBottom: '2px solid ' + (tab === label ? 'var(--accent3)' : 'transparent'),
+          marginBottom: '-1px',
+        },
+      })),
+      isSpending: tab === 'Spending',
+      isIncomeTab: tab === 'Income',
+      isCashFlow: tab === 'Cash Flow',
+      isNetWorth: tab === 'Net Worth',
+      incomeBars: data.map((d) => ({
+        label: d.label,
+        style: { width: '100%', height: (d.inc / max) * 100 + '%', background: d.label === 'Ago' ? 'var(--pos)' : 'rgba(50,201,138,.28)', borderRadius: '4px 4px 0 0', transition: 'height .3s ease' },
+      })),
+      flow: [
+        { date: 'HOY', label: 'Administración', amount: '−$232.000', running: '$15.915.300', neg: true },
+        { date: '24 AGO', label: 'Netflix', amount: '−$45.000', running: '$15.870.300', neg: true },
+        { date: '26 AGO', label: 'Internet y celular', amount: '−$109.000', running: '$15.761.300', neg: true },
+        { date: '01 SEP', label: 'Salario mensual', amount: '+$4.400.000', running: '$20.161.300', neg: false },
+      ].map((f) => ({
+        ...f,
+        amountStyle: { fontSize: '13px', fontWeight: 800, width: '110px', textAlign: 'right', flex: 'none', color: f.neg ? 'var(--neg)' : 'var(--pos)' },
+      })),
+      wallets: [
+        { label: 'Bancolombia — Ahorros', kind: 'Cuenta de ahorros', amount: '$13.740.000', color: 'var(--accent)' },
+        { label: 'Nequi', kind: 'Billetera digital', amount: '$1.982.300', color: '#D95DB2' },
+        { label: 'Efectivo', kind: 'Efectivo', amount: '$425.000', color: '#E8A23D' },
+      ].map((w) => ({
+        ...w,
+        dot: { width: '30px', height: '30px', borderRadius: '10px', background: w.color + '29', flex: 'none' },
+      })),
+      rangeSubtitle: range === '3M' ? 'Últimos 3 meses' : range === '6M' ? 'Últimos 6 meses' : 'Últimos 12 meses',
+      bars: data.map((d) => ({
+        label: d.label,
+        incStyle: { width: '46%', maxWidth: '26px', height: (d.inc / max) * 100 + '%', background: 'var(--pos)', borderRadius: '4px 4px 0 0', transition: 'height .3s ease' },
+        expStyle: { width: '46%', maxWidth: '26px', height: (d.exp / max) * 100 + '%', background: 'var(--neg)', borderRadius: '4px 4px 0 0', transition: 'height .3s ease' },
+      })),
+      categories: CATEGORIES.map((c) => ({
+        ...c,
+        amountStyle: { color: c.alert ? 'var(--neg)' : 'var(--muted)' },
+        fillStyle: { width: c.pct + '%', height: '100%', background: c.color },
+      })),
+      budgets: BUDGETS.map((b) => {
+        const tone = b.pct >= 90 ? 'var(--neg)' : b.pct >= 65 ? 'var(--warn)' : 'var(--pos)'
+        return {
+          ...b,
+          pct: b.pct + '%',
+          cardStyle: { background: 'var(--surface)', border: '1px solid ' + (b.pct >= 90 ? 'var(--neg-soft)' : 'var(--line)'), borderRadius: '16px', padding: '18px 20px' },
+          pctStyle: { fontSize: '11.5px', fontWeight: 800, color: tone, background: tone + '24', borderRadius: '999px', padding: '3px 8px' },
+          fillStyle: { width: Math.min(100, b.pct) + '%', height: '100%', background: tone },
+        }
+      }),
+    }
+  }
+}
+</script>
+</body>
+</html>

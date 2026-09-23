@@ -10,11 +10,9 @@ are thin wrappers around `fetch()` calls, not mock data (see
 `ARCHITECTURE.md` §9). `ProtectedRoute` gates every dashboard route behind
 a real session; a signed-out visitor lands on `/login`.
 
-**Pending**: unlike `android/`, which was just fully reconciled against
-`design_handoff_s2_nova_overview/S2 Nova Android.dc.html` (see
-`PROJECT_STATE.md`'s "Known gaps" section), this app's screens have not
-been checked against a mockup — treat Web's current UI as unverified
-design fidelity until that reconciliation pass happens.
+**Visual source of truth**: `s2_nova_stage2_handoff/S2 Nova Dashboard v2.dc.html`
+(with `STAGE-*.md` specs alongside it). Screens are being reconciled
+against it stage by stage; a screen not yet migrated is unverified.
 
 ## Development Server
 
@@ -132,7 +130,7 @@ a transparent glyph — extracting a transparent glyph from the source art
 left a visible stray border, which is why it's not done that way).
 `LogoMark`/`Logo` (`components/ui/Logo.tsx`) pick between them via
 `useTheme()`, unless `tone="inverted"` pins the dark tile. Regenerate both
-from `design-reference/suggestions/logo-dark.png` /`logo-light.png` if the
+from `s2_nova_stage2_handoff/design_handoff_s2_nova_overview/assets/logo-mark-dark.png` / `logo-mark-light.png` if the
 mark ever changes, rather than re-deriving one from the other.
 
 `LoginPage.tsx`/`RegisterPage.tsx` (`src/auth/`) follow the design handoff

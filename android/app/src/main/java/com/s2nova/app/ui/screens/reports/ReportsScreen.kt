@@ -259,7 +259,7 @@ private fun PeriodTotalRow(
     val deltaText = if (deltaPointDelta != null) {
         "${if (isUp) "+" else ""}$deltaPointDelta pt"
     } else {
-        "${if (isUp) "↑" else "↓"} ${kotlin.math.abs(rawDelta)}%"
+        "${if (isUp) "+" else ""}$deltaPct%"
     }
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
         Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)

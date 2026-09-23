@@ -43,6 +43,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
 import com.s2nova.app.data.mock.expenseCategories
@@ -129,51 +130,64 @@ fun RecurringScreen(onBack: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 items(series, key = { it.id }) { item ->
-                    NovaCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            draft = RecurringDraft(
-                                id = item.id,
-                                name = item.name,
-                                type = item.type,
-                                amountText = item.amount.toInt().toString(),
-                                walletId = item.walletId,
-                                category = item.category,
-                                userPickedCategory = true,
-                                interval = item.interval,
-                                nextDate = item.nextOccurrenceDate,
-                            )
-                        },
-                    ) {
+                    NovaCard(modifier = Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 CategoryIcon(category = item.category, size = CategoryIconSize.ROW)
                                 Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
-                                    Text(item.name, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
+                                    Text(item.name, fontSize = 13.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                                     Text(
                                         if (item.active) "${intervalLabel(item.interval, t)} · ${t(StringKey.RECURRING_NEXT_DUE)} ${item.nextOccurrenceDate}"
                                         else t(StringKey.RECURRING_PAUSED),
-                                        style = MaterialTheme.typography.bodySmall,
+                                        fontSize = 11.5.sp,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(top = 2.dp),
                                     )
                                 }
                                 Text(
                                     (if (item.type == TransactionType.EXPENSE) "-" else "+") + format(item.amount),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.ExtraBold,
                                     color = if (item.type == TransactionType.EXPENSE) MaterialTheme.colorScheme.error else colors.positive,
                                 )
                             }
-                            Row(modifier = Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                TextButton(onClick = {
-                                    scope.launch { AppContainer.recurringSeriesRepository.setActive(item.id, !item.active) }
-                                }) {
-                                    Text(if (item.active) t(StringKey.RECURRING_PAUSE) else t(StringKey.RECURRING_RESUME))
-                                }
+                            Row(modifier = Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                Text(
+                                    if (item.active) t(StringKey.RECURRING_PAUSE) else t(StringKey.RECURRING_RESUME),
+                                    fontSize = 12.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.clickable {
+                                        scope.launch { AppContainer.recurringSeriesRepository.setActive(item.id, !item.active) }
+                                    },
+                                )
+                                Text(
+                                    t(StringKey.RECURRING_EDIT),
+                                    fontSize = 12.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    modifier = Modifier.clickable {
+                                        draft = RecurringDraft(
+                                            id = item.id,
+                                            name = item.name,
+                                            type = item.type,
+                                            amountText = item.amount.toInt().toString(),
+                                            walletId = item.walletId,
+                                            category = item.category,
+                                            userPickedCategory = true,
+                                            interval = item.interval,
+                                            nextDate = item.nextOccurrenceDate,
+                                        )
+                                    },
+                                )
                                 if (item.active && item.isDue) {
-                                    TextButton(onClick = { confirmingId = item.id }) {
-                                        Text(t(StringKey.RECURRING_DUE_TODAY) + " · " + t(StringKey.RECURRING_CONFIRM))
-                                    }
+                                    Text(
+                                        t(StringKey.RECURRING_DUE_TODAY) + " · " + t(StringKey.RECURRING_CONFIRM),
+                                        fontSize = 12.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.clickable { confirmingId = item.id },
+                                    )
                                 }
                             }
                         }

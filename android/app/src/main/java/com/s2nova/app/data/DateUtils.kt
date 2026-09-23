@@ -11,6 +11,7 @@ import java.util.Locale
 private val LOCALE_ES = Locale.forLanguageTag("es-CO")
 private val SHORT_DATE = DateTimeFormatter.ofPattern("d MMM", LOCALE_ES)
 private val LONG_DATE = DateTimeFormatter.ofPattern("d MMM yyyy", LOCALE_ES)
+private val DAY_GROUP_DATE = DateTimeFormatter.ofPattern("d 'de' MMMM", LOCALE_ES)
 
 fun todayISO(): String = LocalDate.now().toString()
 
@@ -27,6 +28,10 @@ fun monthLabel(monthKey: String): String {
 fun formatShortDate(iso: String): String = LocalDate.parse(iso).format(SHORT_DATE)
 
 fun formatLongDate(iso: String): String = LocalDate.parse(iso).format(LONG_DATE)
+
+// Uppercase "D DE MES" group-header label (e.g. "1 DE AGOSTO"), no year — mirrors the
+// Movimientos mockup's day-group headers.
+fun formatDayGroupDate(iso: String): String = LocalDate.parse(iso).format(DAY_GROUP_DATE).uppercase(LOCALE_ES)
 
 fun lastNMonthKeys(n: Int): List<String> {
     val now = LocalDate.now()

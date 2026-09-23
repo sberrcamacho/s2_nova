@@ -125,7 +125,7 @@ fun IconCircle(
     icon: ImageVector,
     color: Color,
     size: CategoryIconSize = CategoryIconSize.MD,
-    fillAlpha: Float = 0.13f,
+    fillAlpha: Float = 0.16f,
     contentDescription: String? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -152,7 +152,7 @@ fun CategoryIcon(
     category: CategoryId,
     subcategoryId: String? = null,
     size: CategoryIconSize = CategoryIconSize.MD,
-    fillAlpha: Float = 0.13f,
+    fillAlpha: Float = 0.16f,
     modifier: Modifier = Modifier,
 ) {
     val meta = categoryMap[category]

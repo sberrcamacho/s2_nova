@@ -39,14 +39,23 @@ object AppContainer {
     lateinit var idleTimeoutStore: IdleTimeoutStore
         private set
 
-    val categoryRepository = CategoryRepository()
-    val walletRepository = WalletRepository()
-    val goalRepository = GoalRepository()
-    val budgetRepository = BudgetRepository(categoryRepository)
-    val transactionRepository = TransactionRepository(categoryRepository)
-    val recurringSeriesRepository = RecurringSeriesRepository(categoryRepository)
-    val productRepository = ProductRepository()
-    val notificationRepository = NotificationRepository()
+    // `by lazy` (not eager `val`s) is load-bearing: merely referencing
+    // AppContainer.init(...) from MainActivity.onCreate forces this object's
+    // <clinit> to run every property initializer below *before* init()'s own
+    // body executes — so an eager `val = CategoryRepository()` would
+    // evaluate that constructor's `api: ApiService = ApiClient.api` default
+    // argument while ApiClient.appContext is still unset, crashing every
+    // launch with UninitializedPropertyAccessException. Deferring
+    // construction to first access (which only happens after init() has
+    // already called ApiClient.init(context)) avoids that ordering trap.
+    val categoryRepository by lazy { CategoryRepository() }
+    val walletRepository by lazy { WalletRepository() }
+    val goalRepository by lazy { GoalRepository() }
+    val budgetRepository by lazy { BudgetRepository(categoryRepository) }
+    val transactionRepository by lazy { TransactionRepository(categoryRepository) }
+    val recurringSeriesRepository by lazy { RecurringSeriesRepository(categoryRepository) }
+    val productRepository by lazy { ProductRepository() }
+    val notificationRepository by lazy { NotificationRepository() }
 
     lateinit var authRepository: AuthRepository
         private set

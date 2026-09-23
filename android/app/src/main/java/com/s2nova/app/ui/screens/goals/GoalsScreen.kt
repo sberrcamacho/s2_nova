@@ -60,12 +60,12 @@ import com.s2nova.app.data.remote.toUserMessage
 import com.s2nova.app.data.todayISO
 import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.ThousandsGroupingVisualTransformation
+import com.s2nova.app.ui.components.DashedNewRow
 import com.s2nova.app.ui.components.DraftSheetDeleteRow
 import com.s2nova.app.ui.components.DraftSheetPrimaryButton
 import com.s2nova.app.ui.components.GoalCategoryId
 import com.s2nova.app.ui.components.GoalCategoryPicker
 import com.s2nova.app.ui.components.NovaCard
-import com.s2nova.app.ui.components.NovaDatePickerField
 import com.s2nova.app.ui.components.NovaDraftSheet
 import com.s2nova.app.ui.components.NovaProgressRing
 import com.s2nova.app.ui.components.goalCategories
@@ -101,12 +101,10 @@ fun GoalsTab(snackbarHostState: SnackbarHostState) {
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         item {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                TextButton(onClick = { draft = GoalDraft(id = null, name = "", category = GoalCategoryId.OTHER, userPickedCategory = false, targetText = "", targetDate = null) }) {
-                    Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
-                    Text(t(StringKey.GOALS_NEW))
-                }
-            }
+            DashedNewRow(
+                label = t(StringKey.GOALS_NEW),
+                onClick = { draft = GoalDraft(id = null, name = "", category = GoalCategoryId.OTHER, userPickedCategory = false, targetText = "") },
+            )
         }
 
         if (goals.isEmpty()) {
@@ -131,7 +129,6 @@ fun GoalsTab(snackbarHostState: SnackbarHostState) {
                         category = category.id,
                         userPickedCategory = true,
                         targetText = goal.targetAmount.toInt().toString(),
-                        targetDate = goal.targetDate,
                     )
                 },
             ) {
@@ -153,9 +150,6 @@ fun GoalsTab(snackbarHostState: SnackbarHostState) {
                             Row(modifier = Modifier.padding(top = 4.dp)) {
                                 Text(format(goal.currentAmount), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.ExtraBold)
                                 Text(" / ${format(goal.targetAmount)}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                            if (goal.targetDate != null) {
-                                Text(goal.targetDate, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
                             }
                         }
                     }
@@ -182,9 +176,9 @@ fun GoalsTab(snackbarHostState: SnackbarHostState) {
                 if (d.name.isNotBlank() && target != null && target > 0) {
                     scope.launch {
                         if (d.id == null) {
-                            AppContainer.goalRepository.create(d.name.trim(), target, d.targetDate, d.category.name)
+                            AppContainer.goalRepository.create(d.name.trim(), target, themeIcon = d.category.name)
                         } else {
-                            AppContainer.goalRepository.update(d.id, d.name.trim(), target, d.targetDate, d.category.name)
+                            AppContainer.goalRepository.update(d.id, d.name.trim(), target, themeIcon = d.category.name)
                         }
                     }
                     draft = null
@@ -239,11 +233,6 @@ private data class GoalDraft(
     val category: GoalCategoryId,
     val userPickedCategory: Boolean,
     val targetText: String,
-    // Kept even though the mockup's own goal-draft sheet doesn't show a
-    // target-date field — an existing, working, non-conflicting feature
-    // (progress-pacing copy elsewhere reads off it) that removing would be
-    // a pure regression rather than a fidelity fix.
-    val targetDate: String?,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -314,13 +303,6 @@ private fun GoalDraftSheet(
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
-
-            NovaDatePickerField(
-                label = t(StringKey.GOALS_TARGET_DATE_OPTIONAL),
-                value = draft.targetDate,
-                onValueChange = { onDraftChange(draft.copy(targetDate = it)) },
-                allowClear = true,
-            )
 
             DraftSheetPrimaryButton(
                 label = t(StringKey.COMMON_SAVE),

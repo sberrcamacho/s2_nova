@@ -32,7 +32,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
 import com.s2nova.app.data.mock.categoryMap
@@ -93,6 +95,12 @@ fun ProfileScreen(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
+            Text(
+                t(StringKey.TITLE_PROFILE),
+                style = MaterialTheme.typography.headlineMedium.copy(fontSize = 21.sp, letterSpacing = (-0.42).sp),
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+
             NovaCard(modifier = Modifier.fillMaxWidth()) {
                 Row(modifier = Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
                     Box(
@@ -101,13 +109,24 @@ fun ProfileScreen(
                             .background(MaterialTheme.colorScheme.primary, CircleShape),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(user?.avatarInitials ?: "US", color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.titleMedium)
+                        Text(user?.avatarInitials ?: "US", color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.titleLarge)
                     }
                     Column(modifier = Modifier.padding(start = 14.dp)) {
-                        Text(user?.name ?: "", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
-                        Text(user?.email ?: "", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
+                        Text(
+                            user?.name ?: "",
+                            fontSize = 15.5.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = (-0.155).sp,
+                            color = MaterialTheme.colorScheme.onBackground,
+                        )
+                        Text(
+                            user?.email ?: "",
+                            fontSize = 11.5.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 2.dp),
+                        )
                         if (memberSince != null) {
-                            Text(memberSince, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(memberSince, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -130,7 +149,12 @@ fun ProfileScreen(
                     .clickable(onClick = onLogout)
                     .padding(14.dp),
             ) {
-                Text(t(StringKey.PROFILE_LOGOUT), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    t(StringKey.PROFILE_LOGOUT),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.error,
+                )
             }
         }
     }
@@ -166,14 +190,14 @@ private fun ProfileRow(
             Box(
                 modifier = Modifier
                     .size(34.dp)
-                    .background(tint.copy(alpha = 0.13f), CircleShape),
+                    .background(tint.copy(alpha = 0.16f), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(16.dp))
             }
             Column(modifier = Modifier.weight(1f).padding(start = 14.dp)) {
-                Text(label, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onBackground)
-                Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(label, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                Text(detail, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }

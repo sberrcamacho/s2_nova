@@ -48,6 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.R
 import com.s2nova.app.data.AnalyticsHelpers
 import com.s2nova.app.data.AppContainer
+import java.util.Calendar
 import com.s2nova.app.data.ThemeController
 import com.s2nova.app.data.model.RecurringSeries
 import com.s2nova.app.data.model.BudgetProgress
@@ -103,6 +104,13 @@ fun HomeScreen(
     val unreadCount = notifications.count { !it.read }
     val topBudgets = budgetProgress.sortedByDescending { it.percentage }.take(3)
     val upcoming = recurringSeries.filter { it.active }.sortedBy { it.nextOccurrenceDate }.take(2)
+    val greetingKey = remember {
+        when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
+            in 5..11 -> StringKey.HOME_GREETING_MORNING
+            in 12..18 -> StringKey.HOME_GREETING_AFTERNOON
+            else -> StringKey.HOME_GREETING_EVENING
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -126,10 +134,14 @@ fun HomeScreen(
                     .clip(RoundedCornerShape(10.dp)),
             )
             Column(modifier = Modifier.weight(1f).padding(start = 11.dp)) {
-                Text(t(StringKey.HOME_GREETING), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    t(greetingKey),
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 Text(
                     user?.name?.substringBefore(" ") ?: "👋",
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = MaterialTheme.typography.headlineMedium.copy(fontSize = 16.sp, letterSpacing = (-0.24).sp),
                     color = MaterialTheme.colorScheme.onBackground,
                 )
             }

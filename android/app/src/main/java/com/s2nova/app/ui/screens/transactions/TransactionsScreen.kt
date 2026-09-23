@@ -12,11 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,10 +22,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
-import com.s2nova.app.data.formatLongDate
+import com.s2nova.app.data.formatDayGroupDate
+import com.s2nova.app.data.todayISO
 import com.s2nova.app.data.mock.categoryMap
 import com.s2nova.app.data.model.Transaction
 import com.s2nova.app.data.model.TransactionStatus
@@ -41,6 +44,7 @@ import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.theme.NovaColors
+import java.time.LocalDate
 
 private enum class TypeFilter(val key: StringKey) {
     ALL(StringKey.TXN_LIST_FILTER_ALL),
@@ -56,22 +60,20 @@ fun TransactionsScreen(
 ) {
     val transactions by AppContainer.transactionRepository.transactions.collectAsStateWithLifecycle()
     val wallets by AppContainer.walletRepository.wallets.collectAsStateWithLifecycle()
-    var search by remember { mutableStateOf("") }
     var filter by remember { mutableStateOf(TypeFilter.ALL) }
     val t = rememberStrings()
     val format = rememberCurrencyFormatter()
     val colors = NovaColors.current
+    val today = todayISO()
+    val yesterday = remember(today) { LocalDate.parse(today).minusDays(1).toString() }
 
-    val filtered = transactions.filter { t ->
-        val matchesType = when (filter) {
+    val filtered = transactions.filter { txn ->
+        when (filter) {
             TypeFilter.ALL -> true
-            TypeFilter.INCOME -> t.type == TransactionType.INCOME
-            TypeFilter.EXPENSE -> t.type == TransactionType.EXPENSE
-            TypeFilter.PENDING -> t.status == TransactionStatus.PLANNED
+            TypeFilter.INCOME -> txn.type == TransactionType.INCOME
+            TypeFilter.EXPENSE -> txn.type == TransactionType.EXPENSE
+            TypeFilter.PENDING -> txn.status == TransactionStatus.PLANNED
         }
-        val q = search.trim().lowercase()
-        val matchesSearch = q.isEmpty() || t.description.lowercase().contains(q) || (t.merchant?.lowercase()?.contains(q) == true)
-        matchesType && matchesSearch
     }
 
     Scaffold(
@@ -80,17 +82,8 @@ fun TransactionsScreen(
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
             Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-                OutlinedTextField(
-                    value = search,
-                    onValueChange = { search = it },
-                    placeholder = { Text(t(StringKey.TXN_LIST_SEARCH_PLACEHOLDER)) },
-                    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                    singleLine = true,
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                )
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 12.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     TypeFilter.entries.forEach { f ->
@@ -113,18 +106,26 @@ fun TransactionsScreen(
                     grouped.forEach { (date, txns) ->
                         item {
                             val netTotal = txns.sumOf { if (it.type == TransactionType.INCOME) it.amount else -it.amount }
-                            Row(modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)) {
-                                Text(
-                                    formatLongDate(date),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                                Text(
-                                    " · ${format(netTotal, signed = true)}",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = if (netTotal >= 0) colors.positive else colors.negative,
-                                )
-                            }
+                            val dayLabel = when (date) {
+                                today -> t(StringKey.TXN_LIST_TODAY)
+                                yesterday -> t(StringKey.TXN_LIST_YESTERDAY)
+                                else -> formatDayGroupDate(date)
+                            }.uppercase()
+                            Text(
+                                buildAnnotatedString {
+                                    append("$dayLabel · ")
+                                    withStyle(SpanStyle(color = if (netTotal > 0) colors.positive else MaterialTheme.colorScheme.onSurfaceVariant)) {
+                                        append(format(netTotal, signed = true))
+                                    }
+                                },
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 10.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.1.em,
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 12.dp, bottom = 4.dp),
+                            )
                         }
                         items(txns) { txn: Transaction ->
                             val merchantOrCategory = txn.merchant
@@ -145,13 +146,14 @@ fun TransactionsScreen(
 private fun FilterPill(label: String, selected: Boolean, onClick: () -> Unit) {
     Text(
         label,
-        style = MaterialTheme.typography.bodyMedium,
+        fontSize = 12.sp,
+        fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
         color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
         maxLines = 1,
         modifier = Modifier
             .clip(RoundedCornerShape(50))
             .background(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
             .selectable(selected = selected, onClick = onClick, role = androidx.compose.ui.semantics.Role.RadioButton)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+            .padding(horizontal = 14.dp, vertical = 9.dp),
     )
 }

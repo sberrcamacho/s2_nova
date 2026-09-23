@@ -31,7 +31,7 @@
     <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column;padding:0 24px;background:var(--bg)">
 <div style="display:flex;flex-direction:column;gap:28px;padding-top:52px;flex:1">
             <div style="display:flex;flex-direction:column;gap:18px">
-              <img src="assets/logo-mark-dark.png" alt="S2 Nova" style="width:52px;height:52px;border-radius:15px;object-fit:cover">
+              <img src="design_handoff_s2_nova_overview/assets/logo-mark-dark.png" alt="S2 Nova" style="width:52px;height:52px;border-radius:15px;object-fit:cover">
               <div>
                 <div style="font-size:30px;font-weight:800;letter-spacing:-.03em;line-height:1.12">Iniciar sesión</div>
                 <div style="font-size:13.5px;color:var(--dim);margin-top:7px">Tus finanzas, siempre al día.</div>
@@ -135,7 +135,7 @@
     <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px 14px;flex:none">
         <div style="display:flex;align-items:center;gap:11px">
-          <img src="assets/logo-mark-dark.png" alt="" style="width:34px;height:34px;border-radius:10px;object-fit:cover;flex:none">
+          <img src="design_handoff_s2_nova_overview/assets/logo-mark-dark.png" alt="" style="width:34px;height:34px;border-radius:10px;object-fit:cover;flex:none">
           <div><div style="font-size:11px;color:var(--dim)">Buenas tardes,</div><div style="font-size:16px;font-weight:800;letter-spacing:-.015em">Mariana</div></div>
         </div>
         <div style="display:flex;gap:10px">
@@ -150,18 +150,26 @@
           <div style="position:relative">
             <div style="display:flex;align-items:center;justify-content:space-between">
               <div style="font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--accent2)">SALDO TOTAL</div>
-              <div style="font-size:10.5px;font-weight:700;color:var(--muted);background:rgba(255,255,255,.08);border-radius:999px;padding:4px 10px">{{ walletCountLabel }}</div>
+              <div onClick="{{ goWalletsFromHome }}" style="display:flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;color:var(--muted);background:rgba(255,255,255,.08);border-radius:999px;padding:4px 8px 4px 10px;cursor:pointer">{{ walletCountLabel }}<span style="font-size:12px;line-height:1">›</span></div>
             </div>
             <div onClick="{{ toggleReveal }}" class="num" style="{{ balanceStyle }}">{{ walletsTotalLabel }}</div>
             <sc-if value="{{ balanceBlurred }}" hint-placeholder-val="{{ false }}">
               <div onClick="{{ toggleReveal }}" style="font-size:10.5px;font-weight:700;color:var(--accent2);margin-top:8px;cursor:pointer">Toca para mostrar</div>
             </sc-if>
             <div style="display:flex;gap:12px;margin-top:18px">
-              <div style="flex:1;background:rgba(255,255,255,.06);border-radius:14px;padding:11px 13px"><div style="font-size:10px;color:var(--muted)">Ingresos</div><div class="num" style="font-size:14.5px;font-weight:800;color:var(--pos);margin-top:3px">$4.288.500</div></div>
-              <div style="flex:1;background:rgba(255,255,255,.06);border-radius:14px;padding:11px 13px"><div style="font-size:10px;color:var(--muted)">Gastos</div><div class="num" style="font-size:14.5px;font-weight:800;color:var(--neg);margin-top:3px">$1.927.100</div></div>
+              <div style="flex:1;background:rgba(255,255,255,.06);border-radius:14px;padding:11px 13px"><div style="font-size:10px;color:var(--muted)">Ingresos del mes</div><div class="num" style="font-size:14.5px;font-weight:800;color:var(--pos);margin-top:3px">$4.288.500</div></div>
+              <div style="flex:1;background:rgba(255,255,255,.06);border-radius:14px;padding:11px 13px"><div style="font-size:10px;color:var(--muted)">Gastos del mes</div><div class="num" style="font-size:14.5px;font-weight:800;color:var(--neg);margin-top:3px">$1.927.100</div></div>
             </div>
           </div>
         </div>
+
+        <sc-if value="{{ homeAlert }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ homeAlert.onOpen }}" style="display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:14px 12px 14px 16px;cursor:pointer">
+          {{ homeAlert.chip }}
+          <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:800">{{ homeAlert.title }}</div><div style="font-size:11px;color:var(--dim);margin-top:2px">{{ homeAlert.body }}</div></div>
+          <div onClick="{{ homeAlert.onDismiss }}" aria-label="Descartar" style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--dim);cursor:pointer;flex:none">✕</div>
+        </div>
+        </sc-if>
 
         <div style="background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:18px">
           <div style="display:flex;align-items:center;justify-content:space-between">
@@ -170,9 +178,10 @@
           </div>
           <div style="display:flex;flex-direction:column;gap:13px;margin-top:14px">
             <sc-for list="{{ homeBudgets }}" as="b" hint-placeholder-count="3">
-              <div>
-                <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:6px"><span>{{ b.label }}</span><span class="num" style="{{ b.pctStyle }}">{{ b.pct }}</span></div>
+              <div onClick="{{ goBudgets }}" style="cursor:pointer">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:12px;font-weight:700;margin-bottom:6px"><span>{{ b.label }}</span><span class="num" style="{{ b.pctStyle }}">{{ b.pct }}</span></div>
                 <div style="height:6px;border-radius:3px;background:var(--line);overflow:hidden"><div style="{{ b.fillStyle }}"></div></div>
+                <div class="num" style="font-size:11px;color:var(--dim);margin-top:5px">{{ b.spent }} / {{ b.limit }}</div>
               </div>
             </sc-for>
           </div>
@@ -180,20 +189,20 @@
 
         <div style="background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:18px">
           <div style="display:flex;align-items:center;justify-content:space-between">
-            <div style="font-size:13.5px;font-weight:800">Próximos pagos</div>
-            <div style="font-size:11.5px;font-weight:700;color:var(--accent2);cursor:pointer">Recurrentes</div>
+            <div style="font-size:13.5px;font-weight:800">Próximos 7 días</div>
+            <div onClick="{{ goRecurring }}" style="font-size:11.5px;font-weight:700;color:var(--accent2);cursor:pointer">Programados</div>
           </div>
           <div style="display:flex;flex-direction:column;margin-top:10px">
-            <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--subtle)">
-              <div style="width:42px;flex:none;text-align:center"><div style="font-size:9.5px;font-weight:700;color:var(--dim)">AGO</div><div class="num" style="font-size:15px;font-weight:800">24</div></div>
-              <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">Netflix</div><div style="font-size:11px;color:var(--dim)">Serie mensual · confirmar al vencer</div></div>
-              <div class="num" style="font-size:13px;font-weight:800;color:var(--neg)">−$45.000</div>
-            </div>
-            <div style="display:flex;align-items:center;gap:12px;padding:10px 0">
-              <div style="width:42px;flex:none;text-align:center"><div style="font-size:9.5px;font-weight:700;color:var(--dim)">AGO</div><div class="num" style="font-size:15px;font-weight:800">26</div></div>
-              <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">Internet y celular</div><div style="font-size:11px;color:var(--dim)">Serie mensual · Claro</div></div>
-              <div class="num" style="font-size:13px;font-weight:800;color:var(--neg)">−$109.000</div>
-            </div>
+            <sc-for list="{{ homeUpcoming }}" as="u" hint-placeholder-count="3">
+              <div onClick="{{ goRecurring }}" style="{{ u.rowStyle }}">
+                <div style="width:42px;flex:none;text-align:center"><div style="{{ u.monStyle }}">{{ u.mon }}</div><div class="num" style="font-size:15px;font-weight:800">{{ u.day }}</div></div>
+                <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">{{ u.label }}</div><div style="font-size:11px;color:var(--dim)">{{ u.detail }}</div></div>
+                <div class="num" style="{{ u.amountStyle }}">{{ u.amount }}</div>
+              </div>
+            </sc-for>
+            <sc-if value="{{ homeUpcomingEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:12px;color:var(--dim);padding:6px 0 2px">Nada programado para esta semana.</div>
+            </sc-if>
           </div>
         </div>
 
@@ -203,9 +212,9 @@
             <div onClick="{{ goTransactions }}" style="font-size:11.5px;font-weight:700;color:var(--accent2);cursor:pointer">Ver todos</div>
           </div>
           <sc-for list="{{ txns }}" as="tx" hint-placeholder-count="4">
-            <div style="display:flex;align-items:center;gap:13px;padding:11px 0;border-bottom:1px solid var(--subtle)">
+            <div onClick="{{ goTransactions }}" style="display:flex;align-items:center;gap:13px;padding:11px 0;border-bottom:1px solid var(--subtle);cursor:pointer">
               {{ tx.chip }}
-              <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">{{ tx.desc }}</div><div style="font-size:11px;color:var(--dim)">{{ tx.merchant }} · {{ tx.date }}</div></div>
+              <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700">{{ tx.desc }}</div><div style="font-size:11px;color:var(--dim)">{{ tx.merchant }} · {{ tx.date }} · {{ tx.wallet }}</div></div>
               <span class="num" style="{{ tx.amountStyle }}">{{ tx.amount }}</span>
             </div>
           </sc-for>
@@ -376,7 +385,10 @@
 
     <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
     <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column">
-      <div style="padding:10px 20px 12px;flex:none;font-size:21px;font-weight:800;letter-spacing:-.02em">Perfil</div>
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 18px 12px;flex:none">
+        <div onClick="{{ goHome }}" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;color:var(--muted);cursor:pointer">←</div>
+        <div style="font-size:17px;font-weight:800;letter-spacing:-.015em">Perfil</div>
+      </div>
       <div class="scroll" style="padding:0 20px 20px;gap:14px">
         <div style="background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:18px;display:flex;align-items:center;gap:14px">
           <div style="width:54px;height:54px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;flex:none">MT</div>
@@ -405,8 +417,8 @@
     <sc-if value="{{ isTransactions }}" hint-placeholder-val="{{ false }}">
     <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column;background:var(--bg)">
       <div style="display:flex;align-items:center;gap:12px;padding:10px 18px 12px;flex:none">
-        <div onClick="{{ goHome }}" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;color:var(--muted);cursor:pointer">←</div>
-        <div style="font-size:17px;font-weight:800;letter-spacing:-.015em">Movimientos</div>
+        <div style="flex:1;min-width:0;font-size:21px;font-weight:800;letter-spacing:-.02em;padding-left:2px">Movimientos</div>
+        <div onClick="{{ goRecurring }}" style="height:34px;display:flex;align-items:center;padding:0 12px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:12px;font-weight:700;color:var(--accent2);cursor:pointer">Programados</div>
       </div>
       <div style="padding:0 20px 12px;flex:none;display:flex;gap:8px">
         <sc-for list="{{ txFilters }}" as="f" hint-placeholder-count="4">
@@ -544,7 +556,7 @@
     <sc-if value="{{ isWallets }}" hint-placeholder-val="{{ false }}">
     <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column;background:var(--bg)">
       <div style="display:flex;align-items:center;gap:12px;padding:10px 18px 12px;flex:none">
-        <div onClick="{{ goProfile }}" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;color:var(--muted);cursor:pointer">←</div>
+        <div onClick="{{ backFromWallets }}" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;color:var(--muted);cursor:pointer">←</div>
         <div style="flex:1;min-width:0;font-size:17px;font-weight:800;letter-spacing:-.015em">Billeteras</div>
         <div onClick="{{ openNewWallet }}" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:300;color:var(--accent);cursor:pointer">+</div>
       </div>
@@ -569,7 +581,7 @@
     <div style="flex:1 1 0;min-height:0;display:flex;flex-direction:column;background:var(--bg)">
       <div style="display:flex;align-items:center;gap:12px;padding:10px 18px 12px;flex:none">
         <div onClick="{{ backFromRecurring }}" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;color:var(--muted);cursor:pointer">←</div>
-        <div style="flex:1;min-width:0;font-size:17px;font-weight:800;letter-spacing:-.015em">Recurrentes</div>
+        <div style="flex:1;min-width:0;font-size:17px;font-weight:800;letter-spacing:-.015em">Programados</div>
         <div onClick="{{ openNewSeries }}" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:300;color:var(--accent);cursor:pointer">+</div>
       </div>
       <div class="scroll" style="padding:12px 20px 20px;gap:12px">
@@ -1165,10 +1177,10 @@ const INCOME_CATEGORIES = [
 ]
 
 const TXNS = [
-  { desc: 'Mercado semanal', merchant: 'Éxito', date: 'Hoy', wallet: 'Bancolombia', amount: '−$168.500', color: C.food, neg: true },
-  { desc: 'Café', merchant: 'Tostao', date: 'Hoy', wallet: 'Efectivo', amount: '−$21.000', color: C.food, neg: true },
-  { desc: 'Viaje en app', merchant: 'Uber', date: 'Ayer', wallet: 'Nequi', amount: '−$21.000', color: C.transportation, neg: true },
-  { desc: 'Internet y celular', merchant: 'Claro', date: 'Ayer', wallet: 'Bancolombia', amount: '−$109.000', color: C.bills, neg: true },
+  { desc: 'Mercado semanal', merchant: 'Éxito', date: 'Hoy', wallet: 'Bancolombia', amount: '−$168.500', cat: 'Alimentación', color: C.food, neg: true },
+  { desc: 'Café', merchant: 'Tostao', date: 'Hoy', wallet: 'Efectivo', amount: '−$21.000', cat: 'Alimentación', color: C.food, neg: true },
+  { desc: 'Viaje en app', merchant: 'Uber', date: 'Ayer', wallet: 'Nequi', amount: '−$21.000', cat: 'Transporte', color: C.transportation, neg: true },
+  { desc: 'Internet y celular', merchant: 'Claro', date: 'Ayer', wallet: 'Bancolombia', amount: '−$109.000', cat: 'Servicios', color: C.bills, neg: true },
 ]
 
 const BUDGET_SEED = [
@@ -1278,16 +1290,17 @@ const inkOn = (hex) => {
 // Profile's own destinations, per ProfileScreen's callbacks in NovaNavGraph.kt
 const PROFILE_ROWS = [
   { label: 'Billeteras', detail: '3 activas · $16.147.300', color: 'var(--accent)' },
-  { label: 'Recurrentes', detail: '6 series activas', color: C.subscriptions },
+  { label: 'Programados', detail: '6 series activas', color: C.subscriptions },
   { label: 'Ajustes', detail: 'Idioma, moneda, seguridad', color: C.bills },
 ]
 
-// Bottom bar: HOME, REPORTS, [FAB], BUDGETS, PROFILE (BottomNavBar.kt)
-const TABS = ['Inicio', 'Reportes', null, 'Planes', 'Perfil']
+// Bottom bar (architecture v2): HOME, TRANSACTIONS, [FAB], PLANS, REPORTS. Profile opens from the header avatar.
+const TABS = ['Inicio', 'Movimientos', null, 'Planes', 'Reportes']
 
 const TAB_ICONS = {
   Inicio: ['M3 10.2 12 3.4l9 6.8V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z'],
   Reportes: ['M5 21V10', 'M12 21V4', 'M19 21v-7'],
+  Movimientos: ['M8 6h13', 'M8 12h13', 'M8 18h13', 'M3.5 6h.01', 'M3.5 12h.01', 'M3.5 18h.01'],
   Planes: ['M3 8h15a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3H5a2 2 0 0 1-2-2z', 'M3 8V6a2 2 0 0 1 2-2h11', 'M17 14h.01'],
   Perfil: ['M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', 'M4 21v-1a5 5 0 0 1 5-5h6a5 5 0 0 1 5 5v1'],
 }
@@ -1336,7 +1349,7 @@ const CAT_GLYPHS = {
   'Freelance': ['M4 5h16v10H4z', 'M2 19h20'],
   'Otros': ['M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z', 'M8 11h.01', 'M12 11h.01', 'M16 11h.01'],
   'Billeteras': ['M3 7h18a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12', 'M17 13h.01'],
-  'Recurrentes': ['M3 12a9 9 0 0 1 15-6.7L21 8', 'M21 3v5h-5', 'M21 12a9 9 0 0 1-15 6.7L3 16', 'M3 21v-5h5'],
+  'Programados': ['M3 12a9 9 0 0 1 15-6.7L21 8', 'M21 3v5h-5', 'M21 12a9 9 0 0 1-15 6.7L3 16', 'M3 21v-5h5'],
   'Préstamos': ['M12 2v20', 'M17 6.5C17 4.6 14.8 3 12 3S7 4.6 7 6.5s2.2 3.5 5 3.5 5 1.6 5 3.5-2.2 3.5-5 3.5-5-1.6-5-3.5'],
   'Ajustes': ['M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', 'M4.5 9.5a2 2 0 0 1 .3-2.4l.7-.7a2 2 0 0 1 2.4-.3', 'M14.1 4.6a2 2 0 0 1 2.4.3l.7.7a2 2 0 0 1 .3 2.4', 'M19.5 14.5a2 2 0 0 1-.3 2.4l-.7.7a2 2 0 0 1-2.4.3', 'M9.9 19.4a2 2 0 0 1-2.4-.3l-.7-.7a2 2 0 0 1-.3-2.4'],
 }
@@ -1528,7 +1541,8 @@ const SERIES_SEED = [
   { id: 4, label: 'Salario mensual', amount: 4400000, income: true, cat: 'Salario', freq: 'Mensual', next: '2026-09-01', active: true, dueToday: false },
   { id: 5, label: 'Gimnasio', amount: 89000, income: false, cat: 'Entretenimiento', freq: 'Mensual', next: '2026-09-05', active: false, dueToday: false },
 ]
-const FREQS = ['Semanal', 'Quincenal', 'Mensual', 'Anual']
+// Matches backend RecurrenceInterval (WEEKLY / MONTHLY / YEARLY).
+const FREQS = ['Semanal', 'Mensual', 'Anual']
 const guessIncomeCategory = (name) => {
   const n = (name || '').toLowerCase()
   if (!n.trim()) return null
@@ -1562,7 +1576,7 @@ const TUTORIAL = [
   ['Todo tu dinero en un solo saldo', 'El saldo de Inicio es la suma de tus billeteras. Agrégalas o edítalas desde Perfil › Billeteras y el total se recalcula solo.'],
   ['Registra con el botón +', 'El + del centro abre gasto, ingreso o transferencia. La categoría se sugiere por el nombre y puedes marcar el movimiento como próximo si aún no afecta el saldo.'],
   ['Presupuestos y metas viven en Planes', 'Un presupuesto pone un límite mensual por categoría. Una meta acumula abonos desde la billetera que elijas y recuerda de dónde vino cada peso.'],
-  ['Lo que se repite, automatízalo', 'Recurrentes guarda tus cobros fijos con su frecuencia. No mueven saldo hasta que confirmas cada uno, así que nada se descuenta por error.'],
+  ['Lo que se repite, automatízalo', 'Programados guarda tus cobros fijos con su frecuencia. No mueven saldo hasta que confirmas cada uno, así que nada se descuenta por error.'],
 ]
 
 const LOAN_SEED = [
@@ -1612,6 +1626,7 @@ class Component extends DCLogic {
     datePicker: null,
     notifOpen: false,
     notifRead: {},
+    homeDismissed: {},
     loanList: LOAN_SEED,
     loanDraft: null,
     loanPay: null,
@@ -1683,6 +1698,40 @@ class Component extends DCLogic {
         background: selected ? 'var(--accent)' : 'var(--surface2)',
         border: '1px solid ' + (selected ? 'transparent' : 'rgba(111,111,130,.4)'),
       },
+    }
+  }
+
+  homeVals(notifs) {
+    const s = this.state
+    const top = notifs.find((n) => !n.read && !s.homeDismissed[n.id])
+    const horizon = '2026-08-28'
+    const up = s.seriesList
+      .filter((x) => x.active && (x.dueToday || x.next <= horizon))
+      .sort((x, y) => (x.dueToday === y.dueToday ? (x.next < y.next ? -1 : 1) : x.dueToday ? -1 : 1))
+    return {
+      homeAlert: top
+        ? {
+            title: top.title,
+            body: top.body,
+            chip: mark(top.cat, top.color, 36, '29'),
+            onOpen: () => this.set({ ...top.go, notifRead: { ...s.notifRead, [top.id]: true } }),
+            onDismiss: (e) => { e.stopPropagation(); this.set({ homeDismissed: { ...s.homeDismissed, [top.id]: true } }) },
+          }
+        : null,
+      homeUpcoming: up.map((x, i) => {
+        const [, m, d] = isoParts(x.dueToday ? TODAY_ISO : x.next)
+        return {
+          label: x.label,
+          mon: x.dueToday ? 'HOY' : MONTHS_ABBR[m - 1].toUpperCase(),
+          day: String(d).padStart(2, '0'),
+          detail: x.dueToday ? 'Vence hoy · confírmalo para que afecte el saldo' : 'Programado · ' + x.freq.toLowerCase(),
+          amount: (x.income ? '+' : '−') + fmtMoney(x.amount),
+          monStyle: { fontSize: '9.5px', fontWeight: 700, color: x.dueToday ? 'var(--warn)' : 'var(--dim)' },
+          amountStyle: { fontSize: '13px', fontWeight: 800, color: x.income ? 'var(--pos)' : 'var(--neg)' },
+          rowStyle: { display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: i < up.length - 1 ? '1px solid var(--subtle)' : 'none', cursor: 'pointer' },
+        }
+      }),
+      homeUpcomingEmpty: up.length === 0,
     }
   }
 
@@ -1811,9 +1860,12 @@ class Component extends DCLogic {
       isProfile: s.screen === 'Perfil',
       isTransactions: s.screen === 'Movimientos',
       isAdd: s.screen === 'Add',
-      showBottomBar: ['Inicio', 'Reportes', 'Planes', 'Perfil'].includes(s.screen),
+      showBottomBar: ['Inicio', 'Movimientos', 'Planes', 'Reportes'].includes(s.screen),
       isWallets: s.screen === 'Billeteras',
       goRecurring: () => this.set({ screen: 'Recurrentes', sheet: null, backTo: s.screen }),
+      goWalletsFromHome: (e) => { if (e) e.stopPropagation(); this.set({ screen: 'Billeteras', sheet: null, backTo: 'Inicio' }) },
+      backFromWallets: () => this.set({ screen: s.backTo || 'Perfil', backTo: null }),
+      ...this.homeVals(notifs),
       backFromRecurring: () => this.set({ screen: s.backTo || 'Perfil', backTo: null }),
       isRecurring: s.screen === 'Recurrentes',
       isSettings: s.screen === 'Ajustes',
@@ -2311,10 +2363,12 @@ class Component extends DCLogic {
         }
       }),
 
-      homeBudgets: blist.slice(0, 3).map((b) => {
+      homeBudgets: blist.slice().sort((x, y) => y.n - x.n).slice(0, 3).map((b) => {
         const tone = b.n >= 90 ? 'var(--neg)' : b.n >= 65 ? 'var(--warn)' : 'var(--pos)'
         return {
           label: b.label,
+          spent: b.spent,
+          limit: b.limit,
           pct: b.n + '%',
           pctStyle: { color: tone, fontWeight: 800 },
           fillStyle: { width: b.n + '%', height: '100%', background: tone },
@@ -2323,11 +2377,11 @@ class Component extends DCLogic {
 
       txns: TXNS.map((tx) => ({
         ...tx,
-        chip: mark(tx.desc.includes('Viaje') ? 'Transporte' : tx.desc.includes('Internet') ? 'Servicios' : 'Alimentación', tx.color, 38, '29'),
+        chip: mark(tx.cat, tx.color, 38, '29'),
         amountStyle: { fontSize: '13px', fontWeight: 800, color: tx.neg ? 'var(--neg)' : 'var(--pos)' },
       })),
-      txnsToday: TXNS.slice(0, 2).map((tx) => ({ ...tx, chip: mark(tx.desc.includes('Viaje') ? 'Transporte' : tx.desc.includes('Internet') ? 'Servicios' : 'Alimentación', tx.color, 38, '29'), amountStyle: { fontSize: '13.5px', fontWeight: 800, color: 'var(--neg)' } })),
-      txnsYesterday: TXNS.slice(2).map((tx) => ({ ...tx, chip: mark(tx.desc.includes('Viaje') ? 'Transporte' : tx.desc.includes('Internet') ? 'Servicios' : 'Alimentación', tx.color, 38, '29'), amountStyle: { fontSize: '13.5px', fontWeight: 800, color: 'var(--neg)' } })),
+      txnsToday: TXNS.slice(0, 2).map((tx) => ({ ...tx, chip: mark(tx.cat, tx.color, 38, '29'), amountStyle: { fontSize: '13.5px', fontWeight: 800, color: 'var(--neg)' } })),
+      txnsYesterday: TXNS.slice(2).map((tx) => ({ ...tx, chip: mark(tx.cat, tx.color, 38, '29'), amountStyle: { fontSize: '13.5px', fontWeight: 800, color: 'var(--neg)' } })),
 
       txFilters: ['Todos', 'Gastos', 'Ingresos', 'Pendientes'].map((label) =>
         this.pill(label, s.txFilter === label, () => this.set({ txFilter: label })),
@@ -2623,9 +2677,9 @@ class Component extends DCLogic {
 
       profileRows: PROFILE_ROWS.map((r) => ({
         ...r,
-        detail: r.label === 'Billeteras' ? s.walletList.length + ' activas · ' + fmtMoney(walletsTotal) : r.label === 'Recurrentes' ? activeSeries + ' series activas' : r.label === 'Préstamos' ? (lentOpen === 0 && owedOpen === 0 ? 'Sin saldos abiertos' : 'Te deben ' + fmtMoney(lentOpen) + ' · debes ' + fmtMoney(owedOpen)) : r.detail,
+        detail: r.label === 'Billeteras' ? s.walletList.length + ' activas · ' + fmtMoney(walletsTotal) : r.label === 'Programados' ? activeSeries + ' series activas' : r.label === 'Préstamos' ? (lentOpen === 0 && owedOpen === 0 ? 'Sin saldos abiertos' : 'Te deben ' + fmtMoney(lentOpen) + ' · debes ' + fmtMoney(owedOpen)) : r.detail,
         chip: mark(r.label, r.color, 34, '29'),
-        onClick: () => this.setState({ screen: r.label }),
+        onClick: () => this.setState({ screen: r.label === 'Programados' ? 'Recurrentes' : r.label, backTo: 'Perfil' }),
       })),
 
       // AddActionsSheet.kt has exactly two actions: manual entry and scan.

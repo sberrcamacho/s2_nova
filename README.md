@@ -1,20 +1,19 @@
 # S2 Nova
 
-Personal finance product made of two separate applications that share a
-visual identity and one backend, but are built, run, and deployed
-independently. See `AGENTS.md` for the full architecture rationale and
-`ARCHITECTURE.md` for the backend/sync design.
+One personal finance product with two clients — Android and Web — that
+share one backend, one database and one domain model, and offer the same
+financial capabilities (barcode capture is the only Android-only feature).
+See `AGENTS.md` for the product principles and `ARCHITECTURE.md` for the
+backend/sync design.
 
-- **`android/`** — native mobile app (Kotlin + Jetpack Compose). Daily
-  financial operations: expenses, income, transactions, budgets, barcode
-  scanning. See `android/AGENTS.md`.
-- **`web/`** — web dashboard (React + TypeScript + Vite). Financial
-  analysis: statistics, charts, categories, analytics, reports. See
-  `web/AGENTS.md`.
+- **`android/`** — native client (Kotlin + Jetpack Compose), tuned for
+  everyday mobile use and barcode scanning. See `android/AGENTS.md`.
+- **`web/`** — web client (React + TypeScript + Vite), tuned for desktop
+  management and deeper analysis. See `web/AGENTS.md`.
 - **`backend/`** — shared API (Node.js + TypeScript + Fastify +
   Prisma/PostgreSQL) both apps talk to. See `backend/AGENTS.md`.
-- **`design-reference/`** — Figma screenshots (`figma/`, the visual source
-  of truth) and current-implementation screenshots (`current/`).
+- **`s2_nova_stage2_handoff/`** — approved product architecture, stage
+  specs and the v2 interactive mockups (visual source of truth).
 
 Both apps are wired to the real backend (auth incl. Google Sign-In,
 accounts, transactions, budgets, goals, recurring series) — Web has its own

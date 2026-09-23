@@ -148,7 +148,7 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   way (`TransactionRepository.paidSoFar`/`outstandingFor`), never a stored
   running total that could drift. The 4th bottom-nav slot is **Planes**
   (`PlanesScreen.kt`, per the design handoff in
-  `design_handoff_s2_nova_overview/`), three tabs: Presupuestos, Metas
+  `s2_nova_stage2_handoff/`), three tabs: Presupuestos, Metas
   (`GoalsTab`), and Préstamos (`LoansTab`) — Loans moved out of Profile and
   is no longer its own stacked destination. Budget/goal progress is
   computed server-side and read directly
@@ -268,8 +268,8 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   `isDark`. The adaptive launcher icon (`mipmap-*/ic_launcher_foreground.png`)
   is generated from the dark variant since the launcher background stays
   dark. Regenerate all of these from
-  `design-reference/suggestions/logo-dark.png`/`logo-light.png` together if
-  the mark ever changes.
+  `s2_nova_stage2_handoff/design_handoff_s2_nova_overview/assets/logo-mark-dark.png`/
+  `logo-mark-light.png` together if the mark ever changes.
 - **System splash screen** (shown before any Compose content exists, via
   `androidx.core:core-splashscreen`): `MainActivity` calls
   `installSplashScreen()`; the Activity's manifest theme is
@@ -288,8 +288,8 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   the icon used to fall back to the launcher's adaptive icon, which is
   always dark, showing a black card even in light mode). Regenerate the
   splash icons the same way as `logo_mark_*` (transparent glyph, no card)
-  from `design-reference/suggestions/logo-dark.png`/`logo-light.png` if the
-  mark changes.
+  from `s2_nova_stage2_handoff/design_handoff_s2_nova_overview/assets/logo-mark-dark.png`/
+  `logo-mark-light.png` if the mark changes.
 - **Pill selector pattern** (`AddTransactionScreen.kt`'s `SelectChip`,
   `GoalContributionScreen.kt`'s `GoalContributionChip`): filled `primary`
   background when selected, a subtle `outline`-alpha `border` when not (so
@@ -302,10 +302,12 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   `RecurringScreen.kt`'s `RecurringChip`. **Category selection** is a
   `ModalBottomSheet` icon
   grid (`CategoryGridItem`) opened by tapping the category preview in the
-  Add Transaction hero card, not an inline chip row — chosen after
-  `design-reference/suggestions/transaction-select-category.jpeg` showed a
-  grid reads better than a horizontally-scrolling row once a category list
-  gets long; it reuses the existing `CategoryIcon` per-category color
+  Add Transaction hero card, not an inline chip row — chosen after an early
+  design suggestion (`transaction-select-category.jpeg`, since removed from
+  the repo in the `design-reference/` → `design_handoff_s2_nova_overview/`
+  consolidation) showed a grid reads better than a horizontally-scrolling
+  row once a category list gets long; it reuses the existing `CategoryIcon`
+  per-category color
   tokens rather than the reference's flat icon tiles, to stay visually
   distinct from that source. **Subcategory selection** follows the same
   grid pattern one level down (`SubcategoryGridItem`, opened automatically
