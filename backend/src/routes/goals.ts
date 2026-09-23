@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { GOAL_CATEGORY_IDS } from "../lib/goalCategories.js";
 import { paymentMethodForAccountType } from "./transactions.js";
+import { computeProgress, serializeGoal } from "../lib/goalProgress.js";
 import { prisma } from "../lib/prisma.js";
 import { dateOnlySchema } from "../lib/validation.js";
 
@@ -24,41 +25,6 @@ const updateGoalSchema = z.object({
 const deleteGoalSchema = z.object({
   returnToAccountId: z.string().uuid().optional(),
 });
-
-async function computeProgress(goalId: string): Promise<bigint> {
-  const rows = await prisma.transaction.findMany({
-    where: { goalId, status: "COMPLETED" },
-    select: { amountMinor: true },
-  });
-  return rows.reduce((sum, row) => sum + row.amountMinor, 0n);
-}
-
-async function serializeGoal(goal: {
-  id: string;
-  name: string;
-  targetAmountMinor: bigint;
-  targetDate: Date | null;
-  themeIcon: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-}) {
-  const currentAmount = await computeProgress(goal.id);
-  const target = goal.targetAmountMinor;
-  const percentage = target > 0n ? Math.min(999, Math.round((Number(currentAmount) / Number(target)) * 100)) : 0;
-
-  return {
-    id: goal.id,
-    name: goal.name,
-    targetAmount: target,
-    currentAmount,
-    remaining: target - currentAmount,
-    percentage,
-    themeIcon: goal.themeIcon,
-    targetDate: goal.targetDate,
-    createdAt: goal.createdAt,
-    updatedAt: goal.updatedAt,
-  };
-}
 
 export async function goalRoutes(app: FastifyInstance) {
   app.get("/goals", { preHandler: app.authenticate }, async (request) => {

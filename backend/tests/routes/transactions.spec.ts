@@ -628,6 +628,44 @@ describe("transaction routes", () => {
   });
 
   describe("GET /transactions", () => {
+    it("returns a loan's live outstanding balance (null for non-loans and settlement rows)", async () => {
+      const user = await createTestUser();
+      const wallet = await createAccount(user.id, { initialBalanceMinor: 1000000n });
+      const other = await categoryBySlug("other");
+
+      const loan = (
+        await app.inject({
+          method: "POST",
+          url: "/api/v1/transactions",
+          headers: authHeader(user),
+          payload: { accountId: wallet.id, type: "EXPENSE", amount: 600000, categoryId: other.id, loanKind: "LENT", counterpartyName: "Camilo", description: "Préstamo", date: "2026-08-01" },
+        })
+      ).json();
+      expect(loan.outstanding).toBe(600000);
+
+      const settle = await app.inject({
+        method: "POST",
+        url: `/api/v1/transactions/${loan.id}/settle-loan`,
+        headers: authHeader(user),
+        payload: { amount: 180000 },
+      });
+      expect(settle.json().original.outstanding).toBe(420000);
+
+      const rows = (await app.inject({ method: "GET", url: "/api/v1/transactions", headers: authHeader(user) })).json();
+      const listedLoan = rows.find((row: { id: string }) => row.id === loan.id);
+      const settlementRow = rows.find((row: { parentLoanId: string | null }) => row.parentLoanId === loan.id);
+      expect(listedLoan.outstanding).toBe(420000);
+      expect(settlementRow.outstanding).toBeNull();
+
+      const patched = await app.inject({
+        method: "PATCH",
+        url: `/api/v1/transactions/${loan.id}`,
+        headers: authHeader(user),
+        payload: { counterpartyName: "Camilo Restrepo" },
+      });
+      expect(patched.json().outstanding).toBe(420000);
+    });
+
     it("filters by type, category, and date range", async () => {
       const user = await createTestUser();
       const wallet = await createAccount(user.id);

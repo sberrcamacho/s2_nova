@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import { parseDateOnly } from "../lib/dates.js";
+import { loanRepaidMap, outstandingOf } from "../lib/loans.js";
 import { prisma } from "../lib/prisma.js";
 import { dateOnlySchema } from "../lib/validation.js";
 
@@ -174,7 +175,7 @@ function serializeTransaction(row: {
   transactionDate: Date;
   createdAt: Date;
   updatedAt: Date;
-}) {
+}, repaidMinor?: bigint) {
   return {
     id: row.id,
     accountId: row.accountId,
@@ -194,6 +195,9 @@ function serializeTransaction(row: {
     loanSettledAt: row.loanSettledAt,
     settledByTransactionId: row.settledByTransactionId,
     parentLoanId: row.parentLoanId,
+    // Only loans carry an outstanding balance; null for everything else
+    // (including settlement rows, which have parentLoanId but no loanKind).
+    outstanding: row.loanKind ? outstandingOf(row, repaidMinor) : null,
     paymentMethod: row.paymentMethod,
     description: row.description,
     merchant: row.merchant,
@@ -256,7 +260,8 @@ export async function transactionRoutes(app: FastifyInstance) {
       take: query.limit,
       skip: query.offset,
     });
-    return rows.map(serializeTransaction);
+    const repaid = await loanRepaidMap(rows.filter((row) => row.loanKind).map((row) => row.id));
+    return rows.map((row) => serializeTransaction(row, repaid.get(row.id)));
   });
 
   app.post("/transactions", { preHandler: app.authenticate }, async (request, reply) => {
@@ -398,7 +403,8 @@ export async function transactionRoutes(app: FastifyInstance) {
       return row;
     });
 
-    return serializeTransaction(updated);
+    const repaid = updated.loanKind ? await loanRepaidMap([updated.id]) : new Map<string, bigint>();
+    return serializeTransaction(updated, repaid.get(updated.id));
   });
 
   // Creates a real, opposite-direction transaction for the repayment
@@ -499,8 +505,9 @@ export async function transactionRoutes(app: FastifyInstance) {
       return { settlement, updatedOriginal };
     });
 
+    const repaid = await loanRepaidMap([result.updatedOriginal.id]);
     return {
-      original: serializeTransaction(result.updatedOriginal),
+      original: serializeTransaction(result.updatedOriginal, repaid.get(result.updatedOriginal.id)),
       settlement: serializeTransaction(result.settlement),
     };
   });

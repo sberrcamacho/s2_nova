@@ -90,6 +90,16 @@ up beyond pointing it at the URL above.
   Lent/Borrowed transaction gets settled — it creates a real
   opposite-direction transaction (see schema.prisma's
   `settledByTransactionId` doc comment), not just a status flag.
+  Loan rows returned by `transactions.ts` carry a server-computed
+  `outstanding` (`src/lib/loans.ts`); clients never re-derive it.
+  `summary.ts` (`GET /summary/months`, `GET /summary/categories`) and
+  `alerts.ts` (`GET /alerts`) are the shared Inicio aggregates and alert
+  rules both clients consume — add figures there rather than computing
+  them per client. Both accept `?today=YYYY-MM-DD` (the client's local
+  date) because month and "due today" boundaries are the user's.
+- `src/lib/budgetProgress.ts`, `src/lib/goalProgress.ts` — the single
+  spent/percentage/status computation for budgets and goals, shared by
+  their routes and the alert rules.
 - `src/server.ts` — Fastify bootstrap: plugin registration, route
   registration, listen
 

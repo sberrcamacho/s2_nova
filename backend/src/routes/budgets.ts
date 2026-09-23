@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { currentMonthKey, monthEnd, monthStart } from "../lib/dates.js";
+import { serializeBudget } from "../lib/budgetProgress.js";
+import { currentMonthKey, monthStart } from "../lib/dates.js";
 import { BUDGET_GOAL_THEME_IDS } from "../lib/budgetGoalThemes.js";
 import { prisma } from "../lib/prisma.js";
 import { monthKeySchema } from "../lib/validation.js";
@@ -28,32 +29,6 @@ const recommendationSchema = z.object({
   savingsPct: z.number().min(0).max(100).default(20),
 });
 
-// A transaction contributes to a budget either by direct link
-// (transaction.budgetId = budget.id) or, for budgets nothing links to
-// directly yet, by the legacy category+month match — never both, so a
-// transaction can't double-count (it either has budgetId set or it
-// doesn't). See schema.prisma's Budget doc comment.
-async function computeSpent(userId: string, budget: { id: string; categoryId: string; startDate: Date }): Promise<bigint> {
-  const monthKey = `${budget.startDate.getUTCFullYear()}-${String(budget.startDate.getUTCMonth() + 1).padStart(2, "0")}`;
-  const rows = await prisma.transaction.findMany({
-    where: {
-      userId,
-      type: "EXPENSE",
-      status: "COMPLETED",
-      OR: [
-        { budgetId: budget.id },
-        {
-          budgetId: null,
-          categoryId: budget.categoryId,
-          transactionDate: { gte: monthStart(monthKey), lte: monthEnd(monthKey) },
-        },
-      ],
-    },
-    select: { amountMinor: true },
-  });
-  return rows.reduce((sum, row) => sum + row.amountMinor, 0n);
-}
-
 // Splits `total` into integer amounts proportional to `percentages`
 // (summing to ~100) that themselves sum EXACTLY to `total` — three
 // independent `Math.round`s (the previous implementation) can under/
@@ -75,37 +50,6 @@ function allocateByPercentage(total: number, percentages: number[]): number[] {
     leftover -= 1;
   }
   return amounts;
-}
-
-async function serializeBudget(userId: string, budget: {
-  id: string;
-  name: string | null;
-  categoryId: string;
-  amountMinor: bigint;
-  themeIcon: string | null;
-  startDate: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}) {
-  const spent = await computeSpent(userId, budget);
-  const limit = budget.amountMinor;
-  const percentage = limit > 0n ? Math.min(999, Math.round((Number(spent) / Number(limit)) * 100)) : 0;
-  const status = percentage >= 100 ? "OVER_BUDGET" : percentage >= 80 ? "NEAR_LIMIT" : "ON_TRACK";
-
-  return {
-    id: budget.id,
-    name: budget.name,
-    categoryId: budget.categoryId,
-    amount: limit,
-    spent,
-    remaining: limit - spent,
-    percentage,
-    status,
-    themeIcon: budget.themeIcon,
-    month: `${budget.startDate.getUTCFullYear()}-${String(budget.startDate.getUTCMonth() + 1).padStart(2, "0")}`,
-    createdAt: budget.createdAt,
-    updatedAt: budget.updatedAt,
-  };
 }
 
 export async function budgetRoutes(app: FastifyInstance) {

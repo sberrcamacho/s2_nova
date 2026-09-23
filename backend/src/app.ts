@@ -7,6 +7,7 @@ import { ZodError } from "zod";
 import { env } from "./env.js";
 import authPlugin from "./plugins/auth.js";
 import { accountRoutes } from "./routes/accounts.js";
+import { alertRoutes } from "./routes/alerts.js";
 import { authRoutes } from "./routes/auth.js";
 import { budgetRoutes } from "./routes/budgets.js";
 import { categoryRoutes } from "./routes/categories.js";
@@ -14,6 +15,7 @@ import { goalRoutes } from "./routes/goals.js";
 import { healthRoutes } from "./routes/health.js";
 import { meRoutes } from "./routes/me.js";
 import { recurringSeriesRoutes } from "./routes/recurringSeries.js";
+import { summaryRoutes } from "./routes/summary.js";
 import { transactionRoutes } from "./routes/transactions.js";
 
 // Split out from server.ts so tests can build a fully-wired Fastify
@@ -59,6 +61,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(budgetRoutes, { prefix: "/api/v1" });
   await app.register(goalRoutes, { prefix: "/api/v1" });
   await app.register(recurringSeriesRoutes, { prefix: "/api/v1" });
+  await app.register(summaryRoutes, { prefix: "/api/v1" });
+  await app.register(alertRoutes, { prefix: "/api/v1" });
 
   return app;
 }
