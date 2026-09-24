@@ -20,6 +20,7 @@ internal fun GoalDto.toGoal() = Goal(
     percentage = percentage,
     targetDate = targetDate?.take(10),
     themeIcon = themeIcon,
+    contributions = contributions.associate { it.accountId to it.amount.toDouble() },
 )
 
 // `api` defaults to the real singleton so every production call site
@@ -78,9 +79,9 @@ class GoalRepository(private val api: ApiService = ApiClient.api) {
     // the user's) must be checked explicitly, or the goal gets dropped from
     // local state while still existing server-side and reappears on the
     // next refresh().
-    suspend fun delete(id: String, returnToAccountId: String? = null) {
+    suspend fun delete(id: String, returnToAccountId: String? = null, returnToOrigin: Boolean = false) {
         if (DemoModeFlag.active) return
-        val response = api.deleteGoal(id, DeleteGoalRequest(returnToAccountId))
+        val response = api.deleteGoal(id, DeleteGoalRequest(returnToAccountId, returnToOrigin.takeIf { it }))
         if (!response.isSuccessful) {
             throw retrofit2.HttpException(response)
         }

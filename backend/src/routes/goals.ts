@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { GOAL_CATEGORY_IDS } from "../lib/goalCategories.js";
 import { paymentMethodForAccountType } from "./transactions.js";
-import { computeProgress, serializeGoal } from "../lib/goalProgress.js";
+import { computeContributions, computeProgress, serializeGoal } from "../lib/goalProgress.js";
 import { prisma } from "../lib/prisma.js";
 import { dateOnlySchema } from "../lib/validation.js";
 
@@ -24,6 +24,8 @@ const updateGoalSchema = z.object({
 
 const deleteGoalSchema = z.object({
   returnToAccountId: z.string().uuid().optional(),
+  // "Devolver a su origen": each contributing wallet gets its own share.
+  returnToOrigin: z.boolean().optional(),
 });
 
 export async function goalRoutes(app: FastifyInstance) {
@@ -97,33 +99,49 @@ export async function goalRoutes(app: FastifyInstance) {
     const currentAmount = await computeProgress(id);
 
     if (currentAmount > 0n) {
-      if (!body.returnToAccountId) {
-        return reply.status(422).send({ error: "returnToAccountId is required to delete a goal with remaining funds." });
+      let refunds: { accountId: string; amount: bigint }[]
+      if (body.returnToOrigin) {
+        refunds = await computeContributions(id);
+        // Rows linked from INCOME or refunds can leave the per-wallet split
+        // short of or above the total; the last wallet absorbs the rest.
+        if (refunds.length === 0) {
+          return reply.status(422).send({ error: "The goal has no contributing wallet to return funds to." });
+        }
+        const split = refunds.reduce((sum, r) => sum + r.amount, 0n);
+        refunds[refunds.length - 1]!.amount += currentAmount - split;
+        refunds = refunds.filter((r) => r.amount > 0n);
+      } else if (body.returnToAccountId) {
+        refunds = [{ accountId: body.returnToAccountId, amount: currentAmount }];
+      } else {
+        return reply.status(422).send({ error: "returnToAccountId or returnToOrigin is required to delete a goal with remaining funds." });
       }
-      const destination = await prisma.account.findFirst({ where: { id: body.returnToAccountId, userId } });
-      if (!destination) {
+      const destinations = await prisma.account.findMany({ where: { id: { in: refunds.map((r) => r.accountId) }, userId } });
+      if (destinations.length !== new Set(refunds.map((r) => r.accountId)).size) {
         return reply.status(422).send({ error: "Destination wallet not found." });
       }
       const otherCategory = await prisma.category.findFirstOrThrow({ where: { slug: "other" } });
 
       await prisma.$transaction(async (tx) => {
-        await tx.transaction.create({
-          data: {
-            userId,
-            accountId: destination.id,
-            type: "INCOME",
-            status: "COMPLETED",
-            amountMinor: currentAmount,
-            categoryId: otherCategory.id,
-            paymentMethod: paymentMethodForAccountType(destination.type),
-            description: `Fondos devueltos: ${existing.name}`,
-            transactionDate: new Date(),
-          },
-        });
-        await tx.account.update({
-          where: { id: destination.id },
-          data: { currentBalanceMinor: { increment: currentAmount } },
-        });
+        for (const refund of refunds) {
+          const destination = destinations.find((d) => d.id === refund.accountId)!;
+          await tx.transaction.create({
+            data: {
+              userId,
+              accountId: destination.id,
+              type: "INCOME",
+              status: "COMPLETED",
+              amountMinor: refund.amount,
+              categoryId: otherCategory.id,
+              paymentMethod: paymentMethodForAccountType(destination.type),
+              description: `Fondos devueltos: ${existing.name}`,
+              transactionDate: new Date(),
+            },
+          });
+          await tx.account.update({
+            where: { id: destination.id },
+            data: { currentBalanceMinor: { increment: refund.amount } },
+          });
+        }
         await tx.goal.delete({ where: { id } });
       });
     } else {

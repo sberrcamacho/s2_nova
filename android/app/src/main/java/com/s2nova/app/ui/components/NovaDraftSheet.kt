@@ -40,6 +40,8 @@ fun NovaDraftSheet(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     title: String? = null,
+    // Mockup sheet note under the title (11 --dim, line-height 1.45).
+    subtitle: androidx.compose.ui.text.AnnotatedString? = null,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -76,7 +78,16 @@ fun NovaDraftSheet(
                     fontSize = 15.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(bottom = 18.dp),
+                    modifier = Modifier.padding(start = 4.dp, end = 4.dp, bottom = if (subtitle != null) 0.dp else 18.dp),
+                )
+            }
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    fontSize = 11.sp,
+                    lineHeight = 16.sp,
+                    color = colors.textDim,
+                    modifier = Modifier.padding(start = 4.dp, end = 4.dp, top = 5.dp, bottom = 18.dp),
                 )
             }
             content()
@@ -112,8 +123,8 @@ fun DraftSheetPrimaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val background = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
-    val contentColor = if (enabled) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+    val background = if (enabled) MaterialTheme.colorScheme.primary else NovaColors.current.pillSurface
+    val contentColor = if (enabled) Color.White else NovaColors.current.textDim
     Box(
         modifier = modifier
             .fillMaxWidth()

@@ -5,6 +5,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,6 +28,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.s2nova.app.data.model.TransactionType
 import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.theme.NovaColors
@@ -91,18 +93,6 @@ fun StatusBadge(text: String, tone: BadgeTone, modifier: Modifier = Modifier) {
 @Composable
 fun cardBorder(): Modifier = Modifier.border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(18.dp))
 
-fun budgetStatusColor(status: com.s2nova.app.data.model.BudgetStatus, colors: com.s2nova.app.ui.theme.NovaExtraColors): Color = when (status) {
-    com.s2nova.app.data.model.BudgetStatus.OVER_BUDGET -> colors.negative
-    com.s2nova.app.data.model.BudgetStatus.NEAR_LIMIT -> colors.warning
-    com.s2nova.app.data.model.BudgetStatus.ON_TRACK -> colors.positive
-}
-
-fun badgeToneFor(status: com.s2nova.app.data.model.BudgetStatus): BadgeTone = when (status) {
-    com.s2nova.app.data.model.BudgetStatus.OVER_BUDGET -> BadgeTone.NEGATIVE
-    com.s2nova.app.data.model.BudgetStatus.NEAR_LIMIT -> BadgeTone.WARNING
-    com.s2nova.app.data.model.BudgetStatus.ON_TRACK -> BadgeTone.POSITIVE
-}
-
 fun Modifier.dashedBorder(color: Color): Modifier = this.drawBehind {
     val strokeWidth = 1.5.dp.toPx()
     val cornerRadius = 16.dp.toPx()
@@ -116,22 +106,24 @@ fun Modifier.dashedBorder(color: Color): Modifier = this.drawBehind {
     )
 }
 
-// Dashed "+ <label>" row for adding a new budget/goal/loan — spec: 1.5dp
-// dashed border, 16dp corner radius, primary-colored icon and text.
+// Dashed "+ <label>" row for adding a new budget/goal/loan — mockup:
+// 1.5dp dashed --line2 border, 16dp corners, 14dp padding, a text "+" at
+// 15 and the label at 12.5 ExtraBold, both in --accent2.
 @Composable
 fun DashedNewRow(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val accent = NovaColors.current.accentText
     Box(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .dashedBorder(MaterialTheme.colorScheme.primary)
+            .dashedBorder(MaterialTheme.colorScheme.outlineVariant)
             .clickable(onClick = onClick)
-            .padding(16.dp),
+            .padding(14.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(end = 6.dp))
-            Text(label, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("+", color = accent, fontSize = 15.sp, lineHeight = 15.sp, fontWeight = FontWeight.ExtraBold)
+            Text(label, color = accent, fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold)
         }
     }
 }

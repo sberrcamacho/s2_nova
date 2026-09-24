@@ -75,45 +75,6 @@ fun NovaDonutChart(
     }
 }
 
-// Single-value ring (Goals tab) — same hand-rolled Canvas approach as
-// NovaDonutChart, but one arc + a centered percentage label.
-@Composable
-fun NovaProgressRing(
-    percentage: Int,
-    color: Color,
-    modifier: Modifier = Modifier,
-    diameter: Dp = 62.dp,
-    strokeWidth: Dp = 6.dp,
-    trackColor: Color = color.copy(alpha = 0.18f),
-    centerLabel: String? = null,
-    // Takes priority over centerLabel when provided — e.g. Goals shows the
-    // goal category's icon at the ring's center instead of the percentage
-    // (see design_handoff_s2_nova_overview/ANDROID.md: "the ring itself is
-    // the percentage"), while the ring's own fill sweep still is the pct.
-    centerContent: (@Composable () -> Unit)? = null,
-) {
-    Box(modifier = modifier.size(diameter), contentAlignment = Alignment.Center) {
-        Canvas(modifier = Modifier.size(diameter)) {
-            val stroke = Stroke(width = strokeWidth.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
-            val inset = strokeWidth.toPx() / 2
-            val arcSize = Size(size.width - strokeWidth.toPx(), size.height - strokeWidth.toPx())
-            drawArc(color = trackColor, startAngle = -90f, sweepAngle = 360f, useCenter = false, topLeft = Offset(inset, inset), size = arcSize, style = stroke)
-            val sweep = (percentage.coerceIn(0, 100) / 100f) * 360f
-            drawArc(color = color, startAngle = -90f, sweepAngle = sweep, useCenter = false, topLeft = Offset(inset, inset), size = arcSize, style = stroke)
-        }
-        if (centerContent != null) {
-            centerContent()
-        } else if (centerLabel != null) {
-            Text(
-                centerLabel,
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-            )
-        }
-    }
-}
-
 @Composable
 fun NovaSparkline(
     points: List<Float>,

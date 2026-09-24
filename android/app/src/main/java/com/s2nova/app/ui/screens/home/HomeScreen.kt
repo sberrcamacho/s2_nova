@@ -624,7 +624,7 @@ private fun CardHeader(title: String, link: String, onLink: () -> Unit) {
     }
 }
 
-private fun toneColor(tone: BudgetTone, colors: NovaExtraColors): Color = when (tone) {
+internal fun toneColor(tone: BudgetTone, colors: NovaExtraColors): Color = when (tone) {
     BudgetTone.NEGATIVE -> colors.negative
     BudgetTone.WARNING -> colors.warning
     BudgetTone.POSITIVE -> colors.positive

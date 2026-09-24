@@ -66,11 +66,18 @@ import com.s2nova.app.ui.components.BackHeader
 import com.s2nova.app.ui.components.CategoryIcon
 import com.s2nova.app.ui.components.CategoryIconSize
 import com.s2nova.app.ui.components.ColorPill
+import com.s2nova.app.ui.components.SheetAmountBox
+import com.s2nova.app.ui.components.SheetBox
+import com.s2nova.app.ui.components.SheetInput
+import com.s2nova.app.ui.components.SheetLabel
+import com.s2nova.app.ui.components.SheetPill
 import com.s2nova.app.ui.components.DraftSheetDeleteRow
 import com.s2nova.app.ui.components.DraftSheetPrimaryButton
 import com.s2nova.app.ui.components.NovaDraftSheet
 import com.s2nova.app.ui.components.MockupIcons
+import com.s2nova.app.ui.longDateLabel
 import com.s2nova.app.ui.rememberAppLanguage
+import com.s2nova.app.ui.shortDateLabel
 import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.suggestExpenseCategory
@@ -156,9 +163,9 @@ fun RecurringScreen(onBack: () -> Unit) {
                 val overdue = due && item.nextOccurrenceDate < today
                 val detail = when {
                     !item.active -> t(StringKey.RECURRING_PAUSED)
-                    overdue -> "${intervalLabel(item.interval, t)} · ${t(StringKey.RECURRING_OVERDUE_SINCE)} ${shortDate(item.nextOccurrenceDate, language)}"
+                    overdue -> "${intervalLabel(item.interval, t)} · ${t(StringKey.RECURRING_OVERDUE_SINCE)} ${shortDateLabel(item.nextOccurrenceDate, language)}"
                     due -> "${intervalLabel(item.interval, t)} · ${t(StringKey.RECURRING_DUE_TODAY)}"
-                    else -> "${intervalLabel(item.interval, t)} · ${t(StringKey.RECURRING_NEXT_DUE)} ${shortDate(item.nextOccurrenceDate, language)}"
+                    else -> "${intervalLabel(item.interval, t)} · ${t(StringKey.RECURRING_NEXT_DUE)} ${shortDateLabel(item.nextOccurrenceDate, language)}"
                 }
                 val income = item.type == TransactionType.INCOME
                 Column(
@@ -312,25 +319,6 @@ private fun intervalLabel(interval: RecurrenceInterval, t: (StringKey) -> String
     RecurrenceInterval.YEARLY -> t(StringKey.RECURRENCE_YEARLY)
 }
 
-private val MONTHS_ABBR_ES = listOf("ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic")
-private val MONTHS_ABBR_EN = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-private val MONTHS_LONG_ES = listOf("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre")
-private val MONTHS_LONG_EN = listOf("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
-
-// Mockup fmtDate: "24 ago".
-private fun shortDate(iso: String, language: AppLanguage): String {
-    val date = LocalDate.parse(iso)
-    return if (language == AppLanguage.EN) "${MONTHS_ABBR_EN[date.monthValue - 1]} ${date.dayOfMonth}"
-    else "${date.dayOfMonth} ${MONTHS_ABBR_ES[date.monthValue - 1]}"
-}
-
-// Mockup fmtDateLong: "24 de agosto de 2026".
-private fun longDate(iso: String, language: AppLanguage): String {
-    val date = LocalDate.parse(iso)
-    return if (language == AppLanguage.EN) "${MONTHS_LONG_EN[date.monthValue - 1]} ${date.dayOfMonth}, ${date.year}"
-    else "${date.dayOfMonth} de ${MONTHS_LONG_ES[date.monthValue - 1]} de ${date.year}"
-}
-
 // Draft state backing the series create/edit sheet. `id == null` means
 // "creating"; an empty nextDate reads "Elegir fecha" and saves as today.
 private data class RecurringDraft(
@@ -420,21 +408,7 @@ private fun RecurringDraftSheet(
 
             Column {
                 SheetLabel(t(StringKey.RECURRING_AMOUNT))
-                SheetBox(padding = PaddingValues(horizontal = 16.dp, vertical = 15.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("$", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Box(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
-                            SheetInput(
-                                value = draft.amountText,
-                                onValueChange = { onDraftChange(draft.copy(amountText = it.filter { c -> c.isDigit() }.take(12))) },
-                                placeholder = "0",
-                                style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.ExtraBold),
-                                keyboardType = KeyboardType.Number,
-                                grouped = true,
-                            )
-                        }
-                    }
-                }
+                SheetAmountBox(draft.amountText) { onDraftChange(draft.copy(amountText = it)) }
             }
 
             // Not in the mockup, whose series have no wallet: the backend
@@ -469,7 +443,7 @@ private fun RecurringDraftSheet(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(MockupIcons.Calendar, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
                         Text(
-                            if (draft.nextDate.isNotBlank()) longDate(draft.nextDate, language) else t(StringKey.DATE_PICKER_CHOOSE),
+                            if (draft.nextDate.isNotBlank()) longDateLabel(draft.nextDate, language) else t(StringKey.DATE_PICKER_CHOOSE),
                             fontSize = 13.5.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = if (draft.nextDate.isNotBlank()) MaterialTheme.colorScheme.onBackground else colors.textDim,
@@ -514,75 +488,4 @@ private fun RecurringDraftSheet(
             DatePicker(state = state)
         }
     }
-}
-
-@Composable
-private fun SheetLabel(text: String) {
-    Text(
-        text,
-        fontSize = 11.5.sp,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(bottom = 8.dp),
-    )
-}
-
-// Mockup field box: 1px --line2 border, 14dp corners.
-@Composable
-private fun SheetBox(padding: PaddingValues, onClick: (() -> Unit)? = null, content: @Composable () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(14.dp))
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(padding),
-    ) { content() }
-}
-
-@Composable
-private fun SheetInput(
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    style: TextStyle,
-    keyboardType: KeyboardType = KeyboardType.Text,
-    grouped: Boolean = false,
-) {
-    val textColor = MaterialTheme.colorScheme.onBackground
-    BasicTextField(
-        value = value,
-        onValueChange = onValueChange,
-        singleLine = true,
-        textStyle = style.copy(color = textColor),
-        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-        visualTransformation = if (grouped) ThousandsGroupingVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None,
-        modifier = Modifier.fillMaxWidth(),
-        decorationBox = { inner ->
-            Box {
-                if (value.isEmpty()) Text(placeholder, style = style.copy(color = NovaColors.current.textDim, fontWeight = FontWeight.SemiBold))
-                inner()
-            }
-        },
-    )
-}
-
-// Mockup pill(): the same unselected/selected treatment as Movimientos' filters.
-@Composable
-private fun SheetPill(label: String, selected: Boolean, onClick: () -> Unit) {
-    val colors = NovaColors.current
-    Text(
-        label,
-        fontSize = 12.sp,
-        fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
-        color = if (selected) MaterialTheme.colorScheme.onPrimary else colors.pillText,
-        maxLines = 1,
-        modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .background(if (selected) MaterialTheme.colorScheme.primary else colors.pillSurface)
-            .border(1.dp, if (selected) Color.Transparent else colors.pillBorder, RoundedCornerShape(50))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 9.dp),
-    )
 }

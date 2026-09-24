@@ -1,11 +1,14 @@
 package com.s2nova.app.ui.screens.goals
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,24 +18,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -43,10 +37,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -59,16 +59,21 @@ import com.s2nova.app.data.model.Wallet
 import com.s2nova.app.data.remote.toUserMessage
 import com.s2nova.app.data.todayISO
 import com.s2nova.app.ui.StringKey
-import com.s2nova.app.ui.ThousandsGroupingVisualTransformation
+import com.s2nova.app.ui.components.ColorPill
 import com.s2nova.app.ui.components.DashedNewRow
 import com.s2nova.app.ui.components.DraftSheetDeleteRow
 import com.s2nova.app.ui.components.DraftSheetPrimaryButton
+import com.s2nova.app.ui.components.GoalCategory
 import com.s2nova.app.ui.components.GoalCategoryId
-import com.s2nova.app.ui.components.GoalCategoryPicker
-import com.s2nova.app.ui.components.NovaCard
+import com.s2nova.app.ui.components.MockupIcons
 import com.s2nova.app.ui.components.NovaDraftSheet
-import com.s2nova.app.ui.components.NovaProgressRing
+import com.s2nova.app.ui.components.SheetAmountBox
+import com.s2nova.app.ui.components.SheetBox
+import com.s2nova.app.ui.components.SheetInput
+import com.s2nova.app.ui.components.SheetLabel
+import com.s2nova.app.ui.components.SheetPill
 import com.s2nova.app.ui.components.goalCategories
+import com.s2nova.app.ui.components.shortWalletName
 import com.s2nova.app.ui.components.goalCategoryFor
 import com.s2nova.app.ui.components.suggestGoalCategory
 import com.s2nova.app.ui.rememberCurrencyFormatter
@@ -76,15 +81,15 @@ import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.theme.NovaColors
 import kotlinx.coroutines.launch
 
-// Goals ("Car Payment", etc.) live as a second tab alongside Budgets
-// rather than a new bottom-nav destination — both are "plan ahead"
-// concepts, and the brief prioritizes keeping Android's navigation
-// unchanged over adding a new top-level surface for a single new screen.
+// Planes › Metas, per the v2 mockup: "+ Nueva meta", then one card per goal
+// (progress ring with the category glyph, pencil to edit, "Abonar"). The
+// goal sheet, the Abonar sheet and the delete sheet (which returns the
+// saved money) follow the mockup's goalSheet / goalPay / goalDel.
 @Composable
 fun GoalsTab(snackbarHostState: SnackbarHostState) {
     val goals by AppContainer.goalRepository.goals.collectAsStateWithLifecycle()
     val wallets by AppContainer.walletRepository.wallets.collectAsStateWithLifecycle()
-    val format = rememberCurrencyFormatter()
+    val colors = NovaColors.current
     val t = rememberStrings()
     val scope = rememberCoroutineScope()
     var draft by remember { mutableStateOf<GoalDraft?>(null) }
@@ -97,8 +102,8 @@ fun GoalsTab(snackbarHostState: SnackbarHostState) {
     }
 
     LazyColumn(
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
             DashedNewRow(
@@ -107,58 +112,34 @@ fun GoalsTab(snackbarHostState: SnackbarHostState) {
             )
         }
 
-        if (goals.isEmpty()) {
-            item {
-                Text(
-                    t(StringKey.GOALS_EMPTY),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 24.dp),
-                )
-            }
-        }
-
-        items(goals) { goal ->
+        items(goals, key = { it.id }) { goal ->
             val category = goalCategoryFor(goal.themeIcon) ?: goalCategories.last()
-            NovaCard(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = {
+            GoalCard(
+                goal = goal,
+                category = category,
+                onEdit = {
                     draft = GoalDraft(
                         id = goal.id,
                         name = goal.name,
                         category = category.id,
                         userPickedCategory = true,
-                        targetText = goal.targetAmount.toInt().toString(),
+                        targetText = goal.targetAmount.toLong().toString(),
                     )
                 },
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    val percentage = goal.percentage.coerceIn(0, 100)
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        // The ring's fill sweep is the percentage; its center
-                        // shows the goal's category icon instead — see
-                        // ANDROID.md's "the ring itself is the percentage".
-                        NovaProgressRing(
-                            percentage = percentage,
-                            color = Color(category.color),
-                            centerContent = {
-                                Icon(category.icon, contentDescription = null, tint = Color(category.color), modifier = Modifier.size(22.dp))
-                            },
-                        )
-                        Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
-                            Text(goal.name, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
-                            Row(modifier = Modifier.padding(top = 4.dp)) {
-                                Text(format(goal.currentAmount), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.ExtraBold)
-                                Text(" / ${format(goal.targetAmount)}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        }
-                    }
-                    Button(
-                        onClick = { paying = goal },
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth().padding(top = 14.dp),
-                    ) { Text(t(StringKey.GOALS_CONTRIBUTE)) }
-                }
+                onPay = { paying = goal },
+            )
+        }
+
+        if (goals.isEmpty()) {
+            item {
+                Text(
+                    t(StringKey.GOALS_EMPTY),
+                    fontSize = 12.sp,
+                    lineHeight = 18.sp,
+                    color = colors.textDim,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp),
+                )
             }
         }
 
@@ -175,10 +156,12 @@ fun GoalsTab(snackbarHostState: SnackbarHostState) {
                 val target = d.targetText.toDoubleOrNull()
                 if (d.name.isNotBlank() && target != null && target > 0) {
                     scope.launch {
-                        if (d.id == null) {
-                            AppContainer.goalRepository.create(d.name.trim(), target, themeIcon = d.category.name)
-                        } else {
-                            AppContainer.goalRepository.update(d.id, d.name.trim(), target, themeIcon = d.category.name)
+                        runCatching {
+                            if (d.id == null) {
+                                AppContainer.goalRepository.create(d.name.trim(), target, themeIcon = d.category.name)
+                            } else {
+                                AppContainer.goalRepository.update(d.id, d.name.trim(), target, themeIcon = d.category.name)
+                            }
                         }
                     }
                     draft = null
@@ -200,11 +183,18 @@ fun GoalsTab(snackbarHostState: SnackbarHostState) {
             goal = goalToDelete,
             wallets = wallets,
             onDismiss = { deleting = null },
-            onConfirm = { destinationWalletId ->
+            onConfirm = { destination ->
                 scope.launch {
                     try {
-                        AppContainer.goalRepository.delete(goalToDelete.id, destinationWalletId)
-                        if (destinationWalletId != null) AppContainer.walletRepository.refresh()
+                        when (destination) {
+                            GoalDestination.Origin -> AppContainer.goalRepository.delete(goalToDelete.id, returnToOrigin = true)
+                            is GoalDestination.Wallet -> AppContainer.goalRepository.delete(goalToDelete.id, destination.id)
+                            null -> AppContainer.goalRepository.delete(goalToDelete.id)
+                        }
+                        if (destination != null) {
+                            AppContainer.walletRepository.refresh()
+                            AppContainer.transactionRepository.refresh()
+                        }
                         deleting = null
                     } catch (error: Exception) {
                         snackbarHostState.showSnackbar(error.toUserMessage(t(StringKey.GOALS_DELETE_ERROR)))
@@ -225,6 +215,97 @@ fun GoalsTab(snackbarHostState: SnackbarHostState) {
     }
 }
 
+private fun goalNote(goal: Goal, t: (StringKey) -> String, format: (Double) -> String): String = when {
+    goal.currentAmount <= 0 -> t(StringKey.GOALS_NOTE_NONE)
+    goal.currentAmount >= goal.targetAmount -> t(StringKey.GOALS_NOTE_DONE)
+    else -> String.format(t(StringKey.GOALS_NOTE_LEFT), format(goal.targetAmount - goal.currentAmount))
+}
+
+@Composable
+private fun GoalCard(goal: Goal, category: GoalCategory, onEdit: () -> Unit, onPay: () -> Unit) {
+    val colors = NovaColors.current
+    val format = rememberCurrencyFormatter()
+    val t = rememberStrings()
+    val shape = RoundedCornerShape(18.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outline, shape)
+            .padding(horizontal = 18.dp, vertical = 16.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            GoalRing(percentage = goal.percentage, category = category)
+            Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        goal.name,
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        maxLines = 1,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Icon(
+                        MockupIcons.Pencil,
+                        contentDescription = t(StringKey.GOALS_EDIT_TITLE),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .clip(CircleShape)
+                            .clickable(onClick = onEdit)
+                            .padding(2.dp)
+                            .size(15.dp),
+                    )
+                }
+                Text(
+                    buildAnnotatedString {
+                        append(format(goal.currentAmount))
+                        withStyle(SpanStyle(fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = colors.textDim)) {
+                            append(" ${t(StringKey.BUDGETS_OF)} ${format(goal.targetAmount)}")
+                        }
+                    },
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+                Text(goalNote(goal, t) { format(it) }, fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 3.dp))
+            }
+        }
+        Box(
+            modifier = Modifier
+                .padding(top = 14.dp)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.primary)
+                .clickable(role = Role.Button, onClick = onPay)
+                .padding(11.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(t(StringKey.GOALS_CONTRIBUTE), fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
+        }
+    }
+}
+
+// Mockup ringStyle: a 62dp conic fill in the goal color over --line, with a
+// 48dp --surface disc on top holding the 22dp glyph.
+@Composable
+private fun GoalRing(percentage: Int, category: GoalCategory) {
+    val color = Color(category.color)
+    val track = MaterialTheme.colorScheme.outline
+    val surface = MaterialTheme.colorScheme.surface
+    Box(modifier = Modifier.size(62.dp), contentAlignment = Alignment.Center) {
+        Canvas(modifier = Modifier.size(62.dp)) {
+            drawCircle(track)
+            drawArc(color, startAngle = -90f, sweepAngle = 3.6f * percentage.coerceIn(0, 100), useCenter = true, topLeft = Offset.Zero, size = Size(size.width, size.height))
+            drawCircle(surface, radius = 24.dp.toPx())
+        }
+        Icon(category.icon, contentDescription = null, tint = color, modifier = Modifier.size(22.dp))
+    }
+}
+
 // Draft state backing the goal create/edit sheet. `id == null` means
 // "creating".
 private data class GoalDraft(
@@ -235,7 +316,7 @@ private data class GoalDraft(
     val targetText: String,
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun GoalDraftSheet(
     draft: GoalDraft,
@@ -245,63 +326,65 @@ private fun GoalDraftSheet(
     onRequestDelete: () -> Unit,
 ) {
     val t = rememberStrings()
+    val colors = NovaColors.current
     val isEdit = draft.id != null
     val category = goalCategories.first { it.id == draft.category }
     val color = Color(category.color)
-    val guessed = suggestGoalCategory(draft.name)
-    val showAutoNote = !draft.userPickedCategory && guessed != null
+    val showAutoNote = !draft.userPickedCategory && suggestGoalCategory(draft.name) != null
 
     NovaDraftSheet(
         onDismiss = onDismiss,
         title = t(if (isEdit) StringKey.GOALS_EDIT_TITLE else StringKey.GOALS_NEW),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Box(
-                        modifier = Modifier.size(40.dp).clip(CircleShape).background(color.copy(alpha = 0.29f)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(category.icon, contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
+            Column {
+                SheetLabel(t(StringKey.GOALS_NAME))
+                SheetBox(padding = PaddingValues(horizontal = 14.dp, vertical = 11.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier.size(40.dp).clip(CircleShape).background(color.copy(alpha = 0x29 / 255f)),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(category.icon, contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
+                        }
+                        Box(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
+                            SheetInput(
+                                value = draft.name,
+                                onValueChange = { newName ->
+                                    val g = if (!draft.userPickedCategory) suggestGoalCategory(newName) else null
+                                    onDraftChange(draft.copy(name = newName, category = g ?: draft.category))
+                                },
+                                placeholder = t(StringKey.GOALS_NAME_PLACEHOLDER),
+                                style = TextStyle(fontSize = 13.5.sp, fontWeight = FontWeight.Bold),
+                            )
+                        }
                     }
-                    OutlinedTextField(
-                        value = draft.name,
-                        onValueChange = { newName ->
-                            val g = if (!draft.userPickedCategory) suggestGoalCategory(newName) else null
-                            onDraftChange(draft.copy(name = newName, category = g ?: draft.category))
-                        },
-                        label = { Text(t(StringKey.GOALS_NAME)) },
-                        placeholder = { Text(t(StringKey.GOALS_NAME_PLACEHOLDER)) },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f),
-                    )
                 }
                 Text(
-                    if (showAutoNote) t(StringKey.BUDGETS_CATEGORY_AUTO_NOTE) else t(StringKey.GOALS_THEME_LABEL),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    t(if (showAutoNote) StringKey.BUDGETS_CATEGORY_AUTO_NOTE else StringKey.GOALS_CATEGORY_NOTE),
+                    fontSize = 11.sp,
+                    color = colors.textDim,
+                    modifier = Modifier.padding(top = 9.dp),
                 )
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(t(StringKey.GOALS_THEME_LABEL), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                GoalCategoryPicker(
-                    selected = draft.category,
-                    onSelect = { onDraftChange(draft.copy(category = it, userPickedCategory = true)) },
-                )
+            Column {
+                SheetLabel(t(StringKey.ADD_TXN_CATEGORY))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    goalCategories.forEach { c ->
+                        ColorPill(
+                            label = t(c.labelKey),
+                            color = Color(c.color),
+                            selected = draft.category == c.id,
+                            onClick = { onDraftChange(draft.copy(category = c.id, userPickedCategory = true)) },
+                        )
+                    }
+                }
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(t(StringKey.GOALS_TARGET_AMOUNT), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                OutlinedTextField(
-                    value = draft.targetText,
-                    onValueChange = { onDraftChange(draft.copy(targetText = it.filter { c -> c.isDigit() })) },
-                    leadingIcon = { Text("$") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    visualTransformation = ThousandsGroupingVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                )
+            Column {
+                SheetLabel(t(StringKey.GOALS_TARGET_AMOUNT))
+                SheetAmountBox(draft.targetText) { onDraftChange(draft.copy(targetText = it)) }
             }
 
             DraftSheetPrimaryButton(
@@ -317,103 +400,134 @@ private fun GoalDraftSheet(
     }
 }
 
+private sealed interface GoalDestination {
+    data object Origin : GoalDestination
+    data class Wallet(val id: String) : GoalDestination
+}
+
+// Mockup goalDel: the saved money goes back either to the wallets it came
+// from ("Devolver a su origen") or all to one wallet, as real movements.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GoalDeleteSheet(
     goal: Goal,
     wallets: List<Wallet>,
     onDismiss: () -> Unit,
-    onConfirm: (destinationWalletId: String?) -> Unit,
+    onConfirm: (GoalDestination?) -> Unit,
 ) {
     val t = rememberStrings()
     val format = rememberCurrencyFormatter()
     val colors = NovaColors.current
     val hasBalance = goal.currentAmount > 0
-    var selected by remember { mutableStateOf(wallets.firstOrNull()?.id) }
+    val origin = goal.contributions.entries.sortedByDescending { it.value }.mapNotNull { (id, amount) -> wallets.firstOrNull { it.id == id }?.let { "${shortWalletName(it.name)} ${format(amount)}" } }
+    var selected by remember { mutableStateOf<GoalDestination>(if (goal.contributions.isNotEmpty()) GoalDestination.Origin else wallets.firstOrNull()?.let { GoalDestination.Wallet(it.id) } ?: GoalDestination.Origin) }
+
+    val subtitle = if (hasBalance) {
+        val amount = format(goal.currentAmount)
+        val body = String.format(t(StringKey.GOALS_DELETE_HAS_BALANCE), amount)
+        val at = body.indexOf(amount)
+        buildAnnotatedString {
+            append(body.substring(0, at))
+            withStyle(SpanStyle(fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)) { append(amount) }
+            append(body.substring(at + amount.length))
+        }
+    } else {
+        buildAnnotatedString { append(t(StringKey.GOALS_DELETE_CONFIRM_BODY)) }
+    }
 
     NovaDraftSheet(
         onDismiss = onDismiss,
-        title = t(if (hasBalance) StringKey.GOALS_DELETE_RETURN_FUNDS_TITLE else StringKey.GOALS_DELETE_CONFIRM_TITLE),
+        title = String.format(t(StringKey.GOALS_DELETE_NAMED), goal.name),
+        subtitle = subtitle,
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Text(
-                t(if (hasBalance) StringKey.GOALS_DELETE_RETURN_FUNDS_BODY else StringKey.GOALS_DELETE_CONFIRM_BODY),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            if (hasBalance) {
-                Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                    wallets.forEach { wallet ->
-                        val isSelected = selected == wallet.id
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else Color.Transparent)
-                                .border(1.dp, if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(14.dp))
-                                .selectable(selected = isSelected, onClick = { selected = wallet.id }, role = androidx.compose.ui.semantics.Role.RadioButton)
-                                .padding(horizontal = 14.dp, vertical = 12.dp),
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(16.dp)
-                                    .clip(CircleShape)
-                                    .border(2.dp, if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant, CircleShape)
-                                    .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent, CircleShape),
-                            )
-                            Column(modifier = Modifier.padding(start = 12.dp)) {
-                                Text(wallet.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                                Text(format(wallet.currentBalance), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        }
-                    }
+        if (hasBalance) {
+            Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                DestinationRow(
+                    label = t(StringKey.GOALS_DELETE_ORIGIN),
+                    detail = origin.joinToString(" · ").ifBlank { t(StringKey.GOALS_DELETE_NO_ORIGIN) },
+                    selected = selected == GoalDestination.Origin,
+                    onClick = { selected = GoalDestination.Origin },
+                )
+                wallets.forEach { wallet ->
+                    DestinationRow(
+                        label = String.format(t(StringKey.GOALS_DELETE_ALL_TO), shortWalletName(wallet.name)),
+                        detail = String.format(t(StringKey.GOALS_DELETE_ONE_MOVE), format(goal.currentAmount)),
+                        selected = selected == GoalDestination.Wallet(wallet.id),
+                        onClick = { selected = GoalDestination.Wallet(wallet.id) },
+                    )
                 }
             }
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(colors.negativeSoft)
-                    .border(1.dp, colors.negative, RoundedCornerShape(14.dp))
-                    .then(if (!hasBalance || selected != null) Modifier.selectable(selected = false, onClick = { onConfirm(if (hasBalance) selected else null) }) else Modifier)
-                    .padding(vertical = 14.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = if (hasBalance) "${t(StringKey.GOALS_DELETE)} · ${format(goal.currentAmount)}" else t(StringKey.GOALS_DELETE),
-                    color = colors.negative,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 13.sp,
-                )
-            }
+        }
+        val canConfirm = !hasBalance || selected != GoalDestination.Origin || goal.contributions.isNotEmpty()
+        Box(
+            modifier = Modifier
+                .padding(top = if (hasBalance) 18.dp else 0.dp)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp))
+                .background(Color(0x24E85D6B))
+                .border(1.dp, colors.negative, RoundedCornerShape(14.dp))
+                .clickable(enabled = canConfirm) { onConfirm(if (hasBalance) selected else null) }
+                .padding(14.dp),
+            contentAlignment = Alignment.Center,
+        ) {
             Text(
-                t(StringKey.COMMON_CANCEL),
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.fillMaxWidth().selectable(selected = false, onClick = onDismiss).padding(vertical = 6.dp),
+                if (hasBalance) String.format(t(StringKey.GOALS_DELETE_AND_RETURN), format(goal.currentAmount)) else t(StringKey.GOALS_DELETE),
+                color = colors.negative,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 13.sp,
             )
+        }
+        Text(
+            t(StringKey.COMMON_CANCEL),
+            textAlign = TextAlign.Center,
+            fontSize = 12.5.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.fillMaxWidth().clickable(onClick = onDismiss).padding(top = 12.dp, bottom = 4.dp),
+        )
+    }
+}
+
+// Mockup goalDelRows row: 16dp radio dot, label 13 Bold, detail 11 --dim.
+@Composable
+private fun DestinationRow(label: String, detail: String, selected: Boolean, onClick: () -> Unit) {
+    val colors = NovaColors.current
+    val accent = MaterialTheme.colorScheme.primary
+    val line2 = MaterialTheme.colorScheme.outlineVariant
+    val surface = MaterialTheme.colorScheme.surface
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(if (selected) Color(0x1F6C5CE7) else Color.Transparent)
+            .border(1.dp, if (selected) accent else line2, RoundedCornerShape(14.dp))
+            .clickable(role = Role.RadioButton, onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+    ) {
+        Canvas(modifier = Modifier.size(16.dp)) {
+            val stroke = 2.dp.toPx()
+            val r = size.minDimension / 2
+            if (selected) {
+                drawCircle(accent, radius = r)
+                drawCircle(surface, radius = r - stroke)
+                drawCircle(accent, radius = r - stroke - 2.5.dp.toPx())
+            } else {
+                drawCircle(line2, radius = r - stroke / 2, style = androidx.compose.ui.graphics.drawscope.Stroke(stroke))
+            }
+        }
+        Column(modifier = Modifier.padding(start = 12.dp)) {
+            Text(label, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+            Text(detail, fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
         }
     }
 }
 
-// A dedicated flow for moving money from a wallet straight into a goal's
-// progress, separate from the general Add Transaction form — no category
-// picker (goal contributions aren't a spending category, so they're
-// recorded under CategoryId.OTHER without ever showing that choice), and
-// an inline Snackbar "Undo" right after saving. Under the hood this is
-// just a normal EXPENSE transaction with `goalId` set — the same
-// mechanism AddTransactionScreen's "more options" goal chip already uses
-// (backend/src/routes/goals.ts sums COMPLETED transactions by goalId) — so
-// it stays editable/deletable from TransactionDetailScreen like any other
-// transaction; Undo here is only a fast path for "right after I tapped
-// save", not the only way to reverse it. Presented as a sheet (per the
-// mockup's goalPayOpen) rather than the full screen this used to be; the
-// SnackbarHostState is hoisted at PlanesScreen so Undo can still show after
-// this sheet closes itself on save.
-@OptIn(ExperimentalMaterial3Api::class)
+// Mockup goalPay: amount, source wallet pills and "Abonar". Under the hood
+// a normal EXPENSE with `goalId` (backend sums linked COMPLETED rows), so
+// it stays editable/deletable like any movement; the snackbar's "Deshacer"
+// is only a fast path right after saving.
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun GoalPaySheet(
     goal: Goal,
@@ -423,65 +537,45 @@ private fun GoalPaySheet(
 ) {
     val t = rememberStrings()
     val format = rememberCurrencyFormatter()
+    val colors = NovaColors.current
     val scope = rememberCoroutineScope()
     var amountText by remember { mutableStateOf("") }
     var walletId by remember { mutableStateOf(wallets.firstOrNull()?.id) }
     var error by remember { mutableStateOf<String?>(null) }
     var saving by remember { mutableStateOf(false) }
+    val amount = amountText.toDoubleOrNull() ?: 0.0
 
-    NovaDraftSheet(onDismiss = onDismiss, title = "${t(StringKey.GOAL_CONTRIBUTION_TITLE)} ${goal.name}") {
+    NovaDraftSheet(
+        onDismiss = onDismiss,
+        title = "${t(StringKey.GOAL_CONTRIBUTION_TITLE)} ${goal.name}",
+        subtitle = buildAnnotatedString { append(String.format(t(StringKey.GOAL_PAY_NOTE), format(goal.currentAmount), format(goal.targetAmount))) },
+    ) {
         Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-            Text(
-                "${format(goal.currentAmount)} / ${format(goal.targetAmount)}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(t(StringKey.GOAL_CONTRIBUTION_AMOUNT), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                OutlinedTextField(
-                    value = amountText,
-                    onValueChange = { amountText = it.filter { c -> c.isDigit() }; error = null },
-                    leadingIcon = { Text("$", fontWeight = FontWeight.Bold) },
-                    placeholder = { Text("0") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    visualTransformation = ThousandsGroupingVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                )
+            Column {
+                SheetLabel(t(StringKey.GOAL_CONTRIBUTION_AMOUNT))
+                SheetAmountBox(amountText) { amountText = it; error = null }
             }
 
             if (wallets.isEmpty()) {
-                Text(t(StringKey.ADD_TXN_NO_WALLET_SUBTITLE), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(t(StringKey.ADD_TXN_NO_WALLET_SUBTITLE), fontSize = 12.sp, color = colors.textDim)
             } else {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(t(StringKey.GOAL_CONTRIBUTION_WALLET), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column {
+                    SheetLabel(t(StringKey.GOAL_CONTRIBUTION_WALLET))
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         wallets.forEach { wallet ->
-                            GoalContributionChip(label = wallet.name, selected = walletId == wallet.id, onClick = { walletId = wallet.id })
+                            SheetPill(shortWalletName(wallet.name), selected = walletId == wallet.id) { walletId = wallet.id }
                         }
                     }
                 }
             }
 
-            if (error != null) {
-                Text(error!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-            }
+            error?.let { Text(it, fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = colors.negative) }
 
             DraftSheetPrimaryButton(
-                label = if (saving) "…" else t(StringKey.GOAL_CONTRIBUTION_SAVE),
-                enabled = !saving && wallets.isNotEmpty(),
+                label = t(StringKey.GOAL_CONTRIBUTION_SAVE),
+                enabled = !saving && amount > 0 && walletId != null,
                 onClick = {
-                    val amount = amountText.toDoubleOrNull()
-                    val selectedWallet = walletId
-                    if (amount == null || amount <= 0) {
-                        error = t(StringKey.GOAL_CONTRIBUTION_ERROR_AMOUNT)
-                        return@DraftSheetPrimaryButton
-                    }
-                    if (selectedWallet == null) {
-                        error = t(StringKey.GOAL_CONTRIBUTION_ERROR_WALLET)
-                        return@DraftSheetPrimaryButton
-                    }
-
+                    val selectedWallet = walletId ?: return@DraftSheetPrimaryButton
                     val input = NewTransactionInput(
                         walletId = selectedWallet,
                         description = t(StringKey.GOAL_CONTRIBUTION_DESCRIPTION_PREFIX) + goal.name,
@@ -491,22 +585,24 @@ private fun GoalPaySheet(
                         date = todayISO(),
                         goalId = goal.id,
                     )
-
                     saving = true
                     scope.launch {
-                        val created = AppContainer.transactionRepository.add(input)
-                        AppContainer.walletRepository.refresh()
-                        AppContainer.goalRepository.refresh()
-                        saving = false
+                        val created = runCatching { AppContainer.transactionRepository.add(input) }.getOrNull()
+                        if (created == null) {
+                            saving = false
+                            error = t(StringKey.COMMON_SAVE_ERROR)
+                            return@launch
+                        }
+                        runCatching { AppContainer.walletRepository.refresh() }
+                        runCatching { AppContainer.goalRepository.refresh() }
                         onDismiss()
-
-                        if (created != null) {
-                            val result = snackbarHostState.showSnackbar(
-                                message = t(StringKey.GOAL_CONTRIBUTION_SAVED),
-                                actionLabel = t(com.s2nova.app.ui.StringKey.COMMON_UNDO),
-                                duration = SnackbarDuration.Long,
-                            )
-                            if (result == SnackbarResult.ActionPerformed) {
+                        val result = snackbarHostState.showSnackbar(
+                            message = t(StringKey.GOAL_CONTRIBUTION_SAVED),
+                            actionLabel = t(StringKey.COMMON_UNDO),
+                            duration = SnackbarDuration.Long,
+                        )
+                        if (result == SnackbarResult.ActionPerformed) {
+                            runCatching {
                                 AppContainer.transactionRepository.delete(created.id)
                                 AppContainer.walletRepository.refresh()
                                 AppContainer.goalRepository.refresh()
@@ -517,20 +613,4 @@ private fun GoalPaySheet(
             )
         }
     }
-}
-
-@Composable
-private fun GoalContributionChip(label: String, selected: Boolean, onClick: () -> Unit) {
-    Text(
-        label,
-        style = MaterialTheme.typography.bodyMedium,
-        color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
-        maxLines = 1,
-        modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .background(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
-            .border(1.dp, if (selected) Color.Transparent else MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(50))
-            .selectable(selected = selected, onClick = onClick, role = androidx.compose.ui.semantics.Role.RadioButton)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
-    )
 }

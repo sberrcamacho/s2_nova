@@ -59,9 +59,12 @@ class BudgetRepository(
         return progress
     }
 
-    suspend fun update(id: String, name: String?, limit: Double, themeIcon: String? = null) {
+    // `category` moves the budget; the backend answers 409 when that
+    // category already has a budget this month.
+    suspend fun update(id: String, name: String?, limit: Double, category: CategoryId? = null, themeIcon: String? = null) {
         if (DemoModeFlag.active) return
-        val dto = api.updateBudget(id, UpdateBudgetRequest(name = name, amount = limit.toLong(), themeIcon = themeIcon))
+        val categoryBackendId = category?.let { categoryRepository.backendIdFor(it) }
+        val dto = api.updateBudget(id, UpdateBudgetRequest(name = name, amount = limit.toLong(), categoryId = categoryBackendId, themeIcon = themeIcon))
         val progress = dto.toBudgetProgress(categoryRepository) ?: return
         _budgetProgress.value = _budgetProgress.value.map { if (it.budget.id == id) progress else it }
     }

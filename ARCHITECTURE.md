@@ -257,7 +257,8 @@ DELETE /api/v1/transactions/:id
 
 GET    /api/v1/budgets
 POST   /api/v1/budgets
-PATCH  /api/v1/budgets/:id
+PATCH  /api/v1/budgets/:id                  -- also moves it to another free category
+DELETE /api/v1/budgets/:id
 POST   /api/v1/budgets/recommendations        -- compute a 50/30/20-style suggestion
 POST   /api/v1/budgets/recommendations/:id/accept
 

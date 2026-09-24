@@ -253,6 +253,31 @@ describe("goal routes", () => {
       expect(returned).toMatchObject({ type: "INCOME", amount: 40000, accountId: destination.id });
     });
 
+    it("lists each wallet's contribution and returns every share to its origin", async () => {
+      const user = await createTestUser();
+      const a = await createAccount(user.id, { name: "A", initialBalanceMinor: 100000n });
+      const b = await createAccount(user.id, { name: "B", initialBalanceMinor: 100000n });
+      const goal = (
+        await app.inject({ method: "POST", url: "/api/v1/goals", headers: authHeader(user), payload: { name: "Split goal", targetAmount: 100000 } })
+      ).json();
+      await contribute(app, user, a.id, goal.id, 30000);
+      await contribute(app, user, b.id, goal.id, 10000);
+      await contribute(app, user, a.id, goal.id, 5000);
+
+      const listed = (await app.inject({ method: "GET", url: "/api/v1/goals", headers: authHeader(user) })).json()[0];
+      expect(listed.contributions).toEqual(
+        expect.arrayContaining([
+          { accountId: a.id, amount: 35000 },
+          { accountId: b.id, amount: 10000 },
+        ]),
+      );
+
+      const res = await app.inject({ method: "DELETE", url: `/api/v1/goals/${goal.id}`, headers: authHeader(user), payload: { returnToOrigin: true } });
+      expect(res.statusCode).toBe(204);
+      expect((await prisma.account.findUniqueOrThrow({ where: { id: a.id } })).currentBalanceMinor).toBe(100000n);
+      expect((await prisma.account.findUniqueOrThrow({ where: { id: b.id } })).currentBalanceMinor).toBe(100000n);
+    });
+
     it("returns 404 for another user's goal", async () => {
       const owner = await createTestUser();
       const stranger = await createTestUser();

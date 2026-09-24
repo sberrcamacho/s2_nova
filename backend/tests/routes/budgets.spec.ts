@@ -220,6 +220,24 @@ describe("budget routes", () => {
       expect(res.json()).toMatchObject({ amount: 150000, name: "Groceries" });
     });
 
+    it("moves the budget to a free category and rejects a taken one with 409", async () => {
+      const user = await createTestUser();
+      const food = await categoryBySlug("food");
+      const transport = await categoryBySlug("transportation");
+      const bills = await categoryBySlug("bills");
+      const create = (categoryId: string) =>
+        app.inject({ method: "POST", url: "/api/v1/budgets", headers: authHeader(user), payload: { categoryId, amount: 100000, month: "2027-04" } })
+      const id = (await create(food.id)).json().id;
+      await create(transport.id);
+
+      const moved = await app.inject({ method: "PATCH", url: `/api/v1/budgets/${id}`, headers: authHeader(user), payload: { categoryId: bills.id } });
+      expect(moved.statusCode).toBe(200);
+      expect(moved.json().categoryId).toBe(bills.id);
+
+      const taken = await app.inject({ method: "PATCH", url: `/api/v1/budgets/${id}`, headers: authHeader(user), payload: { categoryId: transport.id } });
+      expect(taken.statusCode).toBe(409);
+    });
+
     it("returns 404 for another user's budget", async () => {
       const owner = await createTestUser();
       const stranger = await createTestUser();

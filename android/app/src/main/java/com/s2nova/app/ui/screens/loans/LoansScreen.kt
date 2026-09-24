@@ -4,28 +4,21 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -37,32 +30,46 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
+import com.s2nova.app.data.model.CategoryId
 import com.s2nova.app.data.model.LoanKind
+import com.s2nova.app.data.model.NewTransactionInput
 import com.s2nova.app.data.model.Transaction
+import com.s2nova.app.data.model.TransactionType
 import com.s2nova.app.data.model.Wallet
+import com.s2nova.app.data.todayISO
 import com.s2nova.app.ui.StringKey
-import com.s2nova.app.ui.ThousandsGroupingVisualTransformation
 import com.s2nova.app.ui.components.DashedNewRow
-import com.s2nova.app.ui.components.NovaCard
-import com.s2nova.app.ui.components.NovaDatePickerField
+import com.s2nova.app.ui.components.DraftSheetDeleteRow
+import com.s2nova.app.ui.components.DraftSheetPrimaryButton
+import com.s2nova.app.ui.components.NovaDraftSheet
 import com.s2nova.app.ui.components.NovaProgressBar
+import com.s2nova.app.ui.components.SheetAmountBox
+import com.s2nova.app.ui.components.SheetBox
+import com.s2nova.app.ui.components.SheetDateBox
+import com.s2nova.app.ui.components.SheetInput
+import com.s2nova.app.ui.components.SheetLabel
+import com.s2nova.app.ui.components.SheetPill
+import com.s2nova.app.ui.components.shortWalletName
+import com.s2nova.app.ui.rememberAppLanguage
 import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
+import com.s2nova.app.ui.shortDateLabel
 import com.s2nova.app.ui.theme.NovaColors
 import kotlinx.coroutines.launch
 
-// The third tab of Planes (see PlanesScreen.kt) — absorbs what used to be a
-// standalone stacked screen reachable from Profile. Prestado/Recibido is a
-// segmented control, not another underlined tab row, so it visually reads
-// as a sub-filter of this tab rather than a sibling of Presupuestos/Metas/
-// Préstamos (see design_handoff_s2_nova_overview/ANDROID.md).
+// Planes › Préstamos, per the Android v2 mockup: Prestado/Recibido pills,
+// the "Te deben"/"Debes" summary, "+ Registrar préstamo/deuda" and one card
+// per loan with "Registrar abono" (or "Saldado") and "Editar". A loan is a
+// transaction with loanKind set; abonos go through the backend's
+// settle-loan, which records them as opposite-direction movements.
 @Composable
 fun LoansTab(initialSide: LoanKind = LoanKind.LENT) {
     val transactions by AppContainer.transactionRepository.transactions.collectAsStateWithLifecycle()
@@ -84,78 +91,79 @@ fun LoansTab(initialSide: LoanKind = LoanKind.LENT) {
     val settledWord = if (settledCount == 1) t(StringKey.LOANS_SETTLED_WORD_ONE) else t(StringKey.LOANS_SETTLED_WORD_MANY)
 
     LazyColumn(
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
-            SegmentedPills(
-                options = listOf(LoanKind.LENT to t(StringKey.LOANS_LENT_TAB), LoanKind.BORROWED to t(StringKey.LOANS_BORROWED_TAB)),
-                selected = side,
-                onSelect = { side = it },
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(LoanKind.LENT to t(StringKey.LOANS_LENT_TAB), LoanKind.BORROWED to t(StringKey.LOANS_BORROWED_TAB)).forEach { (value, label) ->
+                    SheetPill(label, selected = side == value) { side = value }
+                }
+            }
         }
 
         item {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(20.dp))
-                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))
-                    .padding(20.dp),
+                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(18.dp))
+                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(18.dp))
+                    .padding(horizontal = 18.dp, vertical = 16.dp),
             ) {
+                Text(t(if (side == LoanKind.LENT) StringKey.LOANS_SUMMARY_LENT else StringKey.LOANS_SUMMARY_BORROWED), fontSize = 11.sp, color = colors.textDim)
                 Text(
-                    if (side == LoanKind.LENT) t(StringKey.LOANS_SUMMARY_LENT) else t(StringKey.LOANS_SUMMARY_BORROWED),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    format(outstandingTotal),
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = (-0.6).sp,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.padding(top = 3.dp),
                 )
-                Text(format(outstandingTotal), style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 4.dp))
                 Text(
                     "${items.size} $recordWord · $settledCount $settledWord",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp),
+                    fontSize = 11.sp,
+                    color = colors.textDim,
+                    modifier = Modifier.padding(top = 6.dp),
                 )
             }
         }
 
         item {
             DashedNewRow(
-                label = if (side == LoanKind.LENT) t(StringKey.LOANS_NEW_LENT) else t(StringKey.LOANS_NEW_BORROWED),
+                label = t(if (side == LoanKind.LENT) StringKey.LOANS_NEW_LENT else StringKey.LOANS_NEW_BORROWED),
                 onClick = {
                     draft = LoanDraft(id = null, side = side, counterparty = "", amountText = "", walletId = wallets.firstOrNull()?.id, dueDate = null)
                 },
             )
         }
 
+        items(items, key = { it.id }) { txn ->
+            LoanCard(
+                txn = txn,
+                outstanding = AppContainer.transactionRepository.outstandingFor(txn),
+                onPay = { payingFor = txn },
+                onEdit = {
+                    draft = LoanDraft(
+                        id = txn.id,
+                        side = txn.loanKind ?: side,
+                        counterparty = txn.counterpartyName ?: "",
+                        amountText = txn.amount.toLong().toString(),
+                        walletId = txn.walletId,
+                        dueDate = txn.dueDate,
+                    )
+                },
+            )
+        }
+
         if (items.isEmpty()) {
             item {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Icon(Icons.Filled.MonetizationOn, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(t(StringKey.LOANS_EMPTY), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 12.dp))
-                }
-            }
-        } else {
-            items(items, key = { it.id }) { txn ->
-                LoanCard(
-                    txn = txn,
-                    format = format,
-                    t = t,
-                    colors = colors,
-                    outstanding = AppContainer.transactionRepository.outstandingFor(txn),
-                    onPay = { payingFor = txn },
-                    onEdit = {
-                        draft = LoanDraft(
-                            id = txn.id,
-                            side = txn.loanKind ?: side,
-                            counterparty = txn.counterpartyName ?: "",
-                            amountText = txn.amount.toLong().toString(),
-                            walletId = txn.walletId,
-                            dueDate = txn.dueDate,
-                        )
-                    },
+                Text(
+                    t(if (side == LoanKind.LENT) StringKey.LOANS_EMPTY_LENT else StringKey.LOANS_EMPTY_BORROWED),
+                    fontSize = 12.5.sp,
+                    lineHeight = 19.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 24.dp),
                 )
             }
         }
@@ -173,32 +181,30 @@ fun LoansTab(initialSide: LoanKind = LoanKind.LENT) {
             onSave = {
                 val amount = d.amountText.toDoubleOrNull()
                 val walletId = d.walletId
-                if (amount != null && amount > 0 && walletId != null) {
-                    val counterparty = d.counterparty.trim().ifBlank { null }
-                    if (d.id == null) {
-                        scope.launch {
-                            AppContainer.transactionRepository.add(
-                                com.s2nova.app.data.model.NewTransactionInput(
-                                    walletId = walletId,
-                                    description = counterparty?.let { "${if (d.side == LoanKind.LENT) "Préstamo a" else "Deuda con"} $it" } ?: t(StringKey.LOANS_TITLE),
-                                    amount = amount,
-                                    type = if (d.side == LoanKind.LENT) com.s2nova.app.data.model.TransactionType.EXPENSE else com.s2nova.app.data.model.TransactionType.INCOME,
-                                    category = com.s2nova.app.data.model.CategoryId.OTHER,
-                                    date = com.s2nova.app.data.todayISO(),
-                                    loanKind = d.side,
-                                    counterpartyName = counterparty,
-                                    dueDate = d.dueDate,
-                                ),
-                            )
-                            AppContainer.walletRepository.refresh()
-                            side = d.side
+                if (amount != null && amount > 0 && walletId != null && d.counterparty.isNotBlank()) {
+                    val counterparty = d.counterparty.trim()
+                    scope.launch {
+                        runCatching {
+                            if (d.id == null) {
+                                AppContainer.transactionRepository.add(
+                                    NewTransactionInput(
+                                        walletId = walletId,
+                                        description = "${if (d.side == LoanKind.LENT) "Préstamo a" else "Deuda con"} $counterparty",
+                                        amount = amount,
+                                        type = if (d.side == LoanKind.LENT) TransactionType.EXPENSE else TransactionType.INCOME,
+                                        category = CategoryId.OTHER,
+                                        date = todayISO(),
+                                        loanKind = d.side,
+                                        counterpartyName = counterparty,
+                                        dueDate = d.dueDate,
+                                    ),
+                                )
+                            } else {
+                                AppContainer.transactionRepository.updateLoan(d.id, amount, walletId, d.side, counterparty, d.dueDate)
+                            }
                         }
-                    } else {
-                        scope.launch {
-                            AppContainer.transactionRepository.updateLoan(d.id, amount, walletId, d.side, counterparty, d.dueDate)
-                            AppContainer.walletRepository.refresh()
-                            side = d.side
-                        }
+                        runCatching { AppContainer.walletRepository.refresh() }
+                        side = d.side
                     }
                     draft = null
                 }
@@ -213,32 +219,35 @@ fun LoansTab(initialSide: LoanKind = LoanKind.LENT) {
         )
     }
 
-    if (payingFor != null) {
-        val target = payingFor!!
+    val paying = payingFor
+    if (paying != null) {
         LoanPaySheet(
-            loan = target,
-            outstanding = AppContainer.transactionRepository.outstandingFor(target),
+            loan = paying,
+            outstanding = AppContainer.transactionRepository.outstandingFor(paying),
             wallets = wallets,
             onDismiss = { payingFor = null },
             onConfirm = { amount, walletId ->
                 scope.launch {
-                    AppContainer.transactionRepository.settleLoan(target.id, amount, walletId)
-                    AppContainer.walletRepository.refresh()
+                    runCatching { AppContainer.transactionRepository.settleLoan(paying.id, amount, walletId) }
+                    runCatching { AppContainer.walletRepository.refresh() }
                 }
                 payingFor = null
             },
         )
     }
 
-    if (deleting != null) {
-        val target = deleting!!
+    val toDelete = deleting
+    if (toDelete != null) {
         AlertDialog(
             onDismissRequest = { deleting = null },
             title = { Text(t(StringKey.LOANS_DELETE_CONFIRM_TITLE)) },
             text = { Text(t(StringKey.LOANS_DELETE_CONFIRM_BODY)) },
             confirmButton = {
                 TextButton(onClick = {
-                    scope.launch { AppContainer.transactionRepository.delete(target.id) }
+                    scope.launch {
+                        runCatching { AppContainer.transactionRepository.delete(toDelete.id) }
+                        runCatching { AppContainer.walletRepository.refresh() }
+                    }
                     deleting = null
                 }) { Text(t(StringKey.LOANS_DELETE), color = MaterialTheme.colorScheme.error) }
             },
@@ -247,77 +256,69 @@ fun LoansTab(initialSide: LoanKind = LoanKind.LENT) {
     }
 }
 
+// Mockup loan card: person and due line, the outstanding amount (the
+// principal, dimmed, once settled), a 6dp paid bar, then the actions.
 @Composable
-private fun <T> SegmentedPills(options: List<Pair<T, String>>, selected: T, onSelect: (T) -> Unit) {
-    Row(
+private fun LoanCard(txn: Transaction, outstanding: Double, onPay: () -> Unit, onEdit: () -> Unit) {
+    val colors = NovaColors.current
+    val format = rememberCurrencyFormatter()
+    val t = rememberStrings()
+    val language = rememberAppLanguage()
+    val paid = txn.amount - outstanding
+    val due = if (txn.loanSettled) {
+        String.format(t(StringKey.LOANS_SETTLED_NOTE), format(txn.amount))
+    } else {
+        val base = txn.dueDate?.let { "${t(StringKey.LOANS_DUE)} ${shortDateLabel(it, language)}" } ?: t(StringKey.LOANS_NO_DUE_DATE)
+        base + if (paid > 0) String.format(t(StringKey.LOANS_PAID_NOTE), format(paid), format(txn.amount)) else ""
+    }
+    val shape = RoundedCornerShape(18.dp)
+    Column(
         modifier = Modifier
-            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(999.dp))
-            .padding(3.dp),
+            .fillMaxWidth()
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outline, shape)
+            .padding(16.dp),
     ) {
-        options.forEach { (value, label) ->
-            val isSelected = value == selected
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(999.dp))
-                    .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
-                    .clickable { onSelect(value) }
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-            ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(txn.counterpartyName ?: txn.description, fontSize = 13.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                Text(due, fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
+            }
+            Text(
+                format(if (txn.loanSettled) txn.amount else outstanding),
+                fontSize = 14.5.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = if (txn.loanSettled) colors.textDim else MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.padding(start = 12.dp),
+            )
+        }
+        NovaProgressBar(
+            percentage = if (txn.amount > 0) ((paid / txn.amount) * 100).toInt().coerceIn(0, 100) else 0,
+            color = if (txn.loanSettled) colors.positive else MaterialTheme.colorScheme.primary,
+            height = 6.dp,
+            cornerRadius = 3.dp,
+            modifier = Modifier.padding(top = 12.dp),
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(top = 12.dp)) {
+            if (txn.loanSettled) {
+                Text(t(StringKey.LOANS_SETTLED), fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = colors.positive)
+            } else {
                 Text(
-                    label,
-                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                    t(StringKey.LOANS_REGISTER_PAYMENT),
+                    fontSize = 12.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable(onClick = onPay),
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun LoanCard(
-    txn: Transaction,
-    format: com.s2nova.app.ui.CurrencyFormatter,
-    t: (StringKey) -> String,
-    colors: com.s2nova.app.ui.theme.NovaExtraColors,
-    outstanding: Double,
-    onPay: () -> Unit,
-    onEdit: () -> Unit,
-) {
-    NovaCard(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(txn.counterpartyName ?: txn.description, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
-                    Text(
-                        if (txn.dueDate != null) "${t(StringKey.LOANS_DUE)} ${txn.dueDate}" else t(StringKey.LOANS_NO_DUE_DATE),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Text(format(outstanding), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-            }
-            Spacer(Modifier.height(10.dp))
-            val paid = txn.amount - outstanding
-            NovaProgressBar(
-                percentage = if (txn.amount > 0) ((paid / txn.amount) * 100).toInt().coerceIn(0, 100) else 0,
-                color = if (txn.loanSettled) colors.positive else MaterialTheme.colorScheme.primary,
-            )
             Text(
-                "${t(StringKey.LOANS_PAID_PREFIX)} ${format(paid)} de ${format(txn.amount)}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 6.dp),
+                t(StringKey.LOANS_EDIT_ACTION),
+                fontSize = 12.5.sp,
+                fontWeight = FontWeight.Bold,
+                color = colors.accentText,
+                modifier = Modifier.clickable(onClick = onEdit),
             )
-            Spacer(Modifier.height(8.dp))
-            if (txn.loanSettled) {
-                Text(t(StringKey.LOANS_SETTLED), style = MaterialTheme.typography.labelMedium, color = colors.positive, fontWeight = FontWeight.Bold)
-            } else {
-                Row {
-                    TextButton(onClick = onPay) { Text(t(StringKey.LOANS_REGISTER_PAYMENT)) }
-                    TextButton(onClick = onEdit) { Text(t(StringKey.LOANS_EDIT_ACTION)) }
-                }
-            }
         }
     }
 }
@@ -334,23 +335,9 @@ private data class LoanDraft(
     val dueDate: String?,
 )
 
-@Composable
-private fun LoanChip(label: String, selected: Boolean, onClick: () -> Unit) {
-    Text(
-        label,
-        style = MaterialTheme.typography.bodyMedium,
-        color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
-        maxLines = 1,
-        modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .background(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
-            .border(1.dp, if (selected) Color.Transparent else MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(50))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
-    )
-}
-
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+// Mockup loanSheet: Dirección, the counterparty, Monto, the wallet the
+// money left or entered, and an optional due date.
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun LoanDraftSheet(
     draft: LoanDraft,
@@ -364,81 +351,66 @@ private fun LoanDraftSheet(
     val isEdit = draft.id != null
     val isLent = draft.side == LoanKind.LENT
 
-    com.s2nova.app.ui.components.NovaDraftSheet(
+    NovaDraftSheet(
         onDismiss = onDismiss,
         title = t(if (isEdit) StringKey.LOANS_EDIT_TITLE else if (isLent) StringKey.LOANS_NEW_LENT else StringKey.LOANS_NEW_BORROWED),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-            SegmentedPills(
-                options = listOf(LoanKind.LENT to t(StringKey.LOANS_LENT_TAB), LoanKind.BORROWED to t(StringKey.LOANS_BORROWED_TAB)),
-                selected = draft.side,
-                onSelect = { onDraftChange(draft.copy(side = it)) },
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    t(if (isLent) StringKey.LOANS_FORM_PERSON_LENT else StringKey.LOANS_FORM_PERSON_BORROWED),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                OutlinedTextField(
-                    value = draft.counterparty,
-                    onValueChange = { onDraftChange(draft.copy(counterparty = it)) },
-                    placeholder = { Text(t(StringKey.LOANS_FORM_COUNTERPARTY_PLACEHOLDER)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+            Column {
+                SheetLabel(t(StringKey.LOANS_DIRECTION))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(LoanKind.LENT to t(StringKey.LOANS_LENT_TAB), LoanKind.BORROWED to t(StringKey.LOANS_BORROWED_TAB)).forEach { (value, label) ->
+                        SheetPill(label, selected = draft.side == value) { onDraftChange(draft.copy(side = value)) }
+                    }
+                }
             }
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(t(StringKey.LOANS_FORM_AMOUNT), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                OutlinedTextField(
-                    value = draft.amountText,
-                    onValueChange = { onDraftChange(draft.copy(amountText = it.filter { c -> c.isDigit() })) },
-                    leadingIcon = { Text("$") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    visualTransformation = ThousandsGroupingVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                )
+            Column {
+                SheetLabel(t(if (isLent) StringKey.LOANS_FORM_PERSON_LENT else StringKey.LOANS_FORM_PERSON_BORROWED))
+                SheetBox(padding = PaddingValues(horizontal = 14.dp, vertical = 15.dp)) {
+                    SheetInput(
+                        value = draft.counterparty,
+                        onValueChange = { onDraftChange(draft.copy(counterparty = it)) },
+                        placeholder = t(StringKey.LOANS_FORM_COUNTERPARTY_PLACEHOLDER),
+                        style = TextStyle(fontSize = 13.5.sp, fontWeight = FontWeight.Bold),
+                    )
+                }
+            }
+            Column {
+                SheetLabel(t(StringKey.LOANS_FORM_AMOUNT))
+                SheetAmountBox(draft.amountText) { onDraftChange(draft.copy(amountText = it)) }
             }
             if (wallets.isNotEmpty()) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        t(if (isLent) StringKey.LOANS_FORM_WALLET_LENT else StringKey.LOANS_FORM_WALLET_BORROWED),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    androidx.compose.foundation.layout.FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
+                Column {
+                    SheetLabel(t(if (isLent) StringKey.LOANS_FORM_WALLET_LENT else StringKey.LOANS_FORM_WALLET_BORROWED))
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         wallets.forEach { wallet ->
-                            LoanChip(label = wallet.name, selected = draft.walletId == wallet.id, onClick = { onDraftChange(draft.copy(walletId = wallet.id)) })
+                            SheetPill(shortWalletName(wallet.name), selected = draft.walletId == wallet.id) { onDraftChange(draft.copy(walletId = wallet.id)) }
                         }
                     }
                 }
             }
-            NovaDatePickerField(
-                label = t(StringKey.LOANS_FORM_DUE_DATE),
-                value = draft.dueDate,
-                onValueChange = { onDraftChange(draft.copy(dueDate = it)) },
-                allowClear = true,
-            )
+            Column {
+                SheetLabel(t(StringKey.LOANS_DUE_OPTIONAL))
+                SheetDateBox(value = draft.dueDate, placeholder = t(StringKey.LOANS_NO_DATE), allowClear = true) { onDraftChange(draft.copy(dueDate = it)) }
+            }
 
             val amount = draft.amountText.toDoubleOrNull()
-            com.s2nova.app.ui.components.DraftSheetPrimaryButton(
+            DraftSheetPrimaryButton(
                 label = t(StringKey.COMMON_SAVE),
-                enabled = amount != null && amount > 0 && draft.walletId != null,
+                enabled = draft.counterparty.isNotBlank() && amount != null && amount > 0 && draft.walletId != null,
                 onClick = onSave,
             )
 
             if (isEdit) {
-                com.s2nova.app.ui.components.DraftSheetDeleteRow(label = t(StringKey.LOANS_DELETE), onClick = onRequestDelete)
+                DraftSheetDeleteRow(label = t(StringKey.LOANS_DELETE), onClick = onRequestDelete)
             }
         }
     }
 }
 
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+// Mockup loanPay: the amount starts at the outstanding balance ("Saldar
+// todo" restores it) and can't exceed it; the wallet receives or pays.
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun LoanPaySheet(
     loan: Transaction,
@@ -449,54 +421,47 @@ private fun LoanPaySheet(
 ) {
     val t = rememberStrings()
     val format = rememberCurrencyFormatter()
+    val colors = NovaColors.current
+    val isLent = loan.loanKind == LoanKind.LENT
+    val person = loan.counterpartyName ?: loan.description
     var amountText by remember { mutableStateOf(outstanding.toLong().toString()) }
     var walletId by remember { mutableStateOf(loan.walletId.takeIf { wallets.any { w -> w.id == it } } ?: wallets.firstOrNull()?.id) }
 
-    com.s2nova.app.ui.components.NovaDraftSheet(onDismiss = onDismiss, title = t(StringKey.LOANS_PAYMENT_TITLE)) {
+    NovaDraftSheet(
+        onDismiss = onDismiss,
+        title = String.format(t(if (isLent) StringKey.LOANS_PAY_TITLE_LENT else StringKey.LOANS_PAY_TITLE_BORROWED), person),
+        subtitle = buildAnnotatedString { append(String.format(t(StringKey.LOANS_PAY_NOTE), format(outstanding), format(loan.amount))) },
+    ) {
         Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-            Text(
-                "${t(StringKey.LOANS_OUTSTANDING)}: ${format(outstanding)}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(t(StringKey.LOANS_FORM_AMOUNT), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 8.dp)) {
+                    Text(
+                        t(StringKey.GOAL_CONTRIBUTION_AMOUNT),
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f),
+                    )
                     Text(
                         t(StringKey.LOANS_SETTLE_ALL_SHORTCUT),
-                        style = MaterialTheme.typography.labelLarge,
+                        fontSize = 11.5.sp,
                         fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = colors.accentText,
                         modifier = Modifier.clickable { amountText = outstanding.toLong().toString() },
                     )
                 }
-                OutlinedTextField(
-                    value = amountText,
-                    onValueChange = { amountText = it.filter { c -> c.isDigit() } },
-                    leadingIcon = { Text("$") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    visualTransformation = ThousandsGroupingVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                SheetAmountBox(amountText) { amountText = it }
             }
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    if (loan.loanKind == LoanKind.LENT) t(StringKey.LOANS_PAYMENT_WALLET_LENT) else t(StringKey.LOANS_PAYMENT_WALLET_BORROWED),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                androidx.compose.foundation.layout.FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
+            Column {
+                SheetLabel(t(if (isLent) StringKey.LOANS_PAYMENT_WALLET_LENT else StringKey.LOANS_PAYMENT_WALLET_BORROWED))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     wallets.forEach { wallet ->
-                        LoanChip(label = wallet.name, selected = walletId == wallet.id, onClick = { walletId = wallet.id })
+                        SheetPill(shortWalletName(wallet.name), selected = walletId == wallet.id) { walletId = wallet.id }
                     }
                 }
             }
             val amount = amountText.toDoubleOrNull()
-            com.s2nova.app.ui.components.DraftSheetPrimaryButton(
+            DraftSheetPrimaryButton(
                 label = t(StringKey.LOANS_REGISTER_PAYMENT),
                 enabled = amount != null && amount > 0 && amount <= outstanding && walletId != null,
                 onClick = { onConfirm(amount!!, walletId!!) },
@@ -504,4 +469,3 @@ private fun LoanPaySheet(
         }
     }
 }
-

@@ -296,7 +296,7 @@ data class CreateBudgetRequest(
 )
 
 @Serializable
-data class UpdateBudgetRequest(val name: String? = null, val amount: Long? = null, val themeIcon: String? = null)
+data class UpdateBudgetRequest(val name: String? = null, val amount: Long? = null, val categoryId: String? = null, val themeIcon: String? = null)
 
 @Serializable
 data class BudgetRecommendationRequest(
@@ -333,10 +333,15 @@ data class GoalDto(
     val remaining: Long,
     val percentage: Int,
     val themeIcon: String? = null,
+    val contributions: List<GoalContributionDto> = emptyList(),
     val targetDate: String? = null,
     val createdAt: String,
     val updatedAt: String,
 )
+
+// What one wallet has put into a goal (GET /goals `contributions`).
+@Serializable
+data class GoalContributionDto(val accountId: String, val amount: Long)
 
 @Serializable
 data class CreateGoalRequest(
@@ -355,7 +360,9 @@ data class UpdateGoalRequest(
 )
 
 @Serializable
-data class DeleteGoalRequest(val returnToAccountId: String? = null)
+// Either one destination wallet, or returnToOrigin = every contributing
+// wallet gets its own share back.
+data class DeleteGoalRequest(val returnToAccountId: String? = null, val returnToOrigin: Boolean? = null)
 
 // GET /summary/months — COMPLETED income/expense per month, oldest first,
 // current month last (see backend/src/routes/summary.ts).

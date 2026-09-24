@@ -165,12 +165,15 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   list icon (`PlanesScreen.kt`'s
   `BudgetsTab`) is always its category's real icon (`CategoryIcon`) —
   never the small decorative theme palette in
-  `ui/components/BudgetGoalTheme.kt`, since a budget already has a
-  category to derive an icon from. That palette
-  (`BudgetGoalThemePicker`) is offered only in the Goal create/edit
-  dialogs, which have no category and therefore need an explicit icon
-  choice; don't reintroduce a theme picker in the budget create/edit
-  dialogs.
+  `ui/components/BudgetGoalTheme.kt`. Goals pick one of their own
+  categories (`GoalCategory.kt`, stored in `themeIcon`) from colour pills,
+  and each goal category borrows a transaction category's glyph (the
+  mockup's `GOAL_GLYPH_CAT`). Category and subcategory glyphs are the v2
+  mockup's own outline paths (`CAT_GLYPHS`/`SUB_GLYPHS`, drawn with
+  `strokeIcon`), not Material icons; Obsequio has no mockup glyph and keeps
+  its Material gift icon. Deleting a goal with money in it returns that
+  money as real movements: to one wallet, or "Devolver a su origen" (each
+  contributing wallet gets its share, from the goal's `contributions`).
 - **Wallet type ↔ payment method coherence.** `WalletType`
   (`data/model/Models.kt`) is `CASH, BANK_DEBIT, BANK_CREDIT, SAVINGS,
   CRYPTO, NEQUI, DAVIPLATA, OTHER` — mirrors backend's `AccountType`

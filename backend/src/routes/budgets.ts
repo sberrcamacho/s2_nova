@@ -19,6 +19,7 @@ const createBudgetSchema = z.object({
 const updateBudgetSchema = z.object({
   name: z.string().trim().min(1).max(80).nullable().optional(),
   amount: z.number().int().positive().optional(),
+  categoryId: z.string().uuid().optional(),
   themeIcon: themeIconSchema.nullable().optional(),
 });
 
@@ -109,10 +110,28 @@ export async function budgetRoutes(app: FastifyInstance) {
       return reply.status(404).send({ error: "Budget not found." });
     }
 
+    // Moving a budget to another category keeps the create rules: the
+    // category must be visible to the user and free for that month.
+    if (body.categoryId !== undefined && body.categoryId !== existing.categoryId) {
+      const category = await prisma.category.findFirst({
+        where: { id: body.categoryId, OR: [{ userId: null }, { userId: request.userId }] },
+      });
+      if (!category) {
+        return reply.status(422).send({ error: "Unknown category." });
+      }
+      const duplicate = await prisma.budget.findFirst({
+        where: { userId: request.userId, categoryId: body.categoryId, startDate: existing.startDate, NOT: { id } },
+      });
+      if (duplicate) {
+        return reply.status(409).send({ error: "A budget for this category and month already exists." });
+      }
+    }
+
     const budget = await prisma.budget.update({
       where: { id },
       data: {
         name: body.name,
+        categoryId: body.categoryId,
         amountMinor: body.amount !== undefined ? BigInt(body.amount) : undefined,
         themeIcon: body.themeIcon,
       },

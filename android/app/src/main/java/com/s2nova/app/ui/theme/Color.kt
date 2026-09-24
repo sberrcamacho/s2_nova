@@ -6,7 +6,7 @@ import androidx.compose.ui.graphics.Color
 // share one visual identity. Keep in sync if the web tokens change.
 
 // Light
-val LightBg = Color(0xFFFFFFFF)
+val LightBg = Color(0xFFF7F7FA) // mockup --bg
 val LightBgSecondary = Color(0xFFF7F7FA)
 val LightSurface = Color(0xFFFFFFFF)
 val LightSurfaceElevated = Color(0xFFFFFFFF)

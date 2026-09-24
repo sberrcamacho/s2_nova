@@ -144,8 +144,7 @@ fun TransactionsScreen(
                             val merchantOrCategory = txn.merchant
                                 ?: categoryMap[txn.category]?.let { t(categoryStringKey(it.id)) }
                                 ?: ""
-                            // Mockup's shortWallet: "Bancolombia — Ahorros" reads as "Bancolombia".
-                            val walletName = wallets.firstOrNull { it.id == txn.walletId }?.name?.substringBefore('—')?.trim()
+                            val walletName = wallets.firstOrNull { it.id == txn.walletId }?.name?.let { com.s2nova.app.ui.components.shortWalletName(it) }
                             val subtitle = listOfNotNull(merchantOrCategory.takeIf { it.isNotBlank() }, walletName).joinToString(" · ")
                             TransactionRow(transaction = txn, subtitle = subtitle, onClick = { onOpenDetail(txn.id) })
                         }

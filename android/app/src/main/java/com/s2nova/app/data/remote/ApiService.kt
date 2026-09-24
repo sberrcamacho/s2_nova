@@ -3,6 +3,7 @@ package com.s2nova.app.data.remote
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
+import retrofit2.http.HTTP
 import retrofit2.http.GET
 import retrofit2.http.PATCH
 import retrofit2.http.POST
@@ -53,7 +54,7 @@ interface ApiService {
     @PATCH("accounts/{id}")
     suspend fun updateAccount(@Path("id") id: String, @Body body: UpdateAccountRequest): AccountDto
 
-    @DELETE("accounts/{id}")
+    @HTTP(method = "DELETE", path = "accounts/{id}", hasBody = true)
     suspend fun deleteAccount(@Path("id") id: String, @Body body: DeleteAccountRequest): Response<Unit>
 
     @GET("categories")
@@ -126,7 +127,8 @@ interface ApiService {
     @PATCH("goals/{id}")
     suspend fun updateGoal(@Path("id") id: String, @Body body: UpdateGoalRequest): GoalDto
 
-    @DELETE("goals/{id}")
+    // Retrofit's @DELETE can't carry a body; the destination wallet(s) go in one.
+    @HTTP(method = "DELETE", path = "goals/{id}", hasBody = true)
     suspend fun deleteGoal(@Path("id") id: String, @Body body: DeleteGoalRequest): Response<Unit>
 
     @GET("summary/months")

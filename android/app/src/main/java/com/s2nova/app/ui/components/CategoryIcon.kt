@@ -58,58 +58,61 @@ import com.s2nova.app.data.model.CategoryId
 import com.s2nova.app.ui.categoryStringKey
 import com.s2nova.app.ui.rememberStrings
 
-fun iconFor(category: CategoryId): ImageVector = when (category) {
-    CategoryId.FOOD -> Icons.Filled.Restaurant
-    CategoryId.TRANSPORTATION -> Icons.Filled.DirectionsCar
-    CategoryId.SHOPPING -> Icons.Filled.ShoppingBag
-    CategoryId.HEALTH -> Icons.Filled.Favorite
-    CategoryId.EDUCATION -> Icons.Filled.School
-    CategoryId.ENTERTAINMENT -> Icons.Filled.Movie
-    CategoryId.BILLS -> Icons.Filled.Receipt
-    CategoryId.SUBSCRIPTIONS -> Icons.Filled.Autorenew
-    CategoryId.SALARY -> Icons.Filled.AccountBalanceWallet
-    CategoryId.FREELANCE -> Icons.Filled.Laptop
-    CategoryId.GIFT -> Icons.Filled.CardGiftcard
-    CategoryId.OTHER -> Icons.Filled.MoreHoriz
-}
+// The v2 mockup's category glyphs (CAT_GLYPHS / SUB_GLYPHS): outline paths
+// drawn at a 2.25 stroke in the category color inside the tinted circle.
+private const val MARK_STROKE = 2.25f
 
-// One distinct icon per subcategory slug (see backend/prisma/seed.ts) —
-// unlike the top-level icon, this is purely a client-side lookup (the
-// subcategory's own `icon` DB column just mirrors its parent's, since
-// nothing reads it). Falls back to the parent category's icon for any
-// slug not listed here, so a future subcategory added only on the
-// backend degrades gracefully instead of crashing.
-private val subcategoryIcons: Map<String, ImageVector> = mapOf(
-    "food-groceries" to Icons.Filled.ShoppingCart,
-    "food-restaurants" to Icons.Filled.RamenDining,
-    "food-delivery" to Icons.Filled.DeliveryDining,
-    "food-coffee" to Icons.Filled.LocalCafe,
-    "transportation-public-transit" to Icons.Filled.DirectionsBus,
-    "transportation-fuel" to Icons.Filled.LocalGasStation,
-    "transportation-rideshare" to Icons.Filled.LocalTaxi,
-    "transportation-parking" to Icons.Filled.LocalParking,
-    "shopping-clothing" to Icons.Filled.Checkroom,
-    "shopping-electronics" to Icons.Filled.Devices,
-    "shopping-home" to Icons.Filled.Chair,
-    "shopping-personal-care" to Icons.Filled.Spa,
-    "health-pharmacy" to Icons.Filled.LocalPharmacy,
-    "health-doctor" to Icons.Filled.MedicalServices,
-    "health-insurance" to Icons.Filled.HealthAndSafety,
-    "health-fitness" to Icons.Filled.FitnessCenter,
-    "education-tuition" to Icons.Filled.AccountBalance,
-    "education-supplies" to Icons.AutoMirrored.Filled.MenuBook,
-    "education-courses" to Icons.Filled.Class,
-    "entertainment-streaming" to Icons.Filled.Theaters,
-    "entertainment-events" to Icons.Filled.ConfirmationNumber,
-    "entertainment-hobbies" to Icons.Filled.SportsEsports,
-    "bills-electricity" to Icons.Filled.ElectricBolt,
-    "bills-water" to Icons.Filled.WaterDrop,
-    "bills-internet" to Icons.Filled.Wifi,
-    "bills-rent" to Icons.Filled.Apartment,
-    "subscriptions-streaming" to Icons.Filled.PlayCircle,
-    "subscriptions-software" to Icons.Filled.Code,
+private val categoryGlyphs: Map<CategoryId, ImageVector> = mapOf(
+    CategoryId.FOOD to strokeIcon("Alimentación", "M3 2v7c0 1.1.9 2 2 2h1a2 2 0 0 0 2-2V2", "M6 2v20", "M17 2c-1.7 1.3-3 3.7-3 6 0 1.7.7 3 2 3h2c1.3 0 2-1.3 2-3 0-2.3-1.3-4.7-3-6z", "M18 11v11", strokeWidth = MARK_STROKE),
+    CategoryId.TRANSPORTATION to strokeIcon("Transporte", "M5 17H3v-5l2-5h14l2 5v5h-2", "M5 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0z", "M15 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0z", "M9 17h6", strokeWidth = MARK_STROKE),
+    CategoryId.SHOPPING to strokeIcon("Compras", "M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z", "M3 6h18", "M16 10a4 4 0 0 1-8 0", strokeWidth = MARK_STROKE),
+    CategoryId.HEALTH to strokeIcon("Salud", "M20.8 6.6a5 5 0 0 0-7.1 0L12 8.3l-1.7-1.7a5 5 0 1 0-7.1 7.1L12 21l8.8-7.3a5 5 0 0 0 0-7.1z", strokeWidth = MARK_STROKE),
+    CategoryId.EDUCATION to strokeIcon("Educación", "M22 9 12 5 2 9l10 4 10-4z", "M6 11v6c0 1.5 3 3 6 3s6-1.5 6-3v-6", strokeWidth = MARK_STROKE),
+    CategoryId.ENTERTAINMENT to strokeIcon("Entretenimiento", "M4 11h16l-1.2 9a2 2 0 0 1-2 1.7H7.2a2 2 0 0 1-2-1.7z", "M4 11 8 3", "M12 11 9.5 4", "M16 11 14 5", strokeWidth = MARK_STROKE),
+    CategoryId.BILLS to strokeIcon("Servicios", "M4 2h16v20l-3-2-2 2-3-2-3 2-2-2-3 2z", "M8 7h8", "M8 11h8", "M8 15h5", strokeWidth = MARK_STROKE),
+    CategoryId.SUBSCRIPTIONS to strokeIcon("Suscripciones", "M3 12a9 9 0 0 1 15-6.7L21 8", "M21 3v5h-5", "M21 12a9 9 0 0 1-15 6.7L3 16", "M3 21v-5h5", strokeWidth = MARK_STROKE),
+    CategoryId.SALARY to strokeIcon("Salario", "M3 7h18a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12", "M17 13h.01", strokeWidth = MARK_STROKE),
+    CategoryId.FREELANCE to strokeIcon("Freelance", "M4 5h16v10H4z", "M2 19h20", strokeWidth = MARK_STROKE),
+    CategoryId.OTHER to strokeIcon("Otros", "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z", "M8 11h.01", "M12 11h.01", "M16 11h.01", strokeWidth = MARK_STROKE),
 )
 
+private val subcategoryIcons: Map<String, ImageVector> = mapOf(
+    "food-groceries" to strokeIcon("food-groceries", "M2 3h2.6l2.2 11.2a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 2-1.6L20 7H6", "M9 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2z", "M18 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2z", strokeWidth = MARK_STROKE),
+    "food-restaurants" to strokeIcon("food-restaurants", "M3 11h18", "M12 20a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9z", "M12 4v3", strokeWidth = MARK_STROKE),
+    "food-delivery" to strokeIcon("food-delivery", "M5 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6z", "M19 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6z", "M8 16h8l-3-8H9", "M13 8h4l2 4", strokeWidth = MARK_STROKE),
+    "food-coffee" to strokeIcon("food-coffee", "M4 8h13v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z", "M17 9h2a2 2 0 1 1 0 4h-2", "M7 2v3", "M11 2v3", strokeWidth = MARK_STROKE),
+    "transportation-public-transit" to strokeIcon("transportation-public-transit", "M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z", "M4 11h16", "M7 21v-2", "M17 21v-2", "M8 14h.01", "M16 14h.01", strokeWidth = MARK_STROKE),
+    "transportation-fuel" to strokeIcon("transportation-fuel", "M3 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16", "M2 21h12", "M6 8h4", "M16 8l3 3v7a2 2 0 0 1-4 0V6", strokeWidth = MARK_STROKE),
+    "transportation-rideshare" to strokeIcon("transportation-rideshare", "M5 17H3v-5l2-5h14l2 5v5h-2", "M5 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0z", "M15 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0z", "M9 3h6v4H9z", strokeWidth = MARK_STROKE),
+    "transportation-parking" to strokeIcon("transportation-parking", "M4 3h16v18H4z", "M10 17V8h3a3 3 0 0 1 0 6h-3", strokeWidth = MARK_STROKE),
+    "shopping-clothing" to strokeIcon("shopping-clothing", "M6 4 3 7v3h3v11h12V10h3V7l-3-3-3 1a3 3 0 0 1-6 0z", strokeWidth = MARK_STROKE),
+    "shopping-electronics" to strokeIcon("shopping-electronics", "M3 5h18v11H3z", "M2 20h20", strokeWidth = MARK_STROKE),
+    "shopping-home" to strokeIcon("shopping-home", "M3 11 12 3l9 8", "M5 10v10h14V10", strokeWidth = MARK_STROKE),
+    "shopping-personal-care" to strokeIcon("shopping-personal-care", "M12 21c-4 0-8-3-8-7 4 0 8 3 8 7z", "M12 21c4 0 8-3 8-7-4 0-8 3-8 7z", "M12 21V10", strokeWidth = MARK_STROKE),
+    "health-pharmacy" to strokeIcon("health-pharmacy", "M4 8h16v12H4z", "M8 4h8v4H8z", "M12 11v6", "M9 14h6", strokeWidth = MARK_STROKE),
+    "health-doctor" to strokeIcon("health-doctor", "M6 3v6a5 5 0 0 0 10 0V3", "M4 3h3", "M15 3h3", "M16 14a3 3 0 1 0 0 6 3 3 0 0 0 0-6z", strokeWidth = MARK_STROKE),
+    "health-insurance" to strokeIcon("health-insurance", "M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z", "M9 12l2 2 4-4", strokeWidth = MARK_STROKE),
+    "health-fitness" to strokeIcon("health-fitness", "M4 9v6", "M20 9v6", "M7 6v12", "M17 6v12", "M7 12h10", strokeWidth = MARK_STROKE),
+    "education-tuition" to strokeIcon("education-tuition", "M12 3 2 8h20z", "M4 8v9", "M20 8v9", "M2 21h20", "M9 12v5", "M15 12v5", strokeWidth = MARK_STROKE),
+    "education-supplies" to strokeIcon("education-supplies", "M4 4.5A2.5 2.5 0 0 1 6.5 2H20v18H6.5A2.5 2.5 0 0 0 4 22z", "M8 7h8", strokeWidth = MARK_STROKE),
+    "education-courses" to strokeIcon("education-courses", "M4 4h16v12H4z", "M8 20h8", "M12 16v4", strokeWidth = MARK_STROKE),
+    "entertainment-streaming" to strokeIcon("entertainment-streaming", "M4 4h16v16H4z", "M4 9h16", "M9 4 8 9", "M15 4l-1 5", strokeWidth = MARK_STROKE),
+    "entertainment-events" to strokeIcon("entertainment-events", "M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2 2 2 0 0 0 0 8 2 2 0 0 1-2 2H5a2 2 0 0 1-2-2 2 2 0 0 0 0-8z", "M12 7v2", "M12 11v2", "M12 15v2", strokeWidth = MARK_STROKE),
+    "entertainment-hobbies" to strokeIcon("entertainment-hobbies", "M6 8h12a4 4 0 0 1 4 4v2a3 3 0 0 1-5.2 2L15 15H9l-1.8 1A3 3 0 0 1 2 14v-2a4 4 0 0 1 4-4z", "M8 11v3", "M6.5 12.5h3", "M16 12h.01", "M18 14h.01", strokeWidth = MARK_STROKE),
+    "bills-electricity" to strokeIcon("bills-electricity", "M13 2 4 14h7l-1 8 9-12h-7z", strokeWidth = MARK_STROKE),
+    "bills-water" to strokeIcon("bills-water", "M12 3s6 6.5 6 10.5a6 6 0 0 1-12 0C6 9.5 12 3 12 3z", strokeWidth = MARK_STROKE),
+    "bills-internet" to strokeIcon("bills-internet", "M2 8.5a15 15 0 0 1 20 0", "M5 12a10 10 0 0 1 14 0", "M8.5 15.5a5 5 0 0 1 7 0", "M12 19h.01", strokeWidth = MARK_STROKE),
+    "bills-rent" to strokeIcon("bills-rent", "M4 21V4h10v17", "M14 9h6v12", "M7 8h1", "M11 8h1", "M7 12h1", "M11 12h1", "M7 16h1", "M11 16h1", "M17 13h1", "M17 17h1", strokeWidth = MARK_STROKE),
+    "subscriptions-streaming" to strokeIcon("subscriptions-streaming", "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z", "M10 8.5 16 12l-6 3.5z", strokeWidth = MARK_STROKE),
+    "subscriptions-software" to strokeIcon("subscriptions-software", "M8 6 3 12l5 6", "M16 6l5 6-5 6", strokeWidth = MARK_STROKE),
+)
+
+// Obsequio has no glyph in the mockup, so it keeps its Material gift icon.
+fun iconFor(category: CategoryId): ImageVector = categoryGlyphs[category] ?: Icons.Filled.CardGiftcard
+
+// One distinct glyph per subcategory slug (see backend/prisma/seed.ts),
+// falling back to the parent category's for any slug not listed here, so a
+// subcategory added only on the backend degrades gracefully.
 fun iconForSubcategory(slug: String, parentCategoryId: CategoryId): ImageVector =
     subcategoryIcons[slug] ?: iconFor(parentCategoryId)
 

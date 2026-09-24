@@ -72,4 +72,37 @@ class GoalRepositoryTest {
         assertTrue(repository.goals.value.isEmpty())
         assertEquals(null, created)
     }
+
+    // Regression: deleteGoal was declared with @DELETE plus @Body, which
+    // Retrofit rejects before sending — a goal with funds could never be
+    // deleted. It must go out as a DELETE carrying the destination.
+    @Test
+    fun `delete sends a DELETE with the return-to-origin body`() = runTest {
+        server.enqueue(MockResponse().setResponseCode(204))
+        val repository = GoalRepository(server.apiService())
+        repository.delete("g1", returnToOrigin = true)
+        val request = server.takeRequest()
+        assertEquals("DELETE", request.method)
+        assertTrue(request.path!!.endsWith("/goals/g1"))
+        assertTrue(request.body.readUtf8().contains("\"returnToOrigin\":true"))
+    }
+
+    @Test
+    fun `refresh maps each wallet's contribution`() = runTest {
+        server.enqueue(
+            MockResponse().setBody(
+                """
+                [{
+                  "id": "g1", "name": "Viaje", "targetAmount": 100000, "currentAmount": 25000,
+                  "remaining": 75000, "percentage": 25,
+                  "contributions": [{"accountId": "w1", "amount": 20000}, {"accountId": "w2", "amount": 5000}],
+                  "createdAt": "2026-01-01T00:00:00.000Z", "updatedAt": "2026-01-01T00:00:00.000Z"
+                }]
+                """.trimIndent(),
+            ),
+        )
+        val repository = GoalRepository(server.apiService())
+        repository.refresh()
+        assertEquals(mapOf("w1" to 20000.0, "w2" to 5000.0), repository.goals.value.single().contributions)
+    }
 }

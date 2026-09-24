@@ -162,6 +162,8 @@ data class Goal(
     val percentage: Int = 0,
     val targetDate: String? = null,
     val themeIcon: String? = null,
+    // walletId -> amount that wallet contributed (for "Devolver a su origen").
+    val contributions: Map<String, Double> = emptyMap(),
 )
 
 enum class BudgetStatus { ON_TRACK, NEAR_LIMIT, OVER_BUDGET }
