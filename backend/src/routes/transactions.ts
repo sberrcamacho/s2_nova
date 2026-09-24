@@ -247,10 +247,17 @@ export async function transactionRoutes(app: FastifyInstance) {
         lte: query.to ? parseDateOnly(query.to) : undefined,
       };
     }
+    // Movimientos' search box matches what a row shows: description,
+    // merchant, category and wallet (the Web mockup's wallet shortcut is a
+    // search by wallet name).
     if (query.search) {
+      const contains = { contains: query.search, mode: "insensitive" as const };
       where.OR = [
-        { description: { contains: query.search, mode: "insensitive" } },
-        { merchant: { contains: query.search, mode: "insensitive" } },
+        { description: contains },
+        { merchant: contains },
+        { category: { name: contains } },
+        { account: { name: contains } },
+        { transferToAccount: { name: contains } },
       ];
     }
 

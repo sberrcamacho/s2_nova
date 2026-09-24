@@ -132,7 +132,9 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   see `schema.prisma`'s doc comments in `backend/` for the full rationale.
   **Subscription/Recurring is deliberately NOT a field on `Transaction`**
   — it's a separate `RecurringSeries` definition
-  (`RecurringSeriesRepository`, `ui/screens/recurring/RecurringScreen.kt`)
+  (`RecurringSeriesRepository`, `ui/screens/recurring/RecurringScreen.kt`,
+  titled "Programados"; a due occurrence is confirmed or skipped there —
+  skip uses the backend's `POST /recurring-series/:id/skip`)
   that only ever produces a real `Transaction` when the user explicitly
   confirms a due occurrence, never automatically on app start (that
   conflation was this screen's original design; it was replaced because
@@ -159,7 +161,7 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   computed server-side and read directly
   (`BudgetRepository.budgetProgress`), never recomputed client-side.
   Wallets and Recurring are reachable from Profile (now down to three rows:
-  Billeteras, Recurrentes, Ajustes), same pattern as Settings. A budget's
+  Billeteras, Programados, Ajustes), same pattern as Settings. A budget's
   list icon (`PlanesScreen.kt`'s
   `BudgetsTab`) is always its category's real icon (`CategoryIcon`) —
   never the small decorative theme palette in

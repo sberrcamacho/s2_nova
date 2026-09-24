@@ -1,35 +1,34 @@
 package com.s2nova.app.ui.screens.recurring
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -40,6 +39,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -48,6 +52,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
 import com.s2nova.app.data.mock.expenseCategories
 import com.s2nova.app.data.mock.incomeCategories
+import com.s2nova.app.data.model.AppLanguage
 import com.s2nova.app.data.model.CategoryId
 import com.s2nova.app.data.model.RecurrenceInterval
 import com.s2nova.app.data.model.RecurringSeries
@@ -57,32 +62,42 @@ import com.s2nova.app.data.todayISO
 import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.ThousandsGroupingVisualTransformation
 import com.s2nova.app.ui.categoryStringKey
+import com.s2nova.app.ui.components.BackHeader
 import com.s2nova.app.ui.components.CategoryIcon
 import com.s2nova.app.ui.components.CategoryIconSize
 import com.s2nova.app.ui.components.ColorPill
 import com.s2nova.app.ui.components.DraftSheetDeleteRow
 import com.s2nova.app.ui.components.DraftSheetPrimaryButton
-import com.s2nova.app.ui.components.NovaCard
-import com.s2nova.app.ui.components.NovaDatePickerField
 import com.s2nova.app.ui.components.NovaDraftSheet
-import com.s2nova.app.ui.components.NovaTopBar
+import com.s2nova.app.ui.components.MockupIcons
+import com.s2nova.app.ui.rememberAppLanguage
 import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.suggestExpenseCategory
 import com.s2nova.app.ui.suggestIncomeCategory
 import com.s2nova.app.ui.theme.NovaColors
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
+import kotlin.math.abs
 
+// Programados, per the Android v2 mockup's "Recurrentes" screen: one card
+// per series with Pausar/Reanudar, Editar and, when an occurrence is due,
+// "Vence hoy · Confirmar" (confirms directly, as in the mockup) plus
+// "Omitir", which skips that occurrence via the backend's skip rule — the
+// Web mockup's "Omitir esta vez", added here for parity.
 @Composable
 fun RecurringScreen(onBack: () -> Unit) {
     val series by AppContainer.recurringSeriesRepository.series.collectAsStateWithLifecycle()
     val wallets by AppContainer.walletRepository.wallets.collectAsStateWithLifecycle()
     val format = rememberCurrencyFormatter()
     val t = rememberStrings()
+    val language = rememberAppLanguage()
     val colors = NovaColors.current
     val scope = rememberCoroutineScope()
+    val today = todayISO()
     var draft by remember { mutableStateOf<RecurringDraft?>(null) }
-    var confirmingId by remember { mutableStateOf<String?>(null) }
     var deleting by remember { mutableStateOf<RecurringSeries?>(null) }
 
     LaunchedEffect(Unit) {
@@ -97,118 +112,140 @@ fun RecurringScreen(onBack: () -> Unit) {
             type = TransactionType.EXPENSE,
             amountText = "",
             walletId = wallets.firstOrNull()?.id,
-            category = expenseCategories.first().id,
+            category = CategoryId.BILLS,
             userPickedCategory = false,
             interval = RecurrenceInterval.MONTHLY,
-            nextDate = todayISO(),
+            nextDate = "",
         )
     }
 
-    Scaffold(
-        topBar = {
-            NovaTopBar(
-                title = t(StringKey.RECURRING_TITLE),
-                onBack = onBack,
-                actions = { IconButton(onClick = { openCreate() }) { Icon(Icons.Filled.Add, contentDescription = t(StringKey.RECURRING_NEW)) } },
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background,
-    ) { padding ->
-        if (series.isEmpty()) {
-            Column(
-                modifier = Modifier.fillMaxSize().padding(padding).padding(32.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Icon(Icons.Filled.Repeat, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(48.dp))
-                Text(t(StringKey.RECURRING_EMPTY), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 12.dp))
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.padding(padding),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                items(series, key = { it.id }) { item ->
-                    NovaCard(modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                CategoryIcon(category = item.category, size = CategoryIconSize.ROW)
-                                Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
-                                    Text(item.name, fontSize = 13.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                                    Text(
-                                        if (item.active) "${intervalLabel(item.interval, t)} · ${t(StringKey.RECURRING_NEXT_DUE)} ${item.nextOccurrenceDate}"
-                                        else t(StringKey.RECURRING_PAUSED),
-                                        fontSize = 11.5.sp,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.padding(top = 2.dp),
-                                    )
-                                }
-                                Text(
-                                    (if (item.type == TransactionType.EXPENSE) "-" else "+") + format(item.amount),
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = if (item.type == TransactionType.EXPENSE) MaterialTheme.colorScheme.error else colors.positive,
-                                )
+    // A due occurrence changes balances (confirm) or the series' date (skip),
+    // and either one clears its "vence hoy" alert.
+    fun afterOccurrence(block: suspend () -> Unit) {
+        scope.launch {
+            runCatching { block() }
+            runCatching { AppContainer.walletRepository.refresh() }
+            runCatching { AppContainer.transactionRepository.refresh() }
+            runCatching { AppContainer.alertRepository.refresh() }
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        BackHeader(
+            title = t(StringKey.RECURRING_TITLE),
+            onBack = onBack,
+            action = {
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(CircleShape)
+                        .clickable { openCreate() }
+                        .semantics { contentDescription = t(StringKey.RECURRING_NEW) },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("+", fontSize = 22.sp, fontWeight = FontWeight.Light, color = MaterialTheme.colorScheme.primary)
+                }
+            },
+        )
+        LazyColumn(
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            items(series, key = { it.id }) { item ->
+                val due = item.active && item.isDue
+                val overdue = due && item.nextOccurrenceDate < today
+                val detail = when {
+                    !item.active -> t(StringKey.RECURRING_PAUSED)
+                    overdue -> "${intervalLabel(item.interval, t)} · ${t(StringKey.RECURRING_OVERDUE_SINCE)} ${shortDate(item.nextOccurrenceDate, language)}"
+                    due -> "${intervalLabel(item.interval, t)} · ${t(StringKey.RECURRING_DUE_TODAY)}"
+                    else -> "${intervalLabel(item.interval, t)} · ${t(StringKey.RECURRING_NEXT_DUE)} ${shortDate(item.nextOccurrenceDate, language)}"
+                }
+                val income = item.type == TransactionType.INCOME
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(MaterialTheme.colorScheme.surface)
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(18.dp))
+                        .padding(16.dp),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        CategoryIcon(category = item.category, size = CategoryIconSize.ROW)
+                        Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
+                            Text(item.name, fontSize = 13.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                            Text(detail, fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
+                        }
+                        Text(
+                            (if (income) "+" else "−") + format(abs(item.amount)),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = if (income) colors.positive else colors.negative,
+                            modifier = Modifier.padding(start = 12.dp),
+                        )
+                    }
+                    @OptIn(ExperimentalLayoutApi::class)
+                    FlowRow(
+                        modifier = Modifier.padding(top = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        CardAction(if (item.active) t(StringKey.RECURRING_PAUSE) else t(StringKey.RECURRING_RESUME), MaterialTheme.colorScheme.primary) {
+                            scope.launch { runCatching { AppContainer.recurringSeriesRepository.setActive(item.id, !item.active) } }
+                        }
+                        CardAction(t(StringKey.RECURRING_EDIT), colors.accentText) {
+                            draft = RecurringDraft(
+                                id = item.id,
+                                name = item.name,
+                                type = item.type,
+                                amountText = item.amount.toLong().toString(),
+                                walletId = item.walletId,
+                                category = item.category,
+                                userPickedCategory = true,
+                                interval = item.interval,
+                                nextDate = item.nextOccurrenceDate,
+                            )
+                        }
+                        if (due) {
+                            val label = t(if (overdue) StringKey.RECURRING_OVERDUE else StringKey.RECURRING_DUE_TODAY) + " · " + t(StringKey.RECURRING_CONFIRM)
+                            CardAction(label, MaterialTheme.colorScheme.primary) {
+                                afterOccurrence { AppContainer.recurringSeriesRepository.confirmOccurrence(item.id) }
                             }
-                            Row(modifier = Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                                Text(
-                                    if (item.active) t(StringKey.RECURRING_PAUSE) else t(StringKey.RECURRING_RESUME),
-                                    fontSize = 12.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.clickable {
-                                        scope.launch { AppContainer.recurringSeriesRepository.setActive(item.id, !item.active) }
-                                    },
-                                )
-                                Text(
-                                    t(StringKey.RECURRING_EDIT),
-                                    fontSize = 12.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.secondary,
-                                    modifier = Modifier.clickable {
-                                        draft = RecurringDraft(
-                                            id = item.id,
-                                            name = item.name,
-                                            type = item.type,
-                                            amountText = item.amount.toInt().toString(),
-                                            walletId = item.walletId,
-                                            category = item.category,
-                                            userPickedCategory = true,
-                                            interval = item.interval,
-                                            nextDate = item.nextOccurrenceDate,
-                                        )
-                                    },
-                                )
-                                if (item.active && item.isDue) {
-                                    Text(
-                                        t(StringKey.RECURRING_DUE_TODAY) + " · " + t(StringKey.RECURRING_CONFIRM),
-                                        fontSize = 12.5.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.clickable { confirmingId = item.id },
-                                    )
-                                }
+                            CardAction(t(StringKey.RECURRING_SKIP), colors.accentText) {
+                                afterOccurrence { AppContainer.recurringSeriesRepository.skipOccurrence(item.id) }
                             }
                         }
                     }
                 }
-                item { Spacer(Modifier.height(72.dp)) }
+            }
+            if (series.isEmpty()) {
+                item {
+                    Text(
+                        t(StringKey.RECURRING_EMPTY),
+                        fontSize = 12.sp,
+                        lineHeight = 18.sp,
+                        color = colors.textDim,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp),
+                    )
+                }
             }
         }
+    }
 
-        val d = draft
-        if (d != null) {
-            RecurringDraftSheet(
-                draft = d,
-                wallets = wallets,
-                onDraftChange = { draft = it },
-                onDismiss = { draft = null },
-                onSave = {
-                    val amount = d.amountText.toDoubleOrNull()
-                    val walletId = d.walletId
-                    if (d.name.isNotBlank() && amount != null && amount > 0 && walletId != null && d.nextDate.isNotBlank()) {
-                        scope.launch {
+    val d = draft
+    if (d != null) {
+        RecurringDraftSheet(
+            draft = d,
+            wallets = wallets,
+            onDraftChange = { draft = it },
+            onDismiss = { draft = null },
+            onSave = {
+                val amount = d.amountText.toDoubleOrNull()
+                val walletId = d.walletId
+                if (d.name.isNotBlank() && amount != null && amount > 0 && walletId != null) {
+                    val next = d.nextDate.ifBlank { today }
+                    scope.launch {
+                        runCatching {
                             if (d.id == null) {
                                 AppContainer.recurringSeriesRepository.create(
                                     name = d.name.trim(),
@@ -217,7 +254,7 @@ fun RecurringScreen(onBack: () -> Unit) {
                                     walletId = walletId,
                                     category = d.category,
                                     interval = d.interval,
-                                    startDate = d.nextDate,
+                                    startDate = next,
                                 )
                             } else {
                                 AppContainer.recurringSeriesRepository.update(
@@ -228,82 +265,74 @@ fun RecurringScreen(onBack: () -> Unit) {
                                     walletId = walletId,
                                     category = d.category,
                                     interval = d.interval,
-                                    nextOccurrenceDate = d.nextDate,
+                                    nextOccurrenceDate = next,
                                 )
                             }
                         }
-                        draft = null
+                        runCatching { AppContainer.alertRepository.refresh() }
                     }
-                },
-                onRequestDelete = {
-                    val target = series.firstOrNull { it.id == d.id }
-                    if (target != null) {
-                        deleting = target
-                        draft = null
-                    }
-                },
-            )
-        }
+                    draft = null
+                }
+            },
+            onRequestDelete = {
+                val target = series.firstOrNull { it.id == d.id }
+                if (target != null) {
+                    deleting = target
+                    draft = null
+                }
+            },
+        )
+    }
 
-        if (confirmingId != null) {
-            AlertDialog(
-                onDismissRequest = { confirmingId = null },
-                title = { Text(t(StringKey.RECURRING_CONFIRM)) },
-                text = { Text(t(StringKey.RECURRING_CONFIRMED_TOAST) + "?") },
-                confirmButton = {
-                    TextButton(onClick = {
-                        val id = confirmingId!!
-                        scope.launch {
-                            AppContainer.recurringSeriesRepository.confirmOccurrence(id)
-                            AppContainer.walletRepository.refresh()
-                            AppContainer.transactionRepository.refresh()
-                            confirmingId = null
-                        }
-                    }) { Text(t(StringKey.RECURRING_CONFIRM)) }
-                },
-                dismissButton = {
-                    Row {
-                        TextButton(onClick = {
-                            val id = confirmingId!!
-                            scope.launch {
-                                runCatching { AppContainer.recurringSeriesRepository.skipOccurrence(id) }
-                                runCatching { AppContainer.alertRepository.refresh() }
-                                confirmingId = null
-                            }
-                        }) { Text(t(StringKey.RECURRING_SKIP)) }
-                        TextButton(onClick = { confirmingId = null }) { Text(t(StringKey.COMMON_CANCEL)) }
-                    }
-                },
-            )
-        }
-
-        if (deleting != null) {
-            val target = deleting!!
-            AlertDialog(
-                onDismissRequest = { deleting = null },
-                title = { Text(t(StringKey.RECURRING_DELETE_CONFIRM_TITLE)) },
-                text = { Text(t(StringKey.RECURRING_DELETE_CONFIRM_BODY)) },
-                confirmButton = {
-                    TextButton(onClick = {
-                        scope.launch { AppContainer.recurringSeriesRepository.delete(target.id) }
-                        deleting = null
-                    }) { Text(t(StringKey.RECURRING_DELETE), color = MaterialTheme.colorScheme.error) }
-                },
-                dismissButton = { TextButton(onClick = { deleting = null }) { Text(t(StringKey.COMMON_CANCEL)) } },
-            )
-        }
+    val target = deleting
+    if (target != null) {
+        AlertDialog(
+            onDismissRequest = { deleting = null },
+            title = { Text(t(StringKey.RECURRING_DELETE_CONFIRM_TITLE)) },
+            text = { Text(t(StringKey.RECURRING_DELETE_CONFIRM_BODY)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    scope.launch { runCatching { AppContainer.recurringSeriesRepository.delete(target.id) } }
+                    deleting = null
+                }) { Text(t(StringKey.RECURRING_DELETE), color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { deleting = null }) { Text(t(StringKey.COMMON_CANCEL)) } },
+        )
     }
 }
 
 @Composable
+private fun CardAction(label: String, color: Color, onClick: () -> Unit) {
+    Text(label, fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = color, modifier = Modifier.clickable(onClick = onClick))
+}
+
 private fun intervalLabel(interval: RecurrenceInterval, t: (StringKey) -> String) = when (interval) {
     RecurrenceInterval.WEEKLY -> t(StringKey.RECURRENCE_WEEKLY)
     RecurrenceInterval.MONTHLY -> t(StringKey.RECURRENCE_MONTHLY)
     RecurrenceInterval.YEARLY -> t(StringKey.RECURRENCE_YEARLY)
 }
 
-// Draft state backing the recurring-series create/edit sheet. `id == null`
-// means "creating".
+private val MONTHS_ABBR_ES = listOf("ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic")
+private val MONTHS_ABBR_EN = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+private val MONTHS_LONG_ES = listOf("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre")
+private val MONTHS_LONG_EN = listOf("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
+
+// Mockup fmtDate: "24 ago".
+private fun shortDate(iso: String, language: AppLanguage): String {
+    val date = LocalDate.parse(iso)
+    return if (language == AppLanguage.EN) "${MONTHS_ABBR_EN[date.monthValue - 1]} ${date.dayOfMonth}"
+    else "${date.dayOfMonth} ${MONTHS_ABBR_ES[date.monthValue - 1]}"
+}
+
+// Mockup fmtDateLong: "24 de agosto de 2026".
+private fun longDate(iso: String, language: AppLanguage): String {
+    val date = LocalDate.parse(iso)
+    return if (language == AppLanguage.EN) "${MONTHS_LONG_EN[date.monthValue - 1]} ${date.dayOfMonth}, ${date.year}"
+    else "${date.dayOfMonth} de ${MONTHS_LONG_ES[date.monthValue - 1]} de ${date.year}"
+}
+
+// Draft state backing the series create/edit sheet. `id == null` means
+// "creating"; an empty nextDate reads "Elegir fecha" and saves as today.
 private data class RecurringDraft(
     val id: String?,
     val name: String,
@@ -327,56 +356,61 @@ private fun RecurringDraftSheet(
     onRequestDelete: () -> Unit,
 ) {
     val t = rememberStrings()
+    val language = rememberAppLanguage()
+    val colors = NovaColors.current
     val isEdit = draft.id != null
     val pool = if (draft.type == TransactionType.INCOME) incomeCategories else expenseCategories
     val guessed = if (draft.type == TransactionType.INCOME) suggestIncomeCategory(draft.name) else suggestExpenseCategory(draft.name)
     val showAutoNote = !draft.userPickedCategory && guessed != null
+    var picking by remember { mutableStateOf(false) }
 
     NovaDraftSheet(
         onDismiss = onDismiss,
         title = t(if (isEdit) StringKey.RECURRING_EDIT_TITLE else StringKey.RECURRING_NEW),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = draft.name,
-                    onValueChange = { newName ->
-                        val g = if (!draft.userPickedCategory) {
-                            if (draft.type == TransactionType.INCOME) suggestIncomeCategory(newName) else suggestExpenseCategory(newName)
-                        } else null
-                        onDraftChange(draft.copy(name = newName, category = g ?: draft.category))
-                    },
-                    label = { Text(t(StringKey.RECURRING_NAME)) },
-                    placeholder = { Text(t(StringKey.RECURRING_NAME_PLACEHOLDER)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+            Column {
+                SheetLabel(t(StringKey.RECURRING_NAME))
+                SheetBox(padding = PaddingValues(horizontal = 14.dp, vertical = 15.dp)) {
+                    SheetInput(
+                        value = draft.name,
+                        onValueChange = { newName ->
+                            val g = if (!draft.userPickedCategory) {
+                                if (draft.type == TransactionType.INCOME) suggestIncomeCategory(newName) else suggestExpenseCategory(newName)
+                            } else null
+                            onDraftChange(draft.copy(name = newName, category = g ?: draft.category))
+                        },
+                        placeholder = t(StringKey.RECURRING_NAME_PLACEHOLDER),
+                        style = TextStyle(fontSize = 13.5.sp, fontWeight = FontWeight.Bold),
+                    )
+                }
                 Text(
-                    if (showAutoNote) t(StringKey.RECURRING_CATEGORY_AUTO_NOTE) else "",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    t(if (showAutoNote) StringKey.RECURRING_CATEGORY_AUTO_NOTE else StringKey.RECURRING_NOTE),
+                    fontSize = 11.sp,
+                    color = colors.textDim,
+                    modifier = Modifier.padding(top = 9.dp),
                 )
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(t(StringKey.RECURRING_TYPE), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Column {
+                SheetLabel(t(StringKey.RECURRING_TYPE))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(TransactionType.EXPENSE to t(StringKey.ADD_TXN_EXPENSE), TransactionType.INCOME to t(StringKey.ADD_TXN_INCOME)).forEach { (value, label) ->
-                        RecurringTypePill(label, selected = draft.type == value) {
-                            val newPool = if (value == TransactionType.INCOME) incomeCategories else expenseCategories
-                            onDraftChange(draft.copy(type = value, category = newPool.first().id, userPickedCategory = false))
+                        SheetPill(label, selected = draft.type == value) {
+                            val category = if (value == TransactionType.INCOME) CategoryId.SALARY else CategoryId.BILLS
+                            onDraftChange(draft.copy(type = value, category = category, userPickedCategory = false))
                         }
                     }
                 }
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(t(StringKey.ADD_TXN_CATEGORY), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Column {
+                SheetLabel(t(StringKey.ADD_TXN_CATEGORY))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     pool.forEach { c ->
                         ColorPill(
                             label = t(categoryStringKey(c.id)),
-                            color = androidx.compose.ui.graphics.Color(c.color),
+                            color = Color(c.color),
                             selected = draft.category == c.id,
                             onClick = { onDraftChange(draft.copy(category = c.id, userPickedCategory = true)) },
                         )
@@ -384,54 +418,71 @@ private fun RecurringDraftSheet(
                 }
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(t(StringKey.RECURRING_AMOUNT), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                OutlinedTextField(
-                    value = draft.amountText,
-                    onValueChange = { onDraftChange(draft.copy(amountText = it.filter { c -> c.isDigit() })) },
-                    leadingIcon = { Text("$") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    visualTransformation = ThousandsGroupingVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-
-            if (wallets.isNotEmpty()) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(t(StringKey.ADD_TXN_WALLET), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        wallets.forEach { wallet ->
-                            RecurringTypePill(wallet.name, selected = draft.walletId == wallet.id) { onDraftChange(draft.copy(walletId = wallet.id)) }
+            Column {
+                SheetLabel(t(StringKey.RECURRING_AMOUNT))
+                SheetBox(padding = PaddingValues(horizontal = 16.dp, vertical = 15.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("$", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Box(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
+                            SheetInput(
+                                value = draft.amountText,
+                                onValueChange = { onDraftChange(draft.copy(amountText = it.filter { c -> c.isDigit() }.take(12))) },
+                                placeholder = "0",
+                                style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.ExtraBold),
+                                keyboardType = KeyboardType.Number,
+                                grouped = true,
+                            )
                         }
                     }
                 }
             }
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(t(StringKey.RECURRING_INTERVAL), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            // Not in the mockup, whose series have no wallet: the backend
+            // needs one to know which balance a confirmed occurrence moves.
+            if (wallets.size > 1) {
+                Column {
+                    SheetLabel(t(StringKey.ADD_TXN_WALLET))
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        wallets.forEach { wallet ->
+                            SheetPill(wallet.name, selected = draft.walletId == wallet.id) { onDraftChange(draft.copy(walletId = wallet.id)) }
+                        }
+                    }
+                }
+            }
+
+            Column {
+                SheetLabel(t(StringKey.RECURRING_INTERVAL))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(
                         RecurrenceInterval.WEEKLY to t(StringKey.RECURRENCE_WEEKLY),
                         RecurrenceInterval.MONTHLY to t(StringKey.RECURRENCE_MONTHLY),
                         RecurrenceInterval.YEARLY to t(StringKey.RECURRENCE_YEARLY),
                     ).forEach { (value, label) ->
-                        RecurringTypePill(label, selected = draft.interval == value) { onDraftChange(draft.copy(interval = value)) }
+                        SheetPill(label, selected = draft.interval == value) { onDraftChange(draft.copy(interval = value)) }
                     }
                 }
             }
 
-            NovaDatePickerField(
-                label = t(StringKey.RECURRING_START_DATE),
-                value = draft.nextDate,
-                onValueChange = { onDraftChange(draft.copy(nextDate = it ?: draft.nextDate)) },
-                allowClear = false,
-            )
+            Column {
+                SheetLabel(t(StringKey.RECURRING_START_DATE))
+                SheetBox(padding = PaddingValues(horizontal = 14.dp, vertical = 14.dp), onClick = { picking = true }) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(MockupIcons.Calendar, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
+                        Text(
+                            if (draft.nextDate.isNotBlank()) longDate(draft.nextDate, language) else t(StringKey.DATE_PICKER_CHOOSE),
+                            fontSize = 13.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (draft.nextDate.isNotBlank()) MaterialTheme.colorScheme.onBackground else colors.textDim,
+                            modifier = Modifier.padding(start = 10.dp),
+                        )
+                    }
+                }
+            }
 
             val amount = draft.amountText.toDoubleOrNull()
             DraftSheetPrimaryButton(
                 label = t(StringKey.COMMON_SAVE),
-                enabled = draft.name.isNotBlank() && amount != null && amount > 0 && draft.walletId != null && draft.nextDate.isNotBlank(),
+                enabled = draft.name.isNotBlank() && amount != null && amount > 0 && draft.walletId != null,
                 onClick = onSave,
             )
 
@@ -440,18 +491,98 @@ private fun RecurringDraftSheet(
             }
         }
     }
+
+    if (picking) {
+        val initial = draft.nextDate.ifBlank { todayISO() }
+        val state = rememberDatePickerState(
+            initialSelectedDateMillis = LocalDate.parse(initial).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
+        )
+        DatePickerDialog(
+            onDismissRequest = { picking = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    state.selectedDateMillis?.let {
+                        onDraftChange(draft.copy(nextDate = Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate().toString()))
+                    }
+                    picking = false
+                }) { Text(t(StringKey.DATE_PICKER_USE_DATE)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { onDraftChange(draft.copy(nextDate = todayISO())); picking = false }) { Text(t(StringKey.DATE_PICKER_TODAY)) }
+            },
+        ) {
+            DatePicker(state = state)
+        }
+    }
 }
 
 @Composable
-private fun RecurringTypePill(label: String, selected: Boolean, onClick: () -> Unit) {
+private fun SheetLabel(text: String) {
+    Text(
+        text,
+        fontSize = 11.5.sp,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(bottom = 8.dp),
+    )
+}
+
+// Mockup field box: 1px --line2 border, 14dp corners.
+@Composable
+private fun SheetBox(padding: PaddingValues, onClick: (() -> Unit)? = null, content: @Composable () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(14.dp))
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(padding),
+    ) { content() }
+}
+
+@Composable
+private fun SheetInput(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    style: TextStyle,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    grouped: Boolean = false,
+) {
+    val textColor = MaterialTheme.colorScheme.onBackground
+    BasicTextField(
+        value = value,
+        onValueChange = onValueChange,
+        singleLine = true,
+        textStyle = style.copy(color = textColor),
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        visualTransformation = if (grouped) ThousandsGroupingVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None,
+        modifier = Modifier.fillMaxWidth(),
+        decorationBox = { inner ->
+            Box {
+                if (value.isEmpty()) Text(placeholder, style = style.copy(color = NovaColors.current.textDim, fontWeight = FontWeight.SemiBold))
+                inner()
+            }
+        },
+    )
+}
+
+// Mockup pill(): the same unselected/selected treatment as Movimientos' filters.
+@Composable
+private fun SheetPill(label: String, selected: Boolean, onClick: () -> Unit) {
+    val colors = NovaColors.current
     Text(
         label,
-        style = MaterialTheme.typography.bodySmall,
-        color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
+        fontSize = 12.sp,
+        fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
+        color = if (selected) MaterialTheme.colorScheme.onPrimary else colors.pillText,
+        maxLines = 1,
         modifier = Modifier
             .clip(RoundedCornerShape(50))
-            .background(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
+            .background(if (selected) MaterialTheme.colorScheme.primary else colors.pillSurface)
+            .border(1.dp, if (selected) Color.Transparent else colors.pillBorder, RoundedCornerShape(50))
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(horizontal = 14.dp, vertical = 9.dp),
     )
 }

@@ -35,5 +35,6 @@ object MockupIcons {
     val Reportes = strokeIcon("Reportes", "M5 21V10", "M12 21V4", "M19 21v-7")
     val Bell = strokeIcon("Bell", "M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9", "M10.3 21a1.94 1.94 0 0 0 3.4 0")
     val Pencil = strokeIcon("Pencil", "M12 20h9", "M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z")
+    val Calendar = strokeIcon("Calendar", "M4 5h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z", "M3 10h18", "M8 3v4", "M16 3v4")
     val Scan = strokeIcon("Scan", "M3 7V5a2 2 0 0 1 2-2h2", "M17 3h2a2 2 0 0 1 2 2v2", "M21 17v2a2 2 0 0 1-2 2h-2", "M7 21H5a2 2 0 0 1-2-2v-2", "M3 12h18")
 }

@@ -151,9 +151,10 @@ fun ColorPill(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
-    val background = if (selected) color else color.copy(alpha = 0.16f)
+    // Mockup chip: color + '1f' fill, color + '59' border, --chip-text label.
+    val background = if (selected) color else color.copy(alpha = 0.12f)
     val borderColor = if (selected) Color.Transparent else color.copy(alpha = 0.35f)
-    val textColor = if (selected) inkOn(color) else MaterialTheme.colorScheme.onSurfaceVariant
+    val textColor = if (selected) inkOn(color) else NovaColors.current.pillText
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(50))

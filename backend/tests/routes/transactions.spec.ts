@@ -405,6 +405,29 @@ describe("transaction routes", () => {
     });
   });
 
+  describe("GET /transactions?search=", () => {
+    it("matches description, merchant, category name and wallet name", async () => {
+      const user = await createTestUser();
+      const nequi = await createAccount(user.id, { name: "Nequi", initialBalanceMinor: 1_000_000n });
+      const cash = await createAccount(user.id, { name: "Efectivo", initialBalanceMinor: 1_000_000n });
+      const food = await categoryBySlug("food");
+      const transport = await categoryBySlug("transportation");
+      const create = (payload: Record<string, unknown>) =>
+        app.inject({ method: "POST", url: "/api/v1/transactions", headers: authHeader(user), payload: { type: "EXPENSE", amount: 1000, date: "2026-06-01", ...payload } });
+      await create({ accountId: cash.id, categoryId: food.id, description: "Café", merchant: "Tostao" });
+      await create({ accountId: nequi.id, categoryId: transport.id, description: "Viaje en app", merchant: "Uber" });
+
+      const search = async (q: string) => {
+        const res = await app.inject({ method: "GET", url: `/api/v1/transactions?search=${encodeURIComponent(q)}`, headers: authHeader(user) });
+        return res.json().map((t: { description: string }) => t.description);
+      };
+      expect(await search("tostao")).toEqual(["Café"]);
+      expect(await search("transporte")).toEqual(["Viaje en app"]);
+      expect(await search("nequi")).toEqual(["Viaje en app"]);
+      expect(await search("efectivo")).toEqual(["Café"]);
+    });
+  });
+
   describe("DELETE /transactions/:id", () => {
     it("reverses the balance effect before deleting", async () => {
       const user = await createTestUser();

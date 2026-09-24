@@ -3,67 +3,58 @@ package com.s2nova.app.ui.components
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.s2nova.app.data.formatShortDate
-import com.s2nova.app.data.mock.categoryMap
+import androidx.compose.ui.unit.sp
 import com.s2nova.app.data.model.Transaction
-import com.s2nova.app.ui.categoryStringKey
-import com.s2nova.app.ui.rememberStrings
+import com.s2nova.app.data.model.TransactionType
+import com.s2nova.app.ui.rememberCurrencyFormatter
+import com.s2nova.app.ui.theme.NovaColors
+import kotlin.math.abs
 
+// Movimientos row, per the Android v2 mockup: 38dp category mark, 13sp bold
+// description, "comercio · billetera" in 11sp dim, 13.5sp amount with the
+// mockup's typographic minus, and a subtle divider under each row.
+// Transfers move money between the user's own wallets, so they carry no
+// sign and use the text color.
 @Composable
 fun TransactionRow(
     transaction: Transaction,
+    subtitle: String,
     modifier: Modifier = Modifier,
-    showDate: Boolean = true,
-    subtitleOverride: String? = null,
     onClick: (() -> Unit)? = null,
 ) {
-    val category = categoryMap[transaction.category]
-    val t = rememberStrings()
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .let { if (onClick != null) it.clickable(onClick = onClick) else it }
-            .padding(horizontal = 4.dp, vertical = 10.dp),
-    ) {
-        CategoryIcon(category = transaction.category, subcategoryId = transaction.subcategoryId, size = CategoryIconSize.ROW)
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = 12.dp),
-        ) {
-            Text(
-                text = transaction.description,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            val subtitle = subtitleOverride ?: buildString {
-                append(transaction.merchant ?: category?.let { t(categoryStringKey(it.id)) } ?: "")
-                if (showDate) {
-                    if (isNotEmpty()) append(" · ")
-                    append(formatShortDate(transaction.date))
-                }
+    val colors = NovaColors.current
+    val format = rememberCurrencyFormatter()
+    val (amount, color) = when (transaction.type) {
+        TransactionType.INCOME -> "+" + format(abs(transaction.amount)) to colors.positive
+        TransactionType.EXPENSE -> "\u2212" + format(abs(transaction.amount)) to colors.negative
+        TransactionType.TRANSFER -> format(abs(transaction.amount)) to MaterialTheme.colorScheme.onBackground
+    }
+    Column(modifier = modifier.let { if (onClick != null) it.clickable(onClick = onClick) else it }) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 12.dp)) {
+            CategoryIcon(category = transaction.category, subcategoryId = transaction.subcategoryId, size = CategoryIconSize.ROW)
+            Column(modifier = Modifier.weight(1f).padding(start = 13.dp)) {
+                Text(
+                    transaction.description,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(subtitle, fontSize = 11.sp, color = colors.textDim, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Text(amount, fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold, color = color, modifier = Modifier.padding(start = 13.dp))
         }
-        Column(modifier = Modifier.width(110.dp), horizontalAlignment = androidx.compose.ui.Alignment.End) {
-            AmountText(amount = transaction.amount, type = transaction.type)
-        }
+        HorizontalDivider(thickness = 1.dp, color = colors.dividerSubtle)
     }
 }

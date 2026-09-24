@@ -52,7 +52,13 @@ fun NovaTopBar(
 // The v2 mockup's stacked-screen header: a 38dp "←" target in --muted,
 // then the title at 17/800 (Perfil, Billeteras, Ajustes, Programados).
 @Composable
-fun BackHeader(title: String, onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun BackHeader(
+    title: String,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    // Right-side action (Programados' "+"), shown only when given.
+    action: (@Composable () -> Unit)? = null,
+) {
     val t = rememberStrings()
     androidx.compose.foundation.layout.Row(
         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
@@ -76,7 +82,8 @@ fun BackHeader(title: String, onBack: () -> Unit, modifier: Modifier = Modifier)
             fontWeight = FontWeight.ExtraBold,
             letterSpacing = (-0.255).sp,
             color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(start = 12.dp),
+            modifier = Modifier.weight(1f).padding(start = 12.dp),
         )
+        action?.invoke()
     }
 }

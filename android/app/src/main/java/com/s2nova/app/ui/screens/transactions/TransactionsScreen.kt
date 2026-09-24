@@ -26,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -106,11 +107,18 @@ fun TransactionsScreen(
                     Text(t(StringKey.TXN_LIST_EMPTY_SUBTITLE), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else {
-                LazyColumn(contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)) {
+                LazyColumn(contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 20.dp)) {
                     val grouped = filtered.groupBy { it.date }
-                    grouped.forEach { (date, txns) ->
+                    grouped.entries.forEachIndexed { index, (date, txns) ->
                         item {
-                            val netTotal = txns.sumOf { if (it.type == TransactionType.INCOME) it.amount else -it.amount }
+                            // Transfers stay inside the user's wallets, so they don't move the day's net.
+                            val netTotal = txns.sumOf {
+                                when (it.type) {
+                                    TransactionType.INCOME -> it.amount
+                                    TransactionType.EXPENSE -> -it.amount
+                                    TransactionType.TRANSFER -> 0.0
+                                }
+                            }
                             val dayLabel = when (date) {
                                 today -> t(StringKey.TXN_LIST_TODAY)
                                 yesterday -> t(StringKey.TXN_LIST_YESTERDAY)
@@ -119,8 +127,8 @@ fun TransactionsScreen(
                             Text(
                                 buildAnnotatedString {
                                     append("$dayLabel · ")
-                                    withStyle(SpanStyle(color = if (netTotal > 0) colors.positive else MaterialTheme.colorScheme.onSurfaceVariant)) {
-                                        append(format(netTotal, signed = true))
+                                    withStyle(SpanStyle(color = if (netTotal > 0) colors.positive else colors.textDim)) {
+                                        append(format(netTotal, signed = true).replace('-', '\u2212'))
                                     }
                                 },
                                 style = MaterialTheme.typography.labelSmall.copy(
@@ -128,17 +136,18 @@ fun TransactionsScreen(
                                     fontWeight = FontWeight.Bold,
                                     letterSpacing = 0.1.em,
                                 ),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(top = 12.dp, bottom = 4.dp),
+                                color = colors.textDim,
+                                modifier = Modifier.padding(top = if (index == 0) 12.dp else 18.dp, bottom = 4.dp),
                             )
                         }
                         items(txns) { txn: Transaction ->
                             val merchantOrCategory = txn.merchant
                                 ?: categoryMap[txn.category]?.let { t(categoryStringKey(it.id)) }
                                 ?: ""
-                            val walletName = wallets.firstOrNull { it.id == txn.walletId }?.name
-                            val subtitle = if (walletName != null) "$merchantOrCategory · $walletName" else merchantOrCategory
-                            TransactionRow(transaction = txn, subtitleOverride = subtitle, onClick = { onOpenDetail(txn.id) })
+                            // Mockup's shortWallet: "Bancolombia — Ahorros" reads as "Bancolombia".
+                            val walletName = wallets.firstOrNull { it.id == txn.walletId }?.name?.substringBefore('—')?.trim()
+                            val subtitle = listOfNotNull(merchantOrCategory.takeIf { it.isNotBlank() }, walletName).joinToString(" · ")
+                            TransactionRow(transaction = txn, subtitle = subtitle, onClick = { onOpenDetail(txn.id) })
                         }
                     }
                 }
@@ -149,15 +158,17 @@ fun TransactionsScreen(
 
 @Composable
 private fun FilterPill(label: String, selected: Boolean, onClick: () -> Unit) {
+    val colors = NovaColors.current
     Text(
         label,
         fontSize = 12.sp,
         fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
-        color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
+        color = if (selected) MaterialTheme.colorScheme.onPrimary else colors.pillText,
         maxLines = 1,
         modifier = Modifier
             .clip(RoundedCornerShape(50))
-            .background(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
+            .background(if (selected) MaterialTheme.colorScheme.primary else colors.pillSurface)
+            .border(1.dp, if (selected) Color.Transparent else colors.pillBorder, RoundedCornerShape(50))
             .selectable(selected = selected, onClick = onClick, role = androidx.compose.ui.semantics.Role.RadioButton)
             .padding(horizontal = 14.dp, vertical = 9.dp),
     )
