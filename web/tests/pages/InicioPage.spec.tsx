@@ -38,7 +38,7 @@ describe('InicioPage', () => {
     expect(screen.getByText('$4.288.500')).toBeInTheDocument()
     expect(screen.getByText('2 billeteras')).toBeInTheDocument()
     expect(await screen.findByText('Portátil nuevo está al 90%')).toBeInTheDocument()
-    expect(screen.getByText('Faltan $520.000 para cumplirla.')).toBeInTheDocument()
+    expect(screen.getByText('$520.000').parentElement).toHaveTextContent('Faltan $520.000 para cumplirla.')
 
     await user.click(screen.getByRole('button', { name: 'Descartar' }))
     expect(screen.queryByText('Portátil nuevo está al 90%')).not.toBeInTheDocument()
@@ -54,6 +54,8 @@ describe('InicioPage', () => {
     const balance = await screen.findByText('$16.147.300')
     expect(balance).toHaveAttribute('aria-hidden', 'true')
     expect(screen.getAllByText('Monto oculto').length).toBeGreaterThan(0)
+    // Amounts inside alert copy blur too; the rest of the sentence stays.
+    expect(await screen.findByText('$520.000')).toHaveAttribute('aria-hidden', 'true')
     expect(screen.getByRole('button', { name: 'Mostrar montos' })).toBeInTheDocument()
   })
 

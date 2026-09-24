@@ -261,7 +261,19 @@ fun RecurringScreen(onBack: () -> Unit) {
                         }
                     }) { Text(t(StringKey.RECURRING_CONFIRM)) }
                 },
-                dismissButton = { TextButton(onClick = { confirmingId = null }) { Text(t(StringKey.COMMON_CANCEL)) } },
+                dismissButton = {
+                    Row {
+                        TextButton(onClick = {
+                            val id = confirmingId!!
+                            scope.launch {
+                                runCatching { AppContainer.recurringSeriesRepository.skipOccurrence(id) }
+                                runCatching { AppContainer.alertRepository.refresh() }
+                                confirmingId = null
+                            }
+                        }) { Text(t(StringKey.RECURRING_SKIP)) }
+                        TextButton(onClick = { confirmingId = null }) { Text(t(StringKey.COMMON_CANCEL)) }
+                    }
+                },
             )
         }
 

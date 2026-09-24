@@ -135,4 +135,12 @@ class RecurringSeriesRepository(
         val model = response.series.toModel(categoryRepository) ?: return
         _series.value = _series.value.map { if (it.id == id) model else it }
     }
+
+    // Skips the due occurrence: the series moves to its next date and no
+    // Transaction is created, so balances don't change.
+    suspend fun skipOccurrence(id: String) {
+        if (DemoModeFlag.active) return
+        val model = api.skipRecurringOccurrence(id).toModel(categoryRepository) ?: return
+        _series.value = _series.value.map { if (it.id == id) model else it }
+    }
 }

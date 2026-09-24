@@ -94,6 +94,11 @@ interface ApiService {
         @Body body: ConfirmRecurringOccurrenceRequest,
     ): ConfirmRecurringOccurrenceResponse
 
+    // Advances the series to its next occurrence without creating a
+    // Transaction ("Omitir esta vez"); the backend owns the date rule.
+    @POST("recurring-series/{id}/skip")
+    suspend fun skipRecurringOccurrence(@Path("id") id: String): RecurringSeriesDto
+
     @GET("budgets")
     suspend fun getBudgets(@Query("month") month: String? = null): List<BudgetDto>
 

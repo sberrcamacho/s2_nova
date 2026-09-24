@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { useNavigate } from 'react-router-dom'
 import { CategoryGlyph, CategoryMark } from '@/components/v2/CategoryMark'
 import { ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
-import { Money } from '@/components/v2/Money'
+import { Money, MoneyText, type MoneyTemplate } from '@/components/v2/Money'
 import { EventDialog } from '@/dashboard/components/EventDialog'
 import { accountService } from '@/services/accountService'
 import { alertService, type AppAlert } from '@/services/alertService'
@@ -257,6 +257,7 @@ export default function InicioPage() {
                   key={alert.id}
                   alert={alert}
                   today={today}
+                  hidden={hidden}
                   onOpen={() => openAlert(alert)}
                   onDismiss={() => setAndSaveDismissed([...dismissed, alert.id])}
                 />
@@ -306,7 +307,9 @@ export default function InicioPage() {
                         <div className="h-full" style={{ width: `${Math.min(100, b.percentage)}%`, background: tone }} />
                       </div>
                       <div className="flex justify-between gap-2.5 text-[11px] text-v2-dim">
-                        <span>{budgetNoteText(note, t, format)}</span>
+                        <span>
+                          <MoneyText parts={[budgetNoteText(note, t)]} hidden={hidden} format={format} />
+                        </span>
                         <Money hidden={hidden}>
                           {b.remaining >= 0 ? fill(t('inicio.budgets.available'), format(b.remaining)) : fill(t('inicio.budgets.overBy'), format(-b.remaining))}
                         </Money>
@@ -477,16 +480,16 @@ function budgetsSubtitle(today: string, language: 'es' | 'en', t: (k: Translatio
   return fill(t('inicio.budgets.subtitle'), left, month)
 }
 
-function budgetNoteText(note: ReturnType<typeof budgetNote>, t: (k: TranslationKey) => string, format: (v: number) => string): string {
+function budgetNoteText(note: ReturnType<typeof budgetNote>, t: (k: TranslationKey) => string): MoneyTemplate {
   switch (note.kind) {
     case 'over':
-      return t('inicio.budgets.over')
+      return { template: t('inicio.budgets.over'), args: [] }
     case 'exceeds':
-      return note.days === 1 ? t('inicio.budgets.exceedsOne') : fill(t('inicio.budgets.exceeds'), note.days)
+      return note.days === 1 ? { template: t('inicio.budgets.exceedsOne'), args: [] } : { template: t('inicio.budgets.exceeds'), args: [note.days] }
     case 'closes':
-      return fill(t('inicio.budgets.closes'), format(note.amount))
+      return { template: t('inicio.budgets.closes'), args: [{ amount: note.amount }] }
     default:
-      return t('inicio.budgets.relaxed')
+      return { template: t('inicio.budgets.relaxed'), args: [] }
   }
 }
 
@@ -603,10 +606,10 @@ function MonthBars({ months, language }: { months: MonthTotals[] | null; languag
   )
 }
 
-function AlertCard({ alert, today, onOpen, onDismiss }: { alert: AppAlert; today: string; onOpen: () => void; onDismiss: () => void }) {
+function AlertCard({ alert, today, hidden, onOpen, onDismiss }: { alert: AppAlert; today: string; hidden: boolean; onOpen: () => void; onDismiss: () => void }) {
   const { t, tCategory, language } = useTranslation()
   const { format } = useCurrency()
-  const copy = alertCopy(alert, today, language, t, tCategory, format)
+  const copy = alertCopy(alert, today, language, t, tCategory)
   return (
     <div
       role="button"
@@ -623,7 +626,9 @@ function AlertCard({ alert, today, onOpen, onDismiss }: { alert: AppAlert; today
       <CategoryMark category={copy.glyph} box={32} color={copy.color} />
       <div className="min-w-0 flex-1">
         <div className="text-[12.5px] font-bold">{copy.title}</div>
-        <div className="mt-[3px] text-[11.5px] leading-[1.45] text-v2-dim">{copy.body}</div>
+        <div className="mt-[3px] text-[11.5px] leading-[1.45] text-v2-dim">
+          <MoneyText parts={copy.body} hidden={hidden} format={format} />
+        </div>
       </div>
       <button
         type="button"
