@@ -231,6 +231,54 @@ data class AppNotification(
     val tone: NotificationTone,
 )
 
+// One actionable condition from the shared rule set (backend GET /alerts),
+// in the backend's priority order. Feeds both Inicio's alert card and the
+// bell sheet; copy is rendered by the UI (see ui/AlertCopy.kt). `id` is
+// stable per condition, so read/dismissed state can be kept locally.
+sealed interface AppAlert {
+    val id: String
+
+    data class SeriesDue(
+        override val id: String,
+        val seriesId: String,
+        val name: String,
+        val type: TransactionType,
+        val amount: Double,
+        val category: CategoryId,
+        val dueDate: String,
+        val overdue: Boolean,
+    ) : AppAlert
+
+    data class LoanOpen(
+        override val id: String,
+        val transactionId: String,
+        val loanKind: LoanKind,
+        val counterpartyName: String?,
+        val outstanding: Double,
+        val dueDate: String,
+        val overdue: Boolean,
+    ) : AppAlert
+
+    data class BudgetAtRisk(
+        override val id: String,
+        val budgetId: String,
+        val name: String?,
+        val category: CategoryId,
+        val spent: Double,
+        val limit: Double,
+        val percentage: Int,
+    ) : AppAlert
+
+    data class GoalNear(
+        override val id: String,
+        val goalId: String,
+        val name: String,
+        val themeIcon: String?,
+        val percentage: Int,
+        val remaining: Double,
+    ) : AppAlert
+}
+
 data class MonthlySummary(
     val month: String,
     val label: String,

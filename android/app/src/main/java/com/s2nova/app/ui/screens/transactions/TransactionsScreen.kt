@@ -1,12 +1,15 @@
 package com.s2nova.app.ui.screens.transactions
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.SpanStyle
@@ -38,7 +42,6 @@ import com.s2nova.app.data.model.Transaction
 import com.s2nova.app.data.model.TransactionStatus
 import com.s2nova.app.data.model.TransactionType
 import com.s2nova.app.ui.categoryStringKey
-import com.s2nova.app.ui.components.NovaTopBar
 import com.s2nova.app.ui.components.TransactionRow
 import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.rememberCurrencyFormatter
@@ -55,7 +58,7 @@ private enum class TypeFilter(val key: StringKey) {
 
 @Composable
 fun TransactionsScreen(
-    onBack: () -> Unit,
+    onOpenRecurring: () -> Unit,
     onOpenDetail: (String) -> Unit,
 ) {
     val transactions by AppContainer.transactionRepository.transactions.collectAsStateWithLifecycle()
@@ -77,7 +80,9 @@ fun TransactionsScreen(
     }
 
     Scaffold(
-        topBar = { NovaTopBar(title = t(StringKey.TITLE_TRANSACTIONS), onBack = onBack) },
+        // Movimientos is a bottom-bar tab (v2): title at 21, no back arrow,
+        // and the "Programados" pill on the right.
+        topBar = { MovimientosHeader(title = t(StringKey.TITLE_TRANSACTIONS), programados = t(StringKey.HOME_UPCOMING_LINK), onOpenRecurring = onOpenRecurring) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
@@ -156,4 +161,36 @@ private fun FilterPill(label: String, selected: Boolean, onClick: () -> Unit) {
             .selectable(selected = selected, onClick = onClick, role = androidx.compose.ui.semantics.Role.RadioButton)
             .padding(horizontal = 14.dp, vertical = 9.dp),
     )
+}
+
+@Composable
+private fun MovimientosHeader(title: String, programados: String, onOpenRecurring: () -> Unit) {
+    val colors = NovaColors.current
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 18.dp, end = 18.dp, top = 10.dp, bottom = 12.dp),
+    ) {
+        Text(
+            title,
+            fontSize = 21.sp,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = (-0.42).sp,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.weight(1f).padding(start = 2.dp),
+        )
+        Box(
+            modifier = Modifier
+                .height(34.dp)
+                .clip(RoundedCornerShape(50))
+                .background(MaterialTheme.colorScheme.surface)
+                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(50))
+                .clickable(onClick = onOpenRecurring)
+                .padding(horizontal = 12.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(programados, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = colors.accentText)
+        }
+    }
 }

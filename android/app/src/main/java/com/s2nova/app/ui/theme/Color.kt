@@ -43,6 +43,15 @@ val DarkWarning = Color(0xFFF0B429)
 
 val OnPrimary = Color(0xFFFFFFFF)
 
+// v2 mockup tokens with no existing equivalent: --dim (captions, dates),
+// --accent2 (text links like "Ver todos") and --subtle (row dividers).
+val LightTextDim = Color(0xFF767686)
+val DarkTextDim = Color(0xFF6F6F82)
+val LightAccentText = Color(0xFF5A4AD6)
+val DarkAccentText = Color(0xFFA69DFF)
+val LightDividerSubtle = Color(0xFFF0F0F5)
+val DarkDividerSubtle = Color(0xFF16161F)
+
 // Balance hero card gradient (dark navy → bluish-purple), same in both themes.
 val HeroFrom = Color(0xFF16123A)
 val HeroTo = Color(0xFF241A5E)

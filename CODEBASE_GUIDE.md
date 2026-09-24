@@ -158,10 +158,10 @@ MainActivity.kt          single Activity, installs the splash screen,
      auto-lock overlay)
    - `data/repository/*.kt` — `StateFlow`-backed repositories; most
      (`AuthRepository`, `WalletRepository`, `TransactionRepository`,
-     `BudgetRepository`, `GoalRepository`, `CategoryRepository`) now call
-     the real backend via `ApiClient`; `ProductRepository`/
-     `NotificationRepository` stay in-memory mock (out of scope for the
-     current backend integration pass)
+     `BudgetRepository`, `GoalRepository`, `CategoryRepository`,
+     `SummaryRepository`, `AlertRepository`) call the real backend via
+     `ApiClient`; `ProductRepository` stays an in-memory mock and
+     `NotificationRepository` only holds local notices (scanner)
    - `data/AppContainer.kt` — manual DI: one object holding every
      repository singleton; `AppContainer.init(context)` runs once in
      `MainActivity.onCreate` before any repository touches the network;

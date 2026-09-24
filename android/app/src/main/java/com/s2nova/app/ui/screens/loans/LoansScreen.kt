@@ -64,7 +64,7 @@ import kotlinx.coroutines.launch
 // as a sub-filter of this tab rather than a sibling of Presupuestos/Metas/
 // Préstamos (see design_handoff_s2_nova_overview/ANDROID.md).
 @Composable
-fun LoansTab() {
+fun LoansTab(initialSide: LoanKind = LoanKind.LENT) {
     val transactions by AppContainer.transactionRepository.transactions.collectAsStateWithLifecycle()
     val wallets by AppContainer.walletRepository.wallets.collectAsStateWithLifecycle()
     val format = rememberCurrencyFormatter()
@@ -72,7 +72,7 @@ fun LoansTab() {
     val colors = NovaColors.current
     val scope = rememberCoroutineScope()
 
-    var side by remember { mutableStateOf(LoanKind.LENT) }
+    var side by remember(initialSide) { mutableStateOf(initialSide) }
     var draft by remember { mutableStateOf<LoanDraft?>(null) }
     var payingFor by remember { mutableStateOf<Transaction?>(null) }
     var deleting by remember { mutableStateOf<Transaction?>(null) }

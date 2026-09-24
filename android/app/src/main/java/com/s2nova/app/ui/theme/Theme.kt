@@ -37,6 +37,9 @@ data class NovaExtraColors(
     val loginPositive: Color,
     val loginPositiveBg: Color,
     val loginHighlight: Color,
+    val textDim: Color,
+    val accentText: Color,
+    val dividerSubtle: Color,
 )
 
 private val LightExtraColors = NovaExtraColors(
@@ -63,6 +66,9 @@ private val LightExtraColors = NovaExtraColors(
     loginPositive = LoginPositiveLight,
     loginPositiveBg = LoginPositiveBgLight,
     loginHighlight = LoginHighlightLight,
+    textDim = LightTextDim,
+    accentText = LightAccentText,
+    dividerSubtle = LightDividerSubtle,
 )
 
 private val DarkExtraColors = NovaExtraColors(
@@ -89,6 +95,9 @@ private val DarkExtraColors = NovaExtraColors(
     loginPositive = LoginPositiveDark,
     loginPositiveBg = LoginPositiveBgDark,
     loginHighlight = LoginHighlightDark,
+    textDim = DarkTextDim,
+    accentText = DarkAccentText,
+    dividerSubtle = DarkDividerSubtle,
 )
 
 val LocalNovaExtraColors = staticCompositionLocalOf { LightExtraColors }

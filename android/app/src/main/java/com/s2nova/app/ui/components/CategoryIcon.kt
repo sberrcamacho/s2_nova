@@ -118,6 +118,9 @@ val ScanIcon = Icons.Filled.ShoppingCart
 enum class CategoryIconSize(val box: Int, val icon: Int) {
     SM(32, 15), MD(40, 18), LG(48, 20),
     ROW(38, 17), GRID(52, 24),
+
+    // Alert marks on Inicio's alert card and in the bell sheet (mockup mark(…, 36)).
+    ALERT(36, 17),
 }
 
 @Composable

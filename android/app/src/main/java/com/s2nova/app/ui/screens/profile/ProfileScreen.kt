@@ -41,6 +41,7 @@ import com.s2nova.app.data.mock.categoryMap
 import com.s2nova.app.data.model.AppLanguage
 import com.s2nova.app.data.model.CategoryId
 import com.s2nova.app.ui.StringKey
+import com.s2nova.app.ui.components.BackHeader
 import com.s2nova.app.ui.components.NovaCard
 import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
@@ -50,6 +51,7 @@ import java.util.Locale
 
 @Composable
 fun ProfileScreen(
+    onBack: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenWallets: () -> Unit,
     onOpenRecurring: () -> Unit,
@@ -86,20 +88,23 @@ fun ProfileScreen(
         }
     }
 
-    Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
+    // The app shell's Scaffold already applies the status-bar inset; a
+    // second one here pushed the back header below the mockup's position.
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
+    ) { padding ->
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+        // Perfil is a stacked screen reached from Inicio's avatar (v2), so
+        // it carries the mockup's "←" back header instead of a tab title.
+        BackHeader(title = t(StringKey.TITLE_PROFILE), onBack = onBack)
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(20.dp),
+                .padding(start = 20.dp, end = 20.dp, bottom = 20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Text(
-                t(StringKey.TITLE_PROFILE),
-                style = MaterialTheme.typography.headlineMedium.copy(fontSize = 21.sp, letterSpacing = (-0.42).sp),
-                color = MaterialTheme.colorScheme.onBackground,
-            )
 
             NovaCard(modifier = Modifier.fillMaxWidth()) {
                 Row(modifier = Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -156,6 +161,7 @@ fun ProfileScreen(
                     color = MaterialTheme.colorScheme.error,
                 )
             }
+        }
         }
     }
 }

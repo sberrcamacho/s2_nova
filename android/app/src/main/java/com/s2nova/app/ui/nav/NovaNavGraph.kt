@@ -19,6 +19,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.s2nova.app.data.AppContainer
+import com.s2nova.app.data.model.LoanKind
+import com.s2nova.app.ui.AlertTarget
 import com.s2nova.app.ui.components.AddActionsSheet
 import com.s2nova.app.ui.screens.addtransaction.AddTransactionScreen
 import com.s2nova.app.ui.screens.auth.ForgotPasswordScreen
@@ -91,6 +93,25 @@ fun NovaApp() {
         }
     }
 
+    // Switches bottom-bar tabs: Inicio stays the root, so Back from any
+    // other tab returns to it instead of walking the tab history.
+    fun navigateToTab(route: String) {
+        navController.navigate(route) {
+            popUpTo(NovaDestinations.HOME) { inclusive = false }
+            launchSingleTop = true
+        }
+    }
+
+    fun openAlertTarget(target: AlertTarget) {
+        when (target) {
+            AlertTarget.PROGRAMADOS -> navController.navigate(NovaDestinations.RECURRING)
+            AlertTarget.PLANES_BUDGETS -> navigateToTab(NovaDestinations.budgets(tab = 0))
+            AlertTarget.PLANES_GOALS -> navigateToTab(NovaDestinations.budgets(tab = 1))
+            AlertTarget.PLANES_LOANS_LENT -> navigateToTab(NovaDestinations.budgets(tab = 2, side = LoanKind.LENT.name))
+            AlertTarget.PLANES_LOANS_BORROWED -> navigateToTab(NovaDestinations.budgets(tab = 2, side = LoanKind.BORROWED.name))
+        }
+    }
+
     com.s2nova.app.ui.components.AppLockGate {
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -98,12 +119,7 @@ fun NovaApp() {
             if (bottomBarVisibleFor(currentRoute)) {
                 NovaBottomBar(
                     currentRoute = currentRoute,
-                    onNavigate = { route ->
-                        navController.navigate(route) {
-                            popUpTo(NovaDestinations.HOME) { inclusive = false }
-                            launchSingleTop = true
-                        }
-                    },
+                    onNavigate = { route -> navigateToTab(route) },
                     onFabClick = { showAddSheet = true },
                 )
             }
@@ -176,19 +192,17 @@ fun NovaApp() {
             composable(NovaDestinations.HOME) {
                 HomeScreen(
                     onOpenProfile = { navController.navigate(NovaDestinations.PROFILE) },
-                    onOpenTransactions = { navController.navigate(NovaDestinations.TRANSACTIONS) },
-                    onOpenBudgets = {
-                        navController.navigate(NovaDestinations.BUDGETS) {
-                            popUpTo(NovaDestinations.HOME) { inclusive = false }
-                            launchSingleTop = true
-                        }
-                    },
+                    onOpenTransactions = { navigateToTab(NovaDestinations.TRANSACTIONS) },
+                    onOpenTransactionDetail = { id -> navController.navigate(NovaDestinations.transactionDetail(id)) },
+                    onOpenBudgets = { navigateToTab(NovaDestinations.budgets(tab = 0)) },
                     onOpenRecurring = { navController.navigate(NovaDestinations.RECURRING) },
+                    onOpenWallets = { navController.navigate(NovaDestinations.WALLETS) },
+                    onOpenAlertTarget = ::openAlertTarget,
                 )
             }
             composable(NovaDestinations.TRANSACTIONS) {
                 TransactionsScreen(
-                    onBack = { navController.popBackStack() },
+                    onOpenRecurring = { navController.navigate(NovaDestinations.RECURRING) },
                     onOpenDetail = { id -> navController.navigate(NovaDestinations.transactionDetail(id)) },
                 )
             }
@@ -231,12 +245,24 @@ fun NovaApp() {
                     onPurchaseRegistered = { navController.navigateAsRoot(NovaDestinations.HOME) },
                 )
             }
-            composable(NovaDestinations.BUDGETS) { PlanesScreen() }
+            composable(
+                NovaDestinations.BUDGETS_ROUTE,
+                arguments = listOf(
+                    navArgument("tab") { type = androidx.navigation.NavType.IntType; defaultValue = 0 },
+                    navArgument("side") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = null },
+                ),
+            ) { entry ->
+                PlanesScreen(
+                    initialTab = entry.arguments?.getInt("tab") ?: 0,
+                    initialLoanSide = entry.arguments?.getString("side")?.let { side -> LoanKind.entries.find { it.name == side } } ?: LoanKind.LENT,
+                )
+            }
             composable(NovaDestinations.WALLETS) { WalletsScreen(onBack = { navController.popBackStack() }) }
             composable(NovaDestinations.RECURRING) { RecurringScreen(onBack = { navController.popBackStack() }) }
             composable(NovaDestinations.REPORTS) { ReportsScreen() }
             composable(NovaDestinations.PROFILE) {
                 ProfileScreen(
+                    onBack = { navController.popBackStack() },
                     onOpenSettings = { navController.navigate(NovaDestinations.SETTINGS) },
                     onOpenWallets = { navController.navigate(NovaDestinations.WALLETS) },
                     onOpenRecurring = { navController.navigate(NovaDestinations.RECURRING) },

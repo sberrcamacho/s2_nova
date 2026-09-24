@@ -123,4 +123,13 @@ interface ApiService {
 
     @DELETE("goals/{id}")
     suspend fun deleteGoal(@Path("id") id: String, @Body body: DeleteGoalRequest): Response<Unit>
+
+    @GET("summary/months")
+    suspend fun getMonthSummaries(
+        @Query("count") count: Int,
+        @Query("today") today: String,
+    ): List<MonthSummaryDto>
+
+    @GET("alerts")
+    suspend fun getAlerts(@Query("today") today: String): List<AlertDto>
 }

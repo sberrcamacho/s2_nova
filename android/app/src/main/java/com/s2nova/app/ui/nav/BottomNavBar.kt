@@ -16,10 +16,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -34,15 +30,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.s2nova.app.ui.StringKey
+import com.s2nova.app.ui.components.MockupIcons
 import com.s2nova.app.ui.rememberStrings
 
 private data class BottomTab(val route: String, val labelKey: StringKey, val icon: ImageVector)
 
+// Inicio · Movimientos · [+] · Planes · Reportes (architecture v2); Perfil
+// opens from Inicio's avatar instead.
 private val TABS = listOf(
-    BottomTab(NovaDestinations.HOME, StringKey.NAV_HOME, Icons.Filled.Home),
-    BottomTab(NovaDestinations.REPORTS, StringKey.NAV_REPORTS, Icons.Filled.BarChart),
-    BottomTab(NovaDestinations.BUDGETS, StringKey.NAV_PLANS, Icons.Filled.Wallet),
-    BottomTab(NovaDestinations.PROFILE, StringKey.NAV_PROFILE, Icons.Filled.Person),
+    BottomTab(NovaDestinations.HOME, StringKey.NAV_HOME, MockupIcons.Inicio),
+    BottomTab(NovaDestinations.TRANSACTIONS, StringKey.NAV_TRANSACTIONS, MockupIcons.Movimientos),
+    BottomTab(NovaDestinations.BUDGETS, StringKey.NAV_PLANS, MockupIcons.Planes),
+    BottomTab(NovaDestinations.REPORTS, StringKey.NAV_REPORTS, MockupIcons.Reportes),
 )
 
 @Composable
@@ -71,7 +70,7 @@ fun NovaBottomBar(
             BottomTabItem(
                 label = t(tab.labelKey),
                 icon = tab.icon,
-                selected = currentRoute == tab.route,
+                selected = baseRoute(currentRoute) == tab.route,
                 onClick = { onNavigate(tab.route) },
                 modifier = Modifier.weight(1f),
             )
@@ -131,9 +130,13 @@ private fun FabSlot(onClick: () -> Unit, modifier: Modifier = Modifier) {
     }
 }
 
-fun bottomBarVisibleFor(route: String?): Boolean = route in setOf(
+// A destination's route pattern without its optional query arguments
+// (e.g. "budgets?tab={tab}&side={side}" -> "budgets").
+fun baseRoute(route: String?): String? = route?.substringBefore('?')
+
+fun bottomBarVisibleFor(route: String?): Boolean = baseRoute(route) in setOf(
     NovaDestinations.HOME,
-    NovaDestinations.REPORTS,
+    NovaDestinations.TRANSACTIONS,
     NovaDestinations.BUDGETS,
-    NovaDestinations.PROFILE,
+    NovaDestinations.REPORTS,
 )

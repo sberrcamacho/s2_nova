@@ -1,6 +1,8 @@
 package com.s2nova.app.data.mock
 
+import com.s2nova.app.data.AnalyticsHelpers
 import com.s2nova.app.data.currentMonthKey
+import com.s2nova.app.data.model.AppAlert
 import com.s2nova.app.data.model.BudgetProgress
 import com.s2nova.app.data.model.BudgetStatus
 import com.s2nova.app.data.model.CategoryBudget
@@ -138,6 +140,25 @@ object DemoData {
         paymentMethod = if (category == CategoryId.HEALTH) PaymentMethod.CASH else PaymentMethod.BANK_TRANSFER,
         merchant = merchant,
     )
+
+    val monthSummaries = AnalyticsHelpers.monthlyHistory(transactions, 1)
+
+    // Only the budget rule fires on this dataset (Compras is over its
+    // limit); demo mode never calls the backend's GET /alerts.
+    val alerts: List<AppAlert> = budgetProgress
+        .filter { it.percentage >= 90 }
+        .sortedByDescending { it.percentage }
+        .map {
+            AppAlert.BudgetAtRisk(
+                id = "budget:${it.budget.id}:${it.budget.month}",
+                budgetId = it.budget.id,
+                name = it.budget.name,
+                category = it.budget.category,
+                spent = it.spent,
+                limit = it.budget.limit,
+                percentage = it.percentage,
+            )
+        }
 
     private fun budget(category: CategoryId, limit: Double, spent: Double): BudgetProgress {
         val remaining = limit - spent

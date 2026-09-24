@@ -19,6 +19,11 @@ object NovaDestinations {
     const val EDIT_TRANSACTION = "edit_transaction/{id}"
     const val SCANNER = "scanner"
     const val BUDGETS = "budgets"
+
+    // Planes with a preselected tab (0 Presupuestos, 1 Metas, 2 Préstamos)
+    // and loan side — alert targets deep-link here. Navigating to plain
+    // BUDGETS falls back to the defaults.
+    const val BUDGETS_ROUTE = "budgets?tab={tab}&side={side}"
     const val WALLETS = "wallets"
     const val RECURRING = "recurring"
     const val REPORTS = "reports"
@@ -27,4 +32,5 @@ object NovaDestinations {
 
     fun transactionDetail(id: String) = "transaction_detail/$id"
     fun editTransaction(id: String) = "edit_transaction/$id"
+    fun budgets(tab: Int, side: String? = null) = "budgets?tab=$tab" + (side?.let { "&side=$it" } ?: "")
 }

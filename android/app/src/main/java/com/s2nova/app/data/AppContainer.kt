@@ -1,6 +1,7 @@
 package com.s2nova.app.data
 
 import android.content.Context
+import com.s2nova.app.data.local.AlertStateStore
 import com.s2nova.app.data.local.DemoModeStore
 import com.s2nova.app.data.local.IdleTimeoutStore
 import com.s2nova.app.data.local.OnboardingStore
@@ -11,6 +12,7 @@ import com.s2nova.app.data.model.Currency
 import com.s2nova.app.data.model.User
 import com.s2nova.app.data.model.UserPreferences
 import com.s2nova.app.data.remote.ApiClient
+import com.s2nova.app.data.repository.AlertRepository
 import com.s2nova.app.data.repository.AuthRepository
 import com.s2nova.app.data.repository.BudgetRepository
 import com.s2nova.app.data.repository.CategoryRepository
@@ -19,6 +21,7 @@ import com.s2nova.app.data.repository.GoalRepository
 import com.s2nova.app.data.repository.NotificationRepository
 import com.s2nova.app.data.repository.ProductRepository
 import com.s2nova.app.data.repository.RecurringSeriesRepository
+import com.s2nova.app.data.repository.SummaryRepository
 import com.s2nova.app.data.repository.TransactionRepository
 import com.s2nova.app.data.repository.WalletRepository
 import kotlinx.coroutines.flow.Flow
@@ -38,6 +41,8 @@ object AppContainer {
         private set
     lateinit var idleTimeoutStore: IdleTimeoutStore
         private set
+    lateinit var alertStateStore: AlertStateStore
+        private set
 
     // `by lazy` (not eager `val`s) is load-bearing: merely referencing
     // AppContainer.init(...) from MainActivity.onCreate forces this object's
@@ -56,6 +61,8 @@ object AppContainer {
     val recurringSeriesRepository by lazy { RecurringSeriesRepository(categoryRepository) }
     val productRepository by lazy { ProductRepository() }
     val notificationRepository by lazy { NotificationRepository() }
+    val summaryRepository by lazy { SummaryRepository() }
+    val alertRepository by lazy { AlertRepository(categoryRepository, stateStore = alertStateStore) }
 
     lateinit var authRepository: AuthRepository
         private set
@@ -86,6 +93,7 @@ object AppContainer {
         onboardingStore = OnboardingStore.getInstance(context)
         demoModeStore = DemoModeStore.getInstance(context)
         idleTimeoutStore = IdleTimeoutStore.getInstance(context)
+        alertStateStore = AlertStateStore.getInstance(context)
         val credentialManager = androidx.credentials.CredentialManager.create(context.applicationContext)
         authRepository = AuthRepository(sessionStore, onboardingStore, credentialManager)
     }
@@ -128,6 +136,8 @@ object AppContainer {
         budgetRepository.loadDemo(DemoData.budgetProgress)
         goalRepository.loadDemo(DemoData.goals)
         recurringSeriesRepository.loadDemo(DemoData.recurringSeries)
+        summaryRepository.loadDemo(DemoData.monthSummaries)
+        alertRepository.loadDemo(DemoData.alerts)
         demoModeStore.setDemoModeActive(true)
     }
 
@@ -156,13 +166,7 @@ object AppContainer {
         runCatching { budgetRepository.refresh() }
         runCatching { transactionRepository.refresh() }
         runCatching { recurringSeriesRepository.refresh() }
-        runCatching {
-            notificationRepository.refreshFromData(
-                budgets = budgetRepository.budgetProgress.value,
-                goals = goalRepository.goals.value,
-                recurringSeries = recurringSeriesRepository.series.value,
-                loans = transactionRepository.transactions.value.filter { it.loanKind != null },
-            )
-        }
+        runCatching { summaryRepository.refresh() }
+        runCatching { alertRepository.refresh() }
     }
 }

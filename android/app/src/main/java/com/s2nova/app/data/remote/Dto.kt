@@ -356,3 +356,47 @@ data class UpdateGoalRequest(
 
 @Serializable
 data class DeleteGoalRequest(val returnToAccountId: String? = null)
+
+// GET /summary/months — COMPLETED income/expense per month, oldest first,
+// current month last (see backend/src/routes/summary.ts).
+@Serializable
+data class MonthSummaryDto(
+    val month: String,
+    val income: Long,
+    val expenses: Long,
+    val net: Long,
+)
+
+// GET /alerts — one flat shape for the four alert kinds the backend emits
+// (backend/src/routes/alerts.ts); which optional fields are set depends on
+// `kind`. UI copy is built client-side from these fields (i18n).
+@Serializable
+data class AlertDto(
+    val id: String,
+    val kind: String,
+    // SERIES_DUE
+    val seriesId: String? = null,
+    val type: String? = null,
+    val amount: Long? = null,
+    // SERIES_DUE, BUDGET_AT_RISK
+    val categoryId: String? = null,
+    // SERIES_DUE, BUDGET_AT_RISK, GOAL_NEAR
+    val name: String? = null,
+    // SERIES_DUE, LOAN_OPEN
+    val dueDate: String? = null,
+    val overdue: Boolean = false,
+    // LOAN_OPEN
+    val transactionId: String? = null,
+    val loanKind: String? = null,
+    val counterpartyName: String? = null,
+    val outstanding: Long? = null,
+    // BUDGET_AT_RISK
+    val budgetId: String? = null,
+    val spent: Long? = null,
+    // BUDGET_AT_RISK, GOAL_NEAR
+    val percentage: Int? = null,
+    // GOAL_NEAR
+    val goalId: String? = null,
+    val themeIcon: String? = null,
+    val remaining: Long? = null,
+)

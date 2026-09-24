@@ -28,7 +28,7 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
 - `app/src/main/java/com/s2nova/app/data/mock/` — remaining seed data for entities not yet backend-backed (categories, products/barcodes) — mirrors `web/src/data/*.ts`
 - `app/src/main/java/com/s2nova/app/data/remote/` — `ApiClient` (Retrofit + OkHttp, auth interceptor, refresh-on-401 `Authenticator`), `ApiService` (endpoint interface), `Dto.kt` (wire types matching `backend/src/routes/*.ts` JSON exactly)
 - `app/src/main/java/com/s2nova/app/data/local/` — `SessionStore` (DataStore: access/refresh tokens), `OnboardingStore` (DataStore: onboarding/tutorial completion flags), `IdleTimeoutStore` (DataStore: last-foreground timestamp, backs the auto-lock overlay)
-- `app/src/main/java/com/s2nova/app/data/repository/` — repositories backed by the real backend (`AuthRepository`, `WalletRepository`, `TransactionRepository`, `BudgetRepository`, `GoalRepository`, `CategoryRepository`); `ProductRepository`/`NotificationRepository` remain in-memory mock (barcode/product lookup and notifications are out of scope for the current backend integration pass)
+- `app/src/main/java/com/s2nova/app/data/repository/` — repositories backed by the real backend (`AuthRepository`, `WalletRepository`, `TransactionRepository`, `BudgetRepository`, `GoalRepository`, `CategoryRepository`, `SummaryRepository` — month income/expense totals from `GET /summary/months` — and `AlertRepository` — the shared alert rule set from `GET /alerts`, with read/dismissed ids kept per device in `data/local/AlertStateStore`); `ProductRepository` remains an in-memory mock, and `NotificationRepository` only holds local one-off notices (the scanner's "Compra registrada")
 - `app/src/main/java/com/s2nova/app/data/AppContainer.kt` — manual DI: a single object holding the repository singletons every screen reads from; call `AppContainer.init(context)` once (done in `MainActivity.onCreate`) before any repository touches the network
 
 ## Architecture notes
@@ -146,7 +146,12 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   outstanding balance), tracked via `Transaction.parentLoanId` — a loan's
   paid-so-far is always the live sum of every transaction linked to it that
   way (`TransactionRepository.paidSoFar`/`outstandingFor`), never a stored
-  running total that could drift. The 4th bottom-nav slot is **Planes**
+  running total that could drift. The bottom bar is **Inicio · Movimientos ·
+  [+] · Planes · Reportes** (architecture v2); Perfil is a stacked screen
+  opened from Inicio's avatar. Inicio's alert card and the bell sheet both
+  render `AlertRepository` (copy in `ui/AlertCopy.kt`), and alert targets
+  deep-link into Planes via `NovaDestinations.budgets(tab, side)`. The
+  Planes slot is **Planes**
   (`PlanesScreen.kt`, per the design handoff in
   `s2_nova_stage2_handoff/`), three tabs: Presupuestos, Metas
   (`GoalsTab`), and Préstamos (`LoansTab`) — Loans moved out of Profile and

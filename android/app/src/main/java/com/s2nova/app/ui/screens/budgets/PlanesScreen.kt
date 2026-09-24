@@ -76,9 +76,11 @@ import com.s2nova.app.ui.theme.NovaColors
 import kotlinx.coroutines.launch
 
 @Composable
-fun PlanesScreen() {
+fun PlanesScreen(initialTab: Int = 0, initialLoanSide: com.s2nova.app.data.model.LoanKind = com.s2nova.app.data.model.LoanKind.LENT) {
     val t = rememberStrings()
-    var tab by remember { mutableStateOf(0) }
+    // Keyed on the deep-link arguments so an alert opening a different tab
+    // while Planes is already showing still switches to it.
+    var tab by remember(initialTab, initialLoanSide) { mutableStateOf(initialTab) }
     val snackbarHostState = remember { androidx.compose.material3.SnackbarHostState() }
 
     Scaffold(
@@ -100,7 +102,7 @@ fun PlanesScreen() {
             when (tab) {
                 0 -> BudgetsTab()
                 1 -> GoalsTab(snackbarHostState = snackbarHostState)
-                else -> LoansTab()
+                else -> LoansTab(initialSide = initialLoanSide)
             }
         }
     }
