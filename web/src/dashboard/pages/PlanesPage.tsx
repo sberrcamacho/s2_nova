@@ -14,8 +14,7 @@ const TABS: { id: 'presupuestos' | 'metas' | 'prestamos'; labelKey: TranslationK
 
 // Planes = Presupuestos · Metas · Préstamos (Web v2 mockup). The tab is in
 // the URL (`?tab=`, plus `&side=lent|borrowed` for Préstamos) so Inicio's
-// "Ver en Planes →" links and alerts land on the right one. Presupuestos
-// and Metas still render the pre-v2 pages until the Planes stage.
+// "Ver en Planes →" links and alerts land on the right one.
 export default function PlanesPage() {
   const { t } = useTranslation()
   const [params, setParams] = useSearchParams()

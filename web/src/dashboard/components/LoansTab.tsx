@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom'
 import { CategoryMark } from '@/components/v2/CategoryMark'
 import { Money } from '@/components/v2/Money'
 import { chipClass, errorBoxClass, fieldLabelClass, primaryButtonClass, secondaryButtonClass } from '@/components/panels/SidePanel'
+import { LoanPanel } from '@/dashboard/components/planes/LoanPanel'
+import { PlanAddTile } from '@/dashboard/components/planes/PlanAddTile'
 import { accountService } from '@/services/accountService'
 import { transactionService } from '@/services/transactionService'
 import { useAppData } from '@/state/AppDataContext'
@@ -16,7 +18,9 @@ import type { LoanKind, Transaction, Wallet } from '@/types'
 
 // Planes › Préstamos (Web v2 mockup `isLoans`). A loan is a LENT/BORROWED
 // transaction; its pending balance is the server's `outstanding`, and each
-// abono is a transaction whose parentLoanId points back at it.
+// abono is a transaction whose parentLoanId points back at it. "Editar" and
+// the "+ Registrar préstamo/deuda" tile open LoanPanel (Android's loan
+// sheet), which the Web mockup doesn't draw.
 export function LoansTab({ side, onSide }: { side: LoanKind; onSide: (side: LoanKind) => void }) {
   const { t, language } = useTranslation()
   const { format } = useCurrency()
@@ -25,6 +29,7 @@ export function LoansTab({ side, onSide }: { side: LoanKind; onSide: (side: Loan
   const [loans, setLoans] = useState<Transaction[] | null>(null)
   const [wallets, setWallets] = useState<Wallet[]>([])
   const [paying, setPaying] = useState<Transaction | null>(null)
+  const [editing, setEditing] = useState<Transaction | 'new' | null>(null)
 
   const load = useCallback(async () => {
     const [list, walletList] = await Promise.all([transactionService.getLoans(), accountService.getWallets()])
@@ -137,19 +142,38 @@ export function LoansTab({ side, onSide }: { side: LoanKind; onSide: (side: Loan
                   />
                 ))}
               </div>
-              {!done && (
-                <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={() => setEditing(l)} className="cursor-pointer rounded-[10px] border border-v2-line2 px-3.5 py-[9px] text-[12px] font-bold text-v2-muted">
+                  {t('loans.edit')}
+                </button>
+                {!done && (
                   <button type="button" onClick={() => setPaying(l)} className="cursor-pointer rounded-[10px] bg-v2-accent px-3.5 py-[9px] text-[12px] font-bold text-white">
                     {t('loans.pay')}
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )
         })}
+        {loans && <PlanAddTile label={t(isLent ? 'loans.newLent' : 'loans.newBorrowed')} onClick={() => setEditing('new')} />}
       </div>
       {loans && sideLoans.length === 0 && (
         <div className="p-5 text-center text-[12.5px] text-v2-dim">{t(isLent ? 'loans.emptyLent' : 'loans.emptyBorrowed')}</div>
+      )}
+
+      {editing && (
+        <LoanPanel
+          loan={editing === 'new' ? null : editing}
+          side={side}
+          wallets={wallets}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null)
+            void load()
+            void refreshAppData()
+            notifyChanged()
+          }}
+        />
       )}
 
       {paying && (

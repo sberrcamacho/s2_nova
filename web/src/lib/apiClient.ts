@@ -72,6 +72,16 @@ async function refreshSession(): Promise<boolean> {
   return refreshPromise
 }
 
+// A non-2xx response; `status` lets callers tell e.g. a 409 conflict apart.
+export class ApiError extends Error {
+  readonly status: number
+
+  constructor(message: string, status: number) {
+    super(message)
+    this.status = status
+  }
+}
+
 async function request<T>(path: string, init: RequestInit, options: RequestOptions = {}): Promise<T> {
   let response = await rawRequest(path, init)
 
@@ -83,7 +93,7 @@ async function request<T>(path: string, init: RequestInit, options: RequestOptio
   }
 
   if (!response.ok) {
-    throw new Error(await parseErrorMessage(response))
+    throw new ApiError(await parseErrorMessage(response), response.status)
   }
 
   if (response.status === 204) {
@@ -106,7 +116,7 @@ export const apiClient = {
   patch<T>(path: string, body?: unknown, options?: RequestOptions): Promise<T> {
     return request<T>(path, { method: 'PATCH', body: body !== undefined ? JSON.stringify(body) : undefined }, options)
   },
-  delete<T>(path: string, options?: RequestOptions): Promise<T> {
-    return request<T>(path, { method: 'DELETE' }, options)
+  delete<T>(path: string, body?: unknown, options?: RequestOptions): Promise<T> {
+    return request<T>(path, { method: 'DELETE', body: body !== undefined ? JSON.stringify(body) : undefined }, options)
   },
 }

@@ -1,136 +1,84 @@
-import { useEffect, useState } from 'react'
-import { PiggyBank, TrendingDown, Wallet } from 'lucide-react'
-import { KPICard } from '@/components/ui/KPICard'
-import { Card } from '@/components/ui/Card'
-import { ProgressBar } from '@/components/ui/ProgressBar'
-import { CategoryIcon } from '@/components/ui/CategoryIcon'
-import { Badge } from '@/components/ui/Badge'
-import { NovaBarChart } from '@/components/charts/NovaBarChart'
-import { useAppData } from '@/state/AppDataContext'
-import { analyticsService } from '@/services/analyticsService'
+import { useState } from 'react'
+import { Money, MoneyText } from '@/components/v2/Money'
+import { BudgetPanel } from '@/dashboard/components/planes/BudgetPanel'
+import { PlanAddTile } from '@/dashboard/components/planes/PlanAddTile'
 import { type BudgetProgress } from '@/services/budgetService'
+import { useAppData } from '@/state/AppDataContext'
 import { useCurrency } from '@/state/useCurrency'
+import { useHideAmounts } from '@/state/useHideAmounts'
 import { useTranslation } from '@/state/useTranslation'
-import { currentMonthKey, monthNameLabel } from '@/lib/date'
-import { cn } from '@/lib/cn'
-import type { MonthlySummary } from '@/types'
+import { todayISO } from '@/lib/date'
+import { budgetNote } from '@/lib/inicio'
+import { budgetNoteText } from '@/lib/planCopy'
 
-const STATUS_TONE: Record<BudgetProgress['status'], 'positive' | 'warning' | 'negative'> = {
-  on_track: 'positive',
-  near_limit: 'warning',
-  over_budget: 'negative',
+function tone(pct: number): string {
+  return pct >= 90 ? 'var(--v2-neg)' : pct >= 65 ? 'var(--v2-warn)' : 'var(--v2-pos)'
 }
 
-// Read-only: creating/editing budgets is Android's job (micro-management),
-// Web only shows progress for analysis — see root AGENTS.md.
+// Planes › Presupuestos (Web v2 mockup `isBudgets`): one card per budget,
+// riskiest first, with the pace note Inicio uses. A card opens the budget
+// panel; the dashed tile creates one (Android's "+ Nuevo presupuesto").
 export default function BudgetsPage() {
-  const { budgets } = useAppData()
+  const { budgets, refresh, notifyChanged } = useAppData()
   const { format } = useCurrency()
-  const { t, tCategory, language } = useTranslation()
-  const [history, setHistory] = useState<Record<string, MonthlySummary[]>>({})
-
-  const totalLimit = budgets.reduce((s, b) => s + b.limit, 0)
-  const totalSpent = budgets.reduce((s, b) => s + b.spent, 0)
-  const overCount = budgets.filter((b) => b.status === 'over_budget').length
-  const pct = totalLimit > 0 ? Math.round((totalSpent / totalLimit) * 100) : 0
-
-  const monthKey = currentMonthKey()
-  const now = new Date()
-  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
-  const daysLeft = daysInMonth - now.getDate()
-
-  useEffect(() => {
-    Promise.all(budgets.map((b) => analyticsService.getCategoryHistory(b.category, 6, language).then((h) => [b.id, h] as const))).then(
-      (entries) => setHistory(Object.fromEntries(entries)),
-    )
-  }, [budgets, language])
+  const { hidden } = useHideAmounts()
+  const { t, tCategory } = useTranslation()
+  const [editing, setEditing] = useState<BudgetProgress | 'new' | null>(null)
+  const today = todayISO()
+  const sorted = [...budgets].sort((a, b) => b.percentage - a.percentage)
 
   return (
-    <div className="flex flex-col gap-5">
-      <p className="-mt-1 text-xs font-medium text-ink-tertiary">
-        {t('budgets.readOnlyNote')} {daysLeft} {t('budgets.daysLeftSuffix')} {monthNameLabel(monthKey, language)}.
-      </p>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <KPICard label={t('budgets.totalBudget')} value={format(totalLimit)} icon={<Wallet className="h-4 w-4" />} tone="primary" />
-        <KPICard label={t('budgets.spentThisMonth')} value={format(totalSpent)} icon={<TrendingDown className="h-4 w-4" />} trend={{ value: pct, label: t('budgets.ofBudget') }} />
-        <KPICard label={t('budgets.overCategories')} value={String(overCount)} icon={<PiggyBank className="h-4 w-4" />} />
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {[...budgets]
-          .sort((a, b) => b.percentage - a.percentage)
-          .map((b) => (
-            <Card key={b.id} className={cn('p-5', b.status === 'over_budget' && 'border-negative/35')}>
-              <div className="mb-3 flex items-start justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-3">
-                  <CategoryIcon category={b.category} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13.5px] font-bold text-ink">{b.name ?? tCategory(b.category)}</p>
-                    <p className="text-xs text-ink-tertiary">{b.name ? tCategory(b.category) : t('budgets.monthlyLimit')}</p>
-                  </div>
-                </div>
-                <Badge tone={STATUS_TONE[b.status]}>{b.percentage}%</Badge>
+    <>
+      <div className="grid grid-cols-1 gap-3.5 min-[760px]:grid-cols-2 min-[1100px]:grid-cols-3">
+        {sorted.map((b) => {
+          const c = tone(b.percentage)
+          return (
+            <button
+              key={b.id}
+              type="button"
+              onClick={() => setEditing(b)}
+              className="cursor-pointer rounded-[16px] border bg-v2-surface px-5 py-[18px] text-left focus-visible:outline-2 focus-visible:outline-v2-accent"
+              style={{ borderColor: b.percentage >= 90 ? 'var(--v2-neg-soft)' : 'var(--v2-line)' }}
+            >
+              <div className="flex items-baseline justify-between">
+                <div className="text-[13.5px] font-extrabold">{b.name ?? tCategory(b.category)}</div>
+                {/* The mockup's pill padding stays; its `var(--neg)24` background is invalid CSS and never paints. */}
+                <span className="px-2 py-[3px] text-[11.5px] font-extrabold" style={{ color: c }}>
+                  {b.percentage}%
+                </span>
               </div>
-              <p className="font-numeric text-lg font-extrabold text-ink">
-                {format(b.spent)} <span className="text-sm font-semibold text-ink-tertiary">/ {format(b.limit)}</span>
-              </p>
-              <ProgressBar value={b.percentage} tone={STATUS_TONE[b.status]} trackClassName="mt-3" />
-              <p className="mt-2 text-xs font-semibold text-ink-tertiary">
-                {b.remaining >= 0 ? `${format(b.remaining)} ${t('budgets.remaining')}` : `${format(Math.abs(b.remaining))} ${t('budgets.overLimit')}`}
-              </p>
-            </Card>
-          ))}
-      </div>
-
-      <Card className="p-5 sm:p-6">
-        <h3 className="mb-4 text-[15px] font-bold text-ink">{t('budgets.utilization')}</h3>
-        <div className="flex flex-col gap-4">
-          {[...budgets]
-            .sort((a, b) => b.percentage - a.percentage)
-            .map((b) => (
-              <div key={b.id} className="flex items-center gap-3">
-                <CategoryIcon category={b.category} size="sm" />
-                <span className="w-32 shrink-0 truncate text-[13px] font-semibold text-ink">{tCategory(b.category)}</span>
-                <div className="flex-1">
-                  <ProgressBar value={b.percentage} tone={STATUS_TONE[b.status]} />
-                </div>
-                <span className="w-12 shrink-0 text-right font-numeric text-xs font-bold text-ink-secondary">{b.percentage}%</span>
+              <Money hidden={hidden} className="mt-2 block text-[20px] font-extrabold tracking-[-.025em]">
+                {format(b.spent)}
+              </Money>
+              <div className="mt-0.5 text-[11.5px] text-v2-dim">
+                <MoneyText parts={[{ template: t('plans.of'), args: [{ amount: b.limit }] }]} hidden={hidden} format={format} />
               </div>
-            ))}
-        </div>
-      </Card>
+              <div className="mt-3.5 h-1.5 overflow-hidden rounded-[3px] bg-v2-line">
+                <div className="h-full" style={{ width: `${Math.min(100, b.percentage)}%`, background: c }} />
+              </div>
+              <div className="mt-2.5 text-[11.5px] text-v2-muted">
+                <MoneyText parts={[budgetNoteText(budgetNote(b.spent, b.limit, b.percentage, today), t)]} hidden={hidden} format={format} />
+              </div>
+            </button>
+          )
+        })}
+        <PlanAddTile label={t('plans.newBudget')} onClick={() => setEditing('new')} />
+      </div>
+      {budgets.length === 0 && <div className="p-5 text-center text-[12.5px] text-v2-dim">{t('plans.budgetsEmpty')}</div>}
 
-      <Card className="p-5 sm:p-6">
-        <h3 className="text-[15px] font-bold text-ink">{t('budgets.historicalPerformance')}</h3>
-        <p className="mt-0.5 text-xs font-medium text-ink-tertiary">{t('budgets.historicalNote')}</p>
-        <div className="mt-5 flex flex-col gap-6">
-          {[...budgets]
-            .sort((a, b) => b.percentage - a.percentage)
-            .map((b) => {
-              const spentLabel = t('budgets.spent')
-              const limitLabel = t('budgets.limitProxy')
-              const h = history[b.id] ?? []
-              return (
-                <div key={b.id}>
-                  <div className="mb-2 flex items-center gap-2">
-                    <CategoryIcon category={b.category} size="sm" />
-                    <span className="text-[13px] font-bold text-ink">{b.name ?? tCategory(b.category)}</span>
-                  </div>
-                  <NovaBarChart
-                    data={h.map((m) => ({ month: m.label, [spentLabel]: m.expenses, [limitLabel]: b.limit }))}
-                    xKey="month"
-                    height={180}
-                    series={[
-                      { key: spentLabel, label: spentLabel, color: 'var(--color-negative)' },
-                      { key: limitLabel, label: limitLabel, color: 'var(--color-text-tertiary)' },
-                    ]}
-                  />
-                </div>
-              )
-            })}
-        </div>
-      </Card>
-    </div>
+      {editing && (
+        <BudgetPanel
+          budget={editing === 'new' ? null : editing}
+          taken={budgets.filter((b) => editing === 'new' || b.id !== editing.id).map((b) => b.category)}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null)
+            notifyChanged()
+            void refresh()
+          }}
+        />
+      )}
+    </>
   )
 }
+

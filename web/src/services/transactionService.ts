@@ -194,6 +194,12 @@ export const transactionService = {
     return mapTransaction(row)
   },
 
+  // Loan edits (Android's loan sheet): the wallet, the direction (which
+  // flips the type server-side), the counterparty, amount and due date.
+  async updateLoan(id: string, input: { amount: number; accountId: string; loanKind: LoanKind; counterpartyName: string; dueDate: string | null }): Promise<void> {
+    await apiClient.patch(`/transactions/${id}`, { ...input, loanKind: input.loanKind.toUpperCase() })
+  },
+
   // Every open or settled loan of both kinds, newest first. Pending balances
   // come from the server (`outstanding`), never from summing abonos here.
   async getLoans(): Promise<Transaction[]> {

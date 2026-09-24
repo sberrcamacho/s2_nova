@@ -61,6 +61,8 @@ export interface Goal {
   percentage: number
   themeIcon?: string // goal category id (EMERGENCY, TRAVEL, ...)
   targetDate?: string
+  // What each wallet has put in (for "Devolver a su origen").
+  contributions?: { accountId: string; amount: number }[]
 }
 
 export type CategoryId =

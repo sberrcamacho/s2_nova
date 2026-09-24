@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { useNavigate } from 'react-router-dom'
 import { CategoryGlyph, CategoryMark } from '@/components/v2/CategoryMark'
 import { ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
-import { Money, MoneyText, type MoneyTemplate } from '@/components/v2/Money'
+import { Money, MoneyText } from '@/components/v2/Money'
 import { RowButton, RowSkeletons, SkeletonBar, SyncBanner } from '@/components/v2/Rows'
 import { EventDialog } from '@/dashboard/components/EventDialog'
 import { accountService } from '@/services/accountService'
@@ -17,6 +17,7 @@ import { useCurrency } from '@/state/useCurrency'
 import { useHideAmounts } from '@/state/useHideAmounts'
 import { useTranslation } from '@/state/useTranslation'
 import { alertCopy } from '@/lib/alertCopy'
+import { budgetNoteText, goalEtaText } from '@/lib/planCopy'
 import { goalMark, categoryColor } from '@/lib/categoryGlyphs'
 import { todayISO } from '@/lib/date'
 import {
@@ -27,11 +28,9 @@ import {
   budgetTone,
   daysLeftInMonth,
   fill,
-  goalEta,
   loadDismissed,
   monthAbbr,
   monthYear,
-  monthYearLower,
   nextDueLoan,
   openLoans,
   pruneDismissed,
@@ -474,27 +473,6 @@ function budgetsSubtitle(today: string, language: 'es' | 'en', t: (k: Translatio
   if (left === 0) return fill(t('inicio.budgets.subtitleLast'), month)
   if (left === 1) return fill(t('inicio.budgets.subtitleOne'), month)
   return fill(t('inicio.budgets.subtitle'), left, month)
-}
-
-function budgetNoteText(note: ReturnType<typeof budgetNote>, t: (k: TranslationKey) => string): MoneyTemplate {
-  switch (note.kind) {
-    case 'over':
-      return { template: t('inicio.budgets.over'), args: [] }
-    case 'exceeds':
-      return note.days === 1 ? { template: t('inicio.budgets.exceedsOne'), args: [] } : { template: t('inicio.budgets.exceeds'), args: [note.days] }
-    case 'closes':
-      return { template: t('inicio.budgets.closes'), args: [{ amount: note.amount }] }
-    default:
-      return { template: t('inicio.budgets.relaxed'), args: [] }
-  }
-}
-
-function goalEtaText(goal: Goal, transactions: Transaction[], today: string, language: 'es' | 'en', t: (k: TranslationKey) => string): string {
-  const eta = goalEta(goal, transactions, today)
-  const target = goal.targetDate ? fill(t('inicio.goals.target'), monthYearLower(goal.targetDate.slice(0, 7), language)) : ''
-  if (eta.kind === 'done') return t('inicio.goals.done')
-  if (eta.kind === 'insufficient') return t('inicio.goals.insufficient')
-  return fill(t('inicio.goals.eta'), monthYearLower(eta.month, language)) + target
 }
 
 // ── Pieces ──────────────────────────────────────────────────────────────

@@ -101,6 +101,7 @@
   --v2-pos: #22a06b;
   --v2-neg: #d64545;
   --v2-warn: #b5760f;
+  --v2-neg-soft: #f0d2d2;
   --v2-hero-a: #16123a;
   --v2-hero-b: #1d1650;
   --v2-hero-c: #241a5e;
@@ -193,6 +194,7 @@
   --v2-pos: #32c98a;
   --v2-neg: #ff6262;
   --v2-warn: #f0b429;
+  --v2-neg-soft: #3a2029;
   --v2-hero-a: #050507;
   --v2-hero-b: #141034;
   --v2-hero-c: #211a4d;
@@ -259,6 +261,7 @@
   --color-v2-pos: var(--v2-pos);
   --color-v2-neg: var(--v2-neg);
   --color-v2-warn: var(--v2-warn);
+  --color-v2-neg-soft: var(--v2-neg-soft);
 
   --radius-xs: 6px;
   --radius-sm: 10px;

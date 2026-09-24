@@ -1,14 +1,13 @@
 import { monthlyIncomeTarget } from '@/data/budgets'
 import { apiClient } from '@/lib/apiClient'
-import { categorySlugFor } from '@/lib/backendCategories'
+import { categoryIdFor, categorySlugFor } from '@/lib/backendCategories'
 import { currentMonthKey } from '@/lib/date'
 import type { CategoryBudget, CategoryId } from '@/types'
 
-// Read-only by design: creating/editing budgets is Android's job
-// (micro-management) — Web (macro-analysis) only ever reads budget
-// progress, which the backend computes server-side (spent/remaining/
-// percentage/status — see backend/src/routes/budgets.ts's serializeBudget)
-// and is never recomputed here, same rule Android follows.
+// Budget progress (spent/remaining/percentage/status) is computed by the
+// backend (backend/src/routes/budgets.ts's serializeBudget) and never
+// recomputed here, same rule Android follows. Writes mirror Android's
+// Presupuestos sheet: one budget per category and month (409 otherwise).
 interface BackendBudget {
   id: string
   name: string | null
@@ -52,6 +51,30 @@ export const budgetService = {
   async getBudgets(month: string = currentMonthKey()): Promise<BudgetProgress[]> {
     const budgets = await apiClient.get<BackendBudget[]>(`/budgets?month=${month}`)
     return Promise.all(budgets.map(mapBudget))
+  },
+
+  async createBudget(input: { name?: string; category: CategoryId; limit: number }): Promise<BudgetProgress> {
+    const row = await apiClient.post<BackendBudget>('/budgets', {
+      name: input.name,
+      categoryId: await categoryIdFor(input.category),
+      amount: input.limit,
+      month: currentMonthKey(),
+    })
+    return mapBudget(row)
+  },
+
+  // `name: null` clears a custom name; `category` moves the budget.
+  async updateBudget(id: string, input: { name: string | null; category?: CategoryId; limit: number }): Promise<BudgetProgress> {
+    const row = await apiClient.patch<BackendBudget>(`/budgets/${id}`, {
+      name: input.name,
+      amount: input.limit,
+      categoryId: input.category ? await categoryIdFor(input.category) : undefined,
+    })
+    return mapBudget(row)
+  },
+
+  async deleteBudget(id: string): Promise<void> {
+    await apiClient.delete(`/budgets/${id}`)
   },
 
   async getBudgetByCategory(category: CategoryId, month: string = currentMonthKey()): Promise<BudgetProgress | undefined> {
