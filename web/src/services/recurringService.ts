@@ -45,4 +45,15 @@ export const recurringService = {
     const series = await apiClient.get<BackendRecurringSeries[]>('/recurring-series')
     return Promise.all(series.map(mapSeries))
   },
+
+  // Materializes the next occurrence as a real transaction (backend applies
+  // the balance change and advances the date).
+  async confirmOccurrence(id: string, date: string): Promise<void> {
+    await apiClient.post(`/recurring-series/${id}/confirm`, { date })
+  },
+
+  // Skips the next occurrence ("Omitir esta vez") without a transaction.
+  async skipOccurrence(id: string): Promise<void> {
+    await apiClient.post(`/recurring-series/${id}/skip`)
+  },
 }

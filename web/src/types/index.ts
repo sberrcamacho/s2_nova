@@ -21,10 +21,15 @@ export type LoanKind = 'lent' | 'borrowed'
 
 export type WalletType = 'cash' | 'bank' | 'savings' | 'crypto' | 'other'
 
+// The backend's full AccountType — Inicio's "Billeteras" card labels and
+// icons each wallet by it (Nequi reads "Billetera digital", not "other").
+export type AccountType = 'CASH' | 'BANK_DEBIT' | 'BANK_CREDIT' | 'SAVINGS' | 'CRYPTO' | 'NEQUI' | 'DAVIPLATA' | 'OTHER'
+
 export interface Wallet {
   id: string
   name: string
   type: WalletType
+  accountType: AccountType
   initialBalance: number
   currentBalance: number
 }
@@ -51,6 +56,10 @@ export interface Goal {
   name: string
   targetAmount: number
   currentAmount: number
+  // Server-computed (backend/src/lib/goalProgress.ts) — never recomputed here.
+  remaining: number
+  percentage: number
+  themeIcon?: string // goal category id (EMERGENCY, TRAVEL, ...)
   targetDate?: string
 }
 
@@ -106,6 +115,8 @@ export interface Transaction {
   dueDate?: string // Lent/Borrowed only — when repayment is expected
   loanSettled?: boolean
   settledByTransactionId?: string // the real repayment transaction, once settled
+  parentLoanId?: string // set on an abono — points back at the loan it pays
+  outstanding?: number // loans only: server-computed pending balance
 }
 
 export interface NewTransactionInput {
@@ -117,7 +128,9 @@ export interface NewTransactionInput {
   status?: TransactionStatus
   category: CategoryId
   date: string
-  paymentMethod: PaymentMethod
+  // Ignored by the backend (it derives the method from the wallet); kept
+  // optional only for older call sites.
+  paymentMethod?: PaymentMethod
   merchant?: string
   note?: string
   productId?: string

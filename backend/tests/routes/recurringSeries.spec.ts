@@ -259,6 +259,44 @@ describe("recurring series routes", () => {
     });
   });
 
+  describe("POST /recurring-series/:id/skip", () => {
+    it("advances nextOccurrenceDate without creating a transaction or moving the balance", async () => {
+      const user = await createTestUser();
+      const wallet = await createAccount(user.id, { initialBalanceMinor: 100000n });
+      const category = await categoryBySlug("bills");
+      const createRes = await app.inject({
+        method: "POST",
+        url: "/api/v1/recurring-series",
+        headers: authHeader(user),
+        payload: { name: "Rent", type: "EXPENSE", amount: 20000, accountId: wallet.id, categoryId: category.id, interval: "MONTHLY", startDate: "2026-06-01" },
+      });
+      const id = createRes.json().id;
+
+      const res = await app.inject({ method: "POST", url: `/api/v1/recurring-series/${id}/skip`, headers: authHeader(user) });
+      expect(res.statusCode).toBe(200);
+      expect(res.json().nextOccurrenceDate.slice(0, 10)).toBe("2026-07-01");
+
+      expect(await prisma.transaction.count({ where: { recurringSeriesId: id } })).toBe(0);
+      const walletAfter = await prisma.account.findUniqueOrThrow({ where: { id: wallet.id } });
+      expect(walletAfter.currentBalanceMinor).toBe(100000n);
+    });
+
+    it("returns 404 for another user's series", async () => {
+      const owner = await createTestUser();
+      const stranger = await createTestUser();
+      const wallet = await createAccount(owner.id);
+      const category = await categoryBySlug("bills");
+      const createRes = await app.inject({
+        method: "POST",
+        url: "/api/v1/recurring-series",
+        headers: authHeader(owner),
+        payload: { name: "Series", type: "EXPENSE", amount: 1000, accountId: wallet.id, categoryId: category.id, interval: "MONTHLY", startDate: "2026-06-01" },
+      });
+      const res = await app.inject({ method: "POST", url: `/api/v1/recurring-series/${createRes.json().id}/skip`, headers: authHeader(stranger) });
+      expect(res.statusCode).toBe(404);
+    });
+  });
+
   describe("POST /recurring-series/:id/confirm", () => {
     it("materializes an EXPENSE, decrements the wallet, and advances nextOccurrenceDate", async () => {
       const user = await createTestUser();

@@ -14,6 +14,7 @@ export interface MeResponse {
     theme: 'LIGHT' | 'DARK' | 'SYSTEM'
     notifications: boolean
     biometricLogin: boolean
+    blurBalance: boolean
     onboardingCompleted: boolean
     tutorialCompleted: boolean
   } | null
@@ -46,10 +47,10 @@ export function mapMeResponse(me: MeResponse): User {
       theme: (me.preferences?.theme ?? 'SYSTEM').toLowerCase() as 'light' | 'dark' | 'system',
       notifications: me.preferences?.notifications ?? true,
       biometricLogin: me.preferences?.biometricLogin ?? false,
-      // Not a backend field — a purely client-side display toggle (no
-      // privacy-sensitive data leaves the device either way), so it isn't
-      // part of the account model that gets persisted server-side.
-      hideAmounts: false,
+      // Backed by the shared `blurBalance` preference — the same switch as
+      // Android's "Difuminar el saldo total", so hiding amounts follows the
+      // account across both clients.
+      hideAmounts: me.preferences?.blurBalance ?? false,
       language: (me.preferences?.language as LanguageCode) ?? 'es',
     },
   }
@@ -76,7 +77,7 @@ export const userService = {
     if (patch.theme !== undefined) body.theme = patch.theme.toUpperCase()
     if (patch.notifications !== undefined) body.notifications = patch.notifications
     if (patch.biometricLogin !== undefined) body.biometricLogin = patch.biometricLogin
-    // hideAmounts has no backend field — nothing to send for it.
+    if (patch.hideAmounts !== undefined) body.blurBalance = patch.hideAmounts
     if (Object.keys(body).length === 0) return
     await apiClient.patch('/me/preferences', body)
   },

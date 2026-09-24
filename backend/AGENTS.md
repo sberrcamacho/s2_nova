@@ -86,7 +86,8 @@ up beyond pointing it at the URL above.
   `recurringSeries.ts` is the recurring-definition CRUD + the one place a
   Transaction ever gets created from a series (`POST /:id/confirm`,
   explicit-only — nothing generates transactions on a timer or on app
-  start). `transactions.ts`'s `POST /:id/settle-loan` is the only way a
+  start); `POST /:id/skip` advances the next occurrence without one
+  (Web's "Omitir esta vez"). `transactions.ts`'s `POST /:id/settle-loan` is the only way a
   Lent/Borrowed transaction gets settled — it creates a real
   opposite-direction transaction (see schema.prisma's
   `settledByTransactionId` doc comment), not just a status flag.

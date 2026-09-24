@@ -19,6 +19,8 @@ interface BackendTransaction {
   dueDate: string | null
   loanSettledAt: string | null
   settledByTransactionId: string | null
+  parentLoanId: string | null
+  outstanding: number | null
   paymentMethod: string
   description: string
   merchant: string | null
@@ -49,6 +51,8 @@ async function mapTransaction(row: BackendTransaction): Promise<Transaction> {
     dueDate: row.dueDate?.slice(0, 10),
     loanSettled: row.loanSettledAt !== null,
     settledByTransactionId: row.settledByTransactionId ?? undefined,
+    parentLoanId: row.parentLoanId ?? undefined,
+    outstanding: row.outstanding ?? undefined,
   }
 }
 
@@ -169,6 +173,22 @@ export const transactionService = {
     if (patch.category) body.categoryId = await categoryIdFor(patch.category)
     const row = await apiClient.patch<BackendTransaction>(`/transactions/${id}`, body)
     return mapTransaction(row)
+  },
+
+  // Every open or settled loan of both kinds, newest first. Pending balances
+  // come from the server (`outstanding`), never from summing abonos here.
+  async getLoans(): Promise<Transaction[]> {
+    const [lent, borrowed] = await Promise.all([
+      apiClient.get<BackendTransaction[]>('/transactions?loanKind=LENT&limit=200'),
+      apiClient.get<BackendTransaction[]>('/transactions?loanKind=BORROWED&limit=200'),
+    ])
+    const loans = await Promise.all([...lent, ...borrowed].map(mapTransaction))
+    return loans.sort((a, b) => (a.date < b.date ? 1 : -1))
+  },
+
+  // Records an abono (partial or final) — see backend settle-loan.
+  async settleLoan(id: string, input: { amount: number; accountId: string; date: string }): Promise<void> {
+    await apiClient.post(`/transactions/${id}/settle-loan`, input)
   },
 
   // Synchronous escape hatch for analyticsService/insightsService — see the

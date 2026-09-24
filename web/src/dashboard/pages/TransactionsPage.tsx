@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { ArrowUpDown, ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
@@ -26,7 +27,11 @@ export default function TransactionsPage() {
   const { transactions, isLoading } = useAppData()
   const { t, tCategory, tPaymentMethod, language } = useTranslation()
 
-  const [search, setSearch] = useState('')
+  // `?q=` comes from the header search, `?wallet=` from Inicio's Billeteras card.
+  const [params] = useSearchParams()
+  const walletFilter = params.get('wallet')
+  const [search, setSearch] = useState(params.get('q') ?? '')
+  useEffect(() => setSearch(params.get('q') ?? ''), [params])
   const [type, setType] = useState('all')
   const [category, setCategory] = useState('all')
   const [method, setMethod] = useState('all')
@@ -36,6 +41,7 @@ export default function TransactionsPage() {
 
   const filtered = useMemo(() => {
     const list = transactions.filter((t) => {
+      if (walletFilter && t.accountId !== walletFilter && t.transferAccountId !== walletFilter) return false
       if (type !== 'all' && t.type !== type) return false
       if (category !== 'all' && t.category !== category) return false
       if (method !== 'all' && t.paymentMethod !== method) return false
@@ -51,7 +57,7 @@ export default function TransactionsPage() {
       return (a.date < b.date ? -1 : 1) * dir
     })
     return sorted
-  }, [transactions, type, category, method, search, sortKey, sortDir])
+  }, [transactions, walletFilter, type, category, method, search, sortKey, sortDir])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)

@@ -33,6 +33,7 @@ function mapAccount(account: BackendAccount): Wallet {
     id: account.id,
     name: account.name,
     type: TYPE_MAP[account.type],
+    accountType: account.type,
     initialBalance: account.initialBalance,
     currentBalance: account.currentBalance,
   }

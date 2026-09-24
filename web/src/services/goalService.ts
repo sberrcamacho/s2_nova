@@ -10,6 +10,9 @@ interface BackendGoal {
   name: string
   targetAmount: number
   currentAmount: number
+  remaining: number
+  percentage: number
+  themeIcon: string | null
   targetDate: string | null
 }
 
@@ -19,6 +22,9 @@ function mapGoal(goal: BackendGoal): Goal {
     name: goal.name,
     targetAmount: goal.targetAmount,
     currentAmount: goal.currentAmount,
+    remaining: goal.remaining,
+    percentage: goal.percentage,
+    themeIcon: goal.themeIcon ?? undefined,
     targetDate: goal.targetDate?.slice(0, 10),
   }
 }

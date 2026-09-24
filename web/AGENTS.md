@@ -28,59 +28,41 @@ start the Vite development server on `$PORT` (default 8443).
 
 ## Information Architecture
 
-Primary navigation (`Sidebar.tsx`) is deliberately capped at **exactly 7
-items**: Overview, Insights, Analytics, Budgets, Goals, Reports, Settings.
-This is a product decision, not an oversight — do not add an 8th nav item
-for a new metric or surface; find where it belongs inside one of the 7
-instead. Two routes exist outside the nav as deep links rather than nav
-items: `/transactions` (linked from Overview's recent-transactions list;
-its filter/sort/paginate table is unique functionality, not a duplicate of
-anything in Analytics) and `/settings` (reached from the header avatar
-menu, not the nav's own item list config).
+Web v2 (s2_nova_stage2_handoff, STAGE-2-INICIO): the sidebar
+(`Sidebar.tsx`, `NAV_ITEMS`) has the same four primary destinations as
+Android's bottom bar, in the same order — **Inicio · Movimientos · Planes ·
+Reportes** — plus **Ajustes** in the footer. Pre-v2 paths (`/overview`,
+`/transactions`, `/budgets`, `/goals`, `/analytics`, `/insights`,
+`/reports`, `/settings`) redirect in `routes.tsx`.
 
-- **Overview** (`OverviewPage.tsx`) — the landing page, kept intentionally
-  light: current balance, this month's income/expenses/savings, an income-
-  vs-expenses chart, the top 2-3 insights (with a link to Insights for the
-  rest), a qualitative financial-health summary, a compact "what changed?"
-  period-over-period widget, an upcoming-events list (from active recurring
-  series), goals progress, and a short recent-transactions list. It does
-  not try to surface every metric the app can compute — that's Analytics'
-  job.
-- **Insights** (`InsightsPage.tsx`) — the prescriptive-suggestions surface
-  (see `insightsService.ts` below), with progressive disclosure: the first
-  four insights show by default, the rest are a "show more" click away.
-- **Analytics** (`AnalyticsPage.tsx`) — one consolidated surface with four
-  tabs (`components/ui/Tabs.tsx`): Spending, Income, Cash Flow, Net Worth.
-  This is where the old standalone Expenses/Income/NetWorth/Recurring/
-  Wallets/Categories pages went — their content was absorbed into tabs
-  rather than deleted outright. Cash Flow is the newest tab: money in/out,
-  net cash flow, monthly trends, and an "impact of upcoming movements"
-  section built from active `recurringService` series (subscriptions
-  included). Net Worth folds in what `WalletsPage` used to show
-  standalone (wallet balances) alongside lent/borrowed totals.
-- **Budgets** (`BudgetsPage.tsx`) — read-only, current-month progress plus
-  historical performance: `analyticsService.getCategoryHistory()` charts
-  actual spend per category over the last 6 months against *today's*
-  limit, since past months' limits aren't stored in this data model (see
-  that method's doc comment) — never fabricate a historical limit.
-- **Goals** (`GoalsPage.tsx`) — read-only progress plus a per-goal
-  "contributions over time" mini chart, derived only from transactions
-  actually linked via `transaction.goalId`. With fewer than two distinct
-  contribution months (true for the seed data, which has none), it shows
-  an honest "not enough data" note instead of a chart — never a fabricated
-  projected completion date.
-- **Reports** (`ReportsPage.tsx`) — the periodic-review surface: range
-  totals, savings trend, weekly spending pattern, income-vs-expenses,
-  top categories, budget performance, and goals progress. Resist adding
-  new report "types" here; extend the existing sections instead.
-- **Settings** (`SettingsPage.tsx`) — account/preferences/security, reached
-  via the header avatar menu as well as the nav.
+- **Inicio** (`InicioPage.tsx`) — v2-migrated. Balance hero (sum of
+  wallets, month income/expenses from `summaryService`, 6-month net bars),
+  Billeteras (row → `/movimientos?wallet=`), Alertas (shared backend rules
+  via `alertService`; dismissals are per user in localStorage, pruned to
+  live ids), Presupuestos (all, by risk), Metas, Préstamos, Gasto por
+  categoría, Próximos 14 días with running balance (row → `EventDialog`:
+  confirm or skip a Programado through the backend). Pure presentation
+  helpers live in `lib/inicio.ts` and `lib/alertCopy.ts`.
+- **Movimientos** (`TransactionsPage.tsx`) — pre-v2 table; honours `?q=`
+  (header search) and `?wallet=`. Migrated in the Movimientos stage.
+- **Planes** (`PlanesPage.tsx`) — tab host, `?tab=presupuestos|metas|prestamos`
+  (+ `&side=lent|borrowed`). Préstamos (`components/LoansTab.tsx`) is v2,
+  with "Registrar abono" (`transactionService.settleLoan`); Presupuestos
+  and Metas still render the pre-v2 BudgetsPage/GoalsPage.
+- **Reportes** — the pre-v2 AnalyticsPage for now; the header range
+  dropdown shows only here until Reportes gets its in-page range.
+  InsightsPage/ReportsPage are unrouted and fold into Reportes later.
+- **Ajustes** — SettingsPage.
 
-Forecasting and subscription analysis are **not** separate nav
-destinations — they live wherever there's enough real data to support them
-honestly (e.g. Analytics' burn-rate/forecast KPIs, the Cash Flow tab's
-upcoming-impact section, Insights' subscription-audit insight) rather than
-as dedicated pages.
+The header's "Nuevo movimiento" button (and the `N` shortcut) opens
+`components/panels/NewTransactionPanel.tsx` inside `SidePanel.tsx`, the
+420px shell every Web write form reuses (STAGE-2-INICIO §5).
+
+v2 screens use the mockup's own palette as `--v2-*` tokens
+(`bg-v2-surface`, `text-v2-dim`, …) in `index.css`, `line-height: normal`
+like the mockup, and `components/v2/` (CategoryMark with the mockup's
+category glyphs, Money for 9px-blurred hidden amounts, stroke icons).
+Hidden amounts are the shared `blurBalance` preference (`useHideAmounts`).
 
 ## Project Structure
 
@@ -94,7 +76,7 @@ documented path is missing, or when the repository contradicts this guide.
 - `src/components/ui/`, `src/components/charts/` - Shared, reusable building blocks used across dashboard pages
 - `src/state/` - App-wide React context (auth, theme, toast, mock app data) plus `useCurrency`/`useTranslation`, hooks bound to `user.currency`/`user.preferences.language` — use these instead of importing `lib/currency.ts` or hardcoding copy directly, so amounts/text stay in sync with the Settings page's currency-format and language toggles
 - `src/lib/i18n/` - Small hand-rolled translation dictionary (`es`/`en`) consumed via `useTranslation()`'s `t()`. Coverage is the full app: chrome (sidebar, header, breadcrumb, date-range filter), every dashboard page's own copy (KPI labels, chart titles/subtitles, table headers, empty states, filters, dialogs, toasts), and every category/payment-method/budget-status label shown anywhere — `useTranslation()` also exposes `tCategory(id)`/`tPaymentMethod(id)` for those (mirrors `data/categories.ts`'s `CategoryId`/`PaymentMethod` values, which are the exact dictionary-key suffixes: `category.<id>`, `paymentMethod.<id>`). Never read `.label` off `data/categories.ts` directly in a component; always go through `tCategory`/`tPaymentMethod` so it reacts to the language toggle. Free-form seeded mock content (transaction descriptions/merchants, notification title/message text) is intentionally left untranslated — same principle as not translating a user's own data. Date/month/weekday formatting (`lib/date.ts`) takes the app's `language` (from `useTranslation()`), not the device locale, so chart x-axis labels and formatted dates react to the language toggle too; `analyticsService` methods that produce user-facing labels (`getMonthlyHistory`, `getSavingsTrend`, `getWeeklySpending`) accept an optional `language` param for the same reason — always pass it from `useTranslation()` rather than relying on the `'es'` default. `DashboardFiltersContext`'s `DATE_RANGE_OPTIONS`/`rangeLabelKey` hold `TranslationKey`s, not text, so the date-range filter stays reactive too — resolve them with `t()` in the consuming component, never render the key directly.
-- `src/services/` - Thin wrappers around `apiClient.ts` fetch calls to the real backend (see `ARCHITECTURE.md` §9); each file maps the backend's wire shape (UUID `categoryId`, uppercase enums) to Web's existing domain types (`@/lib/backendCategories.ts` handles the category slug↔UUID translation). `src/data/` now only holds `budgets.ts`'s `monthlyIncomeTarget` (a Web-only planning number with no backend field) and category/payment-method label metadata — the old in-memory mock stores are gone. Every category's `icon` string in `data/categories.ts` must have a matching Lucide entry in `components/ui/CategoryIcon.tsx`'s `ICONS` map — a missing one silently falls back to `CircleEllipsis` instead of erroring, so after adding a category, check the rendered icon, not just the type-checker. `accountService.ts` (Wallets), `goalService.ts` (Goals), `budgetService.ts` (Budgets), and `recurringService.ts` (Recurring) are **read-only** — no `createWallet`/`createGoal`/`setBudgetLimit`/`createRecurringSeries`-style exports exist, and none should be added. Creating/editing Wallets, Budgets, Goals, and Recurring series is Android's job (micro-management); Web (macro-analysis) only ever reads them — this is an explicit product decision, not a gap to fill in. `transactionService.addTransaction` is a thin `POST /transactions` call — the backend applies wallet-balance and goal-contribution side effects itself (see `backend/src/routes/transactions.ts`), so Web never re-implements them client-side. No page currently calls it — Web intentionally has no data-entry UI (that's Android's job too) — but the capability stays wired to the real endpoint rather than a stub. There is deliberately **no** `deleteTransaction` (or any transaction-editing) export — `TransactionsPage` is list/filter/sort only, no delete action; removing a transaction is Android's job, same as creating one. `insightsService.ts` is the one Web-exclusive piece of business logic: prescriptive, data-driven suggestion sentences (not more charts — `AnalyticsPage` already covers those) computed from real transactions/budgets/goals/recurring series, never fabricated; `getFinancialHealth()` is the other half of it — a *qualitative* per-category status (savings/budget/cash flow/goals/debt, each a short status word plus a one-line data-driven detail) for Overview's health summary, deliberately not a single arbitrary 0-100 score. `analyticsService.getPeriodComparison()` powers Overview's "what changed?" widget (current vs. previous month, `pctChange` is `null` — never a fabricated percentage — when there's no prior-period baseline) and `getCategoryHistory()` powers Budgets' historical-performance charts. The upcoming-obligations list (Overview's "Upcoming events") reads directly from `recurringService.getRecurringSeries()`, sorted/filtered by active + next occurrence date — deliberately a list, not a calendar-grid widget (no new charting/calendar dependency, and a list is the more useful shape for a handful of recurring items).
+- `src/services/` - Thin wrappers around `apiClient.ts` fetch calls to the real backend (see `ARCHITECTURE.md` §9); each file maps the backend's wire shape (UUID `categoryId`, uppercase enums) to Web's existing domain types (`@/lib/backendCategories.ts` handles the category slug↔UUID translation). `src/data/` now only holds `budgets.ts`'s `monthlyIncomeTarget` (a Web-only planning number with no backend field) and category/payment-method label metadata — the old in-memory mock stores are gone. Every category's `icon` string in `data/categories.ts` must have a matching Lucide entry in `components/ui/CategoryIcon.tsx`'s `ICONS` map — a missing one silently falls back to `CircleEllipsis` instead of erroring, so after adding a category, check the rendered icon, not just the type-checker. Functional parity (root AGENTS.md) supersedes the old "Web is read-only" rule: every write Android can do must exist on Web, landing stage by stage as side panels. So far: `transactionService.addTransaction` ("Nuevo movimiento"), `transactionService.settleLoan` ("Registrar abono"), `recurringService.confirmOccurrence`/`skipOccurrence`, and the `blurBalance` preference. Each is a thin call — the backend applies every balance/goal side effect, so Web never re-implements them client-side. `summaryService.ts` and `alertService.ts` read the shared server aggregates and alert rules; never re-derive those figures from the client's partial transaction list. `insightsService.ts` is the one Web-exclusive piece of business logic: prescriptive, data-driven suggestion sentences (not more charts — `AnalyticsPage` already covers those) computed from real transactions/budgets/goals/recurring series, never fabricated; `getFinancialHealth()` is the other half of it — a *qualitative* per-category status (savings/budget/cash flow/goals/debt, each a short status word plus a one-line data-driven detail) for Overview's health summary, deliberately not a single arbitrary 0-100 score. `analyticsService.getPeriodComparison()` powers Overview's "what changed?" widget (current vs. previous month, `pctChange` is `null` — never a fabricated percentage — when there's no prior-period baseline) and `getCategoryHistory()` powers Budgets' historical-performance charts. The upcoming-obligations list (Overview's "Upcoming events") reads directly from `recurringService.getRecurringSeries()`, sorted/filtered by active + next occurrence date — deliberately a list, not a calendar-grid widget (no new charting/calendar dependency, and a list is the more useful shape for a handful of recurring items).
 - `src/index.css` - Global CSS entrypoint, Tailwind CSS v4 import, and the S2 Nova design tokens (light/dark palettes)
 - `index.html` - Vite HTML shell containing the `#root` element and loading `src/main.tsx`
 - `package.json` - Project dependencies and the Vite build, development, preview, and formatting scripts
@@ -119,10 +101,9 @@ scaffold does not need a Tailwind config file or PostCSS config.
 `src/index.css`. Keep CSS `@import` statements first, then add any
 `@font-face` rules and font-family defaults there.
 
-The dashboard sidebar (`src/dashboard/components/Sidebar.tsx`) is
-**permanently dark navy**, independent of the light/dark app theme — this
-matches the Figma reference and is intentional, not a bug. Use
-`<Logo tone="inverted" />` on dark, non-theme-reactive surfaces like it.
+The v2 sidebar (`src/dashboard/components/Sidebar.tsx`) follows the app
+theme (`--v2-sidebar`: white in light, #0b0b14 in dark), per the v2
+mockup; its logo tile is always the dark render, as in the mockup.
 
 The logo ships as two pre-rendered PNG tiles, `assets/logo-mark-dark.png`
 and `assets/logo-mark-light.png` (own rounded-card background baked in, not

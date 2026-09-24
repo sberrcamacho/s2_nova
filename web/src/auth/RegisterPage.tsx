@@ -203,7 +203,7 @@ export default function RegisterPage() {
     }
 
     if (await register({ name, email, password })) {
-      navigate('/overview', { replace: true })
+      navigate('/inicio', { replace: true })
     } else {
       setShakeKey((k) => k + 1)
     }
@@ -212,7 +212,7 @@ export default function RegisterPage() {
   const onGoogleToken = async (idToken: string) => {
     clearError()
     if (await loginWithGoogle(idToken)) {
-      navigate('/overview', { replace: true })
+      navigate('/inicio', { replace: true })
     } else {
       setShakeKey((k) => k + 1)
     }

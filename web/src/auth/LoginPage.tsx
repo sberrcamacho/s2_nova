@@ -182,7 +182,7 @@ export default function LoginPage() {
     }
 
     if (await login({ email, password })) {
-      navigate('/overview', { replace: true })
+      navigate('/inicio', { replace: true })
     } else {
       setShakeKey((k) => k + 1)
     }
@@ -191,7 +191,7 @@ export default function LoginPage() {
   const onGoogleToken = async (idToken: string) => {
     clearError()
     if (await loginWithGoogle(idToken)) {
-      navigate('/overview', { replace: true })
+      navigate('/inicio', { replace: true })
     } else {
       setShakeKey((k) => k + 1)
     }

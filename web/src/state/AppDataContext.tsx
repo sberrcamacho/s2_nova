@@ -8,6 +8,10 @@ interface AppDataContextValue {
   transactions: Transaction[]
   budgets: BudgetProgress[]
   isLoading: boolean
+  // Bumps after any write made from the shell (e.g. "Nuevo movimiento"), so
+  // pages that fetch their own server aggregates (Inicio) know to refetch.
+  version: number
+  notifyChanged: () => void
   addTransaction: (input: NewTransactionInput) => Promise<Transaction>
   refresh: () => Promise<void>
 }
@@ -19,6 +23,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [budgets, setBudgets] = useState<BudgetProgress[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [version, setVersion] = useState(0)
+  const notifyChanged = useCallback(() => setVersion((v) => v + 1), [])
 
   const load = useCallback(async () => {
     const [txns, budgetProgress] = await Promise.all([transactionService.getTransactions(), budgetService.getBudgets()])
@@ -46,16 +52,19 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       transactions,
       budgets,
       isLoading,
+      version,
+      notifyChanged,
       refresh: load,
       addTransaction: async (input) => {
         const created = await transactionService.addTransaction(input)
         const [txns, budgetProgress] = await Promise.all([transactionService.getTransactions(), budgetService.getBudgets()])
         setTransactions(txns)
         setBudgets(budgetProgress)
+        setVersion((v) => v + 1)
         return created
       },
     }),
-    [transactions, budgets, isLoading, load],
+    [transactions, budgets, isLoading, version, notifyChanged, load],
   )
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>

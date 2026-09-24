@@ -220,4 +220,20 @@ export async function recurringSeriesRoutes(app: FastifyInstance) {
       },
     };
   });
+
+  // Skips the next occurrence without creating a Transaction — Web's
+  // "Omitir esta vez". Advances nextOccurrenceDate by one interval, the same
+  // rule confirm uses, so neither client re-implements the date math.
+  app.post("/recurring-series/:id/skip", { preHandler: app.authenticate }, async (request, reply) => {
+    const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
+    const series = await prisma.recurringSeries.findFirst({ where: { id, userId: request.userId! } });
+    if (!series) return reply.status(404).send({ error: "Recurring series not found." });
+    if (!series.active) return reply.status(422).send({ error: "This recurring series is paused." });
+
+    const updated = await prisma.recurringSeries.update({
+      where: { id: series.id },
+      data: { nextOccurrenceDate: addInterval(series.nextOccurrenceDate, series.interval as "WEEKLY" | "MONTHLY" | "YEARLY") },
+    });
+    return serializeSeries(updated);
+  });
 }

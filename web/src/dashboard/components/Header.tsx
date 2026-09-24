@@ -1,133 +1,116 @@
-import { useState, type ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { AlertTriangle, Bell, Calendar, Check, CheckCircle2, ChevronDown, Info, LogOut, Menu, Search, Settings, User } from 'lucide-react'
-import { Avatar } from '@/components/ui/Avatar'
-import { Dropdown } from '@/components/ui/Dropdown'
-import { IconButton } from '@/components/ui/IconButton'
-import { useAuth } from '@/state/AuthContext'
-import { useToast } from '@/state/ToastContext'
+import { useEffect, useState } from 'react'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { Calendar, Check, ChevronDown } from 'lucide-react'
+import { ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
 import { useTranslation } from '@/state/useTranslation'
 import { DATE_RANGE_OPTIONS, useDashboardFilters } from '@/dashboard/DashboardFiltersContext'
-import { notifications as mockNotifications, type AppNotification } from '@/data/notifications'
 import { cn } from '@/lib/cn'
 
 interface HeaderProps {
   title: string
   onMenuClick: () => void
+  onNewTransaction: () => void
 }
 
-const NOTIFICATION_TONE_ICON: Record<AppNotification['tone'], ReactNode> = {
-  warning: <AlertTriangle className="h-4 w-4" />,
-  positive: <CheckCircle2 className="h-4 w-4" />,
-  info: <Info className="h-4 w-4" />,
-}
-
-const NOTIFICATION_TONE_CLASSES: Record<AppNotification['tone'], string> = {
-  warning: 'bg-warning-soft text-warning',
-  positive: 'bg-positive-soft text-positive',
-  info: 'bg-accent-soft text-primary',
-}
-
-export function Header({ title, onMenuClick }: HeaderProps) {
-  const { range, setRange, rangeLabelKey } = useDashboardFilters()
-  const { user, logout } = useAuth()
-  const { showToast } = useToast()
+// Web v2 header: breadcrumb, search, "Nuevo movimiento". The mockup's
+// period selector belongs to Movimientos (its month dropdown lands in the
+// Movimientos stage); until Reportes gets its own in-page 3M/6M/12M range,
+// the existing range dropdown stays on Reportes only, where it still drives
+// the charts.
+export function Header({ title, onMenuClick, onNewTransaction }: HeaderProps) {
   const { t } = useTranslation()
+  const location = useLocation()
   const navigate = useNavigate()
-  const [rangeOpen, setRangeOpen] = useState(false)
-  const unreadCount = mockNotifications.filter((n) => !n.read).length
+  const [params] = useSearchParams()
+  const onMovimientos = location.pathname === '/movimientos'
+  const [query, setQuery] = useState(onMovimientos ? (params.get('q') ?? '') : '')
 
-  const onLogout = () => {
-    logout()
-    showToast(t('header.sessionClosed'), 'info')
+  useEffect(() => {
+    if (!onMovimientos) setQuery('')
+  }, [onMovimientos])
+
+  // Typing searches Movimientos, as in the mockup (onQuery → active: Transactions).
+  const onQuery = (value: string) => {
+    setQuery(value)
+    if (value.trim()) navigate(`/movimientos?q=${encodeURIComponent(value)}`, { replace: onMovimientos })
+    else if (onMovimientos) navigate('/movimientos', { replace: true })
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-border bg-bg px-4 sm:px-7">
+    <header className="sticky top-0 z-[5] flex items-center justify-between gap-4 border-b border-v2-line bg-v2-bg px-4 py-3.5 min-[760px]:px-7">
       <div className="flex min-w-0 items-center gap-3">
-        <IconButton icon={<Menu className="h-5 w-5" />} label={t('header.openMenu')} variant="ghost" className="lg:hidden" onClick={onMenuClick} />
-        <p className="hidden truncate text-xs font-medium text-ink-tertiary sm:block">
-          S2 Nova <span className="opacity-50">/</span> <span className="text-ink-secondary">{title}</span>
-        </p>
-      </div>
-
-      <div className="relative hidden w-[280px] shrink-0 md:block">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-tertiary" />
-        <input
-          type="search"
-          placeholder={t('header.search')}
-          className="w-full rounded-[var(--radius-sm)] border border-border bg-surface py-2 pl-9 pr-3 text-[12px] font-medium text-ink placeholder:text-ink-tertiary focus:border-primary focus:outline-none"
-        />
-      </div>
-
-      <div className="flex items-center gap-2">
-        <div className="relative hidden sm:block">
-          <button
-            onClick={() => setRangeOpen((o) => !o)}
-            className="flex items-center gap-2 rounded-[var(--radius-sm)] border border-border bg-surface px-3 py-2 text-[12px] font-semibold text-ink-secondary transition-colors hover:border-border-strong"
-          >
-            <Calendar className="h-4 w-4" />
-            {t(rangeLabelKey)}
-            <ChevronDown className="h-3.5 w-3.5" />
-          </button>
-          {rangeOpen && (
-            <div className="absolute right-0 top-full z-50 mt-2 min-w-[180px] animate-fade-in rounded-[var(--radius-md)] border border-border bg-surface-elevated p-1.5 shadow-[var(--shadow-lg)]">
-              {DATE_RANGE_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => {
-                    setRange(opt.value)
-                    setRangeOpen(false)
-                  }}
-                  className={cn(
-                    'flex w-full items-center justify-between gap-3 rounded-[var(--radius-sm)] px-3 py-2 text-left text-sm font-medium transition-colors',
-                    range === opt.value ? 'bg-accent-soft text-primary' : 'text-ink hover:bg-bg-secondary',
-                  )}
-                >
-                  {t(opt.labelKey)}
-                  {range === opt.value && <Check className="h-4 w-4" />}
-                </button>
-              ))}
-            </div>
-          )}
+        <button
+          type="button"
+          onClick={onMenuClick}
+          aria-label={t('header.openMenu')}
+          className="flex h-8 w-8 items-center justify-center rounded-[9px] text-v2-muted min-[760px]:hidden"
+        >
+          <StrokeIcon paths={ICON_PATHS.menu} size={18} />
+        </button>
+        <div className="truncate text-[12px] text-v2-dim">
+          S2 Nova <span className="opacity-50">/</span> <span className="text-v2-muted">{title}</span>
         </div>
-
-        <Dropdown
-          align="right"
-          width={280}
-          trigger={
-            <IconButton
-              icon={
-                <span className="relative">
-                  <Bell className="h-[18px] w-[18px]" />
-                  {unreadCount > 0 && <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-negative" />}
-                </span>
-              }
-              label={t('header.notifications')}
-              variant="ghost"
-            />
-          }
-          items={mockNotifications.slice(0, 4).map((n) => ({
-            label: n.title,
-            icon: (
-              <span className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-full', NOTIFICATION_TONE_CLASSES[n.tone])}>
-                {NOTIFICATION_TONE_ICON[n.tone]}
-              </span>
-            ),
-            onSelect: () => showToast(n.message, n.tone === 'warning' ? 'error' : n.tone === 'positive' ? 'success' : 'info'),
-          }))}
-        />
-
-        <Dropdown
-          align="right"
-          trigger={<Avatar initials={user?.avatarInitials ?? 'US'} size="sm" className="cursor-pointer" />}
-          items={[
-            { label: t('header.myProfile'), icon: <User className="h-4 w-4" />, onSelect: () => navigate('/settings') },
-            { label: t('nav.settings'), icon: <Settings className="h-4 w-4" />, onSelect: () => navigate('/settings') },
-            { label: t('header.logout'), icon: <LogOut className="h-4 w-4" />, onSelect: onLogout, destructive: true },
-          ]}
-        />
+      </div>
+      <div className="flex min-w-0 items-center gap-2.5">
+        <label className="hidden h-[34px] w-[280px] min-w-0 shrink items-center gap-2 rounded-[10px] border border-v2-line bg-v2-surface px-3 text-v2-dim min-[900px]:flex">
+          <StrokeIcon paths={ICON_PATHS.search} size={14} />
+          <input
+            value={query}
+            onChange={(e) => onQuery(e.target.value)}
+            placeholder={t('v2.header.search')}
+            aria-label={t('v2.header.search')}
+            className="min-w-0 flex-1 border-none bg-transparent text-[12px] text-v2-text outline-none placeholder:text-v2-dim"
+          />
+        </label>
+        {location.pathname === '/reportes' && <RangeSelector />}
+        <button
+          type="button"
+          onClick={onNewTransaction}
+          aria-keyshortcuts="N"
+          className="flex h-[34px] flex-none cursor-pointer items-center gap-[7px] rounded-[10px] bg-v2-accent px-3.5 text-[12.5px] font-bold text-white shadow-[0_8px_24px_rgba(108,92,231,.35)]"
+        >
+          <StrokeIcon paths={ICON_PATHS.plus} size={14} strokeWidth={2.6} />
+          {t('v2.header.newTx')}
+        </button>
       </div>
     </header>
+  )
+}
+
+function RangeSelector() {
+  const { range, setRange, rangeLabelKey } = useDashboardFilters()
+  const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="relative hidden sm:block">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex h-[34px] items-center gap-2 rounded-[10px] border border-v2-line bg-v2-surface px-3 text-[12px] font-bold text-v2-muted"
+      >
+        <Calendar className="h-4 w-4" />
+        {t(rangeLabelKey)}
+        <ChevronDown className="h-3.5 w-3.5" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-10 z-20 w-[180px] rounded-[12px] border border-v2-line2 bg-v2-surface p-1.5 shadow-[0_16px_40px_rgba(0,0,0,.35)]">
+          {DATE_RANGE_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => {
+                setRange(opt.value)
+                setOpen(false)
+              }}
+              className={cn(
+                'flex w-full items-center justify-between rounded-[8px] px-2.5 py-[9px] text-left text-[12.5px]',
+                range === opt.value ? 'bg-v2-subtle font-extrabold text-v2-text' : 'font-semibold text-v2-muted',
+              )}
+            >
+              {t(opt.labelKey)}
+              {range === opt.value && <Check className="h-4 w-4" />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }

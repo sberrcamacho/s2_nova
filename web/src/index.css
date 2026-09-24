@@ -80,6 +80,30 @@
   /* Signup password-strength meter — doesn't match --color-positive exactly */
   --color-login-positive: #12b981;
   --color-login-positive-bg: #e6e6ee;
+
+  /* v2 mockup tokens (s2_nova_stage2_handoff/S2 Nova Dashboard v2.dc.html,
+     the `.thm` palette) — used verbatim by the migrated v2 screens (shell,
+     Inicio, Planes). Kept separate from the older tokens above so screens
+     not yet migrated don't shift until their own stage. */
+  --v2-bg: #f7f7fa;
+  --v2-sidebar: #ffffff;
+  --v2-surface: #ffffff;
+  --v2-surface2: #f0f0f5;
+  --v2-subtle: #f7f7fa;
+  --v2-line: #ebebf2;
+  --v2-line2: #dcdce6;
+  --v2-text: #111118;
+  --v2-muted: #666673;
+  --v2-dim: #767686;
+  --v2-accent: #6657e8;
+  --v2-accent2: #5a4ad6;
+  --v2-accent3: #4a3cc4;
+  --v2-pos: #22a06b;
+  --v2-neg: #d64545;
+  --v2-warn: #b5760f;
+  --v2-hero-a: #16123a;
+  --v2-hero-b: #1d1650;
+  --v2-hero-c: #241a5e;
 }
 
 [data-theme='dark'] {
@@ -151,6 +175,27 @@
   --color-login-checkbox-text: rgba(255, 255, 255, 0.6);
   --color-login-positive: #7cf0bb;
   --color-login-positive-bg: rgba(255, 255, 255, 0.12);
+
+  /* v2 mockup tokens — dark `.thm` palette */
+  --v2-bg: #050507;
+  --v2-sidebar: #0b0b14;
+  --v2-surface: #0e0e15;
+  --v2-surface2: #13131d;
+  --v2-subtle: #16161f;
+  --v2-line: #1c1c28;
+  --v2-line2: #262635;
+  --v2-text: #ffffff;
+  --v2-muted: #a8a8b8;
+  --v2-dim: #6f6f82;
+  --v2-accent: #6c5ce7;
+  --v2-accent2: #a69dff;
+  --v2-accent3: #8578ff;
+  --v2-pos: #32c98a;
+  --v2-neg: #ff6262;
+  --v2-warn: #f0b429;
+  --v2-hero-a: #050507;
+  --v2-hero-b: #141034;
+  --v2-hero-c: #211a4d;
 }
 
 /* ── Tailwind v4 theme mapping — CSS vars stay live, so switching
@@ -197,6 +242,23 @@
   --color-login-checkbox-text: var(--color-login-checkbox-text);
   --color-login-positive: var(--color-login-positive);
   --color-login-positive-bg: var(--color-login-positive-bg);
+
+  --color-v2-bg: var(--v2-bg);
+  --color-v2-sidebar: var(--v2-sidebar);
+  --color-v2-surface: var(--v2-surface);
+  --color-v2-surface2: var(--v2-surface2);
+  --color-v2-subtle: var(--v2-subtle);
+  --color-v2-line: var(--v2-line);
+  --color-v2-line2: var(--v2-line2);
+  --color-v2-text: var(--v2-text);
+  --color-v2-muted: var(--v2-muted);
+  --color-v2-dim: var(--v2-dim);
+  --color-v2-accent: var(--v2-accent);
+  --color-v2-accent2: var(--v2-accent2);
+  --color-v2-accent3: var(--v2-accent3);
+  --color-v2-pos: var(--v2-pos);
+  --color-v2-neg: var(--v2-neg);
+  --color-v2-warn: var(--v2-warn);
 
   --radius-xs: 6px;
   --radius-sm: 10px;
