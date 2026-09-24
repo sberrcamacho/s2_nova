@@ -12,7 +12,7 @@ import type { TranslationKey } from '@/lib/i18n/translations'
 // own stage migrates them.
 const PAGE_META: Record<string, { titleKey: TranslationKey; subtitleKey?: TranslationKey; ownHeader?: boolean }> = {
   '/inicio': { titleKey: 'v2.nav.inicio', ownHeader: true },
-  '/movimientos': { titleKey: 'v2.nav.movimientos', subtitleKey: 'page.transactions.subtitle' },
+  '/movimientos': { titleKey: 'v2.nav.movimientos', ownHeader: true },
   '/planes': { titleKey: 'v2.nav.planes', ownHeader: true },
   '/reportes': { titleKey: 'v2.nav.reportes', subtitleKey: 'page.analytics.subtitle' },
   '/ajustes': { titleKey: 'v2.nav.ajustes', subtitleKey: 'page.settings.subtitle' },

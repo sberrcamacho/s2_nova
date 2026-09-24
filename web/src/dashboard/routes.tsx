@@ -5,7 +5,7 @@ import { ProtectedRoute } from '@/dashboard/ProtectedRoute'
 import LoginPage from '@/auth/LoginPage'
 import RegisterPage from '@/auth/RegisterPage'
 import InicioPage from '@/dashboard/pages/InicioPage'
-import TransactionsPage from '@/dashboard/pages/TransactionsPage'
+import MovimientosPage from '@/dashboard/pages/MovimientosPage'
 import PlanesPage from '@/dashboard/pages/PlanesPage'
 import AnalyticsPage from '@/dashboard/pages/AnalyticsPage'
 import SettingsPage from '@/dashboard/pages/SettingsPage'
@@ -28,7 +28,7 @@ export const dashboardRoutes: RouteObject[] = [
         children: [
           { index: true, element: <Navigate to="/inicio" replace /> },
           { path: 'inicio', element: <InicioPage /> },
-          { path: 'movimientos', element: <TransactionsPage /> },
+          { path: 'movimientos', element: <MovimientosPage /> },
           { path: 'planes', element: <PlanesPage /> },
           { path: 'reportes', element: <AnalyticsPage /> },
           { path: 'ajustes', element: <SettingsPage /> },

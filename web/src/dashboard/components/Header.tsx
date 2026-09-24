@@ -5,6 +5,10 @@ import { ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
 import { useTranslation } from '@/state/useTranslation'
 import { DATE_RANGE_OPTIONS, useDashboardFilters } from '@/dashboard/DashboardFiltersContext'
 import { cn } from '@/lib/cn'
+import { todayISO } from '@/lib/date'
+import { monthYear } from '@/lib/inicio'
+import { recentMonths } from '@/lib/movimientos'
+import { usePeriod } from '@/dashboard/usePeriod'
 
 interface HeaderProps {
   title: string
@@ -12,11 +16,10 @@ interface HeaderProps {
   onNewTransaction: () => void
 }
 
-// Web v2 header: breadcrumb, search, "Nuevo movimiento". The mockup's
-// period selector belongs to Movimientos (its month dropdown lands in the
-// Movimientos stage); until Reportes gets its own in-page 3M/6M/12M range,
-// the existing range dropdown stays on Reportes only, where it still drives
-// the charts.
+// Web v2 header: breadcrumb, search, the period selector (Movimientos
+// only, per the mockup's showPeriod) and "Nuevo movimiento". Until Reportes
+// gets its own in-page 3M/6M/12M range, the old range dropdown stays on
+// Reportes only, where it still drives the charts.
 export function Header({ title, onMenuClick, onNewTransaction }: HeaderProps) {
   const { t } = useTranslation()
   const location = useLocation()
@@ -29,12 +32,23 @@ export function Header({ title, onMenuClick, onNewTransaction }: HeaderProps) {
     if (!onMovimientos) setQuery('')
   }, [onMovimientos])
 
-  // Typing searches Movimientos, as in the mockup (onQuery → active: Transactions).
+  // Typing searches Movimientos, as in the mockup (onQuery → active:
+  // Transactions); on Movimientos the selected period is kept.
   const onQuery = (value: string) => {
     setQuery(value)
-    if (value.trim()) navigate(`/movimientos?q=${encodeURIComponent(value)}`, { replace: onMovimientos })
-    else if (onMovimientos) navigate('/movimientos', { replace: true })
+    const next = new URLSearchParams(onMovimientos ? params : undefined)
+    if (value.trim()) next.set('q', value)
+    else next.delete('q')
+    if (value.trim() || onMovimientos) {
+      const search = next.toString()
+      navigate(`/movimientos${search ? `?${search}` : ''}`, { replace: onMovimientos })
+    }
   }
+
+  // Inicio's wallet rows open Movimientos with the wallet as the query.
+  useEffect(() => {
+    if (onMovimientos) setQuery(params.get('q') ?? '')
+  }, [onMovimientos, params])
 
   return (
     <header className="sticky top-0 z-[5] flex items-center justify-between gap-4 border-b border-v2-line bg-v2-bg px-4 py-3.5 min-[760px]:px-7">
@@ -62,6 +76,7 @@ export function Header({ title, onMenuClick, onNewTransaction }: HeaderProps) {
             className="min-w-0 flex-1 border-none bg-transparent text-[12px] text-v2-text outline-none placeholder:text-v2-dim"
           />
         </label>
+        {onMovimientos && <PeriodSelector />}
         {location.pathname === '/reportes' && <RangeSelector />}
         <button
           type="button"
@@ -107,6 +122,51 @@ function RangeSelector() {
             >
               {t(opt.labelKey)}
               {range === opt.value && <Check className="h-4 w-4" />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// The mockup's month dropdown: current month and the ones before it
+// (`recentMonths`), written to Movimientos' `?period=`.
+function PeriodSelector() {
+  const { t, language } = useTranslation()
+  const [period, setPeriod] = usePeriod()
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={`${t('mov.period')}: ${monthYear(period, language)}`}
+        className="flex h-[34px] cursor-pointer items-center gap-[7px] whitespace-nowrap rounded-[10px] border border-v2-line bg-v2-surface px-3 text-[12px] font-bold text-v2-muted hover:border-v2-line2 hover:text-v2-text"
+      >
+        {monthYear(period, language)}
+        <StrokeIcon paths={['M6 9l6 6 6-6']} size={12} strokeWidth={2.4} />
+      </button>
+      {open && (
+        <div role="listbox" className="absolute right-0 top-10 z-20 flex w-[180px] flex-col gap-0.5 rounded-[12px] border border-v2-line2 bg-v2-surface p-1.5 shadow-[0_16px_40px_rgba(0,0,0,.35)]">
+          {recentMonths(todayISO()).map((m) => (
+            <button
+              key={m}
+              type="button"
+              role="option"
+              aria-selected={period === m}
+              onClick={() => {
+                setPeriod(m)
+                setOpen(false)
+              }}
+              className={cn(
+                'cursor-pointer rounded-[8px] px-2.5 py-[9px] text-left text-[12.5px] hover:bg-v2-subtle',
+                period === m ? 'bg-v2-subtle font-extrabold text-v2-text' : 'font-semibold text-v2-muted',
+              )}
+            >
+              {monthYear(m, language)}
             </button>
           ))}
         </div>

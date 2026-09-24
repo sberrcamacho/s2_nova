@@ -102,8 +102,8 @@ async function buildQuery(filters?: TransactionFilters): Promise<string> {
 // call for every derived stat. Only getTransactions()'s unfiltered call
 // updates it, so a narrowed/filtered fetch never overwrites it with a
 // partial view (nothing currently calls getTransactions with filters —
-// TransactionsPage filters client-side over AppDataContext's full list —
-// but the guard keeps this correct if that changes).
+// Movimientos loads its month through getMonth — but the guard keeps this
+// correct if that changes).
 let cache: Transaction[] = []
 
 export const transactionService = {
@@ -119,6 +119,25 @@ export const transactionService = {
 
     if (!filters) cache = transactions
     return transactions
+  },
+
+  // Every movement dated in one month (Movimientos' period), newest first.
+  // Pages through the list endpoint's 200-row limit, so a busy month is
+  // never silently cut off.
+  async getMonth(monthKey: string): Promise<Transaction[]> {
+    const { from, to } = monthRange(monthKey)
+    const rows: BackendTransaction[] = []
+    for (let offset = 0; ; offset += 200) {
+      const page = await apiClient.get<BackendTransaction[]>(`/transactions?from=${from}&to=${to}&limit=200&offset=${offset}`)
+      rows.push(...page)
+      if (page.length < 200) break
+    }
+    return Promise.all(rows.map(mapTransaction))
+  },
+
+  // The backend reverses the balance effect before deleting.
+  async deleteTransaction(id: string): Promise<void> {
+    await apiClient.delete(`/transactions/${id}`)
   },
 
   async getTransactionById(id: string): Promise<Transaction | undefined> {

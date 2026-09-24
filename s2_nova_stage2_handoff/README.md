@@ -13,5 +13,5 @@ Open each `.dc.html` directly in a browser. They are interactive mockups, not pr
 - Docs are in English. The UI stays in Spanish: implement quoted copy verbatim.
 - Visual source of truth: these v2 mockups. They evolve the previous `design_handoff_s2_nova_overview/S2 Nova Android.dc.html` and `S2 Nova Dashboard.dc.html`.
 - Data rules and backend behavior: `backend/prisma/schema.prisma` and `backend/src/routes/*` in the repo.
-- Scope limits: Web Billeteras and Categorías pages, loan create/edit on Web, and the Reportes merge are later stages. Android's "Recurrentes" keeps its title until the Movimientos stage.
+- Scope limits: Web Billeteras and Categorías pages, loan create/edit on Web, and the Reportes merge are later stages. Android's "Recurrentes" is titled "Programados" since the Movimientos stage.
 - Web currently has a read-only rule in `web/AGENTS.md`. The architecture lifts it; update that file when Web gets write operations.

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { CategoryGlyph, CategoryMark } from '@/components/v2/CategoryMark'
 import { ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
 import { Money, MoneyText, type MoneyTemplate } from '@/components/v2/Money'
+import { RowButton, RowSkeletons, SkeletonBar, SyncBanner } from '@/components/v2/Rows'
 import { EventDialog } from '@/dashboard/components/EventDialog'
 import { accountService } from '@/services/accountService'
 import { alertService, type AppAlert } from '@/services/alertService'
@@ -153,12 +154,7 @@ export default function InicioPage() {
   return (
     <div className="flex flex-col gap-[18px] px-4 pb-10 pt-[26px] min-[760px]:px-7">
       {syncFailed && (
-        <div role="status" className="flex items-center justify-between gap-3 rounded-[12px] bg-[color-mix(in_oklab,var(--v2-neg)_10%,transparent)] px-3.5 py-2.5 text-[12px] font-bold text-v2-neg">
-          <span>{t('inicio.syncError')}</span>
-          <button type="button" onClick={retry} className="cursor-pointer font-extrabold text-v2-accent2">
-            {t('inicio.retry')}
-          </button>
-        </div>
+        <SyncBanner onRetry={retry} />
       )}
 
       <div className="grid grid-cols-1 items-stretch gap-[18px] min-[1100px]:grid-cols-[1.35fr_1fr]">
@@ -214,7 +210,7 @@ export default function InicioPage() {
               <div className="py-3 text-[12.5px] text-v2-dim">{t('inicio.wallets.empty')}</div>
             ) : (
               data.wallets.map((w, i, arr) => (
-                <RowButton key={w.id} last={i === arr.length - 1} onClick={() => navigate(`/movimientos?wallet=${w.id}`)}>
+                <RowButton key={w.id} last={i === arr.length - 1} onClick={() => navigate(`/movimientos?q=${encodeURIComponent(w.name)}`)}>
                   <div
                     className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full text-white"
                     style={{ background: 'linear-gradient(150deg,var(--v2-hero-b),var(--v2-accent))' }}
@@ -519,41 +515,6 @@ function CardHead({ title, subtitle, link, onLink }: { title: string; subtitle?:
           {link}
         </button>
       )}
-    </div>
-  )
-}
-
-// A tappable list row per the mockup's rowBase(): 11px/8px padding pulled
-// out by -8px so the hover background (--subtle) bleeds past the text.
-function RowButton({ children, onClick, last, gap = 14 }: { children: ReactNode; onClick: () => void; last: boolean; gap?: number }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn('mx-[-8px] flex cursor-pointer items-center rounded-[10px] px-2 py-[11px] text-v2-text hover:bg-v2-subtle', !last && 'border-b border-v2-subtle')}
-      style={{ gap }}
-    >
-      {children}
-    </button>
-  )
-}
-
-function SkeletonBar({ className, dark }: { className?: string; dark?: boolean }) {
-  return <div aria-hidden="true" className={cn('animate-pulse rounded-[6px]', dark ? 'bg-white/10' : 'bg-v2-line', className)} />
-}
-
-function RowSkeletons({ count }: { count: number }) {
-  return (
-    <div className="flex flex-col" aria-busy="true">
-      {Array.from({ length: count }, (_, i) => (
-        <div key={i} className="flex items-center gap-3.5 py-[11px]">
-          <SkeletonBar className="h-[34px] w-[34px] rounded-full" />
-          <div className="flex flex-1 flex-col gap-1.5">
-            <SkeletonBar className="h-3 w-[60%]" />
-            <SkeletonBar className="h-2.5 w-[40%]" />
-          </div>
-        </div>
-      ))}
     </div>
   )
 }

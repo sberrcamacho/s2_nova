@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react'
-import { createPortal } from 'react-dom'
+import { useState } from 'react'
 import { CategoryMark } from '@/components/v2/CategoryMark'
-import { ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
+import { DetailDialog } from '@/components/v2/DetailDialog'
 import { Money } from '@/components/v2/Money'
-import { errorBoxClass, primaryButtonClass, secondaryButtonClass } from '@/components/panels/SidePanel'
+import { primaryButtonClass, secondaryButtonClass } from '@/components/panels/SidePanel'
 import { recurringService } from '@/services/recurringService'
 import { useCurrency } from '@/state/useCurrency'
 import { useToast } from '@/state/ToastContext'
@@ -34,14 +33,6 @@ export function EventDialog({ series, walletName, today, hidden, onClose, onChan
   const dueToday = series.nextOccurrenceDate <= today
   const year = series.nextOccurrenceDate.slice(0, 4)
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
-
   const run = async (action: () => Promise<void>, toastKey: TranslationKey) => {
     setBusy(true)
     setError('')
@@ -63,43 +54,21 @@ export function EventDialog({ series, walletName, today, hidden, onClose, onChan
     [t('event.next'), shortDate(nextOccurrenceAfter(series.nextOccurrenceDate, series.interval), language)],
   ]
 
-  return createPortal(
-    <div onClick={onClose} className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(6,6,12,.62)] p-6 [line-height:normal] backdrop-blur-[4px]">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={series.name}
-        onClick={(e) => e.stopPropagation()}
-        className="flex w-[420px] max-w-full flex-col gap-4 rounded-[18px] border border-v2-line2 bg-v2-surface p-[22px] text-v2-text shadow-[0_24px_60px_rgba(0,0,0,.45)]"
-      >
-        <div className="flex items-center gap-3">
-          <CategoryMark category={series.category} box={40} />
-          <div className="min-w-0 flex-1">
-            <div className="text-[15px] font-extrabold tracking-[-.01em]">{series.name}</div>
-            <div className="mt-0.5 text-[11.5px] text-v2-dim">{fill(t('event.sub'), t(`event.interval.${series.interval}` as TranslationKey))}</div>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t('common.close')}
-            className="flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-[9px] text-v2-dim hover:bg-v2-subtle hover:text-v2-text"
-          >
-            <StrokeIcon paths={ICON_PATHS.close} size={14} />
-          </button>
-        </div>
+  return (
+    <DetailDialog
+      title={series.name}
+      sub={fill(t('event.sub'), t(`event.interval.${series.interval}` as TranslationKey))}
+      chip={<CategoryMark category={series.category} box={40} />}
+      amount={
         <Money hidden={hidden} className="text-[30px] font-extrabold tracking-[-.02em]" style={{ color: income ? 'var(--v2-pos)' : 'var(--v2-neg)' }}>
           {`${income ? '+' : '−'}${format(series.amount)}`}
         </Money>
-        <div className="flex flex-col">
-          {rows.map(([label, value]) => (
-            <div key={label} className="flex justify-between gap-3 border-b border-v2-subtle py-2.5 text-[12.5px]">
-              <span className="text-v2-dim">{label}</span>
-              <span className="text-right font-bold">{value}</span>
-            </div>
-          ))}
-        </div>
-        {error && <div className={errorBoxClass}>{error}</div>}
-        <div className="flex justify-end gap-2">
+      }
+      rows={rows}
+      error={error}
+      onClose={onClose}
+      actions={
+        <>
           <button type="button" disabled={busy} onClick={() => run(() => recurringService.skipOccurrence(series.id), 'event.skipped')} className={secondaryButtonClass}>
             {t('event.skip')}
           </button>
@@ -111,9 +80,8 @@ export function EventDialog({ series, walletName, today, hidden, onClose, onChan
           >
             {income ? t('event.confirmIncome') : t('event.confirmExpense')}
           </button>
-        </div>
-      </div>
-    </div>,
-    document.body,
+        </>
+      }
+    />
   )
 }
