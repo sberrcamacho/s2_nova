@@ -8,7 +8,11 @@ import InicioPage from '@/dashboard/pages/InicioPage'
 import MovimientosPage from '@/dashboard/pages/MovimientosPage'
 import PlanesPage from '@/dashboard/pages/PlanesPage'
 import ReportesPage from '@/dashboard/pages/ReportesPage'
-import SettingsPage from '@/dashboard/pages/SettingsPage'
+import AjustesPage from '@/dashboard/pages/AjustesPage'
+import ContrasenaPage from '@/dashboard/pages/ajustes/ContrasenaPage'
+import EliminarPage from '@/dashboard/pages/ajustes/EliminarPage'
+import PerfilPage from '@/dashboard/pages/ajustes/PerfilPage'
+import SesionesPage from '@/dashboard/pages/ajustes/SesionesPage'
 
 // Web v2 information architecture (root AGENTS.md, STAGE-2-INICIO §2):
 // Inicio · Movimientos · Planes · Reportes, plus Ajustes. The pre-v2 paths
@@ -31,7 +35,11 @@ export const dashboardRoutes: RouteObject[] = [
           { path: 'movimientos', element: <MovimientosPage /> },
           { path: 'planes', element: <PlanesPage /> },
           { path: 'reportes', element: <ReportesPage /> },
-          { path: 'ajustes', element: <SettingsPage /> },
+          { path: 'ajustes', element: <AjustesPage /> },
+          { path: 'ajustes/perfil', element: <PerfilPage /> },
+          { path: 'ajustes/contrasena', element: <ContrasenaPage /> },
+          { path: 'ajustes/sesiones', element: <SesionesPage /> },
+          { path: 'ajustes/eliminar', element: <EliminarPage /> },
           { path: 'overview', element: <Navigate to="/inicio" replace /> },
           { path: 'transactions', element: <Navigate to="/movimientos" replace /> },
           { path: 'budgets', element: <Navigate to="/planes?tab=presupuestos" replace /> },

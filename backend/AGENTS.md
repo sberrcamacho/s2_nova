@@ -93,6 +93,13 @@ up beyond pointing it at the URL above.
   `settledByTransactionId` doc comment), not just a status flag.
   Loan rows returned by `transactions.ts` carry a server-computed
   `outstanding` (`src/lib/loans.ts`); clients never re-derive it.
+  `security.ts` backs Web Ajustes › Seguridad: sessions (a login is one
+  `refresh_tokens.session_id`, kept across rotations and carried as the
+  access token's `sid` claim, so the caller's own session can be marked
+  and spared), the delete-account counts and `DELETE /me`;
+  `dataExport.ts` serves the CSV copy. Device labels come from
+  `src/lib/devices.ts` (the Android client sends
+  `S2Nova-Android/<version> (<model>)`).
   `summary.ts` (`GET /summary/months`, `GET /summary/categories`,
   `GET /summary/report?range=3|6|12` for Reportes) and `alerts.ts`
   (`GET /alerts`) are the shared Inicio/Reportes aggregates and alert

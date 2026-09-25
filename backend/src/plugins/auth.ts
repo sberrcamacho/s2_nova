@@ -5,6 +5,7 @@ import { verifyAccessToken } from "../lib/tokens.js";
 declare module "fastify" {
   interface FastifyRequest {
     userId?: string;
+    sessionId?: string;
   }
   interface FastifyInstance {
     authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<undefined>;
@@ -17,6 +18,7 @@ declare module "fastify" {
 // ARCHITECTURE.md §"Security model" / backend/AGENTS.md.
 const authPlugin: FastifyPluginAsync = async (app) => {
   app.decorateRequest("userId", undefined);
+  app.decorateRequest("sessionId", undefined);
 
   app.decorate("authenticate", async (request: FastifyRequest, reply: FastifyReply) => {
     const header = request.headers.authorization;
@@ -27,6 +29,7 @@ const authPlugin: FastifyPluginAsync = async (app) => {
     try {
       const payload = verifyAccessToken(header.slice("Bearer ".length));
       request.userId = payload.sub;
+      request.sessionId = payload.sid;
     } catch {
       return reply.status(401).send({ error: "Invalid or expired access token." });
     }

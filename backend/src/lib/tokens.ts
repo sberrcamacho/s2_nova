@@ -7,10 +7,14 @@ const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 export interface AccessTokenPayload {
   sub: string;
+  // The login session (refresh_tokens.session_id) this token was minted
+  // for — lets /me/sessions mark "Este dispositivo" and keep it open when
+  // the others are closed. Absent on tokens signed outside a session.
+  sid?: string;
 }
 
-export function signAccessToken(userId: string): string {
-  return jwt.sign({ sub: userId }, env.JWT_SECRET, { expiresIn: ACCESS_TOKEN_TTL_SECONDS });
+export function signAccessToken(userId: string, sessionId?: string): string {
+  return jwt.sign(sessionId ? { sub: userId, sid: sessionId } : { sub: userId }, env.JWT_SECRET, { expiresIn: ACCESS_TOKEN_TTL_SECONDS });
 }
 
 export function verifyAccessToken(token: string): AccessTokenPayload {
@@ -18,7 +22,7 @@ export function verifyAccessToken(token: string): AccessTokenPayload {
   if (typeof payload === "string" || typeof payload.sub !== "string") {
     throw new Error("Malformed access token payload");
   }
-  return { sub: payload.sub };
+  return { sub: payload.sub, sid: typeof payload.sid === "string" ? payload.sid : undefined };
 }
 
 export function hashRefreshToken(token: string): string {

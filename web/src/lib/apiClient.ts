@@ -82,7 +82,7 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init: RequestInit, options: RequestOptions = {}): Promise<T> {
+async function send(path: string, init: RequestInit, options: RequestOptions = {}): Promise<Response> {
   let response = await rawRequest(path, init)
 
   if (response.status === 401 && !options.skipAuthRetry && path !== '/auth/refresh') {
@@ -95,7 +95,11 @@ async function request<T>(path: string, init: RequestInit, options: RequestOptio
   if (!response.ok) {
     throw new ApiError(await parseErrorMessage(response), response.status)
   }
+  return response
+}
 
+async function request<T>(path: string, init: RequestInit, options: RequestOptions = {}): Promise<T> {
+  const response = await send(path, init, options)
   if (response.status === 204) {
     return undefined as T
   }
@@ -118,5 +122,11 @@ export const apiClient = {
   },
   delete<T>(path: string, body?: unknown, options?: RequestOptions): Promise<T> {
     return request<T>(path, { method: 'DELETE', body: body !== undefined ? JSON.stringify(body) : undefined }, options)
+  },
+  // A file response (e.g. the CSV export), with the name from Content-Disposition.
+  async download(path: string): Promise<{ data: Blob; fileName: string | null }> {
+    const response = await send(path, { method: 'GET' })
+    const match = /filename="?([^";]+)"?/.exec(response.headers.get('content-disposition') ?? '')
+    return { data: await response.blob(), fileName: match?.[1] ?? null }
   },
 }

@@ -12,7 +12,7 @@ function serializeMe(user: {
   phone: string | null;
   city: string | null;
   createdAt: Date;
-  authIdentities: { provider: string }[];
+  authIdentities: { provider: string; credentialUpdatedAt: Date | null }[];
   preferences: {
     language: string;
     currency: string;
@@ -33,6 +33,7 @@ function serializeMe(user: {
     city: user.city,
     createdAt: user.createdAt,
     hasPassword: user.authIdentities.some((identity) => identity.provider === "PASSWORD"),
+    passwordChangedAt: user.authIdentities.find((identity) => identity.provider === "PASSWORD")?.credentialUpdatedAt ?? null,
     preferences: user.preferences
       ? {
           language: user.preferences.language,
@@ -57,9 +58,10 @@ const updateProfileSchema = z.object({
   currentPassword: z.string().min(1).optional(),
 });
 
+// Ajustes › Cambiar contraseña's rules: at least 8 characters with a number.
 const setPasswordSchema = z.object({
   currentPassword: z.string().min(1).optional(),
-  newPassword: z.string().min(6).max(200),
+  newPassword: z.string().min(8).max(200).regex(/\d/, "Must include a number."),
 });
 
 // 0 stands for "Nunca"/Never (no auto-lock) — mirrors the mockup's
@@ -97,7 +99,7 @@ export async function meRoutes(app: FastifyInstance) {
   app.get("/me", { preHandler: app.authenticate }, async (request, reply) => {
     const user = await prisma.user.findUnique({
       where: { id: request.userId },
-      include: { preferences: true, authIdentities: { where: { provider: "PASSWORD" }, select: { provider: true } } },
+      include: { preferences: true, authIdentities: { where: { provider: "PASSWORD" }, select: { provider: true, credentialUpdatedAt: true } } },
     });
 
     if (!user) {
@@ -149,7 +151,7 @@ export async function meRoutes(app: FastifyInstance) {
           phone: body.phone,
           city: body.city,
         },
-        include: { preferences: true, authIdentities: { where: { provider: "PASSWORD" }, select: { provider: true } } },
+        include: { preferences: true, authIdentities: { where: { provider: "PASSWORD" }, select: { provider: true, credentialUpdatedAt: true } } },
       });
 
       return serializeMe(user);
@@ -159,11 +161,10 @@ export async function meRoutes(app: FastifyInstance) {
   // Two modes: an existing PASSWORD identity requires currentPassword to
   // rotate the hash; a Google-only user with no PASSWORD identity yet can
   // set one for the first time without proving an old password (there
-  // isn't one). Either way, every other refresh token for this user is
-  // revoked afterward — password changes force re-login everywhere,
-  // including the device that made the change, which is the simplest
-  // correct behavior since this route can't tell which refresh token (if
-  // any) belongs to the "current" session.
+  // isn't one). Either way every other session is closed afterwards; the
+  // caller's own session (the access token's `sid`) stays open, matching
+  // "Contraseña actualizada. Cerramos tus otras sesiones." A token without
+  // a sid can't name its session, so everything is revoked then.
   app.post(
     "/me/password",
     { preHandler: app.authenticate, config: { rateLimit: ACCOUNT_RATE_LIMIT } },
@@ -180,18 +181,25 @@ export async function meRoutes(app: FastifyInstance) {
         if (!body.currentPassword || !(await verifyPassword(existingIdentity.credentialHash!, body.currentPassword))) {
           return reply.status(401).send({ error: "Incorrect password." });
         }
+        if (body.currentPassword === body.newPassword) {
+          return reply.status(400).send({ error: "The new password must differ from the current one." });
+        }
         await prisma.authIdentity.update({
           where: { id: existingIdentity.id },
-          data: { credentialHash: newHash },
+          data: { credentialHash: newHash, credentialUpdatedAt: new Date() },
         });
       } else {
         await prisma.authIdentity.create({
-          data: { userId: request.userId!, provider: "PASSWORD", credentialHash: newHash },
+          data: { userId: request.userId!, provider: "PASSWORD", credentialHash: newHash, credentialUpdatedAt: new Date() },
         });
       }
 
       await prisma.refreshToken.updateMany({
-        where: { userId: request.userId!, revokedAt: null },
+        where: {
+          userId: request.userId!,
+          revokedAt: null,
+          ...(request.sessionId ? { sessionId: { not: request.sessionId } } : {}),
+        },
         data: { revokedAt: new Date() },
       });
 
@@ -254,7 +262,7 @@ export async function meRoutes(app: FastifyInstance) {
 
     const user = await prisma.user.findUniqueOrThrow({
       where: { id: request.userId },
-      include: { preferences: true, authIdentities: { where: { provider: "PASSWORD" }, select: { provider: true } } },
+      include: { preferences: true, authIdentities: { where: { provider: "PASSWORD" }, select: { provider: true, credentialUpdatedAt: true } } },
     });
 
     return serializeMe(user);

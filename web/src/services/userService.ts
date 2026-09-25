@@ -6,8 +6,11 @@ export interface MeResponse {
   id: string
   name: string
   email: string
+  phone: string | null
+  city: string | null
   createdAt: string
   hasPassword: boolean
+  passwordChangedAt: string | null
   preferences: {
     language: string
     currency: 'COP' | 'USD'
@@ -30,16 +33,17 @@ function initialsFrom(name: string): string {
   return initials || 'US'
 }
 
-// The account model is deliberately minimal (name, email, password/Google
-// login only — see ARCHITECTURE.md's account-fields decision), so there's
-// no phone/city to map here. `avatarInitials` is derived client-side;
-// `memberSince` maps to the backend's createdAt.
+// `avatarInitials` is derived client-side; `memberSince` maps to the
+// backend's createdAt.
 export function mapMeResponse(me: MeResponse): User {
   return {
     id: me.id,
     name: me.name,
     email: me.email,
     hasPassword: me.hasPassword,
+    passwordChangedAt: me.passwordChangedAt,
+    phone: me.phone ?? '',
+    city: me.city ?? '',
     avatarInitials: initialsFrom(me.name),
     currency: me.preferences?.currency ?? 'COP',
     memberSince: me.createdAt.slice(0, 10),
@@ -56,13 +60,32 @@ export function mapMeResponse(me: MeResponse): User {
   }
 }
 
+// Ajustes › Sesiones activas — one row per signed-in device.
+export interface Session {
+  id: string
+  device: string | null
+  kind: 'desktop' | 'phone' | 'tablet'
+  lastActiveAt: string
+  current: boolean
+}
+
+// What deleting the account removes (Ajustes › Eliminar cuenta).
+export interface Footprint {
+  transactions: number
+  budgets: number
+  goals: number
+  loans: number
+  wallets: number
+  recurringSeries: number
+}
+
 export const userService = {
   async getCurrentUser(): Promise<User> {
     const me = await apiClient.get<MeResponse>('/me')
     return mapMeResponse(me)
   },
 
-  async updateProfile(patch: { name?: string; email?: string; currentPassword?: string }): Promise<User> {
+  async updateProfile(patch: { name?: string; email?: string; phone?: string; city?: string; currentPassword?: string }): Promise<User> {
     const me = await apiClient.patch<MeResponse>('/me', patch)
     return mapMeResponse(me)
   },
@@ -84,5 +107,39 @@ export const userService = {
 
   async updateCurrency(currency: User['currency']): Promise<void> {
     await apiClient.patch('/me/preferences', { currency })
+  },
+
+  getSessions(): Promise<Session[]> {
+    return apiClient.get<Session[]>('/me/sessions')
+  },
+
+  async closeSession(id: string): Promise<void> {
+    await apiClient.delete(`/me/sessions/${id}`)
+  },
+
+  async closeOtherSessions(): Promise<void> {
+    await apiClient.delete('/me/sessions')
+  },
+
+  getFootprint(): Promise<Footprint> {
+    return apiClient.get<Footprint>('/me/footprint')
+  },
+
+  // Saves the backend's CSV (movimientos, presupuestos, metas, préstamos)
+  // through a temporary link, keeping the server's file name.
+  async exportData(): Promise<void> {
+    const blob = await apiClient.download('/me/export')
+    const url = URL.createObjectURL(blob.data)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = blob.fileName ?? 's2-nova.csv'
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  },
+
+  async deleteAccount(password: string): Promise<void> {
+    await apiClient.delete('/me', { password })
   },
 }

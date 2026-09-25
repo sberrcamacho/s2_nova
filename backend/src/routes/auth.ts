@@ -11,8 +11,8 @@ import { generateRefreshToken, hashRefreshToken, signAccessToken } from "../lib/
 // instead. The client declares which mode it wants via this header (there's
 // no cookie yet to infer it from at register/login time) — see
 // ARCHITECTURE.md §"Google Sign-In flow" / §6 for the rationale.
-const REFRESH_COOKIE = "s2nova_refresh";
-const COOKIE_PATH = "/api/v1/auth";
+export const REFRESH_COOKIE = "s2nova_refresh";
+export const COOKIE_PATH = "/api/v1/auth";
 const AUTH_RATE_LIMIT = { max: 10, timeWindow: "1 minute" } as const;
 
 const registerSchema = z.object({
@@ -43,20 +43,23 @@ export async function authRoutes(app: FastifyInstance) {
     request: FastifyRequest,
     reply: FastifyReply,
     userId: string,
-    opts?: { web?: boolean },
+    opts?: { web?: boolean; sessionId?: string; deviceLabel?: string | null },
   ) {
     const web = opts?.web ?? isWebClient(request);
-    const accessToken = signAccessToken(userId);
     const { token: refreshToken, tokenHash, expiresAt } = generateRefreshToken();
 
-    await prisma.refreshToken.create({
+    // A refresh keeps its login's sessionId; a fresh login starts a new one.
+    const { sessionId } = await prisma.refreshToken.create({
       data: {
         userId,
         tokenHash,
+        sessionId: opts?.sessionId,
         expiresAt,
-        deviceLabel: request.headers["user-agent"]?.toString().slice(0, 255) ?? null,
+        // A rotation keeps the device its session logged in from.
+        deviceLabel: opts?.deviceLabel !== undefined ? opts.deviceLabel : (request.headers["user-agent"]?.toString().slice(0, 255) ?? null),
       },
     });
+    const accessToken = signAccessToken(userId, sessionId);
 
     if (web) {
       // Web (GitHub Pages) and the API (Render) are different registrable
@@ -102,7 +105,7 @@ export async function authRoutes(app: FastifyInstance) {
       data: {
         name: body.name,
         email,
-        authIdentities: { create: { provider: "PASSWORD", credentialHash } },
+        authIdentities: { create: { provider: "PASSWORD", credentialHash, credentialUpdatedAt: new Date() } },
         preferences: { create: {} },
       },
     });
@@ -225,7 +228,7 @@ export async function authRoutes(app: FastifyInstance) {
 
     await prisma.refreshToken.update({ where: { id: stored.id }, data: { revokedAt: new Date() } });
 
-    return issueSession(request, reply, stored.userId, { web: Boolean(cookieToken) });
+    return issueSession(request, reply, stored.userId, { web: Boolean(cookieToken), sessionId: stored.sessionId, deviceLabel: stored.deviceLabel });
   });
 
   app.post("/auth/logout", async (request, reply) => {

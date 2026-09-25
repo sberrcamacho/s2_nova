@@ -64,7 +64,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <div className="flex items-center gap-2.5 rounded-[12px] bg-v2-subtle p-2.5">
             <button
               type="button"
-              onClick={() => navigate('/ajustes')}
+              onClick={() => navigate('/ajustes/perfil')}
               title={t('v2.sidebar.editProfile')}
               aria-label={t('v2.sidebar.editProfile')}
               className="flex h-[30px] w-[30px] flex-none cursor-pointer items-center justify-center rounded-full bg-v2-accent text-[11px] font-extrabold text-v2-text"
@@ -74,7 +74,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <div className="min-w-0 flex-1">
               <button
                 type="button"
-                onClick={() => navigate('/ajustes')}
+                onClick={() => navigate('/ajustes/perfil')}
                 className="block w-full cursor-pointer truncate text-left text-[12.5px] font-bold text-v2-text"
               >
                 {user?.name ?? t('sidebar.fallbackUserName')}

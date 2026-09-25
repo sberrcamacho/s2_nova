@@ -26,8 +26,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const showToast = useCallback(
     (message: string, variant: ToastVariant = 'info') => {
       const id = `toast_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
-      setToasts((prev) => [...prev, { id, message, variant }])
-      setTimeout(() => dismissToast(id), 3600)
+      // One toast at a time, 2.6 s each, as in the Dashboard v2 mockup.
+      setToasts([{ id, message, variant }])
+      setTimeout(() => dismissToast(id), 2600)
     },
     [dismissToast],
   )

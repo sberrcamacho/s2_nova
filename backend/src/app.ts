@@ -14,7 +14,9 @@ import { categoryRoutes } from "./routes/categories.js";
 import { goalRoutes } from "./routes/goals.js";
 import { healthRoutes } from "./routes/health.js";
 import { meRoutes } from "./routes/me.js";
+import { dataExportRoutes } from "./routes/dataExport.js";
 import { recurringSeriesRoutes } from "./routes/recurringSeries.js";
+import { securityRoutes } from "./routes/security.js";
 import { summaryRoutes } from "./routes/summary.js";
 import { transactionRoutes } from "./routes/transactions.js";
 
@@ -41,6 +43,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(cors, {
     origin: env.CORS_ORIGINS,
     credentials: true,
+    // Web reads the CSV export's file name (GET /me/export) cross-origin.
+    exposedHeaders: ["Content-Disposition"],
   });
 
   await app.register(cookie);
@@ -55,6 +59,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(healthRoutes, { prefix: "/api/v1" });
   await app.register(authRoutes, { prefix: "/api/v1" });
   await app.register(meRoutes, { prefix: "/api/v1" });
+  await app.register(securityRoutes, { prefix: "/api/v1" });
+  await app.register(dataExportRoutes, { prefix: "/api/v1" });
   await app.register(accountRoutes, { prefix: "/api/v1" });
   await app.register(categoryRoutes, { prefix: "/api/v1" });
   await app.register(transactionRoutes, { prefix: "/api/v1" });

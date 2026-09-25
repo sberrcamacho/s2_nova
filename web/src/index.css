@@ -280,7 +280,6 @@
   --animate-scan-line: scan-line 2.2s ease-in-out infinite;
   --animate-shimmer: shimmer 1.6s ease-in-out infinite;
   --animate-fade-in: fade-in 0.35s ease;
-  --animate-toast-in: toast-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   --animate-shake: shake 0.4s ease-in-out;
 }
 
@@ -375,17 +374,6 @@ button {
   }
 }
 
-@keyframes toast-in {
-  from {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
 @keyframes sparkle-pulse {
   0%,
   100% {
@@ -427,17 +415,6 @@ button {
   }
 }
 
-/* An error toast needs both the entrance animation and the shake — two
-   `animate-*` utility classes can't compose since they both set the same
-   `animation` shorthand property, so this variant spells out both animations
-   (comma-separated) on one class, with the shake starting once the entrance
-   finishes. */
-.animate-toast-in-error {
-  animation:
-    toast-in 0.25s cubic-bezier(0.16, 1, 0.3, 1),
-    shake 0.4s ease-in-out 0.25s;
-}
-
 /* Hide scrollbars on horizontally-scrolling chip rows without hiding overflow */
 .scrollbar-none {
   scrollbar-width: none;
@@ -447,15 +424,13 @@ button {
   display: none;
 }
 
-/* Respect the OS-level motion preference: keep the shimmer/shake/entrance
+/* Respect the OS-level motion preference: keep the shimmer/shake/fade
    effects from being disorienting for anyone who has asked for less
    motion, without losing the underlying state change they communicate. */
 @media (prefers-reduced-motion: reduce) {
   .animate-shimmer,
   .animate-shake,
   .animate-fade-in,
-  .animate-toast-in,
-  .animate-toast-in-error,
   .animate-scan-line,
   .animate-sparkle {
     animation: none;

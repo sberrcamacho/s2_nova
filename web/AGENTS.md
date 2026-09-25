@@ -72,7 +72,17 @@ Reportes** — plus **Ajustes** in the footer. Pre-v2 paths (`/overview`,
   only Flujo de caja's projection of active Programados is built
   client-side, with Inicio's `upcomingWithin` rule. The pre-v2 Analytics,
   Insights and Reports pages folded into it and are gone.
-- **Ajustes** — SettingsPage.
+- **Ajustes** — `AjustesPage` (profile card, Preferencias, Seguridad) plus
+  one route per sub-view under `pages/ajustes/`: `/ajustes/perfil`,
+  `/ajustes/contrasena`, `/ajustes/sesiones`, `/ajustes/eliminar`. Shared
+  pieces live in `components/ajustes/AjustesUi.tsx`. Sessions, the
+  delete-account counts, the CSV export and the deletion itself are backend
+  endpoints (`/me/sessions`, `/me/footprint`, `/me/export`, `DELETE /me`);
+  the password rules shown live are re-checked by `POST /me/password`.
+  The sidebar's avatar and name open `/ajustes/perfil`, as in the mockup.
+
+Toasts (`components/ui/Toast.tsx`) follow the mockup: one inverted pill
+at the bottom centre, 2.6 s, the same for confirmations and errors.
 
 The header's "Nuevo movimiento" button (and the `N` shortcut) opens
 `components/panels/NewTransactionPanel.tsx` inside `SidePanel.tsx`, the

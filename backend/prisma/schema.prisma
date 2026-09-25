@@ -160,6 +160,8 @@ model AuthIdentity {
   provider       AuthProvider
   providerUserId String?      @map("provider_user_id")
   credentialHash String?      @map("credential_hash")
+  // Last time credential_hash was set — Web Ajustes shows "Cambiada hace…".
+  credentialUpdatedAt DateTime? @map("credential_updated_at")
   createdAt      DateTime     @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -174,6 +176,10 @@ model RefreshToken {
   id          String    @id @default(uuid())
   userId      String    @map("user_id")
   tokenHash   String    @unique @map("token_hash")
+  // One login = one session. Every rotated token of that login carries the
+  // same sessionId (also the access token's `sid` claim), so a session can
+  // be listed and revoked as one row in Ajustes › Sesiones activas.
+  sessionId   String    @default(uuid()) @map("session_id")
   deviceLabel String?   @map("device_label")
   expiresAt   DateTime  @map("expires_at")
   revokedAt   DateTime? @map("revoked_at")
@@ -182,6 +188,7 @@ model RefreshToken {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([sessionId])
   @@map("refresh_tokens")
 }
 
