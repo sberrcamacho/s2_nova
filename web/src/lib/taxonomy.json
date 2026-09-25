@@ -1,0 +1,2515 @@
+{
+ "sourceHash": "47f677fe11906c50",
+ "vis": {
+  "food": {
+   "color": "#E8A23D",
+   "glyph": [
+    "M3 2v7c0 1.1.9 2 2 2h1a2 2 0 0 0 2-2V2",
+    "M6 2v20",
+    "M17 2c-1.7 1.3-3 3.7-3 6 0 1.7.7 3 2 3h2c1.3 0 2-1.3 2-3 0-2.3-1.3-4.7-3-6z",
+    "M18 11v11"
+   ]
+  },
+  "housing": {
+   "color": "#D9784A",
+   "glyph": [
+    "M3 10.5 12 3l9 7.5",
+    "M5 9v12h14V9",
+    "M10 21v-6h4v6"
+   ]
+  },
+  "utilities": {
+   "color": "#8A8A99",
+   "glyph": [
+    "M4 2h16v20l-3-2-2 2-3-2-3 2-2-2-3 2z",
+    "M8 7h8",
+    "M8 11h8",
+    "M8 15h5"
+   ]
+  },
+  "transportation": {
+   "color": "#3D8BE8",
+   "glyph": [
+    "M5 17H3v-5l2-5h14l2 5v5h-2",
+    "M5 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0z",
+    "M15 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0z",
+    "M9 17h6"
+   ]
+  },
+  "education": {
+   "color": "#5D6BE8",
+   "glyph": [
+    "M22 9 12 5 2 9l10 4 10-4z",
+    "M6 11v6c0 1.5 3 3 6 3s6-1.5 6-3v-6"
+   ]
+  },
+  "health": {
+   "color": "#E85D6B",
+   "glyph": [
+    "M20.8 6.6a5 5 0 0 0-7.1 0L12 8.3l-1.7-1.7a5 5 0 1 0-7.1 7.1L12 21l8.8-7.3a5 5 0 0 0 0-7.1z"
+   ]
+  },
+  "shopping": {
+   "color": "#3DBBA8",
+   "glyph": [
+    "M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z",
+    "M3 6h18",
+    "M16 10a4 4 0 0 1-8 0"
+   ]
+  },
+  "entertainment": {
+   "color": "#B25DE8",
+   "glyph": [
+    "M4 11h16l-1.2 9a2 2 0 0 1-2 1.7H7.2a2 2 0 0 1-2-1.7z",
+    "M4 11 8 3",
+    "M12 11 9.5 4",
+    "M16 11 14 5"
+   ]
+  },
+  "travel": {
+   "color": "#2FA7C9",
+   "glyph": [
+    "M2 16l20-8",
+    "M6 14.4 4 9l3-1 4 4.4",
+    "M13 11.2 11 4l3-1 5 6.6",
+    "M3 21h18"
+   ]
+  },
+  "debt": {
+   "color": "#C2566F",
+   "glyph": [
+    "M2 6h20v12H2z",
+    "M2 10h20",
+    "M6 14h4"
+   ]
+  },
+  "financial": {
+   "color": "#7A86A8",
+   "glyph": [
+    "M12 3 2 8h20z",
+    "M4 8v9",
+    "M20 8v9",
+    "M2 21h20",
+    "M9 12v5",
+    "M15 12v5"
+   ]
+  },
+  "business": {
+   "color": "#A8963D",
+   "glyph": [
+    "M3 7h18v13H3z",
+    "M8 7V4h8v3",
+    "M3 13h18"
+   ]
+  },
+  "family": {
+   "color": "#E85D9C",
+   "glyph": [
+    "M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
+    "M2 21v-1a6 6 0 0 1 12 0v1",
+    "M16 3.1a4 4 0 0 1 0 7.8",
+    "M22 21v-1a6 6 0 0 0-4-5.7"
+   ]
+  },
+  "other": {
+   "color": "#9C9CAA",
+   "glyph": [
+    "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z",
+    "M8 11h.01",
+    "M12 11h.01",
+    "M16 11h.01"
+   ]
+  },
+  "work": {
+   "color": "#22A06B",
+   "glyph": [
+    "M3 7h18a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12",
+    "M17 13h.01"
+   ]
+  },
+  "investments": {
+   "color": "#6657E8",
+   "glyph": [
+    "M3 17 9 11l4 4 8-8",
+    "M15 7h6v6"
+   ]
+  },
+  "property": {
+   "color": "#9A7B5C",
+   "glyph": [
+    "M4 21V4h10v17",
+    "M14 9h6v12",
+    "M7 8h1",
+    "M11 8h1",
+    "M7 12h1",
+    "M11 12h1",
+    "M7 16h1",
+    "M11 16h1",
+    "M17 13h1",
+    "M17 17h1"
+   ]
+  },
+  "transfers": {
+   "color": "#D95DB2",
+   "glyph": [
+    "M3 8h18v4H3z",
+    "M5 12v9h14v-9",
+    "M12 8v13",
+    "M12 8C10 4 6 4 6 6.5S9 8 12 8z",
+    "M12 8c2-4 6-4 6-1.5S15 8 12 8z"
+   ]
+  },
+  "savings": {
+   "color": "#2FB38A",
+   "glyph": [
+    "M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z",
+    "M9 12l2 2 4-4"
+   ]
+  },
+  "technology": {
+   "color": "#8E7CF0",
+   "glyph": [
+    "M4 5h16v10H4z",
+    "M2 19h20"
+   ]
+  },
+  "pets": {
+   "color": "#6FAE3D",
+   "glyph": [
+    "M12 20c-3 0-6-1.8-6-4.5S9 11 12 11s6 1.8 6 4.5-3 4.5-6 4.5z",
+    "M3.5 9.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 1 0-3 0z",
+    "M7.5 5.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 1 0-3 0z",
+    "M13.5 5.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 1 0-3 0z",
+    "M17.5 9.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 1 0-3 0z"
+   ]
+  },
+  "events": {
+   "color": "#E0A526",
+   "glyph": [
+    "M4 21h16",
+    "M5 21V11h14v10",
+    "M5 15c2 1 3-1 5 0s3 1 5 0 3-1 4 0",
+    "M12 11V7",
+    "M12 4.5v.01"
+   ]
+  }
+ },
+ "nodes": [
+  {
+   "id": "inc.work",
+   "type": "income",
+   "parentId": null,
+   "name": "Trabajo",
+   "vis": "work",
+   "color": "#22A06B",
+   "glyph": [
+    "M3 7h18a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12",
+    "M17 13h.01"
+   ]
+  },
+  {
+   "id": "inc.work.salary",
+   "type": "income",
+   "parentId": "inc.work",
+   "name": "Salario",
+   "vis": "work",
+   "color": "#22A06B",
+   "glyph": [
+    "M3 7h18a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12",
+    "M17 13h.01"
+   ]
+  },
+  {
+   "id": "inc.work.overtime",
+   "type": "income",
+   "parentId": "inc.work",
+   "name": "Horas extra",
+   "vis": "work",
+   "color": "#22A06B",
+   "glyph": [
+    "M3 7h18a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12",
+    "M17 13h.01"
+   ]
+  },
+  {
+   "id": "inc.work.bonuses",
+   "type": "income",
+   "parentId": "inc.work",
+   "name": "Bonificaciones",
+   "vis": "work",
+   "color": "#22A06B",
+   "glyph": [
+    "M3 7h18a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12",
+    "M17 13h.01"
+   ]
+  },
+  {
+   "id": "inc.work.commissions",
+   "type": "income",
+   "parentId": "inc.work",
+   "name": "Comisiones",
+   "vis": "work",
+   "color": "#22A06B",
+   "glyph": [
+    "M3 7h18a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12",
+    "M17 13h.01"
+   ]
+  },
+  {
+   "id": "inc.work.freelance",
+   "type": "income",
+   "parentId": "inc.work",
+   "name": "Freelance",
+   "vis": "work",
+   "color": "#22A06B",
+   "glyph": [
+    "M3 7h18a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12",
+    "M17 13h.01"
+   ]
+  },
+  {
+   "id": "inc.business",
+   "type": "income",
+   "parentId": null,
+   "name": "Negocio",
+   "vis": "business",
+   "color": "#A8963D",
+   "glyph": [
+    "M3 7h18v13H3z",
+    "M8 7V4h8v3",
+    "M3 13h18"
+   ]
+  },
+  {
+   "id": "inc.business.sales",
+   "type": "income",
+   "parentId": "inc.business",
+   "name": "Ventas",
+   "vis": "business",
+   "color": "#A8963D",
+   "glyph": [
+    "M3 7h18v13H3z",
+    "M8 7V4h8v3",
+    "M3 13h18"
+   ]
+  },
+  {
+   "id": "inc.business.services",
+   "type": "income",
+   "parentId": "inc.business",
+   "name": "Servicios prestados",
+   "vis": "business",
+   "color": "#A8963D",
+   "glyph": [
+    "M3 7h18v13H3z",
+    "M8 7V4h8v3",
+    "M3 13h18"
+   ]
+  },
+  {
+   "id": "inc.business.commissions",
+   "type": "income",
+   "parentId": "inc.business",
+   "name": "Comisiones",
+   "vis": "business",
+   "color": "#A8963D",
+   "glyph": [
+    "M3 7h18v13H3z",
+    "M8 7V4h8v3",
+    "M3 13h18"
+   ]
+  },
+  {
+   "id": "inc.business.other",
+   "type": "income",
+   "parentId": "inc.business",
+   "name": "Otros ingresos del negocio",
+   "vis": "business",
+   "color": "#A8963D",
+   "glyph": [
+    "M3 7h18v13H3z",
+    "M8 7V4h8v3",
+    "M3 13h18"
+   ]
+  },
+  {
+   "id": "inc.investments",
+   "type": "income",
+   "parentId": null,
+   "name": "Inversiones",
+   "vis": "investments",
+   "color": "#6657E8",
+   "glyph": [
+    "M3 17 9 11l4 4 8-8",
+    "M15 7h6v6"
+   ]
+  },
+  {
+   "id": "inc.investments.dividends",
+   "type": "income",
+   "parentId": "inc.investments",
+   "name": "Dividendos",
+   "vis": "investments",
+   "color": "#6657E8",
+   "glyph": [
+    "M3 17 9 11l4 4 8-8",
+    "M15 7h6v6"
+   ]
+  },
+  {
+   "id": "inc.investments.interest",
+   "type": "income",
+   "parentId": "inc.investments",
+   "name": "Intereses",
+   "vis": "investments",
+   "color": "#6657E8",
+   "glyph": [
+    "M3 17 9 11l4 4 8-8",
+    "M15 7h6v6"
+   ]
+  },
+  {
+   "id": "inc.investments.returns",
+   "type": "income",
+   "parentId": "inc.investments",
+   "name": "Rendimientos",
+   "vis": "investments",
+   "color": "#6657E8",
+   "glyph": [
+    "M3 17 9 11l4 4 8-8",
+    "M15 7h6v6"
+   ]
+  },
+  {
+   "id": "inc.investments.sale",
+   "type": "income",
+   "parentId": "inc.investments",
+   "name": "Venta de inversiones",
+   "vis": "investments",
+   "color": "#6657E8",
+   "glyph": [
+    "M3 17 9 11l4 4 8-8",
+    "M15 7h6v6"
+   ]
+  },
+  {
+   "id": "inc.property",
+   "type": "income",
+   "parentId": null,
+   "name": "Propiedades",
+   "vis": "property",
+   "color": "#9A7B5C",
+   "glyph": [
+    "M4 21V4h10v17",
+    "M14 9h6v12",
+    "M7 8h1",
+    "M11 8h1",
+    "M7 12h1",
+    "M11 12h1",
+    "M7 16h1",
+    "M11 16h1",
+    "M17 13h1",
+    "M17 17h1"
+   ]
+  },
+  {
+   "id": "inc.property.rent",
+   "type": "income",
+   "parentId": "inc.property",
+   "name": "Arriendos recibidos",
+   "vis": "property",
+   "color": "#9A7B5C",
+   "glyph": [
+    "M4 21V4h10v17",
+    "M14 9h6v12",
+    "M7 8h1",
+    "M11 8h1",
+    "M7 12h1",
+    "M11 12h1",
+    "M7 16h1",
+    "M11 16h1",
+    "M17 13h1",
+    "M17 17h1"
+   ]
+  },
+  {
+   "id": "inc.property.sale",
+   "type": "income",
+   "parentId": "inc.property",
+   "name": "Venta de propiedad",
+   "vis": "property",
+   "color": "#9A7B5C",
+   "glyph": [
+    "M4 21V4h10v17",
+    "M14 9h6v12",
+    "M7 8h1",
+    "M11 8h1",
+    "M7 12h1",
+    "M11 12h1",
+    "M7 16h1",
+    "M11 16h1",
+    "M17 13h1",
+    "M17 17h1"
+   ]
+  },
+  {
+   "id": "inc.property.other",
+   "type": "income",
+   "parentId": "inc.property",
+   "name": "Otros ingresos de propiedad",
+   "vis": "property",
+   "color": "#9A7B5C",
+   "glyph": [
+    "M4 21V4h10v17",
+    "M14 9h6v12",
+    "M7 8h1",
+    "M11 8h1",
+    "M7 12h1",
+    "M11 12h1",
+    "M7 16h1",
+    "M11 16h1",
+    "M17 13h1",
+    "M17 17h1"
+   ]
+  },
+  {
+   "id": "inc.transfers",
+   "type": "income",
+   "parentId": null,
+   "name": "Transferencias recibidas",
+   "vis": "transfers",
+   "color": "#D95DB2",
+   "glyph": [
+    "M3 8h18v4H3z",
+    "M5 12v9h14v-9",
+    "M12 8v13",
+    "M12 8C10 4 6 4 6 6.5S9 8 12 8z",
+    "M12 8c2-4 6-4 6-1.5S15 8 12 8z"
+   ]
+  },
+  {
+   "id": "inc.transfers.gifts",
+   "type": "income",
+   "parentId": "inc.transfers",
+   "name": "Regalos",
+   "vis": "transfers",
+   "color": "#D95DB2",
+   "glyph": [
+    "M3 8h18v4H3z",
+    "M5 12v9h14v-9",
+    "M12 8v13",
+    "M12 8C10 4 6 4 6 6.5S9 8 12 8z",
+    "M12 8c2-4 6-4 6-1.5S15 8 12 8z"
+   ]
+  },
+  {
+   "id": "inc.transfers.donations",
+   "type": "income",
+   "parentId": "inc.transfers",
+   "name": "Donaciones",
+   "vis": "transfers",
+   "color": "#D95DB2",
+   "glyph": [
+    "M3 8h18v4H3z",
+    "M5 12v9h14v-9",
+    "M12 8v13",
+    "M12 8C10 4 6 4 6 6.5S9 8 12 8z",
+    "M12 8c2-4 6-4 6-1.5S15 8 12 8z"
+   ]
+  },
+  {
+   "id": "inc.transfers.assistance",
+   "type": "income",
+   "parentId": "inc.transfers",
+   "name": "Ayuda económica",
+   "vis": "transfers",
+   "color": "#D95DB2",
+   "glyph": [
+    "M3 8h18v4H3z",
+    "M5 12v9h14v-9",
+    "M12 8v13",
+    "M12 8C10 4 6 4 6 6.5S9 8 12 8z",
+    "M12 8c2-4 6-4 6-1.5S15 8 12 8z"
+   ]
+  },
+  {
+   "id": "inc.transfers.reimbursements",
+   "type": "income",
+   "parentId": "inc.transfers",
+   "name": "Reembolsos",
+   "vis": "transfers",
+   "color": "#D95DB2",
+   "glyph": [
+    "M3 8h18v4H3z",
+    "M5 12v9h14v-9",
+    "M12 8v13",
+    "M12 8C10 4 6 4 6 6.5S9 8 12 8z",
+    "M12 8c2-4 6-4 6-1.5S15 8 12 8z"
+   ]
+  },
+  {
+   "id": "inc.financial",
+   "type": "income",
+   "parentId": null,
+   "name": "Financieros",
+   "vis": "financial",
+   "color": "#7A86A8",
+   "glyph": [
+    "M12 3 2 8h20z",
+    "M4 8v9",
+    "M20 8v9",
+    "M2 21h20",
+    "M9 12v5",
+    "M15 12v5"
+   ]
+  },
+  {
+   "id": "inc.financial.refunds",
+   "type": "income",
+   "parentId": "inc.financial",
+   "name": "Devoluciones",
+   "vis": "financial",
+   "color": "#7A86A8",
+   "glyph": [
+    "M12 3 2 8h20z",
+    "M4 8v9",
+    "M20 8v9",
+    "M2 21h20",
+    "M9 12v5",
+    "M15 12v5"
+   ]
+  },
+  {
+   "id": "inc.financial.purchase_reimbursements",
+   "type": "income",
+   "parentId": "inc.financial",
+   "name": "Reintegros de compras",
+   "vis": "financial",
+   "color": "#7A86A8",
+   "glyph": [
+    "M12 3 2 8h20z",
+    "M4 8v9",
+    "M20 8v9",
+    "M2 21h20",
+    "M9 12v5",
+    "M15 12v5"
+   ]
+  },
+  {
+   "id": "inc.financial.adjustments",
+   "type": "income",
+   "parentId": "inc.financial",
+   "name": "Ajustes",
+   "vis": "financial",
+   "color": "#7A86A8",
+   "glyph": [
+    "M12 3 2 8h20z",
+    "M4 8v9",
+    "M20 8v9",
+    "M2 21h20",
+    "M9 12v5",
+    "M15 12v5"
+   ]
+  },
+  {
+   "id": "inc.other",
+   "type": "income",
+   "parentId": null,
+   "name": "Otros ingresos",
+   "vis": "other",
+   "color": "#9C9CAA",
+   "glyph": [
+    "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z",
+    "M8 11h.01",
+    "M12 11h.01",
+    "M16 11h.01"
+   ]
+  },
+  {
+   "id": "inc.other.prizes",
+   "type": "income",
+   "parentId": "inc.other",
+   "name": "Premios",
+   "vis": "other",
+   "color": "#9C9CAA",
+   "glyph": [
+    "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z",
+    "M8 11h.01",
+    "M12 11h.01",
+    "M16 11h.01"
+   ]
+  },
+  {
+   "id": "inc.other.occasional",
+   "type": "income",
+   "parentId": "inc.other",
+   "name": "Ingresos ocasionales",
+   "vis": "other",
+   "color": "#9C9CAA",
+   "glyph": [
+    "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z",
+    "M8 11h.01",
+    "M12 11h.01",
+    "M16 11h.01"
+   ]
+  },
+  {
+   "id": "inc.other.other",
+   "type": "income",
+   "parentId": "inc.other",
+   "name": "Otros",
+   "vis": "other",
+   "color": "#9C9CAA",
+   "glyph": [
+    "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z",
+    "M8 11h.01",
+    "M12 11h.01",
+    "M16 11h.01"
+   ]
+  },
+  {
+   "id": "exp.food",
+   "type": "expense",
+   "parentId": null,
+   "name": "Alimentación",
+   "vis": "food",
+   "color": "#E8A23D",
+   "glyph": [
+    "M3 2v7c0 1.1.9 2 2 2h1a2 2 0 0 0 2-2V2",
+    "M6 2v20",
+    "M17 2c-1.7 1.3-3 3.7-3 6 0 1.7.7 3 2 3h2c1.3 0 2-1.3 2-3 0-2.3-1.3-4.7-3-6z",
+    "M18 11v11"
+   ]
+  },
+  {
+   "id": "exp.food.groceries",
+   "type": "expense",
+   "parentId": "exp.food",
+   "name": "Mercado",
+   "vis": "food",
+   "color": "#E8A23D",
+   "glyph": [
+    "M2 3h2.6l2.2 11.2a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 2-1.6L20 7H6",
+    "M9 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2z",
+    "M18 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"
+   ]
+  },
+  {
+   "id": "exp.food.restaurants",
+   "type": "expense",
+   "parentId": "exp.food",
+   "name": "Restaurantes",
+   "vis": "food",
+   "color": "#E8A23D",
+   "glyph": [
+    "M3 11h18",
+    "M12 20a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9z",
+    "M12 4v3"
+   ]
+  },
+  {
+   "id": "exp.food.delivery",
+   "type": "expense",
+   "parentId": "exp.food",
+   "name": "Domicilios",
+   "vis": "food",
+   "color": "#E8A23D",
+   "glyph": [
+    "M5 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6z",
+    "M19 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6z",
+    "M8 16h8l-3-8H9",
+    "M13 8h4l2 4"
+   ]
+  },
+  {
+   "id": "exp.food.cafes",
+   "type": "expense",
+   "parentId": "exp.food",
+   "name": "Cafés",
+   "vis": "food",
+   "color": "#E8A23D",
+   "glyph": [
+    "M4 8h13v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z",
+    "M17 9h2a2 2 0 1 1 0 4h-2",
+    "M7 2v3",
+    "M11 2v3"
+   ]
+  },
+  {
+   "id": "exp.housing",
+   "type": "expense",
+   "parentId": null,
+   "name": "Vivienda",
+   "vis": "housing",
+   "color": "#D9784A",
+   "glyph": [
+    "M3 10.5 12 3l9 7.5",
+    "M5 9v12h14V9",
+    "M10 21v-6h4v6"
+   ]
+  },
+  {
+   "id": "exp.housing.rent",
+   "type": "expense",
+   "parentId": "exp.housing",
+   "name": "Arriendo",
+   "vis": "housing",
+   "color": "#D9784A",
+   "glyph": [
+    "M3 10.5 12 3l9 7.5",
+    "M5 9v12h14V9",
+    "M10 21v-6h4v6"
+   ]
+  },
+  {
+   "id": "exp.housing.mortgage",
+   "type": "expense",
+   "parentId": "exp.housing",
+   "name": "Hipoteca",
+   "vis": "housing",
+   "color": "#D9784A",
+   "glyph": [
+    "M3 10.5 12 3l9 7.5",
+    "M5 9v12h14V9",
+    "M10 21v-6h4v6"
+   ]
+  },
+  {
+   "id": "exp.housing.maintenance",
+   "type": "expense",
+   "parentId": "exp.housing",
+   "name": "Mantenimiento",
+   "vis": "housing",
+   "color": "#D9784A",
+   "glyph": [
+    "M3 10.5 12 3l9 7.5",
+    "M5 9v12h14V9",
+    "M10 21v-6h4v6"
+   ]
+  },
+  {
+   "id": "exp.housing.furniture",
+   "type": "expense",
+   "parentId": "exp.housing",
+   "name": "Muebles",
+   "vis": "housing",
+   "color": "#D9784A",
+   "glyph": [
+    "M3 10.5 12 3l9 7.5",
+    "M5 9v12h14V9",
+    "M10 21v-6h4v6"
+   ]
+  },
+  {
+   "id": "exp.housing.decoration",
+   "type": "expense",
+   "parentId": "exp.housing",
+   "name": "Decoración",
+   "vis": "housing",
+   "color": "#D9784A",
+   "glyph": [
+    "M3 10.5 12 3l9 7.5",
+    "M5 9v12h14V9",
+    "M10 21v-6h4v6"
+   ]
+  },
+  {
+   "id": "exp.utilities",
+   "type": "expense",
+   "parentId": null,
+   "name": "Servicios públicos",
+   "vis": "utilities",
+   "color": "#8A8A99",
+   "glyph": [
+    "M4 2h16v20l-3-2-2 2-3-2-3 2-2-2-3 2z",
+    "M8 7h8",
+    "M8 11h8",
+    "M8 15h5"
+   ]
+  },
+  {
+   "id": "exp.utilities.electricity",
+   "type": "expense",
+   "parentId": "exp.utilities",
+   "name": "Electricidad",
+   "vis": "utilities",
+   "color": "#8A8A99",
+   "glyph": [
+    "M13 2 4 14h7l-1 8 9-12h-7z"
+   ]
+  },
+  {
+   "id": "exp.utilities.water",
+   "type": "expense",
+   "parentId": "exp.utilities",
+   "name": "Agua",
+   "vis": "utilities",
+   "color": "#8A8A99",
+   "glyph": [
+    "M12 3s6 6.5 6 10.5a6 6 0 0 1-12 0C6 9.5 12 3 12 3z"
+   ]
+  },
+  {
+   "id": "exp.utilities.gas",
+   "type": "expense",
+   "parentId": "exp.utilities",
+   "name": "Gas",
+   "vis": "utilities",
+   "color": "#8A8A99",
+   "glyph": [
+    "M4 2h16v20l-3-2-2 2-3-2-3 2-2-2-3 2z",
+    "M8 7h8",
+    "M8 11h8",
+    "M8 15h5"
+   ]
+  },
+  {
+   "id": "exp.utilities.internet",
+   "type": "expense",
+   "parentId": "exp.utilities",
+   "name": "Internet",
+   "vis": "utilities",
+   "color": "#8A8A99",
+   "glyph": [
+    "M2 8.5a15 15 0 0 1 20 0",
+    "M5 12a10 10 0 0 1 14 0",
+    "M8.5 15.5a5 5 0 0 1 7 0",
+    "M12 19h.01"
+   ]
+  },
+  {
+   "id": "exp.utilities.phone",
+   "type": "expense",
+   "parentId": "exp.utilities",
+   "name": "Telefonía",
+   "vis": "utilities",
+   "color": "#8A8A99",
+   "glyph": [
+    "M7 2h10v20H7z",
+    "M11 18h2"
+   ]
+  },
+  {
+   "id": "exp.transportation",
+   "type": "expense",
+   "parentId": null,
+   "name": "Transporte",
+   "vis": "transportation",
+   "color": "#3D8BE8",
+   "glyph": [
+    "M5 17H3v-5l2-5h14l2 5v5h-2",
+    "M5 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0z",
+    "M15 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0z",
+    "M9 17h6"
+   ]
+  },
+  {
+   "id": "exp.transportation.public_transit",
+   "type": "expense",
+   "parentId": "exp.transportation",
+   "name": "Transporte público",
+   "vis": "transportation",
+   "color": "#3D8BE8",
+   "glyph": [
+    "M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z",
+    "M4 11h16",
+    "M7 21v-2",
+    "M17 21v-2",
+    "M8 14h.01",
+    "M16 14h.01"
+   ]
+  },
+  {
+   "id": "exp.transportation.fuel",
+   "type": "expense",
+   "parentId": "exp.transportation",
+   "name": "Combustible",
+   "vis": "transportation",
+   "color": "#3D8BE8",
+   "glyph": [
+    "M3 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16",
+    "M2 21h12",
+    "M6 8h4",
+    "M16 8l3 3v7a2 2 0 0 1-4 0V6"
+   ]
+  },
+  {
+   "id": "exp.transportation.rideshare",
+   "type": "expense",
+   "parentId": "exp.transportation",
+   "name": "Taxi / Apps",
+   "vis": "transportation",
+   "color": "#3D8BE8",
+   "glyph": [
+    "M5 17H3v-5l2-5h14l2 5v5h-2",
+    "M5 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0z",
+    "M15 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0z",
+    "M9 3h6v4H9z"
+   ]
+  },
+  {
+   "id": "exp.transportation.parking",
+   "type": "expense",
+   "parentId": "exp.transportation",
+   "name": "Parqueadero",
+   "vis": "transportation",
+   "color": "#3D8BE8",
+   "glyph": [
+    "M4 3h16v18H4z",
+    "M10 17V8h3a3 3 0 0 1 0 6h-3"
+   ]
+  },
+  {
+   "id": "exp.transportation.maintenance",
+   "type": "expense",
+   "parentId": "exp.transportation",
+   "name": "Mantenimiento",
+   "vis": "transportation",
+   "color": "#3D8BE8",
+   "glyph": [
+    "M5 17H3v-5l2-5h14l2 5v5h-2",
+    "M5 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0z",
+    "M15 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0z",
+    "M9 17h6"
+   ]
+  },
+  {
+   "id": "exp.education",
+   "type": "expense",
+   "parentId": null,
+   "name": "Educación",
+   "vis": "education",
+   "color": "#5D6BE8",
+   "glyph": [
+    "M22 9 12 5 2 9l10 4 10-4z",
+    "M6 11v6c0 1.5 3 3 6 3s6-1.5 6-3v-6"
+   ]
+  },
+  {
+   "id": "exp.education.tuition",
+   "type": "expense",
+   "parentId": "exp.education",
+   "name": "Matrícula",
+   "vis": "education",
+   "color": "#5D6BE8",
+   "glyph": [
+    "M12 3 2 8h20z",
+    "M4 8v9",
+    "M20 8v9",
+    "M2 21h20",
+    "M9 12v5",
+    "M15 12v5"
+   ]
+  },
+  {
+   "id": "exp.education.courses",
+   "type": "expense",
+   "parentId": "exp.education",
+   "name": "Cursos",
+   "vis": "education",
+   "color": "#5D6BE8",
+   "glyph": [
+    "M4 4h16v12H4z",
+    "M8 20h8",
+    "M12 16v4"
+   ]
+  },
+  {
+   "id": "exp.education.books",
+   "type": "expense",
+   "parentId": "exp.education",
+   "name": "Libros",
+   "vis": "education",
+   "color": "#5D6BE8",
+   "glyph": [
+    "M4 4.5A2.5 2.5 0 0 1 6.5 2H20v18H6.5A2.5 2.5 0 0 0 4 22z",
+    "M8 7h8"
+   ]
+  },
+  {
+   "id": "exp.education.materials",
+   "type": "expense",
+   "parentId": "exp.education",
+   "name": "Materiales",
+   "vis": "education",
+   "color": "#5D6BE8",
+   "glyph": [
+    "M22 9 12 5 2 9l10 4 10-4z",
+    "M6 11v6c0 1.5 3 3 6 3s6-1.5 6-3v-6"
+   ]
+  },
+  {
+   "id": "exp.health",
+   "type": "expense",
+   "parentId": null,
+   "name": "Salud",
+   "vis": "health",
+   "color": "#E85D6B",
+   "glyph": [
+    "M20.8 6.6a5 5 0 0 0-7.1 0L12 8.3l-1.7-1.7a5 5 0 1 0-7.1 7.1L12 21l8.8-7.3a5 5 0 0 0 0-7.1z"
+   ]
+  },
+  {
+   "id": "exp.health.appointments",
+   "type": "expense",
+   "parentId": "exp.health",
+   "name": "Citas médicas",
+   "vis": "health",
+   "color": "#E85D6B",
+   "glyph": [
+    "M6 3v6a5 5 0 0 0 10 0V3",
+    "M4 3h3",
+    "M15 3h3",
+    "M16 14a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"
+   ]
+  },
+  {
+   "id": "exp.health.medication",
+   "type": "expense",
+   "parentId": "exp.health",
+   "name": "Medicamentos",
+   "vis": "health",
+   "color": "#E85D6B",
+   "glyph": [
+    "M4 8h16v12H4z",
+    "M8 4h8v4H8z",
+    "M12 11v6",
+    "M9 14h6"
+   ]
+  },
+  {
+   "id": "exp.health.tests",
+   "type": "expense",
+   "parentId": "exp.health",
+   "name": "Exámenes",
+   "vis": "health",
+   "color": "#E85D6B",
+   "glyph": [
+    "M20.8 6.6a5 5 0 0 0-7.1 0L12 8.3l-1.7-1.7a5 5 0 1 0-7.1 7.1L12 21l8.8-7.3a5 5 0 0 0 0-7.1z"
+   ]
+  },
+  {
+   "id": "exp.health.insurance",
+   "type": "expense",
+   "parentId": "exp.health",
+   "name": "Seguros",
+   "vis": "health",
+   "color": "#E85D6B",
+   "glyph": [
+    "M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z",
+    "M9 12l2 2 4-4"
+   ]
+  },
+  {
+   "id": "exp.health.dental",
+   "type": "expense",
+   "parentId": "exp.health",
+   "name": "Odontología",
+   "vis": "health",
+   "color": "#E85D6B",
+   "glyph": [
+    "M20.8 6.6a5 5 0 0 0-7.1 0L12 8.3l-1.7-1.7a5 5 0 1 0-7.1 7.1L12 21l8.8-7.3a5 5 0 0 0 0-7.1z"
+   ]
+  },
+  {
+   "id": "exp.shopping",
+   "type": "expense",
+   "parentId": null,
+   "name": "Compras",
+   "vis": "shopping",
+   "color": "#3DBBA8",
+   "glyph": [
+    "M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z",
+    "M3 6h18",
+    "M16 10a4 4 0 0 1-8 0"
+   ]
+  },
+  {
+   "id": "exp.shopping.clothing",
+   "type": "expense",
+   "parentId": "exp.shopping",
+   "name": "Ropa",
+   "vis": "shopping",
+   "color": "#3DBBA8",
+   "glyph": [
+    "M6 4 3 7v3h3v11h12V10h3V7l-3-3-3 1a3 3 0 0 1-6 0z"
+   ]
+  },
+  {
+   "id": "exp.shopping.technology",
+   "type": "expense",
+   "parentId": "exp.shopping",
+   "name": "Tecnología",
+   "vis": "shopping",
+   "color": "#3DBBA8",
+   "glyph": [
+    "M3 5h18v11H3z",
+    "M2 20h20"
+   ]
+  },
+  {
+   "id": "exp.shopping.home",
+   "type": "expense",
+   "parentId": "exp.shopping",
+   "name": "Hogar",
+   "vis": "shopping",
+   "color": "#3DBBA8",
+   "glyph": [
+    "M3 11 12 3l9 8",
+    "M5 10v10h14V10"
+   ]
+  },
+  {
+   "id": "exp.shopping.personal_care",
+   "type": "expense",
+   "parentId": "exp.shopping",
+   "name": "Cuidado personal",
+   "vis": "shopping",
+   "color": "#3DBBA8",
+   "glyph": [
+    "M12 21c-4 0-8-3-8-7 4 0 8 3 8 7z",
+    "M12 21c4 0 8-3 8-7-4 0-8 3-8 7z",
+    "M12 21V10"
+   ]
+  },
+  {
+   "id": "exp.entertainment",
+   "type": "expense",
+   "parentId": null,
+   "name": "Entretenimiento",
+   "vis": "entertainment",
+   "color": "#B25DE8",
+   "glyph": [
+    "M4 11h16l-1.2 9a2 2 0 0 1-2 1.7H7.2a2 2 0 0 1-2-1.7z",
+    "M4 11 8 3",
+    "M12 11 9.5 4",
+    "M16 11 14 5"
+   ]
+  },
+  {
+   "id": "exp.entertainment.games",
+   "type": "expense",
+   "parentId": "exp.entertainment",
+   "name": "Juegos",
+   "vis": "entertainment",
+   "color": "#B25DE8",
+   "glyph": [
+    "M6 8h12a4 4 0 0 1 4 4v2a3 3 0 0 1-5.2 2L15 15H9l-1.8 1A3 3 0 0 1 2 14v-2a4 4 0 0 1 4-4z",
+    "M8 11v3",
+    "M6.5 12.5h3",
+    "M16 12h.01",
+    "M18 14h.01"
+   ]
+  },
+  {
+   "id": "exp.entertainment.cinema",
+   "type": "expense",
+   "parentId": "exp.entertainment",
+   "name": "Cine",
+   "vis": "entertainment",
+   "color": "#B25DE8",
+   "glyph": [
+    "M4 4h16v16H4z",
+    "M4 9h16",
+    "M9 4 8 9",
+    "M15 4l-1 5"
+   ]
+  },
+  {
+   "id": "exp.entertainment.streaming",
+   "type": "expense",
+   "parentId": "exp.entertainment",
+   "name": "Streaming",
+   "vis": "entertainment",
+   "color": "#B25DE8",
+   "glyph": [
+    "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z",
+    "M10 8.5 16 12l-6 3.5z"
+   ]
+  },
+  {
+   "id": "exp.entertainment.events",
+   "type": "expense",
+   "parentId": "exp.entertainment",
+   "name": "Eventos",
+   "vis": "entertainment",
+   "color": "#B25DE8",
+   "glyph": [
+    "M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2 2 2 0 0 0 0 8 2 2 0 0 1-2 2H5a2 2 0 0 1-2-2 2 2 0 0 0 0-8z",
+    "M12 7v2",
+    "M12 11v2",
+    "M12 15v2"
+   ]
+  },
+  {
+   "id": "exp.entertainment.hobbies",
+   "type": "expense",
+   "parentId": "exp.entertainment",
+   "name": "Hobbies",
+   "vis": "entertainment",
+   "color": "#B25DE8",
+   "glyph": [
+    "M4 11h16l-1.2 9a2 2 0 0 1-2 1.7H7.2a2 2 0 0 1-2-1.7z",
+    "M4 11 8 3",
+    "M12 11 9.5 4",
+    "M16 11 14 5"
+   ]
+  },
+  {
+   "id": "exp.travel",
+   "type": "expense",
+   "parentId": null,
+   "name": "Viajes",
+   "vis": "travel",
+   "color": "#2FA7C9",
+   "glyph": [
+    "M2 16l20-8",
+    "M6 14.4 4 9l3-1 4 4.4",
+    "M13 11.2 11 4l3-1 5 6.6",
+    "M3 21h18"
+   ]
+  },
+  {
+   "id": "exp.travel.transport",
+   "type": "expense",
+   "parentId": "exp.travel",
+   "name": "Transporte",
+   "vis": "travel",
+   "color": "#2FA7C9",
+   "glyph": [
+    "M2 16l20-8",
+    "M6 14.4 4 9l3-1 4 4.4",
+    "M13 11.2 11 4l3-1 5 6.6",
+    "M3 21h18"
+   ]
+  },
+  {
+   "id": "exp.travel.accommodation",
+   "type": "expense",
+   "parentId": "exp.travel",
+   "name": "Alojamiento",
+   "vis": "travel",
+   "color": "#2FA7C9",
+   "glyph": [
+    "M2 16l20-8",
+    "M6 14.4 4 9l3-1 4 4.4",
+    "M13 11.2 11 4l3-1 5 6.6",
+    "M3 21h18"
+   ]
+  },
+  {
+   "id": "exp.travel.food",
+   "type": "expense",
+   "parentId": "exp.travel",
+   "name": "Comida",
+   "vis": "travel",
+   "color": "#2FA7C9",
+   "glyph": [
+    "M2 16l20-8",
+    "M6 14.4 4 9l3-1 4 4.4",
+    "M13 11.2 11 4l3-1 5 6.6",
+    "M3 21h18"
+   ]
+  },
+  {
+   "id": "exp.travel.activities",
+   "type": "expense",
+   "parentId": "exp.travel",
+   "name": "Actividades",
+   "vis": "travel",
+   "color": "#2FA7C9",
+   "glyph": [
+    "M2 16l20-8",
+    "M6 14.4 4 9l3-1 4 4.4",
+    "M13 11.2 11 4l3-1 5 6.6",
+    "M3 21h18"
+   ]
+  },
+  {
+   "id": "exp.debt",
+   "type": "expense",
+   "parentId": null,
+   "name": "Deudas",
+   "vis": "debt",
+   "color": "#C2566F",
+   "glyph": [
+    "M2 6h20v12H2z",
+    "M2 10h20",
+    "M6 14h4"
+   ]
+  },
+  {
+   "id": "exp.debt.credit_card",
+   "type": "expense",
+   "parentId": "exp.debt",
+   "name": "Tarjeta de crédito",
+   "vis": "debt",
+   "color": "#C2566F",
+   "glyph": [
+    "M2 6h20v12H2z",
+    "M2 10h20",
+    "M6 14h4"
+   ]
+  },
+  {
+   "id": "exp.debt.loans",
+   "type": "expense",
+   "parentId": "exp.debt",
+   "name": "Préstamos",
+   "vis": "debt",
+   "color": "#C2566F",
+   "glyph": [
+    "M2 6h20v12H2z",
+    "M2 10h20",
+    "M6 14h4"
+   ]
+  },
+  {
+   "id": "exp.debt.interest",
+   "type": "expense",
+   "parentId": "exp.debt",
+   "name": "Intereses",
+   "vis": "debt",
+   "color": "#C2566F",
+   "glyph": [
+    "M2 6h20v12H2z",
+    "M2 10h20",
+    "M6 14h4"
+   ]
+  },
+  {
+   "id": "exp.debt.installments",
+   "type": "expense",
+   "parentId": "exp.debt",
+   "name": "Cuotas",
+   "vis": "debt",
+   "color": "#C2566F",
+   "glyph": [
+    "M2 6h20v12H2z",
+    "M2 10h20",
+    "M6 14h4"
+   ]
+  },
+  {
+   "id": "exp.financial",
+   "type": "expense",
+   "parentId": null,
+   "name": "Financieros",
+   "vis": "financial",
+   "color": "#7A86A8",
+   "glyph": [
+    "M12 3 2 8h20z",
+    "M4 8v9",
+    "M20 8v9",
+    "M2 21h20",
+    "M9 12v5",
+    "M15 12v5"
+   ]
+  },
+  {
+   "id": "exp.financial.bank_fees",
+   "type": "expense",
+   "parentId": "exp.financial",
+   "name": "Comisiones bancarias",
+   "vis": "financial",
+   "color": "#7A86A8",
+   "glyph": [
+    "M12 3 2 8h20z",
+    "M4 8v9",
+    "M20 8v9",
+    "M2 21h20",
+    "M9 12v5",
+    "M15 12v5"
+   ]
+  },
+  {
+   "id": "exp.financial.taxes",
+   "type": "expense",
+   "parentId": "exp.financial",
+   "name": "Impuestos",
+   "vis": "financial",
+   "color": "#7A86A8",
+   "glyph": [
+    "M12 3 2 8h20z",
+    "M4 8v9",
+    "M20 8v9",
+    "M2 21h20",
+    "M9 12v5",
+    "M15 12v5"
+   ]
+  },
+  {
+   "id": "exp.financial.insurance",
+   "type": "expense",
+   "parentId": "exp.financial",
+   "name": "Seguros",
+   "vis": "financial",
+   "color": "#7A86A8",
+   "glyph": [
+    "M12 3 2 8h20z",
+    "M4 8v9",
+    "M20 8v9",
+    "M2 21h20",
+    "M9 12v5",
+    "M15 12v5"
+   ]
+  },
+  {
+   "id": "exp.business",
+   "type": "expense",
+   "parentId": null,
+   "name": "Negocio",
+   "vis": "business",
+   "color": "#A8963D",
+   "glyph": [
+    "M3 7h18v13H3z",
+    "M8 7V4h8v3",
+    "M3 13h18"
+   ]
+  },
+  {
+   "id": "exp.business.supplies",
+   "type": "expense",
+   "parentId": "exp.business",
+   "name": "Insumos",
+   "vis": "business",
+   "color": "#A8963D",
+   "glyph": [
+    "M3 7h18v13H3z",
+    "M8 7V4h8v3",
+    "M3 13h18"
+   ]
+  },
+  {
+   "id": "exp.business.suppliers",
+   "type": "expense",
+   "parentId": "exp.business",
+   "name": "Proveedores",
+   "vis": "business",
+   "color": "#A8963D",
+   "glyph": [
+    "M3 7h18v13H3z",
+    "M8 7V4h8v3",
+    "M3 13h18"
+   ]
+  },
+  {
+   "id": "exp.business.advertising",
+   "type": "expense",
+   "parentId": "exp.business",
+   "name": "Publicidad",
+   "vis": "business",
+   "color": "#A8963D",
+   "glyph": [
+    "M3 7h18v13H3z",
+    "M8 7V4h8v3",
+    "M3 13h18"
+   ]
+  },
+  {
+   "id": "exp.business.tools",
+   "type": "expense",
+   "parentId": "exp.business",
+   "name": "Herramientas",
+   "vis": "business",
+   "color": "#A8963D",
+   "glyph": [
+    "M8 6 3 12l5 6",
+    "M16 6l5 6-5 6"
+   ]
+  },
+  {
+   "id": "exp.business.transport",
+   "type": "expense",
+   "parentId": "exp.business",
+   "name": "Transporte",
+   "vis": "business",
+   "color": "#A8963D",
+   "glyph": [
+    "M3 7h18v13H3z",
+    "M8 7V4h8v3",
+    "M3 13h18"
+   ]
+  },
+  {
+   "id": "exp.business.services",
+   "type": "expense",
+   "parentId": "exp.business",
+   "name": "Servicios",
+   "vis": "business",
+   "color": "#A8963D",
+   "glyph": [
+    "M3 7h18v13H3z",
+    "M8 7V4h8v3",
+    "M3 13h18"
+   ]
+  },
+  {
+   "id": "exp.family",
+   "type": "expense",
+   "parentId": null,
+   "name": "Familia",
+   "vis": "family",
+   "color": "#E85D9C",
+   "glyph": [
+    "M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
+    "M2 21v-1a6 6 0 0 1 12 0v1",
+    "M16 3.1a4 4 0 0 1 0 7.8",
+    "M22 21v-1a6 6 0 0 0-4-5.7"
+   ]
+  },
+  {
+   "id": "exp.family.children",
+   "type": "expense",
+   "parentId": "exp.family",
+   "name": "Hijos",
+   "vis": "family",
+   "color": "#E85D9C",
+   "glyph": [
+    "M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
+    "M2 21v-1a6 6 0 0 1 12 0v1",
+    "M16 3.1a4 4 0 0 1 0 7.8",
+    "M22 21v-1a6 6 0 0 0-4-5.7"
+   ]
+  },
+  {
+   "id": "exp.family.pets",
+   "type": "expense",
+   "parentId": "exp.family",
+   "name": "Mascotas",
+   "vis": "family",
+   "color": "#E85D9C",
+   "glyph": [
+    "M12 20c-3 0-6-1.8-6-4.5S9 11 12 11s6 1.8 6 4.5-3 4.5-6 4.5z",
+    "M3.5 9.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 1 0-3 0z",
+    "M7.5 5.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 1 0-3 0z",
+    "M13.5 5.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 1 0-3 0z",
+    "M17.5 9.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 1 0-3 0z"
+   ]
+  },
+  {
+   "id": "exp.family.assistance",
+   "type": "expense",
+   "parentId": "exp.family",
+   "name": "Apoyo familiar",
+   "vis": "family",
+   "color": "#E85D9C",
+   "glyph": [
+    "M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
+    "M2 21v-1a6 6 0 0 1 12 0v1",
+    "M16 3.1a4 4 0 0 1 0 7.8",
+    "M22 21v-1a6 6 0 0 0-4-5.7"
+   ]
+  },
+  {
+   "id": "exp.family.other",
+   "type": "expense",
+   "parentId": "exp.family",
+   "name": "Otros",
+   "vis": "family",
+   "color": "#E85D9C",
+   "glyph": [
+    "M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
+    "M2 21v-1a6 6 0 0 1 12 0v1",
+    "M16 3.1a4 4 0 0 1 0 7.8",
+    "M22 21v-1a6 6 0 0 0-4-5.7"
+   ]
+  },
+  {
+   "id": "exp.other",
+   "type": "expense",
+   "parentId": null,
+   "name": "Otros gastos",
+   "vis": "other",
+   "color": "#9C9CAA",
+   "glyph": [
+    "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z",
+    "M8 11h.01",
+    "M12 11h.01",
+    "M16 11h.01"
+   ]
+  },
+  {
+   "id": "exp.other.unexpected",
+   "type": "expense",
+   "parentId": "exp.other",
+   "name": "Imprevistos",
+   "vis": "other",
+   "color": "#9C9CAA",
+   "glyph": [
+    "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z",
+    "M8 11h.01",
+    "M12 11h.01",
+    "M16 11h.01"
+   ]
+  },
+  {
+   "id": "exp.other.misc",
+   "type": "expense",
+   "parentId": "exp.other",
+   "name": "Gastos varios",
+   "vis": "other",
+   "color": "#9C9CAA",
+   "glyph": [
+    "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z",
+    "M8 11h.01",
+    "M12 11h.01",
+    "M16 11h.01"
+   ]
+  }
+ ],
+ "transfer": {
+  "id": "transfer",
+  "name": "Transferencia",
+  "color": "#6c5ce7",
+  "glyph": [
+   "M7 7h13",
+   "M16 3l4 4-4 4",
+   "M17 17H4",
+   "M8 13l-4 4 4 4"
+  ]
+ },
+ "legacy": {
+  "food": "exp.food",
+  "alimentación": "exp.food",
+  "food-groceries": "exp.food.groceries",
+  "food-restaurants": "exp.food.restaurants",
+  "food-delivery": "exp.food.delivery",
+  "food-coffee": "exp.food.cafes",
+  "transportation": "exp.transportation",
+  "transporte": "exp.transportation",
+  "transportation-public-transit": "exp.transportation.public_transit",
+  "transportation-fuel": "exp.transportation.fuel",
+  "transportation-rideshare": "exp.transportation.rideshare",
+  "transportation-parking": "exp.transportation.parking",
+  "shopping": "exp.shopping",
+  "compras": "exp.shopping",
+  "shopping-clothing": "exp.shopping.clothing",
+  "shopping-electronics": "exp.shopping.technology",
+  "shopping-home": "exp.shopping.home",
+  "shopping-personal-care": "exp.shopping.personal_care",
+  "health": "exp.health",
+  "salud": "exp.health",
+  "health-pharmacy": "exp.health.medication",
+  "health-doctor": "exp.health.appointments",
+  "health-insurance": "exp.health.insurance",
+  "health-fitness": "exp.health",
+  "education": "exp.education",
+  "educación": "exp.education",
+  "education-tuition": "exp.education.tuition",
+  "education-supplies": "exp.education.books",
+  "education-courses": "exp.education.courses",
+  "entertainment": "exp.entertainment",
+  "entretenimiento": "exp.entertainment",
+  "entertainment-streaming": "exp.entertainment.streaming",
+  "entertainment-events": "exp.entertainment.events",
+  "entertainment-hobbies": "exp.entertainment.hobbies",
+  "bills": "exp.utilities",
+  "servicios": "exp.utilities",
+  "bills-electricity": "exp.utilities.electricity",
+  "bills-water": "exp.utilities.water",
+  "bills-internet": "exp.utilities.internet",
+  "bills-rent": "exp.housing.rent",
+  "subscriptions": "exp.entertainment.streaming",
+  "suscripciones": "exp.entertainment.streaming",
+  "subscriptions-streaming": "exp.entertainment.streaming",
+  "subscriptions-software": "exp.business.tools",
+  "salary": "inc.work.salary",
+  "salario": "inc.work.salary",
+  "freelance": "inc.work.freelance",
+  "gift": "inc.transfers.gifts",
+  "obsequio": "inc.transfers.gifts",
+  "other": "exp.other",
+  "otros": "exp.other",
+  "transferencia": "transfer",
+  "goal:emergency": "goal.savings.emergency",
+  "goal:emergencia": "goal.savings.emergency",
+  "goal:travel": "goal.travel",
+  "goal:viaje": "goal.travel",
+  "goal:education": "goal.education",
+  "goal:educación": "goal.education",
+  "goal:housing": "goal.housing",
+  "goal:vivienda": "goal.housing",
+  "goal:vehicle": "goal.transportation.vehicle",
+  "goal:vehículo": "goal.transportation.vehicle",
+  "goal:technology": "goal.technology",
+  "goal:tecnología": "goal.technology",
+  "goal:health": "goal.health",
+  "goal:salud": "goal.health",
+  "goal:debt": "goal.finance.debt_repayment",
+  "goal:deuda": "goal.finance.debt_repayment",
+  "goal:retirement": "goal.savings.future",
+  "goal:retiro": "goal.savings.future",
+  "goal:other": "goal.other",
+  "goal:otros": "goal.other"
+ },
+ "keywords": {
+  "expense": [
+   [
+    "food.groceries",
+    [
+     "mercado",
+     "supermercado",
+     "éxito",
+     "exito",
+     "d1",
+     "ara"
+    ]
+   ],
+   [
+    "food.restaurants",
+    [
+     "restaurante",
+     "almuerzo",
+     "cena",
+     "desayuno"
+    ]
+   ],
+   [
+    "food.delivery",
+    [
+     "domicilio",
+     "rappi"
+    ]
+   ],
+   [
+    "food.cafes",
+    [
+     "café",
+     "cafe",
+     "tostao",
+     "juan valdez",
+     "snack"
+    ]
+   ],
+   [
+    "food",
+    [
+     "comida",
+     "aliment"
+    ]
+   ],
+   [
+    "housing.rent",
+    [
+     "arriendo"
+    ]
+   ],
+   [
+    "housing.mortgage",
+    [
+     "hipoteca"
+    ]
+   ],
+   [
+    "housing.maintenance",
+    [
+     "administración",
+     "administracion",
+     "reparación",
+     "plomero"
+    ]
+   ],
+   [
+    "housing.furniture",
+    [
+     "mueble",
+     "sofá",
+     "colchón"
+    ]
+   ],
+   [
+    "utilities.electricity",
+    [
+     "luz",
+     "energía",
+     "energia",
+     "epm"
+    ]
+   ],
+   [
+    "utilities.water",
+    [
+     "agua",
+     "acueducto"
+    ]
+   ],
+   [
+    "utilities.gas",
+    [
+     "gas natural",
+     "vanti"
+    ]
+   ],
+   [
+    "utilities.internet",
+    [
+     "internet",
+     "fibra"
+    ]
+   ],
+   [
+    "utilities.phone",
+    [
+     "celular",
+     "plan móvil",
+     "claro",
+     "movistar",
+     "tigo"
+    ]
+   ],
+   [
+    "transportation.rideshare",
+    [
+     "taxi",
+     "uber",
+     "didi",
+     "cabify",
+     "viaje en app"
+    ]
+   ],
+   [
+    "transportation.fuel",
+    [
+     "gasolina",
+     "combustible",
+     "tanqueo"
+    ]
+   ],
+   [
+    "transportation.public_transit",
+    [
+     "bus",
+     "metro",
+     "transmilenio",
+     "sitp",
+     "pasaje"
+    ]
+   ],
+   [
+    "transportation.parking",
+    [
+     "parqueadero",
+     "peaje"
+    ]
+   ],
+   [
+    "education.tuition",
+    [
+     "matrícula",
+     "matricula",
+     "semestre",
+     "pensión colegio"
+    ]
+   ],
+   [
+    "education.courses",
+    [
+     "curso",
+     "diplomado",
+     "platzi"
+    ]
+   ],
+   [
+    "education.books",
+    [
+     "libro"
+    ]
+   ],
+   [
+    "health.medication",
+    [
+     "farmacia",
+     "droguería",
+     "drogueria",
+     "medicamento"
+    ]
+   ],
+   [
+    "health.appointments",
+    [
+     "médico",
+     "medico",
+     "cita",
+     "consulta"
+    ]
+   ],
+   [
+    "health.tests",
+    [
+     "examen",
+     "laboratorio"
+    ]
+   ],
+   [
+    "health.insurance",
+    [
+     "eps",
+     "prepagada"
+    ]
+   ],
+   [
+    "health.dental",
+    [
+     "odont",
+     "dentista"
+    ]
+   ],
+   [
+    "shopping.clothing",
+    [
+     "ropa",
+     "zapato",
+     "tenis"
+    ]
+   ],
+   [
+    "shopping.technology",
+    [
+     "tecnolog",
+     "audífono",
+     "computador"
+    ]
+   ],
+   [
+    "shopping.personal_care",
+    [
+     "peluquería",
+     "barbería",
+     "cosmético"
+    ]
+   ],
+   [
+    "entertainment.streaming",
+    [
+     "netflix",
+     "spotify",
+     "disney",
+     "hbo",
+     "prime video",
+     "streaming",
+     "suscrip"
+    ]
+   ],
+   [
+    "entertainment.cinema",
+    [
+     "cine"
+    ]
+   ],
+   [
+    "entertainment.events",
+    [
+     "concierto",
+     "boleta",
+     "fiesta"
+    ]
+   ],
+   [
+    "entertainment.games",
+    [
+     "videojuego",
+     "steam",
+     "playstation",
+     "xbox"
+    ]
+   ],
+   [
+    "travel.transport",
+    [
+     "vuelo",
+     "tiquete",
+     "avianca"
+    ]
+   ],
+   [
+    "travel.accommodation",
+    [
+     "hotel",
+     "airbnb",
+     "hostal"
+    ]
+   ],
+   [
+    "debt.credit_card",
+    [
+     "tarjeta de crédito",
+     "pago tarjeta"
+    ]
+   ],
+   [
+    "debt.installments",
+    [
+     "cuota"
+    ]
+   ],
+   [
+    "financial.bank_fees",
+    [
+     "4x1000",
+     "cuota de manejo",
+     "comisión bancaria"
+    ]
+   ],
+   [
+    "financial.taxes",
+    [
+     "impuesto",
+     "predial",
+     "dian"
+    ]
+   ],
+   [
+    "business.tools",
+    [
+     "icloud",
+     "software",
+     "saas",
+     "hosting",
+     "dominio"
+    ]
+   ],
+   [
+    "business.advertising",
+    [
+     "publicidad",
+     "pauta"
+    ]
+   ],
+   [
+    "family.pets",
+    [
+     "veterinari",
+     "mascota",
+     "concentrado"
+    ]
+   ],
+   [
+    "family.children",
+    [
+     "pañal",
+     "colegio",
+     "guardería"
+    ]
+   ]
+  ],
+  "income": [
+   [
+    "work.salary",
+    [
+     "salario",
+     "nómina",
+     "nomina",
+     "sueldo",
+     "quincena"
+    ]
+   ],
+   [
+    "work.overtime",
+    [
+     "horas extra"
+    ]
+   ],
+   [
+    "work.bonuses",
+    [
+     "bono",
+     "prima",
+     "bonificación"
+    ]
+   ],
+   [
+    "work.freelance",
+    [
+     "freelance",
+     "honorarios",
+     "proyecto"
+    ]
+   ],
+   [
+    "work.commissions",
+    [
+     "comisión",
+     "comision"
+    ]
+   ],
+   [
+    "business.sales",
+    [
+     "venta"
+    ]
+   ],
+   [
+    "investments.dividends",
+    [
+     "dividendo"
+    ]
+   ],
+   [
+    "investments.interest",
+    [
+     "intereses",
+     "cdt"
+    ]
+   ],
+   [
+    "investments.returns",
+    [
+     "rendimiento"
+    ]
+   ],
+   [
+    "property.rent",
+    [
+     "arriendo"
+    ]
+   ],
+   [
+    "transfers.gifts",
+    [
+     "regalo",
+     "obsequio"
+    ]
+   ],
+   [
+    "transfers.reimbursements",
+    [
+     "reembolso"
+    ]
+   ],
+   [
+    "financial.refunds",
+    [
+     "devolución",
+     "devolucion"
+    ]
+   ],
+   [
+    "other.prizes",
+    [
+     "premio",
+     "lotería"
+    ]
+   ]
+  ]
+ },
+ "planIcons": [
+  {
+   "key": "savings",
+   "name": "Ahorro",
+   "kw": [
+    "emergencia",
+    "emergency",
+    "fondo",
+    "ahorro",
+    "respaldo",
+    "imprevisto",
+    "colchón"
+   ],
+   "color": "#2FB38A",
+   "glyph": [
+    "M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z",
+    "M9 12l2 2 4-4"
+   ]
+  },
+  {
+   "key": "travel",
+   "name": "Viaje",
+   "kw": [
+    "viaje",
+    "vacacion",
+    "vacación",
+    "vacation",
+    "trip",
+    "perú",
+    "peru",
+    "playa",
+    "vuelo",
+    "paseo",
+    "europa"
+   ],
+   "color": "#2FA7C9",
+   "glyph": [
+    "M2 16l20-8",
+    "M6 14.4 4 9l3-1 4 4.4",
+    "M13 11.2 11 4l3-1 5 6.6",
+    "M3 21h18"
+   ]
+  },
+  {
+   "key": "technology",
+   "name": "Tecnología",
+   "kw": [
+    "portátil",
+    "portatil",
+    "laptop",
+    "computador",
+    "celular",
+    "iphone",
+    "tablet",
+    "consola"
+   ],
+   "color": "#8E7CF0",
+   "glyph": [
+    "M4 5h16v10H4z",
+    "M2 19h20"
+   ]
+  },
+  {
+   "key": "transportation",
+   "name": "Vehículo",
+   "kw": [
+    "carro",
+    "car",
+    "moto",
+    "vehículo",
+    "vehiculo",
+    "bici"
+   ],
+   "color": "#3D8BE8",
+   "glyph": [
+    "M5 17H3v-5l2-5h14l2 5v5h-2",
+    "M5 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0z",
+    "M15 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0z",
+    "M9 17h6"
+   ]
+  },
+  {
+   "key": "housing",
+   "name": "Vivienda",
+   "kw": [
+    "casa",
+    "house",
+    "apartamento",
+    "apto",
+    "cuota inicial",
+    "arriendo",
+    "remodel",
+    "hogar"
+   ],
+   "color": "#D9784A",
+   "glyph": [
+    "M3 10.5 12 3l9 7.5",
+    "M5 9v12h14V9",
+    "M10 21v-6h4v6"
+   ]
+  },
+  {
+   "key": "education",
+   "name": "Estudio",
+   "kw": [
+    "universidad",
+    "curso",
+    "especializa",
+    "maestr",
+    "semestre",
+    "inglés",
+    "ingles",
+    "estudio"
+   ],
+   "color": "#5D6BE8",
+   "glyph": [
+    "M22 9 12 5 2 9l10 4 10-4z",
+    "M6 11v6c0 1.5 3 3 6 3s6-1.5 6-3v-6"
+   ]
+  },
+  {
+   "key": "health",
+   "name": "Salud",
+   "kw": [
+    "salud",
+    "odont",
+    "cirug",
+    "brackets",
+    "médic",
+    "gimnasio"
+   ],
+   "color": "#E85D6B",
+   "glyph": [
+    "M20.8 6.6a5 5 0 0 0-7.1 0L12 8.3l-1.7-1.7a5 5 0 1 0-7.1 7.1L12 21l8.8-7.3a5 5 0 0 0 0-7.1z"
+   ]
+  },
+  {
+   "key": "events",
+   "name": "Celebración",
+   "kw": [
+    "boda",
+    "cumpleaños",
+    "grado",
+    "fiesta",
+    "matrimonio",
+    "celebra"
+   ],
+   "color": "#E0A526",
+   "glyph": [
+    "M4 21h16",
+    "M5 21V11h14v10",
+    "M5 15c2 1 3-1 5 0s3 1 5 0 3-1 4 0",
+    "M12 11V7",
+    "M12 4.5v.01"
+   ]
+  },
+  {
+   "key": "transfers",
+   "name": "Regalos",
+   "kw": [
+    "regalo",
+    "navidad",
+    "detalle",
+    "amor y amistad"
+   ],
+   "color": "#D95DB2",
+   "glyph": [
+    "M3 8h18v4H3z",
+    "M5 12v9h14v-9",
+    "M12 8v13",
+    "M12 8C10 4 6 4 6 6.5S9 8 12 8z",
+    "M12 8c2-4 6-4 6-1.5S15 8 12 8z"
+   ]
+  },
+  {
+   "key": "pets",
+   "name": "Mascota",
+   "kw": [
+    "perro",
+    "gato",
+    "mascota",
+    "veterinari"
+   ],
+   "color": "#6FAE3D",
+   "glyph": [
+    "M12 20c-3 0-6-1.8-6-4.5S9 11 12 11s6 1.8 6 4.5-3 4.5-6 4.5z",
+    "M3.5 9.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 1 0-3 0z",
+    "M7.5 5.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 1 0-3 0z",
+    "M13.5 5.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 1 0-3 0z",
+    "M17.5 9.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 1 0-3 0z"
+   ]
+  },
+  {
+   "key": "food",
+   "name": "Comida",
+   "kw": [
+    "mercado",
+    "comida",
+    "restaurante",
+    "almuerzo",
+    "salidas a comer"
+   ],
+   "color": "#E8A23D",
+   "glyph": [
+    "M3 2v7c0 1.1.9 2 2 2h1a2 2 0 0 0 2-2V2",
+    "M6 2v20",
+    "M17 2c-1.7 1.3-3 3.7-3 6 0 1.7.7 3 2 3h2c1.3 0 2-1.3 2-3 0-2.3-1.3-4.7-3-6z",
+    "M18 11v11"
+   ]
+  },
+  {
+   "key": "entertainment",
+   "name": "Ocio",
+   "kw": [
+    "concierto",
+    "cine",
+    "ocio",
+    "festival",
+    "salidas"
+   ],
+   "color": "#B25DE8",
+   "glyph": [
+    "M4 11h16l-1.2 9a2 2 0 0 1-2 1.7H7.2a2 2 0 0 1-2-1.7z",
+    "M4 11 8 3",
+    "M12 11 9.5 4",
+    "M16 11 14 5"
+   ]
+  },
+  {
+   "key": "shopping",
+   "name": "Compras",
+   "kw": [
+    "ropa",
+    "compras",
+    "zapatos"
+   ],
+   "color": "#3DBBA8",
+   "glyph": [
+    "M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z",
+    "M3 6h18",
+    "M16 10a4 4 0 0 1-8 0"
+   ]
+  },
+  {
+   "key": "debt",
+   "name": "Deudas",
+   "kw": [
+    "deuda",
+    "tarjeta",
+    "crédito",
+    "credito",
+    "libranza"
+   ],
+   "color": "#C2566F",
+   "glyph": [
+    "M2 6h20v12H2z",
+    "M2 10h20",
+    "M6 14h4"
+   ]
+  },
+  {
+   "key": "investments",
+   "name": "Inversión",
+   "kw": [
+    "inversión",
+    "inversion",
+    "cdt",
+    "acciones"
+   ],
+   "color": "#6657E8",
+   "glyph": [
+    "M3 17 9 11l4 4 8-8",
+    "M15 7h6v6"
+   ]
+  },
+  {
+   "key": "family",
+   "name": "Familia",
+   "kw": [
+    "familia",
+    "hijo",
+    "bebé",
+    "bebe"
+   ],
+   "color": "#E85D9C",
+   "glyph": [
+    "M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
+    "M2 21v-1a6 6 0 0 1 12 0v1",
+    "M16 3.1a4 4 0 0 1 0 7.8",
+    "M22 21v-1a6 6 0 0 0-4-5.7"
+   ]
+  },
+  {
+   "key": "work",
+   "name": "Trabajo",
+   "kw": [
+    "negocio",
+    "trabajo",
+    "equipo"
+   ],
+   "color": "#22A06B",
+   "glyph": [
+    "M3 7h18a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12",
+    "M17 13h.01"
+   ]
+  },
+  {
+   "key": "other",
+   "name": "Otro",
+   "kw": [],
+   "color": "#9C9CAA",
+   "glyph": [
+    "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z",
+    "M8 11h.01",
+    "M12 11h.01",
+    "M16 11h.01"
+   ]
+  }
+ ]
+}

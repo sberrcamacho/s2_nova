@@ -41,15 +41,16 @@ describe("account (wallet) routes", () => {
       expect(res.json().currentBalance).toBe(-100000);
     });
 
-    it("rejects a non-integer initial balance", async () => {
+    it("keeps decimals for a wallet in a currency with cents", async () => {
       const user = await createTestUser();
       const res = await app.inject({
         method: "POST",
         url: "/api/v1/accounts",
         headers: authHeader(user),
-        payload: { name: "Bad", type: "CASH", initialBalance: 12.5 },
+        payload: { name: "Wise", type: "SAVINGS", initialBalance: 12.5, currency: "USD" },
       });
-      expect(res.statusCode).toBe(400);
+      expect(res.statusCode).toBe(201);
+      expect(res.json()).toMatchObject({ currency: "USD", currentBalance: 12.5 });
     });
 
     it("rejects an unknown account type", async () => {
@@ -99,7 +100,7 @@ describe("account (wallet) routes", () => {
       const user = await createTestUser();
       const source = await createAccount(user.id, { name: "Source", initialBalanceMinor: 30000n });
       const destination = await createAccount(user.id, { name: "Destination", initialBalanceMinor: 10000n });
-      const category = await prisma.category.findUniqueOrThrow({ where: { slug: "other" } });
+      const category = await prisma.category.findFirstOrThrow({ where: { userId: null, slug: "exp.other" } });
 
       const txn = await prisma.transaction.create({
         data: {
@@ -135,6 +136,7 @@ describe("account (wallet) routes", () => {
     it("rejects reassigning a wallet to itself", async () => {
       const user = await createTestUser();
       const account = await createAccount(user.id);
+      await createAccount(user.id);
       const res = await app.inject({
         method: "DELETE",
         url: `/api/v1/accounts/${account.id}`,
@@ -147,6 +149,7 @@ describe("account (wallet) routes", () => {
     it("rejects a nonexistent destination wallet", async () => {
       const user = await createTestUser();
       const account = await createAccount(user.id);
+      await createAccount(user.id);
       const res = await app.inject({
         method: "DELETE",
         url: `/api/v1/accounts/${account.id}`,
@@ -156,11 +159,25 @@ describe("account (wallet) routes", () => {
       expect(res.statusCode).toBe(422);
     });
 
-    it("rejects deleting without reassignToAccountId", async () => {
+    it("never deletes the last wallet", async () => {
       const user = await createTestUser();
       const account = await createAccount(user.id);
       const res = await app.inject({ method: "DELETE", url: `/api/v1/accounts/${account.id}`, headers: authHeader(user), payload: {} });
-      expect(res.statusCode).toBe(400);
+      expect(res.statusCode).toBe(409);
+    });
+
+    it("without reassignToAccountId deletes the wallet with its movements", async () => {
+      const user = await createTestUser();
+      const account = await createAccount(user.id);
+      const other = await createAccount(user.id, { initialBalanceMinor: 1000n });
+      const category = await prisma.category.findFirstOrThrow({ where: { userId: null, slug: "exp.other" } });
+      await prisma.transaction.create({
+        data: { userId: user.id, accountId: account.id, type: "EXPENSE", amountMinor: 5n, categoryId: category.id, paymentMethod: "CASH", description: "x", transactionDate: new Date() },
+      });
+      const res = await app.inject({ method: "DELETE", url: `/api/v1/accounts/${account.id}`, headers: authHeader(user), payload: {} });
+      expect(res.statusCode).toBe(204);
+      expect(await prisma.transaction.count({ where: { userId: user.id } })).toBe(0);
+      expect((await prisma.account.findUniqueOrThrow({ where: { id: other.id } })).currentBalanceMinor).toBe(1000n);
     });
   });
 });

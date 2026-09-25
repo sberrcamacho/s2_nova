@@ -1,27 +1,70 @@
 import type { FastifyInstance } from "fastify";
+import type { Budget } from "@prisma/client";
 import { z } from "zod";
-import { serializeBudget } from "../lib/budgetProgress.js";
-import { currentMonthKey, monthStart } from "../lib/dates.js";
-import { BUDGET_GOAL_THEME_IDS } from "../lib/budgetGoalThemes.js";
+import { activeInMonth, serializeBudget } from "../lib/budgetProgress.js";
+import { principalOf, toMinor } from "../lib/currency.js";
+import { currentMonthKey, monthStart, parseDateOnly } from "../lib/dates.js";
 import { prisma } from "../lib/prisma.js";
-import { monthKeySchema } from "../lib/validation.js";
+import { PLAN_ICON_KEYS } from "../lib/taxonomy.js";
+import { dateOnlySchema, monthKeySchema } from "../lib/validation.js";
 
-const themeIconSchema = z.enum(BUDGET_GOAL_THEME_IDS);
+// PLANS.md §4: "Por categoría" (CATEGORY) budgets link expenses
+// automatically by category scope + wallet set; "Personalizado" (CUSTOM)
+// budgets count the movements assigned to them in Nuevo movimiento. Period
+// "Mensual" resets on the 1st; "Rango personalizado" covers Desde..Hasta.
 
-const createBudgetSchema = z.object({
-  name: z.string().trim().min(1).max(80).optional(),
-  categoryId: z.string().uuid(),
-  amount: z.number().int().positive(),
+const planIconSchema = z.enum(PLAN_ICON_KEYS as [string, ...string[]]);
+
+const budgetFields = {
+  name: z.string().trim().min(1).max(80).nullable().optional(),
+  categoryId: z.string().uuid().nullable().optional(),
+  icon: planIconSchema.nullable().optional(),
+  walletIds: z.array(z.string().uuid()).max(50).optional(),
+  amount: z.number().positive().max(1e12),
+  period: z.enum(["MONTHLY", "CUSTOM"]).default("MONTHLY"),
+  // MONTHLY: the month it starts (defaults to the current one).
   month: monthKeySchema.optional(),
-  themeIcon: themeIconSchema.optional(),
-});
+  // CUSTOM: Desde / Hasta.
+  startDate: dateOnlySchema.optional(),
+  endDate: dateOnlySchema.optional(),
+};
+
+const createBudgetSchema = z
+  .object({ kind: z.enum(["CATEGORY", "CUSTOM"]).default("CATEGORY"), ...budgetFields })
+  .refine((b) => b.kind === "CUSTOM" || Boolean(b.categoryId), { message: "categoryId is required.", path: ["categoryId"] })
+  .refine((b) => b.kind === "CATEGORY" || Boolean(b.name), { message: "name is required.", path: ["name"] })
+  .refine((b) => b.period === "MONTHLY" || (b.startDate && b.endDate && b.startDate <= b.endDate), {
+    message: "A custom range needs startDate <= endDate.",
+    path: ["endDate"],
+  });
 
 const updateBudgetSchema = z.object({
-  name: z.string().trim().min(1).max(80).nullable().optional(),
-  amount: z.number().int().positive().optional(),
-  categoryId: z.string().uuid().optional(),
-  themeIcon: themeIconSchema.nullable().optional(),
+  ...budgetFields,
+  amount: budgetFields.amount.optional(),
+  period: z.enum(["MONTHLY", "CUSTOM"]).optional(),
 });
+
+type Range = { startDate: Date; endDate: Date | null };
+
+function rangeOf(body: { period?: "MONTHLY" | "CUSTOM"; month?: string; startDate?: string; endDate?: string }, fallback?: Range): Range {
+  if (body.period === "CUSTOM") return { startDate: parseDateOnly(body.startDate!), endDate: parseDateOnly(body.endDate!) };
+  if (body.period === "MONTHLY") return { startDate: monthStart(body.month ?? currentMonthKey()), endDate: null };
+  return fallback!;
+}
+
+const overlaps = (a: Range, b: Range) =>
+  (a.endDate === null || b.startDate <= a.endDate) && (b.endDate === null || a.startDate <= b.endDate);
+
+// Same scope and overlapping period is a duplicate (PRODUCT_ARCHITECTURE §9).
+async function hasDuplicate(userId: string, categoryId: string, range: Range, exceptId?: string) {
+  const others = await prisma.budget.findMany({ where: { userId, kind: "CATEGORY", categoryId, NOT: exceptId ? { id: exceptId } : undefined } });
+  return others.some((b: Budget) => overlaps(range, b));
+}
+
+async function validWallets(userId: string, walletIds: string[] | undefined) {
+  if (!walletIds?.length) return true;
+  return (await prisma.account.count({ where: { userId, id: { in: walletIds } } })) === new Set(walletIds).size;
+}
 
 const recommendationSchema = z.object({
   monthlyIncome: z.number().int().positive(),
@@ -56,94 +99,95 @@ function allocateByPercentage(total: number, percentages: number[]): number[] {
 export async function budgetRoutes(app: FastifyInstance) {
   app.get("/budgets", { preHandler: app.authenticate }, async (request) => {
     const query = z.object({ month: monthKeySchema.optional() }).parse(request.query);
-    const start = monthStart(query.month ?? currentMonthKey());
+    const month = query.month ?? currentMonthKey();
     const budgets = await prisma.budget.findMany({
-      where: { userId: request.userId, startDate: start },
+      where: { userId: request.userId, ...activeInMonth(month) },
       orderBy: { createdAt: "asc" },
     });
-    return Promise.all(budgets.map((budget) => serializeBudget(request.userId!, budget)));
+    return Promise.all(budgets.map((budget) => serializeBudget(request.userId!, budget, month)));
   });
 
   app.post("/budgets", { preHandler: app.authenticate }, async (request, reply) => {
     const body = createBudgetSchema.parse(request.body);
+    const userId = request.userId!;
 
-    const category = await prisma.category.findFirst({
-      where: { id: body.categoryId, OR: [{ userId: null }, { userId: request.userId }] },
-    });
-    if (!category) {
-      return reply.status(422).send({ error: "Unknown category." });
+    if (body.kind === "CATEGORY") {
+      const category = await prisma.category.findFirst({ where: { id: body.categoryId!, OR: [{ userId: null }, { userId }] } });
+      if (!category) return reply.status(422).send({ error: "Unknown category." });
+    }
+    if (!(await validWallets(userId, body.walletIds))) return reply.status(422).send({ error: "Unknown wallet." });
+
+    const range = rangeOf(body);
+    if (body.kind === "CATEGORY" && (await hasDuplicate(userId, body.categoryId!, range))) {
+      return reply.status(409).send({ error: "A budget for this category and period already exists." });
     }
 
-    const startDate = monthStart(body.month ?? currentMonthKey());
-    // Nothing else stops two Budget rows for the same category/month, and
-    // computeSpent's fallback (unlinked transactions matched by
-    // category+month) would then count the same spend toward both budgets
-    // at once — reject the duplicate instead of silently double-counting.
-    const duplicate = await prisma.budget.findFirst({
-      where: { userId: request.userId, categoryId: body.categoryId, startDate },
-    });
-    if (duplicate) {
-      return reply.status(409).send({ error: "A budget for this category and month already exists." });
-    }
-
+    const principal = await principalOf(userId);
     const budget = await prisma.budget.create({
       data: {
-        userId: request.userId!,
-        name: body.name,
-        categoryId: body.categoryId,
-        amountMinor: BigInt(body.amount),
-        period: "MONTHLY",
-        startDate,
-        themeIcon: body.themeIcon,
+        userId,
+        kind: body.kind,
+        name: body.name ?? null,
+        categoryId: body.kind === "CATEGORY" ? body.categoryId! : null,
+        icon: body.kind === "CUSTOM" ? (body.icon ?? "other") : null,
+        walletIds: body.kind === "CATEGORY" ? (body.walletIds ?? []) : [],
+        amountMinor: toMinor(body.amount, principal),
+        period: body.period,
+        ...range,
       },
     });
     reply.status(201);
-    return serializeBudget(request.userId!, budget);
+    return serializeBudget(userId, budget);
   });
 
   app.patch("/budgets/:id", { preHandler: app.authenticate }, async (request, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
     const body = updateBudgetSchema.parse(request.body);
+    const userId = request.userId!;
 
-    const existing = await prisma.budget.findFirst({ where: { id, userId: request.userId } });
+    const existing = await prisma.budget.findFirst({ where: { id, userId } });
     if (!existing) {
       return reply.status(404).send({ error: "Budget not found." });
     }
+    if (body.period === "CUSTOM" && !(body.startDate && body.endDate && body.startDate <= body.endDate)) {
+      return reply.status(422).send({ error: "A custom range needs startDate <= endDate." });
+    }
+    if (body.period === "MONTHLY" && !body.month) body.month = existing.period === "MONTHLY" ? undefined : currentMonthKey();
+    const range =
+      body.period === "MONTHLY" && !body.month && existing.period === "MONTHLY"
+        ? { startDate: existing.startDate, endDate: null }
+        : rangeOf(body, { startDate: existing.startDate, endDate: existing.endDate });
 
-    // Moving a budget to another category keeps the create rules: the
-    // category must be visible to the user and free for that month.
-    if (body.categoryId !== undefined && body.categoryId !== existing.categoryId) {
-      const category = await prisma.category.findFirst({
-        where: { id: body.categoryId, OR: [{ userId: null }, { userId: request.userId }] },
-      });
-      if (!category) {
-        return reply.status(422).send({ error: "Unknown category." });
+    if (existing.kind === "CATEGORY") {
+      const categoryId = body.categoryId ?? existing.categoryId!;
+      if (body.categoryId) {
+        const category = await prisma.category.findFirst({ where: { id: body.categoryId, OR: [{ userId: null }, { userId }] } });
+        if (!category) return reply.status(422).send({ error: "Unknown category." });
       }
-      const duplicate = await prisma.budget.findFirst({
-        where: { userId: request.userId, categoryId: body.categoryId, startDate: existing.startDate, NOT: { id } },
-      });
-      if (duplicate) {
-        return reply.status(409).send({ error: "A budget for this category and month already exists." });
+      if ((body.categoryId || body.period) && (await hasDuplicate(userId, categoryId, range, id))) {
+        return reply.status(409).send({ error: "A budget for this category and period already exists." });
       }
     }
+    if (!(await validWallets(userId, body.walletIds))) return reply.status(422).send({ error: "Unknown wallet." });
 
+    const principal = await principalOf(userId);
     const budget = await prisma.budget.update({
       where: { id },
       data: {
         name: body.name,
-        categoryId: body.categoryId,
-        amountMinor: body.amount !== undefined ? BigInt(body.amount) : undefined,
-        themeIcon: body.themeIcon,
+        categoryId: existing.kind === "CATEGORY" && body.categoryId ? body.categoryId : undefined,
+        icon: existing.kind === "CUSTOM" && body.icon ? body.icon : undefined,
+        walletIds: existing.kind === "CATEGORY" ? body.walletIds : undefined,
+        amountMinor: body.amount !== undefined ? toMinor(body.amount, principal) : undefined,
+        period: body.period,
+        ...range,
       },
     });
-    return serializeBudget(request.userId!, budget);
+    return serializeBudget(userId, budget);
   });
 
-  // Budgets hold no money of their own — a budget is just a spend limit
-  // computed by summing matching transactions (see computeSpent above), so
-  // deleting one is a plain delete with no wallet-reassignment step.
-  // Linked transactions keep their history; budgetId is set null
-  // (onDelete: SetNull), same pattern as goals.ts.
+  // Budgets hold no money of their own, so deleting one is a plain delete.
+  // Linked and assigned movements keep their history (onDelete: SetNull).
   app.delete("/budgets/:id", { preHandler: app.authenticate }, async (request, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
     const existing = await prisma.budget.findFirst({ where: { id, userId: request.userId } });

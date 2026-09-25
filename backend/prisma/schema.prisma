@@ -85,6 +85,7 @@ enum TransactionStatus {
 // RecurringSeries model doc comment for why definition and occurrence are
 // separate models).
 enum RecurrenceInterval {
+  DAILY
   WEEKLY
   MONTHLY
   YEARLY
@@ -120,8 +121,36 @@ enum PaymentMethod {
   @@map("payment_method")
 }
 
+// Budget.kind (PLANS.md §4): CATEGORY budgets count expenses automatically by
+// category scope + wallet set; CUSTOM budgets count only the movements the
+// user assigned to them in Nuevo movimiento (Transaction.customBudgetId).
+enum BudgetKind {
+  CATEGORY
+  CUSTOM
+
+  @@map("budget_kind")
+}
+
+// GoalPlan end rule (PLANS.md §3): "Al cumplir la meta", "Después de" N
+// aportes, "En una fecha".
+enum GoalPlanEnd {
+  GOAL
+  COUNT
+  DATE
+
+  @@map("goal_plan_end")
+}
+
+enum AttachmentKind {
+  IMAGE
+  PDF
+
+  @@map("attachment_kind")
+}
+
 enum BudgetPeriod {
   MONTHLY
+  CUSTOM
 
   @@map("budget_period")
 }
@@ -146,6 +175,9 @@ model User {
   budgetRecommendations BudgetRecommendation[]
   goals                 Goal[]
   recurringSeries       RecurringSeries[]
+  currencies            UserCurrency[]
+  categoryOverrides     CategoryOverride[]
+  goalPlans             GoalPlan[]
 
   @@map("users")
 }
@@ -203,6 +235,11 @@ model UserPreferences {
   autoLockMinutes       Int             @default(5) @map("auto_lock_minutes")
   onboardingCompletedAt DateTime?       @map("onboarding_completed_at")
   tutorialCompletedAt   DateTime?       @map("tutorial_completed_at")
+  // Mini-guides already dismissed ("inicio", "movimientos", …) — server-side
+  // so a guide seen on Android isn't repeated on Web (ONBOARDING.md §3).
+  // guidesOff is "Omitir guías".
+  guidesSeen            String[]        @default([]) @map("guides_seen")
+  guidesOff             Boolean         @default(false) @map("guides_off")
   updatedAt             DateTime        @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -220,6 +257,9 @@ model Account {
   type                AccountType
   initialBalanceMinor BigInt      @map("initial_balance_minor")
   currentBalanceMinor BigInt      @map("current_balance_minor")
+  // ISO 4217 code. Balances are kept in this currency's minor units
+  // (CURRENCIES_AND_WALLETS.md §1). Existing wallets are COP.
+  currency            String      @default("COP")
   createdAt           DateTime    @default(now()) @map("created_at")
   updatedAt           DateTime    @updatedAt @map("updated_at")
 
@@ -245,11 +285,16 @@ model Category {
   id        String       @id @default(uuid())
   userId    String?      @map("user_id")
   parentId  String?      @map("parent_id")
-  slug      String       @unique
+  // The taxonomy's stable dotted id (CATEGORY_SYSTEM.md §2), e.g.
+  // "exp.food.groceries" — clients key everything on it. Unique per owner:
+  // global rows (userId null) are unique by the seed, custom rows per user.
+  slug      String
   name      String
+  // Visual identity key (CAT_VIS in s2-categories.js, e.g. "food").
   icon      String
   color     String
   kind      CategoryKind
+  isCustom  Boolean      @default(false) @map("is_custom")
   createdAt DateTime     @default(now()) @map("created_at")
 
   user                    User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -259,11 +304,59 @@ model Category {
   subcategoryTransactions Transaction[]     @relation("TransactionSubcategory")
   budgets                 Budget[]
   products                Product[]
-  recurringSeries         RecurringSeries[]
+  recurringSeries         RecurringSeries[]   @relation("SeriesCategory")
+  recurringSubSeries      RecurringSeries[]   @relation("SeriesSubcategory")
+  overrides               CategoryOverride[]
 
+  @@unique([userId, slug])
   @@index([userId])
   @@index([parentId])
   @@map("categories")
+}
+
+// Per-user edits of a built-in category (Ajustes › Categorías): a label
+// override, a different icon, or hidden from the Nuevo movimiento selector.
+// The id never changes; history keeps showing the category.
+model CategoryOverride {
+  userId     String   @map("user_id")
+  categoryId String   @map("category_id")
+  name       String?
+  icon       String?
+  hidden     Boolean  @default(false)
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([userId, categoryId])
+  @@map("category_overrides")
+}
+
+// Currencies the user enabled (Ajustes › Monedas). Exactly one isPrincipal:
+// total balance, budgets and reports are shown in it.
+model UserCurrency {
+  userId      String   @map("user_id")
+  code        String
+  isPrincipal Boolean  @default(false) @map("is_principal")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, code])
+  @@map("user_currencies")
+}
+
+// Daily reference rate: 1 `base` = `rate` `quote`. There is no live FX feed
+// yet; src/lib/currency.ts falls back to fixed reference rates when a day
+// has no row.
+model FxRate {
+  base  String
+  quote String
+  date  DateTime @db.Date
+  rate  Decimal  @db.Decimal(18, 6)
+
+  @@id([base, quote, date])
+  @@map("fx_rates")
 }
 
 // Global, not per-user — the same barcode refers to the same product for
@@ -335,6 +428,19 @@ model Transaction {
   merchant               String?
   note                   String?
   transactionDate        DateTime          @map("transaction_date") @db.Date
+  // Full date and time of the movement (NEW_MOVEMENT.md §4). transactionDate
+  // stays as its calendar day for filtering and aggregates.
+  occurredAt             DateTime?         @map("occurred_at")
+  // Original currency of `amountMinor` (minor units of this currency). When it
+  // differs from the wallet's, fxRate is wallet units per 1 movement unit and
+  // walletAmountMinor is what the wallet balance moved by; otherwise both
+  // are null and the wallet moved by amountMinor.
+  currency               String            @default("COP")
+  fxRate                 Decimal?          @map("fx_rate") @db.Decimal(18, 6)
+  walletAmountMinor      BigInt?           @map("wallet_amount_minor")
+  // Income "De" source type: EMPLOYER, CLIENT, FAMILY, FRIEND, OTHER.
+  counterpartyKind       String?           @map("counterparty_kind")
+  customBudgetId         String?           @map("custom_budget_id")
   createdAt              DateTime          @default(now()) @map("created_at")
   updatedAt              DateTime          @updatedAt @map("updated_at")
 
@@ -345,6 +451,8 @@ model Transaction {
   subcategory             Category?        @relation("TransactionSubcategory", fields: [subcategoryId], references: [id], onDelete: SetNull)
   product                 Product?         @relation(fields: [productId], references: [id], onDelete: SetNull)
   budget                  Budget?          @relation(fields: [budgetId], references: [id], onDelete: SetNull)
+  customBudget            Budget?          @relation("CustomBudget", fields: [customBudgetId], references: [id], onDelete: SetNull)
+  attachment              Attachment?
   goal                    Goal?            @relation(fields: [goalId], references: [id], onDelete: SetNull)
   recurringSeries         RecurringSeries? @relation(fields: [recurringSeriesId], references: [id], onDelete: SetNull)
   settledByTransaction    Transaction?     @relation("LoanSettlement", fields: [settledByTransactionId], references: [id], onDelete: SetNull)
@@ -359,7 +467,26 @@ model Transaction {
   @@index([recurringSeriesId])
   @@index([subcategoryId])
   @@index([parentLoanId])
+  @@index([customBudgetId])
   @@map("transactions")
+}
+
+// Receipt attached to a movement ("Adjuntar comprobante"), one per movement
+// in MVP. The file bytes live in the row: there is no object storage yet,
+// and 10 MB per file keeps that reasonable.
+model Attachment {
+  id            String         @id @default(uuid())
+  transactionId String         @unique @map("transaction_id")
+  kind          AttachmentKind
+  mime          String
+  name          String
+  size          Int
+  data          Bytes
+  createdAt     DateTime       @default(now()) @map("created_at")
+
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@map("attachments")
 }
 
 // A recurring definition — "Netflix, $45,000/month" — kept separate from
@@ -379,16 +506,33 @@ model RecurringSeries {
   amountMinor        BigInt             @map("amount_minor")
   accountId          String             @map("account_id")
   categoryId         String             @map("category_id")
+  subcategoryId      String?            @map("subcategory_id")
   paymentMethod      PaymentMethod      @default(BANK_TRANSFER) @map("payment_method")
   interval           RecurrenceInterval
   nextOccurrenceDate DateTime           @map("next_occurrence_date") @db.Date
   active             Boolean            @default(true)
+  // "Termina" (NEW_MOVEMENT.md §5): after `occurrences` materialized
+  // movements, on `endDate`, or never (both null). occurrencesDone counts
+  // confirmed and skipped dates.
+  occurrences        Int?
+  occurrencesDone    Int                @default(0) @map("occurrences_done")
+  endDate            DateTime?          @map("end_date") @db.Date
+  // "Registrar automáticamente": due dates are recorded as COMPLETED
+  // movements the next time the user's data is read, instead of waiting for
+  // "Confirmar".
+  autoConfirm        Boolean            @default(false) @map("auto_confirm")
+  currency           String             @default("COP")
+  note               String?
+  counterpartyName   String?            @map("counterparty_name")
+  counterpartyKind   String?            @map("counterparty_kind")
+  customBudgetId     String?            @map("custom_budget_id")
   createdAt          DateTime           @default(now()) @map("created_at")
   updatedAt          DateTime           @updatedAt @map("updated_at")
 
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   account      Account       @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  category     Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  category     Category      @relation("SeriesCategory", fields: [categoryId], references: [id], onDelete: Restrict)
+  subcategory  Category?     @relation("SeriesSubcategory", fields: [subcategoryId], references: [id], onDelete: SetNull)
   transactions Transaction[]
 
   @@index([userId])
@@ -404,8 +548,17 @@ model Budget {
   id          String       @id @default(uuid())
   userId      String       @map("user_id")
   name        String?
-  categoryId  String       @map("category_id")
+  kind        BudgetKind   @default(CATEGORY)
+  // Scope for CATEGORY budgets: a parent ("Todas", every child counts) or a
+  // single subcategory. Null for CUSTOM budgets.
+  categoryId  String?      @map("category_id")
+  // Plan icon key (PLAN_ICONS) for CUSTOM budgets.
+  icon        String?
+  // Wallets whose expenses count; empty = all wallets.
+  walletIds   String[]     @default([]) @map("wallet_ids")
   amountMinor BigInt       @map("amount_minor")
+  // MONTHLY resets on the 1st and runs from startDate on (endDate null);
+  // CUSTOM covers startDate..endDate with no reset.
   period      BudgetPeriod @default(MONTHLY)
   startDate   DateTime     @map("start_date") @db.Date
   endDate     DateTime?    @map("end_date") @db.Date
@@ -417,8 +570,9 @@ model Budget {
   updatedAt   DateTime     @updatedAt @map("updated_at")
 
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category     Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  category     Category?     @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   transactions Transaction[]
+  assigned     Transaction[] @relation("CustomBudget")
 
   @@index([userId])
   @@map("budgets")
@@ -455,20 +609,47 @@ model Goal {
   name              String
   targetAmountMinor BigInt    @map("target_amount_minor")
   targetDate        DateTime? @map("target_date") @db.Date
-  // A goal's own category (Emergency, Travel, ...) — distinct from the
-  // shared decorative Budget/Goal theme palette and from the transaction
-  // Category table, since a goal describes what it's *for*, not what it's
-  // spent on. Kept in the same column/name for backward compatibility, but
-  // validated against GOAL_CATEGORY_IDS (see src/lib/goalCategories.ts),
-  // not BUDGET_GOAL_THEME_IDS. Budget.themeIcon (below) still uses the
-  // generic decorative palette.
-  themeIcon         String?   @map("theme_icon")
-  createdAt         DateTime  @default(now()) @map("created_at")
-  updatedAt         DateTime  @updatedAt @map("updated_at")
+  // Plan icon key (PLAN_ICONS in s2-categories.js), suggested from the name
+  // (PLANS.md §1). Migrated from the legacy goal category in themeIcon.
+  icon               String    @default("other")
+  // Legacy goal category; kept one release for the migration, no longer read.
+  themeIcon          String?   @map("theme_icon")
+  // "Monto inicial": counts toward progress without being a movement.
+  initialAmountMinor BigInt    @default(0) @map("initial_amount_minor")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
 
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
+  plan         GoalPlan?
 
   @@index([userId])
   @@map("goals")
+}
+
+// "Aporte periódico" (PLANS.md §3). With autoConfirm false each due date
+// waits for "Confirmar aporte" / "Omitir esta vez"; with autoConfirm true the
+// contribution is recorded the next time the user's data is read.
+model GoalPlan {
+  goalId       String             @id @map("goal_id")
+  userId       String             @map("user_id")
+  amountMinor  BigInt             @map("amount_minor")
+  frequency    RecurrenceInterval
+  accountId    String             @map("account_id")
+  startDate    DateTime           @map("start_date") @db.Date
+  endMode      GoalPlanEnd        @default(GOAL) @map("end_mode")
+  count        Int?
+  endDate      DateTime?          @map("end_date") @db.Date
+  autoConfirm  Boolean            @default(false) @map("auto_confirm")
+  nextDate     DateTime           @map("next_date") @db.Date
+  doneCount    Int                @default(0) @map("done_count")
+  active       Boolean            @default(true)
+  createdAt    DateTime           @default(now()) @map("created_at")
+  updatedAt    DateTime           @updatedAt @map("updated_at")
+
+  goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("goal_plans")
 }

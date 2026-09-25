@@ -39,10 +39,12 @@ function lastDayOfUtcMonth(year: number, month: number): number {
 // original day. Clamp to the target month's last valid day instead, the
 // standard "add a calendar interval" semantics (also matches how most
 // billing systems handle a monthly charge anchored to day 29-31).
-export function addInterval(date: Date, interval: "WEEKLY" | "MONTHLY" | "YEARLY"): Date {
-  if (interval === "WEEKLY") {
+export type Interval = "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
+
+export function addInterval(date: Date, interval: Interval): Date {
+  if (interval === "DAILY" || interval === "WEEKLY") {
     const result = new Date(date);
-    result.setUTCDate(result.getUTCDate() + 7);
+    result.setUTCDate(result.getUTCDate() + (interval === "DAILY" ? 1 : 7));
     return result;
   }
 
@@ -62,4 +64,8 @@ export function addInterval(date: Date, interval: "WEEKLY" | "MONTHLY" | "YEARLY
       date.getUTCMilliseconds(),
     ),
   );
+}
+
+export function dateKey(date: Date): string {
+  return date.toISOString().slice(0, 10);
 }

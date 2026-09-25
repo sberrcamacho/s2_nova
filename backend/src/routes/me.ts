@@ -23,7 +23,10 @@ function serializeMe(user: {
     autoLockMinutes: number;
     onboardingCompletedAt: Date | null;
     tutorialCompletedAt: Date | null;
+    guidesSeen: string[];
+    guidesOff: boolean;
   } | null;
+  currencies?: { code: string; isPrincipal: boolean }[];
 }) {
   return {
     id: user.id,
@@ -45,8 +48,11 @@ function serializeMe(user: {
           autoLockMinutes: user.preferences.autoLockMinutes,
           onboardingCompleted: user.preferences.onboardingCompletedAt !== null,
           tutorialCompleted: user.preferences.tutorialCompletedAt !== null,
+          guidesSeen: user.preferences.guidesSeen,
+          guidesOff: user.preferences.guidesOff,
         }
       : null,
+    principalCurrency: user.currencies?.find((c) => c.isPrincipal)?.code ?? "COP",
   };
 }
 
@@ -83,6 +89,9 @@ const updatePreferencesSchema = z.object({
     .optional(),
   onboardingCompleted: z.boolean().optional(),
   tutorialCompleted: z.boolean().optional(),
+  // Mini-guides (ONBOARDING.md §3): the full seen list, and "Omitir guías".
+  guidesSeen: z.array(z.enum(["inicio", "movimientos", "planes", "reportes", "billeteras"])).max(10).optional(),
+  guidesOff: z.boolean().optional(),
 });
 
 const verifyPasswordSchema = z.object({
@@ -99,7 +108,7 @@ export async function meRoutes(app: FastifyInstance) {
   app.get("/me", { preHandler: app.authenticate }, async (request, reply) => {
     const user = await prisma.user.findUnique({
       where: { id: request.userId },
-      include: { preferences: true, authIdentities: { where: { provider: "PASSWORD" }, select: { provider: true, credentialUpdatedAt: true } } },
+      include: { preferences: true, currencies: true, authIdentities: { where: { provider: "PASSWORD" }, select: { provider: true, credentialUpdatedAt: true } } },
     });
 
     if (!user) {
@@ -151,7 +160,7 @@ export async function meRoutes(app: FastifyInstance) {
           phone: body.phone,
           city: body.city,
         },
-        include: { preferences: true, authIdentities: { where: { provider: "PASSWORD" }, select: { provider: true, credentialUpdatedAt: true } } },
+        include: { preferences: true, currencies: true, authIdentities: { where: { provider: "PASSWORD" }, select: { provider: true, credentialUpdatedAt: true } } },
       });
 
       return serializeMe(user);
@@ -246,6 +255,8 @@ export async function meRoutes(app: FastifyInstance) {
         autoLockMinutes: body.autoLockMinutes,
         onboardingCompletedAt: body.onboardingCompleted ? new Date() : undefined,
         tutorialCompletedAt: body.tutorialCompleted ? new Date() : undefined,
+        guidesSeen: body.guidesSeen,
+        guidesOff: body.guidesOff,
       },
       update: {
         language: body.language,
@@ -257,12 +268,14 @@ export async function meRoutes(app: FastifyInstance) {
         autoLockMinutes: body.autoLockMinutes,
         onboardingCompletedAt: body.onboardingCompleted === undefined ? undefined : body.onboardingCompleted ? new Date() : null,
         tutorialCompletedAt: body.tutorialCompleted === undefined ? undefined : body.tutorialCompleted ? new Date() : null,
+        guidesSeen: body.guidesSeen,
+        guidesOff: body.guidesOff,
       },
     });
 
     const user = await prisma.user.findUniqueOrThrow({
       where: { id: request.userId },
-      include: { preferences: true, authIdentities: { where: { provider: "PASSWORD" }, select: { provider: true, credentialUpdatedAt: true } } },
+      include: { preferences: true, currencies: true, authIdentities: { where: { provider: "PASSWORD" }, select: { provider: true, credentialUpdatedAt: true } } },
     });
 
     return serializeMe(user);

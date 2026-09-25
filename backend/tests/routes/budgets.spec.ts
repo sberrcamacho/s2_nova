@@ -101,7 +101,9 @@ describe("budget routes", () => {
       expect(second.statusCode).toBe(409);
     });
 
-    it("allows the same category in a different month", async () => {
+    // Monthly budgets reset every month from their start on, so a later
+    // month overlaps (PRODUCT_ARCHITECTURE §9).
+    it("rejects a second monthly budget for the same category in a later month", async () => {
       const user = await createTestUser();
       const category = await categoryBySlug("entertainment");
       await app.inject({
@@ -116,7 +118,7 @@ describe("budget routes", () => {
         headers: authHeader(user),
         payload: { categoryId: category.id, amount: 100000, month: "2026-08" },
       });
-      expect(res.statusCode).toBe(201);
+      expect(res.statusCode).toBe(409);
     });
   });
 
@@ -143,7 +145,7 @@ describe("budget routes", () => {
       expect(res.json()).toHaveLength(1);
     });
 
-    it("computes status ON_TRACK below 80% spend", async () => {
+    it("computes status ON_TRACK below 65% spend", async () => {
       const user = await createTestUser();
       const wallet = await createAccount(user.id, { initialBalanceMinor: 1000000n });
       const category = await categoryBySlug("food");
@@ -154,14 +156,14 @@ describe("budget routes", () => {
         payload: { categoryId: category.id, amount: 100000, month: "2026-11" },
       });
       const budget = budgetRes.json();
-      await spendAgainstBudget(app, user, wallet.id, category.id, budget.id, 65000);
+      await spendAgainstBudget(app, user, wallet.id, category.id, budget.id, 60000);
 
       const res = await app.inject({ method: "GET", url: "/api/v1/budgets?month=2026-11", headers: authHeader(user) });
       const found = res.json().find((b: { id: string }) => b.id === budget.id);
-      expect(found).toMatchObject({ spent: 65000, percentage: 65, status: "ON_TRACK" });
+      expect(found).toMatchObject({ spent: 60000, percentage: 60, status: "ON_TRACK" });
     });
 
-    it("computes status NEAR_LIMIT at or above 80% spend", async () => {
+    it("computes status NEAR_LIMIT from 65% spend", async () => {
       const user = await createTestUser();
       const wallet = await createAccount(user.id, { initialBalanceMinor: 1000000n });
       const category = await categoryBySlug("food");
@@ -179,7 +181,7 @@ describe("budget routes", () => {
       expect(found).toMatchObject({ percentage: 85, status: "NEAR_LIMIT" });
     });
 
-    it("computes status OVER_BUDGET at or above 100% spend", async () => {
+    it("computes status OVER_BUDGET above 100% spend", async () => {
       const user = await createTestUser();
       const wallet = await createAccount(user.id, { initialBalanceMinor: 1000000n });
       const category = await categoryBySlug("food");

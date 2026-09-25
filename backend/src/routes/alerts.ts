@@ -1,8 +1,10 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { serializeBudget } from "../lib/budgetProgress.js";
-import { monthKeyOf, monthStart } from "../lib/dates.js";
-import { serializeGoal } from "../lib/goalProgress.js";
+import { activeInMonth, serializeBudget } from "../lib/budgetProgress.js";
+import { fromMinor, principalOf } from "../lib/currency.js";
+import { processDueSeries } from "../lib/recurring.js";
+import { dateKey, monthKeyOf } from "../lib/dates.js";
+import { processDuePlans, serializeGoal } from "../lib/goalProgress.js";
 import { loanRepaidMap, outstandingOf } from "../lib/loans.js";
 import { prisma } from "../lib/prisma.js";
 import { dateOnlySchema } from "../lib/validation.js";
@@ -14,6 +16,9 @@ import { resolveToday } from "./summary.js";
 //   2. open loans with a due date
 //   3. this month's budgets at >= 90% of their limit
 //   4. goals at >= 90% but not yet complete
+//   5. "Aporte programado" due (plan with confirmation) — "Confirmar aporte"
+//      / "Omitir esta vez" (PLANS.md §3)
+//   6. "Aporte automático registrado" in the last 7 days
 // Ids are stable per underlying condition (a series' id changes with its
 // next occurrence, a budget's with its month) so clients can remember
 // dismissed/read alerts locally. UI copy stays in the clients (i18n).
@@ -21,30 +26,39 @@ import { resolveToday } from "./summary.js";
 export const BUDGET_ALERT_PERCENTAGE = 90;
 export const GOAL_ALERT_PERCENTAGE = 90;
 
-const dateKey = (date: Date) => date.toISOString().slice(0, 10);
 
 export async function alertRoutes(app: FastifyInstance) {
   app.get("/alerts", { preHandler: app.authenticate }, async (request) => {
     const query = z.object({ today: dateOnlySchema.optional() }).parse(request.query);
     const userId = request.userId!;
     const today = resolveToday(query.today);
+    // Automatic Programados and aportes are recorded before anything reads them.
+    await processDueSeries(userId, today);
+    await processDuePlans(userId, today);
+    const principal = await principalOf(userId);
+    const weekAgo = new Date(today.getTime() - 7 * 86_400_000);
 
     const [series, loans, budgets, goals] = await Promise.all([
       prisma.recurringSeries.findMany({
-        where: { userId, active: true, nextOccurrenceDate: { lte: today } },
+        where: { userId, active: true, autoConfirm: false, nextOccurrenceDate: { lte: today } },
         orderBy: { nextOccurrenceDate: "asc" },
       }),
       prisma.transaction.findMany({
         where: { userId, status: "COMPLETED", loanKind: { not: null }, loanSettledAt: null, dueDate: { not: null } },
         orderBy: { dueDate: "asc" },
       }),
-      prisma.budget.findMany({ where: { userId, startDate: monthStart(monthKeyOf(today)) } }),
-      prisma.goal.findMany({ where: { userId } }),
+      prisma.budget.findMany({ where: { userId, ...activeInMonth(monthKeyOf(today)) } }),
+      prisma.goal.findMany({ where: { userId }, include: { plan: true } }),
     ]);
 
     const repaid = await loanRepaidMap(loans.map((loan) => loan.id));
-    const budgetProgress = await Promise.all(budgets.map((budget) => serializeBudget(userId, budget)));
-    const goalProgress = await Promise.all(goals.map(serializeGoal));
+    const budgetProgress = await Promise.all(budgets.map((budget) => serializeBudget(userId, budget, monthKeyOf(today))));
+    const goalProgress = await Promise.all(goals.map((goal) => serializeGoal(goal, today)));
+    const autoContributions = await prisma.transaction.findMany({
+      where: { userId, status: "COMPLETED", goal: { plan: { autoConfirm: true } }, transactionDate: { gte: weekAgo, lte: today } },
+      include: { goal: true, account: true },
+      orderBy: { transactionDate: "desc" },
+    });
 
     const seriesAlerts = series.map((item) => ({
       id: `series:${item.id}:${dateKey(item.nextOccurrenceDate)}`,
@@ -52,7 +66,8 @@ export async function alertRoutes(app: FastifyInstance) {
       seriesId: item.id,
       name: item.name,
       type: item.type,
-      amount: item.amountMinor,
+      amount: fromMinor(item.amountMinor, item.currency),
+      currency: item.currency,
       categoryId: item.categoryId,
       dueDate: item.nextOccurrenceDate,
       overdue: item.nextOccurrenceDate < today,
@@ -94,11 +109,40 @@ export async function alertRoutes(app: FastifyInstance) {
         kind: "GOAL_NEAR" as const,
         goalId: goal.id,
         name: goal.name,
+        icon: goal.icon,
         themeIcon: goal.themeIcon,
         percentage: goal.percentage,
         remaining: goal.remaining,
       }));
 
-    return [...seriesAlerts, ...loanAlerts, ...budgetAlerts, ...goalAlerts];
+    const planDueAlerts = goalProgress
+      .filter((goal) => goal.plan?.due)
+      .map((goal) => ({
+        id: `goalplan:${goal.id}:${dateKey(goal.plan!.nextDate)}`,
+        kind: "GOAL_PLAN_DUE" as const,
+        goalId: goal.id,
+        name: goal.name,
+        icon: goal.icon,
+        amount: goal.plan!.amount,
+        currency: principal,
+        accountId: goal.plan!.accountId,
+        dueDate: goal.plan!.nextDate,
+        overdue: goal.plan!.nextDate < today,
+      }));
+
+    const autoAlerts = autoContributions.map((row) => ({
+      id: `goalauto:${row.id}`,
+      kind: "GOAL_PLAN_AUTO" as const,
+      goalId: row.goalId!,
+      name: row.goal!.name,
+      icon: row.goal!.icon,
+      amount: fromMinor(row.amountMinor, row.currency),
+      currency: row.currency,
+      accountId: row.accountId,
+      walletName: row.account.name,
+      date: row.transactionDate,
+    }));
+
+    return [...seriesAlerts, ...planDueAlerts, ...loanAlerts, ...budgetAlerts, ...goalAlerts, ...autoAlerts];
   });
 }

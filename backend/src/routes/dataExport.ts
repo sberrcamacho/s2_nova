@@ -65,7 +65,7 @@ export async function dataExportRoutes(app: FastifyInstance) {
       block(
         "Presupuestos",
         ["Nombre", "Categoría", "Límite mensual", "Desde", "Hasta"],
-        budgets.map((budget) => [budget.name, budget.category.name, budget.amountMinor, day(budget.startDate), day(budget.endDate)]),
+        budgets.map((budget) => [budget.name, budget.category?.name ?? "Personalizado", budget.amountMinor, day(budget.startDate), day(budget.endDate)]),
       ),
       block(
         "Metas",

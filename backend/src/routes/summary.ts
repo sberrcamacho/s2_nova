@@ -2,7 +2,39 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { monthEnd, monthKeyOf, monthStart, parseDateOnly } from "../lib/dates.js";
 import { loanRepaidMap, outstandingOf } from "../lib/loans.js";
+import { convertMinor, principalOf } from "../lib/currency.js";
 import { prisma } from "../lib/prisma.js";
+import type { Prisma } from "@prisma/client";
+
+// Movements in the principal currency: each row's wallet amount converted
+// from its wallet's currency (CURRENCIES_AND_WALLETS.md §1). Same shape as
+// a Prisma groupBy row so the aggregations below read one per movement.
+async function principalRows(userId: string, where: Prisma.TransactionWhereInput) {
+  const [rows, wallets, principal] = await Promise.all([
+    prisma.transaction.findMany({
+      where: { userId, ...where },
+      select: { type: true, categoryId: true, merchant: true, transactionDate: true, amountMinor: true, walletAmountMinor: true, accountId: true },
+    }),
+    prisma.account.findMany({ where: { userId }, select: { id: true, currency: true } }),
+    principalOf(userId),
+  ]);
+  const currencyOf = new Map(wallets.map((w) => [w.id, w.currency]));
+  return rows.map((row) => ({
+    type: row.type,
+    categoryId: row.categoryId,
+    merchant: row.merchant,
+    transactionDate: row.transactionDate,
+    _sum: { amountMinor: convertMinor(row.walletAmountMinor ?? row.amountMinor, currencyOf.get(row.accountId) ?? principal, principal) },
+  }));
+}
+
+export async function walletTotalMinor(userId: string): Promise<bigint> {
+  const [accounts, principal] = await Promise.all([
+    prisma.account.findMany({ where: { userId }, select: { currentBalanceMinor: true, currency: true } }),
+    principalOf(userId),
+  ]);
+  return accounts.reduce((sum, a) => sum + convertMinor(a.currentBalanceMinor, a.currency, principal), 0n);
+}
 import { dateOnlySchema, monthKeySchema } from "../lib/validation.js";
 
 // Server-side aggregates for Inicio (and later Reportes), so Android and Web
@@ -39,7 +71,7 @@ const reportQuerySchema = z.object({
 export const CATEGORY_RISE_PERCENTAGE = 50;
 // Categories that always count as fixed spending, on top of the categories
 // of the user's active expense Programados.
-const FIXED_CATEGORY_SLUGS = ["bills", "subscriptions"];
+const FIXED_CATEGORY_SLUGS = ["exp.housing", "exp.utilities", "exp.debt"];
 // Patrimonio's balance history is always the last six months ("ÚLTIMOS SEIS
 // MESES"), whatever the selected range.
 const NET_WORTH_MONTHS = 6;
@@ -57,15 +89,10 @@ export async function summaryRoutes(app: FastifyInstance) {
     const currentMonth = monthKeyOf(resolveToday(query.today));
     const monthKeys = Array.from({ length: query.count }, (_, index) => shiftMonth(currentMonth, index - query.count + 1));
 
-    const rows = await prisma.transaction.groupBy({
-      by: ["type", "transactionDate"],
-      where: {
-        userId: request.userId,
-        status: "COMPLETED",
-        type: { in: ["INCOME", "EXPENSE"] },
-        transactionDate: { gte: monthStart(monthKeys[0]!), lte: monthEnd(currentMonth) },
-      },
-      _sum: { amountMinor: true },
+    const rows = await principalRows(request.userId!, {
+      status: "COMPLETED",
+      type: { in: ["INCOME", "EXPENSE"] },
+      transactionDate: { gte: monthStart(monthKeys[0]!), lte: monthEnd(currentMonth) },
     });
 
     const totals = new Map(monthKeys.map((key) => [key, { income: 0n, expenses: 0n }]));
@@ -89,16 +116,14 @@ export async function summaryRoutes(app: FastifyInstance) {
     const query = categoriesQuerySchema.parse(request.query);
     const month = query.month ?? monthKeyOf(resolveToday(query.today));
 
-    const rows = await prisma.transaction.groupBy({
-      by: ["categoryId"],
-      where: {
-        userId: request.userId,
-        status: "COMPLETED",
-        type: "EXPENSE",
-        transactionDate: { gte: monthStart(month), lte: monthEnd(month) },
-      },
-      _sum: { amountMinor: true },
+    const movements = await principalRows(request.userId!, {
+      status: "COMPLETED",
+      type: "EXPENSE",
+      transactionDate: { gte: monthStart(month), lte: monthEnd(month) },
     });
+    const byCategory = new Map<string, bigint>();
+    for (const m of movements) byCategory.set(m.categoryId, (byCategory.get(m.categoryId) ?? 0n) + m._sum.amountMinor);
+    const rows = [...byCategory.entries()].map(([categoryId, amountMinor]) => ({ categoryId, _sum: { amountMinor } }));
 
     const total = rows.reduce((sum, row) => sum + (row._sum.amountMinor ?? 0n), 0n);
     const categories = rows
@@ -132,25 +157,16 @@ export async function summaryRoutes(app: FastifyInstance) {
     const previousKeys = rangeKeys.map((key) => shiftMonth(key, -query.range));
 
     const [rows, laterNet, accounts, fixedCategories, series, loans] = await Promise.all([
-      prisma.transaction.groupBy({
-        by: ["type", "categoryId", "merchant", "transactionDate"],
-        where: {
-          userId,
-          status: "COMPLETED",
-          type: { in: ["INCOME", "EXPENSE"] },
-          transactionDate: { gte: monthStart(firstMonth), lte: monthEnd(currentMonth) },
-        },
-        _sum: { amountMinor: true },
+      principalRows(userId, {
+        status: "COMPLETED",
+        type: { in: ["INCOME", "EXPENSE"] },
+        transactionDate: { gte: monthStart(firstMonth), lte: monthEnd(currentMonth) },
       }),
       // Anything dated after this month still moved the balance, so the
       // history walks back from today's wallets through those rows too.
-      prisma.transaction.groupBy({
-        by: ["type"],
-        where: { userId, status: "COMPLETED", type: { in: ["INCOME", "EXPENSE"] }, transactionDate: { gt: monthEnd(currentMonth) } },
-        _sum: { amountMinor: true },
-      }),
-      prisma.account.findMany({ where: { userId }, select: { currentBalanceMinor: true } }),
-      prisma.category.findMany({ where: { slug: { in: FIXED_CATEGORY_SLUGS } }, select: { id: true } }),
+      principalRows(userId, { status: "COMPLETED", type: { in: ["INCOME", "EXPENSE"] }, transactionDate: { gt: monthEnd(currentMonth) } }),
+      walletTotalMinor(userId),
+      prisma.category.findMany({ where: { userId: null, slug: { in: FIXED_CATEGORY_SLUGS } }, select: { id: true } }),
       prisma.recurringSeries.findMany({ where: { userId, active: true, type: "EXPENSE" }, select: { categoryId: true } }),
       prisma.transaction.findMany({
         where: { userId, status: "COMPLETED", loanKind: { not: null } },
@@ -215,7 +231,7 @@ export async function summaryRoutes(app: FastifyInstance) {
 
     const monthExpenses = byMonth.get(currentMonth)?.expenses ?? 0n;
     const peak = weekdays.reduce((best, amount, day) => (amount > weekdays[best]! ? day : best), 0);
-    const walletTotal = accounts.reduce((sum, account) => sum + account.currentBalanceMinor, 0n);
+    const walletTotal = accounts;
     const averageExpenses = Number(totals.expenses) / query.range;
 
     const incomeSources = [...sources.values()]
@@ -234,7 +250,7 @@ export async function summaryRoutes(app: FastifyInstance) {
 
     // Month-end balances, newest first: today's wallets minus everything that
     // happened after each month closed.
-    let after = (laterNet.find((r) => r.type === "INCOME")?._sum.amountMinor ?? 0n) - (laterNet.find((r) => r.type === "EXPENSE")?._sum.amountMinor ?? 0n);
+    let after = laterNet.reduce((sum, r) => sum + (r.type === "INCOME" ? r._sum.amountMinor : -r._sum.amountMinor), 0n);
     const history: { month: string; balance: bigint }[] = [];
     for (let index = 0; index < NET_WORTH_MONTHS; index++) {
       const key = shiftMonth(currentMonth, -index);

@@ -1,9 +1,13 @@
 import type { FastifyInstance } from "fastify";
+import type { RecurringSeries } from "@prisma/client";
 import { z } from "zod";
-import { addInterval, parseDateOnly } from "../lib/dates.js";
+import { CURRENCY_CODES, fromMinor, toMinor } from "../lib/currency.js";
+import { parseDateOnly } from "../lib/dates.js";
+import { advanceData, materializeOccurrence, processDueSeries } from "../lib/recurring.js";
 import { prisma } from "../lib/prisma.js";
 import { dateOnlySchema } from "../lib/validation.js";
 import { paymentMethodForAccountType } from "./transactions.js";
+import { resolveToday } from "./summary.js";
 
 // Recurring definitions ("Netflix, $45,000/month") — see schema.prisma's
 // RecurringSeries doc comment for why this is a separate model from
@@ -11,63 +15,67 @@ import { paymentMethodForAccountType } from "./transactions.js";
 // explicitly confirms an occurrence (POST /:id/confirm); nothing here runs
 // on a timer, so re-opening either app never creates a duplicate.
 
-const intervalEnum = z.enum(["WEEKLY", "MONTHLY", "YEARLY"]);
+const intervalEnum = z.enum(["DAILY", "WEEKLY", "MONTHLY", "YEARLY"]);
+const money = z.number().positive().max(1e12);
 const seriesTypeEnum = z.enum(["INCOME", "EXPENSE"]);
 const dateOnly = dateOnlySchema;
 
 const createSeriesSchema = z.object({
   name: z.string().trim().min(1).max(120),
   type: seriesTypeEnum,
-  amount: z.number().int().positive(),
+  amount: money,
+  currency: z.enum(CURRENCY_CODES).optional(),
   accountId: z.string().uuid(),
   categoryId: z.string().uuid(),
+  subcategoryId: z.string().uuid().nullable().optional(),
   interval: intervalEnum,
   startDate: dateOnly,
+  occurrences: z.number().int().min(1).max(999).nullable().optional(),
+  endDate: dateOnly.nullable().optional(),
+  autoConfirm: z.boolean().optional(),
 });
 
 const updateSeriesSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
   type: seriesTypeEnum.optional(),
-  amount: z.number().int().positive().optional(),
+  amount: money.optional(),
+  currency: z.enum(CURRENCY_CODES).optional(),
   accountId: z.string().uuid().optional(),
   categoryId: z.string().uuid().optional(),
+  subcategoryId: z.string().uuid().nullable().optional(),
   interval: intervalEnum.optional(),
   nextOccurrenceDate: dateOnly.optional(),
   active: z.boolean().optional(),
+  occurrences: z.number().int().min(1).max(999).nullable().optional(),
+  endDate: dateOnly.nullable().optional(),
+  autoConfirm: z.boolean().optional(),
 });
 
 const confirmSchema = z.object({
   date: dateOnly.optional(),
-  amount: z.number().int().positive().optional(),
+  amount: money.optional(),
 });
 
-function serializeSeries(series: {
-  id: string;
-  name: string;
-  type: string;
-  amountMinor: bigint;
-  accountId: string;
-  categoryId: string;
-  paymentMethod: string;
-  interval: string;
-  nextOccurrenceDate: Date;
-  active: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}) {
+function serializeSeries(series: RecurringSeries) {
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
   return {
     id: series.id,
     name: series.name,
     type: series.type,
-    amount: series.amountMinor,
+    amount: fromMinor(series.amountMinor, series.currency),
+    currency: series.currency,
     accountId: series.accountId,
     categoryId: series.categoryId,
+    subcategoryId: series.subcategoryId,
     paymentMethod: series.paymentMethod,
     interval: series.interval,
     nextOccurrenceDate: series.nextOccurrenceDate,
-    isDue: series.active && series.nextOccurrenceDate <= today,
+    occurrences: series.occurrences,
+    occurrencesDone: series.occurrencesDone,
+    endDate: series.endDate,
+    autoConfirm: series.autoConfirm,
+    isDue: series.active && !series.autoConfirm && series.nextOccurrenceDate <= today,
     active: series.active,
     createdAt: series.createdAt,
     updatedAt: series.updatedAt,
@@ -76,6 +84,8 @@ function serializeSeries(series: {
 
 export async function recurringSeriesRoutes(app: FastifyInstance) {
   app.get("/recurring-series", { preHandler: app.authenticate }, async (request) => {
+    const query = z.object({ today: dateOnly.optional() }).parse(request.query);
+    await processDueSeries(request.userId!, resolveToday(query.today));
     const series = await prisma.recurringSeries.findMany({
       where: { userId: request.userId },
       orderBy: { nextOccurrenceDate: "asc" },
@@ -97,12 +107,17 @@ export async function recurringSeriesRoutes(app: FastifyInstance) {
         userId,
         name: body.name,
         type: body.type,
-        amountMinor: BigInt(body.amount),
+        amountMinor: toMinor(body.amount, body.currency ?? account.currency),
+        currency: body.currency ?? account.currency,
         accountId: body.accountId,
         categoryId: body.categoryId,
+        subcategoryId: body.subcategoryId ?? null,
         paymentMethod: paymentMethodForAccountType(account.type),
         interval: body.interval,
         nextOccurrenceDate: parseDateOnly(body.startDate),
+        occurrences: body.occurrences ?? null,
+        endDate: body.endDate ? parseDateOnly(body.endDate) : null,
+        autoConfirm: body.autoConfirm ?? false,
       },
     });
 
@@ -137,9 +152,14 @@ export async function recurringSeriesRoutes(app: FastifyInstance) {
       data: {
         name: body.name,
         type: body.type,
-        amountMinor: body.amount !== undefined ? BigInt(body.amount) : undefined,
+        amountMinor: body.amount !== undefined ? toMinor(body.amount, body.currency ?? existing.currency) : undefined,
+        currency: body.currency,
         accountId: body.accountId,
         categoryId: body.categoryId,
+        subcategoryId: body.subcategoryId,
+        occurrences: body.occurrences,
+        endDate: body.endDate === undefined ? undefined : body.endDate ? parseDateOnly(body.endDate) : null,
+        autoConfirm: body.autoConfirm,
         paymentMethod,
         interval: body.interval,
         nextOccurrenceDate: body.nextOccurrenceDate ? parseDateOnly(body.nextOccurrenceDate) : undefined,
@@ -175,35 +195,11 @@ export async function recurringSeriesRoutes(app: FastifyInstance) {
     if (!series.active) return reply.status(422).send({ error: "This recurring series is paused." });
 
     const transactionDate = body.date ? parseDateOnly(body.date) : new Date();
-    const amountMinor = body.amount !== undefined ? BigInt(body.amount) : series.amountMinor;
+    const amountMinor = body.amount !== undefined ? toMinor(body.amount, series.currency) : series.amountMinor;
 
     const result = await prisma.$transaction(async (tx) => {
-      const transaction = await tx.transaction.create({
-        data: {
-          userId,
-          accountId: series.accountId,
-          type: series.type,
-          status: "COMPLETED",
-          amountMinor,
-          categoryId: series.categoryId,
-          paymentMethod: series.paymentMethod,
-          description: series.name,
-          recurringSeriesId: series.id,
-          transactionDate,
-        },
-      });
-
-      if (series.type === "EXPENSE") {
-        await tx.account.update({ where: { id: series.accountId }, data: { currentBalanceMinor: { decrement: amountMinor } } });
-      } else {
-        await tx.account.update({ where: { id: series.accountId }, data: { currentBalanceMinor: { increment: amountMinor } } });
-      }
-
-      const updatedSeries = await tx.recurringSeries.update({
-        where: { id: series.id },
-        data: { nextOccurrenceDate: addInterval(series.nextOccurrenceDate, series.interval as "WEEKLY" | "MONTHLY" | "YEARLY") },
-      });
-
+      const transaction = await materializeOccurrence(tx, series, transactionDate, amountMinor);
+      const updatedSeries = await tx.recurringSeries.update({ where: { id: series.id }, data: advanceData(series) });
       return { transaction, updatedSeries };
     });
 
@@ -213,7 +209,7 @@ export async function recurringSeriesRoutes(app: FastifyInstance) {
         id: result.transaction.id,
         accountId: result.transaction.accountId,
         type: result.transaction.type,
-        amount: result.transaction.amountMinor,
+        amount: fromMinor(result.transaction.amountMinor, result.transaction.currency),
         categoryId: result.transaction.categoryId,
         description: result.transaction.description,
         date: result.transaction.transactionDate,
@@ -232,7 +228,7 @@ export async function recurringSeriesRoutes(app: FastifyInstance) {
 
     const updated = await prisma.recurringSeries.update({
       where: { id: series.id },
-      data: { nextOccurrenceDate: addInterval(series.nextOccurrenceDate, series.interval as "WEEKLY" | "MONTHLY" | "YEARLY") },
+      data: advanceData(series),
     });
     return serializeSeries(updated);
   });
