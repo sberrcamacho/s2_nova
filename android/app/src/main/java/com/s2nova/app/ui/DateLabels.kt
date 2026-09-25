@@ -24,3 +24,10 @@ fun longDateLabel(iso: String, language: AppLanguage): String {
     return if (language == AppLanguage.EN) "${MONTHS_LONG_EN[date.monthValue - 1]} ${date.dayOfMonth}, ${date.year}"
     else "${date.dayOfMonth} de ${MONTHS_LONG_ES[date.monthValue - 1]} de ${date.year}"
 }
+
+// "nov 2024" (Perfil's "desde nov 2024").
+fun monthYearShortLabel(iso: String, language: AppLanguage): String {
+    val date = LocalDate.parse(iso.take(10))
+    val month = if (language == AppLanguage.EN) MONTHS_ABBR_EN[date.monthValue - 1] else MONTHS_ABBR_ES[date.monthValue - 1]
+    return "$month ${date.year}"
+}

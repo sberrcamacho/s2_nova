@@ -43,6 +43,8 @@ fun NovaDraftSheet(
     // Mockup sheet note under the title (11 --dim, line-height 1.45).
     subtitle: androidx.compose.ui.text.AnnotatedString? = null,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+    // .65 for every draft form; the Ajustes tutorial sheet uses .72.
+    scrimAlpha: Float = 0.65f,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = NovaColors.current
@@ -51,7 +53,7 @@ fun NovaDraftSheet(
         sheetState = sheetState,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         containerColor = colors.sheetSurface,
-        scrimColor = Color.Black.copy(alpha = 0.65f),
+        scrimColor = Color.Black.copy(alpha = scrimAlpha),
         dragHandle = {
             Box(
                 modifier = Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 4.dp),

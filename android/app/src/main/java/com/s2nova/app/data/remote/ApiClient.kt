@@ -42,6 +42,14 @@ object ApiClient {
         .readTimeout(45, TimeUnit.SECONDS)
         .writeTimeout(45, TimeUnit.SECONDS)
 
+    // Web's Ajustes › Sesiones activas names each session from the User-Agent
+    // its login sent; this one reads "S2 Nova app · <model>" there (see
+    // backend/src/lib/devices.ts).
+    private val userAgent = "S2Nova-Android/${BuildConfig.VERSION_NAME} (${android.os.Build.MODEL})"
+
+    private fun OkHttpClient.Builder.identifyApp(): OkHttpClient.Builder =
+        addInterceptor { chain -> chain.proceed(chain.request().newBuilder().header("User-Agent", userAgent).build()) }
+
     // Unauthenticated — used for register/login (no token exists yet) and
     // for refresh/logout (authorized by the refresh token, not the access
     // token). Also used internally by `api`'s Authenticator to perform the
@@ -49,7 +57,7 @@ object ApiClient {
     val authApi: ApiService by lazy {
         Retrofit.Builder()
             .baseUrl(ensureTrailingSlash(BuildConfig.API_BASE_URL))
-            .client(OkHttpClient.Builder().addInterceptor(loggingInterceptor()).applyTimeouts().build())
+            .client(OkHttpClient.Builder().identifyApp().addInterceptor(loggingInterceptor()).applyTimeouts().build())
             .addConverterFactory(json.asConverterFactory(contentType))
             .build()
             .create()
@@ -61,6 +69,7 @@ object ApiClient {
     val api: ApiService by lazy {
         val sessionStore = SessionStore.getInstance(appContext)
         val client = OkHttpClient.Builder()
+            .identifyApp()
             .applyTimeouts()
             .addInterceptor(loggingInterceptor())
             .addInterceptor { chain ->

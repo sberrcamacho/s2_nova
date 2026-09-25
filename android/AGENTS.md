@@ -79,12 +79,14 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   optional `phone`/`city` (`User`, matching `backend/prisma/schema.prisma`'s
   `User` model) — both editable from `SettingsScreen` and shown on
   `ProfileScreen` as `"{city} · desde {mes} {año}"`, per the mockup. Editing
-  name/email (`AuthRepository.updateProfile`, now also carrying
-  `phone`/`city`) and changing/creating a password
-  (`AuthRepository.changePassword`, from Settings) both call the real
-  backend; a successful password change revokes every refresh token
-  server-side, so the app logs itself out and returns to `/login` rather
-  than keep using a session the server will now reject.
+  name/phone/city (`AuthRepository.updateProfile`) calls the real backend.
+  Ajustes follows the Android v2 mockup exactly, so changing the password,
+  managing sessions and deleting the account are Web-only (Ajustes ›
+  Seguridad); the email is read-only here. "Repetir el tutorial" opens the
+  mockup's four-step sheet inside Ajustes. Demo mode has no switch any more;
+  signing out also leaves it. Every request carries
+  `User-Agent: S2Nova-Android/<version> (<model>)` so Web's session list
+  names this device.
 - **Privacy and session preferences** (`UserPreferences.blurBalance`/
   `.autoLockMinutes`, `SettingsScreen`'s "Privacidad y sesión" card, per the
   mockup): `blurBalance` puts a `Modifier.blur` over Home's total-balance
@@ -221,8 +223,7 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   optional step has a Skip; the flow never blocks reaching Home. The local
   DataStore flag is synced from the backend's `user_preferences.onboarding_completed_at`/`tutorial_completed_at`
   on every `/me` fetch (`AuthRepository.fetchAndSyncMe`), so a returning
-  user on a new device/reinstall isn't incorrectly re-onboarded. Replay the
-  tutorial alone (not the full flow) from Settings. If the income step's
+  user on a new device/reinstall isn't incorrectly re-onboarded. If the income step's
   amount was filled in, `OnboardingWalletScreen` creates a monthly
   `RecurringSeries` ("Salario") once the wallet is chosen/created —
   income entered during onboarding is never a one-off transaction created

@@ -45,6 +45,10 @@ data class NovaExtraColors(
     val pillSurface: Color,
     val pillText: Color,
     val pillBorder: Color = Color(0x666F6F82),
+    // Mockup --bg-deep (read-only field, segmented control track) and
+    // --grip2 (row chevrons).
+    val bgDeep: Color,
+    val grip2: Color,
 )
 
 private val LightExtraColors = NovaExtraColors(
@@ -76,6 +80,8 @@ private val LightExtraColors = NovaExtraColors(
     dividerSubtle = LightDividerSubtle,
     pillSurface = LightBgSecondary,
     pillText = Color(0xFF23232C),
+    bgDeep = Color(0xFFECECF3),
+    grip2 = Color(0xFFB0B0BE),
 )
 
 private val DarkExtraColors = NovaExtraColors(
@@ -107,6 +113,8 @@ private val DarkExtraColors = NovaExtraColors(
     dividerSubtle = DarkDividerSubtle,
     pillSurface = DarkSurfaceElevated,
     pillText = Color(0xFFE6E6EE),
+    bgDeep = Color(0xFF09090E),
+    grip2 = Color(0xFF43434F),
 )
 
 val LocalNovaExtraColors = staticCompositionLocalOf { LightExtraColors }

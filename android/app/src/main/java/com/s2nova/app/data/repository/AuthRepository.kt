@@ -7,7 +7,6 @@ import com.s2nova.app.data.model.Currency
 import com.s2nova.app.data.model.User
 import com.s2nova.app.data.model.UserPreferences
 import com.s2nova.app.data.remote.ApiClient
-import com.s2nova.app.data.remote.ChangePasswordRequest
 import com.s2nova.app.data.remote.GoogleLoginRequest
 import com.s2nova.app.data.remote.LoginRequest
 import com.s2nova.app.data.remote.MeResponse
@@ -150,21 +149,6 @@ class AuthRepository(
     suspend fun persistPreferences(request: com.s2nova.app.data.remote.UpdatePreferencesRequest) {
         if (DemoModeFlag.active) return
         runCatching { ApiClient.api.updatePreferences(request) }
-    }
-
-    // The backend revokes every refresh token on a successful password
-    // change (see POST /me/password), including this device's — so the
-    // caller must follow a success with logout() rather than keep using a
-    // session the server will now reject.
-    suspend fun changePassword(currentPassword: String?, newPassword: String): Result<Unit> = runCatching {
-        if (DemoModeFlag.active) error("No disponible en modo demo.")
-        val response = ApiClient.api.changePassword(ChangePasswordRequest(currentPassword, newPassword))
-        // Unlike the fire-and-forget delete endpoints elsewhere in this app,
-        // a wrong current password (401) must surface as an error rather
-        // than silently "succeeding" and logging the user out for nothing.
-        if (!response.isSuccessful) {
-            throw retrofit2.HttpException(response)
-        }
     }
 
     suspend fun logout() {

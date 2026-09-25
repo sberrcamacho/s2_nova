@@ -19,6 +19,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.s2nova.app.data.AppContainer
+import com.s2nova.app.data.repository.DemoModeFlag
 import com.s2nova.app.data.model.LoanKind
 import com.s2nova.app.ui.AlertTarget
 import com.s2nova.app.ui.components.AddActionsSheet
@@ -268,6 +269,9 @@ fun NovaApp() {
                     onOpenRecurring = { navController.navigate(NovaDestinations.RECURRING) },
                     onLogout = {
                         scope.launch {
+                            // Demo mode has no switch of its own any more, so
+                            // signing out is also the way out of it.
+                            if (DemoModeFlag.active) AppContainer.exitDemoMode()
                             AppContainer.authRepository.logout()
                             navController.navigateAsRoot(NovaDestinations.LOGIN)
                         }
@@ -275,19 +279,7 @@ fun NovaApp() {
                 )
             }
             composable(NovaDestinations.SETTINGS) {
-                SettingsScreen(
-                    onBack = { navController.popBackStack() },
-                    onReplayTutorial = {
-                        scope.launch {
-                            AppContainer.onboardingStore.resetTutorial()
-                            navController.navigateAsRoot(NovaDestinations.ONBOARDING_TUTORIAL)
-                        }
-                    },
-                    // The password-change flow already logged the local
-                    // session out itself (see SettingsScreen's
-                    // ChangePasswordDialog) — this callback is nav-only.
-                    onPasswordChanged = { navController.navigateAsRoot(NovaDestinations.LOGIN) },
-                )
+                SettingsScreen(onBack = { navController.popBackStack() })
             }
         }
     }

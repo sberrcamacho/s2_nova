@@ -46,15 +46,17 @@ fun AmountText(amount: Double, type: TransactionType, modifier: Modifier = Modif
     )
 }
 
-// Track 42x24, knob 18dp white — Material3's stock Switch can't be sized to
-// match the mockup exactly, so this is a small purpose-built replacement.
+// The mockup's switch: a 42x24 track with 3px padding and no box-sizing,
+// so it renders 48x30, and an 18dp white knob that sits at the top of the
+// padded area (the flex row doesn't centre it). Material3's Switch can't
+// be sized to match, hence this small replacement.
 @Composable
 fun NovaSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit, modifier: Modifier = Modifier) {
     val trackColor = if (checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
-    val offset by animateDpAsState(targetValue = if (checked) 21.dp else 3.dp, animationSpec = tween(150), label = "switchKnob")
+    val offset by animateDpAsState(targetValue = if (checked) 27.dp else 3.dp, animationSpec = tween(150), label = "switchKnob")
     Box(
         modifier = modifier
-            .size(width = 42.dp, height = 24.dp)
+            .size(width = 48.dp, height = 30.dp)
             .clip(RoundedCornerShape(50))
             .background(trackColor)
             .clickable { onCheckedChange(!checked) },

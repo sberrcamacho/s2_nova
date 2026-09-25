@@ -85,18 +85,9 @@ data class UpdateProfileRequest(
 )
 
 // A standalone re-auth check for the auto-lock overlay — never rotates
-// tokens or mutates the account, unlike ChangePasswordRequest.
+// tokens or mutates the account.
 @Serializable
 data class VerifyPasswordRequest(val password: String)
-
-// currentPassword is omitted (null) only when the user has no PASSWORD
-// identity yet (Google-only account setting a password for the first
-// time) — see backend/src/routes/me.ts's POST /me/password.
-@Serializable
-data class ChangePasswordRequest(
-    val currentPassword: String? = null,
-    val newPassword: String,
-)
 
 @Serializable
 data class AccountDto(
