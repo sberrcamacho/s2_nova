@@ -50,4 +50,69 @@ export const summaryService = {
     )
     return { month: body.month, total: body.total, categories }
   },
+
+  getReport,
+}
+
+// Reportes (backend GET /summary/report): every figure both clients show,
+// for a 3/6/12-month range ending with the current month.
+export type ReportRange = 3 | 6 | 12
+
+export interface ReportTotals {
+  income: number
+  expenses: number
+  savings: number
+  savingsRate: number // whole-number %
+}
+
+export interface ReportCategory {
+  category: CategoryId
+  amount: number
+  previousAmount: number
+  change: number | null // % against the previous month; null when it had none
+  rising: boolean
+}
+
+export interface IncomeSource {
+  category: CategoryId
+  merchant: string | null
+  amount: number
+  percentage: number
+  monthlyMin: number
+  monthlyMax: number
+}
+
+export interface LoanSide {
+  outstanding: number
+  people: number
+  settled: number
+}
+
+export interface Report {
+  range: ReportRange
+  month: string
+  months: MonthTotals[]
+  totals: ReportTotals
+  previousTotals: ReportTotals
+  categories: ReportCategory[]
+  dailyAverage: number
+  peakWeekday: number | null // 0 = Sunday
+  fixedShare: number | null
+  runwayMonths: number | null
+  incomeSources: IncomeSource[]
+  netWorth: { wallets: number; lent: LoanSide; borrowed: LoanSide; history: { month: string; balance: number }[] }
+}
+
+type BackendReport = Omit<Report, 'categories' | 'incomeSources'> & {
+  categories: (Omit<ReportCategory, 'category'> & { categoryId: string })[]
+  incomeSources: (Omit<IncomeSource, 'category'> & { categoryId: string })[]
+}
+
+export async function getReport(range: ReportRange, today: string = todayISO()): Promise<Report> {
+  const body = await apiClient.get<BackendReport>(`/summary/report?range=${range}&today=${today}`)
+  const [categories, incomeSources] = await Promise.all([
+    Promise.all(body.categories.map(async ({ categoryId, ...row }) => ({ ...row, category: await categorySlugFor(categoryId) }))),
+    Promise.all(body.incomeSources.map(async ({ categoryId, ...row }) => ({ ...row, category: await categorySlugFor(categoryId) }))),
+  ])
+  return { ...body, categories, incomeSources }
 }

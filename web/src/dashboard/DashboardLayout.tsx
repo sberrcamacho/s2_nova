@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { Sidebar } from '@/dashboard/components/Sidebar'
 import { Header } from '@/dashboard/components/Header'
-import { DashboardFiltersProvider } from '@/dashboard/DashboardFiltersContext'
 import { NewTransactionPanel } from '@/components/panels/NewTransactionPanel'
 import { useTranslation } from '@/state/useTranslation'
 import type { TranslationKey } from '@/lib/i18n/translations'
@@ -14,7 +13,7 @@ const PAGE_META: Record<string, { titleKey: TranslationKey; subtitleKey?: Transl
   '/inicio': { titleKey: 'v2.nav.inicio', ownHeader: true },
   '/movimientos': { titleKey: 'v2.nav.movimientos', ownHeader: true },
   '/planes': { titleKey: 'v2.nav.planes', ownHeader: true },
-  '/reportes': { titleKey: 'v2.nav.reportes', subtitleKey: 'page.analytics.subtitle' },
+  '/reportes': { titleKey: 'v2.nav.reportes', ownHeader: true },
   '/ajustes': { titleKey: 'v2.nav.ajustes', subtitleKey: 'page.settings.subtitle' },
 }
 
@@ -44,7 +43,7 @@ export function DashboardLayout() {
   }, [])
 
   return (
-    <DashboardFiltersProvider>
+    <>
       <div className="flex h-screen overflow-hidden bg-v2-bg text-v2-text [line-height:normal]">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
@@ -67,6 +66,6 @@ export function DashboardLayout() {
         </div>
       </div>
       {newTxOpen && <NewTransactionPanel onClose={closeNewTx} />}
-    </DashboardFiltersProvider>
+    </>
   )
 }

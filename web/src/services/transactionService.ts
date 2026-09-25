@@ -96,10 +96,8 @@ async function buildQuery(filters?: TransactionFilters): Promise<string> {
   return params.toString()
 }
 
-// Cached snapshot of the last unfiltered fetch — analyticsService and
-// insightsService (Web-exclusive business logic layered on top of already-
-// fetched data) read this synchronously rather than re-awaiting a network
-// call for every derived stat. Only getTransactions()'s unfiltered call
+// Cached snapshot of the last unfiltered fetch, so getTransaction() can
+// answer from memory. Only getTransactions()'s unfiltered call
 // updates it, so a narrowed/filtered fetch never overwrites it with a
 // partial view (nothing currently calls getTransactions with filters —
 // Movimientos loads its month through getMonth — but the guard keeps this
@@ -214,11 +212,5 @@ export const transactionService = {
   // Records an abono (partial or final) — see backend settle-loan.
   async settleLoan(id: string, input: { amount: number; accountId: string; date: string }): Promise<void> {
     await apiClient.post(`/transactions/${id}/settle-loan`, input)
-  },
-
-  // Synchronous escape hatch for analyticsService/insightsService — see the
-  // `cache` doc comment above.
-  _snapshot(): Transaction[] {
-    return cache
   },
 }

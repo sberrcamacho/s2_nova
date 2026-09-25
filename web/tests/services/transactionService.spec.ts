@@ -87,19 +87,28 @@ describe('transactionService', () => {
     expect(result.map((t) => t.id)).toEqual(['t2'])
   })
 
-  it('a filtered getTransactions call does not touch the _snapshot cache; only an unfiltered one does', async () => {
+  it('a filtered getTransactions call does not touch the cache; only an unfiltered one does', async () => {
     mockCategories()
+    let calls = 0
+    const both = [BACKEND_ROW, { ...BACKEND_ROW, id: 't2' }]
     server.use(http.get(`${BASE}/transactions`, () => HttpResponse.json([BACKEND_ROW])))
     await transactionService.getTransactions()
-    const before = transactionService._snapshot()
-    expect(before).toHaveLength(1)
 
-    server.use(http.get(`${BASE}/transactions`, () => HttpResponse.json([BACKEND_ROW, { ...BACKEND_ROW, id: 't2' }])))
+    server.use(
+      http.get(`${BASE}/transactions`, () => {
+        calls++
+        return HttpResponse.json(both)
+      }),
+    )
     await transactionService.getTransactions({ category: 'food' })
-    expect(transactionService._snapshot()).toBe(before)
+    calls = 0
+    // t2 came only from the filtered call, so it isn't cached yet.
+    expect((await transactionService.getTransactionById('t2'))?.id).toBe('t2')
+    expect(calls).toBe(1)
 
-    await transactionService.getTransactions()
-    expect(transactionService._snapshot()).toHaveLength(2)
+    calls = 0
+    expect((await transactionService.getTransactionById('t2'))?.id).toBe('t2')
+    expect(calls).toBe(0)
   })
 
   it('getTransactionById reads from the cached snapshot before hitting the network again', async () => {

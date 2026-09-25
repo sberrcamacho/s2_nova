@@ -3,7 +3,6 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Calendar, Check, ChevronDown } from 'lucide-react'
 import { ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
 import { useTranslation } from '@/state/useTranslation'
-import { DATE_RANGE_OPTIONS, useDashboardFilters } from '@/dashboard/DashboardFiltersContext'
 import { cn } from '@/lib/cn'
 import { todayISO } from '@/lib/date'
 import { monthYear } from '@/lib/inicio'
@@ -17,9 +16,8 @@ interface HeaderProps {
 }
 
 // Web v2 header: breadcrumb, search, the period selector (Movimientos
-// only, per the mockup's showPeriod) and "Nuevo movimiento". Until Reportes
-// gets its own in-page 3M/6M/12M range, the old range dropdown stays on
-// Reportes only, where it still drives the charts.
+// only, per the mockup's showPeriod) and "Nuevo movimiento". Reportes has
+// its own in-page 3M/6M/12M range.
 export function Header({ title, onMenuClick, onNewTransaction }: HeaderProps) {
   const { t } = useTranslation()
   const location = useLocation()
@@ -77,7 +75,6 @@ export function Header({ title, onMenuClick, onNewTransaction }: HeaderProps) {
           />
         </label>
         {onMovimientos && <PeriodSelector />}
-        {location.pathname === '/reportes' && <RangeSelector />}
         <button
           type="button"
           onClick={onNewTransaction}
@@ -89,44 +86,6 @@ export function Header({ title, onMenuClick, onNewTransaction }: HeaderProps) {
         </button>
       </div>
     </header>
-  )
-}
-
-function RangeSelector() {
-  const { range, setRange, rangeLabelKey } = useDashboardFilters()
-  const { t } = useTranslation()
-  const [open, setOpen] = useState(false)
-  return (
-    <div className="relative hidden sm:block">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="flex h-[34px] items-center gap-2 rounded-[10px] border border-v2-line bg-v2-surface px-3 text-[12px] font-bold text-v2-muted"
-      >
-        <Calendar className="h-4 w-4" />
-        {t(rangeLabelKey)}
-        <ChevronDown className="h-3.5 w-3.5" />
-      </button>
-      {open && (
-        <div className="absolute right-0 top-10 z-20 w-[180px] rounded-[12px] border border-v2-line2 bg-v2-surface p-1.5 shadow-[0_16px_40px_rgba(0,0,0,.35)]">
-          {DATE_RANGE_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => {
-                setRange(opt.value)
-                setOpen(false)
-              }}
-              className={cn(
-                'flex w-full items-center justify-between rounded-[8px] px-2.5 py-[9px] text-left text-[12.5px]',
-                range === opt.value ? 'bg-v2-subtle font-extrabold text-v2-text' : 'font-semibold text-v2-muted',
-              )}
-            >
-              {t(opt.labelKey)}
-              {range === opt.value && <Check className="h-4 w-4" />}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
   )
 }
 

@@ -7,13 +7,13 @@ import RegisterPage from '@/auth/RegisterPage'
 import InicioPage from '@/dashboard/pages/InicioPage'
 import MovimientosPage from '@/dashboard/pages/MovimientosPage'
 import PlanesPage from '@/dashboard/pages/PlanesPage'
-import AnalyticsPage from '@/dashboard/pages/AnalyticsPage'
+import ReportesPage from '@/dashboard/pages/ReportesPage'
 import SettingsPage from '@/dashboard/pages/SettingsPage'
 
 // Web v2 information architecture (root AGENTS.md, STAGE-2-INICIO §2):
 // Inicio · Movimientos · Planes · Reportes, plus Ajustes. The pre-v2 paths
-// redirect so old bookmarks keep working. Insights and the old Reports page
-// are no longer routed (their content folds into Reportes in its stage).
+// redirect so old bookmarks keep working; Analytics, Insights and the old
+// Reports page all fold into Reportes.
 //
 // /login and /register sit outside DashboardLayout/ProtectedRoute — they
 // must render for a signed-out visitor, which every other route can't.
@@ -30,7 +30,7 @@ export const dashboardRoutes: RouteObject[] = [
           { path: 'inicio', element: <InicioPage /> },
           { path: 'movimientos', element: <MovimientosPage /> },
           { path: 'planes', element: <PlanesPage /> },
-          { path: 'reportes', element: <AnalyticsPage /> },
+          { path: 'reportes', element: <ReportesPage /> },
           { path: 'ajustes', element: <SettingsPage /> },
           { path: 'overview', element: <Navigate to="/inicio" replace /> },
           { path: 'transactions', element: <Navigate to="/movimientos" replace /> },

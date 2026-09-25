@@ -11,9 +11,6 @@ import type {
 // language switch itself lives and should be visibly proven to work.
 const dictionary = {
   "nav.overview": { es: "Resumen", en: "Overview" },
-  "nav.transactions": { es: "Movimientos", en: "Transactions" },
-  "nav.expenses": { es: "Gastos", en: "Expenses" },
-  "nav.income": { es: "Ingresos", en: "Income" },
   "nav.budgets": { es: "Presupuestos", en: "Budgets" },
   "nav.goals": { es: "Objetivos", en: "Goals" },
   "nav.insights": { es: "Sugerencias", en: "Insights" },
@@ -48,10 +45,6 @@ const dictionary = {
     en: "Computed from your last 30 days. Nothing here is a projection.",
   },
   "page.analytics.title": { es: "Analítica", en: "Analytics" },
-  "page.analytics.subtitle": {
-    es: "Gastos, ingresos, flujo de caja y patrimonio",
-    en: "Spending, income, cash flow and net worth",
-  },
   "page.reports.title": { es: "Reportes", en: "Reports" },
   "page.reports.subtitle": {
     es: "Tendencias históricas y exportación",
@@ -127,19 +120,11 @@ const dictionary = {
   "paymentMethod.nequi": { es: "Nequi", en: "Nequi" },
   "paymentMethod.daviplata": { es: "Daviplata", en: "Daviplata" },
 
-  "budgetStatus.on_track": { es: "En curso", en: "On track" },
-  "budgetStatus.near_limit": { es: "Cerca del límite", en: "Near limit" },
-  "budgetStatus.over_budget": { es: "Excedido", en: "Over budget" },
-
   "common.dismissNotification": {
     es: "Descartar notificación",
     en: "Dismiss notification",
   },
   "common.comingSoon": { es: "Próximamente", en: "Coming soon" },
-  "common.exportSimulated": {
-    es: "Exportación simulada — no hay archivo real en este entorno de demostración.",
-    en: "Simulated export — there's no real file in this demo environment.",
-  },
   "common.periodSelected": {
     es: "Periodo seleccionado",
     en: "Selected period",
@@ -160,15 +145,12 @@ const dictionary = {
     es: "No hay gastos en este periodo.",
     en: "No expenses in this period.",
   },
-  "common.noDataTitle": { es: "Sin datos", en: "No data" },
-  "common.weekShort": { es: "Sem", en: "Wk" },
   "common.today": { es: "Hoy", en: "Today" },
   "common.yesterday": { es: "Ayer", en: "Yesterday" },
 
   "overview.balance": { es: "Saldo actual", en: "Current balance" },
   "overview.totalIncome": { es: "Ingresos totales", en: "Total income" },
   "overview.totalExpenses": { es: "Gastos totales", en: "Total expenses" },
-  "overview.savings": { es: "Ahorro", en: "Savings" },
   "overview.incomeVsExpenses": {
     es: "Ingresos vs. gastos",
     en: "Income vs. expenses",
@@ -197,17 +179,9 @@ const dictionary = {
     en: "Average per transaction",
   },
   "expenses.topCategory": { es: "Categoría principal", en: "Top category" },
-  "expenses.monthlyExpenses": {
-    es: "Gastos mensuales",
-    en: "Monthly expenses",
-  },
   "expenses.distributionByCategory": {
     es: "Distribución por categoría",
     en: "Spending by category",
-  },
-  "expenses.noDataDescription": {
-    es: "No hay gastos en el periodo seleccionado.",
-    en: "No expenses in the selected period.",
   },
   "expenses.periodExpenses": {
     es: "Gastos del periodo",
@@ -224,10 +198,8 @@ const dictionary = {
     en: "Average per income",
   },
   "income.topSource": { es: "Fuente principal", en: "Top source" },
-  "income.monthlyIncome": { es: "Ingresos mensuales", en: "Monthly income" },
   "income.growing": { es: "Creciendo", en: "Growing" },
   "income.declining": { es: "Bajando", en: "Declining" },
-  "income.incomeSources": { es: "Fuentes de ingreso", en: "Income sources" },
   "income.noIncomeTitle": { es: "Sin ingresos", en: "No income" },
   "income.noIncomeDescription": {
     es: "No hay ingresos en este periodo.",
@@ -237,69 +209,37 @@ const dictionary = {
     es: "Ingresos vs. ahorro",
     en: "Income vs. savings",
   },
-  "income.noDataDescription": {
-    es: "No hay ingresos en el periodo seleccionado.",
-    en: "No income in the selected period.",
-  },
   "income.periodIncome": { es: "Ingresos del periodo", en: "Period income" },
   "income.emptyRegisteredTitle": {
     es: "Sin ingresos registrados",
     en: "No income recorded",
   },
 
-  "wallets.emptyTitle": { es: "Sin wallets todavía", en: "No wallets yet" },
   "wallets.type.cash": { es: "Efectivo", en: "Cash" },
   "wallets.type.bank": { es: "Banco", en: "Banking" },
   "wallets.type.savings": { es: "Ahorros", en: "Savings" },
   "wallets.type.crypto": { es: "Bitcoin/Cripto", en: "Bitcoin/Crypto" },
   "wallets.type.other": { es: "Otro", en: "Other" },
 
-
-  "recurring.monthlyExpenses": {
-    es: "Gastos recurrentes/mes",
-    en: "Recurring expenses/mo",
-  },
-  "recurring.monthlyIncome": {
-    es: "Ingresos recurrentes/mes",
-    en: "Recurring income/mo",
-  },
   "recurring.subscriptions": {
     es: "Suscripciones/mes",
     en: "Subscriptions/mo",
-  },
-  "recurring.empty": {
-    es: "Sin movimientos recurrentes.",
-    en: "No recurring items.",
   },
   "recurring.dueToday": { es: "Vence hoy", en: "Due today" },
   "recurring.interval.weekly": { es: "Semanal", en: "Weekly" },
   "recurring.interval.monthly": { es: "Mensual", en: "Monthly" },
   "recurring.interval.yearly": { es: "Anual", en: "Yearly" },
 
-  "netWorth.total": { es: "Patrimonio neto", en: "Net worth" },
   "netWorth.lent": { es: "Prestado (pendiente)", en: "Lent (outstanding)" },
   "netWorth.borrowed": {
     es: "Recibido en préstamo (pendiente)",
     en: "Borrowed (outstanding)",
   },
-  "netWorth.wallets": { es: "Wallets", en: "Wallets" },
 
-  "insights.empty": {
-    es: "No hay sugerencias por ahora — todo se ve en buen camino.",
-    en: "No suggestions right now — everything looks on track.",
-  },
-  "insights.tone.positive": { es: "Positivo", en: "Positive" },
-  "insights.tone.warning": { es: "Atención", en: "Warning" },
-  "insights.tone.negative": { es: "Alerta", en: "Alert" },
-  "insights.tone.neutral": { es: "Info", en: "Info" },
-  "insights.vs": { es: "vs", en: "vs" },
-  "insights.avg": { es: "prom.", en: "avg." },
   "insights.viewAll": {
     es: "Ver todas las sugerencias",
     en: "View all insights",
   },
-  "insights.showMore": { es: "Ver más sugerencias", en: "Show more insights" },
-  "insights.showLess": { es: "Ver menos", en: "Show less" },
   "overview.insightsTitle": {
     es: "Sugerencias para ti",
     en: "Suggestions for you",
@@ -324,210 +264,7 @@ const dictionary = {
     en: "Goals progress",
   },
   "overview.noGoals": { es: "Aún no tienes objetivos", en: "No goals yet" },
-  "health.category.savings": { es: "Ahorro", en: "Savings" },
-  "health.category.budget": { es: "Presupuesto", en: "Budget" },
-  "health.category.cashFlow": { es: "Flujo de caja", en: "Cash Flow" },
-  "health.category.goals": { es: "Objetivos", en: "Goals" },
-  "health.category.debt": { es: "Deuda", en: "Debt" },
-  "health.status.good": { es: "Bien", en: "Good" },
-  "health.status.fair": { es: "Regular", en: "Fair" },
-  "health.status.low": { es: "Bajo", en: "Low" },
-  "health.status.onTrack": { es: "En curso", en: "On track" },
-  "health.status.nearLimit": { es: "Cerca del límite", en: "Near limit" },
-  "health.status.overBudget": { es: "Excedido", en: "Over budget" },
-  "health.status.positive": { es: "Positivo", en: "Positive" },
-  "health.status.tight": { es: "Ajustado", en: "Tight" },
-  "health.status.negative": { es: "Negativo", en: "Negative" },
-  "health.status.attention": { es: "Atención", en: "Attention" },
-  "health.status.moderate": { es: "Moderado", en: "Moderate" },
-  "health.status.high": { es: "Alto", en: "High" },
-  "health.status.none": { es: "N/D", en: "N/A" },
-  "health.savings.saving": { es: "Ahorrando el", en: "Saving" },
-  "health.savings.ofIncome": {
-    es: "de tus ingresos este mes",
-    en: "of your income this month",
-  },
-  "health.savings.noIncome": {
-    es: "Sin ingresos registrados este mes",
-    en: "No income recorded this month",
-  },
-  "health.budget.none": {
-    es: "Aún no tienes presupuestos definidos",
-    en: "You don't have any budgets set yet",
-  },
-  "health.budget.categoryOver": {
-    es: "categoría excedida",
-    en: "category over budget",
-  },
-  "health.budget.categoriesOver": {
-    es: "categorías excedidas",
-    en: "categories over budget",
-  },
-  "health.budget.categoryNear": {
-    es: "categoría cerca del límite",
-    en: "category near its limit",
-  },
-  "health.budget.categoriesNear": {
-    es: "categorías cerca del límite",
-    en: "categories near their limit",
-  },
-  "health.budget.allOnTrack": {
-    es: "Todos los presupuestos van en curso",
-    en: "All budgets are on track",
-  },
-  "health.cashFlow.net": { es: "Neto de", en: "Net of" },
-  "health.cashFlow.improved": {
-    es: "este mes — mejor que el mes pasado",
-    en: "this month — better than last month",
-  },
-  "health.cashFlow.worsened": {
-    es: "este mes — peor que el mes pasado",
-    en: "this month — worse than last month",
-  },
-  "health.goals.none": {
-    es: "Aún no tienes objetivos definidos",
-    en: "You don't have any goals set yet",
-  },
-  "health.goals.onTrack": {
-    es: "Todos los objetivos van en curso",
-    en: "All goals are on track",
-  },
-  "health.goals.oneBehind": {
-    es: "objetivo con fecha cercana y avance bajo",
-    en: "goal close to its deadline with low progress",
-  },
-  "health.goals.multipleBehind": {
-    es: "objetivos con fecha cercana y avance bajo",
-    en: "goals close to their deadline with low progress",
-  },
-  "health.debt.none": {
-    es: "Sin deudas pendientes",
-    en: "No outstanding debt",
-  },
-  "health.debt.outstanding": { es: "Debes", en: "You owe" },
-  "insights.budgetPace.title": {
-    es: "Ritmo de presupuesto",
-    en: "Budget pace",
-  },
-  "insights.budgetPace.prefix": {
-    es: "Vas a exceder tu presupuesto de",
-    en: "You're on track to exceed your",
-  },
-  "insights.budgetPace.middle": {
-    es: "en aproximadamente",
-    en: "budget in about",
-  },
-  "insights.budgetPace.suffix": {
-    es: "días si mantienes este ritmo",
-    en: "days at this rate",
-  },
-  "insights.categorySpike.title": {
-    es: "Categoría en aumento",
-    en: "Category on the rise",
-  },
-  "insights.categorySpike.suffix": {
-    es: "más que el mes pasado",
-    en: "more than last month",
-  },
-  "insights.subscriptions.title": { es: "Suscripciones", en: "Subscriptions" },
-  "insights.subscriptions.prefix": { es: "Estás pagando", en: "You're paying" },
-  "insights.subscriptions.suffix": {
-    es: "al mes en suscripciones — vale la pena revisarlas",
-    en: "/month in subscriptions — worth reviewing",
-  },
-  "insights.savingsRate.title": { es: "Tasa de ahorro", en: "Savings rate" },
-  "insights.savingsRate.prefix": {
-    es: "Tu tasa de ahorro cambió",
-    en: "Your savings rate changed",
-  },
-  "insights.savingsRate.suffix": {
-    es: "puntos en los últimos meses",
-    en: "points over the last few months",
-  },
-  "insights.goalTarget.title": { es: "Meta de ahorro", en: "Savings goal" },
-  "insights.goalTarget.prefix": {
-    es: "Necesitas ahorrar",
-    en: "You need to save",
-  },
-  "insights.goalTarget.middle": {
-    es: "al mes para alcanzar",
-    en: "a month to reach",
-  },
-  "insights.goalTarget.suffix": {
-    es: "antes de la fecha objetivo",
-    en: "by its target date",
-  },
-  "insights.unusualTransaction.title": {
-    es: "Gasto inusual",
-    en: "Unusual expense",
-  },
-  "insights.unusualTransaction.middle": { es: "en", en: "in" },
-  "insights.unusualTransaction.suffix": {
-    es: "está muy por encima de lo habitual",
-    en: "is well above your usual average",
-  },
-  "insights.monthProjection.title": {
-    es: "Proyección de fin de mes",
-    en: "End-of-month projection",
-  },
-  "insights.monthProjection.prefix": {
-    es: "A este ritmo, terminarás el mes gastando",
-    en: "At this pace, you'll end the month spending",
-  },
-  "insights.monthProjection.suffix": {
-    es: "vs. el mes pasado",
-    en: "vs. last month",
-  },
-  "insights.categoryShare.title": {
-    es: "Categoría dominante",
-    en: "Top category",
-  },
-  "insights.categoryShare.suffix": { es: "representa el", en: "makes up" },
-  "insights.categoryShare.ofExpenses": {
-    es: "de tus gastos",
-    en: "of your expenses",
-  },
-  "insights.goalProgress.title": {
-    es: "Progreso de objetivo",
-    en: "Goal progress",
-  },
-  "insights.goalProgress.suffix": { es: "va en el", en: "is" },
-  "insights.goalProgress.complete": { es: "completado", en: "complete" },
-  "insights.upcomingExpenses.title": {
-    es: "Gastos próximos",
-    en: "Upcoming expenses",
-  },
-  "insights.upcomingExpenses.prefix": { es: "Tienes", en: "You have" },
-  "insights.upcomingExpenses.suffix": {
-    es: "en gastos recurrentes próximos.",
-    en: "in upcoming recurring expenses.",
-  },
-  "insights.spendingStreak.title": {
-    es: "Racha de gasto",
-    en: "Spending streak",
-  },
-  "insights.spendingStreak.prefix": {
-    es: "Tu gasto ha subido",
-    en: "Your spending has increased for",
-  },
-  "insights.spendingStreak.suffix": {
-    es: "meses seguidos.",
-    en: "consecutive months.",
-  },
 
-  "categories.breakdown": {
-    es: "Desglose por categoría",
-    en: "Breakdown by category",
-  },
-
-  "analytics.tab.spending": { es: "Gastos", en: "Spending" },
-  "analytics.tab.income": { es: "Ingresos", en: "Income" },
-  "analytics.tab.cashFlow": { es: "Flujo de caja", en: "Cash Flow" },
-  "analytics.tab.netWorth": { es: "Patrimonio", en: "Net Worth" },
-  "analytics.cashFlow.netThisMonth": {
-    es: "Flujo neto este mes",
-    en: "Net cash flow this month",
-  },
   "analytics.cashFlow.trend": {
     es: "Tendencia de flujo de caja",
     en: "Cash flow trend",
@@ -536,16 +273,6 @@ const dictionary = {
     es: "Ahorro acumulado — últimos 6 meses",
     en: "Cumulative savings — last 6 months",
   },
-  "analytics.cashFlow.upcomingImpact": {
-    es: "Impacto de próximos movimientos",
-    en: "Impact of upcoming movements",
-  },
-  "analytics.cashFlow.upcomingImpactSubtitle": {
-    es: "Cómo afectarán tu flujo de caja los movimientos recurrentes activos",
-    en: "How active recurring items will affect your cash flow",
-  },
-  "analytics.burnRate": { es: "Ritmo de gasto", en: "Burn rate" },
-  "analytics.perDaySuffix": { es: "/día", en: "/day" },
   "analytics.bestMonth": { es: "Mejor mes", en: "Best month" },
   "analytics.worstMonth": { es: "Peor mes", en: "Worst month" },
   "analytics.forecastNextMonth": {
@@ -585,12 +312,7 @@ const dictionary = {
     es: "Promedio fin de semana",
     en: "Weekend average",
   },
-  "analytics.peakSpendingDay": {
-    es: "Día de mayor gasto",
-    en: "Peak spending day",
-  },
 
-  "reports.export": { es: "Exportar PDF", en: "Export PDF" },
   "reports.netSavings": { es: "Ahorro neto", en: "Net savings" },
   "reports.avgMonthlySavings": {
     es: "Ahorro mensual promedio",
@@ -600,29 +322,14 @@ const dictionary = {
     es: "Tendencia de ahorro neto",
     en: "Net savings trend",
   },
-  "reports.weeklySpendingPattern": {
-    es: "Patrón de gasto semanal",
-    en: "Weekly spending pattern",
-  },
-  "reports.currentMonth": { es: "Mes actual", en: "Current month" },
   "reports.topCategories": {
     es: "Categorías principales",
     en: "Top categories",
-  },
-  "reports.budgetPerformance": {
-    es: "Desempeño de presupuestos",
-    en: "Budget performance",
   },
   "reports.goalsProgress": {
     es: "Progreso de objetivos",
     en: "Goals progress",
   },
-
-
-  "dateRange.thisMonth": { es: "Este mes", en: "This month" },
-  "dateRange.lastMonth": { es: "Mes pasado", en: "Last month" },
-  "dateRange.last3Months": { es: "Últimos 3 meses", en: "Last 3 months" },
-  "dateRange.thisYear": { es: "Este año", en: "This year" },
 
   // Overview redesign
   "overview.netThisMonth": { es: "neto este mes", en: "net this month" },
@@ -644,33 +351,9 @@ const dictionary = {
   },
 
   // Analytics redesign
-  "analytics.monthsOfRunway": {
-    es: "Meses de reserva",
-    en: "Months of runway",
-  },
-  "analytics.fixedVsVariable": {
-    es: "Fijo vs. variable",
-    en: "Fixed vs. variable",
-  },
-  "analytics.freelanceNote": {
-    es: "El ingreso freelance puede variar de un mes a otro — planea con tu promedio, no con tu mejor mes.",
-    en: "Freelance income can vary month to month — plan around your average, not your best month.",
-  },
   "analytics.cashFlow.projectedBalance": {
     es: "Saldo proyectado",
     en: "Projected balance",
-  },
-  "analytics.cashFlow.lowestProjected": {
-    es: "Saldo proyectado más bajo antes del próximo pago:",
-    en: "Lowest projected balance before your next payday:",
-  },
-  "analytics.rangeSubtitlePrefix": { es: "Últimos", en: "Last" },
-  "analytics.rangeSubtitleSuffix": { es: "meses", en: "months" },
-  "netWorth.lentOut": { es: "Prestado", en: "Lent out" },
-  "netWorth.borrowedTile": { es: "Recibido en préstamo", en: "Borrowed" },
-  "netWorth.lentAndBorrowed": {
-    es: "Prestado y recibido en préstamo",
-    en: "Lent and borrowed",
   },
 
   // Budgets redesign
@@ -678,12 +361,6 @@ const dictionary = {
   // Goals redesign
 
   // Reports redesign
-  "reports.reviewOf": { es: "Revisión de", en: "Review of" },
-  "reports.comparedWith": { es: "comparado con", en: "compared with" },
-  "reports.periodTotals": { es: "Totales del periodo", en: "Period totals" },
-  "reports.colMetric": { es: "MÉTRICA", en: "METRIC" },
-  "reports.colChange": { es: "CAMBIO", en: "CHANGE" },
-  "reports.savingsRate": { es: "Tasa de ahorro", en: "Savings rate" },
 
   // Settings redesign
   "settings.hideAmounts": {
@@ -1062,6 +739,56 @@ const dictionary = {
   "mov.type.transfer": { es: "Transferencia", en: "Transfer" },
   "mov.delete": { es: "Eliminar", en: "Delete" },
   "mov.deleted": { es: "Movimiento eliminado", en: "Transaction deleted" },
+  "rep.title": { es: "Reportes", en: "Reports" },
+  "rep.tab.spending": { es: "Gastos", en: "Spending" },
+  "rep.tab.income": { es: "Ingresos", en: "Income" },
+  "rep.tab.cashFlow": { es: "Flujo de caja", en: "Cash flow" },
+  "rep.tab.netWorth": { es: "Patrimonio", en: "Net worth" },
+  "rep.lastMonths": { es: "Últimos {0} meses", en: "Last {0} months" },
+  "rep.incomeVsExpenses": { es: "Ingresos vs gastos", en: "Income vs expenses" },
+  "rep.income": { es: "Ingresos", en: "Income" },
+  "rep.expenses": { es: "Gastos", en: "Expenses" },
+  "rep.whereMoneyWent": { es: "En qué se fue el dinero", en: "Where the money went" },
+  "rep.topCategories": { es: "Principales categorías del mes", en: "Top categories this month" },
+  "rep.noSpending": { es: "Sin gastos este mes.", en: "No spending this month." },
+  "rep.dailyAverage": { es: "Gasto diario promedio", en: "Average daily spending" },
+  "rep.peakDay": { es: "Día con más gasto", en: "Highest-spending day" },
+  "rep.fixedVsVariable": { es: "Fijo vs variable", en: "Fixed vs variable" },
+  "rep.runway": { es: "Meses de respaldo", en: "Months of runway" },
+  "rep.incomeSources": { es: "Fuentes de ingreso", en: "Income sources" },
+  "rep.noIncome": { es: "Sin ingresos en el periodo.", en: "No income in this period." },
+  "rep.freelanceNote": {
+    es: "El salario es estable mes a mes; lo freelance es la parte variable: osciló entre {0} y {1} en {2}.",
+    en: "Salary is steady month to month; freelance is the variable part: it ranged from {0} to {1} over {2}.",
+  },
+  "rep.months.3": { es: "tres meses", en: "three months" },
+  "rep.months.6": { es: "seis meses", en: "six months" },
+  "rep.months.12": { es: "doce meses", en: "twelve months" },
+  "rep.incomeByMonth": { es: "Ingresos por mes", en: "Income by month" },
+  "rep.incomeByMonthSub": { es: "Salario y demás ingresos", en: "Salary and other income" },
+  "rep.inflows": { es: "Entradas", en: "Inflows" },
+  "rep.outflows": { es: "Salidas", en: "Outflows" },
+  "rep.netFlow": { es: "Flujo neto", en: "Net flow" },
+  "rep.upcoming": { es: "Efecto de los próximos movimientos", en: "Effect of upcoming transactions" },
+  "rep.upcomingSub": { es: "Programados activos aplicados al saldo de hoy", en: "Active scheduled items applied to today's balance" },
+  "rep.upcomingEmpty": { es: "No tienes Programados activos.", en: "You have no active scheduled items." },
+  "rep.today": { es: "HOY", en: "TODAY" },
+  "rep.lowestBeforeSalary": { es: "Saldo proyectado más bajo antes del salario: {0} el {1}.", en: "Lowest projected balance before payday: {0} on {1}." },
+  "rep.lowest": { es: "Saldo proyectado más bajo: {0} el {1}.", en: "Lowest projected balance: {0} on {1}." },
+  "rep.wallets": { es: "Billeteras", en: "Wallets" },
+  "rep.walletsSub": { es: "Saldos a hoy", en: "Balances as of today" },
+  "rep.netWorth": { es: "Patrimonio", en: "Net worth" },
+  "rep.loans": { es: "Prestado y recibido en préstamo", en: "Lent and borrowed" },
+  "rep.loansSub": { es: "Fuera de los saldos de billeteras", en: "Outside wallet balances" },
+  "rep.lent": { es: "Prestado", en: "Lent" },
+  "rep.borrowed": { es: "Recibido", en: "Borrowed" },
+  "rep.people.one": { es: "1 persona", en: "1 person" },
+  "rep.people.many": { es: "{0} personas", en: "{0} people" },
+  "rep.settled.one": { es: "1 saldado", en: "1 settled" },
+  "rep.settled.many": { es: "{0} saldados", en: "{0} settled" },
+  "rep.noLent": { es: "Sin préstamos pendientes", en: "No outstanding loans" },
+  "rep.noBorrowed": { es: "Sin deudas pendientes", en: "No outstanding debts" },
+  "rep.lastSixMonths": { es: "Últimos seis meses", en: "Last six months" },
 } as const satisfies Record<string, Record<LanguageCode, string>>;
 
 export type TranslationKey = keyof typeof dictionary;
@@ -1086,39 +813,9 @@ export function walletTypeTranslationKey(type: WalletType): TranslationKey {
   return `wallets.type.${type}` as TranslationKey;
 }
 
-export function insightToneTranslationKey(
-  tone: "positive" | "warning" | "negative" | "neutral",
-): TranslationKey {
-  return `insights.tone.${tone}` as TranslationKey;
-}
-
 export function recurringIntervalTranslationKey(
   interval: "weekly" | "monthly" | "yearly",
 ): TranslationKey {
   return `recurring.interval.${interval}` as TranslationKey;
 }
 
-export function healthCategoryTranslationKey(
-  key: "savings" | "budget" | "cashFlow" | "goals" | "debt",
-): TranslationKey {
-  return `health.category.${key}` as TranslationKey;
-}
-
-export function healthStatusTranslationKey(
-  status:
-    | "good"
-    | "fair"
-    | "low"
-    | "onTrack"
-    | "nearLimit"
-    | "overBudget"
-    | "positive"
-    | "tight"
-    | "negative"
-    | "attention"
-    | "moderate"
-    | "high"
-    | "none",
-): TranslationKey {
-  return `health.status.${status}` as TranslationKey;
-}
