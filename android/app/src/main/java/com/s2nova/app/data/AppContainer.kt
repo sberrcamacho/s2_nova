@@ -61,7 +61,7 @@ object AppContainer {
     val recurringSeriesRepository by lazy { RecurringSeriesRepository(categoryRepository) }
     val productRepository by lazy { ProductRepository() }
     val notificationRepository by lazy { NotificationRepository() }
-    val summaryRepository by lazy { SummaryRepository() }
+    val summaryRepository by lazy { SummaryRepository(categoryRepository) }
     val alertRepository by lazy { AlertRepository(categoryRepository, stateStore = alertStateStore) }
 
     lateinit var authRepository: AuthRepository

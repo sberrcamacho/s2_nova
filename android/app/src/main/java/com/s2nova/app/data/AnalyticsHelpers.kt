@@ -2,6 +2,9 @@ package com.s2nova.app.data
 
 import com.s2nova.app.data.model.CategoryId
 import com.s2nova.app.data.model.MonthlySummary
+import com.s2nova.app.data.model.Report
+import com.s2nova.app.data.model.ReportCategory
+import com.s2nova.app.data.model.ReportTotals
 import com.s2nova.app.data.model.Transaction
 import com.s2nova.app.data.model.TransactionStatus
 import com.s2nova.app.data.model.TransactionType
@@ -25,6 +28,26 @@ object AnalyticsHelpers {
         val income = items.filter { it.type == TransactionType.INCOME }.sumOf { it.amount }
         val expenses = items.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount }
         return MonthlySummary(monthKey, monthLabel(monthKey), income, expenses)
+    }
+
+    // Demo mode's stand-in for GET /summary/report, with the backend's rules:
+    // totals over the last `range` months against the `range` before them,
+    // category spending for the current month only.
+    fun report(transactions: List<Transaction>, range: Int): Report {
+        val history = monthlyHistory(transactions, range * 2)
+        fun totals(months: List<MonthlySummary>): ReportTotals {
+            val income = months.sumOf { it.income }
+            val expenses = months.sumOf { it.expenses }
+            val rate = if (income > 0) Math.round((income - expenses) / income * 100).toInt() else 0
+            return ReportTotals(income, expenses, income - expenses, rate)
+        }
+        return Report(
+            range = range,
+            months = history.drop(range),
+            totals = totals(history.drop(range)),
+            previousTotals = totals(history.take(range)),
+            categories = categoryBreakdown(transactions).map { ReportCategory(it.category, it.amount) },
+        )
     }
 
     data class CategoryBreakdownEntry(val category: CategoryId, val amount: Double, val percentage: Int)

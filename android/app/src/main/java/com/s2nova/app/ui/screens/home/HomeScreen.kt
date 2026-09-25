@@ -380,7 +380,7 @@ private fun recentDateLabel(iso: String, today: LocalDate, t: (StringKey) -> Str
 }
 
 @Composable
-private fun SyncErrorBanner(message: String, action: String, onRetry: () -> Unit) {
+internal fun SyncErrorBanner(message: String, action: String, onRetry: () -> Unit) {
     val colors = NovaColors.current
     Row(
         verticalAlignment = Alignment.CenterVertically,

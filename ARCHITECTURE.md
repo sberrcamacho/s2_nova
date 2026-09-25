@@ -265,8 +265,9 @@ POST   /api/v1/budgets/recommendations/:id/accept
 GET    /api/v1/products/:barcode              -- 404 is a normal, expected response
 POST   /api/v1/products                       -- register an unknown product
 
-GET    /api/v1/analytics/monthly-summary
-GET    /api/v1/analytics/category-breakdown
+GET    /api/v1/summary/months               -- income/expenses per month (Inicio)
+GET    /api/v1/summary/categories           -- the month's spending per category
+GET    /api/v1/summary/report?range=3|6|12  -- every Reportes figure, both clients
 ```
 
 Every route except `auth/*` and the `GET /products/:barcode` lookup

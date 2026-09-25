@@ -93,8 +93,9 @@ up beyond pointing it at the URL above.
   `settledByTransactionId` doc comment), not just a status flag.
   Loan rows returned by `transactions.ts` carry a server-computed
   `outstanding` (`src/lib/loans.ts`); clients never re-derive it.
-  `summary.ts` (`GET /summary/months`, `GET /summary/categories`) and
-  `alerts.ts` (`GET /alerts`) are the shared Inicio aggregates and alert
+  `summary.ts` (`GET /summary/months`, `GET /summary/categories`,
+  `GET /summary/report?range=3|6|12` for Reportes) and `alerts.ts`
+  (`GET /alerts`) are the shared Inicio/Reportes aggregates and alert
   rules both clients consume — add figures there rather than computing
   them per client. Both accept `?today=YYYY-MM-DD` (the client's local
   date) because month and "due today" boundaries are the user's.

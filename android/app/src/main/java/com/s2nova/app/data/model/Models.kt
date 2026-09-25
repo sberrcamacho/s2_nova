@@ -289,3 +289,18 @@ data class MonthlySummary(
 ) {
     val savings: Double get() = income - expenses
 }
+
+// Reportes (GET /summary/report): the range's totals against the range
+// before it, the monthly bars and the current month's spending per
+// category — the same figures Web's Reportes shows.
+data class ReportTotals(val income: Double, val expenses: Double, val savings: Double, val savingsRate: Int)
+
+data class ReportCategory(val category: CategoryId, val amount: Double)
+
+data class Report(
+    val range: Int,
+    val months: List<MonthlySummary>,
+    val totals: ReportTotals,
+    val previousTotals: ReportTotals,
+    val categories: List<ReportCategory>,
+)

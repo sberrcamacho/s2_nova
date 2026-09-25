@@ -374,6 +374,23 @@ data class MonthSummaryDto(
     val net: Long,
 )
 
+// GET /summary/report — the fields Android's Reportes shows; the rest
+// (Web's tiles, income sources, Patrimonio) is ignored.
+@Serializable
+data class ReportTotalsDto(val income: Long, val expenses: Long, val savings: Long, val savingsRate: Int)
+
+@Serializable
+data class ReportCategoryDto(val categoryId: String, val amount: Long)
+
+@Serializable
+data class ReportDto(
+    val range: Int,
+    val months: List<MonthSummaryDto>,
+    val totals: ReportTotalsDto,
+    val previousTotals: ReportTotalsDto,
+    val categories: List<ReportCategoryDto>,
+)
+
 // GET /alerts — one flat shape for the four alert kinds the backend emits
 // (backend/src/routes/alerts.ts); which optional fields are set depends on
 // `kind`. UI copy is built client-side from these fields (i18n).

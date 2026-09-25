@@ -137,6 +137,12 @@ interface ApiService {
         @Query("today") today: String,
     ): List<MonthSummaryDto>
 
+    @GET("summary/report")
+    suspend fun getReport(
+        @Query("range") range: Int,
+        @Query("today") today: String,
+    ): ReportDto
+
     @GET("alerts")
     suspend fun getAlerts(@Query("today") today: String): List<AlertDto>
 }
