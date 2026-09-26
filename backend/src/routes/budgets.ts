@@ -3,7 +3,7 @@ import type { Budget } from "@prisma/client";
 import { z } from "zod";
 import { activeInMonth, serializeBudget } from "../lib/budgetProgress.js";
 import { principalOf, toMinor } from "../lib/currency.js";
-import { currentMonthKey, monthStart, parseDateOnly } from "../lib/dates.js";
+import { currentMonthKey, monthEnd, monthStart, parseDateOnly } from "../lib/dates.js";
 import { prisma } from "../lib/prisma.js";
 import { PLAN_ICON_KEYS } from "../lib/taxonomy.js";
 import { dateOnlySchema, monthKeySchema } from "../lib/validation.js";
@@ -100,8 +100,10 @@ export async function budgetRoutes(app: FastifyInstance) {
   app.get("/budgets", { preHandler: app.authenticate }, async (request) => {
     const query = z.object({ month: monthKeySchema.optional() }).parse(request.query);
     const month = query.month ?? currentMonthKey();
+    // Planes also lists range budgets that haven't started ("Aún no
+    // empieza"); alerts keep using activeInMonth alone.
     const budgets = await prisma.budget.findMany({
-      where: { userId: request.userId, ...activeInMonth(month) },
+      where: { userId: request.userId, OR: [activeInMonth(month), { period: "CUSTOM", startDate: { gt: monthEnd(month) } }] },
       orderBy: { createdAt: "asc" },
     });
     return Promise.all(budgets.map((budget) => serializeBudget(request.userId!, budget, month)));

@@ -145,6 +145,22 @@ describe("budget routes", () => {
       expect(res.json()).toHaveLength(1);
     });
 
+    it("lists a range budget that hasn't started yet, but not one that already ended", async () => {
+      const user = await createTestUser();
+      const post = (name: string, startDate: string, endDate: string) =>
+        app.inject({
+          method: "POST",
+          url: "/api/v1/budgets",
+          headers: authHeader(user),
+          payload: { kind: "CUSTOM", name, amount: 100000, period: "CUSTOM", startDate, endDate },
+        });
+      expect((await post("Viaje de fin de año", "2026-12-01", "2027-01-15")).statusCode).toBe(201);
+      expect((await post("Ya pasó", "2026-01-01", "2026-02-15")).statusCode).toBe(201);
+
+      const res = await app.inject({ method: "GET", url: "/api/v1/budgets?month=2026-10", headers: authHeader(user) });
+      expect(res.json().map((b: { name: string }) => b.name)).toEqual(["Viaje de fin de año"]);
+    });
+
     it("computes status ON_TRACK below 65% spend", async () => {
       const user = await createTestUser();
       const wallet = await createAccount(user.id, { initialBalanceMinor: 1000000n });
