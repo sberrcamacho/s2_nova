@@ -54,16 +54,24 @@ Reportes** — plus **Ajustes** in the footer. Pre-v2 paths (`/overview`,
   shared with EventDialog) with "Eliminar" — the backend reverses the
   balance. Transactions aren't editable on either client yet.
 - **Planes** (`PlanesPage.tsx`) — v2-migrated tab host,
-  `?tab=presupuestos|metas|prestamos` (+ `&side=lent|borrowed`).
-  Presupuestos (`BudgetsPage.tsx`, riskiest first, Inicio's pace note),
-  Metas (`GoalsPage.tsx`, ring + estimated date + "Abonar") and Préstamos
-  (`components/LoansTab.tsx`, "Registrar abono" dialog + "Editar"). The
-  Web mockup draws these read-only; the writes are side panels mirroring
-  Android's sheets (`components/planes/`: BudgetPanel, GoalPanel with the
-  delete step that returns the goal's money to one wallet or to its
-  origin, GoalPayPanel, LoanPanel), opened from a card or the grid's
-  dashed "+ Nuevo …" tile. Budget/goal copy shared with Inicio lives in
-  `lib/planCopy.ts`.
+  `?tab=presupuestos|metas|prestamos` (+ `&side=lent|borrowed`), with the
+  mockup's header button ("Nuevo presupuesto" / "Nueva meta" / "Registrar
+  préstamo|deuda"). Presupuestos (`BudgetsPage.tsx`: mark, scope, state
+  note and period per card, riskiest first) and Metas (`GoalsPage.tsx`:
+  plan-icon ring, target date, estimate, "Aporte …" line, "+ Abonar")
+  write through the mockup's centered modals in `components/planes/`:
+  `BudgetModal` (Por categoría / Personalizado, Categoría · Billeteras ·
+  Periodo tiles with inline sections — PLANS.md §4), `GoalModal` (icon,
+  initial amount, target date, inline "Aporte periódico"; PUT
+  /goals/:id/plan only when the plan changed, since it restarts the
+  schedule) and `GoalPayModal` ("Abonar"). Deleting a budget or goal goes
+  through Kit's two-step `ConfirmDialog`; a goal's money returns to its
+  origin wallets. Préstamos (`components/LoansTab.tsx`) creates and edits
+  loans in `planes/LoanModal.tsx` (the mockup's planDraft loan variant;
+  delete also goes through `ConfirmDialog`) and records abonos in its
+  "Registrar abono" dialog. The modal building
+  blocks live in `components/v2/Kit.tsx`; budget/goal copy shared with
+  Inicio lives in `lib/planCopy.ts`.
 - **Reportes** (`ReportesPage.tsx`) — v2-migrated. Gastos · Ingresos ·
   Flujo de caja · Patrimonio (`?tab=gastos|ingresos|flujo|patrimonio`)
   over the page's own 3M/6M/12M range; the header shows no period

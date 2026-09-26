@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CategoryGlyph, CategoryMark } from '@/components/v2/CategoryMark'
+import { CategoryMark, Glyph, GlyphMark } from '@/components/v2/CategoryMark'
 import { ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
 import { Money, MoneyText } from '@/components/v2/Money'
 import { RowButton, RowSkeletons, SkeletonBar, SyncBanner } from '@/components/v2/Rows'
@@ -17,7 +17,9 @@ import { useCurrency } from '@/state/useCurrency'
 import { useHideAmounts } from '@/state/useHideAmounts'
 import { useTranslation } from '@/state/useTranslation'
 import { alertCopy } from '@/lib/alertCopy'
-import { budgetNoteText, goalEtaText } from '@/lib/planCopy'
+import { budgetScope, budgetStateNote, planText, shortDayMonth } from '@/lib/planCopy'
+import { shortWallet } from '@/lib/movimientos'
+import { useToast } from '@/state/ToastContext'
 import { goalMark, categoryColor } from '@/lib/categoryGlyphs'
 import { todayISO } from '@/lib/date'
 import {
@@ -97,10 +99,11 @@ function useInicioData(version: number) {
 
 export default function InicioPage() {
   const { t, tCategory, language } = useTranslation()
-  const { format } = useCurrency()
+  const { format, formatIn, currency: principal } = useCurrency()
   const { hidden, toggle } = useHideAmounts()
+  const { showToast } = useToast()
   const { user } = useAuth()
-  const { budgets, transactions, isLoading: appLoading, version, refresh: refreshAppData } = useAppData()
+  const { budgets, isLoading: appLoading, version, refresh: refreshAppData } = useAppData()
   const { data, syncFailed, refresh } = useInicioData(version)
   const navigate = useNavigate()
   const today = todayISO()
@@ -122,9 +125,15 @@ export default function InicioPage() {
     saveDismissed(userId, ids)
   }
 
-  const walletTotal = data.wallets?.reduce((s, w) => s + w.currentBalance, 0) ?? null
+  const walletTotal = data.wallets?.reduce((s, w) => s + w.principalBalance, 0) ?? null
+  const walletName = (id: string) => shortWallet(data.wallets?.find((w) => w.id === id)?.name ?? '')
   const thisMonth = data.months?.[data.months.length - 1]
-  const visibleAlerts = (data.alerts ?? []).filter((a) => !dismissed.includes(a.id))
+  // The Web mockup lists goal contributions and upcoming Programados first,
+  // and leaves "meta casi cumplida" to the Metas card.
+  const FIRST = ['goal_plan_due', 'goal_plan_auto', 'tx_planned']
+  const visibleAlerts = (data.alerts ?? [])
+    .filter((a) => !dismissed.includes(a.id) && a.kind !== 'goal_near')
+    .sort((a, b) => Number(FIRST.includes(b.kind)) - Number(FIRST.includes(a.kind)))
   const monthKey = today.slice(0, 7)
   const upcoming = useMemo(
     () => (data.series && walletTotal !== null ? upcomingWithin(data.series, today, walletTotal, 14) : null),
@@ -146,7 +155,23 @@ export default function InicioPage() {
       case 'budget_at_risk':
         return navigate('/planes?tab=presupuestos')
       case 'goal_near':
+      case 'goal_plan_due':
+      case 'goal_plan_auto':
         return navigate('/planes?tab=metas')
+      case 'tx_planned':
+        return navigate(`/movimientos?tx=${alert.transactionId}`)
+    }
+  }
+
+  const resolvePlan = async (alert: Extract<AppAlert, { kind: 'goal_plan_due' }>, confirm: boolean) => {
+    try {
+      if (confirm) await goalService.confirmPlan(alert.goalId)
+      else await goalService.skipPlan(alert.goalId)
+      showToast(confirm ? `Aporte de ${format(alert.amount)} registrado` : 'Aporte omitido')
+      void refresh()
+      void refreshAppData()
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Algo salió mal. Intenta de nuevo.', 'error')
     }
   }
 
@@ -209,7 +234,7 @@ export default function InicioPage() {
               <div className="py-3 text-[12.5px] text-v2-dim">{t('inicio.wallets.empty')}</div>
             ) : (
               data.wallets.map((w, i, arr) => (
-                <RowButton key={w.id} last={i === arr.length - 1} onClick={() => navigate(`/movimientos?q=${encodeURIComponent(w.name)}`)}>
+                <RowButton key={w.id} last={i === arr.length - 1} onClick={() => navigate('/billeteras')}>
                   <div
                     className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full text-white"
                     style={{ background: 'linear-gradient(150deg,var(--v2-hero-b),var(--v2-accent))' }}
@@ -222,10 +247,15 @@ export default function InicioPage() {
                   </div>
                   <div className="text-right">
                     <Money hidden={hidden} className="block text-[13.5px] font-extrabold">
-                      {format(w.currentBalance)}
+                      {formatIn(w.currentBalance, w.currency)}
                     </Money>
                     <div className="font-numeric text-[10.5px] text-v2-dim">
-                      {fill(t('inicio.wallets.share'), walletTotal && walletTotal > 0 ? Math.round((w.currentBalance / walletTotal) * 100) : 0)}
+                      {w.currency !== principal && (
+                        <Money hidden={hidden} inline>
+                          {`≈ ${format(w.principalBalance)} · `}
+                        </Money>
+                      )}
+                      {fill(t('inicio.wallets.share'), walletTotal && walletTotal > 0 ? Math.round((w.principalBalance / walletTotal) * 100) : 0)}
                     </div>
                   </div>
                   <span className="flex text-v2-dim">
@@ -246,14 +276,17 @@ export default function InicioPage() {
               title={t('inicio.alerts.title')}
               subtitle={visibleAlerts.length === 1 ? t('inicio.alerts.oneOpen') : fill(t('inicio.alerts.manyOpen'), visibleAlerts.length)}
             />
-            <div className="mt-3.5 grid grid-cols-1 gap-2.5 min-[760px]:grid-cols-2 min-[1100px]:grid-cols-3">
+            <div className="mt-3.5 grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-2.5">
               {visibleAlerts.map((alert) => (
                 <AlertCard
                   key={alert.id}
                   alert={alert}
                   today={today}
                   hidden={hidden}
+                  wallets={data.wallets ?? []}
                   onOpen={() => openAlert(alert)}
+                  onConfirm={alert.kind === 'goal_plan_due' ? () => void resolvePlan(alert, true) : undefined}
+                  onSkip={alert.kind === 'goal_plan_due' ? () => void resolvePlan(alert, false) : undefined}
                   onDismiss={() => setAndSaveDismissed([...dismissed, alert.id])}
                 />
               ))}
@@ -280,20 +313,19 @@ export default function InicioPage() {
             onLink={() => navigate('/planes?tab=presupuestos')}
           />
           <div className="mt-2.5 flex flex-col">
-            {appLoading && budgets.length === 0 ? (
+            {appLoading && homeBudgets(budgets).length === 0 ? (
               <RowSkeletons count={4} />
-            ) : budgets.length === 0 ? (
+            ) : homeBudgets(budgets).length === 0 ? (
               <div className="py-3 text-[12.5px] text-v2-dim">{t('inicio.budgets.empty')}</div>
             ) : (
-              sortByRisk(budgets).map((b, i, arr) => {
+              homeBudgets(budgets).map((b, i, arr) => {
                 const tone = TONE_VAR[budgetTone(b.percentage)]
-                const note = budgetNote(b.spent, b.limit, b.percentage, today)
                 return (
                   <RowButton key={b.id} last={i === arr.length - 1} gap={12} onClick={() => navigate('/planes?tab=presupuestos')}>
-                    <CategoryMark category={b.category} box={34} />
+                    <CategoryMark category={b.category!} box={34} />
                     <div className="flex min-w-0 flex-1 flex-col gap-1.5 text-left">
                       <div className="flex items-baseline justify-between gap-2.5">
-                        <span className="text-[12.5px] font-bold">{b.name ?? tCategory(b.category)}</span>
+                        <span className="text-[12.5px] font-bold">{budgetScope(b, walletName)}</span>
                         <Money hidden={hidden} className="text-[11.5px] text-v2-muted">
                           {`${format(b.spent)} / ${format(b.limit)}`}
                         </Money>
@@ -302,9 +334,7 @@ export default function InicioPage() {
                         <div className="h-full" style={{ width: `${Math.min(100, b.percentage)}%`, background: tone }} />
                       </div>
                       <div className="flex justify-between gap-2.5 text-[11px] text-v2-dim">
-                        <span>
-                          <MoneyText parts={[budgetNoteText(note, t)]} hidden={hidden} format={format} />
-                        </span>
+                        <span>{budgetStateNote(b, today, format)}</span>
                         <Money hidden={hidden}>
                           {b.remaining >= 0 ? fill(t('inicio.budgets.available'), format(b.remaining)) : fill(t('inicio.budgets.overBy'), format(-b.remaining))}
                         </Money>
@@ -334,7 +364,7 @@ export default function InicioPage() {
                 <div className="py-3 text-[12.5px] text-v2-dim">{t('inicio.goals.empty')}</div>
               ) : (
                 data.goals.map((g, i, arr) => {
-                  const mark = goalMark(g.themeIcon)
+                  const mark = goalMark(g.icon)
                   const pct = Math.min(100, g.percentage)
                   return (
                     <RowButton key={g.id} last={i === arr.length - 1} onClick={() => navigate('/planes?tab=metas')}>
@@ -343,7 +373,7 @@ export default function InicioPage() {
                         style={{ background: `conic-gradient(${mark.color} ${pct}%, var(--v2-line) 0)` }}
                       >
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-v2-surface">
-                          <CategoryGlyph category={mark.glyph} size={17} color={mark.color} />
+                          <Glyph paths={mark.glyph} size={17} color={mark.color} />
                         </div>
                       </div>
                       <div className="min-w-0 flex-1 text-left">
@@ -351,7 +381,9 @@ export default function InicioPage() {
                         <Money hidden={hidden} className="mt-0.5 block text-[11.5px] text-v2-muted">
                           {fill(t('inicio.goals.progress'), format(g.currentAmount), format(g.targetAmount))}
                         </Money>
-                        <div className="mt-0.5 text-[11px] text-v2-dim">{goalEtaText(g, transactions, today, language, t)}</div>
+                        <div className="mt-0.5 text-[11px] text-v2-dim">
+                          {g.plan ? planText(g.plan, walletName(g.plan.accountId), format) : g.targetDate ? `Fecha objetivo ${shortDayMonth(g.targetDate)}` : 'Sin fecha objetivo'}
+                        </div>
                       </div>
                       <span className="font-numeric text-[12px] font-extrabold text-v2-muted">{g.percentage}%</span>
                     </RowButton>
@@ -545,10 +577,28 @@ function MonthBars({ months, language }: { months: MonthTotals[] | null; languag
   )
 }
 
-function AlertCard({ alert, today, hidden, onOpen, onDismiss }: { alert: AppAlert; today: string; hidden: boolean; onOpen: () => void; onDismiss: () => void }) {
+function AlertCard({
+  alert,
+  today,
+  hidden,
+  wallets,
+  onOpen,
+  onConfirm,
+  onSkip,
+  onDismiss,
+}: {
+  alert: AppAlert
+  today: string
+  hidden: boolean
+  wallets: Wallet[]
+  onOpen: () => void
+  onConfirm?: () => void
+  onSkip?: () => void
+  onDismiss: () => void
+}) {
   const { t, tCategory, language } = useTranslation()
   const { format } = useCurrency()
-  const copy = alertCopy(alert, today, language, t, tCategory)
+  const copy = alertCopy(alert, today, language, t, tCategory, wallets)
   return (
     <div
       role="button"
@@ -562,12 +612,36 @@ function AlertCard({ alert, today, hidden, onOpen, onDismiss }: { alert: AppAler
       }}
       className="flex cursor-pointer items-start gap-3 rounded-[12px] border border-v2-line bg-v2-surface2 py-[13px] pl-[13px] pr-2.5 hover:border-v2-line2"
     >
-      <CategoryMark category={copy.glyph} box={32} color={copy.color} />
+      <GlyphMark paths={copy.glyph} color={copy.color} box={32} />
       <div className="min-w-0 flex-1">
         <div className="text-[12.5px] font-bold">{copy.title}</div>
         <div className="mt-[3px] text-[11.5px] leading-[1.45] text-v2-dim">
           <MoneyText parts={copy.body} hidden={hidden} format={format} />
         </div>
+        {onConfirm && onSkip && (
+          <div className="mt-[9px] flex flex-wrap gap-x-3.5 gap-y-1.5 text-[12px] font-extrabold">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                onConfirm()
+              }}
+              className="cursor-pointer text-v2-accent2"
+            >
+              Confirmar aporte
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                onSkip()
+              }}
+              className="cursor-pointer text-v2-muted"
+            >
+              Omitir esta vez
+            </button>
+          </div>
+        )}
       </div>
       <button
         type="button"
@@ -641,4 +715,9 @@ function LoanBox({ label, value, color, hidden }: { label: string; value: string
       )}
     </div>
   )
+}
+
+// Inicio shows up to six monthly category budgets, riskiest first.
+function homeBudgets(budgets: ReturnType<typeof useAppData>['budgets']) {
+  return sortByRisk(budgets.filter((b) => b.kind === 'category' && b.period === 'monthly')).slice(0, 6)
 }

@@ -7,14 +7,23 @@ import { ThemeProvider } from '@/state/ThemeContext'
 import { ToastProvider } from '@/state/ToastContext'
 import { AuthProvider } from '@/state/AuthContext'
 import { AppDataProvider } from '@/state/AppDataContext'
+import { TAX_NODES } from '@/lib/taxonomy'
 
 export const BASE = 'http://test.local/api/v1'
-export const CATEGORIES = [
-  { id: 'uuid-food', slug: 'food' },
-  { id: 'uuid-bills', slug: 'bills' },
-  { id: 'uuid-other', slug: 'other' },
-  { id: 'uuid-salary', slug: 'salary' },
-]
+// GET /categories: the bundled v2 taxonomy, each node's UUID `uuid-<slug>`
+// ('uuid-exp.food.groceries').
+export const CATEGORIES = TAX_NODES.map((n) => ({
+  id: `uuid-${n.id}`,
+  slug: n.id,
+  name: n.name,
+  icon: n.vis,
+  color: n.color,
+  kind: n.type === 'income' ? 'INCOME' : 'EXPENSE',
+  parentId: n.parentId ? `uuid-${n.parentId}` : null,
+  isCustom: false,
+  hidden: false,
+  usage: 0,
+}))
 
 // Signed-in session with the given blurBalance preference, plus empty
 // transactions/budgets for AppDataProvider unless a test overrides them.

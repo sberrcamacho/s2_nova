@@ -1,6 +1,7 @@
 import { Fragment, type CSSProperties } from 'react'
 import { cn } from '@/lib/cn'
 import { useTranslation } from '@/state/useTranslation'
+import { formatMoney } from '@/lib/currency'
 
 // An amount that blurs (9px, per STAGE-2-INICIO) when amounts are hidden.
 // Blurred text is aria-hidden and replaced for screen readers by
@@ -29,7 +30,9 @@ export function Money({ hidden, children, className, style, inline }: { hidden: 
 // A sentence with amounts in it ("{0} de {1} este mes."): args marked
 // { amount } render through Money, so hiding amounts blurs only the figures
 // and leaves the rest of the sentence readable.
-export type MoneyTemplate = { template: string; args: (string | number | { amount: number })[] }
+// An amount arg may carry its own currency (a movement's); otherwise it is
+// in the principal currency and goes through `format`.
+export type MoneyTemplate = { template: string; args: (string | number | { amount: number; currency?: string })[] }
 
 export function MoneyText({ parts, hidden, format }: { parts: MoneyTemplate[]; hidden: boolean; format: (v: number) => string }) {
   return (
@@ -43,7 +46,7 @@ export function MoneyText({ parts, hidden, format }: { parts: MoneyTemplate[]; h
           if (typeof arg === 'object') {
             return (
               <Money key={`${pi}.${ci}`} hidden={hidden} inline>
-                {format(arg.amount)}
+                {arg.currency ? formatMoney(arg.amount, arg.currency) : format(arg.amount)}
               </Money>
             )
           }

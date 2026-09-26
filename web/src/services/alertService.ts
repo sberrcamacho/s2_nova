@@ -45,9 +45,44 @@ export type AppAlert =
       id: string
       goalId: string
       name: string
-      themeIcon?: string
+      icon: string
       percentage: number
       remaining: number
+    }
+  | {
+      // "Aporte programado a <meta>" — Confirmar aporte / Omitir esta vez.
+      kind: 'goal_plan_due'
+      id: string
+      goalId: string
+      name: string
+      icon: string
+      amount: number
+      currency: string
+      accountId: string
+      dueDate: string
+    }
+  | {
+      kind: 'goal_plan_auto'
+      id: string
+      goalId: string
+      name: string
+      icon: string
+      amount: number
+      currency: string
+      walletName: string
+      date: string
+    }
+  | {
+      // A Programado movement dated in the next 7 days.
+      kind: 'tx_planned'
+      id: string
+      transactionId: string
+      name: string
+      category: CategoryId
+      amount: number
+      currency: string
+      walletName: string
+      dueDate: string
     }
 
 interface BackendAlert {
@@ -57,6 +92,11 @@ interface BackendAlert {
   name?: string | null
   type?: 'INCOME' | 'EXPENSE'
   amount?: number
+  currency?: string
+  accountId?: string
+  walletName?: string
+  date?: string
+  icon?: string
   categoryId?: string
   dueDate?: string
   overdue?: boolean
@@ -114,9 +154,45 @@ async function mapAlert(row: BackendAlert): Promise<AppAlert | null> {
         id: row.id,
         goalId: row.goalId!,
         name: row.name ?? '',
-        themeIcon: row.themeIcon ?? undefined,
+        icon: row.icon ?? 'other',
         percentage: row.percentage ?? 0,
         remaining: row.remaining ?? 0,
+      }
+    case 'GOAL_PLAN_DUE':
+      return {
+        kind: 'goal_plan_due',
+        id: row.id,
+        goalId: row.goalId!,
+        name: row.name ?? '',
+        icon: row.icon ?? 'other',
+        amount: row.amount ?? 0,
+        currency: row.currency ?? 'COP',
+        accountId: row.accountId!,
+        dueDate: row.dueDate!.slice(0, 10),
+      }
+    case 'GOAL_PLAN_AUTO':
+      return {
+        kind: 'goal_plan_auto',
+        id: row.id,
+        goalId: row.goalId!,
+        name: row.name ?? '',
+        icon: row.icon ?? 'other',
+        amount: row.amount ?? 0,
+        currency: row.currency ?? 'COP',
+        walletName: row.walletName ?? '',
+        date: row.date!.slice(0, 10),
+      }
+    case 'TX_PLANNED':
+      return {
+        kind: 'tx_planned',
+        id: row.id,
+        transactionId: row.transactionId!,
+        name: row.name ?? '',
+        category: await categorySlugFor(row.categoryId),
+        amount: row.amount ?? 0,
+        currency: row.currency ?? 'COP',
+        walletName: row.walletName ?? '',
+        dueDate: row.dueDate!.slice(0, 10),
       }
     default:
       // A rule added server-side before this client knows how to show it.

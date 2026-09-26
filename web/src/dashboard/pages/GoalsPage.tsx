@@ -1,24 +1,25 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Money, MoneyText } from '@/components/v2/Money'
+import { IC, Icon } from '@/components/v2/Kit'
+import { Money } from '@/components/v2/Money'
 import { RowSkeletons, SyncBanner } from '@/components/v2/Rows'
-import { GoalPanel, GoalPayPanel } from '@/dashboard/components/planes/GoalPanels'
-import { PlanAddTile } from '@/dashboard/components/planes/PlanAddTile'
+import { GoalModal, GoalPayModal } from '@/dashboard/components/planes/GoalModals'
 import { accountService } from '@/services/accountService'
 import { goalService } from '@/services/goalService'
 import { useAppData } from '@/state/AppDataContext'
 import { useCurrency } from '@/state/useCurrency'
 import { useHideAmounts } from '@/state/useHideAmounts'
 import { useTranslation } from '@/state/useTranslation'
-import { goalMark } from '@/lib/categoryGlyphs'
 import { todayISO } from '@/lib/date'
-import { goalEtaText } from '@/lib/planCopy'
+import { shortWallet } from '@/lib/movimientos'
+import { goalEtaText, longDate, planText, shortDayMonth } from '@/lib/planCopy'
+import { planIcon } from '@/lib/taxonomy'
 import type { Goal, Wallet } from '@/types'
 
-// Planes › Metas (Web v2 mockup `isGoals`): a ring with the percentage,
-// `current de target` and the estimated date, as on Inicio. The card opens
-// the goal panel; "Abonar" (Android's goal-card button, needed for parity)
-// adds a contribution.
-export default function GoalsPage() {
+// Planes › Metas (Web v2 mockup `isGoals`): ring with the plan icon, name
+// and percentage, target date, `current de target`, the estimate, the
+// periodic contribution line and "Abonar". A card opens the goal modal;
+// the header's "Nueva meta" (PlanesPage) creates one.
+export default function GoalsPage({ adding, onAddingDone }: { adding: boolean; onAddingDone: () => void }) {
   const { transactions, version, refresh, notifyChanged } = useAppData()
   const { format } = useCurrency()
   const { hidden } = useHideAmounts()
@@ -26,9 +27,10 @@ export default function GoalsPage() {
   const [goals, setGoals] = useState<Goal[] | null>(null)
   const [wallets, setWallets] = useState<Wallet[]>([])
   const [failed, setFailed] = useState(false)
-  const [editing, setEditing] = useState<Goal | 'new' | null>(null)
+  const [editing, setEditing] = useState<Goal | null>(null)
   const [paying, setPaying] = useState<Goal | null>(null)
   const today = todayISO()
+  const walletName = (id: string) => shortWallet(wallets.find((w) => w.id === id)?.name ?? '')
 
   const load = useCallback(async () => {
     const [g, w] = await Promise.allSettled([goalService.getGoals(), accountService.getWallets()])
@@ -41,9 +43,13 @@ export default function GoalsPage() {
     void load()
   }, [load, version])
 
-  const saved = () => {
+  const close = () => {
     setEditing(null)
     setPaying(null)
+    onAddingDone()
+  }
+  const saved = () => {
+    close()
     notifyChanged()
     void refresh()
   }
@@ -58,45 +64,74 @@ export default function GoalsPage() {
       ) : (
         <div className="grid grid-cols-1 gap-3.5 min-[1100px]:grid-cols-2">
           {goals.map((g) => {
-            const mark = goalMark(g.themeIcon)
+            const ic = planIcon(g.icon)
             const pct = Math.min(100, g.percentage)
             return (
-              <div key={g.id} className="flex items-center gap-3 rounded-[16px] border border-v2-line bg-v2-surface p-5">
-                <button type="button" onClick={() => setEditing(g)} className="flex min-w-0 flex-1 cursor-pointer items-center gap-[18px] text-left focus-visible:outline-2 focus-visible:outline-v2-accent">
-                  <span
-                    className="flex h-[72px] w-[72px] flex-none items-center justify-center rounded-full"
-                    style={{ background: `conic-gradient(${mark.color} ${pct}%, var(--v2-line) 0)` }}
-                  >
+              <div
+                key={g.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => setEditing(g)}
+                onKeyDown={(e) => e.key === 'Enter' && setEditing(g)}
+                className="cursor-pointer rounded-[16px] border border-v2-line bg-v2-surface p-5 hover:border-v2-line2 focus-visible:outline-2 focus-visible:outline-v2-accent"
+              >
+                <div className="flex items-center gap-[18px]">
+                  <span className="flex h-[72px] w-[72px] flex-none items-center justify-center rounded-full" style={{ background: `conic-gradient(${ic.color} ${pct}%, var(--v2-line) 0)` }}>
                     <span className="flex h-14 w-14 items-center justify-center rounded-full bg-v2-surface">
-                      <span className="font-numeric text-[14px] font-extrabold">{g.percentage}%</span>
+                      <Icon paths={ic.glyph} size={24} color={ic.color} />
                     </span>
                   </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[14px] font-extrabold tracking-[-.01em]">{g.name}</span>
-                    <span className="font-numeric mt-[5px] block text-[18px] font-extrabold tracking-[-.02em]">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2.5">
+                      <div className="min-w-0 text-[14px] font-extrabold leading-[1.3] tracking-[-.01em]">{g.name}</div>
+                      <span className="font-numeric text-[12px] font-extrabold" style={{ color: ic.color }}>
+                        {g.percentage}%
+                      </span>
+                    </div>
+                    <div className="mt-0.5 text-[11px] text-v2-dim">{g.targetDate ? `Fecha objetivo ${longDate(g.targetDate)}` : 'Sin fecha objetivo'}</div>
+                    <div className="font-numeric mt-1.5 text-[18px] font-extrabold leading-[1.3] tracking-[-.02em]">
                       <Money hidden={hidden} inline>
                         {format(g.currentAmount)}
                       </Money>{' '}
                       <span className="text-[12px] font-semibold tracking-normal text-v2-dim">
-                        <MoneyText parts={[{ template: t('plans.of'), args: [{ amount: g.targetAmount }] }]} hidden={hidden} format={format} />
+                        de{' '}
+                        <Money hidden={hidden} inline>
+                          {format(g.targetAmount)}
+                        </Money>
                       </span>
+                    </div>
+                    <div className="mt-1.5 text-[11.5px] leading-[1.5] text-v2-dim">{goalEtaText(g, transactions, today, language, t)}</div>
+                  </div>
+                </div>
+                {g.plan && (
+                  <div className="mt-3.5 flex items-center gap-2 rounded-[10px] bg-v2-surface2 px-3 py-[9px] text-[11.5px] font-semibold text-v2-muted">
+                    <Icon paths={IC.repeat} size={13} color="var(--v2-dim)" />
+                    <span className="font-numeric">
+                      {planText(g.plan, walletName(g.plan.accountId), format)} · próximo {shortDayMonth(g.plan.nextDate)}
                     </span>
-                    <span className="mt-1.5 block text-[11.5px] leading-[1.5] text-v2-dim">{goalEtaText(g, transactions, today, language, t)}</span>
-                  </span>
-                </button>
-                <button type="button" onClick={() => setPaying(g)} className="flex-none cursor-pointer self-end rounded-[10px] bg-v2-accent px-3.5 py-[9px] text-[12px] font-bold text-white">
-                  {t('plans.contribute')}
-                </button>
+                  </div>
+                )}
+                <div className="mt-3.5 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setPaying(g)
+                    }}
+                    className="box-border flex h-8 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-[10px] border border-v2-line2 px-3.5 text-[12px] font-extrabold text-v2-accent2 hover:border-v2-accent2"
+                  >
+                    <span className="text-[14px] leading-none">+</span>Abonar
+                  </button>
+                </div>
               </div>
             )
           })}
-          <PlanAddTile label={t('plans.newGoal')} onClick={() => setEditing('new')} />
         </div>
       )}
       {goals?.length === 0 && <div className="p-5 text-center text-[12.5px] text-v2-dim">{t('plans.goalsEmpty')}</div>}
 
-      {editing && <GoalPanel goal={editing === 'new' ? null : editing} wallets={wallets} onClose={() => setEditing(null)} onSaved={saved} />}
-      {paying && <GoalPayPanel goal={paying} wallets={wallets} onClose={() => setPaying(null)} onSaved={saved} />}
+      {(editing || adding) && <GoalModal goal={editing} wallets={wallets} onClose={close} onSaved={saved} />}
+      {paying && <GoalPayModal goal={paying} wallets={wallets} onClose={close} onSaved={saved} />}
     </>
   )
 }

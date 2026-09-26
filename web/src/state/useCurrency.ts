@@ -1,34 +1,17 @@
 import { useCallback, useMemo } from 'react'
 import { useAuth } from '@/state/AuthContext'
-import { useToast } from '@/state/ToastContext'
-import { formatCurrency, formatCurrencyCompact } from '@/lib/currency'
-import { userService } from '@/services/userService'
-import type { CurrencyCode } from '@/types'
+import { formatCurrency, formatCurrencyCompact, formatMoney } from '@/lib/currency'
 
-// Reads the user's currency-format preference (`user.currency`) and returns
-// formatters bound to it, so every amount in the app re-renders with the
-// right format the moment the preference changes in Settings.
+// Formatters bound to the user's principal currency (Ajustes › Monedas):
+// totals and summaries are shown in it. `formatIn` formats an amount in
+// its own currency (a wallet's or a movement's).
 export function useCurrency() {
-  const { user, updateUser } = useAuth()
-  const { showToast } = useToast()
-  const currency: CurrencyCode = user?.currency ?? 'COP'
+  const { user } = useAuth()
+  const currency: string = user?.principalCurrency ?? 'COP'
 
   const format = useCallback((value: number, opts?: { signed?: boolean }) => formatCurrency(value, currency, opts), [currency])
   const formatCompact = useCallback((value: number) => formatCurrencyCompact(value, currency), [currency])
-  const setCurrency = useCallback(
-    (next: CurrencyCode) => {
-      const previous = currency
-      updateUser({ currency: next })
-      userService.updateCurrency(next).catch((err) => {
-        // The optimistic update above must not silently stick around if the
-        // backend rejected it — revert and let the user know, same pattern
-        // as the profile-save/password-change flows.
-        updateUser({ currency: previous })
-        showToast(err instanceof Error ? err.message : 'Algo salió mal. Intenta de nuevo.', 'error')
-      })
-    },
-    [currency, updateUser, showToast],
-  )
+  const formatIn = useCallback((value: number, code: string, opts?: { signed?: boolean }) => formatMoney(value, code, opts), [])
 
-  return useMemo(() => ({ currency, format, formatCompact, setCurrency }), [currency, format, formatCompact, setCurrency])
+  return useMemo(() => ({ currency, format, formatCompact, formatIn }), [currency, format, formatCompact, formatIn])
 }

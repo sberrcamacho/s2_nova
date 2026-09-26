@@ -1,23 +1,22 @@
 import { apiClient } from '@/lib/apiClient'
-import type { Wallet, WalletType } from '@/types'
+import type { AccountType, Wallet, WalletType } from '@/types'
 
-// Read-only by design: creating/editing wallets is Android's job
-// (micro-management) — Web (macro-analysis) only ever reads wallet
-// balances. See root AGENTS.md's Android/Web responsibility split.
+// Billeteras (CURRENCIES_AND_WALLETS.md): one currency per wallet. The
+// backend applies every balance rule; `principalBalance` is its conversion
+// to the user's principal currency for totals.
 
 interface BackendAccount {
   id: string
   name: string
-  type: 'CASH' | 'BANK_DEBIT' | 'BANK_CREDIT' | 'SAVINGS' | 'CRYPTO' | 'NEQUI' | 'DAVIPLATA' | 'OTHER'
+  type: AccountType
+  currency: string
   initialBalance: number
   currentBalance: number
+  principalBalance?: number | null
+  movements?: number | null
 }
 
-// The backend distinguishes more wallet subtypes (bank debit/credit,
-// Nequi, Daviplata) than Web's WalletType — since Web only ever *displays*
-// the type (an icon/label), subtypes collapse into the closest existing
-// bucket rather than widening a type that has no create/edit UI to justify it.
-const TYPE_MAP: Record<BackendAccount['type'], WalletType> = {
+const TYPE_MAP: Record<AccountType, WalletType> = {
   CASH: 'cash',
   BANK_DEBIT: 'bank',
   BANK_CREDIT: 'bank',
@@ -34,8 +33,11 @@ function mapAccount(account: BackendAccount): Wallet {
     name: account.name,
     type: TYPE_MAP[account.type],
     accountType: account.type,
+    currency: account.currency ?? 'COP',
     initialBalance: account.initialBalance,
     currentBalance: account.currentBalance,
+    principalBalance: account.principalBalance ?? account.currentBalance,
+    movements: account.movements ?? 0,
   }
 }
 
@@ -43,5 +45,19 @@ export const accountService = {
   async getWallets(): Promise<Wallet[]> {
     const accounts = await apiClient.get<BackendAccount[]>('/accounts')
     return accounts.map(mapAccount)
+  },
+
+  async createWallet(input: { name: string; type: AccountType; initialBalance: number; currency: string }): Promise<Wallet> {
+    return mapAccount(await apiClient.post<BackendAccount>('/accounts', input))
+  },
+
+  async updateWallet(id: string, input: { name?: string; type?: AccountType }): Promise<Wallet> {
+    return mapAccount(await apiClient.patch<BackendAccount>(`/accounts/${id}`, input))
+  },
+
+  // Without `reassignToAccountId` the wallet's movements are deleted with
+  // it. The last wallet can't be deleted (409).
+  async deleteWallet(id: string, reassignToAccountId?: string): Promise<void> {
+    await apiClient.delete(`/accounts/${id}`, { reassignToAccountId })
   },
 }

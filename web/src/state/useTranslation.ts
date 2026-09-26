@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { useAuth } from '@/state/AuthContext'
+import { categoryName } from '@/lib/backendCategories'
 import {
-  categoryTranslationKey,
   paymentMethodTranslationKey,
   translate,
   type TranslationKey,
@@ -20,7 +20,9 @@ export function useTranslation() {
   // Convenience wrappers for the two mock-data label fields that need to
   // react to the language preference (category/payment-method names) —
   // saves every call site from importing the key-mapping helpers directly.
-  const tCategory = useCallback((id: CategoryId) => translate(categoryTranslationKey(id), language), [language])
+  // Category names come from the shared taxonomy registry (user renames
+  // included) — Spanish, like the rest of the v2 copy.
+  const tCategory = useCallback((id: CategoryId) => categoryName(id), [])
   const tPaymentMethod = useCallback((id: PaymentMethod) => translate(paymentMethodTranslationKey(id), language), [language])
   const setLanguage = useCallback(
     (next: LanguageCode) => {

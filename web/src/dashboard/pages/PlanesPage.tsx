@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import BudgetsPage from '@/dashboard/pages/BudgetsPage'
 import GoalsPage from '@/dashboard/pages/GoalsPage'
@@ -20,13 +21,28 @@ export default function PlanesPage() {
   const [params, setParams] = useSearchParams()
   const tab = TABS.find((x) => x.id === params.get('tab'))?.id ?? 'presupuestos'
   const side = params.get('side') === 'borrowed' ? 'borrowed' : 'lent'
+  const [adding, setAdding] = useState(false)
+  const done = () => setAdding(false)
+  const addLabel = t(tab === 'presupuestos' ? 'plans.newBudget' : tab === 'metas' ? 'plans.newGoal' : side === 'borrowed' ? 'loans.newBorrowed' : 'loans.newLent')
 
   return (
     <div className="flex flex-col gap-[18px] px-4 pb-10 pt-[26px] min-[760px]:px-7">
       <div className="flex flex-col gap-3.5">
-        <div>
-          <h1 className="text-[24px] font-extrabold tracking-[-.025em]">{t('planes.title')}</h1>
-          <div className="mt-[3px] text-[12.5px] text-v2-dim">{t('planes.subtitle')}</div>
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-[24px] font-extrabold tracking-[-.025em]">{t('planes.title')}</h1>
+            <div className="mt-[3px] text-[12.5px] text-v2-dim">{t('planes.subtitle')}</div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setAdding(true)}
+            className="box-border flex h-[34px] cursor-pointer items-center gap-[7px] whitespace-nowrap rounded-[10px] bg-v2-accent px-3.5 text-[12.5px] font-bold text-white"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" className="flex-none">
+              <path d="M12 5v14 M5 12h14" />
+            </svg>
+            {addLabel}
+          </button>
         </div>
         <div role="tablist" className="flex border-b border-v2-line">
           {TABS.map((x) => {
@@ -37,7 +53,10 @@ export default function PlanesPage() {
                 type="button"
                 role="tab"
                 aria-selected={on}
-                onClick={() => setParams({ tab: x.id }, { replace: true })}
+                onClick={() => {
+                  setAdding(false)
+                  setParams({ tab: x.id }, { replace: true })
+                }}
                 className={cn(
                   'mb-[-1px] cursor-pointer border-b-2 px-3.5 py-2.5 text-[12.5px]',
                   on ? 'border-v2-accent3 font-extrabold text-v2-text' : 'border-transparent font-semibold text-v2-dim',
@@ -49,9 +68,9 @@ export default function PlanesPage() {
           })}
         </div>
       </div>
-      {tab === 'presupuestos' && <BudgetsPage />}
-      {tab === 'metas' && <GoalsPage />}
-      {tab === 'prestamos' && <LoansTab side={side} onSide={(s) => setParams({ tab: 'prestamos', side: s }, { replace: true })} />}
+      {tab === 'presupuestos' && <BudgetsPage adding={adding} onAddingDone={done} />}
+      {tab === 'metas' && <GoalsPage adding={adding} onAddingDone={done} />}
+      {tab === 'prestamos' && <LoansTab side={side} onSide={(s) => setParams({ tab: 'prestamos', side: s }, { replace: true })} adding={adding} onAddingDone={done} />}
     </div>
   )
 }

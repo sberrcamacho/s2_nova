@@ -1,59 +1,242 @@
-// The backend models categories as real rows with a generated UUID `id`,
-// while Web's domain model (and every mock seed file) addresses a category
-// by its fixed `slug` (== CategoryId, e.g. 'food') — see
-// backend/src/routes/categories.ts and backend/prisma/seed.ts's `slug`
-// column doc comment. Every service that reads/writes a categoryId over
-// the wire needs to translate between the two; this module fetches
-// GET /categories once per session and caches both directions.
+// The one category registry every screen resolves names, colors and glyphs
+// through (CATEGORY_SYSTEM.md). Nodes are keyed by the taxonomy's stable
+// dotted id (== the backend's Category.slug, e.g. 'exp.food.groceries');
+// the backend row's UUID is only used on the wire (categoryIdFor /
+// categorySlugFor). Until GET /categories loads — and in guest mode — the
+// bundled taxonomy stands in. Components subscribe with useCategories().
+import { useSyncExternalStore } from 'react'
 import { apiClient } from '@/lib/apiClient'
+import { TAX_NODES, TAX_TRANSFER, TAX_VIS, taxNode, visColor } from '@/lib/taxonomy'
 import type { CategoryId } from '@/types'
+
+export interface CategoryNode {
+  id: CategoryId
+  backendId: string | null
+  income: boolean
+  parentId: CategoryId | null
+  name: string
+  defaultName: string
+  vis: string
+  color: string
+  custom: boolean
+  hidden: boolean
+  usage: number
+}
 
 interface BackendCategory {
   id: string
   slug: string
+  name: string
+  defaultName?: string
+  icon: string
+  color: string
+  kind: 'EXPENSE' | 'INCOME'
+  parentId: string | null
+  isCustom: boolean
+  hidden: boolean
+  usage: number
 }
 
-let cache: Promise<{ slugToId: Map<CategoryId, string>; idToSlug: Map<string, CategoryId> }> | null = null
+export const TRANSFER = 'transfer'
 
-function load() {
-  if (!cache) {
-    cache = apiClient
+function bundled(): CategoryNode[] {
+  return TAX_NODES.map((n) => ({
+    id: n.id,
+    backendId: null,
+    income: n.type === 'income',
+    parentId: n.parentId,
+    name: n.name,
+    defaultName: n.name,
+    vis: n.vis,
+    color: n.color,
+    custom: false,
+    hidden: false,
+    usage: 0,
+  }))
+}
+
+let nodes: CategoryNode[] = bundled()
+let byId = new Map(nodes.map((n) => [n.id, n]))
+let byBackend = new Map<string, CategoryNode>()
+const listeners = new Set<() => void>()
+
+function publish(next: CategoryNode[]) {
+  nodes = next
+  byId = new Map(next.map((n) => [n.id, n]))
+  byBackend = new Map(next.filter((n) => n.backendId).map((n) => [n.backendId!, n]))
+  listeners.forEach((l) => l())
+}
+
+function toNodes(rows: BackendCategory[]): CategoryNode[] {
+  const slugOf = new Map(rows.map((r) => [r.id, r.slug]))
+  const order = new Map(TAX_NODES.map((n, i) => [n.id, i]))
+  return rows
+    .map((r) => ({
+      id: r.slug,
+      backendId: r.id,
+      income: r.kind === 'INCOME',
+      parentId: r.parentId ? (slugOf.get(r.parentId) ?? null) : null,
+      name: r.name,
+      defaultName: r.defaultName ?? r.name,
+      vis: r.icon,
+      color: r.color,
+      custom: r.isCustom,
+      hidden: r.hidden,
+      usage: r.usage,
+    }))
+    .sort((a, b) => (order.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (order.get(b.id) ?? Number.MAX_SAFE_INTEGER))
+}
+
+let loading: Promise<void> | null = null
+let guest = false
+
+function load(): Promise<void> {
+  if (guest) return Promise.resolve()
+  if (!loading) {
+    loading = apiClient
       .get<BackendCategory[]>('/categories')
-      .then((categories) => {
-        const slugToId = new Map<CategoryId, string>()
-        const idToSlug = new Map<string, CategoryId>()
-        for (const category of categories) {
-          slugToId.set(category.slug as CategoryId, category.id)
-          idToSlug.set(category.id, category.slug as CategoryId)
-        }
-        return { slugToId, idToSlug }
-      })
+      .then((rows) => publish(toNodes(rows)))
       .catch((err) => {
-        // Don't wedge every future call behind this one failed request —
-        // clear the cache so the next categoryIdFor/categorySlugFor call
-        // retries the fetch instead of re-throwing this same rejection
-        // for the rest of the session.
-        cache = null
+        // Don't wedge every future call behind this one failed request.
+        loading = null
         throw err
       })
   }
-  return cache
+  return loading
+}
+
+export async function refreshCategories(): Promise<void> {
+  loading = null
+  await load()
+}
+
+// Guest mode: the bundled taxonomy, editable locally.
+export function setCategoryGuest(on: boolean) {
+  guest = on
+  loading = null
+  publish(bundled())
+}
+
+export function isCategoryGuest(): boolean {
+  return guest
+}
+
+export function replaceLocalCategories(next: CategoryNode[]) {
+  publish(next)
 }
 
 export async function categoryIdFor(slug: CategoryId): Promise<string> {
-  const { slugToId } = await load()
-  const id = slugToId.get(slug)
+  await load()
+  const id = byId.get(slug)?.backendId
   if (!id) throw new Error(`Unknown category: ${slug}`)
   return id
 }
 
-export async function categorySlugFor(id: string): Promise<CategoryId> {
-  const { idToSlug } = await load()
-  return idToSlug.get(id) ?? 'other'
+// The UUID of the parent + (for a leaf) the UUID of the subcategory, the
+// way POST/PATCH /transactions expect them.
+export async function categoryWireIds(slug: CategoryId): Promise<{ categoryId: string; subcategoryId?: string }> {
+  await load()
+  const node = byId.get(slug)
+  if (!node?.backendId) throw new Error(`Unknown category: ${slug}`)
+  if (!node.parentId) return { categoryId: node.backendId }
+  return { categoryId: byId.get(node.parentId)!.backendId!, subcategoryId: node.backendId }
 }
 
-// Clears the cache — call on logout, since categories can include
-// per-user rows in principle and a new session shouldn't reuse a stale map.
+export async function categorySlugFor(id: string | null | undefined): Promise<CategoryId> {
+  if (!id) return 'exp.other'
+  await load()
+  return byBackend.get(id)?.id ?? 'exp.other'
+}
+
+// A movement's category: the leaf when it has one, else the parent.
+export async function movementCategory(categoryId: string, subcategoryId: string | null | undefined, type: string): Promise<CategoryId> {
+  if (type === 'TRANSFER') return TRANSFER
+  return categorySlugFor(subcategoryId ?? categoryId)
+}
+
 export function resetCategoryCache() {
-  cache = null
+  loading = null
+  guest = false
+  publish(bundled())
+}
+
+// ---- Synchronous lookups ---------------------------------------------
+
+export function allCategories(): CategoryNode[] {
+  return nodes
+}
+
+export function categoryNode(id: CategoryId | null | undefined): CategoryNode | undefined {
+  return id ? byId.get(id) : undefined
+}
+
+export function parentOf(id: CategoryId | null | undefined): CategoryNode | undefined {
+  const n = categoryNode(id)
+  if (!n) return undefined
+  return n.parentId ? (byId.get(n.parentId) ?? n) : n
+}
+
+export function parentCategories(income: boolean, includeHidden = true): CategoryNode[] {
+  return nodes.filter((n) => n.parentId === null && n.income === income && (includeHidden || !n.hidden))
+}
+
+export function childCategories(parentId: CategoryId, includeHidden = true): CategoryNode[] {
+  return nodes.filter((n) => n.parentId === parentId && (includeHidden || !n.hidden))
+}
+
+export function categoryName(id: CategoryId | null | undefined): string {
+  if (id === TRANSFER) return TAX_TRANSFER.name
+  return categoryNode(id)?.name ?? ''
+}
+
+// "Alimentación · Mercado" for a leaf, "Alimentación" for a parent.
+export function categoryLabel(id: CategoryId | null | undefined): string {
+  if (id === TRANSFER) return TAX_TRANSFER.name
+  const n = categoryNode(id)
+  if (!n) return ''
+  const p = n.parentId ? byId.get(n.parentId) : undefined
+  return p ? `${p.name} · ${n.name}` : n.name
+}
+
+// Leaves inherit the parent's color.
+export function categoryColor(id: CategoryId | null | undefined): string {
+  if (id === TRANSFER) return TAX_TRANSFER.color
+  return parentOf(id)?.color ?? visColor('other')
+}
+
+// A leaf uses its own taxonomy glyph unless its parent was re-iconed; a
+// parent (or a custom node) uses its identity's glyph.
+export function categoryGlyph(id: CategoryId | null | undefined): string[] {
+  if (id === TRANSFER) return TAX_TRANSFER.glyph
+  const n = categoryNode(id)
+  if (!n) return TAX_VIS.other.glyph
+  const parent = parentOf(id)!
+  const bundledNode = taxNode(n.id)
+  if (n.parentId && bundledNode && parent.vis === taxNode(parent.id)?.vis) return bundledNode.glyph
+  return TAX_VIS[parent.vis]?.glyph ?? TAX_VIS.other.glyph
+}
+
+// True if `id` equals `scope` or is one of its children ("Todas").
+export function isInCategory(id: CategoryId | null | undefined, scope: CategoryId | null | undefined): boolean {
+  if (!id || !scope) return false
+  return id === scope || categoryNode(id)?.parentId === scope
+}
+
+export function isIncomeCategory(id: CategoryId | null | undefined): boolean {
+  return categoryNode(id)?.income ?? false
+}
+
+function subscribe(listener: () => void) {
+  listeners.add(listener)
+  return () => listeners.delete(listener)
+}
+
+// Re-renders the caller whenever the registry changes (load, edit).
+export function useCategories(): CategoryNode[] {
+  return useSyncExternalStore(subscribe, () => nodes)
+}
+
+// Fire-and-forget warm-up so names resolve before the first list renders.
+export function ensureCategories() {
+  void load().catch(() => undefined)
 }

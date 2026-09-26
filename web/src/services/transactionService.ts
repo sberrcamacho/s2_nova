@@ -1,6 +1,6 @@
 import { apiClient } from '@/lib/apiClient'
-import { categoryIdFor, categorySlugFor } from '@/lib/backendCategories'
-import type { LoanKind, NewTransactionInput, PaymentMethod, Transaction, TransactionStatus, TransactionType } from '@/types'
+import { categoryIdFor, categoryWireIds, movementCategory } from '@/lib/backendCategories'
+import type { AttachmentMeta, CounterpartyKind, LoanKind, NewTransactionInput, PaymentMethod, Transaction, TransactionStatus, TransactionType } from '@/types'
 
 interface BackendTransaction {
   id: string
@@ -9,13 +9,19 @@ interface BackendTransaction {
   type: 'INCOME' | 'EXPENSE' | 'TRANSFER'
   status: 'COMPLETED' | 'PLANNED'
   amount: number
+  currency: string
+  fxRate: number | null
+  walletAmount: number | null
   categoryId: string
+  subcategoryId: string | null
   productId: string | null
   budgetId: string | null
+  customBudgetId: string | null
   goalId: string | null
   recurringSeriesId: string | null
   loanKind: 'LENT' | 'BORROWED' | null
   counterpartyName: string | null
+  counterpartyKind: string | null
   dueDate: string | null
   loanSettledAt: string | null
   settledByTransactionId: string | null
@@ -26,6 +32,12 @@ interface BackendTransaction {
   merchant: string | null
   note: string | null
   date: string
+  occurredAt: string | null
+  attachment: { id: string; kind: 'IMAGE' | 'PDF'; mime: string; name: string; size: number; createdAt: string } | null
+}
+
+export function mapAttachment(a: NonNullable<BackendTransaction['attachment']>): AttachmentMeta {
+  return { id: a.id, kind: a.kind === 'PDF' ? 'pdf' : 'image', mime: a.mime, name: a.name, size: a.size, createdAt: a.createdAt }
 }
 
 async function mapTransaction(row: BackendTransaction): Promise<Transaction> {
@@ -35,19 +47,27 @@ async function mapTransaction(row: BackendTransaction): Promise<Transaction> {
     transferAccountId: row.transferToAccountId ?? undefined,
     description: row.description,
     amount: row.amount,
+    currency: row.currency,
+    fxRate: row.fxRate ?? undefined,
+    walletAmount: row.walletAmount ?? undefined,
     type: row.type.toLowerCase() as TransactionType,
     status: row.status.toLowerCase() as TransactionStatus,
-    category: await categorySlugFor(row.categoryId),
+    category: await movementCategory(row.categoryId, row.subcategoryId, row.type),
     date: row.date.slice(0, 10),
+    // occurredAt carries the local wall-clock time with a "Z" suffix.
+    time: row.occurredAt ? row.occurredAt.slice(11, 16) : '12:00',
     paymentMethod: row.paymentMethod.toLowerCase() as PaymentMethod,
     merchant: row.merchant ?? undefined,
     note: row.note ?? undefined,
     productId: row.productId ?? undefined,
     budgetId: row.budgetId ?? undefined,
+    customBudgetId: row.customBudgetId ?? undefined,
     goalId: row.goalId ?? undefined,
     recurringSeriesId: row.recurringSeriesId ?? undefined,
     loanKind: (row.loanKind?.toLowerCase() as LoanKind | undefined) ?? undefined,
     counterpartyName: row.counterpartyName ?? undefined,
+    counterpartyKind: (row.counterpartyKind?.toLowerCase() as CounterpartyKind | undefined) ?? undefined,
+    attachment: row.attachment ? mapAttachment(row.attachment) : undefined,
     dueDate: row.dueDate?.slice(0, 10),
     loanSettled: row.loanSettledAt !== null,
     settledByTransactionId: row.settledByTransactionId ?? undefined,
@@ -133,9 +153,34 @@ export const transactionService = {
     return Promise.all(rows.map(mapTransaction))
   },
 
-  // The backend reverses the balance effect before deleting.
-  async deleteTransaction(id: string): Promise<void> {
-    await apiClient.delete(`/transactions/${id}`)
+  // The backend reverses the balance effect before deleting. `stopSeries`
+  // also ends the movement's Programado (NEW_MOVEMENT.md §9).
+  async deleteTransaction(id: string, stopSeries = false): Promise<void> {
+    await apiClient.delete(`/transactions/${id}${stopSeries ? '?series=delete' : ''}`)
+  },
+
+  async getTransaction(id: string): Promise<Transaction> {
+    return mapTransaction(await apiClient.get<BackendTransaction>(`/transactions/${id}`))
+  },
+
+  // Receipts (NEW_MOVEMENT.md §7): one per movement, base64 over JSON.
+  async uploadAttachment(id: string, file: File): Promise<AttachmentMeta> {
+    const data = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(String(reader.result).split(',')[1] ?? '')
+      reader.onerror = () => reject(reader.error)
+      reader.readAsDataURL(file)
+    })
+    const row = await apiClient.put<NonNullable<BackendTransaction['attachment']>>(`/transactions/${id}/attachment`, { name: file.name, mime: file.type, data })
+    return mapAttachment(row)
+  },
+
+  async attachmentBlob(id: string): Promise<Blob> {
+    return (await apiClient.download(`/transactions/${id}/attachment`)).data
+  },
+
+  async deleteAttachment(id: string): Promise<void> {
+    await apiClient.delete(`/transactions/${id}/attachment`)
   },
 
   async getTransactionById(id: string): Promise<Transaction | undefined> {
@@ -157,17 +202,22 @@ export const transactionService = {
       type: input.type.toUpperCase(),
       status: (input.status ?? 'completed').toUpperCase(),
       amount: input.amount,
-      categoryId: await categoryIdFor(input.category),
+      currency: input.currency,
+      ...(input.type !== 'transfer' && input.category ? await categoryWireIds(input.category) : {}),
       productId: input.productId,
       budgetId: input.budgetId,
+      customBudgetId: input.customBudgetId,
       goalId: input.goalId,
       loanKind: input.loanKind?.toUpperCase(),
       counterpartyName: input.counterpartyName,
+      counterpartyKind: input.counterpartyKind?.toUpperCase(),
       dueDate: input.dueDate,
       description: input.description,
       merchant: input.merchant,
       note: input.note,
       date: input.date,
+      time: input.time,
+      repeat: input.repeat && { ...input.repeat, interval: input.repeat.interval.toUpperCase() },
     }
     const row = await apiClient.post<BackendTransaction>('/transactions', body)
     return mapTransaction(row)
@@ -176,6 +226,10 @@ export const transactionService = {
   async updateTransaction(id: string, patch: Partial<NewTransactionInput>): Promise<Transaction | undefined> {
     const body: Record<string, unknown> = {
       amount: patch.amount,
+      currency: patch.currency,
+      time: patch.time,
+      customBudgetId: patch.customBudgetId,
+      counterpartyKind: patch.counterpartyKind?.toUpperCase(),
       status: patch.status?.toUpperCase(),
       description: patch.description,
       merchant: patch.merchant,
@@ -187,7 +241,11 @@ export const transactionService = {
       counterpartyName: patch.counterpartyName,
       dueDate: patch.dueDate,
     }
-    if (patch.category) body.categoryId = await categoryIdFor(patch.category)
+    if (patch.category && patch.category !== 'transfer') {
+      const wire = await categoryWireIds(patch.category)
+      body.categoryId = wire.categoryId
+      body.subcategoryId = wire.subcategoryId ?? null
+    }
     const row = await apiClient.patch<BackendTransaction>(`/transactions/${id}`, body)
     return mapTransaction(row)
   },

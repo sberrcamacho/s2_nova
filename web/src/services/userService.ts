@@ -13,14 +13,17 @@ export interface MeResponse {
   passwordChangedAt: string | null
   preferences: {
     language: string
-    currency: 'COP' | 'USD'
+    currency: string
     theme: 'LIGHT' | 'DARK' | 'SYSTEM'
     notifications: boolean
     biometricLogin: boolean
     blurBalance: boolean
     onboardingCompleted: boolean
     tutorialCompleted: boolean
+    guidesSeen?: string[]
+    guidesOff?: boolean
   } | null
+  principalCurrency?: string
 }
 
 function initialsFrom(name: string): string {
@@ -45,8 +48,12 @@ export function mapMeResponse(me: MeResponse): User {
     phone: me.phone ?? '',
     city: me.city ?? '',
     avatarInitials: initialsFrom(me.name),
-    currency: me.preferences?.currency ?? 'COP',
+    currency: me.principalCurrency ?? 'COP',
     memberSince: me.createdAt.slice(0, 10),
+    principalCurrency: me.principalCurrency ?? 'COP',
+    onboardingCompleted: me.preferences?.onboardingCompleted ?? true,
+    guidesSeen: me.preferences?.guidesSeen ?? [],
+    guidesOff: me.preferences?.guidesOff ?? false,
     preferences: {
       theme: (me.preferences?.theme ?? 'SYSTEM').toLowerCase() as 'light' | 'dark' | 'system',
       notifications: me.preferences?.notifications ?? true,
@@ -105,8 +112,13 @@ export const userService = {
     await apiClient.patch('/me/preferences', body)
   },
 
-  async updateCurrency(currency: User['currency']): Promise<void> {
-    await apiClient.patch('/me/preferences', { currency })
+  // Mini-guides (ONBOARDING.md §3), persisted server-side for both clients.
+  async updateGuides(patch: { guidesSeen?: string[]; guidesOff?: boolean }): Promise<void> {
+    await apiClient.patch('/me/preferences', patch)
+  },
+
+  async completeOnboarding(): Promise<void> {
+    await apiClient.patch('/me/preferences', { onboardingCompleted: true, tutorialCompleted: true })
   },
 
   getSessions(): Promise<Session[]> {

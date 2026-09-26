@@ -98,7 +98,24 @@ async function send(path: string, init: RequestInit, options: RequestOptions = {
   return response
 }
 
+// Guest mode ("Continuar como invitado", ONBOARDING.md §1): every request
+// is answered by an in-memory stand-in for the backend (lib/guestApi.ts)
+// and nothing reaches the server.
+type GuestHandler = (method: string, path: string, body: unknown) => Promise<unknown>
+let guestHandler: GuestHandler | null = null
+
+export function setGuestHandler(handler: GuestHandler | null) {
+  guestHandler = handler
+}
+
+export function isGuestMode(): boolean {
+  return guestHandler !== null
+}
+
 async function request<T>(path: string, init: RequestInit, options: RequestOptions = {}): Promise<T> {
+  if (guestHandler) {
+    return (await guestHandler(init.method ?? 'GET', path, init.body ? JSON.parse(String(init.body)) : undefined)) as T
+  }
   const response = await send(path, init, options)
   if (response.status === 204) {
     return undefined as T
@@ -120,11 +137,15 @@ export const apiClient = {
   patch<T>(path: string, body?: unknown, options?: RequestOptions): Promise<T> {
     return request<T>(path, { method: 'PATCH', body: body !== undefined ? JSON.stringify(body) : undefined }, options)
   },
+  put<T>(path: string, body?: unknown, options?: RequestOptions): Promise<T> {
+    return request<T>(path, { method: 'PUT', body: body !== undefined ? JSON.stringify(body) : undefined }, options)
+  },
   delete<T>(path: string, body?: unknown, options?: RequestOptions): Promise<T> {
     return request<T>(path, { method: 'DELETE', body: body !== undefined ? JSON.stringify(body) : undefined }, options)
   },
   // A file response (e.g. the CSV export), with the name from Content-Disposition.
   async download(path: string): Promise<{ data: Blob; fileName: string | null }> {
+    if (guestHandler) return (await guestHandler('DOWNLOAD', path, undefined)) as { data: Blob; fileName: string | null }
     const response = await send(path, { method: 'GET' })
     const match = /filename="?([^";]+)"?/.exec(response.headers.get('content-disposition') ?? '')
     return { data: await response.blob(), fileName: match?.[1] ?? null }

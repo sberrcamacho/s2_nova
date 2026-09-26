@@ -1,18 +1,17 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AjCard, AjCardTitle, AjOutlineButton, AjPills, AjRow, AjSwitch } from '@/dashboard/components/ajustes/AjustesUi'
-import { accountService } from '@/services/accountService'
+import { parentCategories, useCategories } from '@/lib/backendCategories'
+import { currencyService, type UserCurrency } from '@/services/currencyService'
 import { userService, type Session } from '@/services/userService'
 import { useAuth } from '@/state/AuthContext'
-import { useCurrency } from '@/state/useCurrency'
 import { useHideAmounts } from '@/state/useHideAmounts'
 import { useTheme, type ThemePreference } from '@/state/ThemeContext'
 import { useToast } from '@/state/ToastContext'
 import { useTranslation } from '@/state/useTranslation'
 import { initialsOf, timeAgo } from '@/lib/ajustes'
-import { formatCOP, formatUSD } from '@/lib/currency'
 import { MONTHS_LONG, fill } from '@/lib/inicio'
-import type { CurrencyCode, LanguageCode } from '@/types'
+import type { LanguageCode } from '@/types'
 
 // Ajustes (Dashboard v2 › Settings): profile card, Preferencias and
 // Seguridad. Each "Cambiar"/"Administrar"/"Eliminar"/"Editar perfil"
@@ -20,16 +19,16 @@ import type { CurrencyCode, LanguageCode } from '@/types'
 export default function AjustesPage() {
   const { user, updateUser } = useAuth()
   const { t, language, setLanguage } = useTranslation()
-  const { currency, setCurrency } = useCurrency()
   const { preference: theme, setPreference: setTheme } = useTheme()
   const { hidden, toggle: toggleHidden } = useHideAmounts()
   const { showToast } = useToast()
   const navigate = useNavigate()
-  const [walletTotal, setWalletTotal] = useState<number | null>(null)
+  const [currencies, setCurrencies] = useState<UserCurrency[] | null>(null)
+  const categories = useCategories()
   const [sessions, setSessions] = useState<Session[] | null>(null)
 
   useEffect(() => {
-    accountService.getWallets().then((wallets) => setWalletTotal(wallets.reduce((sum, w) => sum + w.currentBalance, 0)), () => setWalletTotal(null))
+    currencyService.getMine().then(setCurrencies, () => setCurrencies(null))
     userService.getSessions().then(setSessions, () => setSessions(null))
   }, [])
 
@@ -59,12 +58,19 @@ export default function AjustesPage() {
     })
   }
 
-  const currencyDetail =
-    walletTotal === null
-      ? ''
-      : currency === 'COP'
-        ? fill(t('aj.currencyCOP'), formatCOP(walletTotal))
-        : fill(t('aj.currencyUSD'), `US${formatUSD(walletTotal)}`)
+  // "COP principal · USD, EUR"
+  const principal = user.principalCurrency
+  const others = (currencies ?? []).filter((c) => c.code !== principal).map((c) => c.code)
+  const currencyDetail = `${principal} principal${others.length ? ` · ${others.join(', ')}` : ''}`
+
+  const customCount = categories.filter((c) => c.custom).length
+  const catSummary = `${parentCategories(false).length} de gasto · ${parentCategories(true).length} de ingreso${customCount ? ` · ${customCount} personalizadas` : ''}`
+
+  const replayGuides = () => {
+    updateUser({ guidesSeen: [], guidesOff: false })
+    void userService.updateGuides({ guidesSeen: [], guidesOff: false })
+    showToast('Verás una guía corta en cada página principal.')
+  }
 
   const passwordDetail = user.hasPassword
     ? user.passwordChangedAt
@@ -106,15 +112,11 @@ export default function AjustesPage() {
               ]}
             />
           </AjRow>
-          <AjRow label={t('aj.currency')} detail={currencyDetail}>
-            <AjPills<CurrencyCode>
-              value={currency}
-              onChange={setCurrency}
-              options={[
-                { value: 'COP', label: t('aj.currencyOptCOP') },
-                { value: 'USD', label: t('aj.currencyOptUSD') },
-              ]}
-            />
+          <AjRow label="Monedas" detail={currencyDetail}>
+            <AjOutlineButton onClick={() => navigate('/ajustes/monedas')}>{t('aj.manage')}</AjOutlineButton>
+          </AjRow>
+          <AjRow label="Guías rápidas" detail="Una guía corta en cada página principal">
+            <AjOutlineButton onClick={replayGuides}>Ver otra vez</AjOutlineButton>
           </AjRow>
           <AjRow label={t('aj.theme')} detail={t('aj.themeHint')}>
             <AjPills<ThemePreference>
@@ -133,6 +135,16 @@ export default function AjustesPage() {
           <AjRow label={t('aj.hideAmounts')} detail={t('aj.hideAmountsHint')}>
             <AjSwitch on={hidden} label={t('aj.hideAmounts')} onToggle={toggleHidden} />
           </AjRow>
+        </div>
+      </AjCard>
+
+      <AjCard className="p-5">
+        <div className="flex items-center gap-4">
+          <div className="min-w-0 flex-1">
+            <AjCardTitle>Categorías</AjCardTitle>
+            <div className="mt-0.5 text-[11.5px] text-v2-dim">{catSummary}</div>
+          </div>
+          <AjOutlineButton onClick={() => navigate('/ajustes/categorias')}>{t('aj.manage')}</AjOutlineButton>
         </div>
       </AjCard>
 

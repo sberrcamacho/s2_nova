@@ -2,9 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { CategoryMark } from '@/components/v2/CategoryMark'
 import { Money } from '@/components/v2/Money'
-import { chipClass, errorBoxClass, fieldLabelClass, primaryButtonClass, secondaryButtonClass } from '@/components/panels/SidePanel'
-import { LoanPanel } from '@/dashboard/components/planes/LoanPanel'
-import { PlanAddTile } from '@/dashboard/components/planes/PlanAddTile'
+import { CancelButton, ErrorBox, Label, flatClass } from '@/components/v2/Kit'
+import { LoanModal } from '@/dashboard/components/planes/LoanModal'
 import { accountService } from '@/services/accountService'
 import { transactionService } from '@/services/transactionService'
 import { useAppData } from '@/state/AppDataContext'
@@ -14,14 +13,14 @@ import { useToast } from '@/state/ToastContext'
 import { useTranslation } from '@/state/useTranslation'
 import { todayISO } from '@/lib/date'
 import { fill, shortDate } from '@/lib/inicio'
+import { shortWallet } from '@/lib/movimientos'
 import type { LoanKind, Transaction, Wallet } from '@/types'
 
 // Planes › Préstamos (Web v2 mockup `isLoans`). A loan is a LENT/BORROWED
 // transaction; its pending balance is the server's `outstanding`, and each
 // abono is a transaction whose parentLoanId points back at it. "Editar" and
-// the "+ Registrar préstamo/deuda" tile open LoanPanel (Android's loan
-// sheet), which the Web mockup doesn't draw.
-export function LoansTab({ side, onSide }: { side: LoanKind; onSide: (side: LoanKind) => void }) {
+// the header's "Registrar préstamo/deuda" (PlanesPage) open LoanModal.
+export function LoansTab({ side, onSide, adding, onAddingDone }: { side: LoanKind; onSide: (side: LoanKind) => void; adding: boolean; onAddingDone: () => void }) {
   const { t, language } = useTranslation()
   const { format } = useCurrency()
   const { hidden } = useHideAmounts()
@@ -41,7 +40,7 @@ export function LoansTab({ side, onSide }: { side: LoanKind; onSide: (side: Loan
     void load()
   }, [load])
 
-  const walletName = (id: string) => wallets.find((w) => w.id === id)?.name ?? ''
+  const walletName = (id: string) => shortWallet(wallets.find((w) => w.id === id)?.name ?? '')
   const isLent = side === 'lent'
   const sideLoans = (loans ?? []).filter((l) => l.loanKind === side)
   const outOf = (l: Transaction) => l.outstanding ?? 0
@@ -155,20 +154,24 @@ export function LoansTab({ side, onSide }: { side: LoanKind; onSide: (side: Loan
             </div>
           )
         })}
-        {loans && <PlanAddTile label={t(isLent ? 'loans.newLent' : 'loans.newBorrowed')} onClick={() => setEditing('new')} />}
       </div>
       {loans && sideLoans.length === 0 && (
         <div className="p-5 text-center text-[12.5px] text-v2-dim">{t(isLent ? 'loans.emptyLent' : 'loans.emptyBorrowed')}</div>
       )}
 
-      {editing && (
-        <LoanPanel
+      {(editing || adding) && (
+        <LoanModal
           loan={editing === 'new' ? null : editing}
           side={side}
           wallets={wallets}
-          onClose={() => setEditing(null)}
-          onSaved={() => {
+          onClose={() => {
             setEditing(null)
+            onAddingDone()
+          }}
+          onSaved={(saved) => {
+            setEditing(null)
+            onAddingDone()
+            if (saved !== side) onSide(saved)
             void load()
             void refreshAppData()
             notifyChanged()
@@ -247,14 +250,14 @@ function PayDialog({ loan, wallets, onClose, onSaved }: { loan: Transaction; wal
         aria-modal="true"
         aria-label={t('loans.pay')}
         onClick={(e) => e.stopPropagation()}
-        className="flex w-[420px] max-w-full flex-col gap-4 rounded-[18px] border border-v2-line2 bg-v2-surface p-[22px] text-v2-text shadow-[0_24px_60px_rgba(0,0,0,.45)]"
+        className="flex w-[466px] max-w-full flex-col gap-4 rounded-[18px] border border-v2-line2 bg-v2-surface p-[22px] text-v2-text shadow-[0_24px_60px_rgba(0,0,0,.45)]"
       >
         <div>
           <div className="text-[15px] font-extrabold">{t('loans.pay')}</div>
           <div className="mt-0.5 text-[11.5px] text-v2-dim">{fill(t('loans.paySub'), loan.counterpartyName ?? t('loans.unknownPerson'), format(out))}</div>
         </div>
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="pay-amount" className={fieldLabelClass}>
+          <label htmlFor="pay-amount" className="text-[11px] font-bold tracking-[.06em] text-v2-muted">
             {t('loans.payAmount')}
           </label>
           <input
@@ -270,25 +273,19 @@ function PayDialog({ loan, wallets, onClose, onSaved }: { loan: Transaction; wal
           <div className="text-[11px] text-v2-dim">{t('loans.payHint')}</div>
         </div>
         <div className="flex flex-col gap-2">
-          <div className={fieldLabelClass}>{t(loan.loanKind === 'lent' ? 'loans.receiveIn' : 'loans.payFrom')}</div>
+          <Label>{t(loan.loanKind === 'lent' ? 'loans.receiveIn' : 'loans.payFrom')}</Label>
           <div className="flex flex-wrap gap-1.5">
             {wallets.map((w) => (
-              <button key={w.id} type="button" aria-pressed={walletId === w.id} onClick={() => setWalletId(w.id)} className={chipClass(walletId === w.id)}>
-                {w.name}
+              <button key={w.id} type="button" aria-pressed={walletId === w.id} onClick={() => setWalletId(w.id)} className={flatClass(walletId === w.id)}>
+                {shortWallet(w.name)}
               </button>
             ))}
           </div>
         </div>
-        {error && (
-          <div role="alert" className={errorBoxClass}>
-            {error}
-          </div>
-        )}
+        {error && <ErrorBox>{error}</ErrorBox>}
         <div className="flex justify-end gap-2">
-          <button type="button" onClick={onClose} className={secondaryButtonClass}>
-            {t('common.cancel')}
-          </button>
-          <button type="button" onClick={save} disabled={busy} className={primaryButtonClass}>
+          <CancelButton onClick={onClose}>{t('common.cancel')}</CancelButton>
+          <button type="button" onClick={save} disabled={busy} className="cursor-pointer whitespace-nowrap rounded-[10px] bg-v2-accent px-4 py-2.5 text-[12.5px] font-bold text-white">
             {t('loans.paySave')}
           </button>
         </div>
