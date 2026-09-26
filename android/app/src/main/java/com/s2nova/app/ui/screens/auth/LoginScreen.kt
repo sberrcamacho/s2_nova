@@ -17,6 +17,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.foundation.border
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,6 +50,7 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit,
     onForgotPassword: () -> Unit,
     onGoToRegister: () -> Unit,
+    onGuest: () -> Unit = {},
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -198,6 +202,29 @@ fun LoginScreen(
                         loading = googleLoading,
                     )
                 }
+
+                // "Continuar como invitado" (ONBOARDING.md §1).
+                androidx.compose.foundation.layout.Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+                        .clickable(onClick = onGuest),
+                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp, androidx.compose.ui.Alignment.CenterHorizontally),
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                ) {
+                    com.s2nova.app.ui.components.V2Icon(com.s2nova.app.ui.components.V2Icons.enter, MaterialTheme.colorScheme.onSurfaceVariant, 18.dp)
+                    Text("Continuar como invitado", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                }
+                Text(
+                    "Explora una cuenta de ejemplo. No se guarda nada.",
+                    fontSize = 11.5.sp,
+                    color = colors.textDim,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    // margin-top: -6px under the button.
+                    modifier = Modifier.fillMaxWidth().offset(y = (-6).dp),
+                )
             }
         }
 

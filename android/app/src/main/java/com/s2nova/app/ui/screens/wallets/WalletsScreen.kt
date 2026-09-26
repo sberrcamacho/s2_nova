@@ -1,44 +1,22 @@
 package com.s2nova.app.ui.screens.wallets
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.AccountBalance
-import androidx.compose.material.icons.filled.CreditCard
-import androidx.compose.material.icons.filled.CurrencyBitcoin
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Payments
-import androidx.compose.material.icons.filled.PhoneAndroid
-import androidx.compose.material.icons.filled.Savings
-import androidx.compose.material.icons.filled.Wallet
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -49,343 +27,179 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
+import com.s2nova.app.data.Currencies
+import com.s2nova.app.data.formatMoney
 import com.s2nova.app.data.model.Wallet
-import com.s2nova.app.data.model.WalletType
-import com.s2nova.app.ui.StringKey
-import com.s2nova.app.ui.ThousandsGroupingVisualTransformation
-import com.s2nova.app.ui.components.DraftSheetDeleteRow
-import com.s2nova.app.ui.components.DraftSheetPrimaryButton
-import com.s2nova.app.ui.components.NovaCard
+import com.s2nova.app.ui.Confirm
+import com.s2nova.app.ui.ConfirmRequest
+import com.s2nova.app.ui.Snack
+import com.s2nova.app.ui.WalletKind
+import com.s2nova.app.ui.components.BareField
+import com.s2nova.app.ui.components.FieldLabel
+import com.s2nova.app.ui.components.FieldNote
+import com.s2nova.app.ui.components.InputBox
+import com.s2nova.app.ui.components.MockupIcons
+import com.s2nova.app.ui.components.MoneyInput
 import com.s2nova.app.ui.components.NovaDraftSheet
-import com.s2nova.app.ui.components.NovaTopBar
-import com.s2nova.app.ui.components.WalletPickerDialog
-import com.s2nova.app.ui.rememberCurrencyFormatter
-import com.s2nova.app.ui.rememberStrings
-import com.s2nova.app.ui.suggestWalletType
+import com.s2nova.app.ui.components.PillRow
+import com.s2nova.app.ui.components.SheetHeader
+import com.s2nova.app.ui.components.SheetTextAction
+import com.s2nova.app.ui.components.TNUM
+import com.s2nova.app.ui.components.V2Button
+import com.s2nova.app.ui.components.V2Icon
+import com.s2nova.app.ui.components.V2Pill
+import com.s2nova.app.ui.components.noRippleClick
 import com.s2nova.app.ui.theme.NovaColors
 import kotlinx.coroutines.launch
 
+// Billeteras (CURRENCIES_AND_WALLETS.md §4): each wallet has one currency;
+// foreign ones carry the "≈" principal line; the footer totals in the
+// principal. Deleting one uses the two-step confirmation and lists how many
+// movements go with it; the last wallet can't be deleted.
+
+private data class WalletDraft(val id: String?, val name: String, val kind: WalletKind, val amount: String, val currency: String, val auto: Boolean)
+
+// The wallet's glyph on the hero gradient (44 dp in lists, 40 dp in forms).
 @Composable
-fun labelFor(type: WalletType): String {
-    val t = rememberStrings()
-    return when (type) {
-        WalletType.CASH -> t(StringKey.WALLET_TYPE_CASH)
-        WalletType.BANK_DEBIT -> t(StringKey.WALLET_TYPE_BANK_DEBIT)
-        WalletType.BANK_CREDIT -> t(StringKey.WALLET_TYPE_BANK_CREDIT)
-        WalletType.SAVINGS -> t(StringKey.WALLET_TYPE_SAVINGS)
-        WalletType.CRYPTO -> t(StringKey.WALLET_TYPE_CRYPTO)
-        WalletType.NEQUI -> t(StringKey.WALLET_TYPE_NEQUI)
-        WalletType.DAVIPLATA -> t(StringKey.WALLET_TYPE_DAVIPLATA)
-        WalletType.OTHER -> t(StringKey.WALLET_TYPE_OTHER)
-    }
+fun WalletMark(kind: WalletKind, box: androidx.compose.ui.unit.Dp) {
+    val colors = NovaColors.current
+    Box(
+        Modifier.size(box).clip(CircleShape).background(Brush.linearGradient(listOf(colors.heroFrom, colors.heroTo))),
+        contentAlignment = Alignment.Center,
+    ) { V2Icon(kind.glyph, Color.White, 20.dp) }
 }
-
-fun iconFor(type: WalletType) = when (type) {
-    WalletType.CASH -> Icons.Filled.Payments
-    WalletType.BANK_DEBIT -> Icons.Filled.AccountBalance
-    WalletType.BANK_CREDIT -> Icons.Filled.CreditCard
-    WalletType.SAVINGS -> Icons.Filled.Savings
-    WalletType.CRYPTO -> Icons.Filled.CurrencyBitcoin
-    WalletType.NEQUI, WalletType.DAVIPLATA -> Icons.Filled.PhoneAndroid
-    WalletType.OTHER -> Icons.Filled.Wallet
-}
-
-@Composable
-fun WalletTypeSelector(selected: WalletType, onSelect: (WalletType) -> Unit) {
-    Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        WalletType.entries.forEach { type ->
-            val isSelected = selected == type
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
-                    .selectable(selected = isSelected, onClick = { onSelect(type) }, role = androidx.compose.ui.semantics.Role.RadioButton)
-                    .padding(horizontal = 14.dp, vertical = 10.dp),
-            ) {
-                Icon(
-                    iconFor(type),
-                    contentDescription = null,
-                    tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(16.dp),
-                )
-                Text(
-                    labelFor(type),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(start = 6.dp),
-                )
-            }
-        }
-    }
-}
-
-// Draft state backing the create/edit sheet. `id == null` means "creating".
-private data class WalletDraft(
-    val id: String?,
-    val name: String,
-    val type: WalletType,
-    val userPickedType: Boolean,
-    val balanceText: String,
-)
 
 @Composable
 fun WalletsScreen(onBack: () -> Unit) {
     val wallets by AppContainer.walletRepository.wallets.collectAsStateWithLifecycle()
-    val format = rememberCurrencyFormatter()
-    val t = rememberStrings()
+    val currencies by AppContainer.currencyRepository.currencies.collectAsStateWithLifecycle()
     val colors = NovaColors.current
     val scope = rememberCoroutineScope()
     var draft by remember { mutableStateOf<WalletDraft?>(null) }
-    var deleting by remember { mutableStateOf<Wallet?>(null) }
-    var blockedDelete by remember { mutableStateOf(false) }
+    val principal = AppContainer.currencyRepository.principal
 
     LaunchedEffect(Unit) { runCatching { AppContainer.walletRepository.refresh() } }
 
-    fun openCreate() {
-        draft = WalletDraft(id = null, name = "", type = WalletType.CASH, userPickedType = false, balanceText = "")
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        Row(Modifier.padding(start = 18.dp, end = 18.dp, top = 10.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(Modifier.size(38.dp).clip(CircleShape).noRippleClick(onBack), contentAlignment = Alignment.Center) { Text("←", fontSize = 19.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            Text("Billeteras", fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
+            Box(Modifier.size(38.dp).clip(CircleShape).noRippleClick { draft = WalletDraft(null, "", WalletKind.CASH, "", principal, true) }, contentAlignment = Alignment.Center) {
+                Text("+", fontSize = 22.sp, fontWeight = FontWeight.Light, color = MaterialTheme.colorScheme.primary)
+            }
+        }
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            wallets.forEach { w ->
+                val kind = WalletKind.of(w.type)
+                Row(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(18.dp))
+                        .noRippleClick { draft = WalletDraft(w.id, w.name, kind, w.currentBalance.let { if (it % 1.0 == 0.0) it.toLong().toString() else it.toString() }, w.currency, false) }.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    WalletMark(kind, 44.dp)
+                    Column(Modifier.weight(1f)) {
+                        Text(w.name, fontSize = 13.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                        Text(kind.label + " · " + w.currency, fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(formatMoney(w.currentBalance, w.currency), fontSize = 14.5.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, style = TextStyle(fontFeatureSettings = TNUM))
+                        if (w.currency != principal) Text("≈ " + formatMoney(w.principalBalance, principal), fontSize = 10.5.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM))
+                    }
+                    Icon(MockupIcons.Pencil, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(15.dp))
+                }
+            }
+            if (wallets.isEmpty()) {
+                Text("No tienes billeteras. Agrega la primera con el + de arriba.", fontSize = 12.sp, lineHeight = 18.sp, color = colors.textDim, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp))
+            }
+            Text(
+                formatMoney(wallets.sumOf { it.principalBalance }, principal) + " en total, en $principal. Las billeteras en otra moneda se convierten con la tasa del día.",
+                fontSize = 11.5.sp, color = colors.textDim, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+            )
+        }
     }
 
-    Scaffold(
-        topBar = {
-            NovaTopBar(
-                title = t(StringKey.WALLETS_TITLE),
-                onBack = onBack,
-                actions = { IconButton(onClick = { openCreate() }) { Icon(Icons.Filled.Add, contentDescription = t(StringKey.WALLETS_NEW)) } },
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background,
-    ) { padding ->
-        if (wallets.isEmpty()) {
-            Column(
-                modifier = Modifier.fillMaxSize().padding(padding).padding(32.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Icon(Icons.Filled.Wallet, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(48.dp))
-                Text(
-                    t(StringKey.WALLETS_EMPTY_TITLE),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(top = 12.dp),
+    val d = draft ?: return
+    val codes = currencies.map { it.code }.ifEmpty { listOf(principal) }
+    NovaDraftSheet(onDismiss = { draft = null }) {
+        SheetHeader(if (d.id != null) "Editar billetera" else "Nueva billetera", bottom = 18.dp)
+        Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
+            Column {
+                FieldLabel("Nombre")
+                InputBox(vertical = 11.dp) {
+                    WalletMark(d.kind, 40.dp)
+                    BareField(d.name, { name -> draft = d.copy(name = name, kind = if (d.auto) WalletKind.guess(name) ?: d.kind else d.kind) }, "Nequi, Bancolombia — Ahorros…")
+                }
+                FieldNote(
+                    if (d.auto && WalletKind.guess(d.name) != null) "Tipo detectado por el nombre. Puedes cambiarlo." else "El tipo define el icono y el método de pago que deriva el servidor.",
+                    Modifier.padding(top = 9.dp),
                 )
-                Text(
-                    t(StringKey.WALLETS_EMPTY_SUBTITLE),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
-                Button(onClick = { openCreate() }, shape = RoundedCornerShape(14.dp), modifier = Modifier.padding(top = 20.dp)) {
-                    Text(t(StringKey.WALLETS_NEW))
-                }
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier.padding(padding),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                items(wallets) { wallet ->
-                    // Whole row is tappable and opens the same sheet in edit
-                    // mode — per the mockup there's no separate pencil/delete
-                    // icon on the row itself.
-                    NovaCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            draft = WalletDraft(
-                                id = wallet.id,
-                                name = wallet.name,
-                                type = wallet.type,
-                                userPickedType = true,
-                                balanceText = wallet.currentBalance.toLong().toString(),
-                            )
-                        },
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(16.dp)) {
-                            Box(
-                                modifier = Modifier
-                                    .size(44.dp)
-                                    .clip(CircleShape)
-                                    .background(androidx.compose.ui.graphics.Brush.linearGradient(listOf(colors.heroFrom, colors.heroTo))),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Icon(iconFor(wallet.type), contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
-                            }
-                            Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
-                                Text(wallet.name, fontSize = 13.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                                Text(labelFor(wallet.type), fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                            Text(
-                                format(wallet.currentBalance),
-                                fontSize = 14.5.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = MaterialTheme.colorScheme.onBackground,
-                            )
-                            Icon(
-                                Icons.Filled.Edit,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(start = 10.dp).size(15.dp),
-                            )
-                        }
-                    }
-                }
-                item {
-                    Text(
-                        "${format(wallets.sumOf { it.currentBalance })} ${t(StringKey.WALLETS_FOOTER_NOTE)}",
-                        fontSize = 11.5.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 6.dp),
-                    )
-                }
-                item { Spacer(Modifier.height(72.dp)) }
+            Column {
+                FieldLabel("Tipo")
+                PillRow { WalletKind.entries.forEach { k -> V2Pill(k.label, d.kind == k, { draft = d.copy(kind = k, auto = false) }) } }
             }
-        }
-
-        val d = draft
-        if (d != null) {
-            WalletDraftSheet(
-                draft = d,
-                onDraftChange = { draft = it },
-                onDismiss = { draft = null },
-                onSave = {
-                    scope.launch {
-                        if (d.id == null) {
-                            AppContainer.walletRepository.create(d.name.trim(), d.type, d.balanceText.toDoubleOrNull() ?: 0.0)
-                        } else {
-                            AppContainer.walletRepository.update(d.id, d.name.trim(), d.type)
-                        }
+            Column {
+                FieldLabel("Moneda")
+                PillRow { codes.forEach { c -> V2Pill(c, d.currency == c, { if (d.id == null) draft = d.copy(currency = c) }) } }
+                FieldNote("El saldo se lleva en ${Currencies.name(d.currency).lowercase()}. Los movimientos en otra moneda se convierten al registrarlos.", Modifier.padding(top = 8.dp))
+            }
+            Column {
+                FieldLabel("Saldo actual")
+                MoneyInput(d.amount.substringBefore('.'), { if (d.id == null) draft = d.copy(amount = it) }, Currencies.symbol(d.currency))
+            }
+            V2Button("Guardar", enabled = d.name.isNotBlank(), onClick = {
+                scope.launch {
+                    runCatching {
+                        if (d.id == null) AppContainer.walletRepository.create(d.name.trim(), d.kind.type, d.amount.toDoubleOrNull() ?: 0.0, d.currency)
+                        else AppContainer.walletRepository.update(d.id, d.name.trim(), d.kind.type)
+                    }.onSuccess {
                         draft = null
-                    }
-                },
-                onRequestDelete = {
-                    val id = d.id ?: return@WalletDraftSheet
-                    draft = null
-                    if (wallets.size <= 1) blockedDelete = true else deleting = wallets.first { it.id == id }
-                },
-            )
-        }
-
-        val walletToDelete = deleting
-        if (walletToDelete != null) {
-            WalletPickerDialog(
-                title = t(StringKey.WALLETS_DELETE_CONFIRM_TITLE),
-                bodyText = t(StringKey.WALLETS_DELETE_REASSIGN_LABEL),
-                wallets = wallets.filterNot { it.id == walletToDelete.id },
-                confirmLabel = t(StringKey.WALLETS_DELETE_CONFIRM),
-                onDismiss = { deleting = null },
-                onConfirm = { destinationId ->
-                    scope.launch {
-                        AppContainer.walletRepository.delete(walletToDelete.id, destinationId)
-                        deleting = null
-                    }
-                },
-            )
-        }
-
-        if (blockedDelete) {
-            AlertDialog(
-                onDismissRequest = { blockedDelete = false },
-                title = { Text(t(StringKey.WALLETS_DELETE_CONFIRM_TITLE)) },
-                text = { Text(t(StringKey.WALLETS_DELETE_ONLY_WALLET)) },
-                confirmButton = { TextButton(onClick = { blockedDelete = false }) { Text(t(StringKey.COMMON_BACK)) } },
-            )
+                        if (!AppContainer.isGuest) runCatching { AppContainer.currencyRepository.refresh() }
+                    }.onFailure { Snack.show("No se pudo guardar la billetera.") }
+                }
+            })
+            if (d.id != null) SheetTextAction("Eliminar billetera", colors.negative, {
+                val w = wallets.first { it.id == d.id }
+                askDeleteWallet(w, wallets.size) { draft = null }
+            }, weight = FontWeight.ExtraBold)
         }
     }
 }
 
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
-@Composable
-private fun WalletDraftSheet(
-    draft: WalletDraft,
-    onDraftChange: (WalletDraft) -> Unit,
-    onDismiss: () -> Unit,
-    onSave: () -> Unit,
-    onRequestDelete: () -> Unit,
-) {
-    val t = rememberStrings()
-    val colors = NovaColors.current
-    val isEdit = draft.id != null
-    val wGuessedNote = !draft.userPickedType && suggestWalletType(draft.name) != null
-
-    NovaDraftSheet(
-        onDismiss = onDismiss,
-        title = t(if (isEdit) StringKey.WALLETS_EDIT_TITLE else StringKey.WALLETS_NEW),
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(androidx.compose.ui.graphics.Brush.linearGradient(listOf(colors.heroFrom, colors.heroTo))),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(iconFor(draft.type), contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
-                    }
-                    OutlinedTextField(
-                        value = draft.name,
-                        onValueChange = { newName ->
-                            val guessed = if (!draft.userPickedType) suggestWalletType(newName) else null
-                            onDraftChange(draft.copy(name = newName, type = guessed ?: draft.type))
-                        },
-                        label = { Text(t(StringKey.WALLETS_NAME)) },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-                Text(
-                    t(if (wGuessedNote) StringKey.WALLETS_TYPE_AUTO_NOTE else StringKey.WALLETS_TYPE_NOTE),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(t(StringKey.WALLETS_TYPE), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                WalletTypeSelector(
-                    selected = draft.type,
-                    onSelect = { onDraftChange(draft.copy(type = it, userPickedType = true)) },
-                )
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(t(StringKey.WALLETS_CURRENT_BALANCE), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                // Editing an existing wallet's balance directly isn't
-                // supported server-side (PATCH /accounts only accepts
-                // name/type) — a direct overwrite would also desync the
-                // balance from its transaction history. So this field is
-                // only editable while creating; in edit mode it's a
-                // read-only display of the current balance.
-                OutlinedTextField(
-                    value = draft.balanceText,
-                    onValueChange = { onDraftChange(draft.copy(balanceText = it.filter { c -> c.isDigit() })) },
-                    enabled = !isEdit,
-                    leadingIcon = { Text("$") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    visualTransformation = ThousandsGroupingVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-
-            DraftSheetPrimaryButton(
-                label = t(StringKey.COMMON_SAVE),
-                enabled = draft.name.isNotBlank(),
-                onClick = onSave,
-            )
-
-            if (isEdit) {
-                DraftSheetDeleteRow(label = t(StringKey.WALLETS_DELETE), onClick = onRequestDelete)
-            }
-        }
+private fun askDeleteWallet(w: Wallet, count: Int, onDone: () -> Unit) {
+    if (count <= 1) {
+        Snack.show("Necesitas al menos una billetera para usar S2 Nova.")
+        return
     }
+    val n = if (AppContainer.isGuest) AppContainer.transactionRepository.transactions.value.count { it.walletId == w.id } else w.movements
+    Confirm.ask(
+        ConfirmRequest(
+            title = "Eliminar la billetera “${w.name}”",
+            lines = listOf(
+                "Saldo actual: " + formatMoney(w.currentBalance, w.currency),
+                n.toString() + (if (n == 1) " movimiento asociado se elimina" else " movimientos asociados se eliminan") + " con ella",
+                "El saldo total de Inicio se recalcula",
+            ),
+            ack = "Entiendo que se eliminan la billetera y sus $n movimientos.",
+            cta = "Eliminar billetera",
+            onConfirm = {
+                onDone()
+                AppContainer.appScope.launch {
+                    runCatching { AppContainer.walletRepository.delete(w.id) }
+                    if (AppContainer.isGuest) AppContainer.transactionRepository.loadDemo(AppContainer.transactionRepository.transactions.value.filter { it.walletId != w.id })
+                    else runCatching { AppContainer.transactionRepository.refresh() }
+                }
+            },
+        ),
+    )
 }

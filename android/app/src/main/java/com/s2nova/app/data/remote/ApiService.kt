@@ -6,6 +6,7 @@ import retrofit2.http.DELETE
 import retrofit2.http.HTTP
 import retrofit2.http.GET
 import retrofit2.http.PATCH
+import retrofit2.http.PUT
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -57,6 +58,31 @@ interface ApiService {
     @GET("categories")
     suspend fun getCategories(): List<CategoryDto>
 
+    @POST("categories")
+    suspend fun createCategory(@Body body: CreateCategoryRequest): CategoryDto
+
+    @PATCH("categories/{id}")
+    suspend fun updateCategory(@Path("id") id: String, @Body body: UpdateCategoryRequest): CategoryDto
+
+    @DELETE("categories/{id}")
+    suspend fun deleteCategory(@Path("id") id: String): Response<Unit>
+
+    @GET("me/currencies")
+    suspend fun getMyCurrencies(): List<CurrencyDto>
+
+    // "+ Agregar moneda" catalog.
+    @GET("currencies")
+    suspend fun getCurrencyCatalog(): List<CurrencyDto>
+
+    @POST("me/currencies")
+    suspend fun addCurrency(@Body body: CurrencyCodeRequest): List<CurrencyDto>
+
+    @DELETE("me/currencies/{code}")
+    suspend fun removeCurrency(@Path("code") code: String): List<CurrencyDto>
+
+    @PUT("me/currencies/principal")
+    suspend fun setPrincipalCurrency(@Body body: CurrencyCodeRequest): List<CurrencyDto>
+
     // No server-side filters wired up here — this app fetches the full list
     // and filters client-side, same as the mock repository it replaced.
     @GET("transactions")
@@ -68,14 +94,24 @@ interface ApiService {
     @PATCH("transactions/{id}")
     suspend fun updateTransaction(@Path("id") id: String, @Body body: UpdateTransactionRequest): TransactionDto
 
+    // series=delete also stops the movement's future repetitions.
     @DELETE("transactions/{id}")
-    suspend fun deleteTransaction(@Path("id") id: String): Response<Unit>
+    suspend fun deleteTransaction(@Path("id") id: String, @Query("series") series: String? = null): Response<Unit>
+
+    @PUT("transactions/{id}/attachment")
+    suspend fun uploadAttachment(@Path("id") id: String, @Body body: UploadAttachmentRequest): AttachmentDto
+
+    @GET("transactions/{id}/attachment")
+    suspend fun downloadAttachment(@Path("id") id: String): okhttp3.ResponseBody
+
+    @DELETE("transactions/{id}/attachment")
+    suspend fun deleteAttachment(@Path("id") id: String): Response<Unit>
 
     @POST("transactions/{id}/settle-loan")
     suspend fun settleLoan(@Path("id") id: String, @Body body: SettleLoanRequest): SettleLoanResponse
 
     @GET("recurring-series")
-    suspend fun getRecurringSeries(): List<RecurringSeriesDto>
+    suspend fun getRecurringSeries(@Query("today") today: String? = null): List<RecurringSeriesDto>
 
     @POST("recurring-series")
     suspend fun createRecurringSeries(@Body body: CreateRecurringSeriesRequest): RecurringSeriesDto
@@ -116,7 +152,22 @@ interface ApiService {
     suspend fun acceptBudgetRecommendation(@Path("id") id: String): AcceptRecommendationResponse
 
     @GET("goals")
-    suspend fun getGoals(): List<GoalDto>
+    suspend fun getGoals(@Query("today") today: String? = null): List<GoalDto>
+
+    @POST("goals/{id}/contribute")
+    suspend fun contributeToGoal(@Path("id") id: String, @Body body: GoalContributeRequest): GoalDto
+
+    @PUT("goals/{id}/plan")
+    suspend fun setGoalPlan(@Path("id") id: String, @Body body: GoalPlanRequest): GoalDto
+
+    @DELETE("goals/{id}/plan")
+    suspend fun removeGoalPlan(@Path("id") id: String): GoalDto
+
+    @POST("goals/{id}/plan/confirm")
+    suspend fun confirmGoalPlan(@Path("id") id: String, @Body body: Map<String, Double> = emptyMap()): GoalDto
+
+    @POST("goals/{id}/plan/skip")
+    suspend fun skipGoalPlan(@Path("id") id: String, @Body body: Map<String, String> = emptyMap()): GoalDto
 
     @POST("goals")
     suspend fun createGoal(@Body body: CreateGoalRequest): GoalDto

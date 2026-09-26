@@ -36,13 +36,16 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
+import com.s2nova.app.data.fmtDate
+import com.s2nova.app.data.formatMoney
+import com.s2nova.app.ui.screens.addtransaction.shortWallet
 import com.s2nova.app.data.formatDayGroupDate
 import com.s2nova.app.data.todayISO
-import com.s2nova.app.data.mock.categoryMap
+import com.s2nova.app.ui.components.categoryColor
 import com.s2nova.app.data.model.Transaction
 import com.s2nova.app.data.model.TransactionStatus
 import com.s2nova.app.data.model.TransactionType
-import com.s2nova.app.ui.categoryStringKey
+import com.s2nova.app.ui.components.categoryName
 import com.s2nova.app.ui.components.TransactionRow
 import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.rememberCurrencyFormatter
@@ -99,53 +102,57 @@ fun TransactionsScreen(
             }
 
             if (filtered.isEmpty()) {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(top = 48.dp),
-                    horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
-                ) {
-                    Text(t(StringKey.TXN_LIST_EMPTY_TITLE), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
-                    Text(t(StringKey.TXN_LIST_EMPTY_SUBTITLE), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
+                Text(
+                    "Aún no tienes movimientos. Registra el primero con el botón +.",
+                    fontSize = 12.sp, lineHeight = 18.sp, color = colors.textDim, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 28.dp),
+                )
             } else {
                 LazyColumn(contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 20.dp)) {
-                    val grouped = filtered.groupBy { it.date }
-                    grouped.entries.forEachIndexed { index, (date, txns) ->
+                    val principal = AppContainer.currencyRepository.principal
+                    val scheduled = filtered.filter { it.status == TransactionStatus.PLANNED }.sortedBy { it.date + it.time }
+                    val groups = buildList {
+                        if (scheduled.isNotEmpty()) add("sched" to scheduled)
+                        filtered.filter { it.status != TransactionStatus.PLANNED }.sortedByDescending { it.date + it.time }
+                            .groupBy { it.date }.forEach { (d, list) -> add(d to list) }
+                    }
+                    groups.forEachIndexed { index, (key, txns) ->
                         item {
                             // Transfers stay inside the user's wallets, so they don't move the day's net.
                             val netTotal = txns.sumOf {
+                                val v = it.amount * AppContainer.currencyRepository.rate(it.currency, principal)
                                 when (it.type) {
-                                    TransactionType.INCOME -> it.amount
-                                    TransactionType.EXPENSE -> -it.amount
+                                    TransactionType.INCOME -> v
+                                    TransactionType.EXPENSE -> -v
                                     TransactionType.TRANSFER -> 0.0
                                 }
                             }
-                            val dayLabel = when (date) {
+                            val sched = key == "sched"
+                            val dayLabel = when (key) {
+                                "sched" -> "PROGRAMADOS"
                                 today -> t(StringKey.TXN_LIST_TODAY)
                                 yesterday -> t(StringKey.TXN_LIST_YESTERDAY)
-                                else -> formatDayGroupDate(date)
+                                else -> formatDayGroupDate(key)
                             }.uppercase()
                             Text(
                                 buildAnnotatedString {
                                     append("$dayLabel · ")
-                                    withStyle(SpanStyle(color = if (netTotal > 0) colors.positive else colors.textDim)) {
-                                        append(format(netTotal, signed = true).replace('-', '\u2212'))
+                                    withStyle(SpanStyle(color = if (sched) colors.warning else if (netTotal >= 0) colors.positive else colors.textDim)) {
+                                        append((if (netTotal >= 0) "+" else "\u2212") + formatMoney(kotlin.math.abs(netTotal), principal))
                                     }
                                 },
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontSize = 10.5.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 0.1.em,
-                                ),
-                                color = colors.textDim,
-                                modifier = Modifier.padding(top = if (index == 0) 12.dp else 18.dp, bottom = 4.dp),
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.5.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.1.em, fontFeatureSettings = "tnum"),
+                                color = if (sched) colors.warning else colors.textDim,
+                                modifier = Modifier.padding(top = if (index == 0) 8.dp else 18.dp, bottom = 4.dp),
                             )
                         }
-                        items(txns) { txn: Transaction ->
-                            val merchantOrCategory = txn.merchant
-                                ?: categoryMap[txn.category]?.let { t(categoryStringKey(it.id)) }
-                                ?: ""
-                            val walletName = wallets.firstOrNull { it.id == txn.walletId }?.name?.let { com.s2nova.app.ui.components.shortWalletName(it) }
-                            val subtitle = listOfNotNull(merchantOrCategory.takeIf { it.isNotBlank() }, walletName).joinToString(" · ")
+                        items(txns, key = { it.id }) { txn: Transaction ->
+                            val walletName = wallets.firstOrNull { it.id == txn.walletId }?.name?.let { shortWallet(it) }
+                            val subtitle = if (txn.status == TransactionStatus.PLANNED) {
+                                listOfNotNull("Programado", fmtDate(txn.date), walletName).joinToString(" · ")
+                            } else {
+                                listOfNotNull((txn.merchant ?: txn.counterpartyName)?.takeIf { it.isNotBlank() }, walletName).joinToString(" · ")
+                            }
                             TransactionRow(transaction = txn, subtitle = subtitle, onClick = { onOpenDetail(txn.id) })
                         }
                     }

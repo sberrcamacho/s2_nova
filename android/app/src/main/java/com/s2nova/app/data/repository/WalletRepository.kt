@@ -1,5 +1,6 @@
 package com.s2nova.app.data.repository
 
+import com.s2nova.app.data.Currencies
 import com.s2nova.app.data.model.Wallet
 import com.s2nova.app.data.model.WalletType
 import com.s2nova.app.data.remote.AccountDto
@@ -11,57 +12,83 @@ import com.s2nova.app.data.remote.UpdateAccountRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.util.UUID
 
 internal fun AccountDto.toWallet() = Wallet(
     id = id,
     name = name,
     type = runCatching { WalletType.valueOf(type) }.getOrDefault(WalletType.OTHER),
-    initialBalance = initialBalance.toDouble(),
-    currentBalance = currentBalance.toDouble(),
+    initialBalance = initialBalance,
+    currentBalance = currentBalance,
+    currency = currency,
+    principalBalance = principalBalance ?: currentBalance,
+    movements = movements ?: 0,
 )
 
-// "Wallet" everywhere in the UI — backed by the same /accounts resource
-// ARCHITECTURE.md's Account model describes; see backend/src/routes/accounts.ts.
+// "Wallet" everywhere in the UI — backed by the /accounts resource
+// (backend/src/routes/accounts.ts). Each wallet has one currency
+// (CURRENCIES_AND_WALLETS.md §4). Guest mode mutates the list in memory.
 class WalletRepository(private val api: ApiService = ApiClient.api) {
     private val _wallets = MutableStateFlow<List<Wallet>>(emptyList())
     val wallets: StateFlow<List<Wallet>> = _wallets.asStateFlow()
+
+    // Principal currency for the "≈" conversions in guest mode.
+    var principal: String = "COP"
 
     suspend fun refresh() {
         if (DemoModeFlag.active) return
         _wallets.value = api.getAccounts().map { it.toWallet() }
     }
 
-    // Overrides the in-memory list with fictitious data for local-only demo
-    // mode — never calls the network. See AppContainer.enterDemoMode().
     fun loadDemo(wallets: List<Wallet>) {
         _wallets.value = wallets
     }
 
-    // Returns null while demo mode is active — see DemoModeFlag's doc
-    // comment for why every mutation must skip the network entirely rather
-    // than reach the real signed-in account.
-    suspend fun create(name: String, type: WalletType, initialBalance: Double): Wallet? {
-        if (DemoModeFlag.active) return null
-        val dto = api.createAccount(CreateAccountRequest(name, type.name, initialBalance.toLong()))
+    // Guest-mode balance change (DemoLedger).
+    fun adjustLocal(id: String, delta: Double) {
+        _wallets.value = _wallets.value.map {
+            if (it.id != id) it
+            else {
+                val balance = it.currentBalance + delta
+                it.copy(currentBalance = balance, principalBalance = balance * Currencies.referenceRate(it.currency, principal))
+            }
+        }
+    }
+
+    fun totalInPrincipal(): Double = _wallets.value.sumOf { it.principalBalance }
+
+    suspend fun create(name: String, type: WalletType, initialBalance: Double, currency: String? = null): Wallet? {
+        if (DemoModeFlag.active) {
+            val code = currency ?: principal
+            val wallet = Wallet(UUID.randomUUID().toString(), name, type, initialBalance, initialBalance, code, initialBalance * Currencies.referenceRate(code, principal), 0)
+            _wallets.value = _wallets.value + wallet
+            return wallet
+        }
+        val dto = api.createAccount(CreateAccountRequest(name, type.name, initialBalance, currency))
         val wallet = dto.toWallet()
         _wallets.value = _wallets.value + wallet
         return wallet
     }
 
     suspend fun update(id: String, name: String, type: WalletType) {
-        if (DemoModeFlag.active) return
+        if (DemoModeFlag.active) {
+            _wallets.value = _wallets.value.map { if (it.id == id) it.copy(name = name, type = type) else it }
+            return
+        }
         val dto = api.updateAccount(id, UpdateAccountRequest(name = name, type = type.name))
         _wallets.value = _wallets.value.map { if (it.id == id) dto.toWallet() else it }
     }
 
-    // Everything the wallet touches (its transactions, any transfer that
-    // named it as a destination, and any active recurring series on it) is
-    // reassigned to reassignToAccountId server-side before deletion, along
-    // with its balance — see backend/src/routes/accounts.ts. refresh()
-    // afterward picks up the destination wallet's new balance.
-    suspend fun delete(id: String, reassignToAccountId: String) {
-        if (DemoModeFlag.active) return
-        api.deleteAccount(id, DeleteAccountRequest(reassignToAccountId))
+    // Without reassignToAccountId the wallet's movements are deleted with
+    // it (the two-step confirmation says how many); the backend refuses the
+    // last wallet (409).
+    suspend fun delete(id: String, reassignToAccountId: String? = null) {
+        if (DemoModeFlag.active) {
+            _wallets.value = _wallets.value.filterNot { it.id == id }
+            return
+        }
+        val response = api.deleteAccount(id, DeleteAccountRequest(reassignToAccountId))
+        if (!response.isSuccessful) throw retrofit2.HttpException(response)
         _wallets.value = _wallets.value.filterNot { it.id == id }
         refresh()
     }

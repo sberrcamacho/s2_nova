@@ -13,6 +13,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -102,6 +103,8 @@ fun NotificationsSheet(onDismiss: () -> Unit, onOpenAlertTarget: (AlertTarget) -
                             onDismiss()
                             onOpenAlertTarget(copy.target)
                         },
+                        onConfirm = copy.confirmGoalId?.let { goalId -> { resolveGoalPlan(goalId, alert.id, confirm = true) } },
+                        onSkip = copy.confirmGoalId?.let { goalId -> { resolveGoalPlan(goalId, alert.id, confirm = false) } },
                     )
                 }
                 notices.forEach { notice ->
@@ -120,7 +123,16 @@ fun NotificationsSheet(onDismiss: () -> Unit, onOpenAlertTarget: (AlertTarget) -
 }
 
 @Composable
-private fun NotificationRow(icon: ImageVector, color: Color, title: String, body: String, read: Boolean, onClick: () -> Unit) {
+private fun NotificationRow(
+    icon: ImageVector,
+    color: Color,
+    title: String,
+    body: String,
+    read: Boolean,
+    onClick: () -> Unit,
+    onConfirm: (() -> Unit)? = null,
+    onSkip: (() -> Unit)? = null,
+) {
     val colors = NovaColors.current
     val shape = RoundedCornerShape(14.dp)
     Row(
@@ -147,6 +159,27 @@ private fun NotificationRow(icon: ImageVector, color: Color, title: String, body
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 3.dp),
             )
+            if (onConfirm != null && onSkip != null) {
+                Row(modifier = Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Text("Confirmar aporte", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText, maxLines = 1, modifier = Modifier.clickable(onClick = onConfirm))
+                    Text("Omitir esta vez", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, modifier = Modifier.clickable(onClick = onSkip))
+                }
+            }
+        }
+    }
+}
+
+// "Confirmar aporte" records the due contribution; "Omitir esta vez"
+// advances the plan (PLANS.md §3). The alert disappears either way.
+private fun resolveGoalPlan(goalId: String, alertId: String, confirm: Boolean) {
+    AppContainer.alertRepository.markRead(alertId)
+    AppContainer.alertRepository.removeLocal(alertId)
+    AppContainer.appScope.launch {
+        runCatching { if (confirm) AppContainer.goalRepository.confirmPlan(goalId) else AppContainer.goalRepository.skipPlan(goalId) }
+            .onSuccess { com.s2nova.app.ui.Snack.show(if (confirm) "Aporte registrado" else "Aporte omitido. Te avisamos en la próxima fecha.") }
+        if (!AppContainer.isGuest) {
+            runCatching { AppContainer.walletRepository.refresh() }
+            runCatching { AppContainer.alertRepository.refresh() }
         }
     }
 }

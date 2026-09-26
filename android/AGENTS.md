@@ -82,8 +82,8 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   name/phone/city (`AuthRepository.updateProfile`) calls the real backend.
   Ajustes follows the Android v2 mockup exactly, so changing the password,
   managing sessions and deleting the account are Web-only (Ajustes ›
-  Seguridad); the email is read-only here. "Repetir el tutorial" opens the
-  mockup's four-step sheet inside Ajustes. Demo mode has no switch any more;
+  Seguridad); the email is read-only here. Ajustes links to Categorías and
+  Monedas and offers "Ver las guías otra vez". Demo mode has no switch any more;
   signing out also leaves it. Every request carries
   `User-Agent: S2Nova-Android/<version> (<model>)` so Web's session list
   names this device.
@@ -216,19 +216,29 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   (`SnackbarHostState`, no new dependency) as the fast path for reversing
   a contribution right after making it; that's in addition to, not
   instead of, deleting it later from the transaction detail screen.
-- **Onboarding** (`ui/screens/onboarding/`): first-launch welcome →
-  optional income → wallet creation → optional 50/30/20 budget suggestion
-  → tutorial carousel, gated by `OnboardingStore` (DataStore), checked once
-  at splash before the nav graph picks Login vs. Onboarding vs. Home. Every
-  optional step has a Skip; the flow never blocks reaching Home. The local
-  DataStore flag is synced from the backend's `user_preferences.onboarding_completed_at`/`tutorial_completed_at`
-  on every `/me` fetch (`AuthRepository.fetchAndSyncMe`), so a returning
-  user on a new device/reinstall isn't incorrectly re-onboarded. If the income step's
-  amount was filled in, `OnboardingWalletScreen` creates a monthly
-  `RecurringSeries` ("Salario") once the wallet is chosen/created —
-  income entered during onboarding is never a one-off transaction created
-  on that first launch, it's the same recurring-definition model as any
-  other subscription/income series.
+- **First run** (`ui/screens/onboarding/FirstRunScreen.kt`, ONBOARDING.md
+  in `design_handoff_s2_nova_v2/docs/`): a new account goes through two
+  non-skippable steps — "Tu moneda principal" (detected from the device
+  region) → "Crea tu primera billetera" — then lands on Inicio. The
+  server's `onboardingCompleted` flag decides the route after auth
+  (`routeAfterAuth` in `NovaNavGraph.kt`). The old welcome/income/budget/
+  tutorial carousel is gone; contextual mini-guides (`GUIDES`/`GuideCard`
+  in `ui/Overlays.kt`) replace it, with seen/off state stored server-side
+  in `prefs.guidesSeen`/`guidesOff` and "Ver las guías otra vez" in Ajustes.
+- **Guest mode** ("Continuar como invitado" on Login): `AppContainer.
+  enterGuestMode()` sets `DemoModeFlag` and loads `data/mock/DemoData.kt`
+  (the v2 mockup's seed, dates shifted relative to today). Mutations apply
+  locally (`DemoLedger`) and are never sent to the server; Inicio shows the
+  "Modo invitado" banner with "Crear cuenta".
+- **v2 overlays** (`ui/Overlays.kt`): `Snack` (undo snackbar, 4.5 s) for
+  minor deletions via `hideLocal`/`restoreLocal`, and `Confirm` (two-step
+  destructive confirmation) for significant ones. Both hosts live at the
+  root of the nav graph.
+- **Multi-currency**: wallets carry a `currency`; the user's principal
+  currency and extra currencies come from `/me/currencies`
+  (`CurrencyRepository`, Ajustes › Monedas). A movement in another currency
+  than its wallet carries `fxRate`/`walletAmount`. Formatting goes through
+  `formatMoney(value, code)` in `data/Money.kt`.
 - **Barcode scanning** (`ui/screens/scanner/`) uses CameraX
   (`camera-core`/`camera2`/`lifecycle`/`view`) for the live preview and
   on-device ML Kit Barcode Scanning (`com.google.mlkit:barcode-scanning`)
@@ -375,18 +385,12 @@ but should share: the color palette (`ui/theme/Color.kt` ↔ `web/src/index.css`
 category/product/budget seed data (`data/mock/*.kt` ↔ `web/src/data/*.ts`),
 and copy/tone. When one changes, check whether the other needs updating.
 
-Adding a new top-level category (e.g. the `GIFT`/"Obsequio" income
-category) touches both apps and the backend seed in lockstep: on Android,
-the `CategoryId` enum (`data/model/Models.kt`), the `Category` row in
-`data/mock/MockCategories.kt`, its `iconFor()` case in
-`ui/components/CategoryIcon.kt`, and its `categoryStringKey()` case plus
-ES/EN entries in `ui/Strings.kt`; on Web, the `CategoryId` union and
-`Category` row in `web/src/types/index.ts`/`web/src/data/categories.ts`,
-its entry in `web/src/components/ui/CategoryIcon.tsx`'s `ICONS` map, and
-its `category.<id>` key in `web/src/lib/i18n/translations.ts`; and a
-matching row in `backend/prisma/seed.ts`. `CategoryId.name.lowercase()`
-must equal the seeded `slug` exactly — `CategoryRepository.kt`'s
-`backendIdFor` relies on that match, with no separate ID-mapping table. A
-category only needs subcategories if it's `EXPENSE`-kind and the product
-actually wants that granularity; `INCOME`-kind categories (`salary`,
-`freelance`, `gift`) intentionally have none today.
+Categories are one shared taxonomy (CATEGORY_SYSTEM.md): stable dotted
+ids such as `exp.food.groceries` stored in the backend's `Category.slug`.
+`design_handoff_s2_nova_v2/s2-categories.js` is the source;
+`scripts/gen-taxonomy.mjs` generates `taxonomy.json` for the backend, Web
+and `app/src/main/assets/`. On Android, `CategoryId` is a `String`
+typealias, and every name, color and glyph resolves through
+`CategoryRepository` (user overrides, hidden nodes and custom categories
+come from `GET /categories`). To change the taxonomy, edit
+`s2-categories.js`, regenerate, and add a migration that remaps rows.

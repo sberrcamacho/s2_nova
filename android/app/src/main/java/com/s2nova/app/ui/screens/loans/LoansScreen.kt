@@ -192,7 +192,7 @@ fun LoansTab(initialSide: LoanKind = LoanKind.LENT) {
                                         description = "${if (d.side == LoanKind.LENT) "Préstamo a" else "Deuda con"} $counterparty",
                                         amount = amount,
                                         type = if (d.side == LoanKind.LENT) TransactionType.EXPENSE else TransactionType.INCOME,
-                                        category = CategoryId.OTHER,
+                                        category = "exp.other",
                                         date = todayISO(),
                                         loanKind = d.side,
                                         counterpartyName = counterparty,

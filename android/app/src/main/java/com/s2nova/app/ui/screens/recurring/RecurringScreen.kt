@@ -50,8 +50,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
-import com.s2nova.app.data.mock.expenseCategories
-import com.s2nova.app.data.mock.incomeCategories
 import com.s2nova.app.data.model.AppLanguage
 import com.s2nova.app.data.model.CategoryId
 import com.s2nova.app.data.model.RecurrenceInterval
@@ -61,7 +59,7 @@ import com.s2nova.app.data.model.Wallet
 import com.s2nova.app.data.todayISO
 import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.ThousandsGroupingVisualTransformation
-import com.s2nova.app.ui.categoryStringKey
+import com.s2nova.app.ui.components.categoryName
 import com.s2nova.app.ui.components.BackHeader
 import com.s2nova.app.ui.components.CategoryIcon
 import com.s2nova.app.ui.components.CategoryIconSize
@@ -119,7 +117,7 @@ fun RecurringScreen(onBack: () -> Unit) {
             type = TransactionType.EXPENSE,
             amountText = "",
             walletId = wallets.firstOrNull()?.id,
-            category = CategoryId.BILLS,
+            category = "exp.utilities",
             userPickedCategory = false,
             interval = RecurrenceInterval.MONTHLY,
             nextDate = "",
@@ -314,6 +312,7 @@ private fun CardAction(label: String, color: Color, onClick: () -> Unit) {
 }
 
 private fun intervalLabel(interval: RecurrenceInterval, t: (StringKey) -> String) = when (interval) {
+    RecurrenceInterval.DAILY -> "Diario"
     RecurrenceInterval.WEEKLY -> t(StringKey.RECURRENCE_WEEKLY)
     RecurrenceInterval.MONTHLY -> t(StringKey.RECURRENCE_MONTHLY)
     RecurrenceInterval.YEARLY -> t(StringKey.RECURRENCE_YEARLY)
@@ -347,7 +346,7 @@ private fun RecurringDraftSheet(
     val language = rememberAppLanguage()
     val colors = NovaColors.current
     val isEdit = draft.id != null
-    val pool = if (draft.type == TransactionType.INCOME) incomeCategories else expenseCategories
+    val pool = AppContainer.categoryRepository.parents(draft.type == TransactionType.INCOME, includeHidden = false)
     val guessed = if (draft.type == TransactionType.INCOME) suggestIncomeCategory(draft.name) else suggestExpenseCategory(draft.name)
     val showAutoNote = !draft.userPickedCategory && guessed != null
     var picking by remember { mutableStateOf(false) }
@@ -385,7 +384,7 @@ private fun RecurringDraftSheet(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(TransactionType.EXPENSE to t(StringKey.ADD_TXN_EXPENSE), TransactionType.INCOME to t(StringKey.ADD_TXN_INCOME)).forEach { (value, label) ->
                         SheetPill(label, selected = draft.type == value) {
-                            val category = if (value == TransactionType.INCOME) CategoryId.SALARY else CategoryId.BILLS
+                            val category = if (value == TransactionType.INCOME) "inc.work" else "exp.utilities"
                             onDraftChange(draft.copy(type = value, category = category, userPickedCategory = false))
                         }
                     }
@@ -397,7 +396,7 @@ private fun RecurringDraftSheet(
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     pool.forEach { c ->
                         ColorPill(
-                            label = t(categoryStringKey(c.id)),
+                            label = categoryName(c.id),
                             color = Color(c.color),
                             selected = draft.category == c.id,
                             onClick = { onDraftChange(draft.copy(category = c.id, userPickedCategory = true)) },

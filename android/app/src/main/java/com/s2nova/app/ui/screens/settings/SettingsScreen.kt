@@ -58,12 +58,6 @@ import kotlinx.coroutines.launch
 // Auto-lock choices in minutes; 0 is "Nunca" (see backend me.ts).
 private val LOCK_OPTIONS = listOf(1, 5, 15, 60, 0)
 
-private val TUTORIAL = listOf(
-    StringKey.TUTORIAL_1_TITLE to StringKey.TUTORIAL_1_BODY,
-    StringKey.TUTORIAL_2_TITLE to StringKey.TUTORIAL_2_BODY,
-    StringKey.TUTORIAL_3_TITLE to StringKey.TUTORIAL_3_BODY,
-    StringKey.TUTORIAL_4_TITLE to StringKey.TUTORIAL_4_BODY,
-)
 
 // The mockup has no box-sizing, so a 1px border adds to each box's padding;
 // Compose draws borders inside, hence the +1dp on bordered boxes below.
@@ -72,7 +66,7 @@ private val TUTORIAL = listOf(
 // and Acerca de. Password, sessions and account deletion live on Web.
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun SettingsScreen(onBack: () -> Unit) {
+fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpenCurrencies: () -> Unit = {}) {
     val user by AppContainer.authRepository.currentUser.collectAsStateWithLifecycle()
     val darkOverride by ThemeController.darkOverride.collectAsStateWithLifecycle()
     val isDark = darkOverride ?: androidx.compose.foundation.isSystemInDarkTheme()
@@ -83,7 +77,6 @@ fun SettingsScreen(onBack: () -> Unit) {
     var name by remember { mutableStateOf(user?.name ?: "") }
     var phone by remember { mutableStateOf(user?.phone ?: "") }
     var city by remember { mutableStateOf(user?.city ?: "") }
-    var tutorialStep by remember { mutableStateOf<Int?>(null) }
     val preferences = user?.preferences
     val notifications = preferences?.notifications ?: true
     val biometric = preferences?.biometricLogin ?: false
@@ -150,14 +143,26 @@ fun SettingsScreen(onBack: () -> Unit) {
                         SwitchRow(t(StringKey.SETTINGS_BIOMETRIC), biometric) {
                             persist({ p -> p.copy(biometricLogin = it) }, UpdatePreferencesRequest(biometricLogin = it))
                         }
-                        SegmentedRow(t(StringKey.SETTINGS_CURRENCY_FORMAT), listOf(Currency.COP to "COP", Currency.USD to "USD"), currency) {
-                            persist({ p -> p.copy(currency = it) }, UpdatePreferencesRequest(currency = it.name))
-                        }
                         SegmentedRow(t(StringKey.SETTINGS_LANGUAGE), listOf(AppLanguage.ES to "Español", AppLanguage.EN to "English"), language) {
                             persist({ p -> p.copy(language = it) }, UpdatePreferencesRequest(language = it.name.lowercase()))
                         }
                     }
                 }
+
+                // Ajustes › Categorías and › Monedas (v2); the COP/USD format
+                // switch is gone — the principal currency replaces it.
+                val cats = AppContainer.categoryRepository
+                val customCount = cats.all().count { it.custom }
+                LinkCard(
+                    "Categorías",
+                    "${cats.parents(false).size} de gasto · ${cats.parents(true).size} de ingreso" + if (customCount > 0) " · $customCount tuyas" else "",
+                    Modifier.padding(top = 16.dp),
+                    onOpenCategories,
+                )
+                val currencies = AppContainer.currencyRepository.currencies.value
+                val principal = AppContainer.currencyRepository.principal
+                val others = currencies.filter { it.code != principal }.map { it.code }
+                LinkCard("Monedas", "$principal principal" + if (others.isNotEmpty()) " · " + others.joinToString(", ") else "", Modifier, onOpenCurrencies)
 
                 SectionTitle(t(StringKey.SETTINGS_PRIVACY_SESSION), modifier = Modifier.padding(top = 16.dp))
                 NovaCard(modifier = Modifier.fillMaxWidth()) {
@@ -209,11 +214,15 @@ fun SettingsScreen(onBack: () -> Unit) {
                     }
                 }
 
-                NovaCard(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), onClick = { tutorialStep = 0 }) {
+                // "Ver las guías otra vez" resets the mini-guides (ONBOARDING.md §3).
+                NovaCard(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), onClick = {
+                    scope.launch { AppContainer.authRepository.updateGuides(emptySet(), false) }
+                    com.s2nova.app.ui.Snack.show("Verás una guía corta en cada pantalla principal.")
+                }) {
                     Row(modifier = Modifier.padding(17.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(t(StringKey.SETTINGS_REPLAY_TUTORIAL), fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-                            Text(t(StringKey.SETTINGS_TUTORIAL_HINT).format(TUTORIAL.size), fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 3.dp))
+                            Text("Ver las guías otra vez", fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+                            Text("Una guía corta en cada pantalla principal", fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 3.dp))
                         }
                         Text("→", fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
@@ -228,7 +237,19 @@ fun SettingsScreen(onBack: () -> Unit) {
         }
     }
 
-    tutorialStep?.let { step -> TutorialSheet(step = step, onStep = { tutorialStep = it }, onClose = { tutorialStep = null }) }
+}
+
+@Composable
+private fun LinkCard(title: String, detail: String, modifier: Modifier, onClick: () -> Unit) {
+    NovaCard(modifier = modifier.fillMaxWidth(), onClick = onClick) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(title, fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
+                Text(detail, fontSize = 11.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 3.dp))
+            }
+            Text("›", fontSize = 18.sp, color = NovaColors.current.textDim)
+        }
+    }
 }
 
 @Composable
@@ -319,60 +340,3 @@ private fun LockPill(label: String, selected: Boolean, onClick: () -> Unit) {
     )
 }
 
-// "Repetir el tutorial": the mockup's four-step sheet over Ajustes.
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
-@Composable
-private fun TutorialSheet(step: Int, onStep: (Int) -> Unit, onClose: () -> Unit) {
-    val t = rememberStrings()
-    val (title, body) = TUTORIAL[step]
-    val last = step == TUTORIAL.lastIndex
-    NovaDraftSheet(onDismiss = onClose, scrimAlpha = 0.72f) {
-        Row(modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, bottom = 16.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            TUTORIAL.indices.forEach { i ->
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(3.dp)
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(if (i <= step) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
-                )
-            }
-        }
-        Column(modifier = Modifier.padding(horizontal = 4.dp)) {
-            Text(t(StringKey.TUTORIAL_STEP_OF).format(step + 1, TUTORIAL.size), fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.2.sp, color = NovaColors.current.accentText)
-            Text(t(title), fontSize = 19.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.38).sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 10.dp))
-            Text(t(body), fontSize = 13.sp, lineHeight = 19.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 9.dp))
-        }
-        Row(modifier = Modifier.fillMaxWidth().padding(top = 24.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                t(StringKey.TUTORIAL_SKIP),
-                fontSize = 12.5.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.clickable(onClick = onClose).padding(horizontal = 4.dp, vertical = 14.dp),
-            )
-            Spacer(Modifier.weight(1f))
-            if (step > 0) {
-                Text(
-                    t(StringKey.TUTORIAL_BACK),
-                    fontSize = 12.5.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = NovaColors.current.accentText,
-                    modifier = Modifier.clickable { onStep(step - 1) }.padding(horizontal = 10.dp, vertical = 14.dp),
-                )
-                Spacer(Modifier.width(12.dp))
-            }
-            Text(
-                t(if (last) StringKey.TUTORIAL_DONE else StringKey.TUTORIAL_NEXT),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = Color.White,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(MaterialTheme.colorScheme.primary)
-                    .clickable { if (last) onClose() else onStep(step + 1) }
-                    .padding(horizontal = 26.dp, vertical = 13.dp),
-            )
-        }
-    }
-}

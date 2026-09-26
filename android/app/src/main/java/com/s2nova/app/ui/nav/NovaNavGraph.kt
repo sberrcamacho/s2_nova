@@ -12,6 +12,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -29,14 +31,15 @@ import com.s2nova.app.ui.screens.auth.LoginScreen
 import com.s2nova.app.ui.screens.auth.RegisterScreen
 import com.s2nova.app.ui.screens.budgets.PlanesScreen
 import com.s2nova.app.ui.screens.home.HomeScreen
-import com.s2nova.app.ui.screens.onboarding.OnboardingBudgetScreen
-import com.s2nova.app.ui.screens.onboarding.OnboardingFlowState
-import com.s2nova.app.ui.screens.onboarding.OnboardingIncomeScreen
-import com.s2nova.app.ui.screens.onboarding.OnboardingTutorialScreen
-import com.s2nova.app.ui.screens.onboarding.OnboardingWalletScreen
-import com.s2nova.app.ui.screens.onboarding.OnboardingWelcomeScreen
-import com.s2nova.app.ui.screens.onboarding.completeOnboarding
+import com.s2nova.app.ui.screens.onboarding.FirstRunScreen
 import com.s2nova.app.ui.screens.profile.ProfileScreen
+import com.s2nova.app.ui.screens.settings.CategoriesScreen
+import com.s2nova.app.ui.screens.settings.CurrenciesScreen
+import com.s2nova.app.ui.ConfirmHost
+import com.s2nova.app.ui.GuideCard
+import com.s2nova.app.ui.SnackHost
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import com.s2nova.app.ui.screens.recurring.RecurringScreen
 import com.s2nova.app.ui.screens.reports.ReportsScreen
 import com.s2nova.app.ui.screens.scanner.ScannerScreen
@@ -57,7 +60,6 @@ fun NovaApp() {
     val currentRoute = backStackEntry?.destination?.route
     var showAddSheet by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-    val onboardingFlowState = remember { OnboardingFlowState() }
     val snackbarHostState = remember { SnackbarHostState() }
     val t = rememberStrings()
 
@@ -79,8 +81,8 @@ fun NovaApp() {
     // otherwise. See AuthRepository.fetchAndSyncMe for how the local flag
     // stays in sync with the backend's.
     suspend fun routeAfterAuth() {
-        val done = AppContainer.onboardingStore.onboardingCompleted.first()
-        navController.navigateAsRoot(if (done) NovaDestinations.HOME else NovaDestinations.ONBOARDING_WELCOME)
+        val done = AppContainer.authRepository.currentUser.value?.onboardingCompleted ?: AppContainer.onboardingStore.onboardingCompleted.first()
+        navController.navigateAsRoot(if (done) NovaDestinations.HOME else NovaDestinations.FIRST_RUN)
     }
 
     // Fires whenever ApiClient's Authenticator gives up because the refresh
@@ -105,6 +107,7 @@ fun NovaApp() {
 
     fun openAlertTarget(target: AlertTarget) {
         when (target) {
+            AlertTarget.MOVIMIENTOS -> navigateToTab(NovaDestinations.TRANSACTIONS)
             AlertTarget.PROGRAMADOS -> navController.navigate(NovaDestinations.RECURRING)
             AlertTarget.PLANES_BUDGETS -> navigateToTab(NovaDestinations.budgets(tab = 0))
             AlertTarget.PLANES_GOALS -> navigateToTab(NovaDestinations.budgets(tab = 1))
@@ -114,6 +117,7 @@ fun NovaApp() {
     }
 
     com.s2nova.app.ui.components.AppLockGate {
+    Box(Modifier.fillMaxSize()) {
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
@@ -138,6 +142,10 @@ fun NovaApp() {
 
             composable(NovaDestinations.LOGIN) {
                 LoginScreen(
+                    onGuest = {
+                        AppContainer.enterGuestMode()
+                        navController.navigateAsRoot(NovaDestinations.HOME)
+                    },
                     onLoginSuccess = { scope.launch { routeAfterAuth() } },
                     onForgotPassword = { navController.navigate(NovaDestinations.FORGOT_PASSWORD) },
                     onGoToRegister = { navController.navigate(NovaDestinations.REGISTER) },
@@ -153,40 +161,15 @@ fun NovaApp() {
                 ForgotPasswordScreen(onBackToLogin = { navController.popBackStack() })
             }
 
-            composable(NovaDestinations.ONBOARDING_WELCOME) {
-                OnboardingWelcomeScreen(
-                    onNext = { navController.navigate(NovaDestinations.ONBOARDING_INCOME) },
-                    onSkipAll = { scope.launch { completeOnboarding(); navController.navigateAsRoot(NovaDestinations.HOME) } },
-                )
-            }
-            composable(NovaDestinations.ONBOARDING_INCOME) {
-                OnboardingIncomeScreen(
-                    state = onboardingFlowState,
-                    onNext = { navController.navigate(NovaDestinations.ONBOARDING_WALLET) },
-                    onBack = { navController.popBackStack() },
-                    onSkip = { navController.navigate(NovaDestinations.ONBOARDING_WALLET) },
-                )
-            }
-            composable(NovaDestinations.ONBOARDING_WALLET) {
-                OnboardingWalletScreen(
-                    state = onboardingFlowState,
-                    onNext = { navController.navigate(NovaDestinations.ONBOARDING_BUDGET) },
-                    onBack = { navController.popBackStack() },
-                    onSkip = { navController.navigate(NovaDestinations.ONBOARDING_BUDGET) },
-                )
-            }
-            composable(NovaDestinations.ONBOARDING_BUDGET) {
-                OnboardingBudgetScreen(
-                    state = onboardingFlowState,
-                    onNext = { navController.navigate(NovaDestinations.ONBOARDING_TUTORIAL) },
-                    onBack = { navController.popBackStack() },
-                    onSkip = { navController.navigate(NovaDestinations.ONBOARDING_TUTORIAL) },
-                )
-            }
-            composable(NovaDestinations.ONBOARDING_TUTORIAL) {
-                OnboardingTutorialScreen(
-                    onFinish = { scope.launch { completeOnboarding(); navController.navigateAsRoot(NovaDestinations.HOME) } },
-                    onSkip = { scope.launch { completeOnboarding(); navController.navigateAsRoot(NovaDestinations.HOME) } },
+            composable(NovaDestinations.FIRST_RUN) {
+                FirstRunScreen(
+                    onBackToSignup = {
+                        scope.launch {
+                            AppContainer.authRepository.logout()
+                            navController.navigateAsRoot(NovaDestinations.REGISTER)
+                        }
+                    },
+                    onDone = { navController.navigateAsRoot(NovaDestinations.HOME) },
                 )
             }
 
@@ -199,6 +182,13 @@ fun NovaApp() {
                     onOpenRecurring = { navController.navigate(NovaDestinations.RECURRING) },
                     onOpenWallets = { navController.navigate(NovaDestinations.WALLETS) },
                     onOpenAlertTarget = ::openAlertTarget,
+                    onCreateAccount = {
+                        scope.launch {
+                            leaveGuestMode()
+                            navController.navigateAsRoot(NovaDestinations.LOGIN)
+                            navController.navigate(NovaDestinations.REGISTER)
+                        }
+                    },
                 )
             }
             composable(NovaDestinations.TRANSACTIONS) {
@@ -221,10 +211,14 @@ fun NovaApp() {
             }
             composable(NovaDestinations.ADD_TRANSACTION) {
                 AddTransactionScreen(
-                    onSaved = { navController.popBackStack() },
+                    onSaved = {
+                        navController.popBackStack()
+                        navigateToTab(NovaDestinations.TRANSACTIONS)
+                    },
                     onBack = { navController.popBackStack() },
                     onAddWallet = { navController.navigate(NovaDestinations.WALLETS) },
-                    onOpenRecurring = { navController.navigate(NovaDestinations.RECURRING) },
+                    onOpenCategories = { income -> navController.navigate(NovaDestinations.categories(income)) },
+                    onOpenCurrencies = { navController.navigate(NovaDestinations.CURRENCIES) },
                 )
             }
             composable(
@@ -237,7 +231,8 @@ fun NovaApp() {
                     onSaved = { navController.popBackStack() },
                     onBack = { navController.popBackStack() },
                     onAddWallet = { navController.navigate(NovaDestinations.WALLETS) },
-                    onOpenRecurring = { navController.navigate(NovaDestinations.RECURRING) },
+                    onOpenCategories = { income -> navController.navigate(NovaDestinations.categories(income)) },
+                    onOpenCurrencies = { navController.navigate(NovaDestinations.CURRENCIES) },
                 )
             }
             composable(NovaDestinations.SCANNER) {
@@ -271,17 +266,33 @@ fun NovaApp() {
                         scope.launch {
                             // Demo mode has no switch of its own any more, so
                             // signing out is also the way out of it.
-                            if (DemoModeFlag.active) AppContainer.exitDemoMode()
-                            AppContainer.authRepository.logout()
+                            if (DemoModeFlag.active) leaveGuestMode() else AppContainer.authRepository.logout()
                             navController.navigateAsRoot(NovaDestinations.LOGIN)
                         }
                     },
                 )
             }
             composable(NovaDestinations.SETTINGS) {
-                SettingsScreen(onBack = { navController.popBackStack() })
+                SettingsScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenCategories = { navController.navigate(NovaDestinations.categories()) },
+                    onOpenCurrencies = { navController.navigate(NovaDestinations.CURRENCIES) },
+                )
             }
+            composable(
+                NovaDestinations.CATEGORIES,
+                arguments = listOf(navArgument("income") { type = androidx.navigation.NavType.BoolType; defaultValue = false }),
+            ) { entry ->
+                CategoriesScreen(initialIncome = entry.arguments?.getBoolean("income") ?: false, onBack = { navController.popBackStack() })
+            }
+            composable(NovaDestinations.CURRENCIES) { CurrenciesScreen(onBack = { navController.popBackStack() }) }
         }
+    }
+
+    val barVisible = bottomBarVisibleFor(currentRoute)
+    SnackHost(bottom = if (barVisible) 92.dp else 24.dp)
+    GuideHost(currentRoute, barVisible)
+    ConfirmHost()
     }
 
     if (showAddSheet) {
@@ -306,13 +317,7 @@ private fun LaunchedSplashNavigation(navController: NavHostController) {
         AppContainer.sessionBootstrapped = true
         kotlinx.coroutines.delay(400)
         val loggedIn = AppContainer.authRepository.bootstrap()
-        if (loggedIn) {
-            if (AppContainer.demoModeActive.first()) {
-                AppContainer.enterDemoMode()
-            } else {
-                AppContainer.refreshUserData()
-            }
-        }
+        if (loggedIn) AppContainer.refreshUserData()
         val onboardingDone = AppContainer.onboardingStore.onboardingCompleted.first()
         navController.navigateAsRoot(splashDestinationFor(loggedIn, onboardingDone))
     }
@@ -322,7 +327,7 @@ private fun LaunchedSplashNavigation(navController: NavHostController) {
 // so this routing decision is unit-testable without a NavController.
 internal fun splashDestinationFor(loggedIn: Boolean, onboardingDone: Boolean): String = when {
     !loggedIn -> NovaDestinations.LOGIN
-    !onboardingDone -> NovaDestinations.ONBOARDING_WELCOME
+    !onboardingDone -> NovaDestinations.FIRST_RUN
     else -> NovaDestinations.HOME
 }
 
@@ -331,4 +336,35 @@ private fun NavHostController.navigateAsRoot(route: String) {
         popUpTo(0) { inclusive = true }
         launchSingleTop = true
     }
+}
+
+// Leaving guest mode discards the example data; nothing was ever synced.
+private suspend fun leaveGuestMode() {
+    DemoModeFlag.set(false)
+    AppContainer.authRepository.logout()
+}
+
+// Mini-guide for the current main screen (ONBOARDING.md §3), until the
+// user taps "Entendido" (or "Omitir guías" for all of them).
+@Composable
+private fun androidx.compose.foundation.layout.BoxScope.GuideHost(route: String?, barVisible: Boolean) {
+    val user by AppContainer.authRepository.currentUser.collectAsStateWithLifecycle()
+    val confirm by com.s2nova.app.ui.Confirm.current.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
+    val prefs = user?.preferences ?: return
+    val key = when (route?.substringBefore('?')) {
+        NovaDestinations.HOME -> "inicio"
+        NovaDestinations.TRANSACTIONS -> "movimientos"
+        NovaDestinations.BUDGETS -> "planes"
+        NovaDestinations.REPORTS -> "reportes"
+        NovaDestinations.WALLETS -> "billeteras"
+        else -> null
+    } ?: return
+    if (prefs.guidesOff || key in prefs.guidesSeen || confirm != null) return
+    GuideCard(
+        key = key,
+        bottom = if (barVisible) 92.dp else 24.dp,
+        onOk = { scope.launch { AppContainer.authRepository.updateGuides(prefs.guidesSeen + key, prefs.guidesOff) } },
+        onSkipAll = { scope.launch { AppContainer.authRepository.updateGuides(prefs.guidesSeen, true) } },
+    )
 }

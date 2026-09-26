@@ -41,7 +41,11 @@ internal fun MeResponse.toUser(): User {
             autoLockMinutes = prefs?.autoLockMinutes ?: 0,
             currency = prefs?.currency?.let { runCatching { Currency.valueOf(it) }.getOrNull() } ?: Currency.COP,
             language = prefs?.language?.let { runCatching { AppLanguage.valueOf(it.uppercase()) }.getOrNull() } ?: AppLanguage.ES,
+            guidesSeen = prefs?.guidesSeen?.toSet() ?: emptySet(),
+            guidesOff = prefs?.guidesOff ?: false,
         ),
+        principalCurrency = principalCurrency,
+        onboardingCompleted = prefs?.onboardingCompleted ?: true,
     )
 }
 
@@ -180,6 +184,14 @@ class AuthRepository(
 
     suspend fun markTutorialCompleted() {
         runCatching { ApiClient.api.updatePreferences(UpdatePreferencesRequest(tutorialCompleted = true)) }
+    }
+
+    // Mini-guides (ONBOARDING.md §3): "Entendido" adds the screen, "Omitir
+    // guías" turns them all off, Ajustes › "Ver las guías otra vez" resets.
+    // Persisted server-side so a guide seen here isn't repeated on Web.
+    suspend fun updateGuides(seen: Set<String>, off: Boolean) {
+        updateUser { it.copy(preferences = it.preferences.copy(guidesSeen = seen, guidesOff = off)) }
+        persistPreferences(UpdatePreferencesRequest(guidesSeen = seen.toList(), guidesOff = off))
     }
 
     fun updateUser(update: (User) -> User) {

@@ -5,7 +5,6 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
 import com.s2nova.app.data.model.AppLanguage
-import com.s2nova.app.data.model.CategoryId
 import com.s2nova.app.data.model.PaymentMethod
 
 // Small hand-rolled dictionary, same scope/approach as web's
@@ -1114,21 +1113,6 @@ fun stringFor(key: StringKey, language: AppLanguage): String =
 // category/payment-method name goes through the same translated lookup
 // instead of reading the (Spanish-only) `label` field on the mock data
 // directly.
-fun categoryStringKey(id: CategoryId): StringKey = when (id) {
-    CategoryId.FOOD -> StringKey.CATEGORY_FOOD
-    CategoryId.TRANSPORTATION -> StringKey.CATEGORY_TRANSPORTATION
-    CategoryId.SHOPPING -> StringKey.CATEGORY_SHOPPING
-    CategoryId.HEALTH -> StringKey.CATEGORY_HEALTH
-    CategoryId.EDUCATION -> StringKey.CATEGORY_EDUCATION
-    CategoryId.ENTERTAINMENT -> StringKey.CATEGORY_ENTERTAINMENT
-    CategoryId.BILLS -> StringKey.CATEGORY_BILLS
-    CategoryId.SUBSCRIPTIONS -> StringKey.CATEGORY_SUBSCRIPTIONS
-    CategoryId.SALARY -> StringKey.CATEGORY_SALARY
-    CategoryId.FREELANCE -> StringKey.CATEGORY_FREELANCE
-    CategoryId.GIFT -> StringKey.CATEGORY_GIFT
-    CategoryId.OTHER -> StringKey.CATEGORY_OTHER
-}
-
 fun paymentMethodStringKey(id: PaymentMethod): StringKey = when (id) {
     PaymentMethod.CASH -> StringKey.PAYMENT_CASH
     PaymentMethod.DEBIT_CARD -> StringKey.PAYMENT_DEBIT_CARD
@@ -1140,7 +1124,7 @@ fun paymentMethodStringKey(id: PaymentMethod): StringKey = when (id) {
 
 fun budgetStatusStringKey(status: com.s2nova.app.data.model.BudgetStatus): StringKey = when (status) {
     com.s2nova.app.data.model.BudgetStatus.OVER_BUDGET -> StringKey.BUDGET_STATUS_OVER
-    com.s2nova.app.data.model.BudgetStatus.NEAR_LIMIT -> StringKey.BUDGET_STATUS_NEAR
+    com.s2nova.app.data.model.BudgetStatus.NEAR_LIMIT, com.s2nova.app.data.model.BudgetStatus.AT_RISK -> StringKey.BUDGET_STATUS_NEAR
     com.s2nova.app.data.model.BudgetStatus.ON_TRACK -> StringKey.BUDGET_STATUS_ON_TRACK
 }
 

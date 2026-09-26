@@ -43,12 +43,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.s2nova.app.data.AppContainer
-import com.s2nova.app.data.mock.categoryMap
+import com.s2nova.app.ui.components.categoryColor
 import com.s2nova.app.data.model.AppLanguage
 import com.s2nova.app.data.model.Report
 import com.s2nova.app.data.model.ReportTotals
 import com.s2nova.app.ui.StringKey
-import com.s2nova.app.ui.categoryStringKey
+import com.s2nova.app.ui.components.categoryName
 import com.s2nova.app.ui.components.SheetPill
 import com.s2nova.app.ui.rememberAppLanguage
 import com.s2nova.app.ui.rememberCurrencyFormatter
@@ -305,10 +305,10 @@ private fun CategoryCard(report: Report?) {
                 repeat(4) { Placeholder(1f, 22) }
             }
             top?.forEach { c ->
-                val color = categoryMap[c.category]?.let { Color(it.color) } ?: colors.textDim
+                val color = com.s2nova.app.ui.components.categoryColor(c.category)
                 Column {
                     Row(modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp)) {
-                        Text(t(categoryStringKey(c.category)), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
+                        Text(categoryName(c.category), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
                         Text(format(c.amount), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     // Width relative to the month's largest category, as on Web.

@@ -45,6 +45,8 @@ fun NovaDraftSheet(
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
     // .65 for every draft form; the Ajustes tutorial sheet uses .72.
     scrimAlpha: Float = 0.65f,
+    // .sheet padding-bottom (26); the amount pad uses 18.
+    bottomPadding: androidx.compose.ui.unit.Dp = 26.dp,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = NovaColors.current
@@ -72,7 +74,7 @@ fun NovaDraftSheet(
             modifier = modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp)
-                .padding(bottom = 26.dp),
+                .padding(bottom = bottomPadding),
         ) {
             if (title != null) {
                 Text(

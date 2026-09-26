@@ -23,8 +23,8 @@ internal fun AlertDto.toAppAlert(categoryRepository: CategoryRepository): AppAle
             seriesId = seriesId!!,
             name = name!!,
             type = TransactionType.valueOf(type!!),
-            amount = amount!!.toDouble(),
-            category = categoryRepository.categoryIdForBackendId(categoryId!!)!!,
+            amount = amount!!,
+            category = categoryRepository.idForBackendId(categoryId!!)!!,
             dueDate = dueDate!!.take(10),
             overdue = overdue,
         )
@@ -33,7 +33,7 @@ internal fun AlertDto.toAppAlert(categoryRepository: CategoryRepository): AppAle
             transactionId = transactionId!!,
             loanKind = LoanKind.valueOf(loanKind!!),
             counterpartyName = counterpartyName,
-            outstanding = outstanding!!.toDouble(),
+            outstanding = outstanding!!,
             dueDate = dueDate!!.take(10),
             overdue = overdue,
         )
@@ -41,18 +41,48 @@ internal fun AlertDto.toAppAlert(categoryRepository: CategoryRepository): AppAle
             id = id,
             budgetId = budgetId!!,
             name = name,
-            category = categoryRepository.categoryIdForBackendId(categoryId!!)!!,
-            spent = spent!!.toDouble(),
-            limit = amount!!.toDouble(),
+            category = categoryRepository.idForBackendId(categoryId!!)!!,
+            spent = spent!!,
+            limit = amount!!,
             percentage = percentage!!,
         )
         "GOAL_NEAR" -> AppAlert.GoalNear(
             id = id,
             goalId = goalId!!,
             name = name!!,
-            themeIcon = themeIcon,
+            icon = icon ?: "other",
             percentage = percentage!!,
-            remaining = remaining!!.toDouble(),
+            remaining = remaining!!,
+        )
+        "GOAL_PLAN_DUE" -> AppAlert.GoalPlanDue(
+            id = id,
+            goalId = goalId!!,
+            name = name!!,
+            icon = icon ?: "other",
+            amount = amount!!,
+            currency = currency ?: "COP",
+            walletId = accountId!!,
+            dueDate = dueDate!!.take(10),
+        )
+        "TX_PLANNED" -> AppAlert.TxPlanned(
+            id = id,
+            transactionId = transactionId!!,
+            name = name.orEmpty(),
+            category = categoryRepository.idForBackendId(categoryId) ?: "exp.other",
+            amount = amount!!,
+            currency = currency ?: "COP",
+            walletName = walletName.orEmpty(),
+            dueDate = dueDate!!.take(10),
+        )
+        "GOAL_PLAN_AUTO" -> AppAlert.GoalPlanAuto(
+            id = id,
+            goalId = goalId!!,
+            name = name!!,
+            icon = icon ?: "other",
+            amount = amount!!,
+            currency = currency ?: "COP",
+            walletName = walletName ?: "",
+            date = date!!.take(10),
         )
         // A kind added on the backend before this client knows it is
         // skipped rather than crashing the whole list.
@@ -106,6 +136,10 @@ class AlertRepository(
     // never calls the network. See AppContainer.enterDemoMode().
     fun loadDemo(alerts: List<AppAlert>) {
         _alerts.value = alerts
+    }
+
+    fun removeLocal(id: String) {
+        _alerts.value = _alerts.value.filterNot { it.id == id }
     }
 
     fun markRead(id: String) {

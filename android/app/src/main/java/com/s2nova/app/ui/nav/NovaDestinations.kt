@@ -6,11 +6,8 @@ object NovaDestinations {
     const val REGISTER = "register"
     const val FORGOT_PASSWORD = "forgot_password"
 
-    const val ONBOARDING_WELCOME = "onboarding_welcome"
-    const val ONBOARDING_INCOME = "onboarding_income"
-    const val ONBOARDING_WALLET = "onboarding_wallet"
-    const val ONBOARDING_BUDGET = "onboarding_budget"
-    const val ONBOARDING_TUTORIAL = "onboarding_tutorial"
+    // First run of a new account: moneda principal → primera billetera.
+    const val FIRST_RUN = "first_run"
 
     const val HOME = "home"
     const val TRANSACTIONS = "transactions"
@@ -29,7 +26,10 @@ object NovaDestinations {
     const val REPORTS = "reports"
     const val PROFILE = "profile"
     const val SETTINGS = "settings"
+    const val CATEGORIES = "categories?income={income}"
+    const val CURRENCIES = "currencies"
 
+    fun categories(income: Boolean = false) = "categories?income=$income"
     fun transactionDetail(id: String) = "transaction_detail/$id"
     fun editTransaction(id: String) = "edit_transaction/$id"
     fun budgets(tab: Int, side: String? = null) = "budgets?tab=$tab" + (side?.let { "&side=$it" } ?: "")

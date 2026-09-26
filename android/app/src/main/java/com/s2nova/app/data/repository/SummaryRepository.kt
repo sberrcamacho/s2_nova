@@ -45,7 +45,7 @@ class SummaryRepository(
             totals = toTotals(body.totals),
             previousTotals = toTotals(body.previousTotals),
             categories = body.categories.map {
-                ReportCategory(categories.categoryIdForBackendId(it.categoryId) ?: CategoryId.OTHER, it.amount.toDouble())
+                ReportCategory(categories.idForBackendId(it.categoryId) ?: "exp.other", it.amount)
             },
         )
     }

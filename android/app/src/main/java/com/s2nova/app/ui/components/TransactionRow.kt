@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.s2nova.app.data.model.Transaction
 import com.s2nova.app.data.model.TransactionType
+import com.s2nova.app.data.repository.displayName
 import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.theme.NovaColors
 import kotlin.math.abs
@@ -33,27 +34,40 @@ fun TransactionRow(
     onClick: (() -> Unit)? = null,
 ) {
     val colors = NovaColors.current
-    val format = rememberCurrencyFormatter()
+    val principal = com.s2nova.app.data.AppContainer.currencyRepository.principal
+    val scheduled = transaction.status == com.s2nova.app.data.model.TransactionStatus.PLANNED
+    val money = com.s2nova.app.data.formatMoney(abs(transaction.amount), transaction.currency)
     val (amount, color) = when (transaction.type) {
-        TransactionType.INCOME -> "+" + format(abs(transaction.amount)) to colors.positive
-        TransactionType.EXPENSE -> "\u2212" + format(abs(transaction.amount)) to colors.negative
-        TransactionType.TRANSFER -> format(abs(transaction.amount)) to MaterialTheme.colorScheme.onBackground
+        TransactionType.INCOME -> "+$money" to colors.positive
+        TransactionType.EXPENSE -> "\u2212$money" to colors.negative
+        TransactionType.TRANSFER -> money to MaterialTheme.colorScheme.onBackground
     }
+    val conv = if (transaction.currency != principal) {
+        "≈ " + com.s2nova.app.data.formatMoney(abs(transaction.amount) * com.s2nova.app.data.AppContainer.currencyRepository.rate(transaction.currency, principal), principal)
+    } else null
     Column(modifier = modifier.let { if (onClick != null) it.clickable(onClick = onClick) else it }) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 12.dp)) {
-            CategoryIcon(category = transaction.category, subcategoryId = transaction.subcategoryId, size = CategoryIconSize.ROW)
+            CatMark(if (transaction.type == TransactionType.TRANSFER) com.s2nova.app.data.repository.CategoryRepository.TRANSFER else transaction.subcategoryId ?: transaction.category, 38.dp)
             Column(modifier = Modifier.weight(1f).padding(start = 13.dp)) {
-                Text(
-                    transaction.description,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        transaction.displayName(com.s2nova.app.data.AppContainer.categoryRepository),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    if (transaction.attachment != null) V2Icon(V2Icons.clip, colors.textDim, 13.dp)
+                    if (transaction.recurringSeriesId != null) V2Icon(V2Icons.repeat, colors.textDim, 13.dp)
+                }
                 Text(subtitle, fontSize = 11.sp, color = colors.textDim, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            Text(amount, fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold, color = color, modifier = Modifier.padding(start = 13.dp))
+            Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(start = 13.dp)) {
+                Text(amount, fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold, color = if (scheduled) MaterialTheme.colorScheme.onSurfaceVariant else color, style = androidx.compose.ui.text.TextStyle(fontFeatureSettings = TNUM))
+                if (conv != null) Text(conv, fontSize = 10.5.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), style = androidx.compose.ui.text.TextStyle(fontFeatureSettings = TNUM))
+            }
         }
         HorizontalDivider(thickness = 1.dp, color = colors.dividerSubtle)
     }

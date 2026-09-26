@@ -64,7 +64,7 @@ import com.s2nova.app.data.model.PaymentMethod
 import com.s2nova.app.data.model.Product
 import com.s2nova.app.data.model.TransactionType
 import com.s2nova.app.data.todayISO
-import com.s2nova.app.ui.categoryStringKey
+import com.s2nova.app.ui.components.categoryName
 import com.s2nova.app.ui.components.CategoryIcon
 import com.s2nova.app.ui.paymentMethodStringKey
 import com.s2nova.app.ui.rememberCurrencyFormatter
@@ -342,7 +342,7 @@ private fun ProductFoundSheet(
             Column(modifier = Modifier.padding(start = 14.dp)) {
                 Text(product.name, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
                 Text(
-                    "${product.brand} · ${product.unit} · ${t(categoryStringKey(product.category))}",
+                    "${product.brand} · ${product.unit} · ${categoryName(product.category)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

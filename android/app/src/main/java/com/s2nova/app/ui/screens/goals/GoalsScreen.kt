@@ -42,7 +42,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -51,7 +50,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
-import com.s2nova.app.data.model.CategoryId
+import com.s2nova.app.data.Taxonomy
+import com.s2nova.app.data.fmtDate
+import com.s2nova.app.data.fmtDateLong
+import com.s2nova.app.data.formatMoney
+import com.s2nova.app.data.model.GoalPlan
+import com.s2nova.app.data.model.RecurrenceInterval
+import com.s2nova.app.ui.Confirm
+import com.s2nova.app.ui.ConfirmRequest
+import com.s2nova.app.ui.Snack
+import com.s2nova.app.ui.components.TNUM
+import com.s2nova.app.ui.components.V2Icon
+import com.s2nova.app.ui.components.V2Icons
+import com.s2nova.app.ui.components.hexColor
+import com.s2nova.app.ui.screens.addtransaction.Freq
+import com.s2nova.app.ui.screens.addtransaction.shortWallet
+import androidx.compose.ui.text.TextStyle
 import com.s2nova.app.data.model.Goal
 import com.s2nova.app.data.model.NewTransactionInput
 import com.s2nova.app.data.model.TransactionType
@@ -63,8 +77,6 @@ import com.s2nova.app.ui.components.ColorPill
 import com.s2nova.app.ui.components.DashedNewRow
 import com.s2nova.app.ui.components.DraftSheetDeleteRow
 import com.s2nova.app.ui.components.DraftSheetPrimaryButton
-import com.s2nova.app.ui.components.GoalCategory
-import com.s2nova.app.ui.components.GoalCategoryId
 import com.s2nova.app.ui.components.MockupIcons
 import com.s2nova.app.ui.components.NovaDraftSheet
 import com.s2nova.app.ui.components.SheetAmountBox
@@ -72,10 +84,7 @@ import com.s2nova.app.ui.components.SheetBox
 import com.s2nova.app.ui.components.SheetInput
 import com.s2nova.app.ui.components.SheetLabel
 import com.s2nova.app.ui.components.SheetPill
-import com.s2nova.app.ui.components.goalCategories
 import com.s2nova.app.ui.components.shortWalletName
-import com.s2nova.app.ui.components.goalCategoryFor
-import com.s2nova.app.ui.components.suggestGoalCategory
 import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.theme.NovaColors
@@ -108,26 +117,12 @@ fun GoalsTab(snackbarHostState: SnackbarHostState) {
         item {
             DashedNewRow(
                 label = t(StringKey.GOALS_NEW),
-                onClick = { draft = GoalDraft(id = null, name = "", category = GoalCategoryId.OTHER, userPickedCategory = false, targetText = "") },
+                onClick = { draft = GoalDraft() },
             )
         }
 
         items(goals, key = { it.id }) { goal ->
-            val category = goalCategoryFor(goal.themeIcon) ?: goalCategories.last()
-            GoalCard(
-                goal = goal,
-                category = category,
-                onEdit = {
-                    draft = GoalDraft(
-                        id = goal.id,
-                        name = goal.name,
-                        category = category.id,
-                        userPickedCategory = true,
-                        targetText = goal.targetAmount.toLong().toString(),
-                    )
-                },
-                onPay = { paying = goal },
-            )
+            GoalCard(goal = goal, onEdit = { draft = GoalDraft.from(goal) }, onPay = { paying = goal })
         }
 
         if (goals.isEmpty()) {
@@ -153,15 +148,16 @@ fun GoalsTab(snackbarHostState: SnackbarHostState) {
             onDraftChange = { draft = it },
             onDismiss = { draft = null },
             onSave = {
-                val target = d.targetText.toDoubleOrNull()
+                val target = d.target.toDoubleOrNull()
                 if (d.name.isNotBlank() && target != null && target > 0) {
+                    val initial = d.initial.toDoubleOrNull() ?: 0.0
+                    val due = d.due.ifBlank { null }
                     scope.launch {
                         runCatching {
-                            if (d.id == null) {
-                                AppContainer.goalRepository.create(d.name.trim(), target, themeIcon = d.category.name)
-                            } else {
-                                AppContainer.goalRepository.update(d.id, d.name.trim(), target, themeIcon = d.category.name)
-                            }
+                            if (d.id == null) AppContainer.goalRepository.create(d.name.trim(), d.icon, target, initial, due, d.plan)
+                            else AppContainer.goalRepository.update(d.id, d.name.trim(), d.icon, target, initial, due, d.plan, d.planChanged)
+                        }.onSuccess {
+                            d.plan?.let { Snack.show("Meta guardada. Próximo aporte el " + fmtDate(it.nextDate)) }
                         }
                     }
                     draft = null
@@ -170,8 +166,18 @@ fun GoalsTab(snackbarHostState: SnackbarHostState) {
             onRequestDelete = {
                 val goal = goals.firstOrNull { it.id == d.id }
                 if (goal != null) {
-                    deleting = goal
-                    draft = null
+                    val principal = AppContainer.currencyRepository.principal
+                    Confirm.ask(
+                        ConfirmRequest(
+                            title = "Eliminar la meta “${goal.name}”",
+                            lines = listOfNotNull(
+                                formatMoney(goal.currentAmount, principal) + " ahorrados de " + formatMoney(goal.targetAmount, principal),
+                                if (goal.plan != null) "El aporte periódico se cancela" else null,
+                                "En el siguiente paso eliges a qué billetera vuelve el dinero",
+                            ),
+                            onNext = { draft = null; deleting = goal },
+                        ),
+                    )
                 }
             },
         )
@@ -222,11 +228,13 @@ private fun goalNote(goal: Goal, t: (StringKey) -> String, format: (Double) -> S
 }
 
 @Composable
-private fun GoalCard(goal: Goal, category: GoalCategory, onEdit: () -> Unit, onPay: () -> Unit) {
+private fun GoalCard(goal: Goal, onEdit: () -> Unit, onPay: () -> Unit) {
     val colors = NovaColors.current
-    val format = rememberCurrencyFormatter()
+    val principal = AppContainer.currencyRepository.principal
+    val format = { v: Double -> formatMoney(v, principal) }
     val t = rememberStrings()
     val shape = RoundedCornerShape(18.dp)
+    val pct = goal.percentage.coerceAtMost(100)
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -236,64 +244,73 @@ private fun GoalCard(goal: Goal, category: GoalCategory, onEdit: () -> Unit, onP
             .padding(horizontal = 18.dp, vertical = 16.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            GoalRing(percentage = goal.percentage, category = category)
+            GoalRing(percentage = pct, icon = goal.icon)
             Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        goal.name,
-                        fontSize = 13.5.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        maxLines = 1,
-                        modifier = Modifier.weight(1f),
-                    )
+                    Text(goal.name, fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, modifier = Modifier.weight(1f))
                     Icon(
                         MockupIcons.Pencil,
                         contentDescription = t(StringKey.GOALS_EDIT_TITLE),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                            .clip(CircleShape)
-                            .clickable(onClick = onEdit)
-                            .padding(2.dp)
-                            .size(15.dp),
+                        modifier = Modifier.padding(start = 8.dp).clip(CircleShape).clickable(onClick = onEdit).padding(2.dp).size(15.dp),
                     )
                 }
                 Text(
+                    "$pct% · " + (goal.targetDate?.let { "fecha objetivo " + fmtDateLong(it) } ?: "sin fecha objetivo"),
+                    fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp),
+                )
+                Text(
                     buildAnnotatedString {
                         append(format(goal.currentAmount))
-                        withStyle(SpanStyle(fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = colors.textDim)) {
-                            append(" ${t(StringKey.BUDGETS_OF)} ${format(goal.targetAmount)}")
-                        }
+                        withStyle(SpanStyle(fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = colors.textDim)) { append(" de " + format(goal.targetAmount)) }
                     },
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(top = 4.dp),
+                    fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.padding(top = 4.dp), style = TextStyle(fontFeatureSettings = TNUM),
                 )
-                Text(goalNote(goal, t) { format(it) }, fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 3.dp))
+                Text(
+                    when {
+                        goal.currentAmount <= 0 -> "Sin abonos aún"
+                        goal.currentAmount >= goal.targetAmount -> "Meta cumplida"
+                        else -> "Faltan " + format(goal.targetAmount - goal.currentAmount)
+                    },
+                    fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 3.dp),
+                )
+            }
+        }
+        goal.plan?.let { plan ->
+            val wallet = AppContainer.walletRepository.wallets.value.firstOrNull { it.id == plan.walletId }?.name?.let(::shortWallet) ?: ""
+            Row(
+                Modifier.padding(top = 12.dp).fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(colors.sheetSurface).padding(horizontal = 12.dp, vertical = 9.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                V2Icon(V2Icons.repeat, colors.textDim, 13.dp)
+                Text(planText(plan, wallet, principal) + " · próximo " + fmtDate(plan.nextDate), fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, style = TextStyle(fontFeatureSettings = TNUM))
             }
         }
         Box(
-            modifier = Modifier
-                .padding(top = 14.dp)
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.primary)
-                .clickable(role = Role.Button, onClick = onPay)
-                .padding(11.dp),
+            modifier = Modifier.padding(top = 14.dp).fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary)
+                .clickable(role = Role.Button, onClick = onPay).padding(11.dp),
             contentAlignment = Alignment.Center,
         ) {
-            Text(t(StringKey.GOALS_CONTRIBUTE), fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
+            Text("Abonar", fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
         }
     }
 }
 
-// Mockup ringStyle: a 62dp conic fill in the goal color over --line, with a
-// 48dp --surface disc on top holding the 22dp glyph.
+// "Aporte mensual de $250.000 desde Bancolombia · con confirmación".
+fun planText(plan: GoalPlan, wallet: String, principal: String): String =
+    "Aporte " + (if (plan.frequency == RecurrenceInterval.DAILY) "diario" else freqOf(plan.frequency).label.lowercase()) + " de " +
+        formatMoney(plan.amount, principal) + " desde " + wallet + " · " + if (plan.autoConfirm) "automático" else "con confirmación"
+
+private fun freqOf(i: RecurrenceInterval): Freq = Freq.entries.first { it.interval == i }
+
+// Mockup ringStyle: a 62 dp conic fill in the icon color over --line, with
+// a 48 dp --surface disc holding the 22 dp glyph.
 @Composable
-private fun GoalRing(percentage: Int, category: GoalCategory) {
-    val color = Color(category.color)
+private fun GoalRing(percentage: Int, icon: String) {
+    val p = Taxonomy.planIcon(icon)
+    val color = hexColor(p.color)
     val track = MaterialTheme.colorScheme.outline
     val surface = MaterialTheme.colorScheme.surface
     Box(modifier = Modifier.size(62.dp), contentAlignment = Alignment.Center) {
@@ -302,101 +319,7 @@ private fun GoalRing(percentage: Int, category: GoalCategory) {
             drawArc(color, startAngle = -90f, sweepAngle = 3.6f * percentage.coerceIn(0, 100), useCenter = true, topLeft = Offset.Zero, size = Size(size.width, size.height))
             drawCircle(surface, radius = 24.dp.toPx())
         }
-        Icon(category.icon, contentDescription = null, tint = color, modifier = Modifier.size(22.dp))
-    }
-}
-
-// Draft state backing the goal create/edit sheet. `id == null` means
-// "creating".
-private data class GoalDraft(
-    val id: String?,
-    val name: String,
-    val category: GoalCategoryId,
-    val userPickedCategory: Boolean,
-    val targetText: String,
-)
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
-@Composable
-private fun GoalDraftSheet(
-    draft: GoalDraft,
-    onDraftChange: (GoalDraft) -> Unit,
-    onDismiss: () -> Unit,
-    onSave: () -> Unit,
-    onRequestDelete: () -> Unit,
-) {
-    val t = rememberStrings()
-    val colors = NovaColors.current
-    val isEdit = draft.id != null
-    val category = goalCategories.first { it.id == draft.category }
-    val color = Color(category.color)
-    val showAutoNote = !draft.userPickedCategory && suggestGoalCategory(draft.name) != null
-
-    NovaDraftSheet(
-        onDismiss = onDismiss,
-        title = t(if (isEdit) StringKey.GOALS_EDIT_TITLE else StringKey.GOALS_NEW),
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-            Column {
-                SheetLabel(t(StringKey.GOALS_NAME))
-                SheetBox(padding = PaddingValues(horizontal = 14.dp, vertical = 11.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier.size(40.dp).clip(CircleShape).background(color.copy(alpha = 0x29 / 255f)),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(category.icon, contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
-                        }
-                        Box(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
-                            SheetInput(
-                                value = draft.name,
-                                onValueChange = { newName ->
-                                    val g = if (!draft.userPickedCategory) suggestGoalCategory(newName) else null
-                                    onDraftChange(draft.copy(name = newName, category = g ?: draft.category))
-                                },
-                                placeholder = t(StringKey.GOALS_NAME_PLACEHOLDER),
-                                style = TextStyle(fontSize = 13.5.sp, fontWeight = FontWeight.Bold),
-                            )
-                        }
-                    }
-                }
-                Text(
-                    t(if (showAutoNote) StringKey.BUDGETS_CATEGORY_AUTO_NOTE else StringKey.GOALS_CATEGORY_NOTE),
-                    fontSize = 11.sp,
-                    color = colors.textDim,
-                    modifier = Modifier.padding(top = 9.dp),
-                )
-            }
-
-            Column {
-                SheetLabel(t(StringKey.ADD_TXN_CATEGORY))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    goalCategories.forEach { c ->
-                        ColorPill(
-                            label = t(c.labelKey),
-                            color = Color(c.color),
-                            selected = draft.category == c.id,
-                            onClick = { onDraftChange(draft.copy(category = c.id, userPickedCategory = true)) },
-                        )
-                    }
-                }
-            }
-
-            Column {
-                SheetLabel(t(StringKey.GOALS_TARGET_AMOUNT))
-                SheetAmountBox(draft.targetText) { onDraftChange(draft.copy(targetText = it)) }
-            }
-
-            DraftSheetPrimaryButton(
-                label = t(StringKey.COMMON_SAVE),
-                enabled = draft.name.isNotBlank() && (draft.targetText.toDoubleOrNull() ?: 0.0) > 0,
-                onClick = onSave,
-            )
-
-            if (isEdit) {
-                DraftSheetDeleteRow(label = t(StringKey.GOALS_DELETE), onClick = onRequestDelete)
-            }
-        }
+        V2Icon(p.glyph, color, 22.dp)
     }
 }
 
@@ -581,7 +504,7 @@ private fun GoalPaySheet(
                         description = t(StringKey.GOAL_CONTRIBUTION_DESCRIPTION_PREFIX) + goal.name,
                         amount = amount,
                         type = TransactionType.EXPENSE,
-                        category = CategoryId.OTHER,
+                        category = "exp.other",
                         date = todayISO(),
                         goalId = goal.id,
                     )

@@ -40,3 +40,20 @@ fun lastNMonthKeys(n: Int): List<String> {
         "%04d-%02d".format(d.year, d.monthValue)
     }
 }
+
+// The v2 mockup's own date copy: "21 ago" (fmtDate) and "21 de agosto de
+// 2026" (fmtDateLong) — month names are fixed Spanish UI copy.
+val MONTHS_ES = listOf("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre")
+val MONTHS_ABBR = listOf("ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic")
+
+fun fmtDate(iso: String?): String {
+    if (iso.isNullOrBlank()) return ""
+    val d = LocalDate.parse(iso.take(10))
+    return "${d.dayOfMonth} ${MONTHS_ABBR[d.monthValue - 1]}"
+}
+
+fun fmtDateLong(iso: String?): String {
+    if (iso.isNullOrBlank()) return ""
+    val d = LocalDate.parse(iso.take(10))
+    return "${d.dayOfMonth} de ${MONTHS_ES[d.monthValue - 1]} de ${d.year}"
+}

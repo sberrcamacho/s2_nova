@@ -34,9 +34,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
-import com.s2nova.app.data.mock.categoryMap
+import com.s2nova.app.ui.components.categoryColor
 import com.s2nova.app.data.model.AppLanguage
-import com.s2nova.app.data.model.CategoryId
 import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.components.BackHeader
 import com.s2nova.app.ui.components.MockupIcons
@@ -66,8 +65,8 @@ fun ProfileScreen(
     val colors = NovaColors.current
     val language = user?.preferences?.language ?: AppLanguage.ES
 
-    val subscriptionsColor = categoryMap[CategoryId.SUBSCRIPTIONS]?.color?.let { Color(it) } ?: MaterialTheme.colorScheme.primary
-    val billsColor = categoryMap[CategoryId.BILLS]?.color?.let { Color(it) } ?: MaterialTheme.colorScheme.primary
+    val subscriptionsColor = com.s2nova.app.ui.components.categoryColor("inc.transfers")
+    val billsColor = com.s2nova.app.ui.components.categoryColor("exp.utilities")
 
     val walletsDetail = "${wallets.size} ${t(StringKey.PROFILE_WALLETS_DETAIL)} · ${format(wallets.sumOf { it.currentBalance })}"
     val activeSeriesCount = recurringSeries.count { it.active }

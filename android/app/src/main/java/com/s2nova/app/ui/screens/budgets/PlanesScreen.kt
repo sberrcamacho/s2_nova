@@ -46,12 +46,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
-import com.s2nova.app.data.mock.expenseCategories
 import com.s2nova.app.data.model.BudgetProgress
-import com.s2nova.app.data.model.CategoryId
+import com.s2nova.app.data.model.BudgetKind
+import com.s2nova.app.data.model.BudgetPeriod
+import com.s2nova.app.data.fmtDate
+import com.s2nova.app.data.formatMoney
+import com.s2nova.app.ui.Confirm
+import com.s2nova.app.ui.ConfirmRequest
+import com.s2nova.app.ui.components.CatMark
+import com.s2nova.app.ui.components.PlanMark
+import com.s2nova.app.ui.components.TNUM
+import com.s2nova.app.ui.components.toneOf
+import com.s2nova.app.ui.screens.addtransaction.shortWallet
 import com.s2nova.app.data.model.LoanKind
 import com.s2nova.app.ui.StringKey
-import com.s2nova.app.ui.categoryStringKey
+import com.s2nova.app.ui.components.categoryName
 import com.s2nova.app.ui.components.CategoryIcon
 import com.s2nova.app.ui.components.CategoryIconSize
 import com.s2nova.app.ui.components.ColorPill
@@ -168,8 +177,7 @@ private fun BudgetsTab() {
     val totalSpent = progressList.sumOf { it.spent }
     val totalPct = if (totalLimit > 0) ((totalSpent / totalLimit) * 100).toInt() else 0
 
-    var draft by remember { mutableStateOf<BudgetDraft?>(null) }
-    var deleting by remember { mutableStateOf<BudgetProgress?>(null) }
+    var draft by remember { mutableStateOf<BudgetEditDraft?>(null) }
 
     LazyColumn(
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 20.dp),
@@ -220,27 +228,11 @@ private fun BudgetsTab() {
         }
 
         item {
-            DashedNewRow(
-                label = t(StringKey.BUDGETS_NEW),
-                onClick = {
-                    val taken = progressList.map { it.budget.category }.toSet()
-                    val free = expenseCategories.map { it.id }.filterNot { it in taken }
-                    val category = if (CategoryId.OTHER in free) CategoryId.OTHER else free.firstOrNull() ?: CategoryId.OTHER
-                    draft = BudgetDraft(id = null, name = "", category = category, userPickedCategory = false, limitText = "")
-                },
-            )
+            DashedNewRow(label = t(StringKey.BUDGETS_NEW), onClick = { draft = BudgetEditDraft() })
         }
 
         items(progressList, key = { it.budget.id }) { progress ->
-            BudgetCard(progress) {
-                draft = BudgetDraft(
-                    id = progress.budget.id,
-                    name = progress.budget.name ?: t(categoryStringKey(progress.budget.category)),
-                    category = progress.budget.category,
-                    userPickedCategory = true,
-                    limitText = progress.budget.limit.toLong().toString(),
-                )
-            }
+            BudgetCard(progress) { draft = BudgetEditDraft.from(progress) }
         }
 
         if (progressList.isEmpty()) {
@@ -259,74 +251,65 @@ private fun BudgetsTab() {
         item { androidx.compose.foundation.layout.Spacer(Modifier.height(72.dp)) }
     }
 
-    val d = draft
-    if (d != null) {
-        BudgetDraftSheet(
+    draft?.let { d ->
+        BudgetSheet(
             draft = d,
-            onDraftChange = { draft = it.copy(error = null) },
+            onChange = { draft = it.copy(error = null) },
             onDismiss = { draft = null },
-            onSave = {
-                val limit = d.limitText.toDoubleOrNull()
-                if (limit != null && limit > 0 && d.name.isNotBlank()) {
-                    // A name equal to a category label (the new one, or the
-                    // one being moved away from) is a display name, not a
-                    // custom one.
-                    val existing = d.id?.let { id -> progressList.firstOrNull { it.budget.id == id } }
-                    val labels = listOfNotNull(d.category, existing?.budget?.category).map { t(categoryStringKey(it)) }
-                    val name = d.name.trim().takeUnless { it in labels }
-                    scope.launch {
-                        try {
-                            if (d.id == null) {
-                                AppContainer.budgetRepository.create(name, d.category, limit)
-                            } else {
-                                val moved = d.category.takeIf { it != existing?.budget?.category }
-                                AppContainer.budgetRepository.update(d.id, name, limit, category = moved)
-                            }
-                            draft = null
-                        } catch (e: HttpException) {
-                            draft = d.copy(error = if (e.code() == 409) t(StringKey.BUDGETS_CATEGORY_TAKEN) else t(StringKey.COMMON_SAVE_ERROR))
-                        } catch (e: Exception) {
-                            draft = d.copy(error = t(StringKey.COMMON_SAVE_ERROR))
-                        }
+            onSave = { save ->
+                scope.launch {
+                    try {
+                        if (d.id == null) AppContainer.budgetRepository.create(save) else AppContainer.budgetRepository.update(d.id, save)
+                        draft = null
+                    } catch (e: HttpException) {
+                        draft = d.copy(error = if (e.code() == 409) "Ya existe un presupuesto para esa categoría en ese periodo." else t(StringKey.COMMON_SAVE_ERROR))
+                    } catch (e: Exception) {
+                        draft = d.copy(error = t(StringKey.COMMON_SAVE_ERROR))
                     }
                 }
             },
-            onRequestDelete = {
-                val id = d.id
-                if (id != null) {
-                    deleting = progressList.firstOrNull { it.budget.id == id }
-                    draft = null
-                }
+            onDelete = {
+                val b = progressList.firstOrNull { it.budget.id == d.id } ?: return@BudgetSheet
+                val principal = AppContainer.currencyRepository.principal
+                val label = b.budget.name ?: categoryName(b.budget.category)
+                Confirm.ask(
+                    ConfirmRequest(
+                        title = "Eliminar el presupuesto “$label”",
+                        lines = listOf(
+                            formatMoney(b.spent, principal) + " gastados de " + formatMoney(b.budget.limit, principal) +
+                                if (b.budget.period == BudgetPeriod.CUSTOM) " · " + fmtDate(b.budget.startDate) + " – " + fmtDate(b.budget.endDate) else " este mes",
+                            "Su historial de avance y sus alertas",
+                            "Tus movimientos no se borran; solo dejan de contar para este límite",
+                        ),
+                        ack = "Entiendo que el presupuesto y su historial se eliminan.",
+                        cta = "Eliminar presupuesto",
+                        onConfirm = {
+                            draft = null
+                            scope.launch { runCatching { AppContainer.budgetRepository.delete(b.budget.id) } }
+                        },
+                    ),
+                )
             },
-        )
-    }
-
-    val toDelete = deleting
-    if (toDelete != null) {
-        AlertDialog(
-            onDismissRequest = { deleting = null },
-            title = { Text(t(StringKey.BUDGETS_DELETE_CONFIRM_TITLE)) },
-            text = { Text(t(StringKey.BUDGETS_DELETE_CONFIRM_BODY)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    scope.launch { runCatching { AppContainer.budgetRepository.delete(toDelete.budget.id) } }
-                    deleting = null
-                }) { Text(t(StringKey.BUDGETS_DELETE), color = MaterialTheme.colorScheme.error) }
-            },
-            dismissButton = { TextButton(onClick = { deleting = null }) { Text(t(StringKey.COMMON_CANCEL)) } },
         )
     }
 }
 
-// Mockup budget card: 38dp mark, name, tone-colored % and pencil,
-// "spent de limit", 6dp bar; --neg-soft border from 90%.
+// Mockup budget card: 38 dp mark (plan icon for custom budgets), name,
+// tone % pill and pencil, scope line, "spent de limit · periodo", 6 dp bar;
+// --neg-soft border from 90 %.
 @Composable
 private fun BudgetCard(progress: BudgetProgress, onEdit: () -> Unit) {
     val colors = NovaColors.current
-    val format = rememberCurrencyFormatter()
-    val t = rememberStrings()
-    val tone = toneColor(budgetTone(progress.percentage), colors)
+    val principal = AppContainer.currencyRepository.principal
+    val b = progress.budget
+    val (tone, bg) = toneOf(progress.percentage)
     val shape = RoundedCornerShape(18.dp)
+    val custom = b.kind == BudgetKind.CUSTOM
+    val repo = AppContainer.categoryRepository
+    val walletNames = AppContainer.walletRepository.wallets.value.filter { it.id in b.walletIds }.map { shortWallet(it.name) }
+    val scope = if (custom) "Personalizado · ${b.assignedCount} movimientos asignados"
+    else repo.label(b.category) + (if (repo.node(b.category)?.parentId != null) "" else " · Todas") + (if (walletNames.isNotEmpty()) " · solo " + walletNames.joinToString(", ") else "")
+    val period = if (b.period == BudgetPeriod.CUSTOM) fmtDate(b.startDate) + " – " + fmtDate(b.endDate) + " · no se reinicia" else "Mensual"
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -336,142 +319,21 @@ private fun BudgetCard(progress: BudgetProgress, onEdit: () -> Unit) {
             .clickable(onClick = onEdit)
             .padding(horizontal = 17.dp, vertical = 15.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            CategoryIcon(category = progress.budget.category, size = CategoryIconSize.ROW)
-            Column(modifier = Modifier.weight(1f).padding(start = 13.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        progress.budget.name ?: t(categoryStringKey(progress.budget.category)),
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        maxLines = 1,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Text(
-                        "${progress.percentage}%",
-                        fontSize = 11.5.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = tone,
-                        modifier = Modifier.padding(start = 8.dp),
-                    )
-                    Icon(
-                        MockupIcons.Pencil,
-                        contentDescription = t(StringKey.BUDGETS_EDIT_TITLE),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 8.dp).size(15.dp),
-                    )
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(13.dp)) {
+            if (custom) PlanMark(b.icon, 38.dp) else CatMark(b.category, 38.dp)
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(b.name ?: repo.name(b.category), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, modifier = Modifier.weight(1f))
+                    Text("${progress.percentage}%", fontSize = 11.5.sp, fontWeight = FontWeight.ExtraBold, color = tone, modifier = Modifier.clip(RoundedCornerShape(999.dp)).background(bg).padding(horizontal = 8.dp, vertical = 3.dp))
+                    Icon(MockupIcons.Pencil, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(15.dp))
                 }
+                Text(scope, fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), maxLines = 1)
                 Text(
-                    "${format(progress.spent)} ${t(StringKey.BUDGETS_OF)} ${format(progress.budget.limit)}",
-                    fontSize = 11.5.sp,
-                    color = colors.textDim,
-                    modifier = Modifier.padding(top = 3.dp),
+                    formatMoney(progress.spent, principal) + " de " + formatMoney(b.limit, principal) + " · " + period,
+                    fontSize = 11.5.sp, color = colors.textDim, modifier = Modifier.padding(top = 3.dp), style = TextStyle(fontFeatureSettings = TNUM),
                 )
             }
         }
-        NovaProgressBar(
-            percentage = progress.percentage.coerceAtMost(100),
-            color = tone,
-            height = 6.dp,
-            cornerRadius = 3.dp,
-            modifier = Modifier.padding(top = 12.dp),
-        )
-    }
-}
-
-// Draft state backing the budget create/edit sheet. `id == null` means
-// "creating". The backend keeps one budget per category and month, so a
-// taken category comes back as a 409 and the sheet stays open.
-private data class BudgetDraft(
-    val id: String?,
-    val name: String,
-    val category: CategoryId,
-    val userPickedCategory: Boolean,
-    val limitText: String,
-    // Save failure shown above "Guardar" (a snackbar would sit under the sheet).
-    val error: String? = null,
-)
-
-// Mockup budgetSheet: Nombre (with the category mark), Categoría pills,
-// Límite mensual, Guardar and "Eliminar presupuesto".
-@OptIn(ExperimentalLayoutApi::class, androidx.compose.material3.ExperimentalMaterial3Api::class)
-@Composable
-private fun BudgetDraftSheet(
-    draft: BudgetDraft,
-    onDraftChange: (BudgetDraft) -> Unit,
-    onDismiss: () -> Unit,
-    onSave: () -> Unit,
-    onRequestDelete: () -> Unit,
-) {
-    val t = rememberStrings()
-    val colors = NovaColors.current
-    val isEdit = draft.id != null
-    val showAutoNote = !draft.userPickedCategory && suggestExpenseCategory(draft.name) != null
-
-    NovaDraftSheet(
-        onDismiss = onDismiss,
-        title = t(if (isEdit) StringKey.BUDGETS_EDIT_TITLE else StringKey.BUDGETS_NEW),
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-            Column {
-                SheetLabel(t(StringKey.BUDGETS_NAME))
-                SheetBox(padding = PaddingValues(horizontal = 14.dp, vertical = 11.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        CategoryIcon(category = draft.category, size = CategoryIconSize.MD)
-                        Box(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
-                            SheetInput(
-                                value = draft.name,
-                                onValueChange = { newName ->
-                                    val guessed = if (!draft.userPickedCategory) suggestExpenseCategory(newName) else null
-                                    onDraftChange(draft.copy(name = newName, category = guessed ?: draft.category))
-                                },
-                                placeholder = t(StringKey.BUDGETS_NAME_PLACEHOLDER),
-                                style = TextStyle(fontSize = 13.5.sp, fontWeight = FontWeight.Bold),
-                            )
-                        }
-                    }
-                }
-                Text(
-                    t(if (showAutoNote) StringKey.BUDGETS_CATEGORY_AUTO_NOTE else StringKey.BUDGETS_CATEGORY_NOTE),
-                    fontSize = 11.sp,
-                    color = colors.textDim,
-                    modifier = Modifier.padding(top = 9.dp),
-                )
-            }
-
-            Column {
-                SheetLabel(t(StringKey.ADD_TXN_CATEGORY))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    expenseCategories.forEach { c ->
-                        ColorPill(
-                            label = t(categoryStringKey(c.id)),
-                            color = Color(c.color),
-                            selected = draft.category == c.id,
-                            onClick = { onDraftChange(draft.copy(category = c.id, userPickedCategory = true)) },
-                        )
-                    }
-                }
-            }
-
-            Column {
-                SheetLabel(t(StringKey.BUDGETS_MONTHLY_LIMIT))
-                SheetAmountBox(draft.limitText) { onDraftChange(draft.copy(limitText = it)) }
-            }
-
-            draft.error?.let {
-                Text(it, fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = colors.negative)
-            }
-
-            DraftSheetPrimaryButton(
-                label = t(StringKey.COMMON_SAVE),
-                enabled = draft.name.isNotBlank() && (draft.limitText.toDoubleOrNull() ?: 0.0) > 0,
-                onClick = onSave,
-            )
-
-            if (isEdit) {
-                DraftSheetDeleteRow(label = t(StringKey.BUDGETS_DELETE), onClick = onRequestDelete)
-            }
-        }
+        NovaProgressBar(percentage = progress.percentage.coerceAtMost(100), color = tone, height = 6.dp, cornerRadius = 3.dp, modifier = Modifier.padding(top = 12.dp))
     }
 }

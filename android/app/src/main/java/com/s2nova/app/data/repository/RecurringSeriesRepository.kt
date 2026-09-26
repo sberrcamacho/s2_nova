@@ -15,14 +15,20 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 internal fun RecurringSeriesDto.toModel(categoryRepository: CategoryRepository): RecurringSeries? {
-    val categoryId = categoryRepository.categoryIdForBackendId(categoryId) ?: return null
+    val categoryId = categoryRepository.idForBackendId(categoryId) ?: return null
     return RecurringSeries(
         id = id,
         name = name,
         type = TransactionType.valueOf(type),
-        amount = amount.toDouble(),
+        amount = amount,
         walletId = accountId,
         category = categoryId,
+        subcategoryId = categoryRepository.idForBackendId(subcategoryId),
+        currency = currency,
+        occurrences = occurrences,
+        occurrencesDone = occurrencesDone,
+        endDate = endDate?.take(10),
+        autoConfirm = autoConfirm,
         paymentMethod = PaymentMethod.valueOf(paymentMethod),
         interval = RecurrenceInterval.valueOf(interval),
         nextOccurrenceDate = nextOccurrenceDate.take(10),
@@ -44,7 +50,7 @@ class RecurringSeriesRepository(
 
     suspend fun refresh() {
         if (DemoModeFlag.active) return
-        _series.value = api.getRecurringSeries().mapNotNull { it.toModel(categoryRepository) }
+        _series.value = api.getRecurringSeries(com.s2nova.app.data.todayISO()).mapNotNull { it.toModel(categoryRepository) }
     }
 
     // Overrides the in-memory list with fictitious data for local-only demo
@@ -68,7 +74,7 @@ class RecurringSeriesRepository(
             CreateRecurringSeriesRequest(
                 name = name,
                 type = type.name,
-                amount = amount.toLong(),
+                amount = amount,
                 accountId = walletId,
                 categoryId = categoryBackendId,
                 interval = interval.name,
@@ -101,7 +107,7 @@ class RecurringSeriesRepository(
             UpdateRecurringSeriesRequest(
                 name = name,
                 type = type.name,
-                amount = amount.toLong(),
+                amount = amount,
                 accountId = walletId,
                 categoryId = categoryBackendId,
                 interval = interval.name,
@@ -120,7 +126,10 @@ class RecurringSeriesRepository(
     }
 
     suspend fun delete(id: String) {
-        if (DemoModeFlag.active) return
+        if (DemoModeFlag.active) {
+            _series.value = _series.value.filterNot { it.id == id }
+            return
+        }
         api.deleteRecurringSeries(id)
         _series.value = _series.value.filterNot { it.id == id }
     }

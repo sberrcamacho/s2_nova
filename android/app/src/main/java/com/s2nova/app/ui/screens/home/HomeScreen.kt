@@ -56,7 +56,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.R
 import com.s2nova.app.data.AppContainer
 import com.s2nova.app.data.ThemeController
-import com.s2nova.app.data.mock.categoryMap
+import com.s2nova.app.ui.components.categoryColor
 import com.s2nova.app.data.model.AppAlert
 import com.s2nova.app.data.model.BudgetProgress
 import com.s2nova.app.data.model.RecurrenceInterval
@@ -66,7 +66,7 @@ import com.s2nova.app.data.repository.homeAlertOf
 import com.s2nova.app.ui.AlertTarget
 import com.s2nova.app.ui.CurrencyFormatter
 import com.s2nova.app.ui.StringKey
-import com.s2nova.app.ui.categoryStringKey
+import com.s2nova.app.ui.components.categoryName
 import com.s2nova.app.ui.components.CategoryIcon
 import com.s2nova.app.ui.components.CategoryIconSize
 import com.s2nova.app.ui.components.IconCircle
@@ -96,6 +96,7 @@ fun HomeScreen(
     onOpenRecurring: () -> Unit,
     onOpenWallets: () -> Unit,
     onOpenAlertTarget: (AlertTarget) -> Unit,
+    onCreateAccount: () -> Unit = {},
 ) {
     var showNotifications by remember { mutableStateOf(false) }
     var balanceRevealed by remember { mutableStateOf(false) }
@@ -140,7 +141,8 @@ fun HomeScreen(
     // Sums each wallet's own currentBalance rather than re-deriving it from
     // the transaction list — the backend already excludes PLANNED ("Upcoming")
     // transactions' effects from that balance (they haven't moved money yet).
-    val balance = wallets.sumOf { it.currentBalance }
+    // Σ wallet balance converted to the principal currency.
+    val balance = wallets.sumOf { it.principalBalance }
     val thisMonth = months.lastOrNull()
     val blurBalancePref = user?.preferences?.blurBalance ?: false
     val isBalanceBlurred = blurBalancePref && !balanceRevealed
@@ -254,6 +256,10 @@ fun HomeScreen(
                             onRetry = { scope.launch { refreshHome() } },
                         )
                     }
+                }
+
+                if (AppContainer.isGuest) {
+                    item { GuestBanner(onCreateAccount) }
                 }
 
                 item {
@@ -634,7 +640,7 @@ internal fun toneColor(tone: BudgetTone, colors: NovaExtraColors): Color = when 
 private fun HomeBudgetRow(progress: BudgetProgress, format: CurrencyFormatter, onClick: () -> Unit) {
     val colors = NovaColors.current
     val t = rememberStrings()
-    val label = progress.budget.name ?: categoryMap[progress.budget.category]?.let { t(categoryStringKey(it.id)) } ?: ""
+    val label = progress.budget.name ?: categoryName(progress.budget.category)
     val tone = toneColor(budgetTone(progress.percentage), colors)
     Column(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)) {
         Row(
@@ -753,7 +759,36 @@ private fun RecentRow(
 }
 
 private fun intervalLabel(interval: RecurrenceInterval, t: (StringKey) -> String): String = when (interval) {
+    RecurrenceInterval.DAILY -> "Diario"
     RecurrenceInterval.WEEKLY -> t(StringKey.RECURRENCE_WEEKLY)
     RecurrenceInterval.MONTHLY -> t(StringKey.RECURRENCE_MONTHLY)
     RecurrenceInterval.YEARLY -> t(StringKey.RECURRENCE_YEARLY)
+}
+
+// "Modo invitado" banner (ONBOARDING.md §1).
+@Composable
+private fun GuestBanner(onCreateAccount: () -> Unit) {
+    val primary = MaterialTheme.colorScheme.primary
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(primary.copy(alpha = 0.12f))
+            .border(1.dp, primary.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text("Modo invitado", fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
+            Text("Estás usando datos de ejemplo. No se guarda nada.", fontSize = 11.sp, lineHeight = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
+        }
+        Text(
+            "Crear cuenta",
+            fontSize = 12.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = androidx.compose.ui.graphics.Color.White,
+            modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(primary).clickable(onClick = onCreateAccount).padding(horizontal = 12.dp, vertical = 9.dp),
+        )
+    }
 }
