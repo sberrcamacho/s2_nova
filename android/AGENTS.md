@@ -157,7 +157,7 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   deep-link into Planes via `NovaDestinations.budgets(tab, side)`. The
   Planes slot is **Planes**
   (`PlanesScreen.kt`, per the design handoff in
-  `s2_nova_stage2_handoff/`), three tabs: Presupuestos, Metas
+  `design_handoff_s2_nova_v2/`), three tabs: Presupuestos, Metas
   (`GoalsTab`), and Préstamos (`LoansTab`) — Loans moved out of Profile and
   is no longer its own stacked destination. Budget/goal progress is
   computed server-side and read directly
@@ -289,7 +289,7 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   `isDark`. The adaptive launcher icon (`mipmap-*/ic_launcher_foreground.png`)
   is generated from the dark variant since the launcher background stays
   dark. Regenerate all of these from
-  `s2_nova_stage2_handoff/design_handoff_s2_nova_overview/assets/logo-mark-dark.png`/
+  `design_handoff_s2_nova_v2/design_handoff_s2_nova_overview/assets/logo-mark-dark.png`/
   `logo-mark-light.png` together if the mark ever changes.
 - **System splash screen** (shown before any Compose content exists, via
   `androidx.core:core-splashscreen`): `MainActivity` calls
@@ -309,7 +309,7 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   the icon used to fall back to the launcher's adaptive icon, which is
   always dark, showing a black card even in light mode). Regenerate the
   splash icons the same way as `logo_mark_*` (transparent glyph, no card)
-  from `s2_nova_stage2_handoff/design_handoff_s2_nova_overview/assets/logo-mark-dark.png`/
+  from `design_handoff_s2_nova_v2/design_handoff_s2_nova_overview/assets/logo-mark-dark.png`/
   `logo-mark-light.png` if the mark changes.
 - **Pill selector pattern** (`AddTransactionScreen.kt`'s `SelectChip`,
   `GoalContributionScreen.kt`'s `GoalContributionChip`): filled `primary`

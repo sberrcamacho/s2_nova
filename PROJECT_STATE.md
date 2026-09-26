@@ -1,190 +1,85 @@
 # S2 Nova — Project State
 
 Snapshot of what exists, what works, and what's outstanding as of
-**2026-09-18** (`main`, uncommitted at this snapshot — see the note below).
+**2026-09-26** (`main`, everything committed and pushed at `21a2d78`).
 This is a point-in-time record, not living documentation — for how to
-build/run/structure each app, see the `AGENTS.md` files, which stay current
-by definition. Update or replace this file at the next major milestone
-rather than trying to keep it perfectly in sync with every commit.
+build/run/structure each app, see the `AGENTS.md` files. Replace this file
+at the next major milestone rather than keeping it in sync with every
+commit.
 
-**Uncommitted state note**: at this snapshot, `web/src/dashboard/pages/
-AnalyticsPage.tsx`, `OverviewPage.tsx`, `ReportsPage.tsx`, and
-`web/src/index.css` have uncommitted local changes not covered by this
-snapshot (an in-progress redesign pass, separate from the real-backend
-migration described below); the entire Android app, plus the `phone`/`city`/
-`blurBalance`/`autoLockMinutes` backend additions described below, are also
-still uncommitted, from a session that reconciled Android against all 12
-screens of `design_handoff_s2_nova_overview/S2 Nova Android.dc.html` — check
-`git status`/`git diff` before assuming those files match what's described
-here, or before assuming any of it is on a pushed branch.
+## Where things stand
 
-**Pending**: the same mockup reconciliation has **not** been done for
-`web/` — Web's screens have not been checked against
-`design_handoff_s2_nova_overview/` (that handoff is an Android-only
-prototype; a Web-side design handoff, if one exists, hasn't been reconciled
-either). Treat Web's current UI as unverified against any mockup until that
-pass happens.
+The product moved to the **v2 design**: `design_handoff_s2_nova_v2/`
+(interactive mockups `S2 Nova Android v2.dc.html` and
+`S2 Nova Dashboard v2.dc.html`, specs in `docs/`) replaced the Stage 2
+handoff. The rule is functional parity (root `AGENTS.md`): every write
+available on Android must exist on Web; `docs/WEB_PARITY.md` lists how
+each capability looks on each platform.
+
+- **Backend** — v2 complete (`947ff92`, `39e1962`, `978d23e`).
+- **Android** — v2 complete (`8751c40`): the reference implementation.
+- **Web** — partially migrated; see the table below.
 
 ## Architecture
 
-Two independent client apps sharing one backend, one database, and one user
-identity — no shared UI code, no separate data islands:
+Two independent clients sharing one backend, one database and one user
+identity — no shared UI code (never revert to a single responsive app):
 
-- **`android/`** — native mobile app, Kotlin + Jetpack Compose. Owns daily
-  financial operations: expenses, income, transactions, budgets,
-  barcode-scanned purchases. Talks to the real backend.
-- **`web/`** — web dashboard, React 19 + TypeScript + Vite 8 + Tailwind v4.
-  Owns financial analysis: statistics, charts, budgets, goals, insights,
-  reports. **Now also talks to the real backend** (see below).
-- **`backend/`** — shared API, Node.js + TypeScript + Fastify +
-  Prisma/PostgreSQL. Full design in `ARCHITECTURE.md`. Deployed 24/7 (see
-  Deployment below).
-- **`design-reference/`** — Figma screenshots (visual source of truth),
-  current-implementation screenshots, plus `bugs/` and `suggestions/`
-  folders used as an informal feedback inbox.
-
-This is a deliberate split from an earlier single-web-app-pretending-to-be-
-mobile architecture (see `e07ca5d`, `338b38b`) and that split must not be
-reverted — a shared backend does not mean merging the two clients.
-
-**Both apps are now migrated onto the real backend** (`ARCHITECTURE.md`'s
-Phases 1–3, 5, 8–9 all landed). Web's own migration (Phase 9 — real
-login/register, Google Sign-In, every `services/*.ts` swapped from mock to
-`fetch()`) was the last piece; it's done.
+- **`android/`** — Kotlin + Jetpack Compose.
+- **`web/`** — React 19 + TypeScript + Vite 8 + Tailwind v4 (`--v2-*`
+  tokens).
+- **`backend/`** — Node.js + TypeScript + Fastify + Prisma/PostgreSQL. Full
+  design in `ARCHITECTURE.md`.
+- **`scripts/gen-taxonomy.mjs`** — generates the category taxonomy JSON
+  for all three from `design_handoff_s2_nova_v2/s2-categories.js`.
 
 ## Backend — implemented
 
-Fastify + TypeScript API over PostgreSQL via Prisma. Routes
-(`backend/src/routes/`): `auth` (register/login/refresh/logout,
-email/password + Google Sign-In with multi-audience token verification),
-`me` (profile — now including optional `phone`/`city` — preferences —
-now including `blurBalance`/`autoLockMinutes` —, secure `PATCH /me` for
-name/email and `POST /me/password` for changing/creating a password, both
-requiring the current password and revoking sessions on success, and
-`POST /me/verify-password` — a lightweight password check with no token
-rotation, backing Android's auto-lock re-entry screen), `accounts`,
-`categories`, `transactions` (expense/income/transfer, upcoming, budget/goal
-links, loan settlement as a real opposite-direction transaction), `budgets`
-(server-computed progress + 50/30/20-style recommendations), `goals`,
-`recurringSeries` (subscriptions/salary, materializes a transaction only on
-explicit confirm, never on a timer), `health` (liveness + DB round-trip
-check).
+Routes (`backend/src/routes/`): `auth` (email/password + Google Sign-In,
+rotating refresh tokens), `me` (profile, preferences, password),
+`security` (sessions, account footprint, `DELETE /me`), `dataExport`
+(CSV), `accounts` (wallets with their own currency), `currencies` (user
+currencies, principal currency, rates), `categories` (global taxonomy +
+per-user overrides and custom nodes), `transactions` (date + time, future =
+PLANNED, title/note, income "De", receipts, loans with server-computed
+`outstanding` and `settle-loan` abonos), `recurringSeries` (Programados:
+confirm/skip, automatic series recorded on read, no timer), `budgets`
+(CATEGORY and CUSTOM kinds, monthly or custom range, 65/90/100
+thresholds), `goals` (plan icon, initial amount, periodic contribution
+plans), `summary` (Inicio/Reportes aggregates), `alerts` (shared alert
+rules incl. TX_PLANNED and goal-plan alerts), `health`.
 
-Auth: argon2id password hashes, short-lived JWT access tokens, rotating
-opaque refresh tokens (hashed at rest). The Web refresh cookie is
-`SameSite=None; Secure` in production (Web and the API are different
-registrable domains — GitHub Pages and Render — so `Lax` would be silently
-dropped on cross-site `fetch()` calls; `Lax` is kept for local dev, which is
-same-site). Money stored as `BigInt` minor units; `userId` always derived
-server-side from the verified token, never from a client-supplied field.
-Local dev: `docker compose up -d` for Postgres, `pnpm prisma:migrate` +
-`pnpm exec prisma db seed`, `pnpm dev` for Fastify on `:3000`.
+Money is stored in minor units per currency; movements freeze their rate
+and wallet amount; totals convert to the principal currency.
 
-Automated tests exist now (`backend/tests/`, Vitest — `pnpm test`), still
-uncommitted at this snapshot. Not yet built: OpenAPI docs generation from
-the Zod schemas.
+## Android — implemented (v2)
 
-## Web dashboard — implemented
+Inicio, Movimientos, category-first Nuevo movimiento (category/subcategory
+sheets, keypad and calculator, fecha y hora, Repetir, moneda + tasa,
+adjuntos, De, custom-budget assignment), Planes (category and custom
+budgets, goals with periodic contributions, Préstamos), Reportes,
+Billeteras with currency, Ajustes (Perfil, Seguridad, Monedas,
+Categorías), notifications with "Confirmar aporte" / "Omitir esta vez",
+two-step destructive confirmation + undo snackbar, guest mode, 2-step first
+run, mini-guides, barcode scanning.
 
-Routes (`web/src/dashboard/routes.tsx`): `/login`, `/register` (new, outside
-`DashboardLayout`), then behind `ProtectedRoute` — Overview, Transactions,
-Budgets, Goals, Analytics (tabs: Spending, Income, Cash Flow, Net Worth),
-Insights, Reports, Settings — nav is deliberately capped at exactly 7 items
-(Transactions is a deep link, not a nav item).
+## Web — v2 migration status
 
-New since the last snapshot — **real backend, real auth**:
-- **Real login/register + Google Sign-In** (`web/src/auth/`), replacing the
-  single-user mock-auto-hydration. `apiClient.ts` holds the access token in
-  memory only, retries once on a 401 via `/auth/refresh` (the refresh token
-  lives in the backend's httpOnly cookie, never in JS/localStorage).
-- **Every `services/*.ts` file swapped from an in-memory mock store to
-  `fetch()` calls** against the real API, with wire-shape mappers
-  (`web/src/lib/backendCategories.ts` handles the category slug↔UUID
-  translation the backend uses).
-- **Account model trimmed to name/email/password** — no phone/city (the
-  backend didn't have those fields at the time; it now does, added for
-  Android's Settings/Profile screens — Web's Settings page hasn't picked
-  them up); Settings gained a change/create-password flow requiring the
-  current password.
-- **Read-only constraints preserved**: `accountService`/`goalService`/
-  `budgetService`/`recurringService` still expose no
-  `create*`/`set*`-style mutating functions — creating/editing Wallets,
-  Budgets, Goals, and Recurring series stays Android's job.
-- **Transaction deletion still absent from the dashboard** —
-  `TransactionsPage` is list/filter/sort only.
-- **Login/Register visual redesign** per `s2-nova-mockup/auth_handoff/`: both
-  `/login` and `/register` now share the same two-column layout (a fixed
-  452px dark brand panel + a 340px form column), replacing the old single-
-  column `AuthShell` (now deleted). Register adds a name field, a
-  password-strength meter, and a Terms/Privacy checkbox; both screens pull
-  their pixel-exact values from a `--color-login-*` token prefix in
-  `index.css`.
+| Area | Status |
+|---|---|
+| v2 data layer (taxonomy registry, multi-currency formatting, `categoryService`, `currencyService`) | Done (`21a2d78`) |
+| Inicio | Done |
+| Movimientos (list, detail dialog, delete) | Done |
+| Planes › Presupuestos, Metas, Préstamos (mockup modals, two-step delete, abonos) | Done, visually verified against the mockup |
+| Reportes | Done |
+| Ajustes (Perfil, Contraseña, Sesiones, Eliminar cuenta) | Done |
+| Nuevo movimiento (category-first flow per `NEW_MOVEMENT.md`) | **Pending** — still the pre-v2 side panel |
+| Billeteras page (sidebar entry + modal, wallet currency) | **Pending** |
+| Ajustes › Monedas, Ajustes › Categorías | **Pending** (services exist, no UI) |
+| Guest mode, first-run card, mini-guides (`ONBOARDING.md`) | **Pending** |
 
-Unchanged: light/dark theme, currency format preference (fixed reference
-rate, not live FX), language preference/i18n coverage, theme-specific logo,
-the Insights page's data-driven suggestions, and the qualitative
-per-category financial-health summary on Overview.
-
-## Android app — implemented
-
-Screens (`ui/screens/`, wired in `NovaNavGraph.kt`): Splash, Login,
-Register, Forgot Password, Onboarding (welcome/income/wallet/budget
-suggestion/tutorial), Home, Transactions (+ Transaction Detail), Add
-Transaction (wallet/transfer/budget/goal/upcoming/lent-borrowed support),
-Scanner, Budgets (shares a tab with Goals), Wallets, Recurring, Loans,
-Reports, Notifications, Profile, Settings.
-
-New since the last snapshot:
-- **Full reconciliation against all 12 screens of the interactive
-  prototype** (`design_handoff_s2_nova_overview/S2 Nova Android.dc.html`,
-  now the mockup's single source of truth per `AGENTS.md`'s UI rules).
-  Every `AlertDialog`-based create/edit/delete form (Wallets, Budgets,
-  Goals, Loans, Recurring) converted to a `ModalBottomSheet` via a new
-  shared shell, `ui/components/NovaDraftSheet.kt` — plain confirmations
-  (delete prompts, the blocked-wallet-delete notice, change-password) stay
-  `AlertDialog`s, only the draft/edit forms moved. Goal contributions
-  (formerly `GoalContributionScreen.kt`, now deleted) and Notifications
-  (formerly its own screen/nav destination) both became sheets too
-  (`GoalPaySheet` inside `GoalsScreen.kt`; `NotificationsSheet`, opened from
-  Home's bell icon) — neither is a nav destination anymore. Recurring
-  gained an edit sheet it never had before, plus a category picker and
-  delete action. Add Transaction gained a live-suggested title
-  (`ui/TitleSuggestion.kt`) with a "SUGERIDO" badge, replacing the old
-  free-text "Descripción" field.
-- **Three new full-stack features**, previously only in the mockup: a
-  blur-total-balance privacy toggle (Home's balance gets a
-  `Modifier.blur` + tap-to-reveal), an auto-lock session-timeout picker
-  enforced by a new `ui/components/AppLockGate.kt` wrapping the whole nav
-  graph (password-only re-entry via a new `POST /me/verify-password`
-  endpoint — no biometric prompt wired up, see `android/AGENTS.md`), and
-  optional `phone`/`city` profile fields (shown on `ProfileScreen` as
-  `"{city} · desde {mes} {año}"`, per the mockup). All three round-tripped
-  through `prisma/schema.prisma` (`User.phone`/`.city`,
-  `UserPreferences.blurBalance`/`.autoLockMinutes`) and a real migration.
-  As a byproduct, fixed a real bug where Settings' notification/biometric/
-  currency/language toggles updated local state only and never persisted
-  to the backend.
-- **Google Sign-In** via Credential Manager (`GoogleAuthHelper.kt`), wired
-  into Login/Register — gated on `local.properties`' `GOOGLE_WEB_CLIENT_ID`
-  being set (no button shown otherwise).
-- Settings gained a change/create-password dialog
-  (`AuthRepository.changePassword`) that logs the device out locally after
-  a successful change (the backend already revoked every refresh token).
-- **`API_BASE_URL` now points at the deployed backend** (Render), not a
-  dev-machine LAN IP.
-- **Login/Register visual redesign** per `s2-nova-mockup/auth_handoff/`:
-  both screens build their own header/scroll/footer skeleton (no more
-  shared `AuthLayout`, which is now used only by `ForgotPasswordScreen`),
-  reusing `NovaTextField`/`NovaPrimaryButton`/`GoogleSignInButton` and a
-  `loginXxx` token family on `NovaExtraColors`. Register adds a name
-  field, a `PasswordStrengthMeter`, and a `TermsCheckbox` — both new
-  `ui/components/` composables.
-
-Unchanged: real login/session against the backend (`AuthRepository` +
-`SessionStore`, still plain DataStore, not yet encrypted — a known
-follow-up), onboarding sync, Wallets/Budgets/Goals/Recurring/Loans as real
-backend-backed repositories, notifications from live data, theme/font/
-currency/language parity, barcode scanning, manual DI via `AppContainer`.
+Web test suite: 118 tests, 14 failing outside Planes because their fixtures
+predate the v2 data layer (details in `TESTING.md`).
 
 ## Deployment
 
@@ -211,78 +106,41 @@ currency/language parity, barcode scanning, manual DI via `AppContainer`.
 - An Oracle Cloud Always Free VM (self-hosted Postgres + backend together)
   was evaluated first and dropped after repeated "out of host capacity"
   errors provisioning the free ARM shape (see `ARCHITECTURE.md` §16).
+- Android reads `API_BASE_URL` from `local.properties` (gitignored); during
+  local development it points at the dev machine's LAN IP.
 - `android/` still has no CI/release pipeline — build/install is local-only
   (`./gradlew assembleDebug` / `installDebug`).
 
 ## Known gaps / explicitly out of scope
 
-- **Pending: Web has not been reconciled against a mockup.** Android's
-  screens were just fully reconciled against
-  `design_handoff_s2_nova_overview/S2 Nova Android.dc.html`; the same pass
-  hasn't been done for `web/` — its current UI is unverified against any
-  design source. Flagged here as the next mockup-fidelity task, not done as
-  part of this snapshot's Android work.
-- **Android's refresh token lives in plain DataStore**, not yet an
-  encrypted store — a named follow-up, not an oversight.
-- **Biometric login** — `UserPreferences.biometricLogin` exists in the
-  schema (today just a local Android toggle); the new auto-lock overlay
-  (`AppLockGate`) re-authenticates with password only, deliberately not
-  wired to `biometricLogin` either — wiring a real biometric/passkey flow
-  (would need an `androidx.biometric` dependency this app doesn't have yet)
-  is deferred to a future phase.
-- **Aiven's database password was pasted in plaintext during setup** (a
-  chat session, not committed to the repo) and hasn't been rotated since —
-  low risk at this stage (no real financial data yet, TLS-only access), but
-  worth rotating (Aiven console → reset password → update `DATABASE_URL` on
-  Render) before storing anything real.
-- USD conversion on both platforms uses a fixed reference rate, not a live
-  FX feed — documented, not fabricated data.
-- **Translation coverage is partial by design** on both platforms (chrome +
-  every dashboard page's own copy on Web; chrome + Settings on Android),
-  documented in both `AGENTS.md` files. Web's `/login`/`/register` screens
-  run their labelled copy through `useTranslation()`/`t()` like the rest of
-  the dashboard (only the brand panel's decorative chart labels/stat
-  sentence are hardcoded Spanish, same treatment as any other seeded
-  content); Android's auth screens are the one exception on that platform
-  — `LoginScreen`/`RegisterScreen`/`ForgotPasswordScreen` hardcode Spanish
-  entirely, not run through `rememberStrings()` (no user/language
-  preference exists yet before login).
-- **User Management / multi-user/team admin** (present in the Figma
-  source) was deliberately dropped — nothing else in the product implies
-  multi-user accounts.
-- Android has no automated tests and no CI. Backend now has a Vitest suite
-  (`backend/tests/`, `pnpm test`, uncommitted at this snapshot) but no CI
-  wired to run it yet.
-- No OpenAPI docs generated from the backend's Zod schemas yet.
-- Web's `authService.requestPasswordReset` has no backend endpoint behind
-  it yet — a known gap, not wired to any UI.
+- The Web v2 items marked **Pending** above.
+- Stale Web test fixtures (14 failures, `TESTING.md` › Current status).
+- Loan category: Web files a new "Recibido" loan (an income) under
+  `inc.other`; Android uses `exp.other` for both directions. The backend
+  doesn't validate category kind against transaction type.
+- On Web, loan cards keep an "Editar" button (edit + delete) that the
+  mockup doesn't show, so loans stay editable as on Android.
+- Android's refresh token lives in plain DataStore, not an encrypted store.
+- Biometric login is not wired (auto-lock re-entry is password-only).
+- The Aiven database password was pasted in plaintext during setup and
+  hasn't been rotated — rotate before storing real data.
+- Android has no CI; the backend suite has no CI either.
+- No OpenAPI docs generated from the Zod schemas.
+- Web's `authService.requestPasswordReset` has no backend endpoint.
+- Out of scope: business finance, the physical IoT piggy bank,
+  multi-user/team administration.
 
-## Design-reference inbox
-
-`design-reference/bugs/corrections-to-logo.png`,
-`design-reference/suggestions/logo-dark.png`/`logo-light.png`, and
-`design-reference/suggestions/add-peso-to-dollar-in-settings.png` were
-actioned in an earlier pass: the logo is theme-reactive on both platforms,
-and the currency-format toggle performs a real (fixed-rate) COP→USD
-conversion.
-
-The `transaction-*.jpeg` batch (an external finance app's Add Transaction
-flow, used as a structural reference, not a copy target) was actioned next:
-Android's `AddTransactionScreen` gained a gradient hero card and a
-`ModalBottomSheet` category picker. Check `design-reference/bugs/` and
-`suggestions/` for newer items before assuming this list is exhaustive.
-
-## Recent history (last 10 commits, at this snapshot)
+## Recent history (at this snapshot)
 
 ```
-a4d21f0 fix(backend): use SameSite=None for the Web refresh cookie in production
-6897f1b fix(backend): regenerate Prisma client in runner stage instead of copying from builder
-c270365 feat: connect Web to real backend, add Google Sign-In and secure account changes, prep backend for Aiven+Render
-a2598ac feat(web): balance-first Overview redesign across all 7 dashboard pages
-dfb0824 feat(web): consolidate dashboard nav into 7 pages, deepen Overview/Analytics
-7813fc5 feat: wallet type/payment method coherence, bank debit/credit subtypes, goal contributions
-72a8465 fix(android): surface real registration/login errors instead of a generic message
-13efc64 feat(web): add 0-100 financial health score to Overview
-55da554 fix(web): remove transaction deletion from the dashboard
-65afdc6 feat: introduce shared backend, wire Android to it, add Web analysis surfaces
+21a2d78 feat(web): v2 data layer (taxonomy, multi-currency) and Planes per the mockup
+978d23e fix(backend): range budgets that haven't started yet
+8751c40 feat(android): v2 — category-first Nuevo movimiento, multi-currency, Planes, taxonomy, guest mode
+39e1962 feat(backend): TX_PLANNED alerts and mockup alert order
+947ff92 feat(backend): v2 taxonomy, multi-currency, scheduled/repeating movements, receipts, custom budgets and goal plans
+c0cd558 feat(android): Perfil and Ajustes v2 per the mockup
+d7bbef0 feat: Ajustes v2 on Web with sessions, password, profile and account deletion
+52a9b27 feat(web): Reportes v2 — Gastos, Ingresos, Flujo de caja and Patrimonio per the mockup
+46bbbda feat: Reportes v2 on Android from a shared GET /summary/report
+5a75342 feat(web): Planes v2 — budgets and goals per the mockup, create/edit/delete panels for budgets, goals and loans
 ```

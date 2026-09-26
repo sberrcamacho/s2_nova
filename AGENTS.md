@@ -12,10 +12,13 @@ backend, one database, one user identity and one domain model:
 - `backend/` — the shared API (Node.js + TypeScript + Fastify + Prisma/
   PostgreSQL). It is the single source of truth for financial data and
   business rules. See `backend/AGENTS.md`.
-- `s2_nova_stage2_handoff/` — the approved product architecture
-  (`S2 Nova Product Architecture.dc.html`), stage specs (`STAGE-*.md`) and
-  the v2 interactive mockups (`S2 Nova Android v2.dc.html`,
-  `S2 Nova Dashboard v2.dc.html`) — the visual source of truth.
+- `design_handoff_s2_nova_v2/` — the v2 interactive mockups
+  (`S2 Nova Android v2.dc.html`, `S2 Nova Dashboard v2.dc.html`) — the
+  visual source of truth — plus the product specs in `docs/`
+  (`PRODUCT_ARCHITECTURE.md`, `CATEGORY_SYSTEM.md`,
+  `CURRENCIES_AND_WALLETS.md`, `NEW_MOVEMENT.md`, `PLANS.md`,
+  `ONBOARDING.md`, `WEB_PARITY.md`) and the category taxonomy source
+  `s2-categories.js` (generated into each app by `scripts/gen-taxonomy.mjs`).
 
 **Functional parity.** Android and Web are functionally the same
 application: every operation that changes the user's financial data

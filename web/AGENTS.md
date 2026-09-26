@@ -10,9 +10,21 @@ are thin wrappers around `fetch()` calls, not mock data (see
 `ARCHITECTURE.md` §9). `ProtectedRoute` gates every dashboard route behind
 a real session; a signed-out visitor lands on `/login`.
 
-**Visual source of truth**: `s2_nova_stage2_handoff/S2 Nova Dashboard v2.dc.html`
-(with `STAGE-*.md` specs alongside it). Screens are being reconciled
-against it stage by stage; a screen not yet migrated is unverified.
+**Visual source of truth**: `design_handoff_s2_nova_v2/S2 Nova Dashboard v2.dc.html`
+(specs in `design_handoff_s2_nova_v2/docs/` — `WEB_PARITY.md` lists what
+Web must match on Android). Screens are being reconciled against it one
+by one; a screen not yet migrated is unverified.
+
+**v2 parity status** (target: Android `8751c40`). Done on Web: the v2 data
+layer (taxonomy, multi-currency), Inicio, Movimientos, Planes
+(Presupuestos · Metas · Préstamos), Reportes, Ajustes (profile, password,
+sessions, deletion). Still missing: the category-first Nuevo movimiento
+(NEW_MOVEMENT.md), the Billeteras page, Ajustes › Monedas and
+Ajustes › Categorías (`currencyService`/`categoryService` exist, no UI
+yet), guest mode and the first-run card (ONBOARDING.md), mini-guides.
+Several non-Planes specs (`NewTransactionPanel`, `AjustesPage`,
+`InicioPage`, `ReportesPage`, `userService`, `unit/currency`,
+`unit/backendCategories`) still use pre-taxonomy fixtures and fail.
 
 ## Development Server
 
@@ -28,7 +40,7 @@ start the Vite development server on `$PORT` (default 8443).
 
 ## Information Architecture
 
-Web v2 (s2_nova_stage2_handoff, STAGE-2-INICIO): the sidebar
+Web v2: the sidebar
 (`Sidebar.tsx`, `NAV_ITEMS`) has the same four primary destinations as
 Android's bottom bar, in the same order — **Inicio · Movimientos · Planes ·
 Reportes** — plus **Ajustes** in the footer. Pre-v2 paths (`/overview`,
@@ -94,7 +106,8 @@ at the bottom centre, 2.6 s, the same for confirmations and errors.
 
 The header's "Nuevo movimiento" button (and the `N` shortcut) opens
 `components/panels/NewTransactionPanel.tsx` inside `SidePanel.tsx`, the
-420px shell every Web write form reuses (STAGE-2-INICIO §5).
+420px shell (not yet the v2 category-first flow). Planes' forms are
+centered modals instead, as in the mockup.
 
 v2 screens use the mockup's own palette as `--v2-*` tokens
 (`bg-v2-surface`, `text-v2-dim`, …) in `index.css`, `line-height: normal`
@@ -112,9 +125,9 @@ documented path is missing, or when the repository contradicts this guide.
 - `src/App.tsx` - Root component; mounts the dashboard route tree at `/`
 - `src/dashboard/` - The entire application: layout, pages, and dashboard-local hooks (`usePeriod`)
 - `src/components/ui/`, `src/components/v2/` - Shared, reusable building blocks used across dashboard pages
-- `src/state/` - App-wide React context (auth, theme, toast, mock app data) plus `useCurrency`/`useTranslation`, hooks bound to `user.currency`/`user.preferences.language` — use these instead of importing `lib/currency.ts` or hardcoding copy directly, so amounts/text stay in sync with the Settings page's currency-format and language toggles
-- `src/lib/i18n/` - Small hand-rolled translation dictionary (`es`/`en`) consumed via `useTranslation()`'s `t()`. Coverage is the full app: chrome (sidebar, header, breadcrumb, date-range filter), every dashboard page's own copy (KPI labels, chart titles/subtitles, table headers, empty states, filters, dialogs, toasts), and every category/payment-method/budget-status label shown anywhere — `useTranslation()` also exposes `tCategory(id)`/`tPaymentMethod(id)` for those (mirrors `data/categories.ts`'s `CategoryId`/`PaymentMethod` values, which are the exact dictionary-key suffixes: `category.<id>`, `paymentMethod.<id>`). Never read `.label` off `data/categories.ts` directly in a component; always go through `tCategory`/`tPaymentMethod` so it reacts to the language toggle. Free-form seeded mock content (transaction descriptions/merchants, notification title/message text) is intentionally left untranslated — same principle as not translating a user's own data. Date/month/weekday formatting (`lib/date.ts`) takes the app's `language` (from `useTranslation()`), not the device locale, so chart x-axis labels and formatted dates react to the language toggle too.
-- `src/services/` - Thin wrappers around `apiClient.ts` fetch calls to the real backend (see `ARCHITECTURE.md` §9); each file maps the backend's wire shape (UUID `categoryId`, uppercase enums) to Web's existing domain types (`@/lib/backendCategories.ts` handles the category slug↔UUID translation). `src/data/` now only holds `budgets.ts`'s `monthlyIncomeTarget` (a Web-only planning number with no backend field) and category/payment-method label metadata — the old in-memory mock stores are gone. Every category's `icon` string in `data/categories.ts` must have a matching Lucide entry in `components/ui/CategoryIcon.tsx`'s `ICONS` map — a missing one silently falls back to `CircleEllipsis` instead of erroring, so after adding a category, check the rendered icon, not just the type-checker. Functional parity (root AGENTS.md) supersedes the old "Web is read-only" rule: every write Android can do must exist on Web, landing stage by stage as side panels. So far: `transactionService.addTransaction` ("Nuevo movimiento", goal contributions, new loans), `transactionService.deleteTransaction` (Movimientos' "Eliminar", loans), `transactionService.settleLoan` ("Registrar abono"), `transactionService.updateLoan`, `budgetService.createBudget`/`updateBudget`/`deleteBudget`, `goalService.createGoal`/`updateGoal`/`deleteGoal`, `recurringService.confirmOccurrence`/`skipOccurrence`, and the `blurBalance` preference. `apiClient` throws `ApiError` with the HTTP `status` (e.g. the 409 for a budget category that's taken). Each is a thin call — the backend applies every balance/goal side effect, so Web never re-implements them client-side. `summaryService.ts` and `alertService.ts` read the shared server aggregates and alert rules; never re-derive those figures from the client's partial transaction list.
+- `src/state/` - App-wide React context (auth, theme, toast, mock app data) plus `useCurrency`/`useTranslation`. `useCurrency` is bound to the user's principal currency (`format` for totals, `formatIn(amount, code)` for a wallet's or movement's own currency — `lib/currency.ts` is the mockup's `fmtCur`); `useTranslation` to `user.preferences.language`. Use these instead of importing `lib/currency.ts` or hardcoding copy directly
+- `src/lib/i18n/` - Small hand-rolled translation dictionary (`es`/`en`) consumed via `useTranslation()`'s `t()`. Coverage is the full app: chrome (sidebar, header, breadcrumb, date-range filter), every dashboard page's own copy (KPI labels, chart titles/subtitles, table headers, empty states, filters, dialogs, toasts), and every payment-method/budget-status label shown anywhere. `useTranslation()` also exposes `tPaymentMethod(id)` (dictionary keys `paymentMethod.<id>`) and `tCategory(id)`, which returns the category's name from the registry (`lib/backendCategories.ts`, see below) — category names are the user's own (renamable) data, not dictionary entries. Never read `.label` off `data/categories.ts` in a component. Free-form seeded mock content (transaction descriptions/merchants, notification title/message text) is intentionally left untranslated — same principle as not translating a user's own data. Date/month/weekday formatting (`lib/date.ts`) takes the app's `language` (from `useTranslation()`), not the device locale, so chart x-axis labels and formatted dates react to the language toggle too.
+- `src/services/` - Thin wrappers around `apiClient.ts` fetch calls to the real backend (see `ARCHITECTURE.md` §9); each file maps the backend's wire shape (UUID `categoryId`, uppercase enums) to Web's existing domain types Categories follow the unified taxonomy (`design_handoff_s2_nova_v2/docs/CATEGORY_SYSTEM.md`): `lib/taxonomy.json` is generated from `design_handoff_s2_nova_v2/s2-categories.js` by the root `scripts/gen-taxonomy.mjs` (never edit it by hand; `lib/taxonomy.ts` types it and exports `PLAN_ICONS`), and `lib/backendCategories.ts` is the one registry every screen resolves names, colors and glyphs through (`useCategories()`), keyed by the taxonomy's dotted id (`exp.food.groceries`, `inc.other` — the backend's `Category.slug`); the backend UUID only appears on the wire. An unknown slug throws, so never send pre-taxonomy ids like `'other'`. `categoryService` (Ajustes › Categorías writes) and `currencyService` (Ajustes › Monedas, rates) back the screens still to come. `src/data/` holds `budgets.ts`'s `monthlyIncomeTarget` and legacy label metadata used only by the pre-v2 `components/ui/CategoryIcon.tsx`/`TransactionRow`; v2 screens draw categories with `components/v2/CategoryMark`. Functional parity (root AGENTS.md) supersedes the old "Web is read-only" rule: every write Android can do must exist on Web, landing screen by screen in whatever shell the mockup uses (side panel, centered modal). So far: `transactionService.addTransaction` ("Nuevo movimiento", goal contributions, new loans), `transactionService.deleteTransaction` (Movimientos' "Eliminar", loans), `transactionService.settleLoan` ("Registrar abono"), `transactionService.updateLoan`, `budgetService.createBudget`/`updateBudget`/`deleteBudget`, `goalService.createGoal`/`updateGoal`/`deleteGoal`, `recurringService.confirmOccurrence`/`skipOccurrence`, and the `blurBalance` preference. `apiClient` throws `ApiError` with the HTTP `status` (e.g. the 409 for a budget category that's taken). Each is a thin call — the backend applies every balance/goal side effect, so Web never re-implements them client-side. `summaryService.ts` and `alertService.ts` read the shared server aggregates and alert rules; never re-derive those figures from the client's partial transaction list.
 - `src/index.css` - Global CSS entrypoint, Tailwind CSS v4 import, and the S2 Nova design tokens (light/dark palettes)
 - `index.html` - Vite HTML shell containing the `#root` element and loading `src/main.tsx`
 - `package.json` - Project dependencies and the Vite build, development, preview, and formatting scripts
@@ -149,7 +162,7 @@ a transparent glyph — extracting a transparent glyph from the source art
 left a visible stray border, which is why it's not done that way).
 `LogoMark`/`Logo` (`components/ui/Logo.tsx`) pick between them via
 `useTheme()`, unless `tone="inverted"` pins the dark tile. Regenerate both
-from `s2_nova_stage2_handoff/design_handoff_s2_nova_overview/assets/logo-mark-dark.png` / `logo-mark-light.png` if the
+from `design_handoff_s2_nova_v2/design_handoff_s2_nova_overview/assets/logo-mark-dark.png` / `logo-mark-light.png` if the
 mark ever changes, rather than re-deriving one from the other.
 
 `LoginPage.tsx`/`RegisterPage.tsx` (`src/auth/`) follow the design handoff

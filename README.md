@@ -12,11 +12,12 @@ backend/sync design.
   management and deeper analysis. See `web/AGENTS.md`.
 - **`backend/`** — shared API (Node.js + TypeScript + Fastify +
   Prisma/PostgreSQL) both apps talk to. See `backend/AGENTS.md`.
-- **`s2_nova_stage2_handoff/`** — approved product architecture, stage
-  specs and the v2 interactive mockups (visual source of truth).
+- **`design_handoff_s2_nova_v2/`** — the v2 interactive mockups (visual
+  source of truth) and the product specs in `docs/`.
 
 Both apps are wired to the real backend (auth incl. Google Sign-In,
-accounts, transactions, budgets, goals, recurring series) — Web has its own
+accounts, transactions, budgets, goals, loans, recurring series, the v2
+category taxonomy and multi-currency) — Web has its own
 login/register screens now too (see `ARCHITECTURE.md` §9). The backend runs
 24/7 on Render + Aiven for PostgreSQL (see `backend/AGENTS.md`'s
 "Production deployment" section); Web deploys to GitHub Pages via
