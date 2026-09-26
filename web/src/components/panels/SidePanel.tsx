@@ -10,9 +10,9 @@ interface SidePanelProps {
   children: ReactNode
 }
 
-// The Web v2 write-form shell (STAGE-2-INICIO §5): a 420px panel docked to
-// the right edge (full width below 520px) over a dimmed backdrop. Every
-// Web create/edit form reuses it.
+// The Web v2 mockup's side panel ("Nuevo movimiento"): 460px docked to the
+// right edge (full width on narrow screens) over a dimmed backdrop. Focus
+// starts on the element marked `data-autofocus`, else the first control.
 export function SidePanel({ title, onClose, footer, children }: SidePanelProps) {
   const { t } = useTranslation()
   const panelRef = useRef<HTMLDivElement>(null)
@@ -22,7 +22,9 @@ export function SidePanel({ title, onClose, footer, children }: SidePanelProps) 
       if (e.key === 'Escape') onClose()
     }
     window.addEventListener('keydown', onKey)
-    panelRef.current?.querySelector<HTMLElement>('input, button')?.focus()
+    const panel = panelRef.current
+    const first = panel?.querySelector<HTMLElement>('[data-autofocus]') ?? panel?.querySelector<HTMLElement>('input, button')
+    first?.focus()
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
@@ -34,7 +36,7 @@ export function SidePanel({ title, onClose, footer, children }: SidePanelProps) 
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="fixed bottom-0 right-0 top-0 z-[41] flex [line-height:normal] w-[420px] max-w-full flex-col border-l border-v2-line2 bg-v2-surface text-v2-text shadow-[-24px_0_60px_rgba(0,0,0,.4)] max-[519px]:w-full"
+        className="fixed bottom-0 right-0 top-0 z-[41] flex [line-height:normal] w-[461px] max-w-full flex-col border-l border-v2-line2 bg-v2-surface text-v2-text shadow-[-24px_0_60px_rgba(0,0,0,.4)]"
       >
         <div className="flex items-center gap-3 border-b border-v2-line px-[22px] py-[18px]">
           <div className="flex-1 text-[16px] font-extrabold tracking-[-.015em]">{title}</div>
@@ -47,8 +49,8 @@ export function SidePanel({ title, onClose, footer, children }: SidePanelProps) 
             <StrokeIcon paths={ICON_PATHS.close} size={14} />
           </button>
         </div>
-        <div className="grid min-h-0 flex-1 auto-rows-max content-start gap-[18px] overflow-y-auto overflow-x-hidden px-[22px] py-5">{children}</div>
-        <div className="flex justify-end gap-2 border-t border-v2-line px-[22px] py-4">{footer}</div>
+        <div className="grid min-h-0 flex-1 auto-rows-max content-start gap-5 overflow-y-auto overflow-x-hidden px-6 pb-7 pt-[22px]">{children}</div>
+        <div className="flex justify-end gap-2.5 border-t border-v2-line px-6 py-4">{footer}</div>
       </div>
     </>,
     document.body,

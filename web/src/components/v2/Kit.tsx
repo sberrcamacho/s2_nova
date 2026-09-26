@@ -92,7 +92,9 @@ export function DateInput({ value, onChange, className }: { value: string; onCha
   return <input type="date" value={value} onChange={(e) => onChange(e.target.value)} className={cn(inputClass, className)} />
 }
 
-// Digits only, shown grouped ("250.000"), with the currency symbol.
+// Digits only, shown grouped ("250.000"), with the currency symbol. The
+// mockup's input keeps the page font (its inline font-family beats `.num`)
+// and the browser's 1px 2px input padding.
 export function MoneyInput({ digits, onDigits, symbol = '$' }: { digits: string; onDigits: (d: string) => void; symbol?: string }) {
   return (
     <div className="box-border flex h-[42px] items-center gap-1.5 rounded-[10px] border border-v2-line bg-v2-sidebar px-3">
@@ -102,7 +104,7 @@ export function MoneyInput({ digits, onDigits, symbol = '$' }: { digits: string;
         onChange={(e) => onDigits(e.target.value.replace(/\D/g, '').slice(0, 12))}
         inputMode="numeric"
         placeholder="0"
-        className="font-numeric min-w-0 flex-1 border-none bg-transparent font-[inherit] text-[14px] font-extrabold text-v2-text outline-none"
+        className="min-w-0 flex-1 border-none bg-transparent px-0.5 py-px font-[inherit] text-[14px] font-extrabold text-v2-text outline-none [font-variant-numeric:tabular-nums]"
       />
     </div>
   )
@@ -135,13 +137,13 @@ export function Pills<T>({ options, value, onChange }: { options: { value: T; la
   )
 }
 
-// An option tile: 44px rounded box + a two-line label (budget and
-// Nuevo movimiento option rows).
+// An option tile: the mockup's 44px content-box (46px with its border)
+// rounded box + a two-line label (budget and Nuevo movimiento option rows).
 export function OptionTile({ icon, label, on, open, onClick }: { icon: ReactNode; label: string; on: boolean; open?: boolean; onClick: () => void }) {
   return (
     <button type="button" onClick={onClick} className="flex min-w-0 cursor-pointer flex-col items-center gap-1.5">
       <span
-        className="flex h-11 w-11 items-center justify-center rounded-[14px] border"
+        className="flex h-[46px] w-[46px] items-center justify-center rounded-[14px] border"
         style={{
           background: on || open ? 'rgba(108,92,231,.16)' : 'var(--v2-surface2)',
           borderColor: on || open ? 'var(--v2-accent)' : 'var(--v2-line2)',

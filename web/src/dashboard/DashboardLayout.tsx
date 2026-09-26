@@ -13,6 +13,7 @@ const PAGE_TITLES: Record<string, TranslationKey> = {
   '/movimientos': 'v2.nav.movimientos',
   '/planes': 'v2.nav.planes',
   '/reportes': 'v2.nav.reportes',
+  '/billeteras': 'v2.nav.billeteras',
   '/ajustes': 'v2.nav.ajustes',
 }
 

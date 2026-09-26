@@ -8,15 +8,18 @@ import type { TranslationKey } from '@/lib/i18n/translations'
 import { cn } from '@/lib/cn'
 
 // Web v2 information architecture: the same four primary destinations as
-// Android's bottom bar, in the same order, plus Ajustes in the footer
-// (s2_nova_stage2_handoff/S2 Nova Dashboard v2.dc.html, `aside`).
+// Android's bottom bar, in the same order, plus Billeteras and Ajustes in
+// the footer (S2 Nova Dashboard v2.dc.html, `aside`, navFooter).
 export const NAV_ITEMS: { to: string; labelKey: TranslationKey; icon: keyof typeof NAV_ICON_PATHS }[] = [
   { to: '/inicio', labelKey: 'v2.nav.inicio', icon: 'inicio' },
   { to: '/movimientos', labelKey: 'v2.nav.movimientos', icon: 'movimientos' },
   { to: '/planes', labelKey: 'v2.nav.planes', icon: 'planes' },
   { to: '/reportes', labelKey: 'v2.nav.reportes', icon: 'reportes' },
 ]
-const FOOTER_ITEM = { to: '/ajustes', labelKey: 'v2.nav.ajustes' as TranslationKey, icon: 'ajustes' as const }
+const FOOTER_ITEMS: { to: string; labelKey: TranslationKey; icon: keyof typeof NAV_ICON_PATHS }[] = [
+  { to: '/billeteras', labelKey: 'v2.nav.billeteras', icon: 'billeteras' },
+  { to: '/ajustes', labelKey: 'v2.nav.ajustes', icon: 'ajustes' },
+]
 
 interface SidebarProps {
   open: boolean
@@ -56,7 +59,9 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <SidebarLink key={item.to} item={item} onClick={onClose} />
           ))}
           <div className="mt-auto pt-2">
-            <SidebarLink item={FOOTER_ITEM} onClick={onClose} />
+            {FOOTER_ITEMS.map((item) => (
+              <SidebarLink key={item.to} item={item} onClick={onClose} />
+            ))}
           </div>
         </nav>
 

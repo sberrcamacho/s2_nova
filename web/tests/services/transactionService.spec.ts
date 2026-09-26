@@ -71,9 +71,23 @@ describe('transactionService', () => {
       type: 'income',
       category: 'salary',
       date: '2026-06-01',
+      status: 'planned',
       paymentMethod: 'bank_transfer',
     })
-    expect(body).toMatchObject({ type: 'INCOME', status: 'COMPLETED', categoryId: 'uuid-salary' })
+    expect(body).toMatchObject({ type: 'INCOME', status: 'PLANNED', categoryId: 'uuid-salary' })
+  })
+
+  it('addTransaction leaves the status to the backend when none is given', async () => {
+    mockCategories()
+    let body: Record<string, unknown> = {}
+    server.use(
+      http.post(`${BASE}/transactions`, async ({ request }) => {
+        body = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json({ ...BACKEND_ROW, categoryId: 'uuid-salary', type: 'INCOME', status: 'PLANNED' })
+      }),
+    )
+    await transactionService.addTransaction({ accountId: 'acc1', description: '', amount: 1, type: 'income', category: 'salary', date: '2099-01-01' })
+    expect(body.status).toBeUndefined()
   })
 
   it('filters by paymentMethod client-side since the backend has no such query param', async () => {

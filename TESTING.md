@@ -14,18 +14,22 @@ never claim NOT RUN work as passing).
 The phase write-ups below describe the original QA pass; their per-file
 counts predate v2. Since then:
 
-- **Web**: `cd web && pnpm test` — 118 tests in 22 files, **14 failing**
-  in 7 files (`forms/NewTransactionPanel`, `pages/AjustesPage`,
+- **Web**: `cd web && pnpm test` — 131 tests in 25 files, **13 failing**
+  in 6 files (`pages/AjustesPage`,
   `pages/InicioPage`, `pages/ReportesPage`, `services/userService`,
   `unit/currency`, `unit/backendCategories`). They use fixtures and
   expectations written before the v2 data layer (pre-taxonomy category
   ids like `'other'`, the old COP/USD currency switch) and need rewriting
   against the taxonomy ids and `lib/currency.ts`'s `fmtCur` format; check
   each one before assuming its screen is fine. `pages/PlanesPage` covers
-  the v2 Planes modals (budgets, goals, loans, abonos) and passes.
+  the v2 Planes modals (budgets, goals, loans, abonos) and
+  `forms/NewTransactionPanel` + `unit/nuevoMovimiento` the v2 Nuevo
+  movimiento, `pages/BilleterasPage` and `pages/MonedasPage` the
+  Billeteras page and Ajustes › Monedas; all pass.
 - **Backend**: v2 added `tests/routes/v2.spec.ts` (taxonomy, currencies,
-  scheduled/repeating movements, custom budgets, goal plans); the counts in
-  Phase 1 were not re-taken.
+  scheduled/repeating movements, custom budgets, goal plans); the whole
+  backend suite is 185 tests in 14 files, all passing. The per-file
+  counts in Phase 1 were not re-taken.
 - **Android**: unchanged since Phase 3.
 
 ## Phase 1 — Backend: PASS

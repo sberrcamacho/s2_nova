@@ -200,7 +200,8 @@ export const transactionService = {
       accountId: input.accountId,
       transferToAccountId: input.transferAccountId,
       type: input.type.toUpperCase(),
-      status: (input.status ?? 'completed').toUpperCase(),
+      // Omitted: the backend saves a future date/time as PLANNED.
+      status: input.status?.toUpperCase(),
       amount: input.amount,
       currency: input.currency,
       ...(input.type !== 'transfer' && input.category ? await categoryWireIds(input.category) : {}),

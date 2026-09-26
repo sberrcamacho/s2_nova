@@ -73,12 +73,13 @@ run, mini-guides, barcode scanning.
 | Planes › Presupuestos, Metas, Préstamos (mockup modals, two-step delete, abonos) | Done, visually verified against the mockup |
 | Reportes | Done |
 | Ajustes (Perfil, Contraseña, Sesiones, Eliminar cuenta) | Done |
-| Nuevo movimiento (category-first flow per `NEW_MOVEMENT.md`) | **Pending** — still the pre-v2 side panel |
-| Billeteras page (sidebar entry + modal, wallet currency) | **Pending** |
-| Ajustes › Monedas, Ajustes › Categorías | **Pending** (services exist, no UI) |
+| Nuevo movimiento (category-first flow per `NEW_MOVEMENT.md`) | Done, visually verified against the mockup |
+| Billeteras page (sidebar entry + modal, wallet currency) | Done, visually verified against the mockup |
+| Ajustes › Monedas (principal, add/remove with two-step confirmation) | Done, visually verified against the mockup |
+| Ajustes › Categorías | **Pending** (`categoryService` exists, no UI) |
 | Guest mode, first-run card, mini-guides (`ONBOARDING.md`) | **Pending** |
 
-Web test suite: 118 tests, 14 failing outside Planes because their fixtures
+Web test suite: 131 tests, 13 failing outside the migrated v2 screens because their fixtures
 predate the v2 data layer (details in `TESTING.md`).
 
 ## Deployment
@@ -114,7 +115,7 @@ predate the v2 data layer (details in `TESTING.md`).
 ## Known gaps / explicitly out of scope
 
 - The Web v2 items marked **Pending** above.
-- Stale Web test fixtures (14 failures, `TESTING.md` › Current status).
+- Stale Web test fixtures (13 failures, `TESTING.md` › Current status).
 - Loan category: Web files a new "Recibido" loan (an income) under
   `inc.other`; Android uses `exp.other` for both directions. The backend
   doesn't validate category kind against transaction type.

@@ -384,6 +384,7 @@ const dictionary = {
   "v2.nav.movimientos": { es: "Movimientos", en: "Transactions" },
   "v2.nav.planes": { es: "Planes", en: "Plans" },
   "v2.nav.reportes": { es: "Reportes", en: "Reports" },
+  "v2.nav.billeteras": { es: "Billeteras", en: "Wallets" },
   "v2.nav.ajustes": { es: "Ajustes", en: "Settings" },
   "v2.sidebar.tagline": { es: "PERSONAL FINANCE", en: "PERSONAL FINANCE" },
   "v2.sidebar.editProfile": { es: "Editar perfil", en: "Edit profile" },
