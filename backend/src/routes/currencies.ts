@@ -46,11 +46,22 @@ export async function currencyRoutes(app: FastifyInstance) {
   app.post("/me/currencies", { preHandler: app.authenticate }, async (request, reply) => {
     const { code } = z.object({ code: codeSchema }).parse(request.body);
     const userId = request.userId!;
-    const hasPrincipal = await prisma.userCurrency.count({ where: { userId, isPrincipal: true } });
-    await prisma.userCurrency.upsert({
-      where: { userId_code: { userId, code } },
-      create: { userId, code, isPrincipal: hasPrincipal === 0 },
-      update: {},
+    await prisma.$transaction(async (tx) => {
+      // A user who never chose a principal has the implicit COP one
+      // (principalOf): persist it first so the added currency never takes
+      // its place.
+      if (!(await tx.userCurrency.count({ where: { userId, isPrincipal: true } }))) {
+        await tx.userCurrency.upsert({
+          where: { userId_code: { userId, code: "COP" } },
+          create: { userId, code: "COP", isPrincipal: true },
+          update: { isPrincipal: true },
+        });
+      }
+      await tx.userCurrency.upsert({
+        where: { userId_code: { userId, code } },
+        create: { userId, code, isPrincipal: false },
+        update: {},
+      });
     });
     reply.status(201);
     return listFor(userId);

@@ -195,4 +195,15 @@ describe("v2 movements, currencies and plans", () => {
     const changeLater = await app.inject({ method: "PUT", url: "/api/v1/me/currencies/principal", headers, payload: { code: "USD" } });
     expect(changeLater.statusCode).toBe(409);
   });
+
+  it("currencies: adding one keeps the implicit COP principal", async () => {
+    const user = await createTestUser();
+    const headers = authHeader(user);
+    await wallet(user, { name: "Efectivo", type: "CASH", initialBalance: 0 });
+    const list = (await app.inject({ method: "POST", url: "/api/v1/me/currencies", headers, payload: { code: "USD" } })).json();
+    expect(list.map((c: { code: string; isPrincipal: boolean }) => [c.code, c.isPrincipal])).toEqual([
+      ["COP", true],
+      ["USD", false],
+    ]);
+  });
 });
