@@ -19,6 +19,7 @@ import { resolveToday } from "./summary.js";
 //   5. "Aporte programado" due (plan with confirmation) — "Confirmar aporte"
 //      / "Omitir esta vez" (PLANS.md §3)
 //   6. "Aporte automático registrado" in the last 7 days
+//   7. Programado movements (PLANNED) dated in the next 7 days
 // Ids are stable per underlying condition (a series' id changes with its
 // next occurrence, a budget's with its month) so clients can remember
 // dismissed/read alerts locally. UI copy stays in the clients (i18n).
@@ -143,6 +144,26 @@ export async function alertRoutes(app: FastifyInstance) {
       date: row.transactionDate,
     }));
 
-    return [...seriesAlerts, ...planDueAlerts, ...loanAlerts, ...budgetAlerts, ...goalAlerts, ...autoAlerts];
+    // Movements dated in the next 7 days ("Programado", PLANNED) — the
+    // mockup's "Cuota del curso de inglés se registra el 28 ago".
+    const weekAhead = new Date(today.getTime() + 7 * 86_400_000);
+    const planned = await prisma.transaction.findMany({
+      where: { userId, status: "PLANNED", loanKind: null, transactionDate: { gte: today, lte: weekAhead } },
+      include: { account: true },
+      orderBy: { transactionDate: "asc" },
+    });
+    const plannedAlerts = planned.map((row) => ({
+      id: `planned:${row.id}`,
+      kind: "TX_PLANNED" as const,
+      transactionId: row.id,
+      name: row.description || row.note || "",
+      categoryId: row.subcategoryId ?? row.categoryId,
+      amount: fromMinor(row.amountMinor, row.currency),
+      currency: row.currency,
+      walletName: row.account.name,
+      dueDate: row.transactionDate,
+    }));
+
+    return [...seriesAlerts, ...loanAlerts, ...budgetAlerts, ...goalAlerts, ...planDueAlerts, ...autoAlerts, ...plannedAlerts];
   });
 }
