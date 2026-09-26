@@ -10,6 +10,7 @@ import PlanesPage from '@/dashboard/pages/PlanesPage'
 import ReportesPage from '@/dashboard/pages/ReportesPage'
 import AjustesPage from '@/dashboard/pages/AjustesPage'
 import BilleterasPage from '@/dashboard/pages/BilleterasPage'
+import CategoriasPage from '@/dashboard/pages/ajustes/CategoriasPage'
 import ContrasenaPage from '@/dashboard/pages/ajustes/ContrasenaPage'
 import EliminarPage from '@/dashboard/pages/ajustes/EliminarPage'
 import PerfilPage from '@/dashboard/pages/ajustes/PerfilPage'
@@ -44,6 +45,7 @@ export const dashboardRoutes: RouteObject[] = [
           { path: 'ajustes/sesiones', element: <SesionesPage /> },
           { path: 'ajustes/eliminar', element: <EliminarPage /> },
           { path: 'ajustes/monedas', element: <MonedasPage /> },
+          { path: 'ajustes/categorias', element: <CategoriasPage /> },
           { path: 'overview', element: <Navigate to="/inicio" replace /> },
           { path: 'transactions', element: <Navigate to="/movimientos" replace /> },
           { path: 'budgets', element: <Navigate to="/planes?tab=presupuestos" replace /> },

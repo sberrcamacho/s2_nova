@@ -91,7 +91,8 @@ export function AjSwitch({ on, label, onToggle }: { on: boolean; label: string; 
 }
 
 // "← Ajustes" + title + subtitle, above every sub-view.
-export function AjSubHeader({ title, subtitle, danger, action }: { title: string; subtitle: string; danger?: boolean; action?: ReactNode }) {
+// `children` go under the title, in the same block (Categorías' tabs).
+export function AjSubHeader({ title, subtitle, danger, action, children }: { title: string; subtitle: string; danger?: boolean; action?: ReactNode; children?: ReactNode }) {
   const { t } = useTranslation()
   return (
     <div className="flex flex-col gap-2.5">
@@ -105,6 +106,7 @@ export function AjSubHeader({ title, subtitle, danger, action }: { title: string
         </div>
         {action}
       </div>
+      {children}
     </div>
   )
 }

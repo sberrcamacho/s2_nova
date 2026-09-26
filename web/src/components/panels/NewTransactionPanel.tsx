@@ -434,7 +434,7 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
             type="button"
             onClick={() => {
               onClose()
-              navigate('/ajustes')
+              navigate(ctypeIncome ? '/ajustes/categorias?tab=ingresos' : '/ajustes/categorias')
             }}
             className="cursor-pointer self-start text-[11.5px] font-bold text-v2-accent2"
           >

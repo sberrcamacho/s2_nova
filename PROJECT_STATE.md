@@ -76,10 +76,10 @@ run, mini-guides, barcode scanning.
 | Nuevo movimiento (category-first flow per `NEW_MOVEMENT.md`) | Done, visually verified against the mockup |
 | Billeteras page (sidebar entry + modal, wallet currency) | Done, visually verified against the mockup |
 | Ajustes › Monedas (principal, add/remove with two-step confirmation) | Done, visually verified against the mockup |
-| Ajustes › Categorías | **Pending** (`categoryService` exists, no UI) |
+| Ajustes › Categorías (rename, icon, hide, custom nodes, two-step delete) | Done, visually verified against the mockup |
 | Guest mode, first-run card, mini-guides (`ONBOARDING.md`) | **Pending** |
 
-Web test suite: 131 tests, 13 failing outside the migrated v2 screens because their fixtures
+Web test suite: 135 tests, 13 failing outside the migrated v2 screens because their fixtures
 predate the v2 data layer (details in `TESTING.md`).
 
 ## Deployment
