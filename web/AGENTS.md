@@ -19,8 +19,8 @@ by one; a screen not yet migrated is unverified.
 layer (taxonomy, multi-currency), Inicio, Movimientos, Planes
 (Presupuestos · Metas · Préstamos), Reportes, Ajustes (profile, password,
 sessions, deletion, Monedas, Categorías), Nuevo movimiento,
-Billeteras, mini-guides. Still missing: guest mode and the first run
-(ONBOARDING.md).
+Billeteras, mini-guides, first run. Still missing: guest mode
+(ONBOARDING.md §1).
 Several specs (`AjustesPage`,
 `InicioPage`, `ReportesPage`, `userService`, `unit/currency`,
 `unit/backendCategories`) still use pre-taxonomy fixtures and fail.
@@ -108,6 +108,16 @@ Reportes** — plus **Ajustes** in the footer. Pre-v2 paths (`/overview`,
   endpoints (`/me/sessions`, `/me/footprint`, `/me/export`, `DELETE /me`);
   the password rules shown live are re-checked by `POST /me/password`.
   The sidebar's avatar and name open `/ajustes/perfil`, as in the mockup.
+
+First run (`auth/FirstRunPage.tsx`, `/bienvenida`, ONBOARDING.md §2):
+`ProtectedRoute` sends a signed-in user whose shared `onboardingCompleted`
+preference is false there before any other route (Crear cuenta, or a
+first Google sign-in). Step 1 picks the principal currency (the browser
+region's one first, `deviceRegion()`), step 2 creates the first wallet;
+the principal is saved with the wallet (`PUT /me/currencies/principal`
+only works before any wallet exists), then the preference is set and the
+user lands on Inicio. The back arrow on step 1 signs out to Crear cuenta.
+An older account that already has wallets is just marked done.
 
 Mini-guides (`dashboard/components/GuideCard.tsx`, ONBOARDING.md §3):
 one card bottom-right on Inicio, Movimientos, Planes, Reportes and

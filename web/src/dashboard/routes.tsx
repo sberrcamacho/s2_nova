@@ -4,6 +4,7 @@ import { DashboardLayout } from '@/dashboard/DashboardLayout'
 import { ProtectedRoute } from '@/dashboard/ProtectedRoute'
 import LoginPage from '@/auth/LoginPage'
 import RegisterPage from '@/auth/RegisterPage'
+import FirstRunPage from '@/auth/FirstRunPage'
 import InicioPage from '@/dashboard/pages/InicioPage'
 import MovimientosPage from '@/dashboard/pages/MovimientosPage'
 import PlanesPage from '@/dashboard/pages/PlanesPage'
@@ -56,6 +57,8 @@ export const dashboardRoutes: RouteObject[] = [
           { path: 'settings', element: <Navigate to="/ajustes" replace /> },
         ],
       },
+      // First run (ONBOARDING.md §2): signed in, but outside the app shell.
+      { path: 'bienvenida', element: <FirstRunPage /> },
     ],
   },
 ]

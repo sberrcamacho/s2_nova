@@ -14,7 +14,7 @@ never claim NOT RUN work as passing).
 The phase write-ups below describe the original QA pass; their per-file
 counts predate v2. Since then:
 
-- **Web**: `cd web && pnpm test` — 138 tests in 27 files, **13 failing**
+- **Web**: `cd web && pnpm test` — 141 tests in 28 files, **13 failing**
   in 6 files (`pages/AjustesPage`,
   `pages/InicioPage`, `pages/ReportesPage`, `services/userService`,
   `unit/currency`, `unit/backendCategories`). They use fixtures and
