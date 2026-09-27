@@ -69,7 +69,7 @@ run, mini-guides, barcode scanning.
 |---|---|
 | v2 data layer (taxonomy registry, multi-currency formatting, `categoryService`, `currencyService`) | Done (`21a2d78`) |
 | Inicio | Done, visually verified against the mockup |
-| Movimientos (list, detail dialog, delete) | Done |
+| Movimientos (Programados, days with totals, filters, detail with comprobante, two-step delete / Deshacer) | Done, visually verified against the mockup |
 | Planes › Presupuestos, Metas, Préstamos (mockup modals, two-step delete, abonos) | Done, visually verified against the mockup |
 | Reportes | Done |
 | Ajustes (Perfil, Contraseña, Sesiones, Eliminar cuenta) | Done |

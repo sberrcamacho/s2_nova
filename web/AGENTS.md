@@ -19,9 +19,14 @@ by one; a screen not yet migrated is unverified.
 layer (taxonomy, multi-currency), Inicio, Movimientos, Planes
 (Presupuestos · Metas · Préstamos), Reportes, Ajustes (profile, password,
 sessions, deletion, Monedas, Categorías), Nuevo movimiento,
-Billeteras, mini-guides, first run, guest mode; Inicio has had its v2
-visual pass. Movimientos, Reportes and Ajustes' main page still await
-theirs. Inicio's goal rings keep the grey the mockup draws (its v2
+Billeteras, mini-guides, first run, guest mode; Inicio and Movimientos
+have had their v2 visual pass. Reportes and Ajustes' main page still
+await theirs. Movimientos lists every Programado on top of the current
+month, then the month by day with each day's total; its detail shows the
+comprobante (Ver · Reemplazar · Descargar · Quitar, or attach one) and
+deletes in two steps when the movement is ≥ $200.000 or has a receipt
+or repeats, otherwise at once with "Deshacer" in the toast (`showToast`'s
+optional action). Inicio's goal rings keep the grey the mockup draws (its v2
 override never recolored them) and its hero bars are data-driven (the
 mockup's are fixed heights). The mockup's "Transporte subió 82% frente a
 julio" alert has no rule in the specs, backend or Android yet.

@@ -155,6 +155,13 @@ export const transactionService = {
 
   // The backend reverses the balance effect before deleting. `stopSeries`
   // also ends the movement's Programado (NEW_MOVEMENT.md §9).
+  // Every Programado (PLANNED) movement, whatever its month: Movimientos
+  // lists the upcoming ones on top of the current month.
+  async getPlanned(): Promise<Transaction[]> {
+    const rows = await apiClient.get<BackendTransaction[]>('/transactions?status=PLANNED&limit=200')
+    return Promise.all(rows.map(mapTransaction))
+  },
+
   async deleteTransaction(id: string, stopSeries = false): Promise<void> {
     await apiClient.delete(`/transactions/${id}${stopSeries ? '?series=delete' : ''}`)
   },
