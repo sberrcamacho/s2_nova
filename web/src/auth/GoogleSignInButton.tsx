@@ -1,3 +1,4 @@
+import { currentLanguage, tr } from '@/lib/i18n/translations'
 import { useEffect, useRef, useState } from 'react'
 import { useTheme } from '@/state/ThemeContext'
 import { useTranslation } from '@/state/useTranslation'
@@ -29,7 +30,7 @@ function loadGoogleScript(): Promise<void> {
     const existing = document.querySelector<HTMLScriptElement>(`script[src="${SCRIPT_SRC}"]`)
     if (existing) {
       existing.addEventListener('load', () => resolve())
-      existing.addEventListener('error', () => reject(new Error('No se pudo cargar Google Sign-In.')))
+      existing.addEventListener('error', () => reject(new Error(tr('auth.err.googleLoad'))))
       return
     }
     const script = document.createElement('script')
@@ -37,7 +38,7 @@ function loadGoogleScript(): Promise<void> {
     script.async = true
     script.defer = true
     script.onload = () => resolve()
-    script.onerror = () => reject(new Error('No se pudo cargar Google Sign-In.'))
+    script.onerror = () => reject(new Error(tr('auth.err.googleLoad')))
     document.head.appendChild(script)
   })
 }
@@ -86,6 +87,7 @@ export function GoogleSignInButton({
           theme: 'outline',
           size: 'large',
           width: 340,
+          locale: currentLanguage(),
         })
         setReady(true)
       })

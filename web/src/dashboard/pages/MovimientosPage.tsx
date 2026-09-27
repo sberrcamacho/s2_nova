@@ -1,8 +1,10 @@
+import { currentLanguage, fill, tr, type TranslationKey } from '@/lib/i18n/translations'
+import { MONTHS_LONG } from '@/lib/inicio'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useSearchParams } from 'react-router-dom'
 import { CategoryMark } from '@/components/v2/CategoryMark'
-import { ConfirmDialog, DangerLink, Flat, IC, Icon, ModalFooter, V2Modal } from '@/components/v2/Kit'
+import { CancelButton, ConfirmDialog, DangerLink, Flat, IC, Icon, ModalFooter, V2Modal } from '@/components/v2/Kit'
 import { Money } from '@/components/v2/Money'
 import { RowSkeletons, SyncBanner } from '@/components/v2/Rows'
 import { primaryButtonClass } from '@/components/panels/SidePanel'
@@ -11,6 +13,7 @@ import { recurringService } from '@/services/recurringService'
 import { transactionService } from '@/services/transactionService'
 import { useAppData } from '@/state/AppDataContext'
 import { useAuth } from '@/state/AuthContext'
+import { useNewMovement } from '@/state/NewMovementContext'
 import { useHideAmounts } from '@/state/useHideAmounts'
 import { useToast } from '@/state/ToastContext'
 import { TRANSFER, allCategories, categoryLabel, categoryName, categoryNode, useCategories } from '@/lib/backendCategories'
@@ -25,12 +28,7 @@ import type { NewTransactionInput, RecurringSeries, Transaction, Wallet } from '
 
 type Filter = 'all' | 'expenses' | 'income' | 'scheduled'
 
-const FILTERS: [Filter, string][] = [
-  ['all', 'Todos'],
-  ['expenses', 'Gastos'],
-  ['income', 'Ingresos'],
-  ['scheduled', 'Programados'],
-]
+const FILTERS: Filter[] = ['all', 'expenses', 'income', 'scheduled']
 
 const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024
 
@@ -84,13 +82,15 @@ function inCategory(x: Transaction, parent: string): boolean {
   return x.category === parent || categoryNode(x.category)?.parentId === parent
 }
 
-const MONTHS = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE']
-
+// "21 DE AGOSTO" / "AUGUST 21" (+ the year when it isn't this one).
 function dayLabel(iso: string, today: string): string {
-  if (iso === today) return 'HOY'
-  if (iso === addDays(today, -1)) return 'AYER'
+  if (iso === today) return tr('common.today').toUpperCase()
+  if (iso === addDays(today, -1)) return tr('common.yesterday').toUpperCase()
   const [y, m, d] = iso.split('-').map(Number)
-  return `${d} DE ${MONTHS[m - 1]}${String(y) === today.slice(0, 4) ? '' : ` DE ${y}`}`
+  const other = String(y) !== today.slice(0, 4)
+  const month = MONTHS_LONG[currentLanguage()][m - 1].toUpperCase()
+  if (currentLanguage() === 'en') return `${month} ${d}${other ? `, ${y}` : ''}`
+  return `${d} DE ${month}${other ? ` DE ${y}` : ''}`
 }
 
 // A server timestamp's calendar day on this device.
@@ -106,8 +106,7 @@ function sizeLabel(bytes: number): string {
 
 // The mockup's repeatSummary for a Programado series.
 function repeatText(series: RecurringSeries, start: string): string {
-  const unit = { daily: 'día', weekly: 'semana', monthly: 'mes', yearly: 'año' }[series.interval]
-  const every = `Cada ${unit}`
+  const every = tr(`nm.every.${series.interval}` as TranslationKey)
   if (series.occurrences) {
     const end = new Date(`${start}T12:00:00`)
     const k = series.occurrences - 1
@@ -116,10 +115,10 @@ function repeatText(series: RecurringSeries, start: string): string {
     else if (series.interval === 'monthly') end.setMonth(end.getMonth() + k)
     else end.setFullYear(end.getFullYear() + k)
     const iso = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`
-    return `${every} × ${series.occurrences} · del ${shortDayMonth(start)} al ${shortDayMonth(iso)}`
+    return fill(tr('nm.repeat.count'), every, series.occurrences, shortDayMonth(start), shortDayMonth(iso))
   }
-  if (series.endDate) return `${every} · hasta el ${shortDayMonth(series.endDate)}`
-  return `${every} · sin fecha de fin`
+  if (series.endDate) return fill(tr('nm.repeat.until'), every, shortDayMonth(series.endDate))
+  return fill(tr('nm.repeat.never'), every)
 }
 
 // Movimientos, per the Web v2 mockup: Programados on top, then the month
@@ -152,7 +151,7 @@ export default function MovimientosPage() {
       if (filter === 'scheduled' && !isSched(x)) return false
       if (cat && !inCategory(x, cat)) return false
       if (!q) return true
-      const label = x.type === 'transfer' ? 'Transferencia' : categoryLabel(x.category)
+      const label = categoryLabel(x.type === 'transfer' ? TRANSFER : x.category)
       return `${x.description} ${x.merchant ?? ''} ${x.counterpartyName ?? ''} ${label} ${walletOf(x.accountId)?.name ?? ''}`.toLowerCase().includes(q)
     })
   }, [txns, filter, cat, query, walletOf])
@@ -161,7 +160,7 @@ export default function MovimientosPage() {
     if (!filtered) return []
     const out: { key: string; label: string; items: Transaction[] }[] = []
     const sched = filtered.filter(isSched).sort((a, b) => (a.date + a.time < b.date + b.time ? -1 : 1))
-    if (sched.length) out.push({ key: 'sched', label: 'PROGRAMADOS', items: sched })
+    if (sched.length) out.push({ key: 'sched', label: tr('mv.scheduled').toUpperCase(), items: sched })
     filtered
       .filter((x) => !isSched(x))
       .sort((a, b) => (a.date + a.time < b.date + b.time ? 1 : -1))
@@ -179,15 +178,15 @@ export default function MovimientosPage() {
     const both = filter === 'all' || filter === 'scheduled'
     const kinds = filter === 'income' ? [true] : filter === 'expenses' ? [false] : [false, true]
     return kinds.flatMap((income) =>
-      parents.filter((n) => n.income === income).map((n) => ({ value: n.id, label: (both ? (income ? 'Ingreso · ' : 'Gasto · ') : '') + n.name })),
+      parents.filter((n) => n.income === income).map((n) => ({ value: n.id, label: (both ? `${tr(income ? 'nm.type.income' : 'nm.type.expense')} · ` : '') + categoryName(n.id) })),
     )
   }, [filter])
 
   const toPrincipal = (x: Transaction) => x.amount * referenceRate(x.currency, principal)
   const subtitle = query
-    ? `${filtered?.length ?? 0} resultados para “${query}”`
+    ? fill(tr('mv.results'), filtered?.length ?? 0, query)
     : txns
-      ? `${txns.filter((x) => !isSched(x)).length} movimientos · ${txns.filter(isSched).length} programados`
+      ? fill(tr('mv.count'), txns.filter((x) => !isSched(x)).length, txns.filter(isSched).length)
       : ' '
   const open = openId ? txns?.find((x) => x.id === openId) : undefined
 
@@ -209,12 +208,12 @@ export default function MovimientosPage() {
 
       <div className="flex flex-col gap-3.5">
         <div>
-          <h1 className="text-[24px] font-extrabold tracking-[-.025em]">Movimientos</h1>
+          <h1 className="text-[24px] font-extrabold tracking-[-.025em]">{tr('guide.movimientos.label')}</h1>
           <div className="mt-1 text-[12.5px] text-v2-dim">{subtitle}</div>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
-          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Tipo">
-            {FILTERS.map(([key, label]) => (
+          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={tr('mv.type')}>
+            {FILTERS.map((key) => (
               <Flat
                 key={key}
                 on={filter === key}
@@ -223,17 +222,17 @@ export default function MovimientosPage() {
                   setCat('')
                 }}
               >
-                {label}
+                {tr(`mv.filter.${key}` as TranslationKey)}
               </Flat>
             ))}
           </div>
           <select
-            aria-label="Categoría"
+            aria-label={tr('bud.category')}
             value={cat}
             onChange={(e) => setCat(e.target.value)}
             className="ml-auto h-[34px] cursor-pointer rounded-[10px] border border-v2-line2 bg-v2-surface px-2.5 text-[12px] font-bold text-v2-text outline-none"
           >
-            <option value="">Todas las categorías</option>
+            <option value="">{tr('mv.allCategories')}</option>
             {catOptions.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
@@ -247,7 +246,7 @@ export default function MovimientosPage() {
         {!filtered ? (
           <RowSkeletons count={6} box={36} />
         ) : groups.length === 0 ? (
-          <div className="py-[30px] text-center text-[12.5px] text-v2-dim">Sin movimientos para este filtro.</div>
+          <div className="py-[30px] text-center text-[12.5px] text-v2-dim">{tr('mv.empty')}</div>
         ) : (
           groups.map((g, gi) => {
             const unit = 10 ** currencyInfo(principal).decimals
@@ -297,7 +296,7 @@ export default function MovimientosPage() {
 
 function MovementRow({ x, last, wallet, principal, hidden, onOpen }: { x: Transaction; last: boolean; wallet: string; principal: string; hidden: boolean; onOpen: () => void }) {
   const sched = isSched(x)
-  const label = x.type === 'transfer' ? 'Transferencia' : categoryLabel(x.category)
+  const label = categoryLabel(x.type === 'transfer' ? TRANSFER : x.category)
   const sub = `${label} · ${[x.merchant || x.counterpartyName, wallet].filter(Boolean).join(' · ')} · ${sched ? `${shortDayMonth(x.date)} ` : ''}${x.time}`
   const color = sched || x.type === 'transfer' ? 'var(--v2-muted)' : x.type === 'income' ? 'var(--v2-pos)' : 'var(--v2-neg)'
   return (
@@ -312,7 +311,7 @@ function MovementRow({ x, last, wallet, principal, hidden, onOpen }: { x: Transa
           <span className="min-w-0 flex-[0_1_auto] truncate">{x.description || label}</span>
           {x.attachment && <Icon paths={IC.clip} size={13} color="var(--v2-dim)" />}
           {x.recurringSeriesId && <Icon paths={IC.repeat} size={13} color="var(--v2-dim)" />}
-          {sched && <span className="flex-none rounded-full bg-[rgba(240,180,41,.14)] px-[7px] py-0.5 text-[10px] font-extrabold text-v2-warn">Programado</span>}
+          {sched && <span className="flex-none rounded-full bg-[rgba(240,180,41,.14)] px-[7px] py-0.5 text-[10px] font-extrabold text-v2-warn">{tr('mv.scheduledOne')}</span>}
         </div>
         <div className="mt-[3px] truncate text-[11px] text-v2-dim">{sub}</div>
       </div>
@@ -335,7 +334,7 @@ function snapshot(x: Transaction): NewTransactionInput {
   return {
     accountId: x.accountId,
     transferAccountId: x.transferAccountId,
-    description: x.description,
+    description: x.description || categoryLabel(x.type === 'transfer' ? TRANSFER : x.category),
     amount: x.amount,
     currency: x.currency,
     type: x.type,
@@ -377,13 +376,14 @@ function MovementDetail({
 }) {
   const { showToast } = useToast()
   const { budgets } = useAppData()
+  const openMovement = useNewMovement()
   const [series, setSeries] = useState<RecurringSeries | null>(null)
   const [confirm, setConfirm] = useState(false)
   const [viewer, setViewer] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const sched = isSched(txn)
   const transfer = txn.type === 'transfer'
-  const label = transfer ? 'Transferencia' : categoryLabel(txn.category)
+  const label = categoryLabel(transfer ? TRANSFER : txn.category)
   const walletName = shortWallet(wallet?.name ?? '')
 
   useEffect(() => {
@@ -399,14 +399,14 @@ function MovementDetail({
 
   const rate = referenceRate(txn.currency, principal)
   const rows = [
-    ['Título', txn.description || label],
-    txn.note ? ['Nota', txn.note] : null,
-    ['Fecha y hora', `${longDate(txn.date)} · ${txn.time}`],
-    ['Billetera', transfer ? `${walletName} → ${shortWallet(walletTo?.name ?? '')}` : `${walletName} · ${wallet?.currency ?? txn.currency}`],
-    txn.type === 'income' && txn.counterpartyName ? ['De', txn.counterpartyName] : null,
-    txn.merchant ? ['Comercio', txn.merchant] : null,
-    budget ? ['Presupuesto', `${budget.name || categoryName(budget.category)} · ${budget.percentage}%`] : null,
-    series ? ['Se repite', repeatText(series, txn.date)] : null,
+    [tr('mv.row.title'), txn.description || label],
+    txn.note ? [tr('mv.row.note'), txn.note] : null,
+    [tr('nm.section.when'), `${longDate(txn.date)} · ${txn.time}`],
+    [tr('mv.row.wallet'), transfer ? `${walletName} → ${shortWallet(walletTo?.name ?? '')}` : `${walletName} · ${wallet?.currency ?? txn.currency}`],
+    txn.type === 'income' && txn.counterpartyName ? [tr('nm.from'), txn.counterpartyName] : null,
+    txn.merchant ? [tr('mv.row.merchant'), txn.merchant] : null,
+    budget ? [tr('nm.budget'), `${budget.name || categoryName(budget.category)} · ${budget.percentage}%`] : null,
+    series ? [tr('mv.row.repeats'), repeatText(series, txn.date)] : null,
   ].filter((r): r is [string, string] => !!r)
 
   const attach = txn.attachment
@@ -414,13 +414,13 @@ function MovementDetail({
 
   const upload = async (file: File | undefined) => {
     if (!file) return
-    if (file.size > MAX_ATTACHMENT_BYTES) return showToast('El archivo supera 10 MB.', 'error')
+    if (file.size > MAX_ATTACHMENT_BYTES) return showToast(tr('nm.err.fileSize'), 'error')
     try {
       await transactionService.uploadAttachment(txn.id, file)
-      showToast('Comprobante guardado en el movimiento', 'success')
+      showToast(tr('mv.receipt.saved'), 'success')
       onChanged()
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'No se pudo guardar el comprobante.', 'error')
+      showToast(err instanceof Error ? err.message : tr('mv.receipt.errSave'), 'error')
     }
   }
 
@@ -431,14 +431,14 @@ function MovementDetail({
       await transactionService.deleteAttachment(txn.id)
       onChanged()
       showToast(
-        'Comprobante quitado',
+        tr('mv.receipt.removed'),
         'info',
         blob && blob.size > 0
-          ? { label: 'Deshacer', onClick: () => void transactionService.uploadAttachment(txn.id, new File([blob], attach.name, { type: attach.mime })).then(onChanged) }
+          ? { label: tr('mv.undo'), onClick: () => void transactionService.uploadAttachment(txn.id, new File([blob], attach.name, { type: attach.mime })).then(onChanged) }
           : undefined,
       )
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'No se pudo quitar el comprobante.', 'error')
+      showToast(err instanceof Error ? err.message : tr('mv.receipt.errRemove'), 'error')
     }
   }
 
@@ -452,7 +452,7 @@ function MovementDetail({
       a.click()
       setTimeout(() => URL.revokeObjectURL(url), 1000)
     } catch {
-      showToast('No se pudo descargar el comprobante.', 'error')
+      showToast(tr('mv.receipt.errDownload'), 'error')
     }
   }
 
@@ -464,12 +464,12 @@ function MovementDetail({
       onClose()
       onChanged()
       showToast(
-        'Movimiento eliminado',
+        tr('mv.deleted'),
         'info',
-        significant ? undefined : { label: 'Deshacer', onClick: () => void transactionService.addTransaction(snapshot(txn)).then(onChanged) },
+        significant ? undefined : { label: tr('mv.undo'), onClick: () => void transactionService.addTransaction(snapshot(txn)).then(onChanged) },
       )
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'No se pudo eliminar el movimiento.', 'error')
+      showToast(err instanceof Error ? err.message : tr('mv.errDelete'), 'error')
     }
   }
 
@@ -482,7 +482,7 @@ function MovementDetail({
             <div className="text-[15px] font-extrabold">{txn.description || label}</div>
             <div className="mt-0.5 text-[11.5px] text-v2-dim">{label}</div>
           </div>
-          <button type="button" onClick={onClose} aria-label="Cerrar" className="flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-[9px] text-v2-dim">
+          <button type="button" onClick={onClose} aria-label={tr('common.close')} className="flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-[9px] text-v2-dim">
             ✕
           </button>
         </div>
@@ -506,7 +506,7 @@ function MovementDetail({
             sched ? 'bg-[rgba(240,180,41,.16)] text-v2-warn' : 'bg-[rgba(50,201,138,.14)] text-v2-pos',
           )}
         >
-          {sched ? 'Programado · no afecta el saldo todavía' : 'Registrado'}
+          {tr(sched ? 'mv.state.scheduled' : 'mv.state.recorded')}
         </span>
         <div className="flex flex-col">
           {rows.map(([k, v]) => (
@@ -516,13 +516,13 @@ function MovementDetail({
             </div>
           ))}
         </div>
-        <div className="text-[13px] font-extrabold">Comprobante</div>
+        <div className="text-[13px] font-extrabold">{tr('mv.receipt')}</div>
         <input
           ref={fileRef}
           type="file"
           accept="image/jpeg,image/png,image/webp,application/pdf"
           className="hidden"
-          aria-label="Archivo del comprobante"
+          aria-label={tr('mv.receipt.file')}
           onChange={(e) => {
             void upload(e.target.files?.[0])
             e.target.value = ''
@@ -533,7 +533,7 @@ function MovementDetail({
             <button
               type="button"
               onClick={() => setViewer(true)}
-              aria-label="Ver comprobante"
+              aria-label={tr('mv.receipt.view')}
               className="flex h-[78px] w-[62px] flex-none cursor-pointer items-center justify-center rounded-[10px] border border-v2-line2"
               style={{ background: photo ? 'repeating-linear-gradient(135deg,var(--v2-surface2) 0 8px,var(--v2-subtle) 8px 16px)' : 'var(--v2-neg-soft)' }}
             >
@@ -541,19 +541,19 @@ function MovementDetail({
             </button>
             <div className="min-w-0 flex-1">
               <div className="truncate text-[12.5px] font-bold">{attach.name}</div>
-              <div className="mt-0.5 text-[11px] text-v2-dim">{`${photo ? 'Foto' : 'PDF'} · ${sizeLabel(attach.size)} · agregado el ${shortDayMonth(localDay(attach.createdAt))}`}</div>
+              <div className="mt-0.5 text-[11px] text-v2-dim">{fill(tr('mv.receipt.meta'), photo ? tr('nm.photo') : 'PDF', sizeLabel(attach.size), shortDayMonth(localDay(attach.createdAt)))}</div>
               <div className="mt-[9px] flex gap-3.5 text-[12px] font-extrabold">
                 <button type="button" onClick={() => setViewer(true)} className="cursor-pointer text-v2-accent2">
-                  Ver
+                  {tr('mv.receipt.see')}
                 </button>
                 <button type="button" onClick={() => fileRef.current?.click()} className="cursor-pointer text-v2-accent2">
-                  Reemplazar
+                  {tr('mv.receipt.replace')}
                 </button>
                 <button type="button" onClick={() => void download()} className="cursor-pointer text-v2-accent2">
-                  Descargar
+                  {tr('mv.receipt.download')}
                 </button>
                 <button type="button" onClick={() => void removeAttachment()} className="cursor-pointer text-v2-neg">
-                  Quitar
+                  {tr('mv.receipt.remove')}
                 </button>
               </div>
             </div>
@@ -570,12 +570,23 @@ function MovementDetail({
             className="flex cursor-pointer items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-dashed border-v2-line2 p-3.5 text-[12.5px] font-extrabold text-v2-accent2"
           >
             <Icon paths={IC.clip} size={15} color="var(--v2-accent2)" />
-            Adjuntar recibo o factura · o arrástralo aquí
+            {tr('mv.receipt.attach')}
           </button>
         )}
-        <ModalFooter left={<DangerLink onClick={() => (significant ? setConfirm(true) : void doDelete())}>Eliminar movimiento</DangerLink>}>
+        <ModalFooter left={<DangerLink onClick={() => (significant ? setConfirm(true) : void doDelete())}>{tr('mv.delete')}</DangerLink>}>
+          {/* Not in the web mockup: editing a movement needs a way in (parity with Android). */}
+          {openMovement && !txn.loanKind && (
+            <CancelButton
+              onClick={() => {
+                onClose()
+                openMovement(txn)
+              }}
+            >
+              {tr('mv.edit')}
+            </CancelButton>
+          )}
           <button type="button" onClick={onClose} className={primaryButtonClass}>
-            Cerrar
+            {tr('common.close')}
           </button>
         </ModalFooter>
       </V2Modal>
@@ -584,15 +595,15 @@ function MovementDetail({
 
       {confirm && (
         <ConfirmDialog
-          title={`Eliminar “${txn.description || label}”`}
+          title={fill(tr('loan.delete.title'), txn.description || label)}
           lines={[
             `${sign(txn)}${formatMoney(txn.amount, txn.currency)} · ${longDate(txn.date)} · ${walletName}`,
-            attach ? `Su comprobante: ${attach.name}` : null,
-            txn.recurringSeriesId ? 'Las repeticiones futuras de este movimiento' : null,
-            `El saldo de ${walletName} y tus presupuestos se recalculan`,
+            attach ? fill(tr('mv.delete.receipt'), attach.name) : null,
+            txn.recurringSeriesId ? tr('mv.delete.repeats') : null,
+            fill(tr('mv.delete.balance'), walletName),
           ].filter((l): l is string => !!l)}
-          ack={`Entiendo que el movimiento${attach ? ' y su comprobante se eliminan' : ' se elimina'} para siempre.`}
-          cta="Eliminar movimiento"
+          ack={tr(attach ? 'mv.delete.ackReceipt' : 'mv.delete.ack')}
+          cta={tr('mv.delete')}
           onCancel={() => setConfirm(false)}
           onConfirm={() => {
             setConfirm(false)
@@ -644,10 +655,10 @@ function ReceiptViewer({ txnId, name, mime, photo, onClose }: { txnId: string; n
           style={{ background: 'repeating-linear-gradient(135deg,#13131d 0 10px,#16161f 10px 20px)' }}
         >
           <Icon paths={photo ? IC.image : IC.file} size={20} color={photo ? 'var(--v2-muted)' : 'var(--v2-neg)'} />
-          <span>Vista previa del comprobante</span>
+          <span>{tr('mv.receipt.preview')}</span>
         </div>
       )}
-      <div className="text-[11.5px] text-[#a8a8b8]">Clic en cualquier lugar para cerrar</div>
+      <div className="text-[11.5px] text-[#a8a8b8]">{tr('mv.receipt.clickClose')}</div>
     </div>,
     document.body,
   )

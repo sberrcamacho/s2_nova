@@ -1,3 +1,4 @@
+import { tr } from '@/lib/i18n/translations'
 import { useEffect, useState } from 'react'
 import { CategoryMark, PlanMark } from '@/components/v2/CategoryMark'
 import { Money } from '@/components/v2/Money'
@@ -70,7 +71,7 @@ export default function BudgetsPage({ adding, onAddingDone }: { adding: boolean;
                 {format(b.spent)}
               </Money>
               <div className="mt-0.5 text-[11.5px] text-v2-dim">
-                de{' '}
+                {`${tr('plan.of')} `}
                 <Money hidden={hidden} inline>
                   {format(b.limit)}
                 </Money>

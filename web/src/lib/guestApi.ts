@@ -1,4 +1,5 @@
 import { ApiError } from '@/lib/apiClient'
+import { currentLanguage } from '@/lib/i18n/translations'
 import { CURRENCY_CATALOG, currencyInfo, referenceRate } from '@/lib/currency'
 import { todayISO } from '@/lib/date'
 import { TAX_NODES, visColor } from '@/lib/taxonomy'
@@ -401,9 +402,9 @@ function seed(): GuestState {
       createdAt: `${today}T12:00:00.000Z`,
       // "Cambiada hace 4 meses", as in the mockup.
       passwordChangedAt: new Date(Date.now() - 122 * 86_400_000).toISOString(),
-      // Guides are on for guests.
+      // Guides are on for guests; the language is the one already showing.
       preferences: {
-        language: 'es',
+        language: currentLanguage(),
         currency: 'COP',
         theme: 'SYSTEM',
         notifications: true,
@@ -413,6 +414,7 @@ function seed(): GuestState {
         tutorialCompleted: true,
         guidesSeen: [],
         guidesOff: false,
+        autoLockMinutes: 5,
       },
     },
     sessions: [
@@ -1027,6 +1029,42 @@ function listTransactions(s: GuestState, q: URLSearchParams) {
   return rows.slice(offset, offset + limit).map((t) => serializeTx(s, t))
 }
 
+type GRepeat = { interval: GSeries['interval']; occurrences?: number; endDate?: string; autoConfirm?: boolean }
+
+function seriesEnded(series: GSeries): boolean {
+  return (series.occurrences !== null && series.occurrencesDone >= series.occurrences) || (series.endDate !== null && series.nextOccurrenceDate > series.endDate)
+}
+
+// "Repetir": the movement is the series' first occurrence.
+function startSeries(
+  s: GuestState,
+  m: { description: string; type: GTx['type']; amount: number; currency: string; accountId: string; walletType: string; categoryId: string; subcategoryId: string | null; customBudgetId: string | null; date: string },
+  repeat: GRepeat,
+): string {
+  const series: GSeries = {
+    id: newId('series'),
+    name: m.description,
+    type: m.type as GSeries['type'],
+    amount: m.amount,
+    currency: m.currency,
+    accountId: m.accountId,
+    categoryId: m.categoryId,
+    subcategoryId: m.subcategoryId,
+    customBudgetId: m.customBudgetId,
+    paymentMethod: paymentMethodFor(m.walletType as Parameters<typeof paymentMethodFor>[0]),
+    interval: repeat.interval,
+    nextOccurrenceDate: addInterval(m.date, repeat.interval),
+    occurrences: repeat.occurrences ?? null,
+    occurrencesDone: 1,
+    endDate: repeat.endDate ?? null,
+    autoConfirm: repeat.autoConfirm ?? false,
+    active: true,
+  }
+  series.active = !seriesEnded(series)
+  s.series.push(series)
+  return series.id
+}
+
 function createTransaction(s: GuestState, body: Row) {
   const wallet = account(s, body.accountId as string)
   const type = body.type as GTx['type']
@@ -1038,35 +1076,24 @@ function createTransaction(s: GuestState, body: Row) {
   const currency = type === 'TRANSFER' ? wallet.currency : ((body.currency as string | undefined) ?? wallet.currency)
   const amount = round(body.amount as number, currency)
   const categoryId = (body.categoryId as string | undefined) ?? 'transfer'
-  const repeat = body.repeat as { interval: GSeries['interval']; occurrences?: number; endDate?: string; autoConfirm?: boolean } | undefined
+  const repeat = body.repeat as GRepeat | undefined
 
-  let recurringSeriesId: string | null = null
-  if (repeat && type !== 'TRANSFER') {
-    const series: GSeries = {
-      id: newId('series'),
-      name: (body.description as string | undefined) ?? '',
-      type,
-      amount,
-      currency,
-      accountId: wallet.id,
-      categoryId,
-      subcategoryId: (body.subcategoryId as string | undefined) ?? null,
-      customBudgetId: (body.customBudgetId as string | undefined) ?? null,
-      paymentMethod: paymentMethodFor(wallet.type),
-      interval: repeat.interval,
-      nextOccurrenceDate: addInterval(date, repeat.interval),
-      occurrences: repeat.occurrences ?? null,
-      occurrencesDone: 1,
-      endDate: repeat.endDate ?? null,
-      autoConfirm: repeat.autoConfirm ?? false,
-      active: true,
-    }
-    if ((series.occurrences !== null && series.occurrencesDone >= series.occurrences) || (series.endDate !== null && series.nextOccurrenceDate > series.endDate)) {
-      series.active = false
-    }
-    s.series.push(series)
-    recurringSeriesId = series.id
-  }
+  if (!String(body.description ?? '').trim()) throw new ApiError('description is required.', 400)
+  const recurringSeriesId =
+    repeat && type !== 'TRANSFER'
+      ? startSeries(s, {
+          description: String(body.description).trim(),
+          type,
+          amount,
+          currency,
+          accountId: wallet.id,
+          walletType: wallet.type,
+          categoryId,
+          subcategoryId: (body.subcategoryId as string | undefined) ?? null,
+          customBudgetId: (body.customBudgetId as string | undefined) ?? null,
+          date,
+        }, repeat)
+      : null
 
   const t = newTx(s, {
     accountId: wallet.id,
@@ -1117,7 +1144,38 @@ function updateTransaction(s: GuestState, id: string, body: Row) {
     const walletId = t.type === 'TRANSFER' ? t.transferToAccountId! : t.accountId
     Object.assign(t, priced(t.amount, t.currency, walletCurrency(s, walletId)))
   }
+  // A new date/time decides Programado again (as the backend does).
+  if (body.status === undefined && (body.date !== undefined || body.time !== undefined) && (t.status === 'PLANNED' || t.status === 'COMPLETED')) {
+    t.status = new Date(`${t.date}T${t.time ?? '12:00'}:00`).getTime() > Date.now() ? 'PLANNED' : 'COMPLETED'
+  }
   applyEffect(s, t, 1)
+  const repeat = body.repeat as GRepeat | null | undefined
+  const series = t.recurringSeriesId ? s.series.find((x) => x.id === t.recurringSeriesId) : undefined
+  if (repeat === null && series) {
+    series.active = false
+    t.recurringSeriesId = null
+  } else if (repeat && t.type !== 'TRANSFER') {
+    if (series) {
+      const nextChanged = series.interval !== repeat.interval
+      Object.assign(series, {
+        name: t.description,
+        amount: t.amount,
+        currency: t.currency,
+        accountId: t.accountId,
+        categoryId: t.categoryId,
+        subcategoryId: t.subcategoryId,
+        customBudgetId: t.customBudgetId,
+        interval: repeat.interval,
+        occurrences: repeat.occurrences ?? null,
+        endDate: repeat.endDate ?? null,
+        autoConfirm: repeat.autoConfirm ?? false,
+        ...(nextChanged ? { nextOccurrenceDate: addInterval(t.date, repeat.interval) } : {}),
+      })
+      series.active = !seriesEnded(series)
+    } else {
+      t.recurringSeriesId = startSeries(s, { ...t, walletType: account(s, t.accountId).type }, repeat)
+    }
+  }
   return serializeTx(s, t)
 }
 
@@ -1284,7 +1342,7 @@ function route(s: GuestState, method: Method, path: string, body: Row): unknown 
   const is = (m: Method, pattern: string) => method === m && at(pattern)
 
   // Session and profile
-  if (is('POST', '/auth/logout')) return undefined
+  if (is('POST', '/auth/logout') || is('POST', '/auth/activity')) return undefined
   if (p[0] === 'auth') throw new ApiError(NOT_FOR_GUESTS, 403)
   if (is('GET', '/me')) return me(s)
   if (is('PATCH', '/me')) {

@@ -84,7 +84,9 @@ describe('AppDataContext', () => {
     const { result } = renderHook(() => useHarness(), { wrapper })
     await waitFor(() => expect(result.current.data.budgets).toHaveLength(1))
 
-    act(() => result.current.auth.logout())
+    await act(async () => {
+      await result.current.auth.logout()
+    })
     await waitFor(() => expect(result.current.data.budgets).toEqual([]))
     expect(result.current.data.transactions).toEqual([])
   })

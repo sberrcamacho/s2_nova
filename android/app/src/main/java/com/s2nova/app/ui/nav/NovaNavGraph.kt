@@ -21,6 +21,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.s2nova.app.data.AppContainer
+import com.s2nova.app.data.local.SessionEndReason
 import com.s2nova.app.data.repository.DemoModeFlag
 import com.s2nova.app.data.model.LoanKind
 import com.s2nova.app.ui.AlertTarget
@@ -85,14 +86,25 @@ fun NovaApp() {
         navController.navigateAsRoot(if (done) NovaDestinations.HOME else NovaDestinations.FIRST_RUN)
     }
 
-    // Fires whenever ApiClient's Authenticator gives up because the refresh
-    // token is also dead (see SessionStore.expire()) — redirects to Login
+    // Fires whenever ApiClient's Authenticator finds the session over — the
+    // refresh token is dead too, or the server ended it (see
+    // SessionStore.expire()) — and redirects to Login
     // from wherever the user happens to be, instead of letting the
     // triggering screen's refresh() throw an uncaught HttpException.
     LaunchedEffect(Unit) {
-        AppContainer.sessionStore.sessionExpired.collect {
+        AppContainer.sessionStore.sessionEnded.collect { reason ->
+            AppContainer.authRepository.onSessionEnded()
             navController.navigateAsRoot(NovaDestinations.LOGIN)
-            snackbarHostState.showSnackbar(t(StringKey.COMMON_SESSION_EXPIRED))
+            snackbarHostState.showSnackbar(t(if (reason == SessionEndReason.IDLE) StringKey.COMMON_SESSION_IDLE else StringKey.COMMON_SESSION_EXPIRED))
+        }
+    }
+
+    // "Cierre automático" signed the user out (ui/components/IdleLogout.kt,
+    // or a restart after too long away — AuthRepository.bootstrap()).
+    LaunchedEffect(Unit) {
+        AppContainer.authRepository.idleLogouts.collect {
+            navController.navigateAsRoot(NovaDestinations.LOGIN)
+            snackbarHostState.showSnackbar(t(StringKey.COMMON_SESSION_IDLE))
         }
     }
 
@@ -116,7 +128,8 @@ fun NovaApp() {
         }
     }
 
-    com.s2nova.app.ui.components.AppLockGate {
+    com.s2nova.app.ui.components.IdleLogoutEffect()
+
     Box(Modifier.fillMaxSize()) {
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -235,6 +248,19 @@ fun NovaApp() {
                     onOpenCurrencies = { navController.navigate(NovaDestinations.CURRENCIES) },
                 )
             }
+            composable(
+                NovaDestinations.EDIT_SERIES,
+                arguments = listOf(navArgument("id") { type = androidx.navigation.NavType.StringType }),
+            ) { entry ->
+                AddTransactionScreen(
+                    editSeriesId = entry.arguments?.getString("id").orEmpty(),
+                    onSaved = { navController.popBackStack() },
+                    onBack = { navController.popBackStack() },
+                    onAddWallet = { navController.navigate(NovaDestinations.WALLETS) },
+                    onOpenCategories = { income -> navController.navigate(NovaDestinations.categories(income)) },
+                    onOpenCurrencies = { navController.navigate(NovaDestinations.CURRENCIES) },
+                )
+            }
             composable(NovaDestinations.SCANNER) {
                 ScannerScreen(
                     onClose = { navController.popBackStack() },
@@ -254,7 +280,13 @@ fun NovaApp() {
                 )
             }
             composable(NovaDestinations.WALLETS) { WalletsScreen(onBack = { navController.popBackStack() }) }
-            composable(NovaDestinations.RECURRING) { RecurringScreen(onBack = { navController.popBackStack() }) }
+            composable(NovaDestinations.RECURRING) {
+                RecurringScreen(
+                    onBack = { navController.popBackStack() },
+                    onNew = { navController.navigate(NovaDestinations.ADD_TRANSACTION) },
+                    onEdit = { id -> navController.navigate(NovaDestinations.editSeries(id)) },
+                )
+            }
             composable(NovaDestinations.REPORTS) { ReportsScreen() }
             composable(NovaDestinations.PROFILE) {
                 ProfileScreen(
@@ -307,7 +339,6 @@ fun NovaApp() {
                 navController.navigate(NovaDestinations.SCANNER)
             },
         )
-    }
     }
 }
 

@@ -89,11 +89,6 @@ data class UpdateProfileRequest(
     val currentPassword: String? = null,
 )
 
-// A standalone re-auth check for the auto-lock overlay — never rotates
-// tokens or mutates the account.
-@Serializable
-data class VerifyPasswordRequest(val password: String)
-
 @Serializable
 data class AccountDto(
     val id: String,
@@ -270,30 +265,9 @@ data class RecurringSeriesDto(
     val updatedAt: String,
 )
 
+// Pausar / Reanudar; full edits go through ApiService.editRecurringSeries.
 @Serializable
-data class CreateRecurringSeriesRequest(
-    val name: String,
-    val type: String,
-    val amount: Double,
-    val accountId: String,
-    val categoryId: String,
-    val subcategoryId: String? = null,
-    val interval: String,
-    val startDate: String,
-)
-
-@Serializable
-data class UpdateRecurringSeriesRequest(
-    val name: String? = null,
-    val type: String? = null,
-    val amount: Double? = null,
-    val accountId: String? = null,
-    val categoryId: String? = null,
-    val subcategoryId: String? = null,
-    val interval: String? = null,
-    val nextOccurrenceDate: String? = null,
-    val active: Boolean? = null,
-)
+data class UpdateRecurringSeriesRequest(val active: Boolean)
 
 @Serializable
 data class ConfirmRecurringOccurrenceRequest(val date: String? = null, val amount: Double? = null)

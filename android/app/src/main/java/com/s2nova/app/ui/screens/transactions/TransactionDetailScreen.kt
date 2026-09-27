@@ -81,6 +81,8 @@ import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.io.File
 import kotlin.math.abs
+import com.s2nova.app.ui.tr
+import com.s2nova.app.ui.StringKey
 
 // Movement detail (NEW_MOVEMENT.md §10): hero with the category mark, signed
 // amount in its original currency, conversion line and status; the rows;
@@ -112,7 +114,7 @@ fun requestDelete(tx: Transaction, walletName: String, scope: kotlinx.coroutines
         repo.hideLocal(tx.id)
         if (AppContainer.isGuest) com.s2nova.app.data.repository.DemoLedger.applyToWallets(tx, -1)
         onDeleted()
-        Snack.show("Movimiento eliminado", onUndo = {
+        Snack.show(tr(StringKey.MV_DELETED), onUndo = {
             if (AppContainer.isGuest) repo.restoreLocal(tx) else repo.restoreLocal(tx)
         }, onTimeout = { if (!AppContainer.isGuest) finish() })
         return
@@ -120,15 +122,15 @@ fun requestDelete(tx: Transaction, walletName: String, scope: kotlinx.coroutines
     val sign = if (tx.type == TransactionType.INCOME) "+" else "−"
     Confirm.ask(
         ConfirmRequest(
-            title = "Eliminar “${tx.displayName(AppContainer.categoryRepository)}”",
+            title = tr(StringKey.MV_DELETE_TITLE, tx.displayName(AppContainer.categoryRepository)),
             lines = listOfNotNull(
                 sign + formatMoney(tx.amount, tx.currency) + " · " + fmtDateLong(tx.date) + " · " + walletName,
-                tx.attachment?.let { "Su comprobante: " + it.name },
-                if (tx.recurringSeriesId != null) "Las repeticiones futuras de este movimiento" else null,
-                "El saldo de $walletName y tus presupuestos se recalculan",
+                tx.attachment?.let { tr(StringKey.MV_DELETE_RECEIPT, it.name) },
+                if (tx.recurringSeriesId != null) tr(StringKey.MV_DELETE_REPEATS) else null,
+                tr(StringKey.MV_DELETE_BALANCE, walletName),
             ),
-            ack = "Entiendo que el movimiento" + (if (tx.attachment != null) " y su comprobante se eliminan" else " se elimina") + " para siempre.",
-            cta = "Eliminar movimiento",
+            ack = tr(if (tx.attachment != null) StringKey.MV_DELETE_ACK_RECEIPT else StringKey.MV_DELETE_ACK),
+            cta = tr(StringKey.MV_DELETE),
             onConfirm = { onDeleted(); finish() },
         ),
     )
@@ -163,15 +165,15 @@ fun TransactionDetailScreen(
             Box(Modifier.size(38.dp).clip(CircleShape).noRippleClick(onBack), contentAlignment = Alignment.Center) {
                 Text("←", fontSize = 19.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Text("Movimiento", fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
+            Text(tr(StringKey.MV_TITLE), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
             if (tx != null && tx.loanKind == null && tx.parentLoanId == null) {
                 Box(Modifier.size(38.dp).clip(CircleShape).noRippleClick { onEdit(tx.id) }, contentAlignment = Alignment.Center) {
-                    Icon(MockupIcons.Pencil, contentDescription = "Editar", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(17.dp))
+                    Icon(MockupIcons.Pencil, contentDescription = tr(StringKey.MV_EDIT), tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(17.dp))
                 }
             }
         }
         if (tx == null) {
-            Text("Este movimiento ya no existe.", fontSize = 12.5.sp, color = colors.textDim, modifier = Modifier.padding(24.dp))
+            Text(tr(StringKey.MV_GONE), fontSize = 12.5.sp, color = colors.textDim, modifier = Modifier.padding(24.dp))
             return@Column
         }
         val wallet = wallets.firstOrNull { it.id == tx.walletId }
@@ -187,7 +189,7 @@ fun TransactionDetailScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 CatMark(if (transfer) CategoryRepository.TRANSFER else tx.subcategoryId ?: tx.category, 56.dp)
-                Text(if (transfer) "Transferencia" else repo.label(tx.subcategoryId ?: tx.category), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+                Text(if (transfer) tr(StringKey.NM_TYPE_TRANSFER) else repo.label(tx.subcategoryId ?: tx.category), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
                 Text(
                     (if (income) "+" else if (transfer) "" else "−") + formatMoney(abs(tx.amount), tx.currency),
                     fontSize = 30.sp, lineHeight = 34.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.9).sp, maxLines = 1,
@@ -200,7 +202,7 @@ fun TransactionDetailScreen(
                     Text("≈ " + formatMoney(abs(tx.amount) * rate, principal) + " $principal · 1 ${tx.currency} = " + formatMoney(rate, principal), fontSize = 11.5.sp, color = colors.textDim, style = TextStyle(fontFeatureSettings = TNUM))
                 }
                 Text(
-                    if (scheduled) "Programado · no afecta el saldo todavía" else "Registrado",
+                    tr(if (scheduled) StringKey.MV_STATE_SCHEDULED else StringKey.MV_STATE_RECORDED),
                     fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = if (scheduled) colors.warning else colors.positive,
                     modifier = Modifier.padding(top = 4.dp).clip(RoundedCornerShape(999.dp)).background(if (scheduled) Color(0x29F0B429) else Color(0x2432C98A)).padding(horizontal = 10.dp, vertical = 4.dp),
                 )
@@ -209,14 +211,14 @@ fun TransactionDetailScreen(
             val autoBudget = if (!income && !transfer) budgets.firstOrNull { it.budget.kind == BudgetKind.CATEGORY && repo.isIn(tx.subcategoryId ?: tx.category, it.budget.category) } else null
             val series = tx.recurringSeriesId?.let { id -> AppContainer.recurringSeriesRepository.series.value.firstOrNull { it.id == id } }
             val rows = listOfNotNull(
-                "Título" to tx.displayName(repo),
-                if (tx.description.isNotBlank() && !tx.note.isNullOrBlank()) "Nota" to tx.note else null,
-                "Fecha y hora" to fmtDateLong(tx.date) + " · " + tx.time,
-                "Billetera" to walletName + " · " + (wallet?.currency ?: principal),
-                tx.counterpartyName?.takeIf { income && it.isNotBlank() }?.let { "De" to it },
-                tx.merchant?.takeIf { it.isNotBlank() }?.let { "Comercio" to it },
-                autoBudget?.let { "Presupuesto" to (it.budget.name ?: repo.name(it.budget.category)) + " · " + it.percentage + "%" },
-                series?.let { "Se repite" to "Cada " + mapOf("DAILY" to "día", "WEEKLY" to "semana", "MONTHLY" to "mes", "YEARLY" to "año")[it.interval.name] + (it.occurrences?.let { n -> " × $n" } ?: " · sin fecha de fin") },
+                tr(StringKey.NM_TITLE_PH) to tx.displayName(repo),
+                if (tx.description.isNotBlank() && !tx.note.isNullOrBlank()) tr(StringKey.MV_NOTE) to tx.note else null,
+                tr(StringKey.NM_SECTION_WHEN) to fmtDateLong(tx.date) + " · " + tx.time,
+                tr(StringKey.NM_WALLET) to walletName + " · " + (wallet?.currency ?: principal),
+                tx.counterpartyName?.takeIf { income && it.isNotBlank() }?.let { tr(StringKey.NM_FROM) to it },
+                tx.merchant?.takeIf { it.isNotBlank() }?.let { tr(StringKey.MV_MERCHANT) to it },
+                autoBudget?.let { tr(StringKey.NM_BUDGET) to (it.budget.name ?: repo.name(it.budget.category)) + " · " + it.percentage + "%" },
+                series?.let { tr(StringKey.MV_REPEATS) to com.s2nova.app.ui.screens.addtransaction.repeatSummary(com.s2nova.app.ui.screens.addtransaction.repeatOf(it), java.time.LocalDate.parse(tx.date)) },
             )
             Column(
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surface)
@@ -236,7 +238,7 @@ fun TransactionDetailScreen(
                 }
             }
 
-            Text("Comprobante", fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 4.dp))
+            Text(tr(StringKey.MV_RECEIPT), fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 4.dp))
             val a = tx.attachment
             if (a != null) {
                 Row(
@@ -248,14 +250,14 @@ fun TransactionDetailScreen(
                     Thumb(a.isPdf, bytes, Modifier.size(width = 64.dp, height = 80.dp).noRippleClick { viewer = true })
                     Column(Modifier.weight(1f)) {
                         Text(a.name, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onBackground)
-                        Text((if (a.isPdf) "PDF" else "Foto") + " · " + sizeLabel(a.size) + " · agregado el " + fmtDate(a.createdAt), fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
+                        Text(tr(StringKey.MV_RECEIPT_META, if (a.isPdf) "PDF" else tr(StringKey.NM_PHOTO), sizeLabel(a.size), fmtDate(a.createdAt)), fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
                         Row(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                            Text("Ver", fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText, modifier = Modifier.noRippleClick { viewer = true })
-                            Text("Reemplazar", fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText, modifier = Modifier.noRippleClick { attachSheet = true })
-                            Text("Quitar", fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = colors.negative, modifier = Modifier.noRippleClick {
+                            Text(tr(StringKey.MV_RECEIPT_SEE), fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText, modifier = Modifier.noRippleClick { viewer = true })
+                            Text(tr(StringKey.MV_RECEIPT_REPLACE), fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText, modifier = Modifier.noRippleClick { attachSheet = true })
+                            Text(tr(StringKey.MV_RECEIPT_REMOVE), fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = colors.negative, modifier = Modifier.noRippleClick {
                                 val repoTx = AppContainer.transactionRepository
                                 repoTx.hideAttachmentLocal(tx.id)
-                                Snack.show("Comprobante quitado", onUndo = { repoTx.restoreAttachment(tx.id, a) }, onTimeout = {
+                                Snack.show(tr(StringKey.MV_RECEIPT_REMOVED), onUndo = { repoTx.restoreAttachment(tx.id, a) }, onTimeout = {
                                     AppContainer.appScope.launch { runCatching { repoTx.removeAttachment(tx.id) } }
                                 })
                             })
@@ -272,14 +274,14 @@ fun TransactionDetailScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     V2Icon(V2Icons.clip, colors.accentText, 16.dp)
-                    Text("Adjuntar recibo o factura", fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText)
+                    Text(tr(StringKey.MV_RECEIPT_ATTACH), fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText)
                 }
             }
             Box(
                 Modifier.padding(top = 6.dp).fillMaxWidth().clip(RoundedCornerShape(16.dp)).border(1.dp, colors.negative.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
                     .noRippleClick { requestDelete(tx, walletName, scope, onDeleted) }.padding(14.dp),
                 contentAlignment = Alignment.Center,
-            ) { Text("Eliminar movimiento", fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = colors.negative) }
+            ) { Text(tr(StringKey.MV_DELETE), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = colors.negative) }
         }
 
         if (viewer && tx.attachment != null) {
@@ -304,7 +306,7 @@ fun TransactionDetailScreen(
                                 verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
                             ) {
                                 V2Icon(if (att.isPdf) V2Icons.file else V2Icons.image, if (att.isPdf) colors.negative else Color(0xFFA8A8B8), 22.dp)
-                                Text("Vista previa del comprobante", fontSize = 12.sp, color = Color(0xFFA8A8B8))
+                                Text(tr(StringKey.MV_RECEIPT_PREVIEW), fontSize = 12.sp, color = Color(0xFFA8A8B8))
                             }
                         }
                     }
@@ -313,12 +315,12 @@ fun TransactionDetailScreen(
                             Modifier.weight(1f).clip(RoundedCornerShape(14.dp)).border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(14.dp))
                                 .noRippleClick { shareFile(context, att.name, att.mime, bytes, send = true) }.padding(13.dp),
                             contentAlignment = Alignment.Center,
-                        ) { Text("Compartir", fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = Color.White) }
+                        ) { Text(tr(StringKey.MV_SHARE), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = Color.White) }
                         Box(
                             Modifier.weight(1f).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.primary)
                                 .noRippleClick { shareFile(context, att.name, att.mime, bytes, send = false) }.padding(13.dp),
                             contentAlignment = Alignment.Center,
-                        ) { Text("Descargar", fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = Color.White) }
+                        ) { Text(tr(StringKey.MV_RECEIPT_DOWNLOAD), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = Color.White) }
                     }
                 }
             }
@@ -330,26 +332,26 @@ fun TransactionDetailScreen(
                     val out = ByteArrayOutputStream()
                     bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, out)
                     attachSheet = false
-                    scope.launch { runCatching { AppContainer.transactionRepository.attach(tx.id, "foto-recibo.jpg", "image/jpeg", out.toByteArray()) }.onSuccess { Snack.show("Comprobante guardado en el movimiento") } }
+                    scope.launch { runCatching { AppContainer.transactionRepository.attach(tx.id, tr(StringKey.NM_RECEIPT_PHOTO_FILE), "image/jpeg", out.toByteArray()) }.onSuccess { Snack.show(tr(StringKey.MV_RECEIPT_SAVED)) } }
                 }
             }
             val pick = { uri: android.net.Uri? ->
                 if (uri != null) {
                     val resolver = context.contentResolver
                     val mime = resolver.getType(uri) ?: "image/jpeg"
-                    var name = "comprobante"
+                    var name = tr(StringKey.NM_RECEIPT_FILE)
                     resolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c -> if (c.moveToFirst()) name = c.getString(0) ?: name }
                     val data = resolver.openInputStream(uri)?.use { it.readBytes() }
                     attachSheet = false
                     if (data != null && data.size <= 10 * 1024 * 1024) {
-                        scope.launch { runCatching { AppContainer.transactionRepository.attach(tx.id, name, mime, data) }.onSuccess { Snack.show("Comprobante guardado en el movimiento") } }
-                    } else if (data != null) Snack.show("El archivo supera 10 MB.")
+                        scope.launch { runCatching { AppContainer.transactionRepository.attach(tx.id, name, mime, data) }.onSuccess { Snack.show(tr(StringKey.MV_RECEIPT_SAVED)) } }
+                    } else if (data != null) Snack.show(tr(StringKey.NM_ERR_FILE_SIZE))
                 }
             }
             val gallery = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { pick(it) }
             val document = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { pick(it) }
             NovaDraftSheet(onDismiss = { attachSheet = false }) {
-                SheetHeader("Adjuntar comprobante", "Queda guardado con el movimiento y lo ves luego en su detalle.", bottom = 10.dp)
+                SheetHeader(tr(StringKey.NM_SECTION_ATTACH), tr(StringKey.NM_ATTACH_HINT), bottom = 10.dp)
                 AttachOptions({ camera.launch(null) }, { gallery.launch("image/*") }, { document.launch(arrayOf("application/pdf", "image/jpeg", "image/png")) })
             }
         }
@@ -385,7 +387,7 @@ private fun Thumb(isPdf: Boolean, bytes: ByteArray?, modifier: Modifier) {
 // viewer through the app's FileProvider.
 private fun shareFile(context: android.content.Context, name: String, mime: String, bytes: ByteArray?, send: Boolean) {
     if (bytes == null) {
-        Snack.show("El comprobante aún se está cargando.")
+        Snack.show(tr(StringKey.MV_RECEIPT_LOADING))
         return
     }
     val dir = File(context.cacheDir, "comprobantes").apply { mkdirs() }

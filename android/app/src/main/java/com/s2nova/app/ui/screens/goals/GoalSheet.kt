@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.s2nova.app.data.AppContainer
 import com.s2nova.app.data.Currencies
-import com.s2nova.app.data.MONTHS_ES
 import com.s2nova.app.data.Taxonomy
 import com.s2nova.app.data.fmtDate
 import com.s2nova.app.data.fmtDateLong
@@ -64,6 +63,9 @@ import com.s2nova.app.ui.screens.budgets.PlanIconGrid
 import com.s2nova.app.ui.theme.NovaColors
 import java.time.LocalDate
 import kotlin.math.ceil
+import com.s2nova.app.ui.tr
+import com.s2nova.app.ui.StringKey
+import com.s2nova.app.ui.monthName
 
 // Goal create/edit (PLANS.md §2): Nombre with the suggested plan icon, the
 // 9×2 Icono grid, Monto objetivo / Monto inicial, Fecha objetivo and the
@@ -83,8 +85,8 @@ data class GoalDraft(
 ) {
     companion object {
         fun from(g: Goal) = GoalDraft(
-            id = g.id, name = g.name, target = g.targetAmount.toLong().toString(), icon = g.icon, iconAuto = false,
-            initial = if (g.initialAmount > 0) g.initialAmount.toLong().toString() else "", due = g.targetDate.orEmpty(), plan = g.plan,
+            id = g.id, name = g.name, target = com.s2nova.app.ui.screens.addtransaction.AmountPad.numStr(g.targetAmount), icon = g.icon, iconAuto = false,
+            initial = if (g.initialAmount > 0) com.s2nova.app.ui.screens.addtransaction.AmountPad.numStr(g.initialAmount) else "", due = g.targetDate.orEmpty(), plan = g.plan,
             current = g.currentAmount,
         )
     }
@@ -109,33 +111,33 @@ fun GoalDraftSheet(draft: GoalDraft, onDraftChange: (GoalDraft) -> Unit, onDismi
     val sym = Currencies.symbol(principal)
     val wallets = AppContainer.walletRepository.wallets.value
     var gp by remember { mutableStateOf<PlanDraft?>(null) }
-    val current = if (d.id != null) d.current else d.initial.toDoubleOrNull() ?: 0.0
+    val current = if (d.id != null) d.current else com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(d.initial)
 
     NovaDraftSheet(onDismiss = onDismiss) {
         Column(Modifier.verticalScroll(rememberScrollState())) {
-            SheetHeader(if (d.id != null) "Editar meta" else "Nueva meta", bottom = 16.dp)
+            SheetHeader(tr(if (d.id != null) StringKey.GOAL_EDIT else StringKey.GOAL_NEW), bottom = 16.dp)
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Column {
-                    FieldLabel("Nombre")
+                    FieldLabel(tr(StringKey.PLAN_NAME))
                     InputBox(vertical = 11.dp) {
                         PlanMark(d.icon, 40.dp)
-                        BareField(d.name, { name -> onDraftChange(d.copy(name = name, icon = if (d.iconAuto) Taxonomy.guessPlanIcon(name) ?: "other" else d.icon)) }, "Viaje a Perú, portátil nuevo…")
+                        BareField(d.name, { name -> onDraftChange(d.copy(name = name, icon = if (d.iconAuto) Taxonomy.guessPlanIcon(name) ?: "other" else d.icon)) }, tr(StringKey.GOAL_NAME_PH))
                     }
                     FieldNote(
-                        if (d.iconAuto && Taxonomy.guessPlanIcon(d.name) != null) "Icono sugerido por el nombre. Toca otro para cambiarlo." else "Elige un icono para reconocer la meta de un vistazo.",
+                        tr(if (d.iconAuto && Taxonomy.guessPlanIcon(d.name) != null) StringKey.PLAN_ICON_GUESS else StringKey.GOAL_ICON_PICK),
                         Modifier.padding(top = 8.dp),
                     )
                 }
                 Column {
-                    FieldLabel("Icono")
+                    FieldLabel(tr(StringKey.PLAN_ICON))
                     PlanIconGrid(d.icon, 9) { onDraftChange(d.copy(icon = it, iconAuto = false)) }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Column(Modifier.weight(1f)) { FieldLabel("Monto objetivo"); MoneyInput(d.target, { onDraftChange(d.copy(target = it)) }, sym, 16.sp) }
-                    Column(Modifier.weight(1f)) { FieldLabel("Monto inicial"); MoneyInput(d.initial, { onDraftChange(d.copy(initial = it)) }, sym, 16.sp) }
+                    Column(Modifier.weight(1f)) { FieldLabel(tr(StringKey.GOAL_TARGET)); com.s2nova.app.ui.components.AmountField(d.target, { onDraftChange(d.copy(target = it)) }, AppContainer.currencyRepository.principal, title = tr(StringKey.GOAL_TARGET), fontSize = 16.sp) }
+                    Column(Modifier.weight(1f)) { FieldLabel(tr(StringKey.GOAL_INITIAL)); com.s2nova.app.ui.components.AmountField(d.initial, { onDraftChange(d.copy(initial = it)) }, AppContainer.currencyRepository.principal, title = tr(StringKey.GOAL_INITIAL), fontSize = 16.sp) }
                 }
                 Column {
-                    FieldLabel("Fecha objetivo (opcional)")
+                    FieldLabel(tr(StringKey.GOAL_DATE))
                     DateBox(d.due) { onDraftChange(d.copy(due = it)) }
                 }
                 val plan = d.plan
@@ -145,7 +147,7 @@ fun GoalDraftSheet(draft: GoalDraft, onDraftChange: (GoalDraft) -> Unit, onDismi
                         .border(1.dp, if (plan != null) primary else MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(14.dp))
                         .noRippleClick {
                             gp = plan?.let { p ->
-                                PlanDraft(p.amount.toLong().toString(), Freq.entries.first { it.interval == p.frequency }, p.walletId, p.startDate, p.endMode, p.count ?: 12, p.endDate.orEmpty(), p.autoConfirm)
+                                PlanDraft(com.s2nova.app.ui.screens.addtransaction.AmountPad.numStr(p.amount), Freq.entries.first { it.interval == p.frequency }, p.walletId, p.startDate, p.endMode, p.count ?: 12, p.endDate.orEmpty(), p.autoConfirm)
                             } ?: PlanDraft(walletId = wallets.firstOrNull()?.id)
                         }.padding(horizontal = 14.dp, vertical = 11.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -155,63 +157,63 @@ fun GoalDraftSheet(draft: GoalDraft, onDraftChange: (GoalDraft) -> Unit, onDismi
                         V2Icon(V2Icons.repeat, colors.accentText, 17.dp)
                     }
                     Column(Modifier.weight(1f)) {
-                        Text("Aporte periódico", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                        Text(tr(StringKey.GOAL_PLAN), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                         val wallet = plan?.let { p -> wallets.firstOrNull { it.id == p.walletId }?.name?.let(::shortWallet) }.orEmpty()
                         Text(
-                            plan?.let { planText(it, wallet, principal) } ?: "Agrega un aporte automático o con recordatorio",
+                            plan?.let { planText(it, wallet, principal) } ?: tr(StringKey.GOAL_PLAN_EMPTY),
                             fontSize = 11.sp, lineHeight = 15.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM),
                         )
                     }
                     Text("›", fontSize = 18.sp, color = colors.textDim)
                 }
-                V2Button("Guardar", enabled = d.name.isNotBlank() && (d.target.toDoubleOrNull() ?: 0.0) > 0, onClick = onSave)
-                if (d.id != null) SheetTextAction("Eliminar meta", colors.negative, onRequestDelete, weight = FontWeight.ExtraBold)
+                V2Button(tr(StringKey.COMMON_SAVE), enabled = d.name.isNotBlank() && com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(d.target) > 0, onClick = onSave)
+                if (d.id != null) SheetTextAction(tr(StringKey.GOAL_DELETE), colors.negative, onRequestDelete, weight = FontWeight.ExtraBold)
             }
         }
     }
 
     val p = gp ?: return
-    val amt = p.amount.toDoubleOrNull() ?: 0.0
+    val amt = com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(p.amount)
     val start = runCatching { LocalDate.parse(p.start) }.getOrDefault(LocalDate.now())
     val summary = if (amt > 0) when (p.end) {
         GoalPlanEnd.GOAL -> {
-            val remaining = ((d.target.toDoubleOrNull() ?: 0.0) - current).coerceAtLeast(0.0)
+            val remaining = (com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(d.target) - current).coerceAtLeast(0.0)
             val n = ceil(remaining / amt).toInt().coerceAtLeast(1)
             val last = addFreq(start, p.freq, (n - 1).toLong())
-            "Con $n aportes de ${formatMoney(amt, principal)} cumples la meta hacia ${MONTHS_ES[last.monthValue - 1]} de ${last.year}."
+            tr(StringKey.GOAL_SUM_GOAL, n, formatMoney(amt, principal), monthName(last.monthValue), last.year)
         }
-        GoalPlanEnd.COUNT -> "${p.count} aportes · ${formatMoney(p.count * amt, principal)} en total · último el ${fmtDate(addFreq(start, p.freq, (p.count - 1).toLong()).toString())}"
-        GoalPlanEnd.DATE -> "Aportes de ${formatMoney(amt, principal)} hasta el " + (if (p.until.isNotBlank()) fmtDateLong(p.until) else "…")
+        GoalPlanEnd.COUNT -> tr(StringKey.GOAL_SUM_COUNT, p.count, formatMoney(p.count * amt, principal), fmtDate(addFreq(start, p.freq, (p.count - 1).toLong()).toString()))
+        GoalPlanEnd.DATE -> tr(StringKey.GOAL_SUM_DATE, formatMoney(amt, principal), if (p.until.isNotBlank()) fmtDateLong(p.until) else "…")
     } else null
     NovaDraftSheet(onDismiss = { gp = null }, scrimAlpha = 0.72f) {
         Column(Modifier.verticalScroll(rememberScrollState())) {
-            SheetHeader("Aporte periódico", (d.name.ifBlank { "Nueva meta" }) + " · " + formatMoney(current, principal) + " de " + formatMoney(d.target.toDoubleOrNull() ?: 0.0, principal), bottom = 16.dp)
+            SheetHeader(tr(StringKey.GOAL_PLAN), (d.name.ifBlank { tr(StringKey.GOAL_NEW) }) + " · " + tr(StringKey.NM_X_OF_Y, formatMoney(current, principal), formatMoney(com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(d.target), principal)), bottom = 16.dp)
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Column { FieldLabel("Monto de cada aporte"); MoneyInput(p.amount, { gp = p.copy(amount = it) }, sym) }
+                Column { FieldLabel(tr(StringKey.GOAL_PLAN_AMOUNT)); com.s2nova.app.ui.components.AmountField(p.amount, { gp = p.copy(amount = it) }, AppContainer.currencyRepository.principal, title = tr(StringKey.GOAL_PLAN_AMOUNT)) }
                 Column {
-                    FieldLabel("Frecuencia")
+                    FieldLabel(tr(StringKey.GOAL_FREQ))
                     PillRow { listOf(Freq.DAILY, Freq.WEEKLY, Freq.MONTHLY).forEach { f -> V2Pill(f.label, p.freq == f, { gp = p.copy(freq = f) }) } }
                 }
                 Column {
-                    FieldLabel("Desde qué billetera")
+                    FieldLabel(tr(StringKey.GOAL_FROM_WALLET))
                     PillRow { wallets.forEach { w -> V2Pill(shortWallet(w.name), p.walletId == w.id, { gp = p.copy(walletId = w.id) }) } }
                 }
-                Column { FieldLabel("Empieza"); DateBox(p.start) { gp = p.copy(start = it) } }
+                Column { FieldLabel(tr(StringKey.GOAL_STARTS)); DateBox(p.start) { gp = p.copy(start = it) } }
                 Column {
-                    FieldLabel("Termina")
+                    FieldLabel(tr(StringKey.NM_ENDS))
                     PillRow {
-                        listOf(GoalPlanEnd.GOAL to "Al cumplir la meta", GoalPlanEnd.COUNT to "Después de", GoalPlanEnd.DATE to "En una fecha").forEach { (k, label) ->
+                        listOf(GoalPlanEnd.GOAL to tr(StringKey.GOAL_ENDS_GOAL), GoalPlanEnd.COUNT to tr(StringKey.NM_ENDS_COUNT), GoalPlanEnd.DATE to tr(StringKey.NM_ENDS_UNTIL)).forEach { (k, label) ->
                             V2Pill(label, p.end == k, { gp = p.copy(end = k) })
                         }
                     }
-                    if (p.end == GoalPlanEnd.COUNT) Stepper("${p.count} aportes", { gp = p.copy(count = (p.count - 1).coerceAtLeast(1)) }, { gp = p.copy(count = (p.count + 1).coerceAtMost(120)) })
+                    if (p.end == GoalPlanEnd.COUNT) Stepper(tr(StringKey.GOAL_N_CONTRIBUTIONS, p.count), { gp = p.copy(count = (p.count - 1).coerceAtLeast(1)) }, { gp = p.copy(count = (p.count + 1).coerceAtMost(120)) })
                     if (p.end == GoalPlanEnd.DATE) DateBox(p.until, Modifier.padding(top = 10.dp)) { gp = p.copy(until = it) }
                 }
                 Column {
-                    FieldLabel("En cada fecha")
+                    FieldLabel(tr(StringKey.NM_EACH_DATE))
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        ConfirmModeRow("Pedirme confirmación", "Te llega una notificación y confirmas cada aporte.", !p.auto) { gp = p.copy(auto = false) }
-                        ConfirmModeRow("Automático", "Se descuenta de la billetera en cada fecha y te avisamos.", p.auto) { gp = p.copy(auto = true) }
+                        ConfirmModeRow(tr(StringKey.NM_ASK), tr(StringKey.GOAL_ASK_DETAIL), !p.auto) { gp = p.copy(auto = false) }
+                        ConfirmModeRow(tr(StringKey.GOAL_AUTO), tr(StringKey.GOAL_AUTO_DETAIL), p.auto) { gp = p.copy(auto = true) }
                     }
                 }
                 if (summary != null) {
@@ -221,7 +223,7 @@ fun GoalDraftSheet(draft: GoalDraft, onDraftChange: (GoalDraft) -> Unit, onDismi
                         style = TextStyle(fontFeatureSettings = TNUM),
                     )
                 }
-                V2Button("Aplicar", enabled = amt > 0 && p.walletId != null, onClick = {
+                V2Button(tr(StringKey.NM_APPLY), enabled = amt > 0 && p.walletId != null, onClick = {
                     val next = d.plan?.nextDate?.takeIf { it >= LocalDate.now().toString() && d.plan.startDate == p.start } ?: p.start
                     onDraftChange(
                         d.copy(
@@ -235,7 +237,7 @@ fun GoalDraftSheet(draft: GoalDraft, onDraftChange: (GoalDraft) -> Unit, onDismi
                     )
                     gp = null
                 })
-                if (d.plan != null) SheetTextAction("Quitar aporte periódico", colors.negative, { onDraftChange(d.copy(plan = null, planChanged = true)); gp = null }, weight = FontWeight.ExtraBold)
+                if (d.plan != null) SheetTextAction(tr(StringKey.GOAL_PLAN_REMOVE), colors.negative, { onDraftChange(d.copy(plan = null, planChanged = true)); gp = null }, weight = FontWeight.ExtraBold)
             }
         }
     }

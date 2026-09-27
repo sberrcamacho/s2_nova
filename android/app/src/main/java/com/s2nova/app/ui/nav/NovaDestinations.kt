@@ -14,6 +14,9 @@ object NovaDestinations {
     const val TRANSACTION_DETAIL = "transaction_detail/{id}"
     const val ADD_TRANSACTION = "add_transaction"
     const val EDIT_TRANSACTION = "edit_transaction/{id}"
+
+    // Programados › Editar: "Nuevo movimiento" on a recurring series.
+    const val EDIT_SERIES = "edit_series/{id}"
     const val SCANNER = "scanner"
     const val BUDGETS = "budgets"
 
@@ -32,5 +35,6 @@ object NovaDestinations {
     fun categories(income: Boolean = false) = "categories?income=$income"
     fun transactionDetail(id: String) = "transaction_detail/$id"
     fun editTransaction(id: String) = "edit_transaction/$id"
+    fun editSeries(id: String) = "edit_series/$id"
     fun budgets(tab: Int, side: String? = null) = "budgets?tab=$tab" + (side?.let { "&side=$it" } ?: "")
 }

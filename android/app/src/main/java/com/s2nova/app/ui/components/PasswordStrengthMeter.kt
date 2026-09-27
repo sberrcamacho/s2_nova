@@ -17,6 +17,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.s2nova.app.ui.theme.NovaColors
+import com.s2nova.app.ui.tr
+import com.s2nova.app.ui.StringKey
 
 private fun passwordStrengthScore(password: String): Int {
     var score = 0
@@ -51,7 +53,7 @@ fun PasswordStrengthMeter(password: String, modifier: Modifier = Modifier) {
             }
             if (score >= 3) {
                 Text(
-                    text = "Segura",
+                    text = tr(StringKey.PW_STRONG),
                     fontSize = 11.5.sp,
                     fontWeight = FontWeight.Bold,
                     color = colors.loginPositive,
@@ -59,7 +61,7 @@ fun PasswordStrengthMeter(password: String, modifier: Modifier = Modifier) {
             }
         }
         Text(
-            text = "Mínimo 8 caracteres, una mayúscula y un número.",
+            text = tr(StringKey.PW_RULES),
             fontSize = 12.sp,
             color = colors.loginTextMuted,
             lineHeight = 16.8.sp,

@@ -58,10 +58,10 @@ export function alertCopy(
     case 'goal_plan_due': {
       const mark = goalMark(alert.icon)
       const wallet = shortWallet(wallets.find((w) => w.id === alert.accountId)?.name ?? '')
-      const when = alert.dueDate === today ? 'para hoy' : `para el ${shortDate(alert.dueDate, language)}`
+      const when = alert.dueDate === today ? t('alert.planDue.today') : fill(t('alert.planDue.on'), shortDate(alert.dueDate, language))
       return {
-        title: `Aporte programado a ${alert.name}`,
-        body: [{ template: `Tienes un aporte de {0} ${alert.currency} ${when} desde {1}.`, args: [{ amount: alert.amount }, wallet] }],
+        title: fill(t('alert.planDue.title'), alert.name),
+        body: [{ template: fill(t('alert.planDue.body'), '{0}', alert.currency, when, '{1}'), args: [{ amount: alert.amount }, wallet] }],
         glyph: mark.glyph,
         color: mark.color,
       }
@@ -69,16 +69,16 @@ export function alertCopy(
     case 'goal_plan_auto': {
       const mark = goalMark(alert.icon)
       return {
-        title: 'Aporte automático registrado',
-        body: [{ template: `{0} ${alert.currency} a {1} desde {2} · {3}`, args: [{ amount: alert.amount }, alert.name, shortWallet(alert.walletName), shortDate(alert.date, language)] }],
+        title: t('alert.planAuto.title'),
+        body: [{ template: fill(t('alert.planAuto.body'), '{0}', alert.currency, '{1}', '{2}', '{3}'), args: [{ amount: alert.amount }, alert.name, shortWallet(alert.walletName), shortDate(alert.date, language)] }],
         glyph: mark.glyph,
         color: mark.color,
       }
     }
     case 'tx_planned':
       return {
-        title: `${alert.name || tCategory(alert.category)} se registra el ${shortDate(alert.dueDate, language)}`,
-        body: [{ template: '{0} · {1} · te pediremos confirmarlo', args: [{ amount: alert.amount, currency: alert.currency }, shortWallet(alert.walletName)] }],
+        title: fill(t('alert.planned.title'), alert.name || tCategory(alert.category), shortDate(alert.dueDate, language)),
+        body: [{ template: t('alert.planned.body'), args: [{ amount: alert.amount, currency: alert.currency }, shortWallet(alert.walletName)] }],
         glyph: glyphOf(alert.category),
         color: categoryColor(alert.category),
       }

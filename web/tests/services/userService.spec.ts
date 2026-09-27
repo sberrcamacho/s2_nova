@@ -56,6 +56,7 @@ describe('mapMeResponse', () => {
       biometricLogin: false,
       hideAmounts: false,
       language: 'es',
+      autoLockMinutes: 5,
     })
   })
 

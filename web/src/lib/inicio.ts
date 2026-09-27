@@ -7,7 +7,7 @@ import type { AccountType, CategoryId, Goal, LanguageCode, RecurringSeries, Tran
 
 export const MONTHS_SHORT: Record<LanguageCode, string[]> = {
   es: ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'],
-  en: ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'],
+  en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
 }
 export const MONTHS_LONG: Record<LanguageCode, string[]> = {
   es: ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'],
@@ -15,9 +15,7 @@ export const MONTHS_LONG: Record<LanguageCode, string[]> = {
 }
 
 // "{0} de {1}" → fill(template, a, b)
-export function fill(template: string, ...args: (string | number)[]): string {
-  return template.replace(/\{(\d+)\}/g, (_, i) => String(args[Number(i)] ?? ''))
-}
+export { fill } from '@/lib/i18n/translations'
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
@@ -35,10 +33,10 @@ export function addDays(iso: string, days: number): string {
   return new Date(toUTC(iso) + days * 86_400_000).toISOString().slice(0, 10)
 }
 
-// "21 ago"
+// "21 ago" / "Aug 21"
 export function shortDate(iso: string, language: LanguageCode): string {
   const [, m, d] = parts(iso)
-  return `${d} ${MONTHS_SHORT[language][m - 1]}`
+  return language === 'en' ? `${MONTHS_SHORT.en[m - 1]} ${d}` : `${d} ${MONTHS_SHORT.es[m - 1]}`
 }
 
 // "Agosto 2026"

@@ -1,3 +1,4 @@
+import { tr } from '@/lib/i18n/translations'
 import { useCallback, useEffect, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Sidebar } from '@/dashboard/components/Sidebar'
@@ -5,6 +6,8 @@ import { GuideCard } from '@/dashboard/components/GuideCard'
 import { Header } from '@/dashboard/components/Header'
 import { NewTransactionPanel } from '@/components/panels/NewTransactionPanel'
 import { useAuth } from '@/state/AuthContext'
+import { NewMovementContext } from '@/state/NewMovementContext'
+import type { Transaction } from '@/types'
 import { useTranslation } from '@/state/useTranslation'
 import type { TranslationKey } from '@/lib/i18n/translations'
 
@@ -31,11 +34,11 @@ function GuestBanner() {
   return (
     <div className="mx-7 mt-[18px] flex items-center gap-3.5 rounded-[14px] border border-[rgba(108,92,231,.35)] bg-[rgba(108,92,231,.12)] px-4 py-3">
       <div className="min-w-0 flex-1">
-        <span className="text-[12.5px] font-extrabold">Modo invitado.</span>{' '}
-        <span className="text-[12px] text-v2-muted">Estás usando datos de ejemplo. No se guarda nada.</span>
+        <span className="text-[12.5px] font-extrabold">{tr('guest.title')}</span>{' '}
+        <span className="text-[12px] text-v2-muted">{tr('guest.body')}</span>
       </div>
       <button type="button" onClick={() => navigate('/register')} className="cursor-pointer rounded-[10px] bg-v2-accent px-3.5 py-2 text-[12px] font-extrabold text-white">
-        Crear cuenta
+        {tr('guest.cta')}
       </button>
     </div>
   )
@@ -45,12 +48,20 @@ export function DashboardLayout() {
   const { user } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [newTxOpen, setNewTxOpen] = useState(false)
+  const [editing, setEditing] = useState<Transaction | undefined>(undefined)
   const location = useLocation()
   const { t } = useTranslation()
   // Ajustes' sub-views (/ajustes/perfil, …) share its title.
   const titleKey = PAGE_TITLES[location.pathname] ?? (location.pathname.startsWith('/ajustes/') ? PAGE_TITLES['/ajustes'] : undefined)
   const title = titleKey ? t(titleKey) : 'S2 Nova'
-  const closeNewTx = useCallback(() => setNewTxOpen(false), [])
+  const closeNewTx = useCallback(() => {
+    setNewTxOpen(false)
+    setEditing(undefined)
+  }, [])
+  const openNewTx = useCallback((tx?: Transaction) => {
+    setEditing(tx)
+    setNewTxOpen(true)
+  }, [])
 
   // "N" opens "Nuevo movimiento" from anywhere, unless the user is typing.
   useEffect(() => {
@@ -64,7 +75,7 @@ export function DashboardLayout() {
   }, [])
 
   return (
-    <>
+    <NewMovementContext.Provider value={openNewTx}>
       <div className="flex h-screen overflow-hidden bg-v2-bg text-v2-text [line-height:normal]">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
@@ -75,8 +86,8 @@ export function DashboardLayout() {
           </main>
         </div>
       </div>
-      {newTxOpen && <NewTransactionPanel onClose={closeNewTx} />}
+      {newTxOpen && <NewTransactionPanel key={editing?.id ?? 'new'} onClose={closeNewTx} editing={editing} />}
       <GuideCard />
-    </>
+    </NewMovementContext.Provider>
   )
 }

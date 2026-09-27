@@ -22,6 +22,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.s2nova.app.ui.tr
+import com.s2nova.app.ui.StringKey
 
 @Composable
 fun ForgotPasswordScreen(onBackToLogin: () -> Unit) {
@@ -29,24 +31,24 @@ fun ForgotPasswordScreen(onBackToLogin: () -> Unit) {
     var submitted by remember { mutableStateOf(false) }
 
     AuthLayout(
-        title = if (submitted) "Revisa tu correo" else "¿Olvidaste tu contraseña?",
+        title = tr(if (submitted) StringKey.AUTH_CHECK_EMAIL else StringKey.AUTH_FORGOT),
         subtitle = if (submitted) {
-            "Si existe una cuenta con ese correo, enviamos instrucciones para restablecer tu contraseña."
+            tr(StringKey.AUTH_FORGOT_SENT)
         } else {
-            "Ingresa tu correo y te enviaremos instrucciones para recuperarla."
+            tr(StringKey.AUTH_FORGOT_HINT)
         },
     ) {
         if (submitted) {
             Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
                 Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(bottom = 12.dp))
-                TextButton(onClick = onBackToLogin) { Text("Volver a inicio de sesión") }
+                TextButton(onClick = onBackToLogin) { Text(tr(StringKey.AUTH_BACK_TO_LOGIN)) }
             }
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = { Text("Correo electrónico") },
+                    label = { Text(tr(StringKey.AUTH_EMAIL_FULL)) },
                     leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null) },
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
@@ -58,10 +60,10 @@ fun ForgotPasswordScreen(onBackToLogin: () -> Unit) {
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("Enviar instrucciones", modifier = Modifier.padding(vertical = 6.dp))
+                    Text(tr(StringKey.AUTH_SEND), modifier = Modifier.padding(vertical = 6.dp))
                 }
                 TextButton(onClick = onBackToLogin, modifier = Modifier.fillMaxWidth()) {
-                    Text("Volver a inicio de sesión")
+                    Text(tr(StringKey.AUTH_BACK_TO_LOGIN))
                 }
             }
         }

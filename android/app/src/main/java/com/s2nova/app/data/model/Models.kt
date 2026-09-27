@@ -74,9 +74,7 @@ data class CategoryNode(
     val usage: Int,
 )
 
-enum class CounterpartyKind(val label: String) {
-    EMPLOYER("Empleador"), CLIENT("Cliente"), FAMILY("Familia"), FRIEND("Amigo"), OTHER("Otro"),
-}
+enum class CounterpartyKind { EMPLOYER, CLIENT, FAMILY, FRIEND, OTHER }
 
 // The receipt attached to a movement (NEW_MOVEMENT.md §7), metadata only;
 // the bytes are fetched on demand.
@@ -279,14 +277,11 @@ data class UserPreferences(
     // Home hides the total balance behind a blur until tapped; Settings'
     // "Difuminar el saldo total" switch controls this default state.
     val blurBalance: Boolean = false,
-    // Minutes of inactivity before the app re-asks for the password (or
-    // biometrics) — 0 means "Nunca" (auto-lock disabled). See
-    // ui/components/AppLockGate.kt for the enforcement. Defaults to 0, not
-    // the DB row's own default of 5, so a missing/not-yet-fetched value
-    // never silently turns on a password gate for an account whose PASSWORD
-    // credential the user (e.g. a Google-primary user) doesn't use day to
-    // day.
-    val autoLockMinutes: Int = 0,
+    // "Cierre automático": minutes without touching the app before it signs
+    // out for real — 0 means "Nunca". Enforced by ui/components/IdleLogout.kt
+    // and, as a backstop, by the server (backend lib/sessions.ts). 5 like
+    // the server's own default.
+    val autoLockMinutes: Int = 5,
     val currency: Currency = Currency.COP,
     val language: AppLanguage = AppLanguage.ES,
     // Mini-guides already dismissed, and "Omitir guías" (ONBOARDING.md §3).

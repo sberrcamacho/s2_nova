@@ -44,6 +44,8 @@ import com.s2nova.app.ui.components.NovaPrimaryButton
 import com.s2nova.app.ui.components.NovaTextField
 import com.s2nova.app.ui.theme.NovaColors
 import kotlinx.coroutines.launch
+import com.s2nova.app.ui.tr
+import com.s2nova.app.ui.StringKey
 
 @Composable
 fun LoginScreen(
@@ -77,7 +79,7 @@ fun LoginScreen(
             AuthLogo()
             Column {
                 Text(
-                    text = "Iniciar sesión",
+                    text = tr(StringKey.AUTH_LOGIN_TITLE),
                     fontSize = 30.sp,
                     fontWeight = FontWeight.ExtraBold,
                     letterSpacing = (-0.03).em,
@@ -85,7 +87,7 @@ fun LoginScreen(
                     color = MaterialTheme.colorScheme.onBackground,
                 )
                 Text(
-                    text = "Tus finanzas, siempre al día.",
+                    text = tr(StringKey.AUTH_LOGIN_SUB),
                     fontSize = 13.5.sp,
                     color = colors.loginTextMuted,
                     modifier = Modifier.padding(top = 7.dp),
@@ -107,13 +109,13 @@ fun LoginScreen(
                 NovaTextField(
                     value = email,
                     onValueChange = { email = it; error = null },
-                    label = "CORREO",
+                    label = tr(StringKey.AUTH_EMAIL),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 )
                 NovaTextField(
                     value = password,
                     onValueChange = { password = it; error = null },
-                    label = "CONTRASEÑA",
+                    label = tr(StringKey.AUTH_PASSWORD),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     isPassword = true,
                     passwordVisible = showPassword,
@@ -126,7 +128,7 @@ fun LoginScreen(
 
                 Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = "¿Olvidaste tu contraseña?",
+                        text = tr(StringKey.AUTH_FORGOT),
                         fontSize = 12.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = colors.loginPrimary,
@@ -139,7 +141,7 @@ fun LoginScreen(
 
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 NovaPrimaryButton(
-                    text = "Entrar",
+                    text = tr(StringKey.AUTH_ENTER),
                     onClick = {
                         loading = true
                         scope.launch {
@@ -151,7 +153,7 @@ fun LoginScreen(
                                 }
                                 .onFailure {
                                     loading = false
-                                    error = it.toUserMessage("Correo o contraseña incorrectos.")
+                                    error = it.toUserMessage(tr(StringKey.AUTH_BAD_CREDENTIALS))
                                 }
                         }
                     },
@@ -166,7 +168,7 @@ fun LoginScreen(
                     ) {
                         HorizontalDivider(modifier = Modifier.weight(1f))
                         Text(
-                            text = "O",
+                            text = tr(StringKey.AUTH_OR),
                             fontSize = 10.5.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.08.em,
@@ -193,7 +195,7 @@ fun LoginScreen(
                                         error = if (it is androidx.credentials.exceptions.GetCredentialCancellationException) {
                                             null
                                         } else {
-                                            it.toUserMessage("No pudimos iniciar sesión con Google.")
+                                            it.toUserMessage(tr(StringKey.AUTH_GOOGLE_ERR))
                                         }
                                     }
                             }
@@ -215,10 +217,10 @@ fun LoginScreen(
                     verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
                 ) {
                     com.s2nova.app.ui.components.V2Icon(com.s2nova.app.ui.components.V2Icons.enter, MaterialTheme.colorScheme.onSurfaceVariant, 18.dp)
-                    Text("Continuar como invitado", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                    Text(tr(StringKey.AUTH_GUEST), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                 }
                 Text(
-                    "Explora una cuenta de ejemplo. No se guarda nada.",
+                    tr(StringKey.AUTH_GUEST_HINT),
                     fontSize = 11.5.sp,
                     color = colors.textDim,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -241,12 +243,12 @@ fun LoginScreen(
                 .padding(bottom = 26.dp),
         ) {
             Text(
-                text = "¿Nuevo aquí? ",
+                text = tr(StringKey.AUTH_NEW_HERE) + " ",
                 fontSize = 13.sp,
                 color = colors.loginTextMuted,
             )
             Text(
-                text = "Crear cuenta",
+                text = tr(StringKey.AUTH_CREATE),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
                 color = if (isDark) MaterialTheme.colorScheme.onBackground else colors.loginPrimary,

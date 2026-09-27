@@ -1,3 +1,4 @@
+import { tr } from '@/lib/i18n/translations'
 import { LogoMark } from '@/components/ui/Logo'
 
 export function SplashScreen() {
@@ -9,7 +10,7 @@ export function SplashScreen() {
           S2 <span className="text-ink-secondary">Nova</span>
         </p>
         <p className="text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-tertiary">
-          Finanzas personales
+          {tr('brand.tagline')}
         </p>
       </div>
     </div>

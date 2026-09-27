@@ -28,6 +28,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.R
 import com.s2nova.app.data.ThemeController
+import com.s2nova.app.ui.tr
+import com.s2nova.app.ui.StringKey
 
 private val GoogleButtonTextColor = Color(0xFF1F1F28)
 private val GoogleButtonBorderLight = Color(0xFFEBEBF2)
@@ -38,7 +40,7 @@ fun GoogleSignInButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     loading: Boolean = false,
-    text: String = "Continuar con Google",
+    text: String = tr(StringKey.AUTH_GOOGLE),
 ) {
     val darkOverride by ThemeController.darkOverride.collectAsStateWithLifecycle()
     val isDark = darkOverride ?: isSystemInDarkTheme()

@@ -14,7 +14,7 @@ import {
   Label,
   ModalFooter,
   ModalTitle,
-  MoneyInput,
+  AmountField,
   OptionTile,
   PlanIconGrid,
   SaveButton,
@@ -30,7 +30,10 @@ import { guessCategory, guessPlanIcon } from '@/lib/taxonomy'
 import { budgetService, type BudgetDraft, type BudgetProgress } from '@/services/budgetService'
 import { useCurrency } from '@/state/useCurrency'
 import { useToast } from '@/state/ToastContext'
+import { useTranslation } from '@/state/useTranslation'
+import { fill } from '@/lib/i18n/translations'
 import type { BudgetKind, Wallet } from '@/types'
+import { evalExpr, numStr } from '@/lib/nuevoMovimiento'
 
 type Section = 'cat' | 'wallets' | 'period' | null
 
@@ -55,7 +58,7 @@ function draftOf(b: BudgetProgress | null): Draft {
   return {
     kind: b.kind,
     name: b.name ?? '',
-    limit: String(b.limit),
+    limit: numStr(b.limit),
     cat: custom ? null : (parentOf(b.category)?.id ?? null),
     sub: custom ? null : categoryNode(b.category)?.parentId ? (b.category ?? null) : null,
     icon: b.icon ?? 'other',
@@ -74,6 +77,7 @@ function draftOf(b: BudgetProgress | null): Draft {
 // that open inline sections. PLANS.md §4.
 export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: BudgetProgress | null; wallets: Wallet[]; onClose: () => void; onSaved: () => void }) {
   useCategories()
+  const { t } = useTranslation()
   const { format } = useCurrency()
   const { showToast } = useToast()
   const [d, setD] = useState<Draft>(() => draftOf(budget))
@@ -87,7 +91,7 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
   }
 
   const custom = d.kind === 'custom'
-  const valid = Number(d.limit) > 0 && (d.period !== 'custom' || (!!d.start && !!d.end && d.end >= d.start)) && (custom ? !!d.name.trim() : !!d.cat)
+  const valid = evalExpr(d.limit) > 0 && (d.period !== 'custom' || (!!d.start && !!d.end && d.end >= d.start)) && (custom ? !!d.name.trim() : !!d.cat)
   const leaf = d.sub ?? d.cat
   const wl = d.walletIds.length ? d.walletIds.map((id) => shortWallet(wallets.find((w) => w.id === id)?.name ?? '')) : null
   const nameGuess = custom ? null : d.auto ? guessCategory(d.name, false) : null
@@ -104,15 +108,15 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
     : [
         {
           k: 'cat',
-          label: d.cat ? categoryName(leaf) : 'Categoría',
+          label: d.cat ? categoryName(leaf) : t('bud.category'),
           on: !!d.cat,
           icon: d.cat ? <Icon paths={categoryGlyph(leaf)} size={18} color={categoryColor(d.cat)} /> : <Icon paths={IC.target} size={18} color="var(--v2-muted)" />,
         },
-        { k: 'wallets', label: wl ? (wl.length === 1 ? wl[0] : `${wl.length} billeteras`) : 'Billeteras', on: !!wl, icon: <Icon paths={IC.wallet} size={18} color={wl ? 'var(--v2-accent2)' : 'var(--v2-muted)'} /> },
+        { k: 'wallets', label: wl ? (wl.length === 1 ? wl[0] : fill(t('bud.nWallets'), wl.length)) : t('bud.wallets'), on: !!wl, icon: <Icon paths={IC.wallet} size={18} color={wl ? 'var(--v2-accent2)' : 'var(--v2-muted)'} /> },
       ]
   tiles.push({
     k: 'period',
-    label: d.period === 'custom' ? (d.start && d.end ? `${shortDayMonth(d.start)} – ${shortDayMonth(d.end)}` : 'Rango') : 'Mensual',
+    label: d.period === 'custom' ? (d.start && d.end ? `${shortDayMonth(d.start)} – ${shortDayMonth(d.end)}` : t('bud.range')) : t('bud.monthly'),
     on: d.period === 'custom',
     icon: <Icon paths={IC.cal} size={18} color={d.period === 'custom' ? 'var(--v2-accent2)' : 'var(--v2-muted)'} />,
   })
@@ -120,20 +124,20 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
   const scopeNote = custom
     ? ''
     : !d.cat
-      ? 'Elige la categoría que cubre este presupuesto.'
-      : (d.sub ? `Solo ${categoryLabel(d.sub)}` : `Todos los gastos de ${categoryName(d.cat)}`) +
-        (wl ? `, pagados desde ${wl.join(', ')}` : ', de todas tus billeteras') +
-        ` · ${d.period === 'custom' ? 'no se reinicia' : 'se reinicia cada mes'}.`
+      ? t('bud.scope.pick')
+      : (d.sub ? fill(t('bud.scope.only'), categoryLabel(d.sub)) : fill(t('bud.scope.all'), categoryName(d.cat))) +
+        (wl ? fill(t('bud.scope.from'), wl.join(', ')) : t('bud.scope.allWallets')) +
+        ` · ${t(d.period === 'custom' ? 'bud.scope.noReset' : 'bud.scope.reset')}.`
 
   const save = async () => {
-    if (!valid) return setErr(custom && !d.name.trim() ? 'Escribe un nombre.' : !custom && !d.cat ? 'Elige una categoría.' : 'Revisa el monto y el periodo.')
+    if (!valid) return setErr(t(custom && !d.name.trim() ? 'bud.err.name' : !custom && !d.cat ? 'nm.err.category' : 'bud.err.amount'))
     const draft: BudgetDraft = {
       kind: d.kind,
       name: d.name.trim() || null,
       category: custom ? undefined : (leaf ?? undefined),
       icon: custom ? d.icon : undefined,
       walletIds: custom ? [] : d.walletIds,
-      limit: Number(d.limit),
+      limit: evalExpr(d.limit),
       period: d.period,
       startDate: d.period === 'custom' ? d.start : undefined,
       endDate: d.period === 'custom' ? d.end : undefined,
@@ -147,10 +151,10 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
         await budgetService.createBudget(draft)
         await budgetService.deleteBudget(budget.id)
       }
-      showToast(budget ? 'Presupuesto actualizado' : 'Presupuesto creado', 'success')
+      showToast(t(budget ? 'bud.toast.updated' : 'bud.toast.created'), 'success')
       onSaved()
     } catch (e) {
-      setErr(e instanceof ApiError && e.status === 409 ? 'Ya tienes un presupuesto para esa categoría en ese periodo.' : e instanceof Error ? e.message : 'No se pudo guardar.')
+      setErr(e instanceof ApiError && e.status === 409 ? t('bud.err.taken') : e instanceof Error ? e.message : t('common.saveError'))
       setBusy(false)
     }
   }
@@ -162,11 +166,11 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
       await budgetService.deleteBudget(budget.id)
       onSaved()
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'No se pudo eliminar.')
+      setErr(e instanceof Error ? e.message : t('common.deleteError'))
     }
   }
 
-  const title = budget ? 'Editar presupuesto' : 'Nuevo presupuesto'
+  const title = t(budget ? 'bud.edit' : 'bud.new')
   const label = budget ? (budget.name ?? categoryName(budget.category)) : ''
 
   return (
@@ -177,8 +181,8 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
         <div className="flex gap-1.5">
           {(
             [
-              ['category', 'Por categoría'],
-              ['custom', 'Personalizado'],
+              ['category', t('bud.kind.category')],
+              ['custom', t('bud.kind.custom')],
             ] as const
           ).map(([k, text]) => (
             <Flat
@@ -195,40 +199,40 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
           ))}
         </div>
         <div className="text-[11.5px] text-v2-dim">
-          {custom ? 'Tú decides qué gastos cuentan: asígnalos desde Nuevo movimiento › Presupuesto.' : 'Los gastos de la categoría elegida suman solos, en las billeteras que indiques.'}
+          {t(custom ? 'bud.kind.customHint' : 'bud.kind.categoryHint')}
         </div>
       </div>
 
       <Field
-        label="NOMBRE"
-        note={
+        label={t('bud.name')}
+        note={t(
           custom
             ? d.iconAuto && guessPlanIcon(d.name)
-              ? 'Icono sugerido por el nombre. Elige otro abajo si quieres.'
-              : 'Elige un icono para reconocerlo de un vistazo.'
+              ? 'bud.note.iconGuess'
+              : 'bud.note.iconPick'
             : nameGuess
-              ? 'Categoría detectada por el nombre. Puedes cambiarla.'
-              : 'Haz clic en el icono para elegir la categoría.'
-        }
+              ? 'bud.note.catGuess'
+              : 'bud.note.catPick',
+        )}
       >
         <div className="flex items-center gap-2.5">
-          <button type="button" onClick={() => setSection(custom ? null : 'cat')} title="Elegir categoría" className="relative flex cursor-pointer">
+          <button type="button" onClick={() => setSection(custom ? null : 'cat')} title={t('bud.pickCategory')} className="relative flex cursor-pointer">
             {custom ? <PlanMark icon={d.icon} box={38} /> : <CategoryMark category={leaf ?? 'exp.other'} box={38} />}
             {!custom && (
               <span className="absolute -bottom-0.5 -right-0.5 box-border flex h-[15px] w-[15px] items-center justify-center rounded-full border-2 border-v2-surface bg-v2-accent text-[8px] text-white">▾</span>
             )}
           </button>
-          <input value={d.name} onChange={(e) => onName(e.target.value)} placeholder={custom ? 'Cumpleaños, viaje, remodelación…' : 'Mercado, salidas… (opcional)'} className={`${inputClass} flex-1`} />
+          <input value={d.name} onChange={(e) => onName(e.target.value)} placeholder={t(custom ? 'bud.ph.custom' : 'bud.ph.category')} className={`${inputClass} flex-1`} />
         </div>
       </Field>
 
-      <Field label="MONTO">
-        <MoneyInput digits={d.limit} onDigits={(v) => set({ limit: v })} />
+      <Field label={t('nm.amount')}>
+        <AmountField expr={d.limit} onExpr={(v) => set({ limit: v })} label={t('bud.limit')} />
       </Field>
 
       {custom && (
         <div className="flex flex-col gap-2">
-          <Label>ICONO</Label>
+          <Label>{t('bud.icon')}</Label>
           <PlanIconGrid value={d.icon} onPick={(k) => set({ icon: k, iconAuto: false })} />
         </div>
       )}
@@ -250,7 +254,7 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
                 on={d.cat === x.id}
                 color={x.color}
                 chip={<CategoryMark category={x.id} box={36} />}
-                label={x.name}
+                label={categoryName(x.id)}
                 onClick={() => {
                   set({ cat: x.id, sub: null, auto: false })
                   if (!childCategories(x.id, false).length) setSection(null)
@@ -260,9 +264,9 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
           </div>
           {d.cat && childCategories(d.cat, false).length > 0 && (
             <>
-              <Label>Subcategoría de {categoryName(d.cat)}</Label>
+              <Label>{fill(t('nm.subOf'), categoryName(d.cat))}</Label>
               <div className="grid grid-cols-[repeat(5,minmax(0,1fr))] gap-1">
-                {[{ id: null as string | null, name: 'Todas' }, ...childCategories(d.cat, false)].map((x) => (
+                {[{ id: null as string | null, name: t('bud.all') }, ...childCategories(d.cat, false).map((s) => ({ id: s.id as string | null, name: categoryName(s.id) }))].map((x) => (
                   <GridCell
                     key={x.id ?? 'all'}
                     on={d.sub === x.id}
@@ -283,10 +287,10 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
 
       {section === 'wallets' && !custom && (
         <SectionBox className="gap-2">
-          <div className="text-[11.5px] text-v2-dim">Elige desde qué billeteras cuentan los gastos.</div>
+          <div className="text-[11.5px] text-v2-dim">{t('bud.walletsHint')}</div>
           <div className="flex flex-wrap gap-1.5">
             <Flat on={!wl} onClick={() => set({ walletIds: [] })}>
-              Todas
+              {t('bud.all')}
             </Flat>
             {wallets.map((w) => {
               const on = d.walletIds.includes(w.id)
@@ -304,10 +308,10 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
         <SectionBox>
           <div className="flex flex-wrap gap-1.5">
             <Flat on={d.period === 'monthly'} onClick={() => set({ period: 'monthly' })}>
-              Mensual
+              {t('bud.monthly')}
             </Flat>
             <Flat on={d.period === 'custom'} onClick={() => set({ period: 'custom' })}>
-              Rango personalizado
+              {t('bud.customRange')}
             </Flat>
           </div>
           {d.period === 'custom' && (
@@ -321,17 +325,17 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
 
       {err && <ErrorBox>{err}</ErrorBox>}
 
-      <ModalFooter left={budget && <DangerLink onClick={() => setConfirming(true)}>Eliminar presupuesto</DangerLink>}>
+      <ModalFooter left={budget && <DangerLink onClick={() => setConfirming(true)}>{t('bud.delete')}</DangerLink>}>
         <CancelButton onClick={onClose} />
         <SaveButton valid={valid} busy={busy} onClick={() => void save()} />
       </ModalFooter>
 
       {confirming && budget && (
         <ConfirmDialog
-          title={`Eliminar el presupuesto “${label}”`}
-          lines={[`${format(budget.spent)} gastados de ${format(budget.limit)} · ${budgetPeriodLabel(budget)}`, 'Su historial de avance y sus alertas', 'Tus movimientos no se borran; solo dejan de contar para este límite']}
-          ack="Entiendo que el presupuesto y su historial se eliminan."
-          cta="Eliminar presupuesto"
+          title={fill(t('bud.delete.title'), label)}
+          lines={[fill(t('bud.delete.spent'), format(budget.spent), format(budget.limit), budgetPeriodLabel(budget)), t('bud.delete.history'), t('bud.delete.keep')]}
+          ack={t('bud.delete.ack')}
+          cta={t('bud.delete')}
           onCancel={() => setConfirming(false)}
           onConfirm={() => void remove()}
         />

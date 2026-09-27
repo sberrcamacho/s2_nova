@@ -70,7 +70,6 @@ import com.s2nova.app.ui.components.DraftSheetPrimaryButton
 import com.s2nova.app.ui.components.MockupIcons
 import com.s2nova.app.ui.components.NovaDraftSheet
 import com.s2nova.app.ui.components.NovaProgressBar
-import com.s2nova.app.ui.components.SheetAmountBox
 import com.s2nova.app.ui.components.SheetBox
 import com.s2nova.app.ui.components.SheetInput
 import com.s2nova.app.ui.components.SheetLabel
@@ -84,6 +83,7 @@ import com.s2nova.app.ui.suggestExpenseCategory
 import com.s2nova.app.ui.theme.NovaColors
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
+import com.s2nova.app.ui.tr
 
 @Composable
 fun PlanesScreen(initialTab: Int = 0, initialLoanSide: LoanKind = LoanKind.LENT) {
@@ -262,7 +262,7 @@ private fun BudgetsTab() {
                         if (d.id == null) AppContainer.budgetRepository.create(save) else AppContainer.budgetRepository.update(d.id, save)
                         draft = null
                     } catch (e: HttpException) {
-                        draft = d.copy(error = if (e.code() == 409) "Ya existe un presupuesto para esa categoría en ese periodo." else t(StringKey.COMMON_SAVE_ERROR))
+                        draft = d.copy(error = if (e.code() == 409) tr(StringKey.BUD_TAKEN) else t(StringKey.COMMON_SAVE_ERROR))
                     } catch (e: Exception) {
                         draft = d.copy(error = t(StringKey.COMMON_SAVE_ERROR))
                     }
@@ -274,15 +274,15 @@ private fun BudgetsTab() {
                 val label = b.budget.name ?: categoryName(b.budget.category)
                 Confirm.ask(
                     ConfirmRequest(
-                        title = "Eliminar el presupuesto “$label”",
+                        title = tr(StringKey.BUD_DELETE_TITLE, label),
                         lines = listOf(
-                            formatMoney(b.spent, principal) + " gastados de " + formatMoney(b.budget.limit, principal) +
-                                if (b.budget.period == BudgetPeriod.CUSTOM) " · " + fmtDate(b.budget.startDate) + " – " + fmtDate(b.budget.endDate) else " este mes",
-                            "Su historial de avance y sus alertas",
-                            "Tus movimientos no se borran; solo dejan de contar para este límite",
+                            tr(StringKey.BUD_DELETE_SPENT, formatMoney(b.spent, principal), formatMoney(b.budget.limit, principal)) +
+                                if (b.budget.period == BudgetPeriod.CUSTOM) " · " + fmtDate(b.budget.startDate) + " – " + fmtDate(b.budget.endDate) else " " + tr(StringKey.BUD_THIS_MONTH),
+                            tr(StringKey.BUD_DELETE_HISTORY),
+                            tr(StringKey.BUD_DELETE_KEEP),
                         ),
-                        ack = "Entiendo que el presupuesto y su historial se eliminan.",
-                        cta = "Eliminar presupuesto",
+                        ack = tr(StringKey.BUD_DELETE_ACK),
+                        cta = tr(StringKey.BUD_DELETE),
                         onConfirm = {
                             draft = null
                             scope.launch { runCatching { AppContainer.budgetRepository.delete(b.budget.id) } }
@@ -307,9 +307,9 @@ private fun BudgetCard(progress: BudgetProgress, onEdit: () -> Unit) {
     val custom = b.kind == BudgetKind.CUSTOM
     val repo = AppContainer.categoryRepository
     val walletNames = AppContainer.walletRepository.wallets.value.filter { it.id in b.walletIds }.map { shortWallet(it.name) }
-    val scope = if (custom) "Personalizado · ${b.assignedCount} movimientos asignados"
-    else repo.label(b.category) + (if (repo.node(b.category)?.parentId != null) "" else " · Todas") + (if (walletNames.isNotEmpty()) " · solo " + walletNames.joinToString(", ") else "")
-    val period = if (b.period == BudgetPeriod.CUSTOM) fmtDate(b.startDate) + " – " + fmtDate(b.endDate) + " · no se reinicia" else "Mensual"
+    val scope = if (custom) tr(StringKey.BUD_SCOPE_CUSTOM, b.assignedCount)
+    else repo.label(b.category) + (if (repo.node(b.category)?.parentId != null) "" else " · " + tr(StringKey.BUD_ALL)) + (if (walletNames.isNotEmpty()) tr(StringKey.BUD_SCOPE_ONLY_WALLETS, walletNames.joinToString(", ")) else "")
+    val period = if (b.period == BudgetPeriod.CUSTOM) fmtDate(b.startDate) + " – " + fmtDate(b.endDate) + " · " + tr(StringKey.BUD_SCOPE_NO_RESET) else tr(StringKey.NM_FREQ_MONTHLY)
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -329,7 +329,7 @@ private fun BudgetCard(progress: BudgetProgress, onEdit: () -> Unit) {
                 }
                 Text(scope, fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), maxLines = 1)
                 Text(
-                    formatMoney(progress.spent, principal) + " de " + formatMoney(b.limit, principal) + " · " + period,
+                    tr(StringKey.NM_X_OF_Y, formatMoney(progress.spent, principal), formatMoney(b.limit, principal)) + " · " + period,
                     fontSize = 11.5.sp, color = colors.textDim, modifier = Modifier.padding(top = 3.dp), style = TextStyle(fontFeatureSettings = TNUM),
                 )
             }

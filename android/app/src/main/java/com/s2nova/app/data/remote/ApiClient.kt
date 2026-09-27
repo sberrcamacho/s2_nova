@@ -2,6 +2,7 @@ package com.s2nova.app.data.remote
 
 import android.content.Context
 import com.s2nova.app.BuildConfig
+import com.s2nova.app.data.local.SessionEndReason
 import com.s2nova.app.data.local.SessionStore
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
@@ -81,25 +82,7 @@ object ApiClient {
                 }
                 chain.proceed(request)
             }
-            .authenticator { _, response ->
-                if (response.request.header("Authorization") == null) return@authenticator null
-                if (priorResponseCount(response) >= 2) return@authenticator null
-
-                val refreshToken = runBlocking { sessionStore.refreshTokenOnce() } ?: return@authenticator null
-                val refreshed = try {
-                    runBlocking { authApi.refresh(RefreshRequest(refreshToken)) }
-                } catch (error: Exception) {
-                    null
-                }
-
-                if (refreshed == null) {
-                    runBlocking { sessionStore.expire() }
-                    return@authenticator null
-                }
-
-                runBlocking { sessionStore.saveSession(refreshed.accessToken, refreshed.refreshToken) }
-                response.request.newBuilder().header("Authorization", "Bearer ${refreshed.accessToken}").build()
-            }
+            .authenticator { _, response -> renewAndRetry(sessionStore, response) }
             .build()
 
         Retrofit.Builder()
@@ -109,6 +92,58 @@ object ApiClient {
             .build()
             .create()
     }
+
+    private val refreshLock = Any()
+
+    // A 401 from the backend's auth layer carries a `code` (see
+    // backend/src/plugins/auth.ts): "token_invalid" means renew the access
+    // token and retry; "session_ended"/"session_idle" mean the session is
+    // over. Any other 401 (a wrong current password, say) is the route's
+    // own answer and passes through untouched.
+    private fun renewAndRetry(sessionStore: SessionStore, response: Response): okhttp3.Request? {
+        val sentToken = response.request.header("Authorization")?.removePrefix("Bearer ") ?: return null
+        if (priorResponseCount(response) >= 2) return null
+        val code = runCatching { json.parseToJsonElement(response.peekBody(4096).string()) }
+            .getOrNull()?.let { (it as? kotlinx.serialization.json.JsonObject)?.get("code") }
+            ?.let { (it as? kotlinx.serialization.json.JsonPrimitive)?.content }
+
+        when (code) {
+            "session_idle" -> return endSession(sessionStore, SessionEndReason.IDLE)
+            "session_ended" -> return endSession(sessionStore, SessionEndReason.EXPIRED)
+            "token_invalid" -> Unit
+            else -> return null
+        }
+
+        // One refresh at a time: requests that failed together wait here,
+        // and the ones after the first find the token already renewed —
+        // presenting the same refresh token twice would look like reuse.
+        synchronized(refreshLock) {
+            val current = runBlocking { sessionStore.accessTokenOnce() } ?: return null
+            if (current != sentToken) return response.request.withToken(current)
+
+            val refreshToken = runBlocking { sessionStore.refreshTokenOnce() } ?: return null
+            val refreshed = try {
+                runBlocking { authApi.refresh(RefreshRequest(refreshToken)) }
+            } catch (error: retrofit2.HttpException) {
+                // The server refused the refresh token: this session is over.
+                val idle = error.response()?.errorBody()?.string()?.contains("session_idle") == true
+                return endSession(sessionStore, if (idle) SessionEndReason.IDLE else SessionEndReason.EXPIRED)
+            } catch (error: Exception) {
+                // Offline or the backend is waking up — not proof the session
+                // is dead, so keep it and let this request fail on its own.
+                return null
+            }
+            runBlocking { sessionStore.saveSession(refreshed.accessToken, refreshed.refreshToken) }
+            return response.request.withToken(refreshed.accessToken)
+        }
+    }
+
+    private fun endSession(sessionStore: SessionStore, reason: SessionEndReason): okhttp3.Request? {
+        runBlocking { sessionStore.expire(reason) }
+        return null
+    }
+
+    private fun okhttp3.Request.withToken(token: String) = newBuilder().header("Authorization", "Bearer $token").build()
 
     private fun priorResponseCount(response: Response): Int {
         var count = 1

@@ -54,6 +54,7 @@ import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.theme.NovaColors
 import com.s2nova.app.ui.theme.NovaFontFamily
 import kotlinx.coroutines.launch
+import com.s2nova.app.ui.tr
 
 // Auto-lock choices in minutes; 0 is "Nunca" (see backend me.ts).
 private val LOCK_OPTIONS = listOf(1, 5, 15, 60, 0)
@@ -154,15 +155,15 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
                 val cats = AppContainer.categoryRepository
                 val customCount = cats.all().count { it.custom }
                 LinkCard(
-                    "Categorías",
-                    "${cats.parents(false).size} de gasto · ${cats.parents(true).size} de ingreso" + if (customCount > 0) " · $customCount tuyas" else "",
+                    tr(StringKey.CAT_TITLE),
+                    tr(StringKey.SET_CAT_SUMMARY, cats.parents(false).size, cats.parents(true).size) + if (customCount > 0) tr(StringKey.SET_CAT_CUSTOM, customCount) else "",
                     Modifier.padding(top = 16.dp),
                     onOpenCategories,
                 )
                 val currencies = AppContainer.currencyRepository.currencies.value
                 val principal = AppContainer.currencyRepository.principal
                 val others = currencies.filter { it.code != principal }.map { it.code }
-                LinkCard("Monedas", "$principal principal" + if (others.isNotEmpty()) " · " + others.joinToString(", ") else "", Modifier, onOpenCurrencies)
+                LinkCard(tr(StringKey.CUR_TITLE), tr(StringKey.SET_CUR_DETAIL, principal) + if (others.isNotEmpty()) " · " + others.joinToString(", ") else "", Modifier, onOpenCurrencies)
 
                 SectionTitle(t(StringKey.SETTINGS_PRIVACY_SESSION), modifier = Modifier.padding(top = 16.dp))
                 NovaCard(modifier = Modifier.fillMaxWidth()) {
@@ -217,12 +218,12 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
                 // "Ver las guías otra vez" resets the mini-guides (ONBOARDING.md §3).
                 NovaCard(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), onClick = {
                     scope.launch { AppContainer.authRepository.updateGuides(emptySet(), false) }
-                    com.s2nova.app.ui.Snack.show("Verás una guía corta en cada pantalla principal.")
+                    com.s2nova.app.ui.Snack.show(tr(StringKey.SET_GUIDES_TOAST))
                 }) {
                     Row(modifier = Modifier.padding(17.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Ver las guías otra vez", fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-                            Text("Una guía corta en cada pantalla principal", fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 3.dp))
+                            Text(tr(StringKey.SET_GUIDES_AGAIN), fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+                            Text(tr(StringKey.SET_GUIDES_DETAIL), fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 3.dp))
                         }
                         Text("→", fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }

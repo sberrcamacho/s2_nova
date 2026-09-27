@@ -32,6 +32,15 @@ export const authService = {
     return completeSession(response)
   },
 
+  // "Cierre automático": tells the server the user is still active.
+  async activity(): Promise<void> {
+    try {
+      await apiClient.post<void>('/auth/activity')
+    } catch {
+      // A missed heartbeat only brings the server's own idle check closer.
+    }
+  },
+
   async logout(): Promise<void> {
     try {
       await apiClient.post<void>('/auth/logout', undefined, { skipAuthRetry: true })

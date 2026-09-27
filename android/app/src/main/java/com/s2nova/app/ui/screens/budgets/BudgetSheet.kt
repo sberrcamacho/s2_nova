@@ -62,6 +62,8 @@ import com.s2nova.app.ui.screens.addtransaction.GridOf
 import com.s2nova.app.ui.screens.addtransaction.shortWallet
 import com.s2nova.app.ui.suggestExpenseCategory
 import com.s2nova.app.ui.theme.NovaColors
+import com.s2nova.app.ui.tr
+import com.s2nova.app.ui.StringKey
 
 // Budget create/edit (PLANS.md §4): kind switch, Nombre with its tappable
 // mark (▾), Monto, the inline Icono grid for Personalizado, and option tiles
@@ -84,7 +86,7 @@ data class BudgetEditDraft(
     val error: String? = null,
 ) {
     val custom get() = kind == BudgetKind.CUSTOM
-    val valid get() = (limit.toDoubleOrNull() ?: 0.0) > 0 &&
+    val valid get() = com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(limit) > 0 &&
         (period != BudgetPeriod.CUSTOM || (start.isNotBlank() && end.isNotBlank() && end >= start)) &&
         (if (custom) name.isNotBlank() else category != null)
 
@@ -97,7 +99,7 @@ data class BudgetEditDraft(
             category = if (custom) null else scope,
             icon = if (custom) icon else null,
             walletIds = if (custom) emptyList() else walletIds,
-            limit = limit.toDouble(),
+            limit = com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(limit),
             period = period,
             startDate = if (period == BudgetPeriod.CUSTOM) start else null,
             endDate = if (period == BudgetPeriod.CUSTOM) end else null,
@@ -110,7 +112,7 @@ data class BudgetEditDraft(
             val repo = AppContainer.categoryRepository
             val node = repo.node(b.category)
             return BudgetEditDraft(
-                id = b.id, kind = b.kind, name = b.name ?: repo.name(b.category), limit = b.limit.toLong().toString(),
+                id = b.id, kind = b.kind, name = b.name ?: repo.name(b.category), limit = com.s2nova.app.ui.screens.addtransaction.AmountPad.numStr(b.limit),
                 category = node?.parentId ?: b.category, sub = if (node?.parentId != null) b.category else null,
                 icon = b.icon ?: "other", iconAuto = false, walletIds = b.walletIds, period = b.period,
                 start = b.startDate.orEmpty(), end = b.endDate.orEmpty(), auto = false,
@@ -132,20 +134,20 @@ fun BudgetSheet(draft: BudgetEditDraft, onChange: (BudgetEditDraft) -> Unit, onD
 
     NovaDraftSheet(onDismiss = onDismiss) {
         Column(Modifier.verticalScroll(rememberScrollState())) {
-            SheetHeader(if (d.id != null) "Editar presupuesto" else "Nuevo presupuesto", bottom = 16.dp)
+            SheetHeader(tr(if (d.id != null) StringKey.BUD_EDIT else StringKey.BUD_NEW), bottom = 16.dp)
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Column {
                     PillRow {
-                        V2Pill("Por categoría", !d.custom, { if (d.id == null) onChange(d.copy(kind = BudgetKind.CATEGORY)) })
-                        V2Pill("Personalizado", d.custom, { if (d.id == null) onChange(d.copy(kind = BudgetKind.CUSTOM)) })
+                        V2Pill(tr(StringKey.BUD_KIND_CATEGORY), !d.custom, { if (d.id == null) onChange(d.copy(kind = BudgetKind.CATEGORY)) })
+                        V2Pill(tr(StringKey.BUD_KIND_CUSTOM), d.custom, { if (d.id == null) onChange(d.copy(kind = BudgetKind.CUSTOM)) })
                     }
                     FieldNote(
-                        if (d.custom) "Tú decides qué gastos cuentan: asígnalos desde Nuevo movimiento › Presupuesto." else "Los gastos de la categoría elegida suman solos, en las billeteras que indiques.",
+                        tr(if (d.custom) StringKey.BUD_KIND_CUSTOM_HINT else StringKey.BUD_KIND_CATEGORY_HINT),
                         Modifier.padding(top = 8.dp),
                     )
                 }
                 Column {
-                    FieldLabel("Nombre")
+                    FieldLabel(tr(StringKey.PLAN_NAME))
                     InputBox(vertical = 11.dp) {
                         Box(Modifier.noRippleClick { bSheet = if (d.custom) BSheet.ICON else BSheet.CAT }) {
                             if (d.custom) PlanMark(d.icon, 40.dp) else CatMark(d.sub ?: d.category ?: "exp.other", 40.dp)
@@ -162,28 +164,30 @@ fun BudgetSheet(draft: BudgetEditDraft, onChange: (BudgetEditDraft) -> Unit, onD
                                 val g = suggestExpenseCategory(name)
                                 onChange(d.copy(name = name, category = if (d.auto && g != null) g else d.category, sub = if (d.auto && g != null) leaf?.takeIf { it != g } else d.sub))
                             }
-                        }, if (d.custom) "Cumpleaños, viaje, remodelación…" else "Mercado, salidas… (opcional)")
+                        }, tr(if (d.custom) StringKey.BUD_PH_CUSTOM else StringKey.BUD_PH_CATEGORY))
                     }
                     FieldNote(
-                        if (d.custom) (if (d.iconAuto && Taxonomy.guessPlanIcon(d.name) != null) "Icono sugerido por el nombre. Toca otro para cambiarlo." else "Elige un icono para reconocerlo de un vistazo.")
-                        else if (d.auto && suggestExpenseCategory(d.name) != null) "Categoría detectada por el nombre. Puedes cambiarla." else "La categoría se detecta por el nombre; al elegir una manualmente se respeta.",
+                        tr(
+                            if (d.custom) (if (d.iconAuto && Taxonomy.guessPlanIcon(d.name) != null) StringKey.PLAN_ICON_GUESS else StringKey.BUD_ICON_PICK)
+                            else if (d.auto && suggestExpenseCategory(d.name) != null) StringKey.BUD_CAT_GUESS else StringKey.BUD_CAT_AUTO,
+                        ),
                         Modifier.padding(top = 8.dp),
                     )
                 }
                 Column {
-                    FieldLabel("Monto")
-                    MoneyInput(d.limit, { onChange(d.copy(limit = it)) }, com.s2nova.app.data.Currencies.symbol(AppContainer.currencyRepository.principal))
+                    FieldLabel(tr(StringKey.NM_AMOUNT))
+                    com.s2nova.app.ui.components.AmountField(d.limit, { onChange(d.copy(limit = it)) }, AppContainer.currencyRepository.principal, title = tr(StringKey.BUD_LIMIT))
                 }
                 if (d.custom) {
                     Column {
-                        FieldLabel("Icono")
+                        FieldLabel(tr(StringKey.PLAN_ICON))
                         PlanIconGrid(d.icon, 9) { onChange(d.copy(icon = it, iconAuto = false)) }
                     }
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     val tiles = mutableListOf<@Composable () -> Unit>()
                     if (!d.custom) {
-                        val catLabel = d.category?.let { repo.name(d.sub ?: it) } ?: "Categoría"
+                        val catLabel = d.category?.let { repo.name(d.sub ?: it) } ?: tr(StringKey.BUD_CATEGORY)
                         tiles += {
                             OptionTile(
                                 if (d.category != null) repo.glyph(d.sub ?: d.category) else V2Icons.target, catLabel, d.category != null, { bSheet = BSheet.CAT },
@@ -191,24 +195,24 @@ fun BudgetSheet(draft: BudgetEditDraft, onChange: (BudgetEditDraft) -> Unit, onD
                             )
                         }
                         val wl = walletLabel(d.walletIds)
-                        tiles += { OptionTile(V2Icons.wallet, if (wl.isEmpty()) "Billeteras" else if (wl.size == 1) wl[0] else "${wl.size} billeteras", wl.isNotEmpty(), { bSheet = BSheet.WALLETS }, Modifier.weight(1f)) }
+                        tiles += { OptionTile(V2Icons.wallet, if (wl.isEmpty()) tr(StringKey.BUD_WALLETS) else if (wl.size == 1) wl[0] else tr(StringKey.BUD_N_WALLETS, wl.size), wl.isNotEmpty(), { bSheet = BSheet.WALLETS }, Modifier.weight(1f)) }
                     }
-                    val per = if (d.period == BudgetPeriod.CUSTOM) (if (d.start.isNotBlank() && d.end.isNotBlank()) fmtDate(d.start) + " – " + fmtDate(d.end) else "Rango") else "Mensual"
+                    val per = if (d.period == BudgetPeriod.CUSTOM) (if (d.start.isNotBlank() && d.end.isNotBlank()) fmtDate(d.start) + " – " + fmtDate(d.end) else tr(StringKey.BUD_RANGE)) else tr(StringKey.NM_FREQ_MONTHLY)
                     tiles += { OptionTile(V2Icons.cal, per, d.period == BudgetPeriod.CUSTOM, { bSheet = BSheet.PERIOD }, Modifier.weight(1f)) }
                     tiles.forEach { it() }
                     repeat(5 - tiles.size) { Box(Modifier.weight(1f)) }
                 }
                 if (!d.custom) {
                     val wl = walletLabel(d.walletIds)
-                    val note = if (d.category == null) "Elige la categoría que cubre este presupuesto."
-                    else (if (d.sub != null) "Solo " + repo.label(d.sub) else "Todos los gastos de " + repo.name(d.category)) +
-                        (if (wl.isNotEmpty()) ", pagados desde " + wl.joinToString(", ") else ", de todas tus billeteras") + " · " +
-                        (if (d.period == BudgetPeriod.CUSTOM) "no se reinicia" else "se reinicia cada mes") + "."
+                    val note = if (d.category == null) tr(StringKey.BUD_SCOPE_PICK)
+                    else (if (d.sub != null) tr(StringKey.BUD_SCOPE_ONLY, repo.label(d.sub)) else tr(StringKey.BUD_SCOPE_ALL, repo.name(d.category))) +
+                        (if (wl.isNotEmpty()) tr(StringKey.BUD_SCOPE_FROM, wl.joinToString(", ")) else tr(StringKey.BUD_SCOPE_ALL_WALLETS)) + " · " +
+                        tr(if (d.period == BudgetPeriod.CUSTOM) StringKey.BUD_SCOPE_NO_RESET else StringKey.BUD_SCOPE_RESET) + "."
                     Text(note, fontSize = 11.sp, lineHeight = 16.sp, color = colors.textDim, modifier = Modifier.offset(y = (-4).dp), style = TextStyle(fontFeatureSettings = TNUM))
                 }
                 d.error?.let { Text(it, fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = colors.negative) }
-                V2Button("Guardar", enabled = d.valid, onClick = { onSave(d.toSave()) })
-                if (d.id != null) SheetTextAction("Eliminar presupuesto", colors.negative, onDelete, weight = FontWeight.ExtraBold)
+                V2Button(tr(StringKey.COMMON_SAVE), enabled = d.valid, onClick = { onSave(d.toSave()) })
+                if (d.id != null) SheetTextAction(tr(StringKey.BUD_DELETE), colors.negative, onDelete, weight = FontWeight.ExtraBold)
             }
         }
     }
@@ -216,13 +220,13 @@ fun BudgetSheet(draft: BudgetEditDraft, onChange: (BudgetEditDraft) -> Unit, onD
     val sheet = bSheet ?: return
     NovaDraftSheet(onDismiss = { bSheet = null }, scrimAlpha = 0.72f) {
         Column(Modifier.verticalScroll(rememberScrollState())) {
-            val title = mapOf(BSheet.CAT to "Categoría", BSheet.SUB to "Subcategoría", BSheet.ICON to "Icono", BSheet.WALLETS to "Billeteras", BSheet.PERIOD to "Periodo")[sheet]!!
+            val title = tr(mapOf(BSheet.CAT to StringKey.BUD_CATEGORY, BSheet.SUB to StringKey.NM_SUBCATEGORY, BSheet.ICON to StringKey.PLAN_ICON, BSheet.WALLETS to StringKey.BUD_WALLETS, BSheet.PERIOD to StringKey.BUD_PERIOD)[sheet]!!)
             val sub = when (sheet) {
-                BSheet.SUB -> repo.name(d.category) + " · \"Todas\" incluye cada subcategoría."
-                BSheet.WALLETS -> "Elige desde qué billeteras cuentan los gastos."
-                BSheet.PERIOD -> if (d.period == BudgetPeriod.CUSTOM) "No se reinicia. Cuenta los gastos entre las dos fechas." else "Se reinicia el 1 de cada mes."
-                BSheet.CAT -> "Los gastos de esta categoría suman solos al presupuesto."
-                BSheet.ICON -> "Para reconocer el presupuesto de un vistazo."
+                BSheet.SUB -> repo.name(d.category) + " · " + tr(StringKey.BUD_SUB_HINT)
+                BSheet.WALLETS -> tr(StringKey.BUD_WALLETS_HINT)
+                BSheet.PERIOD -> tr(if (d.period == BudgetPeriod.CUSTOM) StringKey.BUD_PERIOD_CUSTOM_HINT else StringKey.BUD_PERIOD_MONTHLY_HINT)
+                BSheet.CAT -> tr(StringKey.BUD_CAT_HINT)
+                BSheet.ICON -> tr(StringKey.BUD_ICON_HINT)
             }
             SheetHeader(title, sub, bottom = 16.dp)
             when (sheet) {
@@ -233,12 +237,12 @@ fun BudgetSheet(draft: BudgetEditDraft, onChange: (BudgetEditDraft) -> Unit, onD
                         bSheet = if (repo.children(p.id).isNotEmpty()) BSheet.SUB else null
                     }, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         GridChip(repo.glyph(p.id), Color(p.color), on, 46.dp, 30.dp)
-                        GridLabel(p.name, on)
+                        GridLabel(repo.name(p.id), on)
                     }
                 }
                 BSheet.SUB -> {
                     val parent = d.category ?: "exp.other"
-                    val items = listOf<Pair<String?, String>>(null to "Todas") + repo.children(parent).map { it.id to it.name }
+                    val items = listOf<Pair<String?, String>>(null to tr(StringKey.BUD_ALL)) + repo.children(parent).map { it.id to repo.name(it.id) }
                     GridOf(items, 5, 14.dp, 4.dp) { (id, name) ->
                         val on = d.sub == id
                         Column(Modifier.noRippleClick { onChange(d.copy(sub = id, auto = false)); bSheet = null }, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -246,11 +250,11 @@ fun BudgetSheet(draft: BudgetEditDraft, onChange: (BudgetEditDraft) -> Unit, onD
                             GridLabel(name, on)
                         }
                     }
-                    com.s2nova.app.ui.components.TextLink("← Cambiar categoría", { bSheet = BSheet.CAT }, Modifier.padding(start = 4.dp, top = 18.dp))
+                    com.s2nova.app.ui.components.TextLink(tr(StringKey.NM_CHANGE_CATEGORY), { bSheet = BSheet.CAT }, Modifier.padding(start = 4.dp, top = 18.dp))
                 }
                 BSheet.ICON -> PlanIconGrid(d.icon, 6) { onChange(d.copy(icon = it, iconAuto = false)); bSheet = null }
                 BSheet.WALLETS -> PillRow {
-                    V2Pill("Todas", d.walletIds.isEmpty(), { onChange(d.copy(walletIds = emptyList())) })
+                    V2Pill(tr(StringKey.BUD_ALL), d.walletIds.isEmpty(), { onChange(d.copy(walletIds = emptyList())) })
                     wallets.forEach { w ->
                         V2Pill(shortWallet(w.name), w.id in d.walletIds, {
                             onChange(d.copy(walletIds = if (w.id in d.walletIds) d.walletIds - w.id else d.walletIds + w.id))
@@ -259,18 +263,18 @@ fun BudgetSheet(draft: BudgetEditDraft, onChange: (BudgetEditDraft) -> Unit, onD
                 }
                 BSheet.PERIOD -> {
                     PillRow {
-                        V2Pill("Mensual", d.period == BudgetPeriod.MONTHLY, { onChange(d.copy(period = BudgetPeriod.MONTHLY)) })
-                        V2Pill("Rango personalizado", d.period == BudgetPeriod.CUSTOM, { onChange(d.copy(period = BudgetPeriod.CUSTOM)) })
+                        V2Pill(tr(StringKey.NM_FREQ_MONTHLY), d.period == BudgetPeriod.MONTHLY, { onChange(d.copy(period = BudgetPeriod.MONTHLY)) })
+                        V2Pill(tr(StringKey.BUD_CUSTOM_RANGE), d.period == BudgetPeriod.CUSTOM, { onChange(d.copy(period = BudgetPeriod.CUSTOM)) })
                     }
                     if (d.period == BudgetPeriod.CUSTOM) {
                         Row(Modifier.padding(top = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Column(Modifier.weight(1f)) { FieldLabel("Desde"); DateBox(d.start) { onChange(d.copy(start = it)) } }
-                            Column(Modifier.weight(1f)) { FieldLabel("Hasta"); DateBox(d.end) { onChange(d.copy(end = it)) } }
+                            Column(Modifier.weight(1f)) { FieldLabel(tr(StringKey.NM_WALLET_FROM)); DateBox(d.start) { onChange(d.copy(start = it)) } }
+                            Column(Modifier.weight(1f)) { FieldLabel(tr(StringKey.BUD_UNTIL)); DateBox(d.end) { onChange(d.copy(end = it)) } }
                         }
                     }
                 }
             }
-            V2Button("Listo", onClick = { bSheet = null }, modifier = Modifier.padding(top = 18.dp))
+            V2Button(tr(StringKey.NM_DONE), onClick = { bSheet = null }, modifier = Modifier.padding(top = 18.dp))
         }
     }
 }

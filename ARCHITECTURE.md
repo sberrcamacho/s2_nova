@@ -77,14 +77,30 @@ table gives for free (see §4).
 - Passwords: **argon2id** hash, never plaintext, never logged.
 - Access token: short-lived (15 min) JWT, `Authorization: Bearer`.
 - Refresh token: opaque random token, stored **hashed** server-side in
-  `refresh_tokens`, long-lived (30 days), rotated on every use (old token
-  revoked, new one issued) — limits replay damage if one leaks.
+  `refresh_tokens`, rotated on every use (old token revoked, new one
+  issued, atomically) — limits replay damage if one leaks. A login lasts
+  at most 30 days however often it refreshes. Replaying a *rotated* token
+  more than 30 s after its rotation is treated as theft and revokes every
+  session of the user; within 30 s it's a client race and is just
+  rejected. A token revoked by logout/"Cerrar sesión"/idle is simply
+  rejected.
+- Every access token carries its session (`sid`) and the auth plugin
+  checks that session is still open on each request, so logout, closing a
+  session, changing the password or idling out take effect immediately.
+  Its 401s carry a `code`: `token_invalid` (refresh and retry),
+  `session_ended` / `session_idle` (sign out); other 401s (a wrong current
+  password) are the route's own answer and never trigger a refresh.
+- "Cierre automático" (`autoLockMinutes`, 0 = never): a real logout after
+  that long without the user touching the app. Both clients enforce it and
+  report activity (`POST /auth/activity`, at most once a minute); the
+  server ends a session idle longer than the setting + 1 min on its own
+  (`lib/sessions.ts`), which covers a killed or offline client.
 - Web: refresh token in an `httpOnly`, `Secure`, `SameSite=Lax` cookie
   (never readable by JS, so an XSS can't exfiltrate it). Access token kept
   in memory only.
-- Android: refresh token in `EncryptedSharedPreferences` (or the DataStore
-  equivalent wrapped with Jetpack Security) — never plaintext
-  `SharedPreferences`.
+- Android: both tokens in DataStore, AES-GCM encrypted with a
+  non-exportable Android Keystore key (`SessionStore`); the Activity sets
+  `FLAG_SECURE`.
 - No backend secret (DB URL, JWT signing key, Google OAuth client secret)
   ever ships in an Android or Web build artifact — see §14.
 
@@ -239,7 +255,8 @@ POST   /api/v1/auth/register
 POST   /api/v1/auth/login
 POST   /api/v1/auth/google
 POST   /api/v1/auth/refresh
-POST   /api/v1/auth/logout
+POST   /api/v1/auth/logout                -- ends the whole session
+POST   /api/v1/auth/activity              -- "Cierre automático" heartbeat
 
 GET    /api/v1/me
 PATCH  /api/v1/me/preferences

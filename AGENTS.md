@@ -18,7 +18,8 @@ backend, one database, one user identity and one domain model:
   (`PRODUCT_ARCHITECTURE.md`, `CATEGORY_SYSTEM.md`,
   `CURRENCIES_AND_WALLETS.md`, `NEW_MOVEMENT.md`, `PLANS.md`,
   `ONBOARDING.md`, `WEB_PARITY.md`) and the category taxonomy source
-  `s2-categories.js` (generated into each app by `scripts/gen-taxonomy.mjs`).
+  `s2-categories.js` (generated into each app by `scripts/gen-taxonomy.mjs`,
+  which adds the English names from `scripts/taxonomy-en.json`).
 
 **Functional parity.** Android and Web are functionally the same
 application: every operation that changes the user's financial data
@@ -33,7 +34,8 @@ figure or rule (balances, budget progress, loan outstanding, alerts,
 monthly aggregates), implement it once in `backend/` and consume it from
 both clients instead of duplicating the logic.
 
-**Vocabulary.** UI copy is Spanish and shared across platforms: Inicio,
+**Vocabulary.** UI copy is Spanish, with an English version of every
+string (the user's language preference), and shared across platforms: Inicio,
 Movimientos, Planes (Presupuestos · Metas · Préstamos), Reportes,
 Billeteras, Categorías, Alertas, Programados, Abono, Aporte. Technical
 documentation stays in English. Out of scope: business finance and the

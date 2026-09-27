@@ -60,6 +60,8 @@ import com.s2nova.app.ui.components.V2Pill
 import com.s2nova.app.ui.components.noRippleClick
 import com.s2nova.app.ui.theme.NovaColors
 import kotlinx.coroutines.launch
+import com.s2nova.app.ui.tr
+import com.s2nova.app.ui.StringKey
 
 // Billeteras (CURRENCIES_AND_WALLETS.md §4): each wallet has one currency;
 // foreign ones carry the "≈" principal line; the footer totals in the
@@ -92,7 +94,7 @@ fun WalletsScreen(onBack: () -> Unit) {
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Row(Modifier.padding(start = 18.dp, end = 18.dp, top = 10.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(Modifier.size(38.dp).clip(CircleShape).noRippleClick(onBack), contentAlignment = Alignment.Center) { Text("←", fontSize = 19.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-            Text("Billeteras", fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
+            Text(tr(StringKey.WALLET_TITLE), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
             Box(Modifier.size(38.dp).clip(CircleShape).noRippleClick { draft = WalletDraft(null, "", WalletKind.CASH, "", principal, true) }, contentAlignment = Alignment.Center) {
                 Text("+", fontSize = 22.sp, fontWeight = FontWeight.Light, color = MaterialTheme.colorScheme.primary)
             }
@@ -102,7 +104,7 @@ fun WalletsScreen(onBack: () -> Unit) {
                 val kind = WalletKind.of(w.type)
                 Row(
                     Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(18.dp))
-                        .noRippleClick { draft = WalletDraft(w.id, w.name, kind, w.currentBalance.let { if (it % 1.0 == 0.0) it.toLong().toString() else it.toString() }, w.currency, false) }.padding(16.dp),
+                        .noRippleClick { draft = WalletDraft(w.id, w.name, kind, com.s2nova.app.ui.screens.addtransaction.AmountPad.numStr(w.currentBalance), w.currency, false) }.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
@@ -119,10 +121,10 @@ fun WalletsScreen(onBack: () -> Unit) {
                 }
             }
             if (wallets.isEmpty()) {
-                Text("No tienes billeteras. Agrega la primera con el + de arriba.", fontSize = 12.sp, lineHeight = 18.sp, color = colors.textDim, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp))
+                Text(tr(StringKey.WALLET_EMPTY), fontSize = 12.sp, lineHeight = 18.sp, color = colors.textDim, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp))
             }
             Text(
-                formatMoney(wallets.sumOf { it.principalBalance }, principal) + " en total, en $principal. Las billeteras en otra moneda se convierten con la tasa del día.",
+                tr(StringKey.WALLET_TOTAL, formatMoney(wallets.sumOf { it.principalBalance }, principal), principal),
                 fontSize = 11.5.sp, color = colors.textDim, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
             )
         }
@@ -131,44 +133,44 @@ fun WalletsScreen(onBack: () -> Unit) {
     val d = draft ?: return
     val codes = currencies.map { it.code }.ifEmpty { listOf(principal) }
     NovaDraftSheet(onDismiss = { draft = null }) {
-        SheetHeader(if (d.id != null) "Editar billetera" else "Nueva billetera", bottom = 18.dp)
+        SheetHeader(tr(if (d.id != null) StringKey.WALLET_EDIT else StringKey.WALLET_NEW), bottom = 18.dp)
         Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
             Column {
-                FieldLabel("Nombre")
+                FieldLabel(tr(StringKey.PLAN_NAME))
                 InputBox(vertical = 11.dp) {
                     WalletMark(d.kind, 40.dp)
-                    BareField(d.name, { name -> draft = d.copy(name = name, kind = if (d.auto) WalletKind.guess(name) ?: d.kind else d.kind) }, "Nequi, Bancolombia — Ahorros…")
+                    BareField(d.name, { name -> draft = d.copy(name = name, kind = if (d.auto) WalletKind.guess(name) ?: d.kind else d.kind) }, tr(StringKey.WALLET_NAME_PH))
                 }
                 FieldNote(
-                    if (d.auto && WalletKind.guess(d.name) != null) "Tipo detectado por el nombre. Puedes cambiarlo." else "El tipo define el icono y el método de pago que deriva el servidor.",
+                    tr(if (d.auto && WalletKind.guess(d.name) != null) StringKey.WALLET_TYPE_GUESS else StringKey.WALLET_TYPE_HINT),
                     Modifier.padding(top = 9.dp),
                 )
             }
             Column {
-                FieldLabel("Tipo")
+                FieldLabel(tr(StringKey.WALLET_TYPE))
                 PillRow { WalletKind.entries.forEach { k -> V2Pill(k.label, d.kind == k, { draft = d.copy(kind = k, auto = false) }) } }
             }
             Column {
-                FieldLabel("Moneda")
+                FieldLabel(tr(StringKey.WALLET_CURRENCY))
                 PillRow { codes.forEach { c -> V2Pill(c, d.currency == c, { if (d.id == null) draft = d.copy(currency = c) }) } }
-                FieldNote("El saldo se lleva en ${Currencies.name(d.currency).lowercase()}. Los movimientos en otra moneda se convierten al registrarlos.", Modifier.padding(top = 8.dp))
+                FieldNote(tr(StringKey.WALLET_CURRENCY_HINT, Currencies.name(d.currency).lowercase()), Modifier.padding(top = 8.dp))
             }
             Column {
-                FieldLabel("Saldo actual")
-                MoneyInput(d.amount.substringBefore('.'), { if (d.id == null) draft = d.copy(amount = it) }, Currencies.symbol(d.currency))
+                FieldLabel(tr(StringKey.WALLET_BALANCE))
+                com.s2nova.app.ui.components.AmountField(d.amount, { draft = d.copy(amount = it) }, d.currency, title = tr(StringKey.WALLET_INITIAL), enabled = d.id == null)
             }
-            V2Button("Guardar", enabled = d.name.isNotBlank(), onClick = {
+            V2Button(tr(StringKey.COMMON_SAVE), enabled = d.name.isNotBlank(), onClick = {
                 scope.launch {
                     runCatching {
-                        if (d.id == null) AppContainer.walletRepository.create(d.name.trim(), d.kind.type, d.amount.toDoubleOrNull() ?: 0.0, d.currency)
+                        if (d.id == null) AppContainer.walletRepository.create(d.name.trim(), d.kind.type, com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(d.amount), d.currency)
                         else AppContainer.walletRepository.update(d.id, d.name.trim(), d.kind.type)
                     }.onSuccess {
                         draft = null
                         if (!AppContainer.isGuest) runCatching { AppContainer.currencyRepository.refresh() }
-                    }.onFailure { Snack.show("No se pudo guardar la billetera.") }
+                    }.onFailure { Snack.show(tr(StringKey.WALLET_ERR_SAVE)) }
                 }
             })
-            if (d.id != null) SheetTextAction("Eliminar billetera", colors.negative, {
+            if (d.id != null) SheetTextAction(tr(StringKey.WALLET_DELETE), colors.negative, {
                 val w = wallets.first { it.id == d.id }
                 askDeleteWallet(w, wallets.size) { draft = null }
             }, weight = FontWeight.ExtraBold)
@@ -178,20 +180,20 @@ fun WalletsScreen(onBack: () -> Unit) {
 
 private fun askDeleteWallet(w: Wallet, count: Int, onDone: () -> Unit) {
     if (count <= 1) {
-        Snack.show("Necesitas al menos una billetera para usar S2 Nova.")
+        Snack.show(tr(StringKey.WALLET_LAST))
         return
     }
     val n = if (AppContainer.isGuest) AppContainer.transactionRepository.transactions.value.count { it.walletId == w.id } else w.movements
     Confirm.ask(
         ConfirmRequest(
-            title = "Eliminar la billetera “${w.name}”",
+            title = tr(StringKey.WALLET_DELETE_TITLE, w.name),
             lines = listOf(
-                "Saldo actual: " + formatMoney(w.currentBalance, w.currency),
-                n.toString() + (if (n == 1) " movimiento asociado se elimina" else " movimientos asociados se eliminan") + " con ella",
-                "El saldo total de Inicio se recalcula",
+                tr(StringKey.WALLET_DELETE_BALANCE, formatMoney(w.currentBalance, w.currency)),
+                tr(if (n == 1) StringKey.WALLET_DELETE_ONE else StringKey.WALLET_DELETE_MANY, n),
+                tr(StringKey.WALLET_DELETE_TOTAL),
             ),
-            ack = "Entiendo que se eliminan la billetera y sus $n movimientos.",
-            cta = "Eliminar billetera",
+            ack = tr(StringKey.WALLET_DELETE_ACK, n),
+            cta = tr(StringKey.WALLET_DELETE),
             onConfirm = {
                 onDone()
                 AppContainer.appScope.launch {

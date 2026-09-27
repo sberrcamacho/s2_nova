@@ -84,6 +84,6 @@ object AnalyticsHelpers {
                 val week = ((day - 1) / 7).coerceAtMost(4)
                 buckets[week] += t.amount
             }
-        return buckets.mapIndexed { i, amount -> WeekPoint("Sem ${i + 1}", amount) }
+        return buckets.mapIndexed { i, amount -> WeekPoint(com.s2nova.app.ui.tr(com.s2nova.app.ui.StringKey.REP_WEEK, i + 1), amount) }
     }
 }

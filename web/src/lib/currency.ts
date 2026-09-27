@@ -2,10 +2,12 @@
 // its currency's symbol ("$", "US$", "€"…) with Colombian grouping
 // ("$168.500", "US$5,99") — the mockup's fmtCur: decimals only when the
 // value has them and the currency uses them.
+import { currentLanguage } from '@/lib/i18n/translations'
 
 export interface CurrencyInfo {
   code: string
   name: string
+  nameEn: string
   symbol: string
   decimals: number
   // COP per unit; the backend's fallback when it has no rate of the day.
@@ -13,19 +15,27 @@ export interface CurrencyInfo {
 }
 
 export const CURRENCY_CATALOG: CurrencyInfo[] = [
-  { code: 'COP', name: 'Peso colombiano', symbol: '$', decimals: 0, referenceRate: 1 },
-  { code: 'USD', name: 'Dólar estadounidense', symbol: 'US$', decimals: 2, referenceRate: 3950 },
-  { code: 'EUR', name: 'Euro', symbol: '€', decimals: 2, referenceRate: 4300 },
-  { code: 'MXN', name: 'Peso mexicano', symbol: 'MX$', decimals: 2, referenceRate: 215 },
-  { code: 'PEN', name: 'Sol peruano', symbol: 'S/', decimals: 2, referenceRate: 1050 },
-  { code: 'BRL', name: 'Real brasileño', symbol: 'R$', decimals: 2, referenceRate: 720 },
-  { code: 'GBP', name: 'Libra esterlina', symbol: '£', decimals: 2, referenceRate: 5000 },
-  { code: 'CLP', name: 'Peso chileno', symbol: 'CLP$', decimals: 0, referenceRate: 4.2 },
-  { code: 'ARS', name: 'Peso argentino', symbol: 'AR$', decimals: 2, referenceRate: 4 },
+  { code: 'COP', name: 'Peso colombiano', nameEn: 'Colombian peso', symbol: '$', decimals: 0, referenceRate: 1 },
+  { code: 'USD', name: 'Dólar estadounidense', nameEn: 'US dollar', symbol: 'US$', decimals: 2, referenceRate: 3950 },
+  { code: 'EUR', name: 'Euro', nameEn: 'Euro', symbol: '€', decimals: 2, referenceRate: 4300 },
+  { code: 'MXN', name: 'Peso mexicano', nameEn: 'Mexican peso', symbol: 'MX$', decimals: 2, referenceRate: 215 },
+  { code: 'PEN', name: 'Sol peruano', nameEn: 'Peruvian sol', symbol: 'S/', decimals: 2, referenceRate: 1050 },
+  { code: 'BRL', name: 'Real brasileño', nameEn: 'Brazilian real', symbol: 'R$', decimals: 2, referenceRate: 720 },
+  { code: 'GBP', name: 'Libra esterlina', nameEn: 'Pound sterling', symbol: '£', decimals: 2, referenceRate: 5000 },
+  { code: 'CLP', name: 'Peso chileno', nameEn: 'Chilean peso', symbol: 'CLP$', decimals: 0, referenceRate: 4.2 },
+  { code: 'ARS', name: 'Peso argentino', nameEn: 'Argentine peso', symbol: 'AR$', decimals: 2, referenceRate: 4 },
 ]
 
 export function currencyInfo(code: string | null | undefined): CurrencyInfo {
   return CURRENCY_CATALOG.find((c) => c.code === code) ?? CURRENCY_CATALOG[0]
+}
+
+// "Dólar estadounidense" / "US dollar"; `fallback` for a code outside the
+// catalog (the backend's own name).
+export function currencyName(code: string, fallback?: string): string {
+  const c = CURRENCY_CATALOG.find((x) => x.code === code)
+  if (!c) return fallback ?? code
+  return currentLanguage() === 'en' ? c.nameEn : c.name
 }
 
 // 1 `from` in `to` units at the reference rate.
@@ -34,27 +44,32 @@ export function referenceRate(from: string, to: string): number {
 }
 
 // The browser's regional currency (ONBOARDING.md §2), from its locale's region.
-const REGION_CURRENCY: Record<string, { currency: string; country: string }> = {
-  CO: { currency: 'COP', country: 'Colombia' },
-  US: { currency: 'USD', country: 'Estados Unidos' },
-  MX: { currency: 'MXN', country: 'México' },
-  PE: { currency: 'PEN', country: 'Perú' },
-  BR: { currency: 'BRL', country: 'Brasil' },
-  GB: { currency: 'GBP', country: 'Reino Unido' },
-  CL: { currency: 'CLP', country: 'Chile' },
-  AR: { currency: 'ARS', country: 'Argentina' },
-  ES: { currency: 'EUR', country: 'España' },
-  DE: { currency: 'EUR', country: 'Alemania' },
-  FR: { currency: 'EUR', country: 'Francia' },
+const REGION_CURRENCY: Record<string, { currency: string; country: string; countryEn: string }> = {
+  CO: { currency: 'COP', country: 'Colombia', countryEn: 'Colombia' },
+  US: { currency: 'USD', country: 'Estados Unidos', countryEn: 'United States' },
+  MX: { currency: 'MXN', country: 'México', countryEn: 'Mexico' },
+  PE: { currency: 'PEN', country: 'Perú', countryEn: 'Peru' },
+  BR: { currency: 'BRL', country: 'Brasil', countryEn: 'Brazil' },
+  GB: { currency: 'GBP', country: 'Reino Unido', countryEn: 'United Kingdom' },
+  CL: { currency: 'CLP', country: 'Chile', countryEn: 'Chile' },
+  AR: { currency: 'ARS', country: 'Argentina', countryEn: 'Argentina' },
+  ES: { currency: 'EUR', country: 'España', countryEn: 'Spain' },
+  DE: { currency: 'EUR', country: 'Alemania', countryEn: 'Germany' },
+  FR: { currency: 'EUR', country: 'Francia', countryEn: 'France' },
 }
 
+// `country` in the app language.
 export function deviceRegion(): { currency: string; country: string } {
   const langs = typeof navigator !== 'undefined' ? [...(navigator.languages ?? []), navigator.language] : []
+  let hit = REGION_CURRENCY.CO
   for (const l of langs) {
     const region = l?.split('-')[1]?.toUpperCase()
-    if (region && REGION_CURRENCY[region]) return REGION_CURRENCY[region]
+    if (region && REGION_CURRENCY[region]) {
+      hit = REGION_CURRENCY[region]
+      break
+    }
   }
-  return REGION_CURRENCY.CO
+  return { currency: hit.currency, country: currentLanguage() === 'en' ? hit.countryEn : hit.country }
 }
 
 // Plain grouped number without symbol ("168.500", "5,99").

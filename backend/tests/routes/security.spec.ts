@@ -36,13 +36,14 @@ describe("security routes", () => {
   const bearer = (token: string) => ({ authorization: `Bearer ${token}` });
   const refresh = (refreshToken: string) =>
     app.inject({ method: "POST", url: "/api/v1/auth/refresh", payload: { refreshToken } });
-  // Refreshing a revoked token would trip reuse detection and close every
-  // session, so revocation is read from the table instead.
+  // Revocation is read from the table rather than by trying to refresh.
   const isOpen = async (refreshToken: string) =>
     (await prisma.refreshToken.findUniqueOrThrow({ where: { tokenHash: hashRefreshToken(refreshToken) } })).revokedAt === null;
 
   it("lists one row per login, labels the device and marks the caller's session", async () => {
     const user = await createTestUser();
+    // Only the three logins below, not the helper's own session.
+    await prisma.refreshToken.deleteMany({ where: { userId: user.id } });
     const desktop = await login(user, CHROME_WINDOWS);
     await login(user, SAFARI_IPAD);
     await login(user, "S2Nova-Android/1.0.0 (Pixel 8)");
@@ -97,7 +98,8 @@ describe("security routes", () => {
     expect(await isOpen(phone.refreshToken)).toBe(false);
     expect(await isOpen(desktop.refreshToken)).toBe(true);
 
-    const me = (await app.inject({ method: "GET", url: "/api/v1/me", headers: authHeader(user) })).json();
+    // The helper's own session was one of "the rest", so ask as the caller.
+    const me = (await app.inject({ method: "GET", url: "/api/v1/me", headers: bearer(desktop.accessToken) })).json();
     expect(Date.now() - new Date(me.passwordChangedAt).getTime()).toBeLessThan(60_000);
   });
 

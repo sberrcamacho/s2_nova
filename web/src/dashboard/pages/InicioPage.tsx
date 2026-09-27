@@ -1,3 +1,4 @@
+import { tr } from '@/lib/i18n/translations'
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CategoryMark, Glyph, GlyphMark } from '@/components/v2/CategoryMark'
@@ -5,7 +6,7 @@ import { ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
 import { Money, MoneyText } from '@/components/v2/Money'
 import { RowButton, RowSkeletons, SkeletonBar, SyncBanner } from '@/components/v2/Rows'
 import { EventDialog } from '@/dashboard/components/EventDialog'
-import { WALLET_KINDS } from '@/dashboard/components/WalletModal'
+import { WALLET_KINDS, walletKindLabel } from '@/dashboard/components/WalletModal'
 import { accountService } from '@/services/accountService'
 import { alertService, type AppAlert } from '@/services/alertService'
 import { goalService } from '@/services/goalService'
@@ -168,11 +169,11 @@ export default function InicioPage() {
     try {
       if (confirm) await goalService.confirmPlan(alert.goalId)
       else await goalService.skipPlan(alert.goalId)
-      showToast(confirm ? `Aporte de ${format(alert.amount)} registrado` : 'Aporte omitido')
+      showToast(confirm ? fill(t('inicio.plan.done'), format(alert.amount)) : t('inicio.plan.skipped'))
       void refresh()
       void refreshAppData()
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Algo salió mal. Intenta de nuevo.', 'error')
+      showToast(err instanceof Error ? err.message : t('api.generic'), 'error')
     }
   }
 
@@ -245,7 +246,7 @@ export default function InicioPage() {
                   <div className="min-w-0 flex-1 text-left">
                     <div className="text-[12.5px] font-bold">{w.name}</div>
                     <div className="text-[11px] text-v2-dim">
-                      {WALLET_KINDS.find((k) => k.type === w.accountType)?.label ?? t(`inicio.walletKind.${walletKind(w.accountType)}` as TranslationKey)}
+                      {WALLET_KINDS.some((k) => k.type === w.accountType) ? walletKindLabel(w.accountType) : t(`inicio.walletKind.${walletKind(w.accountType)}` as TranslationKey)}
                     </div>
                   </div>
                   <div className="text-right">
@@ -387,7 +388,7 @@ export default function InicioPage() {
                           {fill(t('inicio.goals.progress'), format(g.currentAmount), format(g.targetAmount))}
                         </Money>
                         <div className="mt-0.5 text-[11px] text-v2-dim">
-                          {g.plan ? planText(g.plan, walletName(g.plan.accountId), format) : g.targetDate ? `Fecha objetivo ${shortDayMonth(g.targetDate)}` : 'Sin fecha objetivo'}
+                          {g.plan ? planText(g.plan, walletName(g.plan.accountId), format) : g.targetDate ? fill(t('goal.targetOn'), shortDayMonth(g.targetDate)) : t('goal.noTarget')}
                         </div>
                       </div>
                       <span className="font-numeric text-[12px] font-extrabold text-v2-muted">{g.percentage}%</span>
@@ -633,7 +634,7 @@ function AlertCard({
               }}
               className="cursor-pointer text-v2-accent2"
             >
-              Confirmar aporte
+              {tr('inicio.plan.confirm')}
             </button>
             <button
               type="button"
@@ -643,7 +644,7 @@ function AlertCard({
               }}
               className="cursor-pointer text-v2-muted"
             >
-              Omitir esta vez
+              {tr('event.skip')}
             </button>
           </div>
         )}

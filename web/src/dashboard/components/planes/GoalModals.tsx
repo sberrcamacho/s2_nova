@@ -1,3 +1,4 @@
+import { fill, tr } from '@/lib/i18n/translations'
 import { useState } from 'react'
 import { PlanMark } from '@/components/v2/CategoryMark'
 import {
@@ -12,7 +13,7 @@ import {
   Label,
   ModalFooter,
   ModalTitle,
-  MoneyInput,
+  AmountField,
   PlanIconGrid,
   Pills,
   RadioRow,
@@ -20,6 +21,7 @@ import {
   V2Modal,
   inputClass,
 } from '@/components/v2/Kit'
+import { evalExpr, numStr } from '@/lib/nuevoMovimiento'
 import { todayISO } from '@/lib/date'
 import { shortWallet } from '@/lib/movimientos'
 import { addSteps, longDate, monthYearLong, planText, shortDayMonth } from '@/lib/planCopy'
@@ -40,24 +42,24 @@ interface PlanDraft {
   autoConfirm: boolean
 }
 
-const FREQS: { value: GoalPlan['frequency']; label: string }[] = [
-  { value: 'daily', label: 'Diario' },
-  { value: 'weekly', label: 'Semanal' },
-  { value: 'monthly', label: 'Mensual' },
+const freqs = (): { value: GoalPlan['frequency']; label: string }[] => [
+  { value: 'daily', label: tr('nm.freq.daily') },
+  { value: 'weekly', label: tr('nm.freq.weekly') },
+  { value: 'monthly', label: tr('nm.freq.monthly') },
 ]
-const ENDS: { value: GoalPlan['endMode']; label: string }[] = [
-  { value: 'goal', label: 'Al cumplir la meta' },
-  { value: 'count', label: 'Después de' },
-  { value: 'date', label: 'En una fecha' },
+const ends = (): { value: GoalPlan['endMode']; label: string }[] => [
+  { value: 'goal', label: tr('goal.ends.goal') },
+  { value: 'count', label: tr('nm.ends.count') },
+  { value: 'date', label: tr('nm.ends.until') },
 ]
 
 function planDraftOf(plan: GoalPlan): PlanDraft {
-  return { amount: String(plan.amount), frequency: plan.frequency, accountId: plan.accountId, startDate: plan.startDate, endMode: plan.endMode, count: plan.count ?? 12, endDate: plan.endDate ?? '', autoConfirm: plan.autoConfirm }
+  return { amount: numStr(plan.amount), frequency: plan.frequency, accountId: plan.accountId, startDate: plan.startDate, endMode: plan.endMode, count: plan.count ?? 12, endDate: plan.endDate ?? '', autoConfirm: plan.autoConfirm }
 }
 
 function planInput(p: PlanDraft): GoalPlanInput {
   return {
-    amount: Number(p.amount),
+    amount: evalExpr(p.amount),
     frequency: p.frequency,
     accountId: p.accountId,
     startDate: p.startDate || todayISO(),
@@ -91,15 +93,15 @@ export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | nu
   const [name, setName] = useState(goal?.name ?? '')
   const [icon, setIcon] = useState(goal?.icon ?? 'other')
   const [iconAuto, setIconAuto] = useState(!goal)
-  const [target, setTarget] = useState(goal ? String(goal.targetAmount) : '')
-  const [initial, setInitial] = useState(goal?.initialAmount ? String(goal.initialAmount) : '')
+  const [target, setTarget] = useState(goal ? numStr(goal.targetAmount) : '')
+  const [initial, setInitial] = useState(goal?.initialAmount ? numStr(goal.initialAmount) : '')
   const [due, setDue] = useState(goal?.targetDate ?? '')
   const [plan, setPlanState] = useState<PlanDraft | null>(goal?.plan ? planDraftOf(goal.plan) : null)
   const [planOpen, setPlanOpen] = useState(false)
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
   const [confirming, setConfirming] = useState(false)
-  const valid = !!name.trim() && Number(target) > 0
+  const valid = !!name.trim() && evalExpr(target) > 0
   const walletName = (id: string) => shortWallet(wallets.find((w) => w.id === id)?.name ?? '')
   const clear = <T,>(fn: (v: T) => void) => (v: T) => {
     fn(v)
@@ -111,20 +113,20 @@ export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | nu
     setPlanState({ ...pl, ...p })
     setErr('')
   }
-  const amt = Number(pl.amount) || 0
-  const current = goal ? goal.currentAmount : Number(initial) || 0
+  const amt = evalExpr(pl.amount)
+  const current = goal ? goal.currentAmount : evalExpr(initial)
   let summary = ''
   if (planOpen && amt > 0) {
     const start = pl.startDate || todayISO()
     if (pl.endMode === 'goal') {
-      const k = Math.max(1, Math.ceil(Math.max(0, (Number(target) || 0) - current) / amt))
+      const k = Math.max(1, Math.ceil(Math.max(0, evalExpr(target) - current) / amt))
       const { month, year } = monthYearLong(addSteps(start, pl.frequency, k - 1))
-      summary = `Con ${k} aportes de ${format(amt)} cumples la meta hacia ${month} de ${year}.`
-    } else if (pl.endMode === 'count') summary = `${pl.count} aportes · ${format(pl.count * amt)} en total · último el ${shortDayMonth(addSteps(start, pl.frequency, pl.count - 1))}`
-    else summary = `Aportes de ${format(amt)} hasta el ${pl.endDate ? longDate(pl.endDate) : '…'}`
+      summary = fill(tr('goal.sum.goal'), k, format(amt), month, year)
+    } else if (pl.endMode === 'count') summary = fill(tr('goal.sum.count'), pl.count, format(pl.count * amt), shortDayMonth(addSteps(start, pl.frequency, pl.count - 1)))
+    else summary = fill(tr('goal.sum.date'), format(amt), pl.endDate ? longDate(pl.endDate) : '…')
   }
 
-  const planRow = plan && Number(plan.amount) > 0 ? planText({ ...planInput(plan), nextDate: '', doneCount: 0, active: true, due: false }, walletName(plan.accountId), format) : 'Agrega un aporte automático o con recordatorio'
+  const planRow = plan && evalExpr(plan.amount) > 0 ? planText({ ...planInput(plan), nextDate: '', doneCount: 0, active: true, due: false }, walletName(plan.accountId), format) : tr('goal.plan.empty')
 
   const onName = (v: string) => {
     setName(v)
@@ -133,19 +135,19 @@ export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | nu
   }
 
   const save = async () => {
-    if (!valid) return setErr(!name.trim() ? 'Escribe un nombre para la meta.' : 'Escribe el monto objetivo.')
-    const input = { name: name.trim(), icon, targetAmount: Number(target), initialAmount: Number(initial) || 0, targetDate: due || null }
-    const nextPlan = plan && Number(plan.amount) > 0 && plan.accountId ? planInput(plan) : null
+    if (!valid) return setErr(tr(!name.trim() ? 'goal.err.name' : 'goal.err.target'))
+    const input = { name: name.trim(), icon, targetAmount: evalExpr(target), initialAmount: evalExpr(initial), targetDate: due || null }
+    const nextPlan = plan && evalExpr(plan.amount) > 0 && plan.accountId ? planInput(plan) : null
     setBusy(true)
     try {
       const saved = goal ? await goalService.updateGoal(goal.id, input) : await goalService.createGoal(input)
       let next = saved.plan?.nextDate
       if (nextPlan && !(goal?.plan && samePlan(goal.plan, nextPlan))) next = (await goalService.setPlan(saved.id, nextPlan)).plan?.nextDate
       else if (!nextPlan && goal?.plan) await goalService.removePlan(saved.id)
-      showToast(nextPlan && next ? `Meta guardada. Próximo aporte el ${shortDayMonth(next)}` : 'Meta guardada', 'success')
+      showToast(nextPlan && next ? fill(tr('goal.toast.savedNext'), shortDayMonth(next)) : tr('goal.toast.saved'), 'success')
       onSaved()
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'No se pudo guardar.')
+      setErr(e instanceof Error ? e.message : tr('common.saveError'))
       setBusy(false)
     }
   }
@@ -157,24 +159,24 @@ export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | nu
       await goalService.deleteGoal(goal.id, goal.currentAmount > 0 ? 'origin' : undefined)
       onSaved()
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'No se pudo eliminar.')
+      setErr(e instanceof Error ? e.message : tr('common.deleteError'))
     }
   }
 
-  const title = goal ? 'Editar meta' : 'Nueva meta'
+  const title = tr(goal ? 'goal.edit' : 'goal.new')
   return (
     <V2Modal width={520} onClose={onClose} label={title}>
       <ModalTitle>{title}</ModalTitle>
 
-      <Field label="NOMBRE" note={iconAuto && guessPlanIcon(name) ? 'Icono sugerido por el nombre. Elige otro abajo si quieres.' : 'Elige un icono para reconocer la meta de un vistazo.'}>
+      <Field label={tr('bud.name')} note={tr(iconAuto && guessPlanIcon(name) ? 'bud.note.iconGuess' : 'goal.note.iconPick')}>
         <div className="flex items-center gap-2.5">
           <PlanMark icon={icon} box={38} />
-          <input value={name} onChange={(e) => onName(e.target.value)} placeholder="Viaje a Perú, portátil nuevo…" className={`${inputClass} flex-1`} />
+          <input value={name} onChange={(e) => onName(e.target.value)} placeholder={tr('goal.namePh')} className={`${inputClass} flex-1`} />
         </div>
       </Field>
 
       <div className="flex flex-col gap-2">
-        <Label>ICONO</Label>
+        <Label>{tr('bud.icon')}</Label>
         <PlanIconGrid
           value={icon}
           onPick={(k) => {
@@ -186,13 +188,13 @@ export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | nu
       </div>
 
       <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] gap-2.5">
-        <Field label="MONTO OBJETIVO">
-          <MoneyInput digits={target} onDigits={clear(setTarget)} />
+        <Field label={tr('goal.target')}>
+          <AmountField expr={target} onExpr={clear(setTarget)} label={tr('goal.targetLabel')} />
         </Field>
-        <Field label="MONTO INICIAL">
-          <MoneyInput digits={initial} onDigits={clear(setInitial)} />
+        <Field label={tr('goal.initial')}>
+          <AmountField expr={initial} onExpr={clear(setInitial)} label={tr('goal.initialLabel')} />
         </Field>
-        <Field label="FECHA OBJETIVO">
+        <Field label={tr('goal.date')}>
           <DateInput value={due} onChange={clear(setDue)} />
         </Field>
       </div>
@@ -210,7 +212,7 @@ export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | nu
           <Icon paths={IC.repeat} size={16} color="var(--v2-accent2)" />
         </span>
         <div className="min-w-0 flex-1">
-          <div className="text-[12.5px] font-bold">Aporte periódico</div>
+          <div className="text-[12.5px] font-bold">{tr('goal.plan')}</div>
           <div className="font-numeric mt-0.5 text-[11px] text-v2-dim">{planRow}</div>
         </div>
       </button>
@@ -218,27 +220,27 @@ export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | nu
       {planOpen && (
         <div className="flex flex-col gap-3 rounded-[14px] border border-v2-line2 bg-v2-surface2 p-3.5">
           <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2.5">
-            <Field label="MONTO DE CADA APORTE">
-              <MoneyInput digits={pl.amount} onDigits={(v) => plSet({ amount: v })} />
+            <Field label={tr('goal.plan.amount')}>
+              <AmountField expr={pl.amount} onExpr={(v) => plSet({ amount: v })} label={tr('goal.plan.amountLabel')} />
             </Field>
-            <Field label="EMPIEZA">
+            <Field label={tr('goal.plan.starts')}>
               <DateInput value={pl.startDate} onChange={(v) => plSet({ startDate: v })} />
             </Field>
           </div>
-          <Field label="FRECUENCIA">
-            <Pills options={FREQS} value={pl.frequency} onChange={(v) => plSet({ frequency: v })} />
+          <Field label={tr('goal.plan.freq')}>
+            <Pills options={freqs()} value={pl.frequency} onChange={(v) => plSet({ frequency: v })} />
           </Field>
-          <Field label="DESDE QUÉ BILLETERA">
+          <Field label={tr('goal.fromWallet')}>
             <Pills options={wallets.map((w) => ({ value: w.id, label: shortWallet(w.name) }))} value={pl.accountId} onChange={(v) => plSet({ accountId: v })} />
           </Field>
-          <Field label="TERMINA">
-            <Pills options={ENDS} value={pl.endMode} onChange={(v) => plSet({ endMode: v })} />
+          <Field label={tr('nm.ends')}>
+            <Pills options={ends()} value={pl.endMode} onChange={(v) => plSet({ endMode: v })} />
             {pl.endMode === 'count' && (
               <div className="flex items-center gap-2.5">
                 <button type="button" onClick={() => plSet({ count: Math.max(1, pl.count - 1) })} className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-[10px] border border-v2-line2 text-[16px] font-bold">
                   −
                 </button>
-                <div className="font-numeric flex-1 text-center text-[14px] font-extrabold">{pl.count} aportes</div>
+                <div className="font-numeric flex-1 text-center text-[14px] font-extrabold">{fill(tr('goal.nContributions'), pl.count)}</div>
                 <button type="button" onClick={() => plSet({ count: Math.min(120, pl.count + 1) })} className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-[10px] border border-v2-line2 text-[16px] font-bold">
                   +
                 </button>
@@ -246,12 +248,12 @@ export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | nu
             )}
             {pl.endMode === 'date' && <DateInput value={pl.endDate} onChange={(v) => plSet({ endDate: v })} />}
           </Field>
-          <Field label="EN CADA FECHA">
+          <Field label={tr('nm.eachDate')}>
             <div className="flex flex-col gap-2">
               {(
                 [
-                  [false, 'Pedirme confirmación', 'Te llega una alerta y confirmas cada aporte.'],
-                  [true, 'Automático', 'Se descuenta de la billetera en cada fecha y te avisamos.'],
+                  [false, tr('nm.ask'), tr('goal.ask.detail')],
+                  [true, tr('goal.auto'), tr('goal.auto.detail')],
                 ] as const
               ).map(([auto, text, detail]) => (
                 <RadioRow key={text} on={pl.autoConfirm === auto} onClick={() => plSet({ autoConfirm: auto })}>
@@ -270,24 +272,24 @@ export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | nu
             }}
             className="cursor-pointer self-start text-[12px] font-bold text-v2-neg"
           >
-            Quitar aporte periódico
+            {tr('goal.plan.remove')}
           </button>
         </div>
       )}
 
       {err && <ErrorBox>{err}</ErrorBox>}
 
-      <ModalFooter left={goal && <DangerLink onClick={() => setConfirming(true)}>Eliminar meta</DangerLink>}>
+      <ModalFooter left={goal && <DangerLink onClick={() => setConfirming(true)}>{tr('goal.delete')}</DangerLink>}>
         <CancelButton onClick={onClose} />
         <SaveButton valid={valid} busy={busy} onClick={() => void save()} />
       </ModalFooter>
 
       {confirming && goal && (
         <ConfirmDialog
-          title={`Eliminar la meta “${goal.name}”`}
-          lines={[`${format(goal.currentAmount)} ahorrados de ${format(goal.targetAmount)}`, ...(goal.plan ? ['El aporte periódico se cancela'] : []), 'El dinero ahorrado vuelve a las billeteras de origen']}
-          ack="Entiendo que la meta se elimina y su dinero vuelve a las billeteras de origen."
-          cta="Eliminar meta"
+          title={fill(tr('goal.delete.title'), goal.name)}
+          lines={[fill(tr('goal.delete.saved'), format(goal.currentAmount), format(goal.targetAmount)), ...(goal.plan ? [tr('goal.delete.plan')] : []), tr('goal.delete.money')]}
+          ack={tr('goal.delete.ack')}
+          cta={tr('goal.delete')}
           onCancel={() => setConfirming(false)}
           onConfirm={() => void remove()}
         />
@@ -304,51 +306,48 @@ export function GoalPayModal({ goal, wallets, onClose, onSaved }: { goal: Goal; 
   const [accountId, setAccountId] = useState(wallets[0]?.id ?? '')
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
-  const ok = Number(amount) > 0 && !!accountId
+  const ok = evalExpr(amount) > 0 && !!accountId
 
   const confirm = async () => {
     if (!ok || busy) return
     setBusy(true)
     try {
-      await goalService.contribute(goal.id, { amount: Number(amount), accountId, date: todayISO() })
-      showToast(`Abono de ${format(Number(amount))} a ${goal.name} desde ${shortWallet(wallets.find((w) => w.id === accountId)?.name ?? '')}`, 'success')
+      await goalService.contribute(goal.id, { amount: evalExpr(amount), accountId, date: todayISO() })
+      showToast(fill(tr('goal.pay.toast'), format(evalExpr(amount)), goal.name, shortWallet(wallets.find((w) => w.id === accountId)?.name ?? '')), 'success')
       onSaved()
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'No se pudo registrar el abono.')
+      setErr(e instanceof Error ? e.message : tr('goal.pay.err'))
       setBusy(false)
     }
   }
 
   return (
-    <V2Modal width={420} onClose={onClose} label={`Abonar a ${goal.name}`}>
+    <V2Modal width={420} onClose={onClose} label={fill(tr('goal.pay.title'), goal.name)}>
       <div className="flex items-center gap-3">
         <PlanMark icon={goal.icon} box={38} />
         <div className="min-w-0 flex-1">
-          <div className="text-[15px] font-extrabold">Abonar a {goal.name}</div>
+          <div className="text-[15px] font-extrabold">{fill(tr('goal.pay.title'), goal.name)}</div>
           <div className="font-numeric mt-[3px] text-[11.5px] leading-[1.45] text-v2-dim">
-            {format(goal.currentAmount)} de {format(goal.targetAmount)} · el abono queda registrado en la billetera de origen
+            {fill(tr('goal.pay.sub'), format(goal.currentAmount), format(goal.targetAmount))}
           </div>
         </div>
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label>MONTO DEL ABONO</Label>
-        <div className="box-border flex h-[46px] items-center gap-1.5 rounded-[10px] border border-v2-line bg-v2-sidebar px-3.5">
-          <span className="font-numeric text-[16px] font-extrabold text-v2-muted">$</span>
-          <input
-            autoFocus
-            value={amount ? Number(amount).toLocaleString('es-CO') : ''}
-            onChange={(e) => {
-              setAmount(e.target.value.replace(/\D/g, '').slice(0, 12))
-              setErr('')
-            }}
-            inputMode="numeric"
-            placeholder="0"
-            className="font-numeric min-w-0 flex-1 border-none bg-transparent font-[inherit] text-[16px] font-extrabold text-v2-text outline-none"
-          />
-        </div>
+        <Label>{tr('goal.pay.amount')}</Label>
+        <AmountField
+          expr={amount}
+          onExpr={(v) => {
+            setAmount(v)
+            setErr('')
+          }}
+          height={46}
+          fontSize={16}
+          label={tr('goal.pay.amountLabel')}
+          autoFocus
+        />
       </div>
       <div className="flex flex-col gap-2">
-        <Label>DESDE QUÉ BILLETERA</Label>
+        <Label>{tr('goal.fromWallet')}</Label>
         <Pills options={wallets.map((w) => ({ value: w.id, label: shortWallet(w.name) }))} value={accountId} onChange={setAccountId} />
       </div>
       {err && <ErrorBox>{err}</ErrorBox>}
@@ -360,7 +359,7 @@ export function GoalPayModal({ goal, wallets, onClose, onSaved }: { goal: Goal; 
           className="whitespace-nowrap rounded-[10px] px-[18px] py-2.5 text-[12.5px] font-bold"
           style={{ cursor: ok ? 'pointer' : 'not-allowed', color: ok ? '#fff' : 'var(--v2-dim)', background: ok ? 'var(--v2-accent)' : 'var(--v2-surface2)' }}
         >
-          Abonar
+          {tr('goal.pay')}
         </button>
       </div>
     </V2Modal>

@@ -39,6 +39,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.s2nova.app.ui.theme.NovaColors
+import com.s2nova.app.ui.tr
+import com.s2nova.app.ui.StringKey
 
 @Composable
 fun NovaTextField(
@@ -115,7 +117,7 @@ fun NovaTextField(
                     ) {
                         Icon(
                             imageVector = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                            contentDescription = if (passwordVisible) "Ocultar contraseña" else "Ver contraseña",
+                            contentDescription = if (passwordVisible) tr(StringKey.PW_HIDE) else tr(StringKey.PW_SHOW),
                             tint = colors.loginTextMuted,
                             modifier = Modifier.size(20.dp),
                         )

@@ -1,9 +1,13 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { http, HttpResponse } from 'msw'
 import { server } from '../mocks/server'
+import { setCurrentLanguage } from '@/lib/i18n/translations'
 import { apiClient } from '@/lib/apiClient'
 
 const BASE = 'http://test.local/api/v1'
+
+// The auth layer's 401 for an expired access token (backend plugins/auth.ts).
+const expired = () => HttpResponse.json({ error: 'Invalid or expired access token.', code: 'token_invalid' }, { status: 401 })
 
 describe('apiClient', () => {
   afterEach(() => {
@@ -49,7 +53,7 @@ describe('apiClient', () => {
       http.get(`${BASE}/secret`, ({ request }) => {
         whoamiCalls++
         const auth = request.headers.get('authorization')
-        if (auth !== 'Bearer fresh-token') return new HttpResponse(null, { status: 401 })
+        if (auth !== 'Bearer fresh-token') return expired()
         return HttpResponse.json({ secret: 42 })
       }),
       http.post(`${BASE}/auth/refresh`, () => HttpResponse.json({ accessToken: 'fresh-token' })),
@@ -65,7 +69,7 @@ describe('apiClient', () => {
     server.use(
       http.get(`${BASE}/secret`, ({ request }) => {
         const auth = request.headers.get('authorization')
-        if (auth !== 'Bearer fresh-token') return new HttpResponse(null, { status: 401 })
+        if (auth !== 'Bearer fresh-token') return expired()
         return HttpResponse.json({ ok: true })
       }),
       http.post(`${BASE}/auth/refresh`, async () => {
@@ -81,11 +85,42 @@ describe('apiClient', () => {
   it('clears the access token and does not retry when the refresh itself fails', async () => {
     apiClient.setAccessToken('stale-token')
     server.use(
-      http.get(`${BASE}/secret`, () => new HttpResponse(null, { status: 401 })),
+      http.get(`${BASE}/secret`, () => expired()),
       http.post(`${BASE}/auth/refresh`, () => new HttpResponse(null, { status: 401 })),
     )
-    await expect(apiClient.get('/secret')).rejects.toThrow('Tu sesión expiró. Vuelve a iniciar sesión.')
+    await expect(apiClient.get('/secret')).rejects.toThrow('Tu sesión terminó. Vuelve a iniciar sesión.')
     expect(apiClient.getAccessToken()).toBeNull()
+  })
+
+  it("doesn't treat a route's own 401 (a wrong current password) as an expired session", async () => {
+    let refreshCalls = 0
+    apiClient.setAccessToken('good-token')
+    server.use(
+      http.post(`${BASE}/me/password`, () => HttpResponse.json({ error: 'Incorrect password.' }, { status: 401 })),
+      http.post(`${BASE}/auth/refresh`, () => {
+        refreshCalls++
+        return HttpResponse.json({ accessToken: 'x' })
+      }),
+    )
+    await expect(apiClient.post('/me/password', {})).rejects.toThrow('La contraseña no es correcta.')
+    expect(refreshCalls).toBe(0)
+    expect(apiClient.getAccessToken()).toBe('good-token')
+  })
+
+  it("shows the backend's error sentences in the app language", async () => {
+    apiClient.setAccessToken('good-token')
+    server.use(
+      http.post(`${BASE}/transactions`, () => HttpResponse.json({ error: "Transfers can't repeat." }, { status: 422 })),
+      http.get(`${BASE}/goals/g1`, () => HttpResponse.json({ error: 'Goal not found.' }, { status: 404 })),
+    )
+    await expect(apiClient.post('/transactions', {})).rejects.toThrow('Las transferencias no se pueden repetir.')
+    await expect(apiClient.get('/goals/g1')).rejects.toThrow('Algo salió mal. Intenta de nuevo.')
+    setCurrentLanguage('en')
+    try {
+      await expect(apiClient.post('/transactions', {})).rejects.toThrow("Transfers can't repeat.")
+    } finally {
+      setCurrentLanguage('es')
+    }
   })
 
   it('never tries to refresh a 401 from /auth/refresh itself (would recurse)', async () => {
@@ -103,7 +138,7 @@ describe('apiClient', () => {
   it('honors skipAuthRetry and does not attempt a refresh on 401', async () => {
     let refreshCalls = 0
     server.use(
-      http.get(`${BASE}/secret`, () => new HttpResponse(null, { status: 401 })),
+      http.get(`${BASE}/secret`, () => expired()),
       http.post(`${BASE}/auth/refresh`, () => {
         refreshCalls++
         return HttpResponse.json({ accessToken: 'x' })

@@ -1,3 +1,4 @@
+import { MONTHS_SHORT } from '@/lib/inicio'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
@@ -12,16 +13,16 @@ import { cn } from '@/lib/cn'
 const BRAND_PANEL_GRADIENT = 'linear-gradient(150deg,#16123a 0%,#1d1650 55%,#241a5e 100%)'
 
 const INCOME_VS_EXPENSES = [
-  { month: 'Mar', income: 56, expense: 44 },
-  { month: 'Abr', income: 64, expense: 49 },
-  { month: 'May', income: 60, expense: 41 },
-  { month: 'Jun', income: 73, expense: 52 },
-  { month: 'Jul', income: 81, expense: 46 },
-  { month: 'Ago', income: 94, expense: 48 },
+  { month: 2, income: 56, expense: 44 },
+  { month: 3, income: 64, expense: 49 },
+  { month: 4, income: 60, expense: 41 },
+  { month: 5, income: 73, expense: 52 },
+  { month: 6, income: 81, expense: 46 },
+  { month: 7, income: 94, expense: 48 },
 ]
 
 function SignupBrandPanel() {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   return (
     <div
       className="relative hidden w-[452px] shrink-0 flex-col justify-between overflow-hidden p-[38px] text-white min-[900px]:flex"
@@ -43,15 +44,15 @@ function SignupBrandPanel() {
 
       <div className="relative flex flex-col gap-[26px]">
         <div className="text-[34px] font-extrabold leading-[1.14] tracking-[-0.03em] text-pretty">
-          Empieza a ordenar
+          {t('auth.hero.register1')}
           <br />
-          tus finanzas hoy.
+          {t('auth.hero.register2')}
         </div>
 
         <div className="flex flex-col gap-4">
           <div className="flex items-baseline justify-between">
-            <div className="text-[10px] font-bold tracking-[0.11em] text-[#b9b0ff]">INGRESOS VS. GASTOS</div>
-            <div className="text-[11px] text-white/45">Últimos 6 meses</div>
+            <div className="text-[10px] font-bold tracking-[0.11em] text-[#b9b0ff]">{t('auth.hero.incomeVsExpenses')}</div>
+            <div className="text-[11px] text-white/45">{t('common.last6Months')}</div>
           </div>
 
           <div className="flex items-end gap-3">
@@ -61,7 +62,7 @@ function SignupBrandPanel() {
                   <div className="flex-1 rounded-[3px] bg-[#8578ff]" style={{ height: `${income}%` }} />
                   <div className="flex-1 rounded-[3px] bg-white/20" style={{ height: `${expense}%` }} />
                 </div>
-                <div className="text-[11px] font-semibold text-white/45">{month}</div>
+                <div className="text-[11px] font-semibold text-white/45">{MONTHS_SHORT[language][month].replace(/^./, (c) => c.toUpperCase())}</div>
               </div>
             ))}
           </div>
@@ -69,17 +70,16 @@ function SignupBrandPanel() {
           <div className="flex items-center gap-[18px]">
             <div className="flex items-center gap-2.5">
               <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#8578ff]" />
-              <span className="text-[12.5px] text-white/72">Ingresos</span>
+              <span className="text-[12.5px] text-white/72">{t('nm.type.income')}</span>
             </div>
             <div className="flex items-center gap-2.5">
               <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-white/20" />
-              <span className="text-[12.5px] text-white/72">Gastos</span>
+              <span className="text-[12.5px] text-white/72">{t('auth.hero.expenses')}</span>
             </div>
           </div>
 
           <div className="text-[13px] leading-[1.5] text-white/60 text-pretty">
-            Los usuarios de S2 Nova ahorran en promedio un 18% más en su tercer mes, con todas sus cuentas en un solo
-            balance.
+            {t('auth.hero.stat')}
           </div>
         </div>
       </div>

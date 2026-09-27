@@ -30,20 +30,6 @@ export function PanelField({ label, htmlFor, aside, note, children }: { label: s
   )
 }
 
-// Digits only, shown grouped the Colombian way ("1.250.000").
-export function AmountInput({ id, value, onChange }: { id: string; value: string; onChange: (digits: string) => void }) {
-  return (
-    <input
-      id={id}
-      value={value ? Number(value).toLocaleString('es-CO') : ''}
-      onChange={(e) => onChange(e.target.value.replace(/\D/g, '').slice(0, 11))}
-      placeholder="0"
-      inputMode="numeric"
-      className={cn(panelInputClass, 'font-numeric')}
-    />
-  )
-}
-
 export function WalletChips({ wallets, selected, onSelect }: { wallets: Wallet[]; selected: string | null; onSelect: (id: string) => void }) {
   return (
     <div className="flex flex-wrap gap-1.5">

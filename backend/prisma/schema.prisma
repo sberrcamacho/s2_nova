@@ -215,6 +215,15 @@ model RefreshToken {
   deviceLabel String?   @map("device_label")
   expiresAt   DateTime  @map("expires_at")
   revokedAt   DateTime? @map("revoked_at")
+  // Set (with revokedAt) when the token was replaced by /auth/refresh — the
+  // only kind of revocation whose replay counts as token reuse. A token
+  // revoked by logout, "Cerrar sesión" or idle timeout is simply rejected.
+  rotatedAt   DateTime? @map("rotated_at")
+  // Carried over on every rotation: when the login happened (sessions
+  // expire 30 days after it, however often they refresh) and the user's
+  // last interaction (POST /auth/activity), which the auto-logout checks.
+  sessionStartedAt DateTime @default(now()) @map("session_started_at")
+  lastActivityAt   DateTime @default(now()) @map("last_activity_at")
   createdAt   DateTime  @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

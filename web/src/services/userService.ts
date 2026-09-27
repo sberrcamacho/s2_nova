@@ -22,6 +22,7 @@ export interface MeResponse {
     tutorialCompleted: boolean
     guidesSeen?: string[]
     guidesOff?: boolean
+    autoLockMinutes?: number
   } | null
   principalCurrency?: string
 }
@@ -63,6 +64,7 @@ export function mapMeResponse(me: MeResponse): User {
       // account across both clients.
       hideAmounts: me.preferences?.blurBalance ?? false,
       language: (me.preferences?.language as LanguageCode) ?? 'es',
+      autoLockMinutes: me.preferences?.autoLockMinutes ?? 5,
     },
   }
 }
@@ -108,6 +110,7 @@ export const userService = {
     if (patch.notifications !== undefined) body.notifications = patch.notifications
     if (patch.biometricLogin !== undefined) body.biometricLogin = patch.biometricLogin
     if (patch.hideAmounts !== undefined) body.blurBalance = patch.hideAmounts
+    if (patch.autoLockMinutes !== undefined) body.autoLockMinutes = patch.autoLockMinutes
     if (Object.keys(body).length === 0) return
     await apiClient.patch('/me/preferences', body)
   },

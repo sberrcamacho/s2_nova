@@ -45,7 +45,7 @@ export default function AjustesPage() {
     userService.updatePreferences({ theme: next }).catch((err) => {
       setTheme(previous)
       updateUser({ preferences: { ...user.preferences, theme: previous } })
-      showToast(err instanceof Error ? err.message : 'Algo salió mal. Intenta de nuevo.', 'error')
+      showToast(err instanceof Error ? err.message : t('api.generic'), 'error')
     })
   }
 
@@ -54,22 +54,34 @@ export default function AjustesPage() {
     updateUser({ preferences: { ...user.preferences, notifications: next } })
     userService.updatePreferences({ notifications: next }).catch((err) => {
       updateUser({ preferences: { ...user.preferences, notifications: !next } })
-      showToast(err instanceof Error ? err.message : 'Algo salió mal. Intenta de nuevo.', 'error')
+      showToast(err instanceof Error ? err.message : t('api.generic'), 'error')
     })
   }
 
   // "COP principal · USD, EUR"
   const principal = user.principalCurrency
   const others = (currencies ?? []).filter((c) => c.code !== principal).map((c) => c.code)
-  const currencyDetail = `${principal} principal${others.length ? ` · ${others.join(', ')}` : ''}`
+  const currencyDetail = fill(t('aj.cur.detail'), principal) + (others.length ? ` · ${others.join(', ')}` : '')
 
   const customCount = categories.filter((c) => c.custom).length
-  const catSummary = `${parentCategories(false).length} de gasto · ${parentCategories(true).length} de ingreso${customCount ? ` · ${customCount} personalizadas` : ''}`
+  const catSummary = fill(t('aj.cat.summary'), parentCategories(false).length, parentCategories(true).length) + (customCount ? fill(t('aj.cat.custom'), customCount) : '')
 
   const replayGuides = () => {
     updateUser({ guidesSeen: [], guidesOff: false })
     void userService.updateGuides({ guidesSeen: [], guidesOff: false })
-    showToast('Verás una guía corta en cada página principal.')
+    showToast(t('aj.guides.toast'))
+  }
+
+  // Not in the web mockup: kept for parity with Android's setting, which
+  // the server also enforces (backend lib/sessions.ts).
+  const onAutoLock = (value: string) => {
+    const next = Number(value)
+    const previous = user.preferences.autoLockMinutes
+    updateUser({ preferences: { ...user.preferences, autoLockMinutes: next } })
+    userService.updatePreferences({ autoLockMinutes: next }).catch((err) => {
+      updateUser({ preferences: { ...user.preferences, autoLockMinutes: previous } })
+      showToast(err instanceof Error ? err.message : t('api.generic'), 'error')
+    })
   }
 
   const passwordDetail = user.hasPassword
@@ -112,11 +124,11 @@ export default function AjustesPage() {
               ]}
             />
           </AjRow>
-          <AjRow label="Monedas" detail={currencyDetail}>
+          <AjRow label={t('aj.currencies')} detail={currencyDetail}>
             <AjOutlineButton onClick={() => navigate('/ajustes/monedas')}>{t('aj.manage')}</AjOutlineButton>
           </AjRow>
-          <AjRow label="Guías rápidas" detail="Una guía corta en cada página principal">
-            <AjOutlineButton onClick={replayGuides}>Ver otra vez</AjOutlineButton>
+          <AjRow label={t('aj.guides')} detail={t('aj.guides.detail')}>
+            <AjOutlineButton onClick={replayGuides}>{t('aj.guides.again')}</AjOutlineButton>
           </AjRow>
           <AjRow label={t('aj.theme')} detail={t('aj.themeHint')}>
             <AjPills<ThemePreference>
@@ -141,7 +153,7 @@ export default function AjustesPage() {
       <AjCard className="p-5">
         <div className="flex items-center gap-4">
           <div className="min-w-0 flex-1">
-            <AjCardTitle>Categorías</AjCardTitle>
+            <AjCardTitle>{t('cat.title')}</AjCardTitle>
             <div className="mt-0.5 text-[11.5px] text-v2-dim">{catSummary}</div>
           </div>
           <AjOutlineButton onClick={() => navigate('/ajustes/categorias')}>{t('aj.manage')}</AjOutlineButton>
@@ -153,6 +165,19 @@ export default function AjustesPage() {
         <div className="mt-2 flex flex-col">
           <AjRow label={t('aj.password')} detail={passwordDetail}>
             <AjOutlineButton onClick={() => navigate('/ajustes/contrasena')}>{t('aj.change')}</AjOutlineButton>
+          </AjRow>
+          <AjRow label={t('aj.autoLock')} detail={t('aj.autoLockHint')}>
+            <AjPills<string>
+              value={String(user.preferences.autoLockMinutes)}
+              onChange={onAutoLock}
+              options={[
+                { value: '0', label: t('aj.autoLockNever') },
+                { value: '1', label: '1 min' },
+                { value: '5', label: '5 min' },
+                { value: '15', label: '15 min' },
+                { value: '60', label: '60 min' },
+              ]}
+            />
           </AjRow>
           <AjRow label={t('aj.sessions')} detail={sessionsSummary}>
             <AjOutlineButton onClick={() => navigate('/ajustes/sesiones')}>{t('aj.manage')}</AjOutlineButton>

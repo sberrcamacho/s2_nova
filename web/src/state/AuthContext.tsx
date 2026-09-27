@@ -1,10 +1,12 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { apiClient, setGuestHandler } from '@/lib/apiClient'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { apiClient, setGuestHandler, setSessionEndedHandler, type SessionEndReason } from '@/lib/apiClient'
 import { resetCategoryCache } from '@/lib/backendCategories'
 import { createGuestApi } from '@/lib/guestApi'
 import { authService } from '@/services/authService'
 import { userService } from '@/services/userService'
-import type { AuthCredentials, RegisterInput, User } from '@/types'
+import { useIdleLogout } from '@/state/useIdleLogout'
+import { setCurrentLanguage, tr, translate } from '@/lib/i18n/translations'
+import type { AuthCredentials, LanguageCode, RegisterInput, User } from '@/types'
 
 interface AuthContextValue {
   user: User | null
@@ -16,18 +18,52 @@ interface AuthContextValue {
   register: (input: RegisterInput) => Promise<boolean>
   loginWithGoogle: (idToken: string) => Promise<boolean>
   enterGuest: () => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   clearError: () => void
   updateUser: (patch: Partial<User>) => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
+// Signing out in one tab signs out the others (they share the session).
+const AUTH_CHANNEL = 's2nova-auth'
+
+function openChannel(): BroadcastChannel | null {
+  try {
+    return typeof BroadcastChannel === 'undefined' ? null : new BroadcastChannel(AUTH_CHANNEL)
+  } catch {
+    return null
+  }
+}
+
+// Signed out, screens read in the last signed-in user's language.
+const LAST_LANGUAGE_KEY = 's2nova.language'
+
+function lastLanguage(): LanguageCode {
+  try {
+    return localStorage.getItem(LAST_LANGUAGE_KEY) === 'en' ? 'en' : 'es'
+  } catch {
+    return 'es'
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isInitializing, setIsInitializing] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Before the children render, so helpers outside React agree with them.
+  const language = user?.preferences.language ?? lastLanguage()
+  setCurrentLanguage(language)
+  useEffect(() => {
+    if (!user) return
+    try {
+      localStorage.setItem(LAST_LANGUAGE_KEY, user.preferences.language)
+    } catch {
+      // Private mode: signed-out screens fall back to Spanish.
+    }
+  }, [user])
 
   useEffect(() => {
     // Silent session restore: the refresh token lives in an httpOnly
@@ -52,6 +88,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  // Clears everything this tab holds about the session. `notice` is shown on
+  // Login (why the user landed there, if it wasn't their own doing).
+  const clearSession = useCallback((notice: string | null) => {
+    setGuestHandler(null)
+    apiClient.setAccessToken(null)
+    resetCategoryCache()
+    setUser(null)
+    setError(notice)
+  }, [])
+
+  const noticeFor = useCallback(
+    (reason: SessionEndReason) => translate(reason === 'idle' ? 'auth.sessionIdle' : 'auth.sessionExpired', language),
+    [language],
+  )
+
+  // Ends the session for real: the server revokes it before this tab and
+  // the others forget it.
+  const endSession = useCallback(
+    async (notice: string | null) => {
+      await authService.logout()
+      clearSession(notice)
+      openChannel()?.postMessage({ type: 'logout', notice })
+    },
+    [clearSession],
+  )
+
+  // A request found the session over (expired, closed from another device,
+  // or ended by the server's own idle check).
+  useEffect(() => {
+    setSessionEndedHandler((reason) => clearSession(noticeFor(reason)))
+    return () => setSessionEndedHandler(null)
+  }, [clearSession, noticeFor])
+
+  useEffect(() => {
+    const channel = openChannel()
+    if (!channel) return
+    channel.onmessage = (event: MessageEvent<{ type?: string; notice?: string | null }>) => {
+      if (event.data?.type === 'logout') clearSession(event.data.notice ?? null)
+    }
+    return () => channel.close()
+  }, [clearSession])
+
+  useIdleLogout(
+    user?.preferences.autoLockMinutes ?? 0,
+    !!user,
+    () => void endSession(noticeFor('idle')),
+    () => {
+      if (!user?.isGuest) void authService.activity()
+    },
+  )
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -67,7 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(await authService.login(credentials))
           return true
         } catch (err) {
-          setError(err instanceof Error ? err.message : 'No pudimos iniciar sesión.')
+          setError(err instanceof Error ? err.message : tr('auth.err.login'))
           return false
         } finally {
           setIsSubmitting(false)
@@ -80,7 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(await authService.register(input))
           return true
         } catch (err) {
-          setError(err instanceof Error ? err.message : 'No pudimos crear tu cuenta.')
+          setError(err instanceof Error ? err.message : tr('auth.err.register'))
           return false
         } finally {
           setIsSubmitting(false)
@@ -93,7 +180,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(await authService.loginWithGoogle(idToken))
           return true
         } catch (err) {
-          setError(err instanceof Error ? err.message : 'No pudimos iniciar sesión con Google.')
+          setError(err instanceof Error ? err.message : tr('auth.err.google'))
           return false
         } finally {
           setIsSubmitting(false)
@@ -107,18 +194,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const me = await userService.getCurrentUser()
         setUser({ ...me, isGuest: true })
       },
-      logout: () => {
-        void authService.logout()
-        setGuestHandler(null)
-        apiClient.setAccessToken(null)
-        resetCategoryCache()
-        setUser(null)
-      },
+      logout: () => endSession(null),
       updateUser: (patch) => {
         setUser((prev) => (prev ? { ...prev, ...patch } : prev))
       },
     }),
-    [user, isInitializing, isSubmitting, error],
+    [user, isInitializing, isSubmitting, error, endSession],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

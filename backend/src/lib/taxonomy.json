@@ -200,6 +200,7 @@
    "type": "income",
    "parentId": null,
    "name": "Trabajo",
+   "nameEn": "Work",
    "vis": "work",
    "color": "#22A06B",
    "glyph": [
@@ -212,6 +213,7 @@
    "type": "income",
    "parentId": "inc.work",
    "name": "Salario",
+   "nameEn": "Salary",
    "vis": "work",
    "color": "#22A06B",
    "glyph": [
@@ -224,6 +226,7 @@
    "type": "income",
    "parentId": "inc.work",
    "name": "Horas extra",
+   "nameEn": "Overtime",
    "vis": "work",
    "color": "#22A06B",
    "glyph": [
@@ -236,6 +239,7 @@
    "type": "income",
    "parentId": "inc.work",
    "name": "Bonificaciones",
+   "nameEn": "Bonuses",
    "vis": "work",
    "color": "#22A06B",
    "glyph": [
@@ -248,6 +252,7 @@
    "type": "income",
    "parentId": "inc.work",
    "name": "Comisiones",
+   "nameEn": "Commissions",
    "vis": "work",
    "color": "#22A06B",
    "glyph": [
@@ -260,6 +265,7 @@
    "type": "income",
    "parentId": "inc.work",
    "name": "Freelance",
+   "nameEn": "Freelance",
    "vis": "work",
    "color": "#22A06B",
    "glyph": [
@@ -272,6 +278,7 @@
    "type": "income",
    "parentId": null,
    "name": "Negocio",
+   "nameEn": "Business",
    "vis": "business",
    "color": "#A8963D",
    "glyph": [
@@ -285,6 +292,7 @@
    "type": "income",
    "parentId": "inc.business",
    "name": "Ventas",
+   "nameEn": "Sales",
    "vis": "business",
    "color": "#A8963D",
    "glyph": [
@@ -298,6 +306,7 @@
    "type": "income",
    "parentId": "inc.business",
    "name": "Servicios prestados",
+   "nameEn": "Services rendered",
    "vis": "business",
    "color": "#A8963D",
    "glyph": [
@@ -311,6 +320,7 @@
    "type": "income",
    "parentId": "inc.business",
    "name": "Comisiones",
+   "nameEn": "Commissions",
    "vis": "business",
    "color": "#A8963D",
    "glyph": [
@@ -324,6 +334,7 @@
    "type": "income",
    "parentId": "inc.business",
    "name": "Otros ingresos del negocio",
+   "nameEn": "Other business income",
    "vis": "business",
    "color": "#A8963D",
    "glyph": [
@@ -337,6 +348,7 @@
    "type": "income",
    "parentId": null,
    "name": "Inversiones",
+   "nameEn": "Investments",
    "vis": "investments",
    "color": "#6657E8",
    "glyph": [
@@ -349,6 +361,7 @@
    "type": "income",
    "parentId": "inc.investments",
    "name": "Dividendos",
+   "nameEn": "Dividends",
    "vis": "investments",
    "color": "#6657E8",
    "glyph": [
@@ -361,6 +374,7 @@
    "type": "income",
    "parentId": "inc.investments",
    "name": "Intereses",
+   "nameEn": "Interest",
    "vis": "investments",
    "color": "#6657E8",
    "glyph": [
@@ -373,6 +387,7 @@
    "type": "income",
    "parentId": "inc.investments",
    "name": "Rendimientos",
+   "nameEn": "Returns",
    "vis": "investments",
    "color": "#6657E8",
    "glyph": [
@@ -385,6 +400,7 @@
    "type": "income",
    "parentId": "inc.investments",
    "name": "Venta de inversiones",
+   "nameEn": "Sale of investments",
    "vis": "investments",
    "color": "#6657E8",
    "glyph": [
@@ -397,6 +413,7 @@
    "type": "income",
    "parentId": null,
    "name": "Propiedades",
+   "nameEn": "Property",
    "vis": "property",
    "color": "#9A7B5C",
    "glyph": [
@@ -417,6 +434,7 @@
    "type": "income",
    "parentId": "inc.property",
    "name": "Arriendos recibidos",
+   "nameEn": "Rent received",
    "vis": "property",
    "color": "#9A7B5C",
    "glyph": [
@@ -437,6 +455,7 @@
    "type": "income",
    "parentId": "inc.property",
    "name": "Venta de propiedad",
+   "nameEn": "Sale of property",
    "vis": "property",
    "color": "#9A7B5C",
    "glyph": [
@@ -457,6 +476,7 @@
    "type": "income",
    "parentId": "inc.property",
    "name": "Otros ingresos de propiedad",
+   "nameEn": "Other property income",
    "vis": "property",
    "color": "#9A7B5C",
    "glyph": [
@@ -477,6 +497,7 @@
    "type": "income",
    "parentId": null,
    "name": "Transferencias recibidas",
+   "nameEn": "Transfers received",
    "vis": "transfers",
    "color": "#D95DB2",
    "glyph": [
@@ -492,6 +513,7 @@
    "type": "income",
    "parentId": "inc.transfers",
    "name": "Regalos",
+   "nameEn": "Gifts",
    "vis": "transfers",
    "color": "#D95DB2",
    "glyph": [
@@ -507,6 +529,7 @@
    "type": "income",
    "parentId": "inc.transfers",
    "name": "Donaciones",
+   "nameEn": "Donations",
    "vis": "transfers",
    "color": "#D95DB2",
    "glyph": [
@@ -522,6 +545,7 @@
    "type": "income",
    "parentId": "inc.transfers",
    "name": "Ayuda económica",
+   "nameEn": "Financial help",
    "vis": "transfers",
    "color": "#D95DB2",
    "glyph": [
@@ -537,6 +561,7 @@
    "type": "income",
    "parentId": "inc.transfers",
    "name": "Reembolsos",
+   "nameEn": "Reimbursements",
    "vis": "transfers",
    "color": "#D95DB2",
    "glyph": [
@@ -552,6 +577,7 @@
    "type": "income",
    "parentId": null,
    "name": "Financieros",
+   "nameEn": "Financial",
    "vis": "financial",
    "color": "#7A86A8",
    "glyph": [
@@ -568,6 +594,7 @@
    "type": "income",
    "parentId": "inc.financial",
    "name": "Devoluciones",
+   "nameEn": "Refunds",
    "vis": "financial",
    "color": "#7A86A8",
    "glyph": [
@@ -584,6 +611,7 @@
    "type": "income",
    "parentId": "inc.financial",
    "name": "Reintegros de compras",
+   "nameEn": "Purchase reimbursements",
    "vis": "financial",
    "color": "#7A86A8",
    "glyph": [
@@ -600,6 +628,7 @@
    "type": "income",
    "parentId": "inc.financial",
    "name": "Ajustes",
+   "nameEn": "Adjustments",
    "vis": "financial",
    "color": "#7A86A8",
    "glyph": [
@@ -616,6 +645,7 @@
    "type": "income",
    "parentId": null,
    "name": "Otros ingresos",
+   "nameEn": "Other income",
    "vis": "other",
    "color": "#9C9CAA",
    "glyph": [
@@ -630,6 +660,7 @@
    "type": "income",
    "parentId": "inc.other",
    "name": "Premios",
+   "nameEn": "Prizes",
    "vis": "other",
    "color": "#9C9CAA",
    "glyph": [
@@ -644,6 +675,7 @@
    "type": "income",
    "parentId": "inc.other",
    "name": "Ingresos ocasionales",
+   "nameEn": "Occasional income",
    "vis": "other",
    "color": "#9C9CAA",
    "glyph": [
@@ -658,6 +690,7 @@
    "type": "income",
    "parentId": "inc.other",
    "name": "Otros",
+   "nameEn": "Other",
    "vis": "other",
    "color": "#9C9CAA",
    "glyph": [
@@ -672,6 +705,7 @@
    "type": "expense",
    "parentId": null,
    "name": "Alimentación",
+   "nameEn": "Food",
    "vis": "food",
    "color": "#E8A23D",
    "glyph": [
@@ -686,6 +720,7 @@
    "type": "expense",
    "parentId": "exp.food",
    "name": "Mercado",
+   "nameEn": "Groceries",
    "vis": "food",
    "color": "#E8A23D",
    "glyph": [
@@ -699,6 +734,7 @@
    "type": "expense",
    "parentId": "exp.food",
    "name": "Restaurantes",
+   "nameEn": "Restaurants",
    "vis": "food",
    "color": "#E8A23D",
    "glyph": [
@@ -712,6 +748,7 @@
    "type": "expense",
    "parentId": "exp.food",
    "name": "Domicilios",
+   "nameEn": "Delivery",
    "vis": "food",
    "color": "#E8A23D",
    "glyph": [
@@ -726,6 +763,7 @@
    "type": "expense",
    "parentId": "exp.food",
    "name": "Cafés",
+   "nameEn": "Cafés",
    "vis": "food",
    "color": "#E8A23D",
    "glyph": [
@@ -740,6 +778,7 @@
    "type": "expense",
    "parentId": null,
    "name": "Vivienda",
+   "nameEn": "Housing",
    "vis": "housing",
    "color": "#D9784A",
    "glyph": [
@@ -753,6 +792,7 @@
    "type": "expense",
    "parentId": "exp.housing",
    "name": "Arriendo",
+   "nameEn": "Rent",
    "vis": "housing",
    "color": "#D9784A",
    "glyph": [
@@ -766,6 +806,7 @@
    "type": "expense",
    "parentId": "exp.housing",
    "name": "Hipoteca",
+   "nameEn": "Mortgage",
    "vis": "housing",
    "color": "#D9784A",
    "glyph": [
@@ -779,6 +820,7 @@
    "type": "expense",
    "parentId": "exp.housing",
    "name": "Mantenimiento",
+   "nameEn": "Maintenance",
    "vis": "housing",
    "color": "#D9784A",
    "glyph": [
@@ -792,6 +834,7 @@
    "type": "expense",
    "parentId": "exp.housing",
    "name": "Muebles",
+   "nameEn": "Furniture",
    "vis": "housing",
    "color": "#D9784A",
    "glyph": [
@@ -805,6 +848,7 @@
    "type": "expense",
    "parentId": "exp.housing",
    "name": "Decoración",
+   "nameEn": "Decoration",
    "vis": "housing",
    "color": "#D9784A",
    "glyph": [
@@ -818,6 +862,7 @@
    "type": "expense",
    "parentId": null,
    "name": "Servicios públicos",
+   "nameEn": "Utilities",
    "vis": "utilities",
    "color": "#8A8A99",
    "glyph": [
@@ -832,6 +877,7 @@
    "type": "expense",
    "parentId": "exp.utilities",
    "name": "Electricidad",
+   "nameEn": "Electricity",
    "vis": "utilities",
    "color": "#8A8A99",
    "glyph": [
@@ -843,6 +889,7 @@
    "type": "expense",
    "parentId": "exp.utilities",
    "name": "Agua",
+   "nameEn": "Water",
    "vis": "utilities",
    "color": "#8A8A99",
    "glyph": [
@@ -854,6 +901,7 @@
    "type": "expense",
    "parentId": "exp.utilities",
    "name": "Gas",
+   "nameEn": "Gas",
    "vis": "utilities",
    "color": "#8A8A99",
    "glyph": [
@@ -868,6 +916,7 @@
    "type": "expense",
    "parentId": "exp.utilities",
    "name": "Internet",
+   "nameEn": "Internet",
    "vis": "utilities",
    "color": "#8A8A99",
    "glyph": [
@@ -882,6 +931,7 @@
    "type": "expense",
    "parentId": "exp.utilities",
    "name": "Telefonía",
+   "nameEn": "Phone",
    "vis": "utilities",
    "color": "#8A8A99",
    "glyph": [
@@ -894,6 +944,7 @@
    "type": "expense",
    "parentId": null,
    "name": "Transporte",
+   "nameEn": "Transportation",
    "vis": "transportation",
    "color": "#3D8BE8",
    "glyph": [
@@ -908,6 +959,7 @@
    "type": "expense",
    "parentId": "exp.transportation",
    "name": "Transporte público",
+   "nameEn": "Public transit",
    "vis": "transportation",
    "color": "#3D8BE8",
    "glyph": [
@@ -924,6 +976,7 @@
    "type": "expense",
    "parentId": "exp.transportation",
    "name": "Combustible",
+   "nameEn": "Fuel",
    "vis": "transportation",
    "color": "#3D8BE8",
    "glyph": [
@@ -938,6 +991,7 @@
    "type": "expense",
    "parentId": "exp.transportation",
    "name": "Taxi / Apps",
+   "nameEn": "Taxi / Rideshare",
    "vis": "transportation",
    "color": "#3D8BE8",
    "glyph": [
@@ -952,6 +1006,7 @@
    "type": "expense",
    "parentId": "exp.transportation",
    "name": "Parqueadero",
+   "nameEn": "Parking",
    "vis": "transportation",
    "color": "#3D8BE8",
    "glyph": [
@@ -964,6 +1019,7 @@
    "type": "expense",
    "parentId": "exp.transportation",
    "name": "Mantenimiento",
+   "nameEn": "Maintenance",
    "vis": "transportation",
    "color": "#3D8BE8",
    "glyph": [
@@ -978,6 +1034,7 @@
    "type": "expense",
    "parentId": null,
    "name": "Educación",
+   "nameEn": "Education",
    "vis": "education",
    "color": "#5D6BE8",
    "glyph": [
@@ -990,6 +1047,7 @@
    "type": "expense",
    "parentId": "exp.education",
    "name": "Matrícula",
+   "nameEn": "Tuition",
    "vis": "education",
    "color": "#5D6BE8",
    "glyph": [
@@ -1006,6 +1064,7 @@
    "type": "expense",
    "parentId": "exp.education",
    "name": "Cursos",
+   "nameEn": "Courses",
    "vis": "education",
    "color": "#5D6BE8",
    "glyph": [
@@ -1019,6 +1078,7 @@
    "type": "expense",
    "parentId": "exp.education",
    "name": "Libros",
+   "nameEn": "Books",
    "vis": "education",
    "color": "#5D6BE8",
    "glyph": [
@@ -1031,6 +1091,7 @@
    "type": "expense",
    "parentId": "exp.education",
    "name": "Materiales",
+   "nameEn": "Supplies",
    "vis": "education",
    "color": "#5D6BE8",
    "glyph": [
@@ -1043,6 +1104,7 @@
    "type": "expense",
    "parentId": null,
    "name": "Salud",
+   "nameEn": "Health",
    "vis": "health",
    "color": "#E85D6B",
    "glyph": [
@@ -1054,6 +1116,7 @@
    "type": "expense",
    "parentId": "exp.health",
    "name": "Citas médicas",
+   "nameEn": "Doctor visits",
    "vis": "health",
    "color": "#E85D6B",
    "glyph": [
@@ -1068,6 +1131,7 @@
    "type": "expense",
    "parentId": "exp.health",
    "name": "Medicamentos",
+   "nameEn": "Medication",
    "vis": "health",
    "color": "#E85D6B",
    "glyph": [
@@ -1082,6 +1146,7 @@
    "type": "expense",
    "parentId": "exp.health",
    "name": "Exámenes",
+   "nameEn": "Medical tests",
    "vis": "health",
    "color": "#E85D6B",
    "glyph": [
@@ -1093,6 +1158,7 @@
    "type": "expense",
    "parentId": "exp.health",
    "name": "Seguros",
+   "nameEn": "Insurance",
    "vis": "health",
    "color": "#E85D6B",
    "glyph": [
@@ -1105,6 +1171,7 @@
    "type": "expense",
    "parentId": "exp.health",
    "name": "Odontología",
+   "nameEn": "Dental",
    "vis": "health",
    "color": "#E85D6B",
    "glyph": [
@@ -1116,6 +1183,7 @@
    "type": "expense",
    "parentId": null,
    "name": "Compras",
+   "nameEn": "Shopping",
    "vis": "shopping",
    "color": "#3DBBA8",
    "glyph": [
@@ -1129,6 +1197,7 @@
    "type": "expense",
    "parentId": "exp.shopping",
    "name": "Ropa",
+   "nameEn": "Clothing",
    "vis": "shopping",
    "color": "#3DBBA8",
    "glyph": [
@@ -1140,6 +1209,7 @@
    "type": "expense",
    "parentId": "exp.shopping",
    "name": "Tecnología",
+   "nameEn": "Technology",
    "vis": "shopping",
    "color": "#3DBBA8",
    "glyph": [
@@ -1152,6 +1222,7 @@
    "type": "expense",
    "parentId": "exp.shopping",
    "name": "Hogar",
+   "nameEn": "Home",
    "vis": "shopping",
    "color": "#3DBBA8",
    "glyph": [
@@ -1164,6 +1235,7 @@
    "type": "expense",
    "parentId": "exp.shopping",
    "name": "Cuidado personal",
+   "nameEn": "Personal care",
    "vis": "shopping",
    "color": "#3DBBA8",
    "glyph": [
@@ -1177,6 +1249,7 @@
    "type": "expense",
    "parentId": null,
    "name": "Entretenimiento",
+   "nameEn": "Entertainment",
    "vis": "entertainment",
    "color": "#B25DE8",
    "glyph": [
@@ -1191,6 +1264,7 @@
    "type": "expense",
    "parentId": "exp.entertainment",
    "name": "Juegos",
+   "nameEn": "Games",
    "vis": "entertainment",
    "color": "#B25DE8",
    "glyph": [
@@ -1206,6 +1280,7 @@
    "type": "expense",
    "parentId": "exp.entertainment",
    "name": "Cine",
+   "nameEn": "Movies",
    "vis": "entertainment",
    "color": "#B25DE8",
    "glyph": [
@@ -1220,6 +1295,7 @@
    "type": "expense",
    "parentId": "exp.entertainment",
    "name": "Streaming",
+   "nameEn": "Streaming",
    "vis": "entertainment",
    "color": "#B25DE8",
    "glyph": [
@@ -1232,6 +1308,7 @@
    "type": "expense",
    "parentId": "exp.entertainment",
    "name": "Eventos",
+   "nameEn": "Events",
    "vis": "entertainment",
    "color": "#B25DE8",
    "glyph": [
@@ -1246,6 +1323,7 @@
    "type": "expense",
    "parentId": "exp.entertainment",
    "name": "Hobbies",
+   "nameEn": "Hobbies",
    "vis": "entertainment",
    "color": "#B25DE8",
    "glyph": [
@@ -1260,6 +1338,7 @@
    "type": "expense",
    "parentId": null,
    "name": "Viajes",
+   "nameEn": "Travel",
    "vis": "travel",
    "color": "#2FA7C9",
    "glyph": [
@@ -1274,6 +1353,7 @@
    "type": "expense",
    "parentId": "exp.travel",
    "name": "Transporte",
+   "nameEn": "Transport",
    "vis": "travel",
    "color": "#2FA7C9",
    "glyph": [
@@ -1288,6 +1368,7 @@
    "type": "expense",
    "parentId": "exp.travel",
    "name": "Alojamiento",
+   "nameEn": "Lodging",
    "vis": "travel",
    "color": "#2FA7C9",
    "glyph": [
@@ -1302,6 +1383,7 @@
    "type": "expense",
    "parentId": "exp.travel",
    "name": "Comida",
+   "nameEn": "Food",
    "vis": "travel",
    "color": "#2FA7C9",
    "glyph": [
@@ -1316,6 +1398,7 @@
    "type": "expense",
    "parentId": "exp.travel",
    "name": "Actividades",
+   "nameEn": "Activities",
    "vis": "travel",
    "color": "#2FA7C9",
    "glyph": [
@@ -1330,6 +1413,7 @@
    "type": "expense",
    "parentId": null,
    "name": "Deudas",
+   "nameEn": "Debt",
    "vis": "debt",
    "color": "#C2566F",
    "glyph": [
@@ -1343,6 +1427,7 @@
    "type": "expense",
    "parentId": "exp.debt",
    "name": "Tarjeta de crédito",
+   "nameEn": "Credit card",
    "vis": "debt",
    "color": "#C2566F",
    "glyph": [
@@ -1356,6 +1441,7 @@
    "type": "expense",
    "parentId": "exp.debt",
    "name": "Préstamos",
+   "nameEn": "Loans",
    "vis": "debt",
    "color": "#C2566F",
    "glyph": [
@@ -1369,6 +1455,7 @@
    "type": "expense",
    "parentId": "exp.debt",
    "name": "Intereses",
+   "nameEn": "Interest",
    "vis": "debt",
    "color": "#C2566F",
    "glyph": [
@@ -1382,6 +1469,7 @@
    "type": "expense",
    "parentId": "exp.debt",
    "name": "Cuotas",
+   "nameEn": "Installments",
    "vis": "debt",
    "color": "#C2566F",
    "glyph": [
@@ -1395,6 +1483,7 @@
    "type": "expense",
    "parentId": null,
    "name": "Financieros",
+   "nameEn": "Financial",
    "vis": "financial",
    "color": "#7A86A8",
    "glyph": [
@@ -1411,6 +1500,7 @@
    "type": "expense",
    "parentId": "exp.financial",
    "name": "Comisiones bancarias",
+   "nameEn": "Bank fees",
    "vis": "financial",
    "color": "#7A86A8",
    "glyph": [
@@ -1427,6 +1517,7 @@
    "type": "expense",
    "parentId": "exp.financial",
    "name": "Impuestos",
+   "nameEn": "Taxes",
    "vis": "financial",
    "color": "#7A86A8",
    "glyph": [
@@ -1443,6 +1534,7 @@
    "type": "expense",
    "parentId": "exp.financial",
    "name": "Seguros",
+   "nameEn": "Insurance",
    "vis": "financial",
    "color": "#7A86A8",
    "glyph": [
@@ -1459,6 +1551,7 @@
    "type": "expense",
    "parentId": null,
    "name": "Negocio",
+   "nameEn": "Business",
    "vis": "business",
    "color": "#A8963D",
    "glyph": [
@@ -1472,6 +1565,7 @@
    "type": "expense",
    "parentId": "exp.business",
    "name": "Insumos",
+   "nameEn": "Supplies",
    "vis": "business",
    "color": "#A8963D",
    "glyph": [
@@ -1485,6 +1579,7 @@
    "type": "expense",
    "parentId": "exp.business",
    "name": "Proveedores",
+   "nameEn": "Suppliers",
    "vis": "business",
    "color": "#A8963D",
    "glyph": [
@@ -1498,6 +1593,7 @@
    "type": "expense",
    "parentId": "exp.business",
    "name": "Publicidad",
+   "nameEn": "Advertising",
    "vis": "business",
    "color": "#A8963D",
    "glyph": [
@@ -1511,6 +1607,7 @@
    "type": "expense",
    "parentId": "exp.business",
    "name": "Herramientas",
+   "nameEn": "Tools",
    "vis": "business",
    "color": "#A8963D",
    "glyph": [
@@ -1523,6 +1620,7 @@
    "type": "expense",
    "parentId": "exp.business",
    "name": "Transporte",
+   "nameEn": "Transport",
    "vis": "business",
    "color": "#A8963D",
    "glyph": [
@@ -1536,6 +1634,7 @@
    "type": "expense",
    "parentId": "exp.business",
    "name": "Servicios",
+   "nameEn": "Services",
    "vis": "business",
    "color": "#A8963D",
    "glyph": [
@@ -1549,6 +1648,7 @@
    "type": "expense",
    "parentId": null,
    "name": "Familia",
+   "nameEn": "Family",
    "vis": "family",
    "color": "#E85D9C",
    "glyph": [
@@ -1563,6 +1663,7 @@
    "type": "expense",
    "parentId": "exp.family",
    "name": "Hijos",
+   "nameEn": "Children",
    "vis": "family",
    "color": "#E85D9C",
    "glyph": [
@@ -1577,6 +1678,7 @@
    "type": "expense",
    "parentId": "exp.family",
    "name": "Mascotas",
+   "nameEn": "Pets",
    "vis": "family",
    "color": "#E85D9C",
    "glyph": [
@@ -1592,6 +1694,7 @@
    "type": "expense",
    "parentId": "exp.family",
    "name": "Apoyo familiar",
+   "nameEn": "Family support",
    "vis": "family",
    "color": "#E85D9C",
    "glyph": [
@@ -1606,6 +1709,7 @@
    "type": "expense",
    "parentId": "exp.family",
    "name": "Otros",
+   "nameEn": "Other",
    "vis": "family",
    "color": "#E85D9C",
    "glyph": [
@@ -1620,6 +1724,7 @@
    "type": "expense",
    "parentId": null,
    "name": "Otros gastos",
+   "nameEn": "Other expenses",
    "vis": "other",
    "color": "#9C9CAA",
    "glyph": [
@@ -1634,6 +1739,7 @@
    "type": "expense",
    "parentId": "exp.other",
    "name": "Imprevistos",
+   "nameEn": "Unexpected",
    "vis": "other",
    "color": "#9C9CAA",
    "glyph": [
@@ -1648,6 +1754,7 @@
    "type": "expense",
    "parentId": "exp.other",
    "name": "Gastos varios",
+   "nameEn": "Miscellaneous",
    "vis": "other",
    "color": "#9C9CAA",
    "glyph": [
@@ -1661,6 +1768,7 @@
  "transfer": {
   "id": "transfer",
   "name": "Transferencia",
+  "nameEn": "Transfer",
   "color": "#6c5ce7",
   "glyph": [
    "M7 7h13",
@@ -2197,6 +2305,7 @@
   {
    "key": "savings",
    "name": "Ahorro",
+   "nameEn": "Savings",
    "kw": [
     "emergencia",
     "emergency",
@@ -2215,6 +2324,7 @@
   {
    "key": "travel",
    "name": "Viaje",
+   "nameEn": "Trip",
    "kw": [
     "viaje",
     "vacacion",
@@ -2239,6 +2349,7 @@
   {
    "key": "technology",
    "name": "Tecnología",
+   "nameEn": "Technology",
    "kw": [
     "portátil",
     "portatil",
@@ -2258,6 +2369,7 @@
   {
    "key": "transportation",
    "name": "Vehículo",
+   "nameEn": "Vehicle",
    "kw": [
     "carro",
     "car",
@@ -2277,6 +2389,7 @@
   {
    "key": "housing",
    "name": "Vivienda",
+   "nameEn": "Home",
    "kw": [
     "casa",
     "house",
@@ -2297,6 +2410,7 @@
   {
    "key": "education",
    "name": "Estudio",
+   "nameEn": "Studies",
    "kw": [
     "universidad",
     "curso",
@@ -2316,6 +2430,7 @@
   {
    "key": "health",
    "name": "Salud",
+   "nameEn": "Health",
    "kw": [
     "salud",
     "odont",
@@ -2332,6 +2447,7 @@
   {
    "key": "events",
    "name": "Celebración",
+   "nameEn": "Celebration",
    "kw": [
     "boda",
     "cumpleaños",
@@ -2352,6 +2468,7 @@
   {
    "key": "transfers",
    "name": "Regalos",
+   "nameEn": "Gifts",
    "kw": [
     "regalo",
     "navidad",
@@ -2370,6 +2487,7 @@
   {
    "key": "pets",
    "name": "Mascota",
+   "nameEn": "Pet",
    "kw": [
     "perro",
     "gato",
@@ -2388,6 +2506,7 @@
   {
    "key": "food",
    "name": "Comida",
+   "nameEn": "Food",
    "kw": [
     "mercado",
     "comida",
@@ -2406,6 +2525,7 @@
   {
    "key": "entertainment",
    "name": "Ocio",
+   "nameEn": "Leisure",
    "kw": [
     "concierto",
     "cine",
@@ -2424,6 +2544,7 @@
   {
    "key": "shopping",
    "name": "Compras",
+   "nameEn": "Shopping",
    "kw": [
     "ropa",
     "compras",
@@ -2439,6 +2560,7 @@
   {
    "key": "debt",
    "name": "Deudas",
+   "nameEn": "Debt",
    "kw": [
     "deuda",
     "tarjeta",
@@ -2456,6 +2578,7 @@
   {
    "key": "investments",
    "name": "Inversión",
+   "nameEn": "Investment",
    "kw": [
     "inversión",
     "inversion",
@@ -2471,6 +2594,7 @@
   {
    "key": "family",
    "name": "Familia",
+   "nameEn": "Family",
    "kw": [
     "familia",
     "hijo",
@@ -2488,6 +2612,7 @@
   {
    "key": "work",
    "name": "Trabajo",
+   "nameEn": "Work",
    "kw": [
     "negocio",
     "trabajo",
@@ -2502,6 +2627,7 @@
   {
    "key": "other",
    "name": "Otro",
+   "nameEn": "Other",
    "kw": [],
    "color": "#9C9CAA",
    "glyph": [

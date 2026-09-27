@@ -1,6 +1,9 @@
 // Pure helpers of "Nuevo movimiento" (NEW_MOVEMENT.md), verbatim from the
 // Web v2 mockup: the typed/keyed arithmetic (evalExpr, fmtExpr, the
-// calculator keys), Repetir's summary lines and short dates.
+// calculator keys), Repetir's summary lines and short dates, in the app
+// language.
+import { MONTHS_LONG, MONTHS_SHORT } from '@/lib/inicio'
+import { currentLanguage, fill, tr, type TranslationKey } from '@/lib/i18n/translations'
 
 export const OPS = ['+', '−', '×', '÷']
 export const CALC = ['C', '⌫', '÷', '×', '7', '8', '9', '−', '4', '5', '6', '+', '1', '2', '3', '=', '00', '0', ',']
@@ -34,7 +37,8 @@ export function evalExpr(e: string): number {
 
 export const hasOps = (e: string) => /[+−×÷]/.test(e)
 
-const numStr = (n: number) => String(n).replace('.', ',')
+// A number as the amount field's typed expression ("1500,5").
+export const numStr = (n: number) => String(n).replace('.', ',')
 
 // "150000+18500" → "150.000 + 18.500".
 export function fmtExpr(e: string): string {
@@ -78,8 +82,6 @@ export function pressKey(e: string, k: string): string {
   return (seg === '0' && k !== '00' ? e.slice(0, -1) : e) + k
 }
 
-const MONTHS_ABBR = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
-export const MONTHS_LONG = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
 
 const parts = (iso: string) => iso.split('-').map(Number)
 const isoOf = (dt: Date) => `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`
@@ -88,14 +90,20 @@ const isoOf = (dt: Date) => `${dt.getFullYear()}-${String(dt.getMonth() + 1).pad
 export function fmtDate(iso: string): string {
   if (!iso) return ''
   const [, m, d] = parts(iso)
-  return `${d} ${MONTHS_ABBR[m - 1]}`
+  return currentLanguage() === 'en' ? `${MONTHS_SHORT.en[m - 1]} ${d}` : `${d} ${MONTHS_SHORT.es[m - 1]}`
 }
 
-// "21 de agosto de 2026".
+// "21 de agosto de 2026" / "August 21, 2026".
 export function fmtDateLong(iso: string): string {
   if (!iso) return ''
   const [y, m, d] = parts(iso)
-  return `${d} de ${MONTHS_LONG[m - 1]} de ${y}`
+  return currentLanguage() === 'en' ? `${MONTHS_LONG.en[m - 1]} ${d}, ${y}` : `${d} de ${MONTHS_LONG.es[m - 1]} de ${y}`
+}
+
+// "1 de octubre" / "October 1".
+export function fmtDayMonth(iso: string): string {
+  const [, m, d] = parts(iso)
+  return currentLanguage() === 'en' ? `${MONTHS_LONG.en[m - 1]} ${d}` : `${d} de ${MONTHS_LONG.es[m - 1]}`
 }
 
 export function addDays(iso: string, days: number): string {
@@ -108,10 +116,13 @@ export function nextFirst(iso: string): string {
   return isoOf(new Date(y, m, 1))
 }
 
+// Freq values are internal ids; freqLabel() is the copy.
 export type Freq = 'Diario' | 'Semanal' | 'Mensual' | 'Anual'
 export const FREQS: Freq[] = ['Diario', 'Semanal', 'Mensual', 'Anual']
 export const FREQ_INTERVAL = { Diario: 'daily', Semanal: 'weekly', Mensual: 'monthly', Anual: 'yearly' } as const
-const FREQ_UNIT: Record<Freq, string> = { Diario: 'día', Semanal: 'semana', Mensual: 'mes', Anual: 'año' }
+
+export const freqLabel = (f: Freq) => tr(`nm.freq.${FREQ_INTERVAL[f]}` as TranslationKey)
+const freqEvery = (f: Freq) => tr(`nm.every.${FREQ_INTERVAL[f]}` as TranslationKey)
 
 export interface RepeatDraft {
   freq: Freq | null
@@ -135,16 +146,16 @@ export function addIso(iso: string, freq: Freq, k: number): string {
 
 // "Cada semana × 4 · del 21 ago al 11 sep".
 export function repeatSummary(r: RepeatDraft | null, start: string): string {
-  if (!r || !r.freq) return 'No se repite'
-  const u = 'Cada ' + FREQ_UNIT[r.freq]
-  if (r.endMode === 'count') return `${u} × ${r.count} · del ${fmtDate(start)} al ${fmtDate(addIso(start, r.freq, r.count - 1))}`
-  if (r.endMode === 'until') return `${u} · hasta el ${r.until ? fmtDate(r.until) : '…'}`
-  return `${u} · sin fecha de fin`
+  if (!r || !r.freq) return tr('nm.noRepeat')
+  const u = freqEvery(r.freq)
+  if (r.endMode === 'count') return fill(tr('nm.repeat.count'), u, r.count, fmtDate(start), fmtDate(addIso(start, r.freq, r.count - 1)))
+  if (r.endMode === 'until') return fill(tr('nm.repeat.until'), u, r.until ? fmtDate(r.until) : '…')
+  return fill(tr('nm.repeat.never'), u)
 }
 
 // "Semanal ×4".
 export function repeatShort(r: RepeatDraft | null): string {
-  return r && r.freq ? r.freq + (r.endMode === 'count' ? ' ×' + r.count : '') : 'Repetir'
+  return r && r.freq ? freqLabel(r.freq) + (r.endMode === 'count' ? ' ×' + r.count : '') : tr('nm.repeat')
 }
 
 // Budget status colors at 65 / 90 % (PLANS.md).

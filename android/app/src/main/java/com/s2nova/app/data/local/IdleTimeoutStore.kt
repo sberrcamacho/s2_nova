@@ -8,11 +8,10 @@ import kotlinx.coroutines.flow.first
 
 private val Context.idleTimeoutDataStore by preferencesDataStore(name = "s2nova_idle_timeout")
 
-// Backs the auto-lock overlay (ui/components/AppLockGate.kt) — persisted
-// via DataStore, not an in-memory flag, since the timestamp must survive
-// the app being backgrounded past its own process lifetime (the whole
-// point is detecting "how long was this app in the background", which an
-// in-memory value can't do once the process is gone).
+// "Cierre automático": when the user last touched the app. Kept in memory
+// for the running process (MainActivity.onUserInteraction updates it) and
+// persisted whenever the app goes to the background, so a restart after
+// the process was killed still knows how long the app sat unused.
 class IdleTimeoutStore private constructor(context: Context) {
     private val context = context.applicationContext
 
@@ -20,14 +19,22 @@ class IdleTimeoutStore private constructor(context: Context) {
         val LAST_INTERACTION_AT = longPreferencesKey("last_interaction_at_millis")
     }
 
-    suspend fun recordInteractionNow() {
-        context.idleTimeoutDataStore.edit { it[Keys.LAST_INTERACTION_AT] = System.currentTimeMillis() }
+    @Volatile var lastInteractionAt: Long = System.currentTimeMillis()
+        private set
+
+    fun touch(now: Long = System.currentTimeMillis()) {
+        lastInteractionAt = now
     }
 
-    suspend fun millisSinceLastInteraction(): Long? {
-        val last = context.idleTimeoutDataStore.data.first()[Keys.LAST_INTERACTION_AT]
-        return last?.let { System.currentTimeMillis() - it }
+    fun idleMillis(now: Long = System.currentTimeMillis()): Long = now - lastInteractionAt
+
+    suspend fun persist() {
+        val at = lastInteractionAt
+        context.idleTimeoutDataStore.edit { it[Keys.LAST_INTERACTION_AT] = at }
     }
+
+    suspend fun persistedIdleMillis(now: Long = System.currentTimeMillis()): Long? =
+        context.idleTimeoutDataStore.data.first()[Keys.LAST_INTERACTION_AT]?.let { now - it }
 
     companion object {
         @Volatile private var instance: IdleTimeoutStore? = null

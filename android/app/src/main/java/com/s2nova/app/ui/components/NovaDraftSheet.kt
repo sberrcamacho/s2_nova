@@ -52,6 +52,8 @@ fun NovaDraftSheet(
     val colors = NovaColors.current
     ModalBottomSheet(
         onDismissRequest = onDismiss,
+        // Taps in a sheet's own window still count for "Cierre automático".
+        modifier = Modifier.countsAsActivity(),
         sheetState = sheetState,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         containerColor = colors.sheetSurface,

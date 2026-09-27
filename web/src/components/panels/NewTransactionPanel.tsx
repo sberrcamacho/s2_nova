@@ -4,7 +4,7 @@ import { SidePanel } from '@/components/panels/SidePanel'
 import { CategoryMark, GlyphMark, PlanMark } from '@/components/v2/CategoryMark'
 import { CancelButton, ErrorBox, Flat, GridCell, IC, Icon, OptionTile, RadioRow } from '@/components/v2/Kit'
 import { AjSwitch } from '@/dashboard/components/ajustes/AjustesUi'
-import { categoryColor, categoryGlyph, categoryLabel, categoryName, childCategories, isInCategory, parentCategories, useCategories } from '@/lib/backendCategories'
+import { categoryColor, categoryGlyph, categoryLabel, categoryName, childCategories, isInCategory, parentCategories, parentOf, useCategories } from '@/lib/backendCategories'
 import { currencyInfo, formatMoney, referenceRate } from '@/lib/currency'
 import { todayISO } from '@/lib/date'
 import { shortWallet } from '@/lib/movimientos'
@@ -12,7 +12,6 @@ import {
   CALC,
   FREQS,
   FREQ_INTERVAL,
-  MONTHS_LONG,
   OPS,
   RP_DEFAULT,
   addDays,
@@ -20,7 +19,9 @@ import {
   fileSize,
   fmtDate,
   fmtDateLong,
+  fmtDayMonth,
   fmtExpr,
+  freqLabel,
   hasOps,
   nextFirst,
   pressKey,
@@ -35,45 +36,28 @@ import { cn } from '@/lib/cn'
 import { accountService } from '@/services/accountService'
 import { currencyService, type UserCurrency } from '@/services/currencyService'
 import { goalService } from '@/services/goalService'
+import { recurringService } from '@/services/recurringService'
 import { transactionService } from '@/services/transactionService'
 import { useAppData } from '@/state/AppDataContext'
 import { useCurrency } from '@/state/useCurrency'
 import { useToast } from '@/state/ToastContext'
-import type { CategoryId, CounterpartyKind, Goal, TransactionType, Wallet } from '@/types'
+import { useTranslation } from '@/state/useTranslation'
+import { fill, type TranslationKey } from '@/lib/i18n/translations'
+import type { CategoryId, CounterpartyKind, Goal, NewTransactionInput, RecurringSeries, Transaction, TransactionType, Wallet } from '@/types'
 
 // "Nuevo movimiento" — the Web v2 mockup's side panel (NEW_MOVEMENT.md,
 // WEB_PARITY.md): type, "Elige una categoría" (inline category grid), the
 // amount hero with typed arithmetic and the Teclado/Calculadora switch,
 // wallet, the automatic budget line, Título/Nota, and the five option
 // tiles whose sections open inline. Saves through POST /transactions; the
-// backend applies balances, PLANNED status, currency and Repetir.
+// backend applies balances, PLANNED status, currency and Repetir. With
+// `editing` it is "Editar movimiento": every field starts from the movement
+// — its Repetir from its series, its receipt — and saves with PATCH.
 
 type Section = 'cat' | 'when' | 'repeat' | 'attach' | 'from' | 'bpick' | 'more' | 'currency'
 
-const TYPES: { value: TransactionType; label: string }[] = [
-  { value: 'expense', label: 'Gasto' },
-  { value: 'income', label: 'Ingreso' },
-  { value: 'transfer', label: 'Transferencia' },
-]
-
-const FROM_KINDS: { label: string; kind: CounterpartyKind }[] = [
-  { label: 'Empleador', kind: 'employer' },
-  { label: 'Cliente', kind: 'client' },
-  { label: 'Familia', kind: 'family' },
-  { label: 'Amigo', kind: 'friend' },
-  { label: 'Otro', kind: 'other' },
-]
-
-const SECTION_TITLE: Record<Section, string> = {
-  cat: '',
-  when: 'Fecha y hora',
-  repeat: 'Repetir',
-  attach: 'Adjuntar comprobante',
-  from: '¿De quién recibiste el dinero?',
-  bpick: 'Presupuesto personalizado',
-  more: 'Más opciones',
-  currency: 'Moneda del movimiento',
-}
+const TYPES: TransactionType[] = ['expense', 'income', 'transfer']
+const FROM_KINDS: CounterpartyKind[] = ['employer', 'client', 'family', 'friend', 'other']
 
 const ATTACH_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
 const MAX_ATTACH = 10 * 1024 * 1024
@@ -125,14 +109,35 @@ function RowText({ label, detail }: { label: string; detail: string }) {
   )
 }
 
+// A movement's amount as the amount field's typed expression ("1500,5").
+function exprOf(amount: number): string {
+  return String(amount).replace('.', ',')
+}
+
+const FREQ_OF = { daily: 'Diario', weekly: 'Semanal', monthly: 'Mensual', yearly: 'Anual' } as const
+
+// The Repetir draft a series stands for.
+function repeatOf(series: RecurringSeries): RepeatDraft {
+  return {
+    freq: FREQ_OF[series.interval],
+    endMode: series.occurrences ? 'count' : series.endDate ? 'until' : 'never',
+    count: series.occurrences ?? RP_DEFAULT.count,
+    until: series.endDate ?? '',
+    confirm: series.autoConfirm ? 'auto' : 'ask',
+  }
+}
+
+type AttachDraft = { file?: File; name: string; size: number; photo: boolean }
+
 function PillRow({ children }: { children: ReactNode }) {
   return <div className="flex flex-wrap gap-1.5">{children}</div>
 }
 
-export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
+export function NewTransactionPanel({ onClose, editing }: { onClose: () => void; editing?: Transaction }) {
   useCategories()
+  const { t } = useTranslation()
   const navigate = useNavigate()
-  const { addTransaction, budgets, transactions } = useAppData()
+  const { addTransaction, budgets, transactions, notifyChanged, refresh: refreshAppData } = useAppData()
   const { currency: principal, format, formatIn } = useCurrency()
   const { showToast } = useToast()
   const [today] = useState(todayISO)
@@ -141,26 +146,30 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
   const [currencies, setCurrencies] = useState<UserCurrency[]>([])
   const [goals, setGoals] = useState<Goal[]>([])
 
-  const [type, setType] = useState<TransactionType>('expense')
-  const [cat, setCat] = useState<CategoryId | null>(null)
-  const [sub, setSub] = useState<CategoryId | null>(null)
-  const [catDone, setCatDone] = useState(false)
-  const [expr, setExpr] = useState('')
-  const [title, setTitle] = useState('')
-  const [note, setNote] = useState('')
-  const [date, setDate] = useState(today)
-  const [time, setTime] = useState(now)
+  const e0 = editing
+  const e0Parent = e0 && e0.type !== 'transfer' ? parentOf(e0.category)?.id : undefined
+  const [type, setType] = useState<TransactionType>(e0?.type ?? 'expense')
+  const [cat, setCat] = useState<CategoryId | null>(e0Parent ?? null)
+  const [sub, setSub] = useState<CategoryId | null>(e0Parent && e0Parent !== e0?.category ? e0!.category : null)
+  const [catDone, setCatDone] = useState(!!e0)
+  const [expr, setExpr] = useState(e0 ? exprOf(e0.amount) : '')
+  const [title, setTitle] = useState(e0?.description ?? '')
+  const [note, setNote] = useState(e0?.note ?? '')
+  const [date, setDate] = useState(e0?.date ?? today)
+  const [time, setTime] = useState(e0?.time ?? now)
   const [repeat, setRepeat] = useState<RepeatDraft | null>(null)
   const [rpDraft, setRpDraft] = useState<RepeatDraft | null>(null)
-  const [cur, setCur] = useState<string | null>(null)
-  const [attach, setAttach] = useState<{ file: File; photo: boolean } | null>(null)
-  const [from, setFrom] = useState('')
-  const [fromKind, setFromKind] = useState<CounterpartyKind | null>(null)
-  const [budgetId, setBudgetId] = useState<string | null>(null)
-  const [loan, setLoan] = useState(false)
-  const [goalId, setGoalId] = useState<string | null>(null)
-  const [walletId, setWalletId] = useState<string | null>(null)
-  const [toId, setToId] = useState<string | null>(null)
+  const [cur, setCur] = useState<string | null>(e0 && e0.type !== 'transfer' ? e0.currency : null)
+  const [attach, setAttach] = useState<AttachDraft | null>(
+    e0?.attachment ? { name: e0.attachment.name, size: e0.attachment.size, photo: e0.attachment.kind === 'image' } : null,
+  )
+  const [from, setFrom] = useState(e0?.counterpartyName ?? '')
+  const [fromKind, setFromKind] = useState<CounterpartyKind | null>(e0?.counterpartyKind ?? null)
+  const [budgetId, setBudgetId] = useState<string | null>(e0?.customBudgetId ?? null)
+  const [loan, setLoan] = useState(!!e0?.loanKind)
+  const [goalId, setGoalId] = useState<string | null>(e0?.goalId ?? null)
+  const [walletId, setWalletId] = useState<string | null>(e0?.accountId ?? null)
+  const [toId, setToId] = useState<string | null>(e0?.transferAccountId ?? null)
   const [section, setSection] = useState<Section | null>(null)
   const [calc, setCalc] = useState(() => readPref(PREFS.calc) === '1')
   const [err, setErr] = useState('')
@@ -175,12 +184,13 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
       .then((list) => {
         if (cancelled) return
         setWallets(list)
+        if (editing) return
         const last = readPref(PREFS.wallet)
         const first = list.find((w) => w.id === last) ?? list[0]
         setWalletId(first?.id ?? null)
         setToId(list.find((w) => w.id !== first?.id)?.id ?? null)
       })
-      .catch(() => !cancelled && setErr('No se pudieron cargar tus billeteras.'))
+      .catch(() => !cancelled && setErr(t('nm.err.wallets')))
     currencyService
       .getMine()
       .then((list) => !cancelled && setCurrencies(list))
@@ -189,6 +199,16 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
       .getGoals()
       .then((list) => !cancelled && setGoals(list))
       .catch(() => undefined)
+    // Editing keeps the movement's Repetir: it starts from its series.
+    if (editing?.recurringSeriesId) {
+      recurringService
+        .getRecurringSeries()
+        .then((list) => {
+          const series = list.find((x) => x.id === editing.recurringSeriesId)
+          if (!cancelled && series?.active) setRepeat(repeatOf(series))
+        })
+        .catch(() => undefined)
+    }
     return () => {
       cancelled = true
     }
@@ -213,7 +233,7 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
   const val = evalExpr(expr)
   const future = date > today || (date === today && time > now)
   const leaf = sub ?? cat
-  const valid = (isTr || catDone) && val > 0
+  const valid = (isTr || catDone) && val > 0 && title.trim() !== ''
   const whenOn = !(date === today && time === now)
   const lastWhen = readPref(PREFS.lastWhen)?.split(' ') as [string, string] | undefined
 
@@ -226,20 +246,19 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
   const budgetLabel = (b: (typeof budgets)[number]) => b.name || categoryName(b.category)
   let budgetLine: ReactNode = null
   if (lineBudget) {
-    const add = future ? 0 : val * rateOf(code)
+    // Editing: the budget already counts the saved movement, so only the change adds.
+    const counted = editing && editing.status === 'completed' && editing.type === 'expense' ? editing.amount * rateOf(editing.currency) : 0
+    const add = (future ? 0 : val * rateOf(code)) - counted
     const pct = lineBudget.limit > 0 ? Math.round(((lineBudget.spent + add) / lineBudget.limit) * 100) : 0
     const [tone, bg] = toneOf(pct)
     budgetLine = (
       <div className="flex items-center gap-3 rounded-[14px] border border-v2-line bg-v2-surface2 px-3 py-2.5">
         {lineBudget.kind === 'custom' ? <PlanMark icon={lineBudget.icon} box={32} /> : <CategoryMark category={lineBudget.category!} box={32} />}
         <div className="min-w-0 flex-1">
-          <div className="text-[12.5px] font-bold">{'Suma a ' + budgetLabel(lineBudget) + (autoBudget && picked ? ' y a ' + picked.name : '')}</div>
+          <div className="text-[12.5px] font-bold">{autoBudget && picked ? fill(t('nm.budget.addsTwo'), budgetLabel(lineBudget), picked.name!) : fill(t('nm.budget.adds'), budgetLabel(lineBudget))}</div>
           <div className="font-numeric mt-0.5 text-[11px] text-v2-dim">
-            {(autoBudget ? 'Por la categoría · ' : 'Personalizado · ') +
-              format(lineBudget.spent + add) +
-              ' de ' +
-              format(lineBudget.limit) +
-              (future ? ' · cuenta cuando se registre' : val > 0 ? ' con este gasto' : '')}
+            {fill(t(autoBudget ? 'nm.budget.byCategory' : 'nm.budget.custom'), format(lineBudget.spent + add), format(lineBudget.limit)) +
+              (future ? t('nm.budget.whenRecorded') : val > 0 ? t('nm.budget.withThis') : '')}
           </div>
         </div>
         <span className="font-numeric flex-none rounded-full px-2 py-[3px] text-[11.5px] font-extrabold" style={{ color: tone, background: bg }}>
@@ -269,9 +288,9 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
 
   const takeFile = (file: File | undefined) => {
     if (!file) return
-    if (!ATTACH_MIMES.includes(file.type)) return setErr('Usa un archivo PDF, JPG o PNG.')
-    if (file.size > MAX_ATTACH) return setErr('El archivo supera los 10 MB.')
-    setAttach({ file, photo: file.type !== 'application/pdf' })
+    if (!ATTACH_MIMES.includes(file.type)) return setErr(t('nm.err.fileType'))
+    if (file.size > MAX_ATTACH) return setErr(t('nm.err.fileSize'))
+    setAttach({ file, name: file.name, size: file.size, photo: file.type !== 'application/pdf' })
     setErr('')
     setSection(null)
   }
@@ -282,13 +301,13 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
   }
 
   const options: { k: Section; label: string; on: boolean; icon: readonly string[] }[] = [
-    { k: 'when', label: date === today ? (time === now ? 'Ahora' : 'Hoy ' + time) : fmtDate(date), on: whenOn, icon: future ? IC.cal : IC.clock },
+    { k: 'when', label: date === today ? (time === now ? t('nm.now') : fill(t('nm.todayAt'), time)) : fmtDate(date), on: whenOn, icon: future ? IC.cal : IC.clock },
     { k: 'repeat', label: repeatShort(repeat), on: !!repeat, icon: IC.repeat },
-    { k: 'attach', label: attach ? '1 adjunto' : 'Adjuntar', on: !!attach, icon: IC.clip },
+    { k: 'attach', label: attach ? t('nm.oneAttachment') : t('nm.attach'), on: !!attach, icon: IC.clip },
   ]
-  if (isInc) options.push({ k: 'from', label: from || 'De', on: !!from, icon: IC.person })
-  if (!isInc && !isTr) options.push({ k: 'bpick', label: picked ? picked.name! : 'Presupuesto', on: !!picked, icon: IC.target })
-  if (!isTr) options.push({ k: 'more', label: 'Más', on: loan || !!goalId, icon: IC.more })
+  if (isInc) options.push({ k: 'from', label: from || t('nm.from'), on: !!from, icon: IC.person })
+  if (!isInc && !isTr) options.push({ k: 'bpick', label: picked ? picked.name! : t('nm.budget'), on: !!picked, icon: IC.target })
+  if (!isTr) options.push({ k: 'more', label: t('nm.more'), on: loan || !!goalId, icon: IC.more })
 
   const rp = rpDraft ?? repeat ?? RP_DEFAULT
   const rpSet = (patch: Partial<RepeatDraft>) => setRpDraft({ ...rp, ...patch })
@@ -296,12 +315,20 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
   const recents = [...new Map(transactions.filter((t) => t.type === 'income' && !t.loanKind && t.counterpartyName).map((t) => [t.counterpartyName!, t.counterpartyKind ?? null])).entries()].slice(0, 3)
 
   const save = async () => {
-    if (!valid) return setErr(!isTr && !catDone ? 'Elige una categoría.' : 'Escribe el monto.')
-    if (!walletId) return setErr('Elige una billetera.')
-    if (isTr && !toId) return setErr('Elige la billetera de destino.')
+    if (!valid) return setErr(t(!isTr && !catDone ? 'nm.err.category' : val <= 0 ? 'nm.err.amount' : 'nm.err.title'))
+    if (!walletId) return setErr(t('nm.err.wallet'))
+    if (isTr && !toId) return setErr(t('nm.err.walletTo'))
     setSaving(true)
+    const rule = repeat?.freq
+      ? {
+          interval: FREQ_INTERVAL[repeat.freq],
+          occurrences: repeat.endMode === 'count' ? repeat.count : undefined,
+          endDate: repeat.endMode === 'until' && repeat.until ? repeat.until : undefined,
+          autoConfirm: repeat.confirm === 'auto',
+        }
+      : undefined
     try {
-      const created = await addTransaction({
+      const input: NewTransactionInput = {
         accountId: walletId,
         transferAccountId: isTr ? toId! : undefined,
         type,
@@ -317,34 +344,33 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
         loanKind: loan && !isTr ? (isInc ? 'borrowed' : 'lent') : undefined,
         counterpartyName: isInc ? from.trim() || undefined : undefined,
         counterpartyKind: isInc && from.trim() ? (fromKind ?? undefined) : undefined,
-        repeat: repeat?.freq
-          ? {
-              interval: FREQ_INTERVAL[repeat.freq],
-              occurrences: repeat.endMode === 'count' ? repeat.count : undefined,
-              endDate: repeat.endMode === 'until' && repeat.until ? repeat.until : undefined,
-              autoConfirm: repeat.confirm === 'auto',
-            }
-          : undefined,
-      })
+        repeat: rule,
+      }
+      const saved = editing ? await transactionService.editMovement(editing.id, input, rule ?? null) : await addTransaction(input)
       writePref(PREFS.wallet, walletId)
       if (whenOn) writePref(PREFS.lastWhen, `${date} ${time}`)
-      if (attach) await transactionService.uploadAttachment(created.id, attach.file)
-      showToast(future ? `Programado para el ${fmtDate(date)}. No afecta el saldo hasta entonces.` : 'Movimiento guardado', 'success')
+      if (attach?.file) await transactionService.uploadAttachment(saved.id, attach.file)
+      else if (editing?.attachment && !attach) await transactionService.deleteAttachment(saved.id)
+      showToast(future ? fill(t('nm.toast.scheduled'), fmtDate(date)) : t(editing ? 'nm.toast.edited' : 'nm.toast.saved'), 'success')
       onClose()
-      navigate('/movimientos')
+      if (editing) {
+        // Open pages (Movimientos, Inicio) reload the edited movement.
+        notifyChanged()
+        void refreshAppData()
+      } else navigate('/movimientos')
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'No se pudo guardar el movimiento. Intenta de nuevo.')
+      setErr(e instanceof Error ? e.message : t('nm.err.save'))
       setSaving(false)
     }
   }
 
   const ctypeIncome = isInc
   const subs = cat ? childCategories(cat, false) : []
-  const saveLabel = future ? 'Programar movimiento' : repeat ? 'Guardar y repetir' : 'Guardar movimiento'
+  const saveLabel = t(future ? 'nm.saveScheduled' : repeat ? 'nm.saveRepeat' : 'nm.save')
 
   return (
     <SidePanel
-      title="Nuevo movimiento"
+      title={t(editing ? 'nm.editTitle' : 'nm.title')}
       onClose={onClose}
       footer={
         <>
@@ -361,22 +387,25 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
         </>
       }
     >
-      <div role="radiogroup" aria-label="Tipo de movimiento" className="flex gap-1 rounded-[12px] border border-v2-line bg-v2-surface2 p-1">
-        {TYPES.map((opt) => {
-          const on = type === opt.value
+      <div role="radiogroup" aria-label={t('nm.typeLabel')} className="flex gap-1 rounded-[12px] border border-v2-line bg-v2-surface2 p-1">
+        {TYPES.map((value) => {
+          const on = type === value
           return (
             <button
-              key={opt.value}
+              key={value}
               type="button"
               role="radio"
               aria-checked={on}
-              onClick={() => pickType(opt.value)}
+              // A movement's type is fixed once saved.
+              disabled={!!editing && !on}
+              onClick={() => pickType(value)}
               className={cn(
-                'flex-1 cursor-pointer rounded-[9px] py-2 text-center text-[12px] font-bold',
+                'flex-1 rounded-[9px] py-2 text-center text-[12px] font-bold',
+                editing ? (on ? 'cursor-default' : 'cursor-not-allowed opacity-50') : 'cursor-pointer',
                 on ? 'bg-v2-surface text-v2-text shadow-[0_1px_0_var(--v2-line2)]' : 'text-v2-dim',
               )}
             >
-              {opt.label}
+              {t(`nm.type.${value}` as TranslationKey)}
             </button>
           )
         })}
@@ -385,9 +414,9 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
       {!isTr && section === 'cat' && (
         <div className="flex flex-col gap-2.5">
           <div className="flex items-center">
-            <div className="flex-1 text-[15px] font-extrabold">{ctypeIncome ? '¿De dónde viene el ingreso?' : '¿En qué gastaste?'}</div>
+            <div className="flex-1 text-[15px] font-extrabold">{t(ctypeIncome ? 'nm.cat.income' : 'nm.cat.expense')}</div>
             <button type="button" onClick={() => setSection(null)} className="cursor-pointer text-[12px] font-bold text-v2-accent2">
-              Cerrar
+              {t('common.close')}
             </button>
           </div>
           <div className="grid grid-cols-5 gap-1">
@@ -397,7 +426,7 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
                 on={cat === x.id}
                 color={x.color}
                 chip={<CategoryMark category={x.id} box={36} />}
-                label={x.name}
+                label={categoryName(x.id)}
                 onClick={edit(() => {
                   setCat(x.id)
                   setSub(null)
@@ -411,9 +440,9 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
           </div>
           {cat && subs.length > 0 && (
             <>
-              <div className="mt-1.5 text-[11px] font-bold tracking-[.06em] text-v2-muted">{'Subcategoría de ' + categoryName(cat)}</div>
+              <div className="mt-1.5 text-[11px] font-bold tracking-[.06em] text-v2-muted">{fill(t('nm.subOf'), categoryName(cat))}</div>
               <div className="grid grid-cols-5 gap-1">
-                {[{ id: null as CategoryId | null, name: 'Ninguna' }, ...subs].map((x) => (
+                {[{ id: null as CategoryId | null, name: t('nm.none.f') }, ...subs.map((s) => ({ id: s.id as CategoryId | null, name: categoryName(s.id) }))].map((x) => (
                   <GridCell
                     key={x.id ?? 'none'}
                     on={catDone && sub === x.id}
@@ -438,7 +467,7 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
             }}
             className="cursor-pointer self-start text-[11.5px] font-bold text-v2-accent2"
           >
-            Gestionar categorías en Ajustes →
+            {t('nm.manageCategories')}
           </button>
         </div>
       )}
@@ -451,10 +480,10 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
         >
           {catDone && leaf ? <CategoryMark category={leaf} box={38} /> : <GlyphMark paths={TAX_VIS.other.glyph} color="var(--v2-dim)" box={38} />}
           <div className="min-w-0 flex-1">
-            <div className="text-[10px] font-extrabold tracking-[.1em] text-v2-dim">CATEGORÍA</div>
-            <div className="mt-0.5 text-[13.5px] font-extrabold">{catDone && leaf ? categoryLabel(leaf) : 'Elige una categoría'}</div>
+            <div className="text-[10px] font-extrabold tracking-[.1em] text-v2-dim">{t('nm.category')}</div>
+            <div className="mt-0.5 text-[13.5px] font-extrabold">{catDone && leaf ? categoryLabel(leaf) : t('nm.pickCategory')}</div>
           </div>
-          <span className="text-[12px] font-bold text-v2-accent2">Cambiar</span>
+          <span className="text-[12px] font-bold text-v2-accent2">{t('nm.change')}</span>
         </button>
       )}
 
@@ -464,12 +493,12 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
       >
         <div className="flex items-center gap-2">
           <label htmlFor="nt-amount" className="flex-1 text-[10.5px] font-bold tracking-[.11em] text-[#a69dff]">
-            MONTO
+            {t('nm.amount')}
           </label>
           <button
             type="button"
             // 34px plus its 1px border (content-box in the mockup).
-            title="Cambiar entre teclado y calculadora"
+            title={t('nm.padToggle')}
             onClick={() => {
               writePref(PREFS.calc, calc ? '0' : '1')
               setCalc(!calc)
@@ -478,7 +507,7 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
             style={{ background: calc ? 'rgba(255,255,255,.28)' : 'rgba(255,255,255,.1)', borderColor: calc ? '#fff' : 'transparent' }}
           >
             <Icon paths={IC.calc} size={14} color="#fff" />
-            {calc ? 'Calculadora' : 'Teclado'}
+            {t(calc ? 'nm.calculator' : 'nm.keypad')}
           </button>
           <button
             type="button"
@@ -499,16 +528,16 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
           className="w-full border-none bg-transparent px-0.5 py-px font-[inherit] text-[30px] [font-variant-numeric:tabular-nums] font-extrabold tracking-[-.02em] text-white outline-none"
         />
         {hasOps(expr) && <div className="font-numeric text-[15px] font-extrabold text-white">{'= ' + formatIn(val, code)}</div>}
-        <div className="text-[11px] text-[rgba(255,255,255,.55)]">Puedes escribir operaciones: 150000+18500</div>
+        <div className="text-[11px] text-[rgba(255,255,255,.55)]">{t('nm.opsHint')}</div>
         {code !== wcur && (
           <div className="font-numeric text-[11.5px] text-[rgba(255,255,255,.8)]">
-            {val > 0 ? `≈ ${formatIn(val * rate, wcur)} ${wcur} en ${walletName} · 1 ${code} = ${formatIn(rate, wcur)}` : `Se convierte a ${wcur} al guardar en ${walletName}`}
+            {val > 0 ? fill(t('nm.fx.approx'), formatIn(val * rate, wcur), wcur, walletName, code, formatIn(rate, wcur)) : fill(t('nm.fx.later'), wcur, walletName)}
           </div>
         )}
         {future && (
           <div className="flex items-center gap-[7px] self-start whitespace-nowrap rounded-full bg-[rgba(240,180,41,.18)] px-[11px] py-[5px] text-[11px] font-extrabold text-[#f7cf6b]">
             <Icon paths={IC.cal} size={13} color="#f7cf6b" />
-            {`PROGRAMADO · ${fmtDate(date)} · ${time}`}
+            {`${t('nm.scheduledChip')} · ${fmtDate(date)} · ${time}`}
           </div>
         )}
       </div>
@@ -541,7 +570,7 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
       )}
 
       <div className="flex flex-col gap-2">
-        <div className={fieldLabel}>{isInc ? 'BILLETERA QUE RECIBE' : isTr ? 'DESDE' : 'BILLETERA'}</div>
+        <div className={fieldLabel}>{t(isInc ? 'nm.walletIn' : isTr ? 'nm.walletFrom' : 'nm.wallet')}</div>
         <PillRow>
           {wallets.map((w) => (
             <Flat key={w.id} on={walletId === w.id} onClick={() => pickWallet(w.id)}>
@@ -553,7 +582,7 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
 
       {isTr && (
         <div className="flex flex-col gap-2">
-          <div className={fieldLabel}>TRANSFERIR A</div>
+          <div className={fieldLabel}>{t('nm.walletTo')}</div>
           <PillRow>
             {wallets
               .filter((w) => w.id !== walletId)
@@ -568,8 +597,8 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
 
       {budgetLine}
 
-      <input value={title} onChange={(e) => edit(setTitle)(e.target.value.slice(0, 60))} placeholder="Título (opcional)" className={cn(textInput, 'font-bold placeholder:font-bold')} />
-      <input value={note} onChange={(e) => edit(setNote)(e.target.value)} placeholder="Nota (opcional)" className={textInput} />
+      <input value={title} onChange={(e) => edit(setTitle)(e.target.value.slice(0, 60))} placeholder={t('nm.titlePh')} className={cn(textInput, 'font-bold placeholder:font-bold')} />
+      <input value={note} onChange={(e) => edit(setNote)(e.target.value)} placeholder={t('nm.notePh')} className={textInput} />
 
       <div className="grid grid-cols-5 gap-1.5">
         {options.map((o) => (
@@ -586,18 +615,18 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
 
       {section && section !== 'cat' && (
         <div className="flex flex-col gap-3 rounded-[14px] border border-v2-line2 bg-v2-surface2 p-3.5">
-          <SectionHead title={SECTION_TITLE[section]} action="Listo" onAction={() => setSection(null)} />
+          <SectionHead title={t(`nm.section.${section}` as TranslationKey)} action={t('nm.done')} onAction={() => setSection(null)} />
 
           {section === 'when' && (
             <>
               <PillRow>
                 <Flat on={date === today && time === now} onClick={edit(() => (setDate(today), setTime(now)))}>
-                  Ahora
+                  {t('nm.now')}
                 </Flat>
                 {(
                   [
-                    ['Ayer', addDays(today, -1)],
-                    ['Anteayer', addDays(today, -2)],
+                    [t('nm.yesterday'), addDays(today, -1)],
+                    [t('nm.dayBefore'), addDays(today, -2)],
                   ] as const
                 ).map(([label, iso]) => (
                   <Flat key={label} on={date === iso && !(lastWhen && lastWhen[0] === iso && lastWhen[1] === time)} onClick={edit(() => setDate(iso))}>
@@ -606,17 +635,17 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
                 ))}
                 {lastWhen && (
                   <Flat on={date === lastWhen[0] && time === lastWhen[1]} onClick={edit(() => (setDate(lastWhen[0]), setTime(lastWhen[1])))}>
-                    {`Como el anterior · ${fmtDate(lastWhen[0])}, ${lastWhen[1]}`}
+                    {fill(t('nm.likeLast'), fmtDate(lastWhen[0]), lastWhen[1])}
                   </Flat>
                 )}
               </PillRow>
-              <div className={fieldLabel}>PROGRAMAR A FUTURO</div>
+              <div className={fieldLabel}>{t('nm.future')}</div>
               <PillRow>
                 {(
                   [
-                    ['Mañana', addDays(today, 1)],
-                    ['En una semana', addDays(today, 7)],
-                    [`1 de ${MONTHS_LONG[Number(nextFirst(today).slice(5, 7)) - 1]}`, nextFirst(today)],
+                    [t('nm.tomorrow'), addDays(today, 1)],
+                    [t('nm.inAWeek'), addDays(today, 7)],
+                    [fmtDayMonth(nextFirst(today)), nextFirst(today)],
                   ] as const
                 ).map(([label, iso]) => (
                   <Flat key={label} on={date === iso} onClick={edit(() => setDate(iso))}>
@@ -625,18 +654,18 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
                 ))}
               </PillRow>
               <div className="grid grid-cols-[minmax(0,1fr)_130px] gap-2">
-                <input type="date" aria-label="Fecha" value={date} onChange={(e) => edit(setDate)(e.target.value || today)} className={textInput} />
-                <input type="time" aria-label="Hora" value={time} onChange={(e) => edit(setTime)(e.target.value || now)} className={textInput} />
+                <input type="date" aria-label={t('nm.date')} value={date} onChange={(e) => edit(setDate)(e.target.value || today)} className={textInput} />
+                <input type="time" aria-label={t('nm.time')} value={time} onChange={(e) => edit(setTime)(e.target.value || now)} className={textInput} />
               </div>
               <div
                 className="rounded-[10px] text-[11.5px] leading-[1.45]"
                 style={{ padding: future ? '9px 11px' : 0, color: future ? 'var(--v2-warn)' : 'var(--v2-dim)', background: future ? 'rgba(240,180,41,.12)' : 'transparent' }}
               >
                 {future
-                  ? 'Fecha futura: se guarda como programado y no afecta el saldo hasta que llegue la fecha y lo confirmes.'
+                  ? t('nm.when.future')
                   : date < today
-                    ? 'Fecha pasada: se registra con esa fecha y cuenta en el mes que corresponde.'
-                    : 'Se registra con la fecha y hora de hoy.'}
+                    ? t('nm.when.past')
+                    : t('nm.when.today')}
               </div>
             </>
           )}
@@ -646,23 +675,23 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
               <div className="font-numeric text-[11.5px] text-v2-dim">{repeatSummary(rp.freq ? rp : null, date)}</div>
               <PillRow>
                 <Flat on={!rp.freq} onClick={() => rpSet({ freq: null })}>
-                  No se repite
+                  {t('nm.noRepeat')}
                 </Flat>
                 {FREQS.map((f) => (
                   <Flat key={f} on={rp.freq === f} onClick={() => rpSet({ freq: f })}>
-                    {f}
+                    {freqLabel(f)}
                   </Flat>
                 ))}
               </PillRow>
               {rp.freq && (
                 <>
-                  <div className={fieldLabel}>TERMINA</div>
+                  <div className={fieldLabel}>{t('nm.ends')}</div>
                   <PillRow>
                     {(
                       [
-                        ['count', 'Después de'],
-                        ['until', 'En una fecha'],
-                        ['never', 'Sin fin'],
+                        ['count', t('nm.ends.count')],
+                        ['until', t('nm.ends.until')],
+                        ['never', t('nm.ends.never')],
                       ] as const
                     ).map(([k, label]) => (
                       <Flat key={k} on={rp.endMode === k} onClick={() => rpSet({ endMode: k })}>
@@ -672,23 +701,23 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
                   </PillRow>
                   {rp.endMode === 'count' && (
                     <div className="flex items-center gap-2.5">
-                      <button type="button" aria-label="Menos" onClick={() => rpSet({ count: Math.max(2, rp.count - 1) })} className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded-[10px] border border-v2-line2 text-[16px] font-bold">
+                      <button type="button" aria-label={t('nm.less')} onClick={() => rpSet({ count: Math.max(2, rp.count - 1) })} className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded-[10px] border border-v2-line2 text-[16px] font-bold">
                         −
                       </button>
-                      <div className="font-numeric flex-1 text-center text-[14px] font-extrabold">{rp.count + (rp.count === 1 ? ' vez' : ' veces')}</div>
-                      <button type="button" aria-label="Más" onClick={() => rpSet({ count: Math.min(99, rp.count + 1) })} className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded-[10px] border border-v2-line2 text-[16px] font-bold">
+                      <div className="font-numeric flex-1 text-center text-[14px] font-extrabold">{fill(t(rp.count === 1 ? 'nm.time1' : 'nm.timesN'), rp.count)}</div>
+                      <button type="button" aria-label={t('nm.moreCount')} onClick={() => rpSet({ count: Math.min(99, rp.count + 1) })} className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded-[10px] border border-v2-line2 text-[16px] font-bold">
                         +
                       </button>
                     </div>
                   )}
-                  {rp.endMode === 'until' && <input type="date" aria-label="Termina el" value={rp.until} onChange={(e) => rpSet({ until: e.target.value })} className={textInput} />}
-                  <div className="font-numeric text-[11.5px] text-v2-muted">{`Empieza ${date === today ? 'hoy' : 'el ' + fmtDateLong(date)} · ${time} (según Fecha y hora)`}</div>
-                  <div className={fieldLabel}>EN CADA FECHA</div>
+                  {rp.endMode === 'until' && <input type="date" aria-label={t('nm.endsOn')} value={rp.until} onChange={(e) => rpSet({ until: e.target.value })} className={textInput} />}
+                  <div className="font-numeric text-[11.5px] text-v2-muted">{date === today ? fill(t('nm.startsToday'), time) : fill(t('nm.startsOn'), fmtDateLong(date), time)}</div>
+                  <div className={fieldLabel}>{t('nm.eachDate')}</div>
                   <div className="flex flex-col gap-2">
                     {(
                       [
-                        ['ask', 'Pedirme confirmación', 'Te avisamos en cada fecha. No mueve saldo hasta que confirmes.'],
-                        ['auto', 'Registrar automáticamente', 'Se registra solo en cada fecha y te avisamos.'],
+                        ['ask', t('nm.ask'), t('nm.ask.detail')],
+                        ['auto', t('nm.auto'), t('nm.auto.detail')],
                       ] as const
                     ).map(([k, label, detail]) => (
                       <RadioRow key={k} on={rp.confirm === k} onClick={() => rpSet({ confirm: k })}>
@@ -708,14 +737,14 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
                 })}
                 className="cursor-pointer rounded-[10px] bg-v2-accent px-3.5 py-[9px] text-center text-[12.5px] font-bold text-white"
               >
-                Aplicar
+                {t('nm.apply')}
               </button>
             </>
           )}
 
           {section === 'currency' && (
             <>
-              <div className="text-[11.5px] leading-[1.45] text-v2-dim">{`${walletName} está en ${wcur}. Si el movimiento fue en otra moneda, guardamos el monto original y lo convertimos.`}</div>
+              <div className="text-[11.5px] leading-[1.45] text-v2-dim">{fill(t('nm.currency.hint'), walletName, wcur)}</div>
               <div className="flex flex-col gap-2">
                 {(currencies.length ? currencies.map((c) => c.code) : [wcur]).map((c) => (
                   <RadioRow
@@ -729,7 +758,7 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
                       <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-[rgba(108,92,231,.16)] text-[11.5px] font-extrabold text-v2-accent2">{currencyInfo(c).symbol}</span>
                     }
                   >
-                    <RowText label={`${currencyInfo(c).name} · ${c}`} detail={c === wcur ? `Moneda de ${walletName}` : `1 ${c} = ${formatMoney(rateOf(c) / rateOf(wcur), wcur)} ${wcur}`} />
+                    <RowText label={`${currencyInfo(c).name} · ${c}`} detail={c === wcur ? fill(t('nm.currency.of'), walletName) : `1 ${c} = ${formatMoney(rateOf(c) / rateOf(wcur), wcur)} ${wcur}`} />
                   </RadioRow>
                 ))}
               </div>
@@ -739,12 +768,12 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
           {section === 'attach' && (
             <>
               <div onDragOver={(e) => e.preventDefault()} onDrop={onDrop} className="rounded-[12px] border-[1.5px] border-dashed border-v2-line2 p-4 text-center text-[12px] text-v2-dim">
-                Arrastra aquí el recibo o la factura
+                {t('nm.attach.drop')}
               </div>
               {(
                 [
-                  [IC.image, 'Subir foto o imagen', 'JPG o PNG de tu recibo', photoInput],
-                  [IC.file, 'Subir PDF o documento', 'PDF, JPG o PNG · hasta 10 MB', docInput],
+                  [IC.image, t('nm.attach.photo'), t('nm.attach.photoDetail'), photoInput],
+                  [IC.file, t('nm.attach.doc'), t('nm.attach.docDetail'), docInput],
                 ] as const
               ).map(([icon, label, detail, ref]) => (
                 <button key={label} type="button" onClick={() => ref.current?.click()} className="flex cursor-pointer items-center gap-3 py-1 text-left">
@@ -764,18 +793,18 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
 
           {section === 'from' && (
             <>
-              <input value={from} onChange={(e) => edit(setFrom)(e.target.value.slice(0, 40))} placeholder="Empresa, cliente o persona" className={textInput} />
-              <div className={fieldLabel}>TIPO DE ORIGEN</div>
+              <input value={from} onChange={(e) => edit(setFrom)(e.target.value.slice(0, 40))} placeholder={t('nm.from.ph')} className={textInput} />
+              <div className={fieldLabel}>{t('nm.from.kind')}</div>
               <PillRow>
                 {FROM_KINDS.map((k) => (
-                  <Flat key={k.kind} on={fromKind === k.kind} onClick={() => setFromKind(fromKind === k.kind ? null : k.kind)}>
-                    {k.label}
+                  <Flat key={k} on={fromKind === k} onClick={() => setFromKind(fromKind === k ? null : k)}>
+                    {t(`nm.from.${k}` as TranslationKey)}
                   </Flat>
                 ))}
               </PillRow>
               {recents.length > 0 && (
                 <>
-                  <div className={fieldLabel}>RECIENTES</div>
+                  <div className={fieldLabel}>{t('nm.recents')}</div>
                   <PillRow>
                     {recents.map(([name, kind]) => (
                       <Flat key={name} on={from === name} onClick={edit(() => (setFrom(name), setFromKind(kind)))}>
@@ -792,16 +821,16 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
             <>
               <div className="text-[11.5px] leading-[1.45] text-v2-dim">
                 {autoBudget
-                  ? `Este gasto ya suma a ${budgetLabel(autoBudget)} por su categoría. Elige un presupuesto personalizado si también cuenta ahí.`
-                  : `Ningún presupuesto por categoría cubre ${cat ? categoryName(leaf) : 'este gasto'}. Puedes asignarlo a uno personalizado.`}
+                  ? fill(t('nm.bpick.auto'), budgetLabel(autoBudget))
+                  : fill(t('nm.bpick.none'), cat ? categoryName(leaf) : t('nm.bpick.thisExpense'))}
               </div>
               <div className="flex flex-col gap-2">
                 <RadioRow on={budgetId === null} onClick={() => setBudgetId(null)}>
-                  <RowText label="Ninguno" detail="Solo cuenta por su categoría" />
+                  <RowText label={t('nm.none.m')} detail={t('nm.bpick.noneDetail')} />
                 </RadioRow>
                 {customs.map((b) => (
                   <RadioRow key={b.id} on={budgetId === b.id} onClick={() => setBudgetId(b.id)} leading={<PlanMark icon={b.icon} box={32} />}>
-                    <RowText label={b.name ?? ''} detail={`${format(b.spent)} de ${format(b.limit)}`} />
+                    <RowText label={b.name ?? ''} detail={fill(t('nm.xOfY'), format(b.spent), format(b.limit))} />
                   </RadioRow>
                 ))}
               </div>
@@ -812,15 +841,15 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
             <>
               <div className="flex items-center gap-3">
                 <div className="min-w-0 flex-1">
-                  <div className="text-[12.5px] font-bold">{isInc ? 'Es dinero que me prestaron' : 'Es dinero que presté'}</div>
-                  <div className="mt-0.5 text-[11px] text-v2-dim">Se registra en Planes › Préstamos con contraparte y vencimiento.</div>
+                  <div className="text-[12.5px] font-bold">{t(isInc ? 'nm.loan.borrowed' : 'nm.loan.lent')}</div>
+                  <div className="mt-0.5 text-[11px] text-v2-dim">{t('nm.loan.detail')}</div>
                 </div>
-                <AjSwitch on={loan} label={isInc ? 'Es dinero que me prestaron' : 'Es dinero que presté'} onToggle={() => setLoan(!loan)} />
+                <AjSwitch on={loan} label={t(isInc ? 'nm.loan.borrowed' : 'nm.loan.lent')} onToggle={() => !editing && setLoan(!loan)} />
               </div>
-              <div className={fieldLabel}>APORTE A UNA META</div>
+              <div className={fieldLabel}>{t('nm.goal')}</div>
               <PillRow>
                 <Flat on={goalId === null} onClick={() => setGoalId(null)}>
-                  Ninguna
+                  {t('nm.none.f')}
                 </Flat>
                 {goals.map((g) => (
                   <Flat key={g.id} on={goalId === g.id} onClick={() => setGoalId(g.id)}>
@@ -839,10 +868,10 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
             <Icon paths={attach.photo ? IC.image : IC.file} size={16} color="var(--v2-accent2)" />
           </span>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-[12.5px] font-bold">{attach.file.name}</div>
-            <div className="text-[11px] text-v2-dim">{`${attach.photo ? 'Foto' : 'Documento'} · ${fileSize(attach.file.size)}`}</div>
+            <div className="truncate text-[12.5px] font-bold">{attach.name}</div>
+            <div className="text-[11px] text-v2-dim">{`${t(attach.photo ? 'nm.photo' : 'nm.document')} · ${fileSize(attach.size)}`}</div>
           </div>
-          <button type="button" aria-label="Quitar adjunto" onClick={() => setAttach(null)} className="cursor-pointer p-1 text-[13px] text-v2-dim">
+          <button type="button" aria-label={t('nm.removeAttachment')} onClick={() => setAttach(null)} className="cursor-pointer p-1 text-[13px] text-v2-dim">
             ✕
           </button>
         </div>
@@ -851,7 +880,7 @@ export function NewTransactionPanel({ onClose }: { onClose: () => void }) {
       {repeat && (
         <div className="flex items-center gap-2 text-[11.5px] text-v2-muted">
           <Icon paths={IC.repeat} size={13} color="var(--v2-dim)" />
-          <span className="font-numeric">{`${repeatSummary(repeat, date)} · ${repeat.confirm === 'auto' ? 'automático' : 'con confirmación'}`}</span>
+          <span className="font-numeric">{`${repeatSummary(repeat, date)} · ${t(repeat.confirm === 'auto' ? 'nm.automatic' : 'nm.withConfirmation')}`}</span>
         </div>
       )}
 

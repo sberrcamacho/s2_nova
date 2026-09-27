@@ -10,6 +10,7 @@ export interface TaxNode {
   type: 'expense' | 'income'
   parentId: string | null
   name: string
+  nameEn: string
   vis: string
   color: string
   glyph: string[]
@@ -18,6 +19,7 @@ export interface TaxNode {
 export interface PlanIcon {
   key: string
   name: string
+  nameEn: string
   kw: string[]
   color: string
   glyph: string[]
@@ -25,7 +27,7 @@ export interface PlanIcon {
 
 export const TAX_VIS = data.vis as Record<string, { color: string; glyph: string[] }>
 export const TAX_NODES = data.nodes as TaxNode[]
-export const TAX_TRANSFER = data.transfer as { id: 'transfer'; name: string; color: string; glyph: string[] }
+export const TAX_TRANSFER = data.transfer as { id: 'transfer'; name: string; nameEn: string; color: string; glyph: string[] }
 export const PLAN_ICONS = data.planIcons as PlanIcon[]
 const KEYWORDS = data.keywords as { expense: [string, string[]][]; income: [string, string[]][] }
 

@@ -1,6 +1,6 @@
 import { apiClient } from '@/lib/apiClient'
 import { categoryIdFor, categoryWireIds, movementCategory } from '@/lib/backendCategories'
-import type { AttachmentMeta, CounterpartyKind, LoanKind, NewTransactionInput, PaymentMethod, Transaction, TransactionStatus, TransactionType } from '@/types'
+import type { AttachmentMeta, CounterpartyKind, LoanKind, NewTransactionInput, PaymentMethod, RepeatRule, Transaction, TransactionStatus, TransactionType } from '@/types'
 
 interface BackendTransaction {
   id: string
@@ -256,6 +256,36 @@ export const transactionService = {
     }
     const row = await apiClient.patch<BackendTransaction>(`/transactions/${id}`, body)
     return mapTransaction(row)
+  },
+
+  // "Editar movimiento" (Nuevo movimiento in edit mode): every field the
+  // form shows, with explicit nulls for the ones it cleared, and its
+  // Repetir — a rule updates or starts the series, null stops it. The type
+  // and a transfer's destination are fixed once created.
+  async editMovement(id: string, input: NewTransactionInput, repeat: RepeatRule | null): Promise<Transaction> {
+    const transfer = input.type === 'transfer'
+    const body: Record<string, unknown> = {
+      accountId: input.accountId,
+      amount: input.amount,
+      description: input.description,
+      note: input.note ?? null,
+      date: input.date,
+      time: input.time,
+      customBudgetId: transfer ? undefined : (input.customBudgetId ?? null),
+      goalId: transfer ? undefined : (input.goalId ?? null),
+      counterpartyName: input.type === 'income' && !input.loanKind ? (input.counterpartyName ?? null) : undefined,
+      counterpartyKind: input.type === 'income' && !input.loanKind ? (input.counterpartyKind?.toUpperCase() ?? null) : undefined,
+      repeat: transfer ? undefined : repeat && { ...repeat, interval: repeat.interval.toUpperCase() },
+    }
+    if (!transfer) {
+      body.currency = input.currency
+      if (input.category) {
+        const wire = await categoryWireIds(input.category)
+        body.categoryId = wire.categoryId
+        body.subcategoryId = wire.subcategoryId ?? null
+      }
+    }
+    return mapTransaction(await apiClient.patch<BackendTransaction>(`/transactions/${id}`, body))
   },
 
   // Loan edits (Android's loan sheet): the wallet, the direction (which

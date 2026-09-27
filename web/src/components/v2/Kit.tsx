@@ -2,7 +2,9 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Glyph, GlyphMark } from '@/components/v2/CategoryMark'
 import { PLAN_ICONS } from '@/lib/taxonomy'
+import { currentLanguage, tr } from '@/lib/i18n/translations'
 import { cn } from '@/lib/cn'
+import { CALC, OPS, evalExpr, fmtExpr, hasOps, pressKey, typedExpr } from '@/lib/nuevoMovimiento'
 
 // Building blocks of the Web v2 mockup's modals and inline sections —
 // verbatim from its style helpers (flat, tileBox, tileLab, gridCell,
@@ -92,22 +94,118 @@ export function DateInput({ value, onChange, className }: { value: string; onCha
   return <input type="date" value={value} onChange={(e) => onChange(e.target.value)} className={cn(inputClass, className)} />
 }
 
-// Digits only, shown grouped ("250.000"), with the currency symbol. The
-// mockup's input keeps the page font (its inline font-family beats `.num`)
-// and the browser's 1px 2px input padding.
-export function MoneyInput({ digits, onDigits, symbol = '$' }: { digits: string; onDigits: (d: string) => void; symbol?: string }) {
+// Every money field outside "Nuevo movimiento" uses the same entry as its
+// amount (NEW_MOVEMENT.md §2): typed arithmetic ("150000+18500", × ÷ with
+// * / x), decimals with ",", the "= total" line, and the Teclado/Calculadora
+// switch with the mockup's CALC grid. The value is the typed expression;
+// read it with evalExpr(). The box keeps each modal's own size.
+export function AmountField({
+  expr,
+  onExpr,
+  symbol = '$',
+  height = 42,
+  fontSize = 14,
+  radius = 10,
+  label = tr('kit.amount'),
+  autoFocus,
+  disabled,
+}: {
+  expr: string
+  onExpr: (expr: string) => void
+  symbol?: string
+  height?: number
+  fontSize?: number
+  radius?: number
+  label?: string
+  autoFocus?: boolean
+  disabled?: boolean
+}) {
+  const [calc, setCalc] = useState(() => readCalcPref())
+  const total = evalExpr(expr)
   return (
-    <div className="box-border flex h-[42px] items-center gap-1.5 rounded-[10px] border border-v2-line bg-v2-sidebar px-3">
-      <span className="font-numeric text-[14px] font-extrabold text-v2-muted">{symbol}</span>
-      <input
-        value={digits ? Number(digits).toLocaleString('es-CO') : ''}
-        onChange={(e) => onDigits(e.target.value.replace(/\D/g, '').slice(0, 12))}
-        inputMode="numeric"
-        placeholder="0"
-        className="min-w-0 flex-1 border-none bg-transparent px-0.5 py-px font-[inherit] text-[14px] font-extrabold text-v2-text outline-none [font-variant-numeric:tabular-nums]"
-      />
+    <div className="flex flex-col gap-1.5">
+      <div
+        className="box-border flex items-center gap-1.5 border border-v2-line bg-v2-sidebar pl-3 pr-1.5"
+        style={{ height, borderRadius: radius, opacity: disabled ? 0.6 : 1 }}
+      >
+        <span className="font-numeric font-extrabold text-v2-muted" style={{ fontSize }}>
+          {symbol}
+        </span>
+        <input
+          value={fmtExpr(expr)}
+          onChange={(e) => onExpr(typedExpr(e.target.value))}
+          inputMode="decimal"
+          placeholder="0"
+          aria-label={label}
+          autoFocus={autoFocus}
+          disabled={disabled}
+          className="min-w-0 flex-1 border-none bg-transparent px-0.5 py-px font-[inherit] font-extrabold text-v2-text outline-none [font-variant-numeric:tabular-nums]"
+          style={{ fontSize }}
+        />
+        {!disabled && (
+          <button
+            type="button"
+            title={tr('nm.padToggle')}
+            aria-label={tr(calc ? 'nm.calculator' : 'nm.keypad')}
+            aria-pressed={calc}
+            onClick={() => {
+              writeCalcPref(!calc)
+              setCalc(!calc)
+            }}
+            className={cn(
+              'flex h-7 w-7 flex-none cursor-pointer items-center justify-center rounded-full border',
+              calc ? 'border-v2-accent bg-[rgba(108,92,231,.2)]' : 'border-transparent bg-v2-surface2',
+            )}
+          >
+            <Icon paths={IC.calc} size={14} color={calc ? 'var(--v2-accent2)' : 'var(--v2-muted)'} />
+          </button>
+        )}
+      </div>
+      {hasOps(expr) && <div className="font-numeric text-[12px] font-extrabold text-v2-muted">{'= ' + symbol + total.toLocaleString(currentLanguage() === 'en' ? 'en-US' : 'es-CO', { maximumFractionDigits: 2 })}</div>}
+      {calc && !disabled && (
+        <div className="grid grid-cols-4 gap-1.5">
+          {CALC.map((k) => {
+            const op = OPS.includes(k)
+            return (
+              <button
+                key={k}
+                type="button"
+                onClick={() => onExpr(pressKey(expr, k))}
+                className={cn(
+                  'flex h-10 cursor-pointer select-none items-center justify-center rounded-[10px] border font-bold',
+                  op
+                    ? 'border-transparent bg-[rgba(108,92,231,.16)] text-[17px] text-v2-accent2'
+                    : k === '='
+                      ? 'row-span-2 h-auto border-transparent bg-[rgba(108,92,231,.32)] text-[19px] text-white'
+                      : k === 'C' || k === '⌫'
+                        ? 'border-v2-line bg-v2-surface2 text-[13px] font-extrabold text-v2-muted'
+                        : 'border-v2-line bg-v2-surface2 text-[15px] text-v2-text',
+                )}
+              >
+                {k}
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
+}
+
+// The pad mode is one per-device preference, shared with Nuevo movimiento.
+function readCalcPref(): boolean {
+  try {
+    return localStorage.getItem('nm.calc') === '1'
+  } catch {
+    return false
+  }
+}
+function writeCalcPref(on: boolean) {
+  try {
+    localStorage.setItem('nm.calc', on ? '1' : '0')
+  } catch {
+    // Storage unavailable: the mode just isn't remembered.
+  }
 }
 
 export function flatClass(on: boolean): string {
@@ -197,7 +295,7 @@ export function PlanIconGrid({ value, onPick }: { value: string; onPick: (key: s
         <button
           key={p.key}
           type="button"
-          title={p.name}
+          title={currentLanguage() === 'en' ? p.nameEn : p.name}
           onClick={() => onPick(p.key)}
           className="flex cursor-pointer justify-center rounded-[10px] py-1"
           style={{ border: `1.5px solid ${value === p.key ? p.color : 'transparent'}` }}
@@ -246,7 +344,7 @@ export function ErrorBox({ children }: { children: ReactNode }) {
   )
 }
 
-export function CancelButton({ onClick, children = 'Cancelar' }: { onClick: () => void; children?: ReactNode }) {
+export function CancelButton({ onClick, children = tr('common.cancel') }: { onClick: () => void; children?: ReactNode }) {
   return (
     <button type="button" onClick={onClick} className="cursor-pointer whitespace-nowrap rounded-[10px] border border-v2-line2 px-4 py-2.5 text-[12.5px] font-bold text-v2-muted">
       {children}
@@ -256,7 +354,7 @@ export function CancelButton({ onClick, children = 'Cancelar' }: { onClick: () =
 
 // Enabled look only when the form is valid; a click on the disabled look
 // still reports why (the mockup shows the error instead of doing nothing).
-export function SaveButton({ valid, onClick, children = 'Guardar', busy }: { valid: boolean; onClick: () => void; children?: ReactNode; busy?: boolean }) {
+export function SaveButton({ valid, onClick, children = tr('common.save'), busy }: { valid: boolean; onClick: () => void; children?: ReactNode; busy?: boolean }) {
   return (
     <button
       type="button"
@@ -311,7 +409,7 @@ export function ConfirmDialog({ title, lines, ack, cta, onCancel, onConfirm }: {
         // The mockup's 440px is content-box: 486px with its 22px padding and border.
         role="alertdialog"
         aria-modal="true"
-        aria-label={step === 1 ? title : 'No se puede deshacer'}
+        aria-label={step === 1 ? title : tr('kit.cantUndo')}
         onClick={(e) => e.stopPropagation()}
         className="flex w-[486px] max-w-full flex-col gap-3.5 rounded-[18px] border border-v2-line2 bg-v2-surface p-[22px] text-v2-text shadow-[0_24px_60px_rgba(0,0,0,.45)]"
       >
@@ -321,7 +419,7 @@ export function ConfirmDialog({ title, lines, ack, cta, onCancel, onConfirm }: {
         {step === 1 ? (
           <>
             <div className="text-[16px] font-extrabold">{title}</div>
-            <div className="text-[10.5px] font-extrabold tracking-[.08em] text-v2-dim">SE VA A ELIMINAR</div>
+            <div className="text-[10.5px] font-extrabold tracking-[.08em] text-v2-dim">{tr('kit.willDelete')}</div>
             <div className="flex flex-col gap-[7px]">
               {lines.map((l) => (
                 <div key={l} className="flex gap-2.5 text-[12.5px] leading-[1.45] text-v2-muted">
@@ -332,16 +430,16 @@ export function ConfirmDialog({ title, lines, ack, cta, onCancel, onConfirm }: {
             </div>
             <div className="mt-1 flex justify-end gap-2">
               <button type="button" onClick={onCancel} className={secondary}>
-                Cancelar
+                {tr('common.cancel')}
               </button>
               <button type="button" onClick={() => setStep(2)} className="cursor-pointer rounded-[10px] border border-v2-neg px-4 py-2.5 text-[12.5px] font-bold text-v2-neg">
-                Continuar
+                {tr('kit.continue')}
               </button>
             </div>
           </>
         ) : (
           <>
-            <div className="text-[16px] font-extrabold">No se puede deshacer</div>
+            <div className="text-[16px] font-extrabold">{tr('kit.cantUndo')}</div>
             <button type="button" onClick={() => setChecked(!checked)} className="flex cursor-pointer items-start gap-3 rounded-[12px] border border-v2-line2 p-3 text-left">
               <span
                 className="box-border flex h-5 w-5 flex-none items-center justify-center rounded-[6px]"
@@ -353,7 +451,7 @@ export function ConfirmDialog({ title, lines, ack, cta, onCancel, onConfirm }: {
             </button>
             <div className="flex justify-end gap-2">
               <button type="button" onClick={() => { setStep(1); setChecked(false) }} className={secondary}>
-                Volver
+                {tr('common.back')}
               </button>
               <button
                 type="button"

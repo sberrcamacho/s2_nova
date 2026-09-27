@@ -60,6 +60,8 @@ import com.s2nova.app.ui.components.noRippleClick
 import com.s2nova.app.ui.screens.addtransaction.GridOf
 import com.s2nova.app.ui.theme.NovaColors
 import kotlinx.coroutines.launch
+import com.s2nova.app.ui.tr
+import com.s2nova.app.ui.StringKey
 
 // Ajustes › Categorías (CATEGORY_SYSTEM.md §7b): Gastos / Ingresos tabs,
 // one card per parent with its subcategory chips and "+ Subcategoría"; "+"
@@ -82,14 +84,14 @@ fun CategoriesScreen(initialIncome: Boolean, onBack: () -> Unit) {
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Row(Modifier.padding(start = 18.dp, end = 18.dp, top = 10.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(Modifier.size(38.dp).clip(CircleShape).noRippleClick(onBack), contentAlignment = Alignment.Center) { Text("←", fontSize = 19.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-            Text("Categorías", fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
+            Text(tr(StringKey.CAT_TITLE), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
             Box(Modifier.size(38.dp).clip(CircleShape).noRippleClick { draft = CatDraft(null, "", null, "other") }, contentAlignment = Alignment.Center) {
                 Text("+", fontSize = 22.sp, fontWeight = FontWeight.Light, color = MaterialTheme.colorScheme.primary)
             }
         }
-        UnderlineTabs(listOf("Gastos", "Ingresos"), if (income) 1 else 0) { income = it == 1 }
+        UnderlineTabs(listOf(tr(StringKey.CAT_TAB_EXPENSES), tr(StringKey.CAT_TAB_INCOME)), if (income) 1 else 0) { income = it == 1 }
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Son las mismas en Nuevo movimiento, presupuestos, filtros y reportes. Toca una categoría o subcategoría para editarla.", fontSize = 11.sp, lineHeight = 16.sp, color = colors.textDim)
+            Text(tr(StringKey.CAT_SUBTITLE), fontSize = 11.sp, lineHeight = 16.sp, color = colors.textDim)
             repo.parents(income).forEach { p ->
                 val kids = repo.children(p.id)
                 Column(
@@ -97,30 +99,30 @@ fun CategoriesScreen(initialIncome: Boolean, onBack: () -> Unit) {
                         .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp)).padding(14.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    Row(Modifier.noRippleClick { draft = CatDraft(p.id, p.name, null, p.vis, p.hidden) }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(Modifier.noRippleClick { draft = CatDraft(p.id, repo.displayName(p), null, p.vis, p.hidden) }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         CatMark(p.id, 38.dp)
                         Column(Modifier.weight(1f)) {
-                            Text(p.name, fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
-                            Text(kids.size.toString() + if (kids.size == 1) " subcategoría" else " subcategorías", fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
+                            Text(repo.displayName(p), fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
+                            Text(tr(if (kids.size == 1) StringKey.CAT_SUB_ONE else StringKey.CAT_SUB_MANY, kids.size), fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
                         }
-                        if (p.hidden) Tag("Oculta", colors.textDim, MaterialTheme.colorScheme.outlineVariant)
-                        if (p.custom) Tag("Tuya", colors.accentText, colors.accentText)
+                        if (p.hidden) Tag(tr(StringKey.CAT_HIDDEN), colors.textDim, MaterialTheme.colorScheme.outlineVariant)
+                        if (p.custom) Tag(tr(StringKey.CAT_YOURS), colors.accentText, colors.accentText)
                         Icon(MockupIcons.Pencil, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(15.dp))
                     }
                     val color = Color(p.color)
                     androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         kids.forEach { c ->
                             Text(
-                                c.name, fontSize = 11.sp, fontWeight = FontWeight.Bold,
+                                repo.displayName(c), fontSize = 11.sp, fontWeight = FontWeight.Bold,
                                 color = if (c.custom) (if (color.luminance() > 0.5f) Color(0xFF111118) else Color.White) else colors.pillText,
                                 modifier = Modifier.clip(RoundedCornerShape(999.dp)).background(if (c.custom) color else color.copy(alpha = 0.12f))
                                     .border(1.dp, color.copy(alpha = 0.35f), RoundedCornerShape(999.dp))
-                                    .noRippleClick { draft = CatDraft(c.id, c.name, p.id, p.vis) }.padding(horizontal = 9.dp, vertical = 4.dp),
+                                    .noRippleClick { draft = CatDraft(c.id, repo.displayName(c), p.id, p.vis) }.padding(horizontal = 9.dp, vertical = 4.dp),
                             )
                         }
                         val line2 = MaterialTheme.colorScheme.outlineVariant
                         Text(
-                            "+ Subcategoría", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText,
+                            tr(StringKey.CAT_ADD_SUB), fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText,
                             modifier = Modifier.clip(RoundedCornerShape(999.dp)).drawBehind {
                                 drawRoundRect(line2, style = Stroke(1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(3.dp.toPx(), 2.dp.toPx()))), cornerRadius = androidx.compose.ui.geometry.CornerRadius(size.height / 2))
                             }.noRippleClick { draft = CatDraft(null, "", p.id, p.vis) }.padding(horizontal = 9.dp, vertical = 4.dp),
@@ -137,28 +139,28 @@ fun CategoriesScreen(initialIncome: Boolean, onBack: () -> Unit) {
     NovaDraftSheet(onDismiss = { draft = null }) {
         Column(Modifier.verticalScroll(rememberScrollState())) {
             SheetHeader(
-                if (editing != null) (if (editing.parentId != null) "Editar subcategoría" else "Editar categoría") else if (parent != null) "Nueva subcategoría en ${parent.name}" else "Nueva categoría",
-                if (editing != null) (if (editing.custom) "Creada por ti. Los cambios se ven en movimientos, presupuestos y reportes." else "Categoría de S2 Nova: puedes cambiar el nombre y el icono. No se puede eliminar; ocúltala si no la usas.")
-                else "Tipo: " + (if (income) "ingreso" else "gasto") + ". Queda disponible en todo S2 Nova.",
+                if (editing != null) tr(if (editing.parentId != null) StringKey.CAT_EDIT_SUB else StringKey.CAT_EDIT) else if (parent != null) tr(StringKey.CAT_NEW_SUB_IN, repo.displayName(parent)) else tr(StringKey.CAT_NEW),
+                if (editing != null) tr(if (editing.custom) StringKey.CAT_SUB_CUSTOM else StringKey.CAT_SUB_BUILTIN)
+                else tr(if (income) StringKey.CAT_SUB_NEW_INCOME else StringKey.CAT_SUB_NEW_EXPENSE),
                 bottom = 18.dp, subtitleTop = 5.dp,
             )
             Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
                 Column {
-                    FieldLabel("Nombre")
-                    InputBox { BareField(d.name, { draft = d.copy(name = it.take(40), err = "") }, "Ej. Clases de música") }
+                    FieldLabel(tr(StringKey.PLAN_NAME))
+                    InputBox { BareField(d.name, { draft = d.copy(name = it.take(40), err = "") }, tr(StringKey.CAT_NAME_PH)) }
                 }
                 if (editing == null) {
                     Column {
-                        FieldLabel("Dentro de")
+                        FieldLabel(tr(StringKey.CAT_INSIDE))
                         PillRow {
-                            V2Pill("Nueva principal", d.parentId == null, { draft = d.copy(parentId = null, err = "") })
-                            repo.parents(income).forEach { p -> V2Pill(p.name, d.parentId == p.id, { draft = d.copy(parentId = p.id, vis = p.vis, err = "") }) }
+                            V2Pill(tr(StringKey.CAT_NEW_MAIN), d.parentId == null, { draft = d.copy(parentId = null, err = "") })
+                            repo.parents(income).forEach { p -> V2Pill(repo.displayName(p), d.parentId == p.id, { draft = d.copy(parentId = p.id, vis = p.vis, err = "") }) }
                         }
                     }
                 }
                 if (parent == null) {
                     Column {
-                        FieldLabel("Icono y color")
+                        FieldLabel(tr(StringKey.CAT_ICON_COLOR))
                         GridOf(Taxonomy.vis.keys.filter { it != "transfer" }, 6, 6.dp, 6.dp) { k ->
                             val v = Taxonomy.vis.getValue(k)
                             val c = hexColor(v.color)
@@ -170,32 +172,33 @@ fun CategoriesScreen(initialIncome: Boolean, onBack: () -> Unit) {
                         }
                     }
                 } else {
-                    Text("Usa el color de ${parent.name} para agruparse igual en reportes.", fontSize = 11.sp, color = colors.textDim)
+                    Text(tr(StringKey.CAT_PARENT_COLOR, repo.displayName(parent)), fontSize = 11.sp, color = colors.textDim)
                 }
                 if (editing != null && !editing.custom && editing.parentId == null) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                         Column(Modifier.weight(1f)) {
-                            Text("Mostrar al registrar", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                            Text("Si la ocultas, sale del selector pero conserva su historial en reportes.", fontSize = 11.sp, lineHeight = 15.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
+                            Text(tr(StringKey.CAT_SHOW), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                            Text(tr(StringKey.CAT_SHOW_HINT), fontSize = 11.sp, lineHeight = 15.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
                         }
                         V2Switch(!d.hidden) { draft = d.copy(hidden = !d.hidden) }
                     }
                 }
                 if (d.err.isNotBlank()) Text(d.err, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = colors.negative)
-                V2Button(if (editing != null) "Guardar cambios" else "Crear categoría", onClick = {
+                V2Button(tr(if (editing != null) StringKey.CAT_SAVE else StringKey.CAT_CREATE), onClick = {
                     val name = d.name.trim()
-                    if (name.isEmpty()) { draft = d.copy(err = "Escribe un nombre."); return@V2Button }
+                    if (name.isEmpty()) { draft = d.copy(err = tr(StringKey.CAT_ERR_NAME)); return@V2Button }
                     val siblings = if (d.parentId != null) repo.children(d.parentId) else repo.parents(income)
-                    if (siblings.any { it.name.equals(name, ignoreCase = true) && it.id != editing?.id }) { draft = d.copy(err = "Ya existe una categoría con ese nombre aquí."); return@V2Button }
+                    if (siblings.any { repo.displayName(it).equals(name, ignoreCase = true) && it.id != editing?.id }) { draft = d.copy(err = tr(StringKey.CAT_ERR_TAKEN)); return@V2Button }
                     scope.launch {
                         runCatching {
-                            if (editing != null) repo.update(editing.id, name, if (editing.parentId == null) d.vis else null, if (!editing.custom && editing.parentId == null) d.hidden else null)
+                            // A built-in shown in English keeps its stored name unless it was changed.
+                            if (editing != null) repo.update(editing.id, if (name == repo.displayName(editing)) editing.name else name, if (editing.parentId == null) d.vis else null, if (!editing.custom && editing.parentId == null) d.hidden else null)
                             else repo.create(income, d.parentId, name, d.vis)
-                        }.onSuccess { draft = null }.onFailure { draft = d.copy(err = "No se pudo guardar. Intenta de nuevo.") }
+                        }.onSuccess { draft = null }.onFailure { draft = d.copy(err = tr(StringKey.LOAN_ERR_SAVE)) }
                     }
                 })
                 if (editing != null && editing.custom) {
-                    SheetTextAction(if (editing.parentId != null) "Eliminar subcategoría" else "Eliminar categoría", colors.negative, { askDelete(editing, income) { draft = null } }, weight = FontWeight.ExtraBold)
+                    SheetTextAction(tr(if (editing.parentId != null) StringKey.CAT_DELETE_SUB else StringKey.CAT_DELETE), colors.negative, { askDelete(editing, income) { draft = null } }, weight = FontWeight.ExtraBold)
                 }
             }
         }
@@ -209,14 +212,14 @@ private fun askDelete(n: CategoryNode, income: Boolean, onDone: () -> Unit) {
     val used = n.usage + kids.sumOf { it.usage }
     Confirm.ask(
         ConfirmRequest(
-            title = "Eliminar “${n.name}”",
+            title = tr(StringKey.MV_DELETE_TITLE, repo.displayName(n)),
             lines = listOf(
-                (if (n.parentId != null) "Subcategoría de " + repo.name(n.parentId) else "Categoría principal") + if (kids.isNotEmpty()) " y sus ${kids.size} subcategorías" else "",
-                used.toString() + (if (used == 1) " movimiento pasa" else " movimientos pasan") + " a " + repo.name(fallback),
-                "Deja de aparecer en presupuestos, filtros y reportes",
+                (if (n.parentId != null) tr(StringKey.CAT_SUB_OF, repo.name(n.parentId)) else tr(StringKey.CAT_MAIN)) + if (kids.isNotEmpty()) tr(StringKey.CAT_AND_SUBS, kids.size) else "",
+                tr(if (used == 1) StringKey.CAT_MOVE_ONE else StringKey.CAT_MOVE_MANY, used, repo.name(fallback)),
+                tr(StringKey.CAT_DELETE_GONE),
             ),
-            ack = "Entiendo que los movimientos se reasignan a ${repo.name(fallback)} y que esto no se puede deshacer.",
-            cta = "Eliminar categoría",
+            ack = tr(StringKey.CAT_DELETE_ACK, repo.name(fallback)),
+            cta = tr(StringKey.CAT_DELETE),
             onConfirm = {
                 onDone()
                 AppContainer.appScope.launch {

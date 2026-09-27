@@ -22,7 +22,7 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
 - `app/src/main/java/com/s2nova/app/MainActivity.kt` — single Activity, hosts the whole Compose UI
 - `app/src/main/java/com/s2nova/app/ui/nav/NovaNavGraph.kt` — the app's one `NavHost`: all routes, the bottom bar, and the FAB's add-actions sheet live here
 - `app/src/main/java/com/s2nova/app/ui/screens/` — one package per screen (auth, home, transactions, addtransaction, scanner, budgets, loans, recurring, wallets, reports, notifications, profile, settings)
-- `app/src/main/java/com/s2nova/app/ui/components/` — shared composables (cards, charts, category icons, progress bars, top bar, bottom nav, `NovaDraftSheet` — the shared `ModalBottomSheet` shell every create/edit/delete form uses, `AppLockGate` — the auto-lock overlay wrapping the nav graph)
+- `app/src/main/java/com/s2nova/app/ui/components/` — shared composables (cards, charts, category icons, progress bars, top bar, bottom nav, `NovaDraftSheet` — the shared `ModalBottomSheet` shell every create/edit/delete form uses, `IdleLogout` — "Cierre automático")
 - `app/src/main/java/com/s2nova/app/ui/theme/` — Color/Theme/Type — ported 1:1 from `web/src/index.css`'s design tokens so both apps share one visual identity
 - `app/src/main/java/com/s2nova/app/data/model/` — data classes mirroring `web/src/types/index.ts`
 - `app/src/main/java/com/s2nova/app/data/mock/` — remaining seed data for entities not yet backend-backed (categories, products/barcodes) — mirrors `web/src/data/*.ts`
@@ -92,17 +92,22 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   mockup): `blurBalance` puts a `Modifier.blur` over Home's total-balance
   figure with a "Toca para mostrar" tap-to-reveal, re-hiding on the next
   composition rather than staying revealed forever. `autoLockMinutes` (one
-  of `0` "Nunca", `1`, `5`, `15`, `60`) is enforced by `AppLockGate`
-  (`ui/components/AppLockGate.kt`, wrapping the whole nav graph in
-  `NovaNavGraph.kt`): it records a timestamp via `IdleTimeoutStore` on the
-  single Activity's `ON_STOP` and, on the next `ON_START`, shows a
-  full-screen password challenge (`POST /me/verify-password`, a
-  password-check endpoint that never rotates tokens) if the elapsed time
-  exceeds the preference. Deliberately password-only — there's no
-  `androidx.biometric` dependency in this app, so a biometric re-entry
-  option isn't wired up (`UserPreferences.biometricLogin` itself has no
-  enforcement anywhere in the app yet either); a user with no password set
-  (Google-only sign-in) is never locked, since there'd be no way back in.
+  of `0` "Nunca", `1`, `5`, `15`, `60`; default 5) is "Cierre automático":
+  a real sign-out after that long without the user touching the app
+  (`ui/components/IdleLogout.kt`). `MainActivity.onUserInteraction` (and
+  `Modifier.countsAsActivity()` on `NovaDraftSheet`, whose window bypasses
+  it) updates `IdleTimeoutStore`; a foreground ticker checks every 15 s,
+  the timestamp is persisted on every move to the background, and
+  `AuthRepository.bootstrap()` refuses to restore a session that sat idle
+  too long after the process was killed — so rotating or reopening the app
+  can't dodge it. It calls `AuthRepository.logoutForIdle()` (server
+  revokes the session, tokens cleared) and Login shows why. While active,
+  the app posts `POST /auth/activity` at most once a minute; the server
+  ends idle sessions itself too (backend `lib/sessions.ts`) and rejects
+  their access tokens at once. Tokens are AES-GCM encrypted with an
+  Android Keystore key (`SessionStore`); the Activity sets `FLAG_SECURE`;
+  `ApiClient`'s Authenticator refreshes one request at a time and only on
+  the auth layer's `token_invalid` 401s (see backend `plugins/auth.ts`).
   Both preferences persist through the same `PATCH /me/preferences` call as
   every other toggle on that screen — see the next bullet, this was also
   the fix for a real bug where Settings' notification/biometric/currency/
@@ -136,7 +141,12 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   — it's a separate `RecurringSeries` definition
   (`RecurringSeriesRepository`, `ui/screens/recurring/RecurringScreen.kt`,
   titled "Programados"; a due occurrence is confirmed or skipped there —
-  skip uses the backend's `POST /recurring-series/:id/skip`)
+  skip uses the backend's `POST /recurring-series/:id/skip`. It is a list
+  only: series are created with "Repetir" in Nuevo movimiento, whose
+  screen the header "+" opens, and "Editar" opens `AddTransactionScreen`
+  with `editSeriesId` (template, Repetir rule, next date; saves through
+  `RecurringSeriesRepository.edit`, Repetir off pauses, and it deletes the
+  series)
   that only ever produces a real `Transaction` when the user explicitly
   confirms a due occurrence, never automatically on app start (that
   conflation was this screen's original design; it was replaced because
@@ -258,25 +268,21 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   not device settings — screens read them via `rememberCurrencyFormatter()`
   and `rememberStrings()` (`ui/CurrencyFormatting.kt`, `ui/Strings.kt`)
   rather than calling `formatCOP`/`formatUSD` or hardcoding copy directly,
-  mirroring web's `useCurrency()`/`useTranslation()`. The `StringKey`
-  dictionary covers every screen's UI chrome (labels, buttons, placeholders,
-  validation messages, dialogs, permission prompts) **except** auth
-  (`LoginScreen`/`RegisterScreen`/`ForgotPasswordScreen`/`AuthLayout`) —
-  there is no logged-in user (and therefore no language preference) before
-  login, and `AuthRepository.login()`/`.logout()` don't persist one across
-  the session boundary, so there is no language state for those screens to
-  react to; `rememberStrings()` would just always resolve to its `ES`
-  fallback there. `ScannerScreen` **is** in scope (its UI chrome, permission
-  message, and product-found sheet all use `rememberStrings()`) — only the
-  camera/ML Kit scanning logic itself is untouched. It also covers every
-  category/payment-method/budget-status
-  label via `categoryStringKey()`/`paymentMethodStringKey()`/
-  `budgetStatusStringKey()` — never read `Category.label`/
-  `PaymentMethodOption.label` off `data/mock/MockCategories.kt` directly in
-  a screen, always go through those + `rememberStrings()` so it reacts to
-  the language toggle. Free-form seeded mock content (transaction
-  descriptions/merchants, notification title/message text, product names)
-  is intentionally left untranslated, same principle as not translating a
+  mirroring web's `useCurrency()`/`useTranslation()`. Every visible string
+  lives in the `StringKey` dictionary (`ES`/`EN` maps, templates in
+  `String.format` form): composables use `rememberStrings()`, and any code
+  (sheets, alerts, enums like `Freq`/`WalletKind`, date helpers) uses
+  `tr(key, args…)`. Both read `AppLang.current`, Compose state kept in step
+  with the signed-in user's preference by `AppContainer` and remembered in
+  SharedPreferences, so Login/Register and guest mode open in the last
+  language used. Dates (`fmtDate`, `DateLabels.kt`, `DateUtils.kt`) and
+  currency names follow it. Built-in category names come from the taxonomy's
+  `nameEn` through `CategoryRepository.displayName()`/`name()`/`label()`
+  (a renamed or custom category keeps the user's text); never read
+  `CategoryNode.name` in a screen. Backend error sentences shown to the user
+  go through `toUserMessage()`'s map. Free-form seeded mock content
+  (transaction descriptions/merchants, notification text, product names) is
+  intentionally left untranslated, same principle as not translating a
   user's own data. `formatUSD` (`data/CurrencyUtils.kt`) actually converts
   COP → USD using a fixed reference rate (`COP_PER_USD`) — there's no live
   FX feed, so it's a documented stand-in constant, not fabricated live data.
@@ -319,8 +325,8 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   of bare `clickable` so screen readers announce the selected state.
   Follow this pattern for any new chip-style selector rather than
   reintroducing a borderless chip — each screen keeps its own small
-  private composable for this rather than sharing one, matching
-  `RecurringScreen.kt`'s `RecurringChip`. **Category selection** is a
+  private composable for this rather than sharing one, as
+  `RecurringScreen.kt`'s old `RecurringChip` did. **Category selection** is a
   `ModalBottomSheet` icon
   grid (`CategoryGridItem`) opened by tapping the category preview in the
   Add Transaction hero card, not an inline chip row — chosen after an early

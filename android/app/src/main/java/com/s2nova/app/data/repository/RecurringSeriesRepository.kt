@@ -7,12 +7,13 @@ import com.s2nova.app.data.model.TransactionType
 import com.s2nova.app.data.remote.ApiClient
 import com.s2nova.app.data.remote.ApiService
 import com.s2nova.app.data.remote.ConfirmRecurringOccurrenceRequest
-import com.s2nova.app.data.remote.CreateRecurringSeriesRequest
 import com.s2nova.app.data.remote.RecurringSeriesDto
 import com.s2nova.app.data.remote.UpdateRecurringSeriesRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 
 internal fun RecurringSeriesDto.toModel(categoryRepository: CategoryRepository): RecurringSeries? {
     val categoryId = categoryRepository.idForBackendId(categoryId) ?: return null
@@ -59,62 +60,48 @@ class RecurringSeriesRepository(
         _series.value = series
     }
 
-    suspend fun create(
-        name: String,
-        type: TransactionType,
-        amount: Double,
-        walletId: String,
-        category: com.s2nova.app.data.model.CategoryId,
-        interval: RecurrenceInterval,
-        startDate: String,
-    ): RecurringSeries? {
-        if (DemoModeFlag.active) return null
-        val categoryBackendId = categoryRepository.backendIdFor(category) ?: return null
-        val dto = api.createRecurringSeries(
-            CreateRecurringSeriesRequest(
-                name = name,
-                type = type.name,
-                amount = amount,
-                accountId = walletId,
-                categoryId = categoryBackendId,
-                interval = interval.name,
-                startDate = startDate,
-            ),
-        )
-        val model = dto.toModel(categoryRepository) ?: return null
-        _series.value = _series.value + model
-        return model
-    }
-
-    // Full edit — name, type, amount, wallet, category, interval and next
-    // occurrence date all change together from one dialog (see
-    // RecurringScreen.kt's EditRecurringDialog / ANDROID.md's hoja modal
-    // table). Changing the wallet re-derives paymentMethod server-side.
-    suspend fun update(
+    // Editar in Programados opens "Nuevo movimiento" on the series; this
+    // saves it. Occurrences/end date are sent even when null so "Termina:
+    // nunca" clears them. Changing the wallet re-derives paymentMethod
+    // server-side.
+    suspend fun edit(
         id: String,
         name: String,
-        type: TransactionType,
         amount: Double,
+        currency: String,
         walletId: String,
         category: com.s2nova.app.data.model.CategoryId,
+        subcategoryId: com.s2nova.app.data.model.CategoryId?,
         interval: RecurrenceInterval,
         nextOccurrenceDate: String,
+        occurrences: Int?,
+        endDate: String?,
+        autoConfirm: Boolean,
     ) {
-        if (DemoModeFlag.active) return
+        if (DemoModeFlag.active) {
+            _series.value = _series.value.map {
+                if (it.id != id) it else it.copy(
+                    name = name, amount = amount, currency = currency, walletId = walletId, category = category, subcategoryId = subcategoryId,
+                    interval = interval, nextOccurrenceDate = nextOccurrenceDate, occurrences = occurrences, endDate = endDate, autoConfirm = autoConfirm,
+                )
+            }
+            return
+        }
         val categoryBackendId = categoryRepository.backendIdFor(category) ?: return
-        val dto = api.updateRecurringSeries(
-            id,
-            UpdateRecurringSeriesRequest(
-                name = name,
-                type = type.name,
-                amount = amount,
-                accountId = walletId,
-                categoryId = categoryBackendId,
-                interval = interval.name,
-                nextOccurrenceDate = nextOccurrenceDate,
-            ),
-        )
-        val model = dto.toModel(categoryRepository) ?: return
+        val body = buildJsonObject {
+            put("name", JsonPrimitive(name))
+            put("amount", JsonPrimitive(amount))
+            put("currency", JsonPrimitive(currency))
+            put("accountId", JsonPrimitive(walletId))
+            put("categoryId", JsonPrimitive(categoryBackendId))
+            put("subcategoryId", JsonPrimitive(categoryRepository.backendIdFor(subcategoryId)))
+            put("interval", JsonPrimitive(interval.name))
+            put("nextOccurrenceDate", JsonPrimitive(nextOccurrenceDate))
+            put("occurrences", JsonPrimitive(occurrences))
+            put("endDate", JsonPrimitive(endDate))
+            put("autoConfirm", JsonPrimitive(autoConfirm))
+        }
+        val model = api.editRecurringSeries(id, body).toModel(categoryRepository) ?: return
         _series.value = _series.value.map { if (it.id == id) model else it }
     }
 

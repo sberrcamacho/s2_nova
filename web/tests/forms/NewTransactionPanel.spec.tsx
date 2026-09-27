@@ -63,6 +63,9 @@ describe('NewTransactionPanel', () => {
     expect(screen.getByText('Alimentación · Mercado')).toBeInTheDocument()
     await user.click(save)
     expect(screen.getByRole('alert')).toHaveTextContent('Escribe el monto.')
+    await user.type(screen.getByLabelText('MONTO'), '5000')
+    await user.click(save)
+    expect(screen.getByRole('alert')).toHaveTextContent('Escribe un título.')
   })
 
   it('evaluates typed arithmetic and posts the expense with its subcategory', async () => {
@@ -72,7 +75,7 @@ describe('NewTransactionPanel', () => {
     await pickCategory(user, 'Alimentación', 'Mercado')
     await user.type(screen.getByLabelText('MONTO'), '150000+18500')
     expect(screen.getByText('= $168.500')).toBeInTheDocument()
-    await user.type(screen.getByPlaceholderText('Título (opcional)'), 'Mercado de la semana')
+    await user.type(screen.getByPlaceholderText('Título'), 'Mercado de la semana')
     await user.click(screen.getByRole('button', { name: 'Guardar movimiento' }))
 
     await waitFor(() => expect(onClose).toHaveBeenCalled())
@@ -96,6 +99,7 @@ describe('NewTransactionPanel', () => {
     await open()
     await pickCategory(user, 'Vivienda', 'Arriendo')
     await user.type(screen.getByLabelText('MONTO'), '1450000')
+    await user.type(screen.getByPlaceholderText('Título'), 'Arriendo')
 
     await user.click(screen.getByRole('button', { name: 'Repetir' }))
     await user.click(screen.getByRole('button', { name: 'Semanal' }))
@@ -118,6 +122,7 @@ describe('NewTransactionPanel', () => {
     await user.click(screen.getByRole('radio', { name: 'Ingreso' }))
     await pickCategory(user, 'Trabajo', 'Freelance')
     await user.type(screen.getByLabelText('MONTO'), '1200000')
+    await user.type(screen.getByPlaceholderText('Título'), 'Diseño web')
     await user.click(screen.getByRole('button', { name: 'De' }))
     await user.type(screen.getByPlaceholderText('Empresa, cliente o persona'), 'Andrés Gómez')
     await user.click(screen.getByRole('button', { name: 'Cliente' }))
@@ -136,7 +141,65 @@ describe('NewTransactionPanel', () => {
     expect(screen.queryByText('CATEGORÍA')).not.toBeInTheDocument()
     expect(within(screen.getByRole('dialog')).getByText('DESDE')).toBeInTheDocument()
     await user.type(screen.getByLabelText('MONTO'), '1000')
+    await user.type(screen.getByPlaceholderText('Título'), 'Ahorro')
     await user.click(screen.getByRole('button', { name: 'Guardar movimiento' }))
     expect(screen.getByRole('alert')).toHaveTextContent('Elige la billetera de destino.')
+  })
+
+  it('edits a movement keeping its Repetir and receipt, and saves every field with PATCH', async () => {
+    mockPanel()
+    let patched: Record<string, unknown> | undefined
+    let receiptRemoved = false
+    server.use(
+      http.get(`${BASE}/recurring-series`, () =>
+        HttpResponse.json([
+          { id: 's1', name: 'Gimnasio', type: 'EXPENSE', amount: 90000, currency: 'COP', accountId: WALLETS[1].id, categoryId: 'uuid-exp.health', subcategoryId: null, interval: 'WEEKLY', nextOccurrenceDate: '2026-10-01', occurrences: 4, occurrencesDone: 1, endDate: null, autoConfirm: true, isDue: false, active: true },
+        ]),
+      ),
+      http.patch(`${BASE}/transactions/t9`, async ({ request }) => {
+        patched = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json(row({ id: 't9', ...patched, type: 'EXPENSE', categoryId: 'uuid-exp.health', date: '2026-09-20T00:00:00.000Z', recurringSeriesId: 's1' }))
+      }),
+      http.delete(`${BASE}/transactions/t9/attachment`, () => {
+        receiptRemoved = true
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+    renderApp(
+      <NewTransactionPanel
+        onClose={onClose}
+        editing={{
+          id: 't9', accountId: WALLETS[1].id, description: 'Gimnasio', amount: 90000, currency: 'COP', type: 'expense', status: 'completed', category: 'exp.health',
+          date: '2026-09-20', time: '07:30', paymentMethod: 'transfer', note: 'Plan anual', recurringSeriesId: 's1', customBudgetId: undefined,
+          attachment: { id: 'f1', kind: 'image', mime: 'image/jpeg', name: 'recibo-gym.jpg', size: 200_000, createdAt: '2026-09-20T10:00:00.000Z' },
+        }}
+      />,
+    )
+    expect(await screen.findByRole('dialog', { name: 'Editar movimiento' })).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Título')).toHaveValue('Gimnasio')
+    expect(screen.getByPlaceholderText('Nota (opcional)')).toHaveValue('Plan anual')
+    expect(screen.getByText('recibo-gym.jpg')).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Semanal ×4' })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: 'Ingreso' })).toBeDisabled()
+
+    await user.clear(screen.getByPlaceholderText('Nota (opcional)'))
+    await user.click(screen.getByRole('button', { name: 'Quitar adjunto' }))
+    await user.click(screen.getByRole('button', { name: 'Guardar y repetir' }))
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled())
+    expect(patched).toMatchObject({
+      accountId: WALLETS[1].id,
+      amount: 90000,
+      description: 'Gimnasio',
+      note: null,
+      customBudgetId: null,
+      goalId: null,
+      date: '2026-09-20',
+      time: '07:30',
+      repeat: { interval: 'WEEKLY', occurrences: 4, autoConfirm: true },
+    })
+    expect(receiptRemoved).toBe(true)
   })
 })

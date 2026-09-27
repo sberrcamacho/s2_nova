@@ -1,3 +1,4 @@
+import { tr } from '@/lib/i18n/translations'
 import { useCallback } from 'react'
 import { useAuth } from '@/state/AuthContext'
 import { useToast } from '@/state/ToastContext'
@@ -16,7 +17,7 @@ export function useHideAmounts() {
     updateUser({ preferences: { ...user.preferences, hideAmounts: next } })
     userService.updatePreferences({ hideAmounts: next }).catch((err) => {
       updateUser({ preferences: { ...user.preferences, hideAmounts: !next } })
-      showToast(err instanceof Error ? err.message : 'Algo salió mal. Intenta de nuevo.', 'error')
+      showToast(err instanceof Error ? err.message : tr('api.generic'), 'error')
     })
   }, [user, hidden, updateUser, showToast])
 

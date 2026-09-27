@@ -19,6 +19,13 @@ const { verifyGoogleIdToken, GoogleNotConfiguredError } = vi.hoisted(() => {
 // google-auth-library itself.
 vi.mock("../../src/lib/googleAuth.js", () => ({ verifyGoogleIdToken, GoogleNotConfiguredError }));
 
+// Moves a rotated token's rotation back past the race grace window, so
+// replaying it counts as reuse rather than two racing refreshes.
+async function ageRotation(refreshToken: string) {
+  const past = new Date(Date.now() - 60_000);
+  await prisma.refreshToken.update({ where: { tokenHash: hashRefreshToken(refreshToken) }, data: { rotatedAt: past, revokedAt: past } });
+}
+
 function randomEmail() {
   return `auth-${Math.random().toString(36).slice(2)}@example.com`;
 }
@@ -235,7 +242,9 @@ describe("auth routes", () => {
       const newRefreshToken = refreshRes.json().refreshToken as string;
       expect(newRefreshToken).not.toBe(originalRefreshToken);
 
-      // Reusing the now-revoked original token must fail.
+      // Reusing the now-revoked original token (well after the rotation)
+      // must fail.
+      await ageRotation(originalRefreshToken);
       const reuseRes = await app.inject({
         method: "POST",
         url: "/api/v1/auth/refresh",
@@ -287,7 +296,8 @@ describe("auth routes", () => {
       });
       const rotatedRefreshToken = rotateRes.json().refreshToken as string;
 
-      // Replay the now-revoked original token — this is the reuse.
+      // Replay the now-revoked original token later on — this is the reuse.
+      await ageRotation(originalRefreshToken);
       const reuseRes = await app.inject({
         method: "POST",
         url: "/api/v1/auth/refresh",
@@ -312,6 +322,80 @@ describe("auth routes", () => {
         payload: { refreshToken: otherDeviceRefreshToken },
       });
       expect(otherDeviceAfterReuse.statusCode).toBe(401);
+    });
+
+    it("treats two refreshes racing on one token as a race, not reuse", async () => {
+      const registerRes = await app.inject({
+        method: "POST",
+        url: "/api/v1/auth/register",
+        payload: { name: "Racer", email: randomEmail(), password: "Sup3rSecret" },
+      });
+      const refreshToken = registerRes.json().refreshToken as string;
+
+      const [a, b] = await Promise.all([
+        app.inject({ method: "POST", url: "/api/v1/auth/refresh", payload: { refreshToken } }),
+        app.inject({ method: "POST", url: "/api/v1/auth/refresh", payload: { refreshToken } }),
+      ]);
+      const codes = [a.statusCode, b.statusCode].sort();
+      expect(codes).toEqual([200, 401]);
+
+      // The winner's token keeps working: the loser didn't sweep the session.
+      const winner = (a.statusCode === 200 ? a : b).json();
+      const next = await app.inject({ method: "POST", url: "/api/v1/auth/refresh", payload: { refreshToken: winner.refreshToken } });
+      expect(next.statusCode).toBe(200);
+      expect((await app.inject({ method: "GET", url: "/api/v1/me", headers: { authorization: `Bearer ${next.json().accessToken}` } })).statusCode).toBe(200);
+    });
+
+    it("ends a session idle for longer than its Cierre automático", async () => {
+      const registerRes = await app.inject({
+        method: "POST",
+        url: "/api/v1/auth/register",
+        payload: { name: "Idle User", email: randomEmail(), password: "Sup3rSecret" },
+      });
+      const { refreshToken, accessToken } = registerRes.json() as { refreshToken: string; accessToken: string };
+      const auth = { authorization: `Bearer ${accessToken}` };
+
+      // Default is 5 minutes; activity 4 minutes ago is fine and a heartbeat
+      // moves it forward.
+      await prisma.refreshToken.updateMany({ data: { lastActivityAt: new Date(Date.now() - 4 * 60_000) } });
+      expect((await app.inject({ method: "POST", url: "/api/v1/auth/activity", headers: auth })).statusCode).toBe(204);
+      const touched = await prisma.refreshToken.findUniqueOrThrow({ where: { tokenHash: hashRefreshToken(refreshToken) } });
+      expect(Date.now() - touched.lastActivityAt.getTime()).toBeLessThan(5_000);
+
+      // Seven minutes idle: both the access token and the refresh are refused.
+      await prisma.refreshToken.updateMany({ data: { lastActivityAt: new Date(Date.now() - 7 * 60_000) } });
+      const me = await app.inject({ method: "GET", url: "/api/v1/me", headers: auth });
+      expect(me.statusCode).toBe(401);
+      expect(me.json().code).toBe("session_idle");
+      expect((await app.inject({ method: "POST", url: "/api/v1/auth/refresh", payload: { refreshToken } })).statusCode).toBe(401);
+    });
+
+    it("never ends an idle session when Cierre automático is off", async () => {
+      const registerRes = await app.inject({
+        method: "POST",
+        url: "/api/v1/auth/register",
+        payload: { name: "No Lock", email: randomEmail(), password: "Sup3rSecret" },
+      });
+      const { refreshToken } = registerRes.json() as { refreshToken: string };
+      await prisma.userPreferences.updateMany({ data: { autoLockMinutes: 0 } });
+      await prisma.refreshToken.updateMany({ data: { lastActivityAt: new Date(Date.now() - 24 * 60 * 60_000) } });
+      expect((await app.inject({ method: "POST", url: "/api/v1/auth/refresh", payload: { refreshToken } })).statusCode).toBe(200);
+    });
+
+    it("keeps a session to 30 days from its login, however often it refreshes", async () => {
+      const registerRes = await app.inject({
+        method: "POST",
+        url: "/api/v1/auth/register",
+        payload: { name: "Long Session", email: randomEmail(), password: "Sup3rSecret" },
+      });
+      const refreshToken = registerRes.json().refreshToken as string;
+      const started = new Date(Date.now() - 29 * 24 * 60 * 60_000);
+      await prisma.refreshToken.updateMany({ data: { sessionStartedAt: started } });
+
+      const res = await app.inject({ method: "POST", url: "/api/v1/auth/refresh", payload: { refreshToken } });
+      expect(res.statusCode).toBe(200);
+      const rotated = await prisma.refreshToken.findUniqueOrThrow({ where: { tokenHash: hashRefreshToken(res.json().refreshToken) } });
+      expect(rotated.expiresAt.getTime()).toBe(started.getTime() + 30 * 24 * 60 * 60_000);
     });
 
     it("rejects an expired refresh token with 401", async () => {
@@ -371,6 +455,35 @@ describe("auth routes", () => {
 
       const refreshAfterLogout = await app.inject({ method: "POST", url: "/api/v1/auth/refresh", payload: { refreshToken } });
       expect(refreshAfterLogout.statusCode).toBe(401);
+    });
+
+    it("ends the whole session, so its access token stops working at once", async () => {
+      const registerRes = await app.inject({
+        method: "POST",
+        url: "/api/v1/auth/register",
+        payload: { name: "Logout Now", email: randomEmail(), password: "Sup3rSecret" },
+      });
+      const first = registerRes.json() as { refreshToken: string };
+      // Rotate once, then log out with the *new* token: the access token
+      // minted by either stops working.
+      const rotated = (await app.inject({ method: "POST", url: "/api/v1/auth/refresh", payload: { refreshToken: first.refreshToken } })).json();
+      const auth = { authorization: `Bearer ${rotated.accessToken}` };
+      expect((await app.inject({ method: "GET", url: "/api/v1/me", headers: auth })).statusCode).toBe(200);
+
+      await app.inject({ method: "POST", url: "/api/v1/auth/logout", payload: { refreshToken: rotated.refreshToken } });
+      const me = await app.inject({ method: "GET", url: "/api/v1/me", headers: auth });
+      expect(me.statusCode).toBe(401);
+      expect(me.json().code).toBe("session_ended");
+    });
+
+    it("rejects a logged-out token without closing the user's other sessions", async () => {
+      const email = randomEmail();
+      const a = (await app.inject({ method: "POST", url: "/api/v1/auth/register", payload: { name: "Two Devices", email, password: "Sup3rSecret" } })).json();
+      const b = (await app.inject({ method: "POST", url: "/api/v1/auth/login", payload: { email, password: "Sup3rSecret" } })).json();
+      await app.inject({ method: "POST", url: "/api/v1/auth/logout", payload: { refreshToken: a.refreshToken } });
+
+      expect((await app.inject({ method: "POST", url: "/api/v1/auth/refresh", payload: { refreshToken: a.refreshToken } })).statusCode).toBe(401);
+      expect((await app.inject({ method: "POST", url: "/api/v1/auth/refresh", payload: { refreshToken: b.refreshToken } })).statusCode).toBe(200);
     });
 
     it("succeeds even with no token presented (already-logged-out client)", async () => {

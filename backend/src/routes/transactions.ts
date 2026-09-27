@@ -34,6 +34,48 @@ const repeatSchema = z.object({
   autoConfirm: z.boolean().default(false),
 });
 
+type RepeatRule = z.infer<typeof repeatSchema>;
+
+// The series a movement repeats as ("Repetir"): the movement itself is its
+// first occurrence, so the next one is one interval after its date.
+function seriesFromMovement(
+  row: {
+    userId: string; description: string; type: "INCOME" | "EXPENSE" | "TRANSFER"; amountMinor: bigint; currency: string;
+    accountId: string; categoryId: string; subcategoryId: string | null; customBudgetId: string | null; note: string | null;
+    counterpartyName: string | null; counterpartyKind: Prisma.TransactionCreateInput["counterpartyKind"]; transactionDate: Date;
+  },
+  repeat: RepeatRule,
+  paymentMethod: ReturnType<typeof paymentMethodForAccountType>,
+  occurrencesDone = 1,
+) {
+  const next = addInterval(row.transactionDate, repeat.interval);
+  const draft = {
+    occurrences: repeat.occurrences ?? null,
+    occurrencesDone,
+    endDate: repeat.endDate ? parseDateOnly(repeat.endDate) : null,
+  };
+  return {
+    userId: row.userId,
+    name: row.description,
+    type: row.type as "INCOME" | "EXPENSE",
+    amountMinor: row.amountMinor,
+    currency: row.currency as Prisma.RecurringSeriesCreateInput["currency"],
+    accountId: row.accountId,
+    categoryId: row.categoryId,
+    subcategoryId: row.subcategoryId,
+    customBudgetId: row.customBudgetId,
+    note: row.note,
+    counterpartyName: row.counterpartyName,
+    counterpartyKind: row.counterpartyKind ?? null,
+    paymentMethod,
+    interval: repeat.interval,
+    nextOccurrenceDate: next,
+    autoConfirm: repeat.autoConfirm,
+    ...draft,
+    active: !seriesEnded(draft, next),
+  };
+}
+
 // A transaction's payment method is never chosen by the client — it's
 // derived from its wallet's AccountType, so "which wallet" and "how it was
 // paid" can never disagree (see schema.prisma's PaymentMethod doc
@@ -74,8 +116,8 @@ const createTransactionSchema = z
     counterpartyName: z.string().trim().min(1).max(120).optional(),
     counterpartyKind: counterpartyKindEnum.optional(),
     dueDate: dateOnly.optional(),
-    // "Título (opcional)". Never suggested; may be empty.
-    description: z.string().trim().max(200).default(""),
+    // "Título" — required (NEW_MOVEMENT.md); never suggested.
+    description: z.string().trim().min(1).max(200),
     merchant: z.string().trim().max(120).optional(),
     note: z.string().trim().max(500).optional(),
     date: dateOnly,
@@ -120,11 +162,14 @@ const updateTransactionSchema = z.object({
   counterpartyName: z.string().trim().min(1).max(120).nullable().optional(),
   counterpartyKind: counterpartyKindEnum.nullable().optional(),
   dueDate: dateOnly.nullable().optional(),
-  description: z.string().trim().max(200).optional(),
+  description: z.string().trim().min(1).max(200).optional(),
   merchant: z.string().trim().max(120).nullable().optional(),
   note: z.string().trim().max(500).nullable().optional(),
   date: dateOnly.optional(),
   time: timeOfDay.optional(),
+  // Editing "Repetir": a rule updates (or starts) the movement's series;
+  // null stops it. Omitted leaves it alone.
+  repeat: repeatSchema.nullable().optional(),
 });
 
 const listQuerySchema = z.object({
@@ -288,33 +333,26 @@ export async function transactionRoutes(app: FastifyInstance) {
     const created = await prisma.$transaction(async (tx) => {
       let seriesId: string | null = null;
       if (body.repeat && body.type !== "TRANSFER") {
-        const next = addInterval(transactionDate, body.repeat.interval);
-        const draft = {
-          occurrences: body.repeat.occurrences ?? null,
-          occurrencesDone: 1,
-          endDate: body.repeat.endDate ? parseDateOnly(body.repeat.endDate) : null,
-        };
         const series = await tx.recurringSeries.create({
-          data: {
-            userId,
-            name: body.description,
-            type: body.type,
-            amountMinor: pricing.amountMinor,
-            currency,
-            accountId: body.accountId,
-            categoryId,
-            subcategoryId: body.subcategoryId ?? null,
-            customBudgetId: body.customBudgetId ?? null,
-            note: body.note ?? null,
-            counterpartyName: body.counterpartyName ?? null,
-            counterpartyKind: body.counterpartyKind ?? null,
-            paymentMethod: paymentMethodForAccountType(account.type),
-            interval: body.repeat.interval,
-            nextOccurrenceDate: next,
-            autoConfirm: body.repeat.autoConfirm,
-            ...draft,
-            active: !seriesEnded(draft, next),
-          },
+          data: seriesFromMovement(
+            {
+              userId,
+              description: body.description,
+              type: body.type,
+              amountMinor: pricing.amountMinor,
+              currency,
+              accountId: body.accountId,
+              categoryId,
+              subcategoryId: body.subcategoryId ?? null,
+              customBudgetId: body.customBudgetId ?? null,
+              note: body.note ?? null,
+              counterpartyName: body.counterpartyName ?? null,
+              counterpartyKind: body.counterpartyKind ?? null,
+              transactionDate,
+            },
+            body.repeat,
+            paymentMethodForAccountType(account.type),
+          ),
         });
         seriesId = series.id;
       }
@@ -383,7 +421,25 @@ export async function transactionRoutes(app: FastifyInstance) {
       return reply.status(422).send({ error: "accountId must differ from this transfer's destination account." });
     }
 
-    const nextStatus = body.status ?? existing.status;
+    const occurredAt =
+      body.date || body.time
+        ? occurredAtOf(
+            body.date ?? existing.transactionDate.toISOString().slice(0, 10),
+            body.time ?? (existing.occurredAt ?? existing.transactionDate).toISOString().slice(11, 16),
+          )
+        : undefined;
+    // A new date/time decides PLANNED vs COMPLETED again, same rule as
+    // creation, unless the client sets the status itself.
+    const nextStatus =
+      body.status ??
+      (occurredAt && (existing.status === "PLANNED" || existing.status === "COMPLETED")
+        ? occurredAt.getTime() > Date.now()
+          ? "PLANNED"
+          : "COMPLETED"
+        : existing.status);
+    if (body.repeat && existing.type === "TRANSFER") {
+      return reply.status(422).send({ error: "Transfers can't repeat." });
+    }
     const nextDate = body.date ? parseDateOnly(body.date) : existing.transactionDate;
     const nextType = body.loanKind ? (body.loanKind === "LENT" ? "EXPENSE" : "INCOME") : existing.type;
     const nextAccountId = body.accountId ?? existing.accountId;
@@ -395,13 +451,6 @@ export async function transactionRoutes(app: FastifyInstance) {
       body.amount !== undefined || body.currency !== undefined || body.accountId !== undefined
         ? await priced(body.amount ?? fromMinor(existing.amountMinor, existing.currency), currency, wallet?.currency ?? currency, nextDate)
         : null;
-    const occurredAt =
-      body.date || body.time
-        ? occurredAtOf(
-            body.date ?? existing.transactionDate.toISOString().slice(0, 10),
-            body.time ?? (existing.occurredAt ?? existing.transactionDate).toISOString().slice(11, 16),
-          )
-        : undefined;
 
     const updated = await prisma.$transaction(async (tx) => {
       if (existing.status === "COMPLETED") await applyBalanceEffect(tx, effectOf(existing), -1);
@@ -434,6 +483,33 @@ export async function transactionRoutes(app: FastifyInstance) {
       });
 
       if (row.status === "COMPLETED") await applyBalanceEffect(tx, effectOf(row), 1);
+
+      if (body.repeat === null && row.recurringSeriesId) {
+        // "No se repite": the series stops; past occurrences keep their history.
+        await tx.recurringSeries.updateMany({ where: { id: row.recurringSeriesId, userId }, data: { active: false } });
+        return tx.transaction.update({ where: { id }, data: { recurringSeriesId: null }, include: { attachment: attachmentMetaSelect } });
+      }
+      if (body.repeat) {
+        const account = await tx.account.findFirstOrThrow({ where: { id: row.accountId, userId } });
+        const series = row.recurringSeriesId ? await tx.recurringSeries.findFirst({ where: { id: row.recurringSeriesId, userId } }) : null;
+        if (series) {
+          // The series follows the edited movement and its new rule.
+          const data = seriesFromMovement(row, body.repeat, paymentMethodForAccountType(account.type), series.occurrencesDone);
+          const { userId: _owner, ...update } = data;
+          const keepNext = series.interval === body.repeat.interval;
+          await tx.recurringSeries.update({
+            where: { id: series.id },
+            data: {
+              ...update,
+              nextOccurrenceDate: keepNext ? series.nextOccurrenceDate : data.nextOccurrenceDate,
+              active: !seriesEnded(data, keepNext ? series.nextOccurrenceDate : data.nextOccurrenceDate),
+            },
+          });
+        } else {
+          const created = await tx.recurringSeries.create({ data: seriesFromMovement(row, body.repeat, paymentMethodForAccountType(account.type)) });
+          return tx.transaction.update({ where: { id }, data: { recurringSeriesId: created.id }, include: { attachment: attachmentMetaSelect } });
+        }
+      }
       return row;
     });
 

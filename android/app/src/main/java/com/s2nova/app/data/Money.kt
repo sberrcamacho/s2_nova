@@ -11,28 +11,33 @@ import kotlin.math.round
 // ("$168.500", "US$5,99") — the mockup's fmtCur: decimals only when the
 // value has them and the currency uses them.
 
-data class CurrencyInfo(val code: String, val name: String, val symbol: String, val decimals: Int, val referenceRate: Double)
+data class CurrencyInfo(val code: String, val nameEs: String, val nameEn: String, val symbol: String, val decimals: Int, val referenceRate: Double) {
+    val name: String get() = if (com.s2nova.app.ui.AppLang.current == com.s2nova.app.data.model.AppLanguage.EN) nameEn else nameEs
+}
 
 object Currencies {
     // referenceRate = COP per unit; the backend's fallback when it has no
     // rate of the day (backend/src/lib/currency.ts).
     val catalog: List<CurrencyInfo> = listOf(
-        CurrencyInfo("COP", "Peso colombiano", "$", 0, 1.0),
-        CurrencyInfo("USD", "Dólar estadounidense", "US$", 2, 3950.0),
-        CurrencyInfo("EUR", "Euro", "€", 2, 4300.0),
-        CurrencyInfo("MXN", "Peso mexicano", "MX$", 2, 215.0),
-        CurrencyInfo("PEN", "Sol peruano", "S/", 2, 1050.0),
-        CurrencyInfo("BRL", "Real brasileño", "R$", 2, 720.0),
-        CurrencyInfo("GBP", "Libra esterlina", "£", 2, 5000.0),
-        CurrencyInfo("CLP", "Peso chileno", "CLP$", 0, 4.2),
-        CurrencyInfo("ARS", "Peso argentino", "AR$", 2, 4.0),
+        CurrencyInfo("COP", "Peso colombiano", "Colombian peso", "$", 0, 1.0),
+        CurrencyInfo("USD", "Dólar estadounidense", "US dollar", "US$", 2, 3950.0),
+        CurrencyInfo("EUR", "Euro", "Euro", "€", 2, 4300.0),
+        CurrencyInfo("MXN", "Peso mexicano", "Mexican peso", "MX$", 2, 215.0),
+        CurrencyInfo("PEN", "Sol peruano", "Peruvian sol", "S/", 2, 1050.0),
+        CurrencyInfo("BRL", "Real brasileño", "Brazilian real", "R$", 2, 720.0),
+        CurrencyInfo("GBP", "Libra esterlina", "Pound sterling", "£", 2, 5000.0),
+        CurrencyInfo("CLP", "Peso chileno", "Chilean peso", "CLP$", 0, 4.2),
+        CurrencyInfo("ARS", "Peso argentino", "Argentine peso", "AR$", 2, 4.0),
     )
 
     fun info(code: String?): CurrencyInfo = catalog.firstOrNull { it.code == code } ?: catalog.first()
 
     fun symbol(code: String?): String = info(code).symbol
 
-    fun name(code: String?): String = info(code).name
+    // In the app language; `fallback` (the backend's name) for a code
+    // outside the catalog.
+    fun name(code: String?, fallback: String? = null): String =
+        catalog.firstOrNull { it.code == code }?.name ?: fallback ?: info(code).name
 
     // 1 `from` in `to` units at the reference rate.
     fun referenceRate(from: String, to: String): Double = if (from == to) 1.0 else info(from).referenceRate / info(to).referenceRate
@@ -43,7 +48,10 @@ object Currencies {
         return catalog.firstOrNull { it.code == code }?.code ?: "COP"
     }
 
-    fun deviceCountry(): String = Locale.getDefault().getDisplayCountry(Locale.forLanguageTag("es")).ifBlank { "Colombia" }
+    fun deviceCountry(): String {
+        val lang = if (com.s2nova.app.ui.AppLang.current == com.s2nova.app.data.model.AppLanguage.EN) "en" else "es"
+        return Locale.getDefault().getDisplayCountry(Locale.forLanguageTag(lang)).ifBlank { "Colombia" }
+    }
 }
 
 private val SYMBOLS = DecimalFormatSymbols(Locale.forLanguageTag("es-CO")).apply {

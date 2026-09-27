@@ -42,6 +42,7 @@ import com.s2nova.app.ui.components.MockupIcons
 import com.s2nova.app.ui.components.strokeIcon
 import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.theme.NovaColors
+import com.s2nova.app.ui.tr
 
 private data class BottomTab(val route: String, val labelKey: StringKey, val icon: ImageVector)
 
@@ -54,7 +55,7 @@ private val TABS = listOf(
     BottomTab(NovaDestinations.REPORTS, StringKey.NAV_REPORTS, MockupIcons.Reportes),
 )
 
-private val PlusIcon = strokeIcon("Nuevo movimiento", "M12 5v14", "M5 12h14", strokeWidth = 2.6f)
+private val PlusIcon = strokeIcon("+", "M12 5v14", "M5 12h14", strokeWidth = 2.6f)
 
 // The mockup's bar outline (viewBox 394×72): flat edges with a concave dip
 // under the "+" button. Stretched across the width; vertically it keeps the

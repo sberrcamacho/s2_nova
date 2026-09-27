@@ -79,7 +79,6 @@ import com.s2nova.app.ui.components.DraftSheetDeleteRow
 import com.s2nova.app.ui.components.DraftSheetPrimaryButton
 import com.s2nova.app.ui.components.MockupIcons
 import com.s2nova.app.ui.components.NovaDraftSheet
-import com.s2nova.app.ui.components.SheetAmountBox
 import com.s2nova.app.ui.components.SheetBox
 import com.s2nova.app.ui.components.SheetInput
 import com.s2nova.app.ui.components.SheetLabel
@@ -89,6 +88,7 @@ import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.theme.NovaColors
 import kotlinx.coroutines.launch
+import com.s2nova.app.ui.tr
 
 // Planes › Metas, per the v2 mockup: "+ Nueva meta", then one card per goal
 // (progress ring with the category glyph, pencil to edit, "Abonar"). The
@@ -148,16 +148,16 @@ fun GoalsTab(snackbarHostState: SnackbarHostState) {
             onDraftChange = { draft = it },
             onDismiss = { draft = null },
             onSave = {
-                val target = d.target.toDoubleOrNull()
+                val target = com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(d.target).takeIf { it > 0 }
                 if (d.name.isNotBlank() && target != null && target > 0) {
-                    val initial = d.initial.toDoubleOrNull() ?: 0.0
+                    val initial = com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(d.initial)
                     val due = d.due.ifBlank { null }
                     scope.launch {
                         runCatching {
                             if (d.id == null) AppContainer.goalRepository.create(d.name.trim(), d.icon, target, initial, due, d.plan)
                             else AppContainer.goalRepository.update(d.id, d.name.trim(), d.icon, target, initial, due, d.plan, d.planChanged)
                         }.onSuccess {
-                            d.plan?.let { Snack.show("Meta guardada. Próximo aporte el " + fmtDate(it.nextDate)) }
+                            d.plan?.let { Snack.show(tr(StringKey.GOAL_SAVED_NEXT, fmtDate(it.nextDate))) }
                         }
                     }
                     draft = null
@@ -169,11 +169,11 @@ fun GoalsTab(snackbarHostState: SnackbarHostState) {
                     val principal = AppContainer.currencyRepository.principal
                     Confirm.ask(
                         ConfirmRequest(
-                            title = "Eliminar la meta “${goal.name}”",
+                            title = tr(StringKey.GOAL_DELETE_TITLE, goal.name),
                             lines = listOfNotNull(
-                                formatMoney(goal.currentAmount, principal) + " ahorrados de " + formatMoney(goal.targetAmount, principal),
-                                if (goal.plan != null) "El aporte periódico se cancela" else null,
-                                "En el siguiente paso eliges a qué billetera vuelve el dinero",
+                                tr(StringKey.GOAL_DELETE_SAVED, formatMoney(goal.currentAmount, principal), formatMoney(goal.targetAmount, principal)),
+                                if (goal.plan != null) tr(StringKey.GOAL_DELETE_PLAN) else null,
+                                tr(StringKey.GOAL_DELETE_NEXT),
                             ),
                             onNext = { draft = null; deleting = goal },
                         ),
@@ -256,22 +256,22 @@ private fun GoalCard(goal: Goal, onEdit: () -> Unit, onPay: () -> Unit) {
                     )
                 }
                 Text(
-                    "$pct% · " + (goal.targetDate?.let { "fecha objetivo " + fmtDateLong(it) } ?: "sin fecha objetivo"),
+                    "$pct% · " + (goal.targetDate?.let { tr(StringKey.GOAL_TARGET_ON, fmtDateLong(it)) } ?: tr(StringKey.GOAL_NO_TARGET)),
                     fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp),
                 )
                 Text(
                     buildAnnotatedString {
                         append(format(goal.currentAmount))
-                        withStyle(SpanStyle(fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = colors.textDim)) { append(" de " + format(goal.targetAmount)) }
+                        withStyle(SpanStyle(fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = colors.textDim)) { append(" " + tr(StringKey.GOAL_OF, format(goal.targetAmount))) }
                     },
                     fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.padding(top = 4.dp), style = TextStyle(fontFeatureSettings = TNUM),
                 )
                 Text(
                     when {
-                        goal.currentAmount <= 0 -> "Sin abonos aún"
-                        goal.currentAmount >= goal.targetAmount -> "Meta cumplida"
-                        else -> "Faltan " + format(goal.targetAmount - goal.currentAmount)
+                        goal.currentAmount <= 0 -> tr(StringKey.GOAL_NO_PAYMENTS)
+                        goal.currentAmount >= goal.targetAmount -> tr(StringKey.GOAL_MET)
+                        else -> tr(StringKey.GOAL_LEFT, format(goal.targetAmount - goal.currentAmount))
                     },
                     fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 3.dp),
                 )
@@ -285,7 +285,7 @@ private fun GoalCard(goal: Goal, onEdit: () -> Unit, onPay: () -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 V2Icon(V2Icons.repeat, colors.textDim, 13.dp)
-                Text(planText(plan, wallet, principal) + " · próximo " + fmtDate(plan.nextDate), fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, style = TextStyle(fontFeatureSettings = TNUM))
+                Text(planText(plan, wallet, principal) + " · " + tr(StringKey.GOAL_NEXT, fmtDate(plan.nextDate)), fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, style = TextStyle(fontFeatureSettings = TNUM))
             }
         }
         Box(
@@ -293,17 +293,21 @@ private fun GoalCard(goal: Goal, onEdit: () -> Unit, onPay: () -> Unit) {
                 .clickable(role = Role.Button, onClick = onPay).padding(11.dp),
             contentAlignment = Alignment.Center,
         ) {
-            Text("Abonar", fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
+            Text(tr(StringKey.GOAL_PAY), fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
         }
     }
 }
 
 // "Aporte mensual de $250.000 desde Bancolombia · con confirmación".
 fun planText(plan: GoalPlan, wallet: String, principal: String): String =
-    "Aporte " + (if (plan.frequency == RecurrenceInterval.DAILY) "diario" else freqOf(plan.frequency).label.lowercase()) + " de " +
-        formatMoney(plan.amount, principal) + " desde " + wallet + " · " + if (plan.autoConfirm) "automático" else "con confirmación"
-
-private fun freqOf(i: RecurrenceInterval): Freq = Freq.entries.first { it.interval == i }
+    tr(
+        when (plan.frequency) {
+            RecurrenceInterval.DAILY -> StringKey.GOAL_PLAN_TEXT_DAILY
+            RecurrenceInterval.WEEKLY -> StringKey.GOAL_PLAN_TEXT_WEEKLY
+            else -> StringKey.GOAL_PLAN_TEXT_MONTHLY
+        },
+        formatMoney(plan.amount, principal), wallet,
+    ) + " · " + tr(if (plan.autoConfirm) StringKey.NM_AUTOMATIC else StringKey.NM_WITH_CONFIRMATION)
 
 // Mockup ringStyle: a 62 dp conic fill in the icon color over --line, with
 // a 48 dp --surface disc holding the 22 dp glyph.
@@ -466,7 +470,7 @@ private fun GoalPaySheet(
     var walletId by remember { mutableStateOf(wallets.firstOrNull()?.id) }
     var error by remember { mutableStateOf<String?>(null) }
     var saving by remember { mutableStateOf(false) }
-    val amount = amountText.toDoubleOrNull() ?: 0.0
+    val amount = com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(amountText)
 
     NovaDraftSheet(
         onDismiss = onDismiss,
@@ -476,7 +480,7 @@ private fun GoalPaySheet(
         Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
             Column {
                 SheetLabel(t(StringKey.GOAL_CONTRIBUTION_AMOUNT))
-                SheetAmountBox(amountText) { amountText = it; error = null }
+                com.s2nova.app.ui.components.AmountField(amountText, { amountText = it; error = null }, AppContainer.currencyRepository.principal, title = tr(StringKey.GOAL_PAY_AMOUNT), style = com.s2nova.app.ui.components.AmountBoxStyle.SHEET)
             }
 
             if (wallets.isEmpty()) {

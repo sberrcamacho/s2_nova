@@ -9,12 +9,13 @@ export interface AccessTokenPayload {
   sub: string;
   // The login session (refresh_tokens.session_id) this token was minted
   // for — lets /me/sessions mark "Este dispositivo" and keep it open when
-  // the others are closed. Absent on tokens signed outside a session.
+  // the others are closed, and lets the auth plugin reject it the moment
+  // that session ends. Tokens without one are refused.
   sid?: string;
 }
 
-export function signAccessToken(userId: string, sessionId?: string): string {
-  return jwt.sign(sessionId ? { sub: userId, sid: sessionId } : { sub: userId }, env.JWT_SECRET, { expiresIn: ACCESS_TOKEN_TTL_SECONDS });
+export function signAccessToken(userId: string, sessionId: string): string {
+  return jwt.sign({ sub: userId, sid: sessionId }, env.JWT_SECRET, { expiresIn: ACCESS_TOKEN_TTL_SECONDS });
 }
 
 export function verifyAccessToken(token: string): AccessTokenPayload {
@@ -32,11 +33,13 @@ export function hashRefreshToken(token: string): string {
 // Rotated on every /auth/refresh call — the opaque token is only ever
 // returned to the client once; the DB stores just its hash, same pattern
 // as password storage, so a DB leak alone can't be replayed as a session.
-export function generateRefreshToken(): { token: string; tokenHash: string; expiresAt: Date } {
+// `notAfter` caps it at the session's own end (lib/sessions.ts).
+export function generateRefreshToken(notAfter?: Date): { token: string; tokenHash: string; expiresAt: Date } {
   const token = randomBytes(48).toString("base64url");
+  const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
   return {
     token,
     tokenHash: hashRefreshToken(token),
-    expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
+    expiresAt: notAfter && notAfter < expiresAt ? notAfter : expiresAt,
   };
 }

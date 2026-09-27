@@ -26,6 +26,7 @@ import com.s2nova.app.data.repository.SummaryRepository
 import com.s2nova.app.data.repository.TransactionRepository
 import com.s2nova.app.data.repository.WalletRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 
 // Manual DI container — a single set of repositories shared by every
 // screen. No DI framework, no ViewModels: this is intentional (see
@@ -102,14 +103,19 @@ object AppContainer {
         idleTimeoutStore = IdleTimeoutStore.getInstance(context)
         alertStateStore = AlertStateStore.getInstance(context)
         val credentialManager = androidx.credentials.CredentialManager.create(context.applicationContext)
-        authRepository = AuthRepository(sessionStore, onboardingStore, credentialManager)
+        authRepository = AuthRepository(sessionStore, onboardingStore, credentialManager, idleTimeoutStore)
+        com.s2nova.app.ui.AppLang.init(context)
+        appScope.launch {
+            authRepository.currentUser.collect { user -> user?.let { com.s2nova.app.ui.AppLang.set(it.preferences.language) } }
+        }
     }
 
     val demoModeActive: Flow<Boolean> get() = demoModeStore.demoModeActive
 
-    private val GUEST_PREFERENCES = UserPreferences(
+    // The guest keeps the language the app was already showing.
+    private fun guestPreferences() = UserPreferences(
         darkTheme = true, notifications = true, biometricLogin = false,
-        currency = Currency.COP, language = AppLanguage.ES,
+        autoLockMinutes = 5, currency = Currency.COP, language = com.s2nova.app.ui.AppLang.current,
     )
 
     // "Continuar como invitado" (ONBOARDING.md §1): a sandboxed example
@@ -119,7 +125,8 @@ object AppContainer {
     // inside a real account.
     fun enterGuestMode() {
         DemoModeFlag.set(true)
-        authRepository.setCurrentUserLocally(DemoData.user(GUEST_PREFERENCES))
+        idleTimeoutStore.touch()
+        authRepository.setCurrentUserLocally(DemoData.user(guestPreferences()))
         categoryRepository.loadDemo()
         currencyRepository.loadDemo(DemoData.currencies, "COP")
         walletRepository.principal = "COP"

@@ -47,6 +47,8 @@ import com.s2nova.app.ui.components.TNUM
 import com.s2nova.app.ui.components.noRippleClick
 import com.s2nova.app.ui.theme.NovaColors
 import kotlinx.coroutines.launch
+import com.s2nova.app.ui.tr
+import com.s2nova.app.ui.StringKey
 
 // Ajustes › Monedas (CURRENCIES_AND_WALLETS.md §3).
 @Composable
@@ -66,13 +68,13 @@ fun CurrenciesScreen(onBack: () -> Unit) {
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Row(Modifier.padding(start = 18.dp, end = 18.dp, top = 10.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(Modifier.size(38.dp).clip(CircleShape).noRippleClick(onBack), contentAlignment = Alignment.Center) { Text("←", fontSize = 19.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-            Text("Monedas", fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
+            Text(tr(StringKey.CUR_TITLE), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
             Box(Modifier.size(38.dp).clip(CircleShape).noRippleClick { adding = true }, contentAlignment = Alignment.Center) {
                 Text("+", fontSize = 22.sp, fontWeight = FontWeight.Light, color = MaterialTheme.colorScheme.primary)
             }
         }
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Moneda principal", fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(tr(StringKey.CUR_PRINCIPAL), fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Column(
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(18.dp)).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -83,36 +85,36 @@ fun CurrenciesScreen(onBack: () -> Unit) {
                         Text(Currencies.name(principal), fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
                         Text(principal, fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
                     }
-                    Text("Principal", fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText, modifier = Modifier.clip(RoundedCornerShape(999.dp)).border(1.dp, colors.accentText, RoundedCornerShape(999.dp)).padding(horizontal = 8.dp, vertical = 3.dp))
+                    Text(tr(StringKey.CUR_PRINCIPAL_BADGE), fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText, modifier = Modifier.clip(RoundedCornerShape(999.dp)).border(1.dp, colors.accentText, RoundedCornerShape(999.dp)).padding(horizontal = 8.dp, vertical = 3.dp))
                 }
                 Text(
-                    "Detectada por la región de tu dispositivo (${Currencies.deviceCountry()}). El saldo total, los presupuestos y los reportes se muestran en $principal.",
+                    tr(StringKey.CUR_DETECTED, Currencies.deviceCountry(), principal),
                     fontSize = 11.sp, lineHeight = 16.sp, color = colors.textDim,
                 )
             }
-            Text("Otras monedas", fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 10.dp))
+            Text(tr(StringKey.CUR_OTHERS), fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 10.dp))
             val others = currencies.filter { it.code != principal }
             Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(18.dp))) {
-                if (others.isEmpty()) Text("Solo usas tu moneda principal.", fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(16.dp))
+                if (others.isEmpty()) Text(tr(StringKey.CUR_ONLY_PRINCIPAL), fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(16.dp))
                 others.forEachIndexed { i, c ->
                     val n = used(c.code)
                     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 13.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         SymbolBadge(c.symbol)
                         Column(Modifier.weight(1f)) {
-                            Text(c.name + " · " + c.code, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                            Text(Currencies.name(c.code, c.name) + " · " + c.code, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                             Text(
-                                "1 ${c.code} = " + formatMoney(c.rate, principal) + " · " + if (n > 0) "$n " + (if (n == 1) "billetera" else "billeteras") else "sin billeteras",
+                                "1 ${c.code} = " + formatMoney(c.rate, principal) + " · " + if (n > 0) tr(if (n == 1) StringKey.CUR_WALLET_ONE else StringKey.CUR_WALLET_MANY, n) else tr(StringKey.CUR_NO_WALLETS),
                                 fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM),
                             )
                         }
                         if (n == 0) {
-                            Text("Quitar", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = colors.negative, modifier = Modifier.noRippleClick {
+                            Text(tr(StringKey.MV_RECEIPT_REMOVE), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = colors.negative, modifier = Modifier.noRippleClick {
                                 Confirm.ask(
                                     ConfirmRequest(
-                                        title = "Quitar " + c.name,
-                                        lines = listOf("Deja de aparecer al crear billeteras y movimientos", "Los movimientos ya registrados en ${c.code} conservan su monto y su tasa"),
-                                        ack = "Entiendo que ${c.code} se quita de mis monedas.",
-                                        cta = "Quitar moneda",
+                                        title = tr(StringKey.CUR_REMOVE_TITLE, Currencies.name(c.code, c.name)),
+                                        lines = listOf(tr(StringKey.CUR_REMOVE_GONE), tr(StringKey.CUR_REMOVE_KEEP, c.code)),
+                                        ack = tr(StringKey.CUR_REMOVE_ACK, c.code),
+                                        cta = tr(StringKey.CUR_REMOVE),
                                         onConfirm = { scope.launch { runCatching { repo.remove(c.code) } } },
                                     ),
                                 )
@@ -122,9 +124,9 @@ fun CurrenciesScreen(onBack: () -> Unit) {
                     if (i < others.size - 1) HorizontalDivider(thickness = 1.dp, color = colors.dividerSubtle)
                 }
             }
-            DashedNewRow(label = "Agregar moneda", onClick = { adding = true }, modifier = Modifier.padding(top = 4.dp))
+            DashedNewRow(label = tr(StringKey.CUR_ADD), onClick = { adding = true }, modifier = Modifier.padding(top = 4.dp))
             Text(
-                "Las tasas se actualizan cada día. Cada movimiento guarda su monto en la moneda original y la tasa usada al registrarlo.",
+                tr(StringKey.CUR_RATES_NOTE),
                 fontSize = 11.sp, lineHeight = 16.sp, color = colors.textDim, modifier = Modifier.padding(horizontal = 2.dp, vertical = 4.dp),
             )
         }
@@ -132,20 +134,20 @@ fun CurrenciesScreen(onBack: () -> Unit) {
 
     if (adding) {
         NovaDraftSheet(onDismiss = { adding = false }) {
-            SheetHeader("Agregar moneda", "Podrás crear billeteras y registrar movimientos en ella.")
+            SheetHeader(tr(StringKey.CUR_ADD), tr(StringKey.CUR_ADD_HINT))
             Column {
                 catalog.filter { c -> currencies.none { it.code == c.code } }.forEach { c ->
                     Row(
                         Modifier.fillMaxWidth().noRippleClick {
                             adding = false
-                            scope.launch { runCatching { repo.add(c.code) }.onSuccess { Snack.show(c.name + " agregado") } }
+                            scope.launch { runCatching { repo.add(c.code) }.onSuccess { Snack.show(tr(StringKey.CUR_ADDED, Currencies.name(c.code, c.name))) } }
                         }.padding(horizontal = 4.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         SymbolBadge(c.symbol)
                         Column(Modifier.weight(1f)) {
-                            Text(c.name + " · " + c.code, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                            Text(Currencies.name(c.code, c.name) + " · " + c.code, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                             Text("1 ${c.code} = " + formatMoney(c.rate, principal), fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM))
                         }
                         Text("+", fontSize = 18.sp, color = colors.accentText)

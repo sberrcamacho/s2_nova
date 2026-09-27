@@ -78,8 +78,8 @@ fun presentAlert(alert: AppAlert, t: (StringKey) -> String, format: CurrencyForm
         val wallet = AppContainer.walletRepository.wallets.value.firstOrNull { it.id == alert.walletId }?.name?.let(::shortWallet) ?: ""
         val today = java.time.LocalDate.now().toString()
         AlertPresentation(
-            title = "Aporte programado a " + alert.name,
-            body = "Tienes un aporte de " + formatMoney(alert.amount, alert.currency) + " " + alert.currency + " para " + (if (alert.dueDate == today) "hoy" else "el " + fmtDate(alert.dueDate)) + " desde " + wallet + ".",
+            title = tr(StringKey.ALERT_PLAN_DUE_TITLE, alert.name),
+            body = tr(StringKey.ALERT_PLAN_DUE_BODY, formatMoney(alert.amount, alert.currency), alert.currency, if (alert.dueDate == today) tr(StringKey.ALERT_PLAN_DUE_TODAY) else tr(StringKey.ALERT_PLAN_DUE_ON, fmtDate(alert.dueDate)), wallet),
             icon = glyphIcon(p.glyph),
             color = hexColor(p.color),
             target = AlertTarget.PLANES_GOALS,
@@ -87,8 +87,8 @@ fun presentAlert(alert: AppAlert, t: (StringKey) -> String, format: CurrencyForm
         )
     }
     is AppAlert.TxPlanned -> AlertPresentation(
-        title = alert.name.ifBlank { AppContainer.categoryRepository.name(alert.category) } + " se registra el " + fmtDate(alert.dueDate),
-        body = formatMoney(alert.amount, alert.currency) + " · " + shortWallet(alert.walletName) + " · te pediremos confirmarlo",
+        title = tr(StringKey.ALERT_PLANNED_TITLE, alert.name.ifBlank { AppContainer.categoryRepository.name(alert.category) }, fmtDate(alert.dueDate)),
+        body = tr(StringKey.ALERT_PLANNED_BODY, formatMoney(alert.amount, alert.currency), shortWallet(alert.walletName)),
         icon = iconFor(alert.category),
         color = categoryColor(alert.category),
         target = AlertTarget.MOVIMIENTOS,
@@ -96,8 +96,8 @@ fun presentAlert(alert: AppAlert, t: (StringKey) -> String, format: CurrencyForm
     is AppAlert.GoalPlanAuto -> {
         val p = Taxonomy.planIcon(alert.icon)
         AlertPresentation(
-            title = "Aporte automático registrado",
-            body = formatMoney(alert.amount, alert.currency) + " " + alert.currency + " a " + alert.name + " desde " + shortWallet(alert.walletName) + " · " + fmtDate(alert.date),
+            title = tr(StringKey.ALERT_PLAN_AUTO_TITLE),
+            body = tr(StringKey.ALERT_PLAN_AUTO_BODY, formatMoney(alert.amount, alert.currency), alert.currency, alert.name, shortWallet(alert.walletName), fmtDate(alert.date)),
             icon = glyphIcon(p.glyph),
             color = hexColor(p.color),
             target = AlertTarget.PLANES_GOALS,

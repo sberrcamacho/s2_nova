@@ -20,16 +20,17 @@ data class TaxNode(
     val type: String, // "expense" | "income"
     val parentId: String? = null,
     val name: String,
+    val nameEn: String = name,
     val vis: String,
     val color: String,
     val glyph: List<String>,
 )
 
 @Serializable
-data class TaxTransfer(val id: String, val name: String, val color: String, val glyph: List<String>)
+data class TaxTransfer(val id: String, val name: String, val nameEn: String = name, val color: String, val glyph: List<String>)
 
 @Serializable
-data class TaxPlanIcon(val key: String, val name: String, val kw: List<String>, val color: String, val glyph: List<String>)
+data class TaxPlanIcon(val key: String, val name: String, val nameEn: String = name, val kw: List<String>, val color: String, val glyph: List<String>)
 
 @Serializable
 data class TaxKeywords(val expense: List<List<kotlinx.serialization.json.JsonElement>>, val income: List<List<kotlinx.serialization.json.JsonElement>>)

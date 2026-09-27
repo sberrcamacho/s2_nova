@@ -35,6 +35,7 @@ import com.s2nova.app.ui.presentAlert
 import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.theme.NovaColors
+import com.s2nova.app.ui.tr
 
 // The bell sheet (v2 mockup `notifOpen`): the shared alerts from
 // AlertRepository — the same rule set as Inicio's alert card and Web's
@@ -161,8 +162,8 @@ private fun NotificationRow(
             )
             if (onConfirm != null && onSkip != null) {
                 Row(modifier = Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Text("Confirmar aporte", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText, maxLines = 1, modifier = Modifier.clickable(onClick = onConfirm))
-                    Text("Omitir esta vez", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, modifier = Modifier.clickable(onClick = onSkip))
+                    Text(tr(StringKey.PLAN_CONFIRM), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText, maxLines = 1, modifier = Modifier.clickable(onClick = onConfirm))
+                    Text(tr(StringKey.PLAN_SKIP), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, modifier = Modifier.clickable(onClick = onSkip))
                 }
             }
         }
@@ -176,7 +177,7 @@ private fun resolveGoalPlan(goalId: String, alertId: String, confirm: Boolean) {
     AppContainer.alertRepository.removeLocal(alertId)
     AppContainer.appScope.launch {
         runCatching { if (confirm) AppContainer.goalRepository.confirmPlan(goalId) else AppContainer.goalRepository.skipPlan(goalId) }
-            .onSuccess { com.s2nova.app.ui.Snack.show(if (confirm) "Aporte registrado" else "Aporte omitido. Te avisamos en la próxima fecha.") }
+            .onSuccess { com.s2nova.app.ui.Snack.show(tr(if (confirm) StringKey.PLAN_DONE else StringKey.PLAN_SKIPPED)) }
         if (!AppContainer.isGuest) {
             runCatching { AppContainer.walletRepository.refresh() }
             runCatching { AppContainer.alertRepository.refresh() }

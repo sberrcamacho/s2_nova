@@ -81,6 +81,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.util.Calendar
 import kotlin.math.abs
+import com.s2nova.app.ui.tr
 
 // Inicio, per S2 Nova Android v2 › Inicio and STAGE-2-INICIO §1/§3: balance
 // hero (sum of wallets + this month's income/expenses from the backend
@@ -759,7 +760,7 @@ private fun RecentRow(
 }
 
 private fun intervalLabel(interval: RecurrenceInterval, t: (StringKey) -> String): String = when (interval) {
-    RecurrenceInterval.DAILY -> "Diario"
+    RecurrenceInterval.DAILY -> tr(StringKey.NM_FREQ_DAILY)
     RecurrenceInterval.WEEKLY -> t(StringKey.RECURRENCE_WEEKLY)
     RecurrenceInterval.MONTHLY -> t(StringKey.RECURRENCE_MONTHLY)
     RecurrenceInterval.YEARLY -> t(StringKey.RECURRENCE_YEARLY)
@@ -780,11 +781,11 @@ private fun GuestBanner(onCreateAccount: () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text("Modo invitado", fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
-            Text("Estás usando datos de ejemplo. No se guarda nada.", fontSize = 11.sp, lineHeight = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
+            Text(tr(StringKey.GUEST_TITLE), fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
+            Text(tr(StringKey.GUEST_BODY), fontSize = 11.sp, lineHeight = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
         }
         Text(
-            "Crear cuenta",
+            tr(StringKey.AUTH_CREATE),
             fontSize = 12.sp,
             fontWeight = FontWeight.ExtraBold,
             color = androidx.compose.ui.graphics.Color.White,

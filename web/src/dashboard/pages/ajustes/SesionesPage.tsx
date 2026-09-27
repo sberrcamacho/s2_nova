@@ -24,13 +24,13 @@ export default function SesionesPage() {
   const [sessions, setSessions] = useState<Session[]>([])
 
   const load = useCallback(() => {
-    userService.getSessions().then(setSessions, (err) => showToast(err instanceof Error ? err.message : 'Algo salió mal. Intenta de nuevo.', 'error'))
+    userService.getSessions().then(setSessions, (err) => showToast(err instanceof Error ? err.message : t('api.generic'), 'error'))
   }, [showToast])
 
   useEffect(load, [load])
 
   const run = (action: Promise<void>) =>
-    action.then(load, (err) => showToast(err instanceof Error ? err.message : 'Algo salió mal. Intenta de nuevo.', 'error'))
+    action.then(load, (err) => showToast(err instanceof Error ? err.message : t('api.generic'), 'error'))
 
   const hasOthers = sessions.some((s) => !s.current)
   const now = Date.now()

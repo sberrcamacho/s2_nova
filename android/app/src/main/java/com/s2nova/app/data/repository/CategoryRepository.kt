@@ -67,13 +67,23 @@ class CategoryRepository(private val api: ApiService = ApiClient.api) {
 
     fun children(parentId: CategoryId): List<CategoryNode> = current().filter { it.parentId == parentId }
 
-    fun name(id: CategoryId?): String = if (id == TRANSFER) Taxonomy.transfer.name else node(id)?.name ?: ""
+    // The name to show: a built-in category the user hasn't renamed reads in
+    // the app language; a renamed or custom one is the user's own text.
+    fun displayName(n: CategoryNode): String {
+        if (com.s2nova.app.ui.AppLang.current != com.s2nova.app.data.model.AppLanguage.EN || n.custom) return n.name
+        val tax = Taxonomy.node(n.id) ?: return n.name
+        return if (tax.name == n.name) tax.nameEn else n.name
+    }
+
+    fun name(id: CategoryId?): String =
+        if (id == TRANSFER) (if (com.s2nova.app.ui.AppLang.current == com.s2nova.app.data.model.AppLanguage.EN) Taxonomy.transfer.nameEn else Taxonomy.transfer.name)
+        else node(id)?.let(::displayName) ?: ""
 
     // "Alimentación · Mercado" for a leaf, "Alimentación" for a parent.
     fun label(id: CategoryId?): String {
-        if (id == TRANSFER) return Taxonomy.transfer.name
+        if (id == TRANSFER) return name(TRANSFER)
         val n = node(id) ?: return ""
-        return n.parentId?.let { node(it)?.name + " · " + n.name } ?: n.name
+        return n.parentId?.let { p -> node(p)?.let(::displayName) + " · " + displayName(n) } ?: displayName(n)
     }
 
     // Leaves inherit the parent's color.

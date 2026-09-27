@@ -31,7 +31,7 @@ export default function EliminarPage() {
 
   const canDelete = word.trim().toUpperCase() === CONFIRM_WORD && password.length > 0 && ack
 
-  const fail = (err: unknown) => showToast(err instanceof Error ? err.message : 'Algo salió mal. Intenta de nuevo.', 'error')
+  const fail = (err: unknown) => showToast(err instanceof Error ? err.message : t('api.generic'), 'error')
 
   const exportData = () => userService.exportData().then(() => showToast(t('aj.del.exported'), 'success'), fail)
 

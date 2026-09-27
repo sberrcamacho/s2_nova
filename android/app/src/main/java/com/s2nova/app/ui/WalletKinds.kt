@@ -4,13 +4,16 @@ import com.s2nova.app.data.model.WalletType
 
 // The v2 mockup's wallet kinds (WALLET_KINDS / WALLET_GLYPHS), mapped onto
 // the backend's AccountType. Shared by Billeteras and the first run.
-enum class WalletKind(val label: String, val type: WalletType, val glyph: List<String>) {
-    SAVINGS("Cuenta de ahorros", WalletType.SAVINGS, BANK),
-    CHECKING("Cuenta corriente", WalletType.BANK_DEBIT, BANK),
-    NEQUI("Nequi", WalletType.NEQUI, PHONE),
-    DAVIPLATA("Daviplata", WalletType.DAVIPLATA, PHONE),
-    CREDIT("Tarjeta de crédito", WalletType.BANK_CREDIT, listOf("M2 6h20v12H2z", "M2 10h20", "M6 14h4")),
-    CASH("Efectivo", WalletType.CASH, listOf("M2 7h20a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z", "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"));
+// Nequi and Daviplata are brand names (labelKey null), the same in every language.
+enum class WalletKind(private val labelKey: StringKey?, val type: WalletType, val glyph: List<String>) {
+    SAVINGS(StringKey.WALLET_KIND_SAVINGS, WalletType.SAVINGS, BANK),
+    CHECKING(StringKey.WALLET_KIND_CHECKING, WalletType.BANK_DEBIT, BANK),
+    NEQUI(null, WalletType.NEQUI, PHONE),
+    DAVIPLATA(null, WalletType.DAVIPLATA, PHONE),
+    CREDIT(StringKey.WALLET_KIND_CREDIT, WalletType.BANK_CREDIT, listOf("M2 6h20v12H2z", "M2 10h20", "M6 14h4")),
+    CASH(StringKey.WALLET_KIND_CASH, WalletType.CASH, listOf("M2 7h20a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z", "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"));
+
+    val label: String get() = labelKey?.let(::tr) ?: name.lowercase().replaceFirstChar { it.uppercase() }
 
     companion object {
         fun of(type: WalletType): WalletKind = when (type) {

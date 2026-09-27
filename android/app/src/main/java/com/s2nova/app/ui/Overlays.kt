@@ -97,7 +97,7 @@ fun BoxScope.SnackHost(bottom: Dp) {
     ) {
         Text(m.text, fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.background, modifier = Modifier.weight(1f))
         if (m.onUndo != null) {
-            Text("Deshacer", fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = NovaColors.current.accentText, modifier = Modifier.noRippleClick { Snack.undo() })
+            Text(tr(StringKey.COMMON_UNDO), fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = NovaColors.current.accentText, modifier = Modifier.noRippleClick { Snack.undo() })
         }
     }
 }
@@ -141,7 +141,7 @@ fun ConfirmHost() {
             }
             if (step == 1) {
                 Text(r.title, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp, color = MaterialTheme.colorScheme.onBackground)
-                Text("SE VA A ELIMINAR", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.88.sp, color = colors.textDim)
+                Text(tr(StringKey.CONFIRM_WILL_DELETE), fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.88.sp, color = colors.textDim)
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     r.lines.forEach { line ->
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -157,13 +157,13 @@ fun ConfirmHost() {
                             if (next != null) { Confirm.close(); next() } else step = 2
                         }.padding(14.dp),
                     contentAlignment = Alignment.Center,
-                ) { Text("Continuar", fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = colors.negative) }
+                ) { Text(tr(StringKey.CONFIRM_CONTINUE), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = colors.negative) }
                 Text(
-                    "Cancelar", fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    tr(StringKey.COMMON_CANCEL), fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().noRippleClick { Confirm.close() }.padding(vertical = 4.dp),
                 )
             } else {
-                Text("No se puede deshacer", fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp, color = MaterialTheme.colorScheme.onBackground)
+                Text(tr(StringKey.CONFIRM_CANT_UNDO), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp, color = MaterialTheme.colorScheme.onBackground)
                 Row(
                     Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(14.dp))
                         .noRippleClick { checked = !checked }.padding(horizontal = 14.dp, vertical = 13.dp),
@@ -183,7 +183,7 @@ fun ConfirmHost() {
                     contentAlignment = Alignment.Center,
                 ) { Text(r.cta, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = if (checked) Color.White else colors.textDim) }
                 Text(
-                    "Volver", fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    tr(StringKey.COMMON_BACK_TO), fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().noRippleClick { step = 1; checked = false }.padding(vertical = 4.dp),
                 )
             }
@@ -192,17 +192,15 @@ fun ConfirmHost() {
 }
 
 // Contextual mini-guides (ONBOARDING.md §3), one per main screen.
-val GUIDES = mapOf(
-    "inicio" to ("Inicio" to ("Tu dinero de un vistazo" to "El saldo suma todas tus billeteras en tu moneda principal. Debajo ves el mes, las alertas y lo que viene.")),
-    "movimientos" to ("Movimientos" to ("Todo lo que entra y sale" to "Los programados aparecen arriba. Toca un movimiento para ver su detalle y su comprobante.")),
-    "planes" to ("Planes" to ("Presupuestos, metas y préstamos" to "Pon límites a tus gastos, ahorra para lo que quieres y lleva la cuenta de lo que prestas.")),
-    "reportes" to ("Reportes" to ("Hacia dónde va tu dinero" to "Compara meses y revisa tus gastos por categoría o subcategoría.")),
-    "billeteras" to ("Billeteras" to ("Dónde está tu dinero" to "Cada billetera tiene su moneda. El saldo total las convierte a tu moneda principal.")),
-)
+// Copy: GUIDE_<KEY>_LABEL / _TITLE / _BODY.
+private val GUIDES = setOf("inicio", "movimientos", "planes", "reportes", "billeteras")
 
 @Composable
 fun BoxScope.GuideCard(key: String, bottom: Dp, onOk: () -> Unit, onSkipAll: () -> Unit) {
-    val (screen, copy) = GUIDES[key] ?: return
+    if (key !in GUIDES) return
+    val part = { name: String -> tr(StringKey.valueOf("GUIDE_${key.uppercase()}_$name")) }
+    val screen = part("LABEL")
+    val copy = part("TITLE") to part("BODY")
     val colors = NovaColors.current
     Column(
         Modifier
@@ -215,15 +213,15 @@ fun BoxScope.GuideCard(key: String, bottom: Dp, onOk: () -> Unit, onSkipAll: () 
             .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.45f), RoundedCornerShape(20.dp))
             .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 14.dp),
     ) {
-        Text("GUÍA RÁPIDA · " + screen.uppercase(), fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.2.sp, color = colors.accentText)
+        Text(tr(StringKey.GUIDE_LABEL).uppercase() + " · " + screen.uppercase(), fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.2.sp, color = colors.accentText)
         Text(copy.first, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.15).sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 8.dp))
         Text(copy.second, fontSize = 12.5.sp, lineHeight = 19.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
         Row(Modifier.padding(top = 14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Omitir guías", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.noRippleClick(onSkipAll))
+            Text(tr(StringKey.GUIDE_SKIP), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.noRippleClick(onSkipAll))
             Spacer(Modifier.weight(1f))
             Box(
                 Modifier.clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary).noRippleClick(onOk).padding(horizontal = 18.dp, vertical = 10.dp),
-            ) { Text("Entendido", fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = Color.White) }
+            ) { Text(tr(StringKey.GUIDE_OK), fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = Color.White) }
         }
     }
 }

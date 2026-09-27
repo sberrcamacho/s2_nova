@@ -1,3 +1,4 @@
+import { fill, tr } from '@/lib/i18n/translations'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Icon } from '@/components/v2/Kit'
@@ -31,7 +32,7 @@ export default function BilleterasPage() {
   useEffect(load, [load])
 
   const total = wallets?.reduce((s, w) => s + w.principalBalance, 0) ?? 0
-  const share = (w: Wallet) => `${total > 0 ? Math.round((w.principalBalance / total) * 100) : 0}% del total`
+  const share = (w: Wallet) => fill(tr('wallet.share'), total > 0 ? Math.round((w.principalBalance / total) * 100) : 0)
 
   const saved = () => {
     setEditing(null)
@@ -43,13 +44,13 @@ export default function BilleterasPage() {
   return (
     <div className="flex flex-col gap-[18px] px-4 pb-10 pt-[26px] min-[760px]:px-7">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-[24px] font-extrabold tracking-[-.025em]">Billeteras</h1>
+        <h1 className="text-[24px] font-extrabold tracking-[-.025em]">{tr('guide.billeteras.label')}</h1>
         <button
           type="button"
           onClick={() => setEditing('new')}
           className="box-border flex h-[34px] cursor-pointer items-center gap-[7px] whitespace-nowrap rounded-[10px] bg-v2-accent px-3.5 text-[12.5px] font-bold text-white"
         >
-          + Nueva billetera
+          {tr('wallet.newPlus')}
         </button>
       </div>
       <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-3.5">
@@ -94,7 +95,7 @@ export default function BilleterasPage() {
               }}
               className="cursor-pointer self-start text-[12px] font-bold text-v2-accent2"
             >
-              Ver movimientos →
+              {tr('wallet.seeMovements')}
             </button>
           </div>
         ))}

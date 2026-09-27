@@ -1,3 +1,4 @@
+import { fill, tr } from '@/lib/i18n/translations'
 import { useCallback, useEffect, useState } from 'react'
 import { IC, Icon } from '@/components/v2/Kit'
 import { Money } from '@/components/v2/Money'
@@ -88,13 +89,13 @@ export default function GoalsPage({ adding, onAddingDone }: { adding: boolean; o
                         {g.percentage}%
                       </span>
                     </div>
-                    <div className="mt-0.5 text-[11px] text-v2-dim">{g.targetDate ? `Fecha objetivo ${longDate(g.targetDate)}` : 'Sin fecha objetivo'}</div>
+                    <div className="mt-0.5 text-[11px] text-v2-dim">{g.targetDate ? fill(tr('goal.targetOn'), longDate(g.targetDate)) : tr('goal.noTarget')}</div>
                     <div className="font-numeric mt-1.5 text-[18px] font-extrabold leading-[1.3] tracking-[-.02em]">
                       <Money hidden={hidden} inline>
                         {format(g.currentAmount)}
                       </Money>{' '}
                       <span className="text-[12px] font-semibold tracking-normal text-v2-dim">
-                        de{' '}
+                        {`${tr('plan.of')} `}
                         <Money hidden={hidden} inline>
                           {format(g.targetAmount)}
                         </Money>
@@ -107,7 +108,7 @@ export default function GoalsPage({ adding, onAddingDone }: { adding: boolean; o
                   <div className="mt-3.5 flex items-center gap-2 rounded-[10px] bg-v2-surface2 px-3 py-[9px] text-[11.5px] font-semibold text-v2-muted">
                     <Icon paths={IC.repeat} size={13} color="var(--v2-dim)" />
                     <span className="font-numeric">
-                      {planText(g.plan, walletName(g.plan.accountId), format)} · próximo {shortDayMonth(g.plan.nextDate)}
+                      {`${planText(g.plan, walletName(g.plan.accountId), format)} · ${fill(tr('goal.next'), shortDayMonth(g.plan.nextDate))}`}
                     </span>
                   </div>
                 )}

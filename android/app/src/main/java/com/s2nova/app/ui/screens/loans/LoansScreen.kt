@@ -51,7 +51,6 @@ import com.s2nova.app.ui.components.DraftSheetDeleteRow
 import com.s2nova.app.ui.components.DraftSheetPrimaryButton
 import com.s2nova.app.ui.components.NovaDraftSheet
 import com.s2nova.app.ui.components.NovaProgressBar
-import com.s2nova.app.ui.components.SheetAmountBox
 import com.s2nova.app.ui.components.SheetBox
 import com.s2nova.app.ui.components.SheetDateBox
 import com.s2nova.app.ui.components.SheetInput
@@ -64,6 +63,7 @@ import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.shortDateLabel
 import com.s2nova.app.ui.theme.NovaColors
 import kotlinx.coroutines.launch
+import com.s2nova.app.ui.tr
 
 // Planes › Préstamos, per the Android v2 mockup: Prestado/Recibido pills,
 // the "Te deben"/"Debes" summary, "+ Registrar préstamo/deuda" and one card
@@ -147,7 +147,7 @@ fun LoansTab(initialSide: LoanKind = LoanKind.LENT) {
                         id = txn.id,
                         side = txn.loanKind ?: side,
                         counterparty = txn.counterpartyName ?: "",
-                        amountText = txn.amount.toLong().toString(),
+                        amountText = com.s2nova.app.ui.screens.addtransaction.AmountPad.numStr(txn.amount),
                         walletId = txn.walletId,
                         dueDate = txn.dueDate,
                     )
@@ -179,7 +179,7 @@ fun LoansTab(initialSide: LoanKind = LoanKind.LENT) {
             onDraftChange = { draft = it },
             onDismiss = { draft = null },
             onSave = {
-                val amount = d.amountText.toDoubleOrNull()
+                val amount = com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(d.amountText).takeIf { it > 0 }
                 val walletId = d.walletId
                 if (amount != null && amount > 0 && walletId != null && d.counterparty.isNotBlank()) {
                     val counterparty = d.counterparty.trim()
@@ -189,7 +189,7 @@ fun LoansTab(initialSide: LoanKind = LoanKind.LENT) {
                                 AppContainer.transactionRepository.add(
                                     NewTransactionInput(
                                         walletId = walletId,
-                                        description = "${if (d.side == LoanKind.LENT) "Préstamo a" else "Deuda con"} $counterparty",
+                                        description = tr(if (d.side == LoanKind.LENT) StringKey.LOAN_DESC_LENT else StringKey.LOAN_DESC_BORROWED, counterparty),
                                         amount = amount,
                                         type = if (d.side == LoanKind.LENT) TransactionType.EXPENSE else TransactionType.INCOME,
                                         category = "exp.other",
@@ -377,7 +377,7 @@ private fun LoanDraftSheet(
             }
             Column {
                 SheetLabel(t(StringKey.LOANS_FORM_AMOUNT))
-                SheetAmountBox(draft.amountText) { onDraftChange(draft.copy(amountText = it)) }
+                com.s2nova.app.ui.components.AmountField(draft.amountText, { onDraftChange(draft.copy(amountText = it)) }, AppContainer.currencyRepository.principal, style = com.s2nova.app.ui.components.AmountBoxStyle.SHEET)
             }
             if (wallets.isNotEmpty()) {
                 Column {
@@ -394,7 +394,7 @@ private fun LoanDraftSheet(
                 SheetDateBox(value = draft.dueDate, placeholder = t(StringKey.LOANS_NO_DATE), allowClear = true) { onDraftChange(draft.copy(dueDate = it)) }
             }
 
-            val amount = draft.amountText.toDoubleOrNull()
+            val amount = com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(draft.amountText).takeIf { it > 0 }
             DraftSheetPrimaryButton(
                 label = t(StringKey.COMMON_SAVE),
                 enabled = draft.counterparty.isNotBlank() && amount != null && amount > 0 && draft.walletId != null,
@@ -424,7 +424,7 @@ private fun LoanPaySheet(
     val colors = NovaColors.current
     val isLent = loan.loanKind == LoanKind.LENT
     val person = loan.counterpartyName ?: loan.description
-    var amountText by remember { mutableStateOf(outstanding.toLong().toString()) }
+    var amountText by remember { mutableStateOf(com.s2nova.app.ui.screens.addtransaction.AmountPad.numStr(outstanding)) }
     var walletId by remember { mutableStateOf(loan.walletId.takeIf { wallets.any { w -> w.id == it } } ?: wallets.firstOrNull()?.id) }
 
     NovaDraftSheet(
@@ -447,10 +447,10 @@ private fun LoanPaySheet(
                         fontSize = 11.5.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = colors.accentText,
-                        modifier = Modifier.clickable { amountText = outstanding.toLong().toString() },
+                        modifier = Modifier.clickable { amountText = com.s2nova.app.ui.screens.addtransaction.AmountPad.numStr(outstanding) },
                     )
                 }
-                SheetAmountBox(amountText) { amountText = it }
+                com.s2nova.app.ui.components.AmountField(amountText, { amountText = it }, AppContainer.currencyRepository.principal, style = com.s2nova.app.ui.components.AmountBoxStyle.SHEET)
             }
             Column {
                 SheetLabel(t(if (isLent) StringKey.LOANS_PAYMENT_WALLET_LENT else StringKey.LOANS_PAYMENT_WALLET_BORROWED))
@@ -460,7 +460,7 @@ private fun LoanPaySheet(
                     }
                 }
             }
-            val amount = amountText.toDoubleOrNull()
+            val amount = com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(amountText).takeIf { it > 0 }
             DraftSheetPrimaryButton(
                 label = t(StringKey.LOANS_REGISTER_PAYMENT),
                 enabled = amount != null && amount > 0 && amount <= outstanding && walletId != null,

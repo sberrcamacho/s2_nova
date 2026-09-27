@@ -3,26 +3,95 @@
 // bug can't exfiltrate a persisted token; the refresh token never touches
 // JS at all, it's the backend's httpOnly cookie (see auth.ts's
 // REFRESH_COOKIE, scoped to /api/v1/auth).
+import { tr, type TranslationKey } from '@/lib/i18n/translations'
+
 const BASE_URL = import.meta.env.VITE_API_URL
 
 let accessToken: string | null = null
-let refreshPromise: Promise<boolean> | null = null
+let refreshPromise: Promise<RefreshResult> | null = null
+
+// Why a session ended under the user: it ran out (or was closed from
+// another device), or the server's "Cierre automático" ended it.
+export type SessionEndReason = 'expired' | 'idle'
+type RefreshResult = 'ok' | SessionEndReason
+
+let sessionEndedHandler: ((reason: SessionEndReason) => void) | null = null
+
+// AuthContext registers this so a session that can't be renewed signs the
+// user out everywhere at once, instead of each page failing on its own.
+export function setSessionEndedHandler(handler: ((reason: SessionEndReason) => void) | null) {
+  sessionEndedHandler = handler
+}
+
+async function errorCode(response: Response): Promise<string | undefined> {
+  try {
+    return ((await response.clone().json()) as { code?: string }).code
+  } catch {
+    return undefined
+  }
+}
+
+async function endReason(response: Response): Promise<SessionEndReason> {
+  return (await errorCode(response)) === 'session_idle' ? 'idle' : 'expired'
+}
 
 function setAccessToken(token: string | null) {
   accessToken = token
 }
 
 function genericErrorMessage(status: number): string {
-  if (status === 401) return 'Tu sesión expiró. Vuelve a iniciar sesión.'
-  if (status === 429) return 'Demasiados intentos. Intenta de nuevo en un momento.'
-  if (status >= 500) return 'Tuvimos un problema en el servidor. Intenta de nuevo.'
-  return 'Algo salió mal. Intenta de nuevo.'
+  if (status === 401) return tr('auth.sessionExpired')
+  if (status === 429) return tr('api.tooMany')
+  if (status >= 500) return tr('api.server')
+  return tr('api.generic')
+}
+
+// The backend's (and guest mode's) error sentences, in the app language.
+// Ones not listed pass through, except "… not found." and the generic
+// ones, which read as the status' own message.
+const SERVER_MESSAGES: Record<string, TranslationKey> = {
+  'Invalid email or password.': 'api.badCredentials',
+  'Invalid or expired access token.': 'auth.sessionExpired',
+  'Session ended.': 'auth.sessionExpired',
+  'Refresh token is invalid or expired.': 'auth.sessionExpired',
+  'An account with that email already exists.': 'api.emailTaken',
+  'An account with that email already exists. Sign in with your password, or verify this email with Google first.': 'api.emailTakenGoogle',
+  'Incorrect password.': 'api.wrongPassword',
+  'The new password must differ from the current one.': 'api.samePassword',
+  'Set a password before changing your email.': 'api.passwordFirstEmail',
+  'Set a password before deleting your account.': 'api.passwordFirstDelete',
+  'Invalid Google token.': 'api.google',
+  'Google Sign-In is not configured on this server.': 'api.google',
+  'A budget for this category and period already exists.': 'bud.err.taken',
+  'A custom range needs startDate <= endDate.': 'api.badRange',
+  'This loan has already been settled.': 'api.loanSettled',
+  "This loan hasn't been confirmed yet — nothing to settle.": 'api.loanPlanned',
+  'This plan has ended.': 'api.planEnded',
+  'This recurring series is paused.': 'api.seriesPaused',
+  "Transfers can't repeat.": 'api.transferRepeat',
+  'Destination must be a different wallet.': 'api.sameWallet',
+  'Only custom categories can be deleted.': 'api.customOnly',
+  'The goal has no contributing wallet to return funds to.': 'api.goalNoWallet',
+  'Necesitas al menos una billetera para usar S2 Nova.': 'api.lastWallet',
+  'La moneda principal se elige antes de crear billeteras.': 'api.principalLocked',
+  'La moneda principal no se puede quitar.': 'api.principalKeep',
+  'Hay billeteras en esta moneda.': 'api.currencyInUse',
+  'El archivo supera 10 MB.': 'nm.err.fileSize',
+  'Ya existe una categoría con ese nombre.': 'api.categoryTaken',
+  'No disponible en modo invitado. Crea una cuenta para usarlo.': 'api.guest',
+}
+
+export function localizeServerMessage(message: string, status: number): string {
+  const key = SERVER_MESSAGES[message]
+  if (key) return tr(key)
+  if (/not found\.$/i.test(message) || /is required\.$/.test(message) || message === 'Invalid request.' || message === 'Internal server error.') return genericErrorMessage(status)
+  return message
 }
 
 async function parseErrorMessage(response: Response): Promise<string> {
   try {
     const body = (await response.clone().json()) as { error?: string }
-    return body.error || genericErrorMessage(response.status)
+    return body.error ? localizeServerMessage(body.error, response.status) : genericErrorMessage(response.status)
   } catch {
     return genericErrorMessage(response.status)
   }
@@ -49,21 +118,21 @@ async function rawRequest(path: string, init: RequestInit): Promise<Response> {
 // the same time, so a burst of concurrent requests doesn't fire the
 // rotating refresh-token endpoint more than once (it would invalidate the
 // token the second caller was about to use).
-async function refreshSession(): Promise<boolean> {
+async function refreshSession(): Promise<RefreshResult> {
   if (!refreshPromise) {
-    refreshPromise = (async () => {
+    refreshPromise = (async (): Promise<RefreshResult> => {
       try {
         const response = await rawRequest('/auth/refresh', { method: 'POST' })
         if (!response.ok) {
           setAccessToken(null)
-          return false
+          return endReason(response)
         }
         const body = (await response.json()) as { accessToken: string }
         setAccessToken(body.accessToken)
-        return true
+        return 'ok'
       } catch {
-        setAccessToken(null)
-        return false
+        // Offline: the session may well be fine, so keep it.
+        return 'ok'
       } finally {
         refreshPromise = null
       }
@@ -77,7 +146,7 @@ export class ApiError extends Error {
   readonly status: number
 
   constructor(message: string, status: number) {
-    super(message)
+    super(localizeServerMessage(message, status))
     this.status = status
   }
 }
@@ -85,10 +154,17 @@ export class ApiError extends Error {
 async function send(path: string, init: RequestInit, options: RequestOptions = {}): Promise<Response> {
   let response = await rawRequest(path, init)
 
-  if (response.status === 401 && !options.skipAuthRetry && path !== '/auth/refresh') {
-    const refreshed = await refreshSession()
-    if (refreshed) {
+  // Only the auth layer's own 401s concern the session (backend
+  // plugins/auth.ts); a wrong current password is just an error.
+  const code = response.status === 401 && !options.skipAuthRetry ? await errorCode(response) : undefined
+  if (code === 'token_invalid' || code === 'session_ended' || code === 'session_idle') {
+    const hadSession = accessToken !== null
+    const result: RefreshResult = code === 'token_invalid' ? await refreshSession() : code === 'session_idle' ? 'idle' : 'expired'
+    if (result === 'ok') {
       response = await rawRequest(path, init)
+    } else if (hadSession) {
+      setAccessToken(null)
+      sessionEndedHandler?.(result)
     }
   }
 

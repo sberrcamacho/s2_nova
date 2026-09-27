@@ -105,26 +105,6 @@ fun SheetPill(label: String, selected: Boolean, onClick: () -> Unit) {
     )
 }
 
-// Mockup amount box: muted "$" at 18 ExtraBold, then the grouped digits.
-@Composable
-fun SheetAmountBox(value: String, onValueChange: (String) -> Unit) {
-    SheetBox(padding = PaddingValues(horizontal = 16.dp, vertical = 15.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("$", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Box(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
-                SheetInput(
-                    value = value,
-                    onValueChange = { onValueChange(it.filter { c -> c.isDigit() }.take(12)) },
-                    placeholder = "0",
-                    style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.ExtraBold),
-                    keyboardType = KeyboardType.Number,
-                    grouped = true,
-                )
-            }
-        }
-    }
-}
-
 // Mockup shortWallet: "Bancolombia — Ahorros" reads as "Bancolombia".
 fun shortWalletName(name: String): String = name.substringBefore('—').trim()
 

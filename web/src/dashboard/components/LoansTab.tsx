@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { CategoryMark } from '@/components/v2/CategoryMark'
 import { Money } from '@/components/v2/Money'
-import { CancelButton, ErrorBox, Label, flatClass } from '@/components/v2/Kit'
+import { AmountField, CancelButton, ErrorBox, Label, flatClass } from '@/components/v2/Kit'
 import { LoanModal } from '@/dashboard/components/planes/LoanModal'
 import { accountService } from '@/services/accountService'
 import { transactionService } from '@/services/transactionService'
@@ -12,6 +12,7 @@ import { useHideAmounts } from '@/state/useHideAmounts'
 import { useToast } from '@/state/ToastContext'
 import { useTranslation } from '@/state/useTranslation'
 import { todayISO } from '@/lib/date'
+import { evalExpr, numStr } from '@/lib/nuevoMovimiento'
 import { fill, shortDate } from '@/lib/inicio'
 import { shortWallet } from '@/lib/movimientos'
 import type { LoanKind, Transaction, Wallet } from '@/types'
@@ -223,13 +224,13 @@ function PayDialog({ loan, wallets, onClose, onSaved }: { loan: Transaction; wal
   const { format } = useCurrency()
   const { showToast } = useToast()
   const out = loan.outstanding ?? 0
-  const [amount, setAmount] = useState(String(out))
+  const [amount, setAmount] = useState(numStr(out))
   const [walletId, setWalletId] = useState(loan.accountId)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
   const save = async () => {
-    const value = Number(amount)
+    const value = evalExpr(amount)
     if (!value || value > out) return setError(fill(t('loans.payError'), format(out)))
     setBusy(true)
     try {
@@ -257,18 +258,19 @@ function PayDialog({ loan, wallets, onClose, onSaved }: { loan: Transaction; wal
           <div className="mt-0.5 text-[11.5px] text-v2-dim">{fill(t('loans.paySub'), loan.counterpartyName ?? t('loans.unknownPerson'), format(out))}</div>
         </div>
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="pay-amount" className="text-[11px] font-bold tracking-[.06em] text-v2-muted">
+          <label className="text-[11px] font-bold tracking-[.06em] text-v2-muted">
             {t('loans.payAmount')}
           </label>
-          <input
-            id="pay-amount"
-            value={amount ? Number(amount).toLocaleString('es-CO') : ''}
-            onChange={(e) => {
-              setAmount(e.target.value.replace(/\D/g, '').slice(0, 11))
+          <AmountField
+            expr={amount}
+            onExpr={(v) => {
+              setAmount(v)
               setError('')
             }}
-            inputMode="numeric"
-            className="font-numeric box-border h-11 w-full rounded-[12px] border border-v2-line bg-v2-sidebar px-3.5 text-[13px] text-v2-text outline-none focus:border-v2-accent"
+            height={44}
+            fontSize={13}
+            radius={12}
+            label={t('loans.payAmount')}
           />
           <div className="text-[11px] text-v2-dim">{t('loans.payHint')}</div>
         </div>

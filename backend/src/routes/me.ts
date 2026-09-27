@@ -216,11 +216,10 @@ export async function meRoutes(app: FastifyInstance) {
     },
   );
 
-  // A standalone "is this still you?" re-auth check for the app's
-  // auto-lock overlay (see android/.../ui/components/AppLockGate.kt) — it
-  // must never mutate account state or rotate tokens the way POST
-  // /me/password and POST /auth/login do, since it's called on every
-  // unlock attempt, not just an intentional password change.
+  // A standalone "is this still you?" re-auth check (no client uses it
+  // since "Cierre automático" became a real logout) — it must never mutate
+  // account state or rotate tokens the way POST /me/password and POST
+  // /auth/login do.
   app.post(
     "/me/verify-password",
     { preHandler: app.authenticate, config: { rateLimit: ACCOUNT_RATE_LIMIT } },

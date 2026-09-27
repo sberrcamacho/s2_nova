@@ -1,3 +1,4 @@
+import { tr } from '@/lib/i18n/translations'
 import logoMarkDark from '@/assets/logo-mark-dark.png'
 import logoMarkLight from '@/assets/logo-mark-light.png'
 import { cn } from '@/lib/cn'
@@ -53,7 +54,7 @@ export function Logo({ variant = 'full', size = 'md', tone = 'default', classNam
           S2 <span className={cn('font-bold', inverted ? 'text-white/60' : 'text-ink-secondary')} style={{ fontWeight: 600 }}>Nova</span>
         </span>
         <span className={cn('font-semibold uppercase tracking-[0.18em]', inverted ? 'text-white/35' : 'text-ink-tertiary', NOVA_SIZES[size])}>
-          Finanzas personales
+          {tr('brand.tagline')}
         </span>
       </div>
     </div>

@@ -28,7 +28,7 @@ class NotificationRepository {
             id = "n_${UUID.randomUUID()}",
             title = title,
             message = message,
-            time = "Ahora",
+            time = com.s2nova.app.ui.tr(com.s2nova.app.ui.StringKey.NM_NOW),
             read = false,
             tone = tone,
         )

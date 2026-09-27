@@ -28,6 +28,10 @@ interface ApiService {
     @POST("auth/logout")
     suspend fun logout(@Body body: RefreshRequest): Response<Unit>
 
+    // "Cierre automático": the user is still active (at most once a minute).
+    @POST("auth/activity")
+    suspend fun activity(): Response<Unit>
+
     @POST("auth/google")
     suspend fun loginWithGoogle(@Body body: GoogleLoginRequest): SessionResponse
 
@@ -37,8 +41,6 @@ interface ApiService {
     @PATCH("me")
     suspend fun updateProfile(@Body body: UpdateProfileRequest): MeResponse
 
-    @POST("me/verify-password")
-    suspend fun verifyPassword(@Body body: VerifyPasswordRequest): Response<Unit>
 
     @PATCH("me/preferences")
     suspend fun updatePreferences(@Body body: UpdatePreferencesRequest): MeResponse
@@ -94,6 +96,11 @@ interface ApiService {
     @PATCH("transactions/{id}")
     suspend fun updateTransaction(@Path("id") id: String, @Body body: UpdateTransactionRequest): TransactionDto
 
+    // "Editar movimiento": a hand-built body, so cleared fields go as
+    // explicit nulls (see TransactionRepository.edit).
+    @PATCH("transactions/{id}")
+    suspend fun editTransaction(@Path("id") id: String, @Body body: kotlinx.serialization.json.JsonObject): TransactionDto
+
     // series=delete also stops the movement's future repetitions.
     @DELETE("transactions/{id}")
     suspend fun deleteTransaction(@Path("id") id: String, @Query("series") series: String? = null): Response<Unit>
@@ -113,8 +120,9 @@ interface ApiService {
     @GET("recurring-series")
     suspend fun getRecurringSeries(@Query("today") today: String? = null): List<RecurringSeriesDto>
 
-    @POST("recurring-series")
-    suspend fun createRecurringSeries(@Body body: CreateRecurringSeriesRequest): RecurringSeriesDto
+    // Full edit with explicit nulls (see RecurringSeriesRepository.edit).
+    @PATCH("recurring-series/{id}")
+    suspend fun editRecurringSeries(@Path("id") id: String, @Body body: kotlinx.serialization.json.JsonObject): RecurringSeriesDto
 
     @PATCH("recurring-series/{id}")
     suspend fun updateRecurringSeries(@Path("id") id: String, @Body body: UpdateRecurringSeriesRequest): RecurringSeriesDto

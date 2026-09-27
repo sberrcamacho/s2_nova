@@ -48,6 +48,8 @@ import com.s2nova.app.ui.components.PasswordStrengthMeter
 import com.s2nova.app.ui.components.TermsCheckbox
 import com.s2nova.app.ui.theme.NovaColors
 import kotlinx.coroutines.launch
+import com.s2nova.app.ui.tr
+import com.s2nova.app.ui.StringKey
 
 @Composable
 fun RegisterScreen(
@@ -84,7 +86,7 @@ fun RegisterScreen(
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Volver",
+                contentDescription = tr(StringKey.COMMON_BACK_TO),
                 tint = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.size(16.dp),
             )
@@ -94,7 +96,7 @@ fun RegisterScreen(
 
         Column {
             Text(
-                text = "Crear cuenta",
+                text = tr(StringKey.AUTH_CREATE),
                 fontSize = 30.sp,
                 fontWeight = FontWeight.ExtraBold,
                 letterSpacing = (-0.03).em,
@@ -102,7 +104,7 @@ fun RegisterScreen(
                 color = MaterialTheme.colorScheme.onBackground,
             )
             Text(
-                text = "Gratis, sin tarjeta de crédito.",
+                text = tr(StringKey.AUTH_REGISTER_SUB),
                 fontSize = 13.5.sp,
                 color = colors.loginTextMuted,
                 modifier = Modifier.padding(top = 7.dp),
@@ -124,19 +126,19 @@ fun RegisterScreen(
                 NovaTextField(
                     value = name,
                     onValueChange = { name = it; error = null },
-                    label = "NOMBRE",
+                    label = tr(StringKey.AUTH_NAME),
                 )
                 NovaTextField(
                     value = email,
                     onValueChange = { email = it; error = null },
-                    label = "CORREO",
+                    label = tr(StringKey.AUTH_EMAIL),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 )
                 Column {
                     NovaTextField(
                         value = password,
                         onValueChange = { password = it; error = null },
-                        label = "CONTRASEÑA",
+                        label = tr(StringKey.AUTH_PASSWORD),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         isPassword = true,
                         passwordVisible = showPassword,
@@ -154,7 +156,7 @@ fun RegisterScreen(
 
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 NovaPrimaryButton(
-                    text = "Crear cuenta",
+                    text = tr(StringKey.AUTH_CREATE),
                     onClick = {
                         loading = true
                         scope.launch {
@@ -167,7 +169,7 @@ fun RegisterScreen(
                                 .onFailure {
                                     loading = false
                                     error = it.toUserMessage(
-                                        "Revisa tu nombre, correo y que la contraseña tenga al menos 8 caracteres.",
+                                        tr(StringKey.AUTH_REGISTER_ERR),
                                     )
                                 }
                         }
@@ -183,7 +185,7 @@ fun RegisterScreen(
                     ) {
                         HorizontalDivider(modifier = Modifier.weight(1f))
                         Text(
-                            text = "O",
+                            text = tr(StringKey.AUTH_OR),
                             fontSize = 10.5.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.08.em,
@@ -210,14 +212,14 @@ fun RegisterScreen(
                                         error = if (it is androidx.credentials.exceptions.GetCredentialCancellationException) {
                                             null
                                         } else {
-                                            it.toUserMessage("No pudimos iniciar sesión con Google.")
+                                            it.toUserMessage(tr(StringKey.AUTH_GOOGLE_ERR))
                                         }
                                     }
                             }
                         },
                         enabled = !googleLoading,
                         loading = googleLoading,
-                        text = "Registrarse con Google",
+                        text = tr(StringKey.AUTH_GOOGLE_REGISTER),
                     )
                 }
             }
@@ -233,12 +235,12 @@ fun RegisterScreen(
                 .padding(bottom = 26.dp),
         ) {
             Text(
-                text = "¿Ya tienes cuenta? ",
+                text = tr(StringKey.AUTH_HAVE_ACCOUNT) + " ",
                 fontSize = 13.sp,
                 color = colors.loginTextMuted,
             )
             Text(
-                text = "Iniciar sesión",
+                text = tr(StringKey.AUTH_LOGIN_TITLE),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
                 color = colors.loginHighlight,

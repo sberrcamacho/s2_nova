@@ -1,4 +1,5 @@
 import type { LanguageCode } from '@/types'
+import { currentLanguage } from '@/lib/i18n/translations'
 
 const DAY_MONTH: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' }
 const DAY_MONTH_YEAR: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' }
@@ -27,15 +28,15 @@ function localISODate(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
-export function formatShortDate(iso: string, language: LanguageCode = 'es'): string {
+export function formatShortDate(iso: string, language: LanguageCode = currentLanguage()): string {
   return toDate(iso).toLocaleDateString(localeFor(language), DAY_MONTH)
 }
 
-export function formatLongDate(iso: string, language: LanguageCode = 'es'): string {
+export function formatLongDate(iso: string, language: LanguageCode = currentLanguage()): string {
   return toDate(iso).toLocaleDateString(localeFor(language), DAY_MONTH_YEAR)
 }
 
-export function formatFullDate(iso: string, language: LanguageCode = 'es'): string {
+export function formatFullDate(iso: string, language: LanguageCode = currentLanguage()): string {
   const text = toDate(iso).toLocaleDateString(localeFor(language), WEEKDAY_DAY_MONTH)
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
@@ -44,20 +45,20 @@ export function todayISO(): string {
   return localISODate(new Date())
 }
 
-export function monthLabel(monthKey: string, language: LanguageCode = 'es'): string {
+export function monthLabel(monthKey: string, language: LanguageCode = currentLanguage()): string {
   const [year, month] = monthKey.split('-').map(Number)
   return new Date(year, month - 1, 1).toLocaleDateString(localeFor(language), { month: 'short' })
 }
 
 // Full month name, e.g. "August" / "agosto" — capitalized either way, for
 // headers like Analytics'/Reports' "{Month} {Year}" line.
-export function monthNameLabel(monthKey: string, language: LanguageCode = 'es'): string {
+export function monthNameLabel(monthKey: string, language: LanguageCode = currentLanguage()): string {
   const [year, month] = monthKey.split('-').map(Number)
   const text = new Date(year, month - 1, 1).toLocaleDateString(localeFor(language), { month: 'long' })
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
 
-export function monthYearLabel(monthKey: string, language: LanguageCode = 'es'): string {
+export function monthYearLabel(monthKey: string, language: LanguageCode = currentLanguage()): string {
   return `${monthNameLabel(monthKey, language)} ${monthKey.slice(0, 4)}`
 }
 
@@ -72,13 +73,13 @@ export function isSameMonth(iso: string, monthKey: string): boolean {
 // Reference Sunday (2023-01-01 was a Sunday) so weekday index 0-6
 // (JS `Date.getDay()` order) maps to a localized weekday name via Intl
 // instead of a hardcoded, language-specific name array.
-export function weekdayLabel(dayIndex: number, language: LanguageCode = 'es'): string {
+export function weekdayLabel(dayIndex: number, language: LanguageCode = currentLanguage()): string {
   const date = new Date(2023, 0, 1 + dayIndex)
   const text = date.toLocaleDateString(localeFor(language), { weekday: 'long' })
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
 
-export function relativeDayLabel(iso: string, language: LanguageCode = 'es'): string {
+export function relativeDayLabel(iso: string, language: LanguageCode = currentLanguage()): string {
   const date = toDate(iso)
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())

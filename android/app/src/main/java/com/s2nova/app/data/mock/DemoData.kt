@@ -120,13 +120,15 @@ object DemoData {
         return BudgetProgress(budget, spent, budget.limit - spent, pct, budgetStatusOf(pct))
     }
 
+    // Category budgets have no name of their own: they show the category's,
+    // in the app language (as on Web).
     val budgetProgress: List<BudgetProgress> = listOf(
-        CategoryBudget("demo-b1", "Vivienda", category = "exp.housing", limit = 250_000.0, month = currentMonthKey()),
-        CategoryBudget("demo-b2", "Streaming", category = "exp.entertainment.streaming", limit = 90_000.0, month = currentMonthKey()),
-        CategoryBudget("demo-b3", "Alimentación", category = "exp.food", limit = 900_000.0, month = currentMonthKey()),
-        CategoryBudget("demo-b4", "Servicios públicos", category = "exp.utilities", limit = 200_000.0, month = currentMonthKey()),
-        CategoryBudget("demo-b5", "Transporte", category = "exp.transportation", limit = 150_000.0, month = currentMonthKey()),
-        CategoryBudget("demo-b6", "Compras", category = "exp.shopping", limit = 780_000.0, month = currentMonthKey()),
+        CategoryBudget("demo-b1", category = "exp.housing", limit = 250_000.0, month = currentMonthKey()),
+        CategoryBudget("demo-b2", category = "exp.entertainment.streaming", limit = 90_000.0, month = currentMonthKey()),
+        CategoryBudget("demo-b3", category = "exp.food", limit = 900_000.0, month = currentMonthKey()),
+        CategoryBudget("demo-b4", category = "exp.utilities", limit = 200_000.0, month = currentMonthKey()),
+        CategoryBudget("demo-b5", category = "exp.transportation", limit = 150_000.0, month = currentMonthKey()),
+        CategoryBudget("demo-b6", category = "exp.shopping", limit = 780_000.0, month = currentMonthKey()),
     ).map { progress(it, monthSpend[it.category] ?: 0.0) } + listOf(
         progress(
             CategoryBudget("demo-b7", "Viaje de fin de año", BudgetKind.CUSTOM, icon = "travel", period = BudgetPeriod.CUSTOM,

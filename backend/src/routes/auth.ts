@@ -4,6 +4,7 @@ import { env } from "../env.js";
 import { GoogleNotConfiguredError, verifyGoogleIdToken } from "../lib/googleAuth.js";
 import { hashPassword, verifyPassword } from "../lib/password.js";
 import { prisma } from "../lib/prisma.js";
+import { ROTATION_GRACE_MS, SESSION_MAX_AGE_MS, isIdle, revokeSession } from "../lib/sessions.js";
 import { generateRefreshToken, hashRefreshToken, signAccessToken } from "../lib/tokens.js";
 
 // Web sends the refresh token as an httpOnly cookie; Android/other native
@@ -34,6 +35,14 @@ const refreshBodySchema = z.object({
   refreshToken: z.string().min(1).optional(),
 });
 
+type Rotation = {
+  from: { id: string; sessionId: string; deviceLabel: string | null; sessionStartedAt: Date; lastActivityAt: Date };
+};
+
+class RefreshRaceError extends Error {}
+
+const INVALID_REFRESH = { error: "Refresh token is invalid or expired." } as const;
+
 function isWebClient(request: FastifyRequest): boolean {
   return request.headers["x-client-platform"] === "web";
 }
@@ -43,22 +52,50 @@ export async function authRoutes(app: FastifyInstance) {
     request: FastifyRequest,
     reply: FastifyReply,
     userId: string,
-    opts?: { web?: boolean; sessionId?: string; deviceLabel?: string | null },
+    opts?: { web?: boolean; rotate?: Rotation },
   ) {
     const web = opts?.web ?? isWebClient(request);
-    const { token: refreshToken, tokenHash, expiresAt } = generateRefreshToken();
+    const rotate = opts?.rotate;
+    const { token: refreshToken, tokenHash, expiresAt } = generateRefreshToken(
+      rotate ? new Date(rotate.from.sessionStartedAt.getTime() + SESSION_MAX_AGE_MS) : undefined,
+    );
+    const data = {
+      userId,
+      tokenHash,
+      expiresAt,
+      deviceLabel: request.headers["user-agent"]?.toString().slice(0, 255) ?? null,
+    };
 
-    // A refresh keeps its login's sessionId; a fresh login starts a new one.
-    const { sessionId } = await prisma.refreshToken.create({
-      data: {
-        userId,
-        tokenHash,
-        sessionId: opts?.sessionId,
-        expiresAt,
-        // A rotation keeps the device its session logged in from.
-        deviceLabel: opts?.deviceLabel !== undefined ? opts.deviceLabel : (request.headers["user-agent"]?.toString().slice(0, 255) ?? null),
-      },
-    });
+    let sessionId: string;
+    if (rotate) {
+      // Retiring the presented token and issuing its successor is one
+      // transaction, so the session is never without an open token (the
+      // auth plugin checks for one) and, of two racing refreshes, only the
+      // one that actually retired the token gets a successor.
+      const { from } = rotate;
+      sessionId = await prisma.$transaction(async (tx) => {
+        const now = new Date();
+        const { count } = await tx.refreshToken.updateMany({
+          where: { id: from.id, revokedAt: null },
+          data: { revokedAt: now, rotatedAt: now },
+        });
+        if (count === 0) throw new RefreshRaceError();
+        // A rotation keeps the login's session, device, start and activity.
+        const created = await tx.refreshToken.create({
+          data: {
+            ...data,
+            sessionId: from.sessionId,
+            deviceLabel: from.deviceLabel,
+            sessionStartedAt: from.sessionStartedAt,
+            lastActivityAt: from.lastActivityAt,
+          },
+        });
+        return created.sessionId;
+      });
+    } else {
+      // A fresh login starts a new session.
+      sessionId = (await prisma.refreshToken.create({ data })).sessionId;
+    }
     const accessToken = signAccessToken(userId, sessionId);
 
     if (web) {
@@ -203,32 +240,62 @@ export async function authRoutes(app: FastifyInstance) {
     }
 
     const tokenHash = hashRefreshToken(presentedToken);
-    const stored = await prisma.refreshToken.findUnique({ where: { tokenHash } });
+    const stored = await prisma.refreshToken.findUnique({
+      where: { tokenHash },
+      include: { user: { select: { preferences: { select: { autoLockMinutes: true } } } } },
+    });
 
     if (!stored) {
-      return reply.status(401).send({ error: "Refresh token is invalid or expired." });
+      return reply.status(401).send(INVALID_REFRESH);
     }
 
     if (stored.revokedAt) {
-      // Presenting an already-revoked (but not expired) token means either
-      // a stale client retried an old refresh, or someone else is replaying
-      // a stolen one — standard rotation-reuse-detection mitigation is to
-      // treat it as compromise and revoke every other active session for
-      // this user too, not just reject this one request.
-      await prisma.refreshToken.updateMany({
-        where: { userId: stored.userId, revokedAt: null },
-        data: { revokedAt: new Date() },
-      });
-      return reply.status(401).send({ error: "Refresh token is invalid or expired." });
+      // Only a token that was *rotated* can be reused: presenting one well
+      // after its successor was issued means either a badly stale client or
+      // someone replaying a stolen token, and the standard rotation-reuse
+      // mitigation is to treat it as compromise and revoke every active
+      // session for this user. Within ROTATION_GRACE_MS it's two requests
+      // of the same client racing to refresh — just reject the loser. A
+      // token revoked by logout, "Cerrar sesión" or idle timeout is plain
+      // rejected: that session is simply over.
+      const reused = stored.rotatedAt && Date.now() - stored.rotatedAt.getTime() > ROTATION_GRACE_MS;
+      if (reused) {
+        await prisma.refreshToken.updateMany({
+          where: { userId: stored.userId, revokedAt: null },
+          data: { revokedAt: new Date() },
+        });
+      }
+      return reply.status(401).send(INVALID_REFRESH);
     }
 
     if (stored.expiresAt < new Date()) {
-      return reply.status(401).send({ error: "Refresh token is invalid or expired." });
+      return reply.status(401).send(INVALID_REFRESH);
     }
 
-    await prisma.refreshToken.update({ where: { id: stored.id }, data: { revokedAt: new Date() } });
+    // "Cierre automático": a session left idle longer than the user's
+    // setting ends here too, even if no client is around to log it out.
+    if (isIdle(stored.lastActivityAt, stored.user.preferences?.autoLockMinutes ?? 0)) {
+      await revokeSession(stored.sessionId);
+      return reply.status(401).send({ error: "Session ended.", code: "session_idle" });
+    }
 
-    return issueSession(request, reply, stored.userId, { web: Boolean(cookieToken), sessionId: stored.sessionId, deviceLabel: stored.deviceLabel });
+    try {
+      return await issueSession(request, reply, stored.userId, { web: Boolean(cookieToken), rotate: { from: stored } });
+    } catch (error) {
+      if (error instanceof RefreshRaceError) return reply.status(401).send(INVALID_REFRESH);
+      throw error;
+    }
+  });
+
+  // The clients call this (at most once a minute) while the user is
+  // interacting, which is what keeps the session clear of "Cierre
+  // automático". Background requests don't count as activity.
+  app.post("/auth/activity", { preHandler: app.authenticate }, async (request, reply) => {
+    await prisma.refreshToken.updateMany({
+      where: { sessionId: request.sessionId!, revokedAt: null },
+      data: { lastActivityAt: new Date() },
+    });
+    return reply.status(204).send();
   });
 
   app.post("/auth/logout", async (request, reply) => {
@@ -236,12 +303,11 @@ export async function authRoutes(app: FastifyInstance) {
     const bodyToken = refreshBodySchema.parse(request.body ?? {}).refreshToken;
     const presentedToken = cookieToken ?? bodyToken;
 
+    // Logging out ends the whole session (every token of that login), so
+    // its access token stops working at once too (plugins/auth.ts).
     if (presentedToken) {
-      const tokenHash = hashRefreshToken(presentedToken);
-      await prisma.refreshToken.updateMany({
-        where: { tokenHash, revokedAt: null },
-        data: { revokedAt: new Date() },
-      });
+      const stored = await prisma.refreshToken.findUnique({ where: { tokenHash: hashRefreshToken(presentedToken) } });
+      if (stored) await revokeSession(stored.sessionId);
     }
 
     if (cookieToken) {

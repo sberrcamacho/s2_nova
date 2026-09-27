@@ -16,6 +16,15 @@ const data = new Function(
   `${source}\nreturn { CAT_VIS, CAT_NODES, CAT_TRANSFER, CAT_LEGACY, CAT_KEYWORDS, PLAN_ICONS };`,
 )();
 
+// English display names (UI copy for the English language setting), by
+// node id, "transfer" and "plan.<key>". The Spanish names stay in the
+// canonical source; every node must have one here.
+const en = JSON.parse(readFileSync(resolve(root, "scripts/taxonomy-en.json"), "utf8"));
+const nameEn = (id) => {
+  if (!en[id]) throw new Error(`scripts/taxonomy-en.json: missing ${id}`);
+  return en[id];
+};
+
 const out = {
   sourceHash: createHash("sha256").update(source).digest("hex").slice(0, 16),
   vis: Object.fromEntries(Object.entries(data.CAT_VIS).map(([k, [color, glyph]]) => [k, { color, glyph }])),
@@ -24,14 +33,15 @@ const out = {
     type: n.type,
     parentId: n.parentId,
     name: n.name,
+    nameEn: nameEn(n.id),
     vis: n.vis,
     color: n.color,
     glyph: n.glyph,
   })),
-  transfer: { id: "transfer", name: data.CAT_TRANSFER.name, color: data.CAT_TRANSFER.color, glyph: data.CAT_TRANSFER.glyph },
+  transfer: { id: "transfer", name: data.CAT_TRANSFER.name, nameEn: nameEn("transfer"), color: data.CAT_TRANSFER.color, glyph: data.CAT_TRANSFER.glyph },
   legacy: data.CAT_LEGACY,
   keywords: { expense: data.CAT_KEYWORDS.expense, income: data.CAT_KEYWORDS.income },
-  planIcons: data.PLAN_ICONS.map((p) => ({ key: p.key, name: p.name, kw: p.kw, color: p.color, glyph: p.glyph })),
+  planIcons: data.PLAN_ICONS.map((p) => ({ key: p.key, name: p.name, nameEn: nameEn(`plan.${p.key}`), kw: p.kw, color: p.color, glyph: p.glyph })),
 };
 
 const json = JSON.stringify(out, null, 1) + "\n";

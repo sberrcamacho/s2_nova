@@ -1,5 +1,6 @@
 package com.s2nova.app.data.repository
 
+import com.s2nova.app.data.local.IdleTimeoutStore
 import com.s2nova.app.data.local.OnboardingStore
 import com.s2nova.app.data.local.SessionStore
 import com.s2nova.app.data.model.AppLanguage
@@ -14,7 +15,10 @@ import com.s2nova.app.data.remote.RefreshRequest
 import com.s2nova.app.data.remote.RegisterRequest
 import com.s2nova.app.data.remote.UpdatePreferencesRequest
 import com.s2nova.app.data.remote.UpdateProfileRequest
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -38,7 +42,7 @@ internal fun MeResponse.toUser(): User {
             notifications = prefs?.notifications ?: true,
             biometricLogin = prefs?.biometricLogin ?: false,
             blurBalance = prefs?.blurBalance ?: false,
-            autoLockMinutes = prefs?.autoLockMinutes ?: 0,
+            autoLockMinutes = prefs?.autoLockMinutes ?: 5,
             currency = prefs?.currency?.let { runCatching { Currency.valueOf(it) }.getOrNull() } ?: Currency.COP,
             language = prefs?.language?.let { runCatching { AppLanguage.valueOf(it.uppercase()) }.getOrNull() } ?: AppLanguage.ES,
             guidesSeen = prefs?.guidesSeen?.toSet() ?: emptySet(),
@@ -58,9 +62,16 @@ class AuthRepository(
     private val sessionStore: SessionStore,
     private val onboardingStore: OnboardingStore,
     private val credentialManager: androidx.credentials.CredentialManager,
+    private val idleTimeoutStore: IdleTimeoutStore,
 ) {
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
+
+    private val _idleLogouts = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    // Emitted after "Cierre automático" signed the user out, so the app can
+    // go to Login and say why.
+    val idleLogouts: SharedFlow<Unit> = _idleLogouts.asSharedFlow()
 
     // Keeps the local (per-device, offline-checkable) onboarding flag in
     // sync with the backend's — matters when the same account signs in on
@@ -79,7 +90,18 @@ class AuthRepository(
     suspend fun bootstrap(): Boolean {
         if (sessionStore.refreshTokenOnce() == null) return false
         return try {
-            _currentUser.value = fetchAndSyncMe()
+            val user = fetchAndSyncMe()
+            // The app was closed (or killed) longer ago than "Cierre
+            // automático" allows: that session is over, not restored.
+            val idle = idleTimeoutStore.persistedIdleMillis()
+            val minutes = user.preferences.autoLockMinutes
+            if (minutes > 0 && idle != null && idle >= minutes * 60_000L) {
+                _currentUser.value = user
+                logoutForIdle()
+                return false
+            }
+            idleTimeoutStore.touch()
+            _currentUser.value = user
             true
         } catch (error: retrofit2.HttpException) {
             // The server itself rejected the token (401/403 etc.) — it's
@@ -103,18 +125,21 @@ class AuthRepository(
     suspend fun login(email: String, password: String): Result<Unit> = runCatching {
         val session = ApiClient.authApi.login(LoginRequest(email.trim(), password))
         sessionStore.saveSession(session.accessToken, session.refreshToken)
+        idleTimeoutStore.touch()
         _currentUser.value = fetchAndSyncMe()
     }
 
     suspend fun register(name: String, email: String, password: String): Result<Unit> = runCatching {
         val session = ApiClient.authApi.register(RegisterRequest(name.trim(), email.trim(), password))
         sessionStore.saveSession(session.accessToken, session.refreshToken)
+        idleTimeoutStore.touch()
         _currentUser.value = fetchAndSyncMe()
     }
 
     suspend fun loginWithGoogle(idToken: String): Result<Unit> = runCatching {
         val session = ApiClient.authApi.loginWithGoogle(GoogleLoginRequest(idToken))
         sessionStore.saveSession(session.accessToken, session.refreshToken)
+        idleTimeoutStore.touch()
         _currentUser.value = fetchAndSyncMe()
     }
 
@@ -133,17 +158,17 @@ class AuthRepository(
             // while demo mode is active is the fictitious local persona, not
             // the signed-in account — never let that write reach the real
             // backend session. See AppContainer.enterDemoMode().
-            if (DemoModeFlag.active) error("No disponible en modo demo.")
+            if (DemoModeFlag.active) error(com.s2nova.app.ui.tr(com.s2nova.app.ui.StringKey.API_GUEST))
             val response = ApiClient.api.updateProfile(UpdateProfileRequest(name, email, phone, city, currentPassword))
             _currentUser.value = response.toUser()
         }
 
-    // "Is this still you?" check for the auto-lock overlay — never rotates
-    // tokens, so a wrong guess just re-shows the prompt.
-    suspend fun verifyPassword(password: String): Boolean {
-        if (DemoModeFlag.active) return true
-        val response = ApiClient.api.verifyPassword(com.s2nova.app.data.remote.VerifyPasswordRequest(password))
-        return response.isSuccessful
+    // "Cierre automático" heartbeat: tells the server the user is still
+    // active, so its own idle check leaves the session alone (backend
+    // lib/sessions.ts). A missed one only brings that check closer.
+    suspend fun reportActivity() {
+        if (DemoModeFlag.active || _currentUser.value == null) return
+        runCatching { ApiClient.api.activity() }
     }
 
     // Best-effort remote mirror for a preference toggle already applied
@@ -163,6 +188,20 @@ class AuthRepository(
         runCatching { ApiClient.authApi.logout(RefreshRequest(refreshToken)) }
         runCatching { credentialManager.clearCredentialState(androidx.credentials.ClearCredentialStateRequest()) }
         sessionStore.clear()
+        _currentUser.value = null
+    }
+
+    // "Cierre automático": a real sign-out (the server revokes the session,
+    // this device forgets its tokens), then Login explains why.
+    suspend fun logoutForIdle() {
+        logout()
+        _idleLogouts.tryEmit(Unit)
+    }
+
+    // The session ended under the user (SessionStore.sessionEnded): the
+    // tokens are already gone; forget who was signed in.
+    fun onSessionEnded() {
+        DemoModeFlag.set(false)
         _currentUser.value = null
     }
 

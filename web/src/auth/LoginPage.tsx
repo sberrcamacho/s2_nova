@@ -34,9 +34,9 @@ function BrandPanel() {
 
       <div className="relative flex flex-col gap-[22px]">
         <div className="text-[34px] font-extrabold leading-[1.14] tracking-[-0.03em] text-pretty">
-          Todo tu dinero,
+          {t('auth.hero.login1')}
           <br />
-          en una sola vista.
+          {t('auth.hero.login2')}
         </div>
 
         <div className="flex flex-col gap-[18px]">
@@ -100,15 +100,15 @@ function BrandPanel() {
             <div className="flex flex-1 flex-col gap-2">
               <div className="flex items-center gap-2.5">
                 <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#8578ff]" />
-                <span className="text-[12.5px] text-white/72">Gastos por categoría</span>
+                <span className="text-[12.5px] text-white/72">{t('auth.hero.byCategory')}</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#7cf0bb]" />
-                <span className="text-[12.5px] text-white/72">Ahorro del mes</span>
+                <span className="text-[12.5px] text-white/72">{t('auth.hero.saving')}</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-white/22" />
-                <span className="text-[12.5px] text-white/72">Proyección</span>
+                <span className="text-[12.5px] text-white/72">{t('auth.hero.projection')}</span>
               </div>
             </div>
           </div>
@@ -295,7 +295,7 @@ export default function LoginPage() {
                   </label>
                   <button
                     type="button"
-                    title="Próximamente"
+                    title={t('common.comingSoon')}
                     className="text-[11px] font-bold text-highlight"
                   >
                     {t('auth.forgotPassword')}
@@ -362,9 +362,9 @@ export default function LoginPage() {
             className="flex h-12 cursor-pointer items-center justify-center gap-[9px] rounded-[12px] border border-v2-line2 text-[13.5px] font-bold text-v2-text hover:border-v2-accent2"
           >
             <EnterIcon />
-            Continuar como invitado
+            {t('auth.guest')}
           </button>
-          <div className="-mt-2 text-center text-[11.5px] text-v2-dim [line-height:normal]">Explora una cuenta de ejemplo. No se guarda nada.</div>
+          <div className="-mt-2 text-center text-[11.5px] text-v2-dim [line-height:normal]">{t('auth.guestHint')}</div>
 
           <div className="text-center text-xs" style={{ color: 'var(--color-login-text-muted)' }}>
             {t('auth.noAccount')}{' '}

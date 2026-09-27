@@ -25,6 +25,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.s2nova.app.ui.theme.NovaColors
+import com.s2nova.app.ui.tr
+import com.s2nova.app.ui.StringKey
 
 @Composable
 fun TermsCheckbox(
@@ -65,13 +67,13 @@ fun TermsCheckbox(
 
         Text(
             text = buildAnnotatedString {
-                append("Acepto los ")
+                append(tr(StringKey.TERMS_ACCEPT) + " ")
                 withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = colors.loginHighlight)) {
-                    append("Términos")
+                    append(tr(StringKey.TERMS_TERMS))
                 }
-                append(" y la ")
+                append(" " + tr(StringKey.TERMS_AND) + " ")
                 withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = colors.loginHighlight)) {
-                    append("Política de privacidad")
+                    append(tr(StringKey.TERMS_PRIVACY))
                 }
             },
             fontSize = 13.sp,

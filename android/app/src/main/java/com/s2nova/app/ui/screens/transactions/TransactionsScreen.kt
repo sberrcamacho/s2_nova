@@ -52,6 +52,7 @@ import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.theme.NovaColors
 import java.time.LocalDate
+import com.s2nova.app.ui.tr
 
 private enum class TypeFilter(val key: StringKey) {
     ALL(StringKey.TXN_LIST_FILTER_ALL),
@@ -103,7 +104,7 @@ fun TransactionsScreen(
 
             if (filtered.isEmpty()) {
                 Text(
-                    "Aún no tienes movimientos. Registra el primero con el botón +.",
+                    tr(StringKey.MV_EMPTY),
                     fontSize = 12.sp, lineHeight = 18.sp, color = colors.textDim, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 28.dp),
                 )
@@ -129,7 +130,7 @@ fun TransactionsScreen(
                             }
                             val sched = key == "sched"
                             val dayLabel = when (key) {
-                                "sched" -> "PROGRAMADOS"
+                                "sched" -> tr(StringKey.MV_SCHEDULED).uppercase()
                                 today -> t(StringKey.TXN_LIST_TODAY)
                                 yesterday -> t(StringKey.TXN_LIST_YESTERDAY)
                                 else -> formatDayGroupDate(key)
@@ -149,7 +150,7 @@ fun TransactionsScreen(
                         items(txns, key = { it.id }) { txn: Transaction ->
                             val walletName = wallets.firstOrNull { it.id == txn.walletId }?.name?.let { shortWallet(it) }
                             val subtitle = if (txn.status == TransactionStatus.PLANNED) {
-                                listOfNotNull("Programado", fmtDate(txn.date), walletName).joinToString(" · ")
+                                listOfNotNull(tr(StringKey.MV_SCHEDULED_ONE), fmtDate(txn.date), walletName).joinToString(" · ")
                             } else {
                                 listOfNotNull((txn.merchant ?: txn.counterpartyName)?.takeIf { it.isNotBlank() }, walletName).joinToString(" · ")
                             }

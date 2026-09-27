@@ -37,6 +37,7 @@ describe("v2 movements, currencies and plans", () => {
         accountId: cop.id,
         type: "EXPENSE",
         amount: 5.99,
+        description: "Netflix",
         currency: "USD",
         categoryId: streaming.parentId,
         subcategoryId: streaming.id,
@@ -59,7 +60,7 @@ describe("v2 movements, currencies and plans", () => {
       method: "POST",
       url: "/api/v1/transactions",
       headers: authHeader(user),
-      payload: { accountId: w.id, type: "EXPENSE", amount: 500, categoryId: rent.parentId, subcategoryId: rent.id, date: "2099-09-01", time: "08:00" },
+      payload: { accountId: w.id, type: "EXPENSE", amount: 500, description: "Arriendo", categoryId: rent.parentId, subcategoryId: rent.id, date: "2099-09-01", time: "08:00" },
     });
     expect(res.json().status).toBe("PLANNED");
     expect((await prisma.account.findUniqueOrThrow({ where: { id: w.id } })).currentBalanceMinor).toBe(1000n);
@@ -77,6 +78,7 @@ describe("v2 movements, currencies and plans", () => {
         accountId: w.id,
         type: "EXPENSE",
         amount: 80000,
+        description: "Terapia",
         categoryId: health.id,
         date: "2026-08-21",
         repeat: { interval: "WEEKLY", occurrences: 2 },
@@ -89,6 +91,57 @@ describe("v2 movements, currencies and plans", () => {
 
     const confirmed = await app.inject({ method: "POST", url: `/api/v1/recurring-series/${seriesId}/confirm`, headers: authHeader(user), payload: {} });
     expect(confirmed.json().series).toMatchObject({ occurrencesDone: 2, active: false });
+  });
+
+  it("requires a title", async () => {
+    const user = await createTestUser();
+    const w = await wallet(user, { name: "Efectivo", type: "CASH", initialBalance: 0 });
+    const food = await categoryBySlug("exp.food");
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/v1/transactions",
+      headers: authHeader(user),
+      payload: { accountId: w.id, type: "EXPENSE", amount: 1, description: "  ", categoryId: food.id, date: "2026-08-21" },
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it("editing a movement's Repetir updates, starts or stops its series, and a new date re-decides Programado", async () => {
+    const user = await createTestUser();
+    const w = await wallet(user, { name: "Efectivo", type: "CASH", initialBalance: 0 });
+    const health = await categoryBySlug("exp.health");
+    const post = (repeat?: object) =>
+      app.inject({
+        method: "POST",
+        url: "/api/v1/transactions",
+        headers: authHeader(user),
+        payload: { accountId: w.id, type: "EXPENSE", amount: 80000, description: "Terapia", categoryId: health.id, date: "2026-08-21", ...(repeat ? { repeat } : {}) },
+      });
+    const patch = (id: string, payload: object) => app.inject({ method: "PATCH", url: `/api/v1/transactions/${id}`, headers: authHeader(user), payload });
+
+    // Changing the rule keeps the series and updates it with the edit.
+    const withSeries = (await post({ interval: "WEEKLY", occurrences: 4 })).json();
+    const edited = await patch(withSeries.id, { description: "Terapia semanal", amount: 90000, repeat: { interval: "WEEKLY", occurrences: 6, autoConfirm: true } });
+    expect(edited.statusCode).toBe(200);
+    expect(edited.json().recurringSeriesId).toBe(withSeries.recurringSeriesId);
+    const series = await prisma.recurringSeries.findUniqueOrThrow({ where: { id: withSeries.recurringSeriesId } });
+    expect(series).toMatchObject({ name: "Terapia semanal", amountMinor: 90000n, occurrences: 6, autoConfirm: true, active: true });
+
+    // null stops it and unlinks the movement.
+    const stopped = (await patch(withSeries.id, { repeat: null })).json();
+    expect(stopped.recurringSeriesId).toBeNull();
+    expect((await prisma.recurringSeries.findUniqueOrThrow({ where: { id: withSeries.recurringSeriesId } })).active).toBe(false);
+
+    // A movement without a series starts one, itself the first occurrence.
+    const plain = (await post()).json();
+    const started = (await patch(plain.id, { repeat: { interval: "MONTHLY", endDate: "2026-12-31" } })).json();
+    const fresh = await prisma.recurringSeries.findUniqueOrThrow({ where: { id: started.recurringSeriesId } });
+    expect(fresh).toMatchObject({ interval: "MONTHLY", occurrencesDone: 1, active: true });
+    expect(fresh.nextOccurrenceDate.toISOString().slice(0, 10)).toBe("2026-09-21");
+
+    // Moving it into the future makes it a Programado, and back again completes it.
+    expect((await patch(plain.id, { date: "2099-01-01" })).json().status).toBe("PLANNED");
+    expect((await patch(plain.id, { date: "2026-08-22" })).json().status).toBe("COMPLETED");
   });
 
   it("records automatic Programados when they're read", async () => {
@@ -110,7 +163,7 @@ describe("v2 movements, currencies and plans", () => {
     const w = await wallet(user, { name: "Efectivo", type: "CASH", initialBalance: 0 });
     const food = await categoryBySlug("exp.food");
     const tx = (
-      await app.inject({ method: "POST", url: "/api/v1/transactions", headers: authHeader(user), payload: { accountId: w.id, type: "EXPENSE", amount: 1, categoryId: food.id, date: "2026-08-21" } })
+      await app.inject({ method: "POST", url: "/api/v1/transactions", headers: authHeader(user), payload: { accountId: w.id, type: "EXPENSE", amount: 1, description: "Almuerzo", categoryId: food.id, date: "2026-08-21" } })
     ).json();
     const put = await app.inject({
       method: "PUT",
@@ -146,7 +199,7 @@ describe("v2 movements, currencies and plans", () => {
         method: "POST",
         url: "/api/v1/transactions",
         headers: authHeader(user),
-        payload: { accountId, type: "EXPENSE", amount: 50000, categoryId: clothing.parentId, subcategoryId: clothing.id, customBudgetId, date: "2026-09-05" },
+        payload: { accountId, type: "EXPENSE", amount: 50000, description: "Regalo", categoryId: clothing.parentId, subcategoryId: clothing.id, customBudgetId, date: "2026-09-05" },
       });
     }
     const list = (await app.inject({ method: "GET", url: "/api/v1/budgets?month=2026-09", headers: authHeader(user) })).json() as { id: string; spent: number; assignedCount: number | null }[];

@@ -247,6 +247,7 @@ export interface User {
     biometricLogin: boolean
     hideAmounts: boolean
     language: LanguageCode
+    autoLockMinutes: number // "Cierre automático"; 0 = Nunca
   }
 }
 

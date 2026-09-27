@@ -173,6 +173,48 @@ class TransactionRepository(
         applyUpdated(id, dto)
     }
 
+    // "Editar movimiento" (Nuevo movimiento in edit mode): every field the
+    // form shows, with explicit nulls for the ones it cleared — a plain
+    // UpdateTransactionRequest would drop them — and its Repetir: a rule
+    // updates or starts the series, null stops it. The backend re-decides
+    // Programado from the new date. Type and a transfer's destination are
+    // fixed once created.
+    suspend fun edit(id: String, input: NewTransactionInput) {
+        if (DemoModeFlag.active) return update(id, input)
+        val transfer = input.type == TransactionType.TRANSFER
+        val body = kotlinx.serialization.json.buildJsonObject {
+            put("accountId", kotlinx.serialization.json.JsonPrimitive(input.walletId))
+            put("amount", kotlinx.serialization.json.JsonPrimitive(input.amount))
+            put("description", kotlinx.serialization.json.JsonPrimitive(input.description))
+            put("note", kotlinx.serialization.json.JsonPrimitive(input.note))
+            put("date", kotlinx.serialization.json.JsonPrimitive(input.date))
+            input.time?.let { put("time", kotlinx.serialization.json.JsonPrimitive(it)) }
+            if (!transfer) {
+                input.currency?.let { put("currency", kotlinx.serialization.json.JsonPrimitive(it)) }
+                categoryRepository.backendIdFor(input.category)?.let { put("categoryId", kotlinx.serialization.json.JsonPrimitive(it)) }
+                put("subcategoryId", kotlinx.serialization.json.JsonPrimitive(categoryRepository.backendIdFor(input.subcategoryId)))
+                put("customBudgetId", kotlinx.serialization.json.JsonPrimitive(input.customBudgetId))
+                put("goalId", kotlinx.serialization.json.JsonPrimitive(input.goalId))
+                if (input.type == TransactionType.INCOME && input.loanKind == null) {
+                    put("counterpartyName", kotlinx.serialization.json.JsonPrimitive(input.counterpartyName))
+                    put("counterpartyKind", kotlinx.serialization.json.JsonPrimitive(input.counterpartyKind?.name))
+                }
+                put(
+                    "repeat",
+                    input.repeat?.let { r ->
+                        kotlinx.serialization.json.buildJsonObject {
+                            put("interval", kotlinx.serialization.json.JsonPrimitive(r.interval.name))
+                            r.occurrences?.let { put("occurrences", kotlinx.serialization.json.JsonPrimitive(it)) }
+                            r.endDate?.let { put("endDate", kotlinx.serialization.json.JsonPrimitive(it)) }
+                            put("autoConfirm", kotlinx.serialization.json.JsonPrimitive(r.autoConfirm))
+                        }
+                    } ?: kotlinx.serialization.json.JsonNull,
+                )
+            }
+        }
+        applyUpdated(id, api.editTransaction(id, body))
+    }
+
     // Loan-only edit — separate from update() because Lent/Borrowed records
     // expose fields (wallet, direction, counterparty, due date) that a
     // normal transaction edit never touches.

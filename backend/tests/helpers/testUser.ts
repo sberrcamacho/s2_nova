@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { hashPassword } from "../../src/lib/password.js";
 import { prisma } from "../../src/lib/prisma.js";
-import { signAccessToken } from "../../src/lib/tokens.js";
+import { generateRefreshToken, signAccessToken } from "../../src/lib/tokens.js";
 
 export interface TestUser {
   id: string;
@@ -15,7 +15,9 @@ export interface TestUser {
 // route layer uses — bypasses POST /auth/register on purpose so route
 // tests that just need "a logged-in user" don't also spend one of
 // /auth/register's rate-limit allowance (see auth.ts's AUTH_RATE_LIMIT).
-// Only auth.spec.ts should exercise /auth/register itself.
+// Only auth.spec.ts should exercise /auth/register itself. The token belongs
+// to a real open session (a refresh_tokens row), since the auth plugin
+// rejects access tokens whose session has ended.
 export async function createTestUser(overrides?: { name?: string; email?: string; password?: string }): Promise<TestUser> {
   const email = overrides?.email ?? `test-${randomUUID()}@example.com`;
   const password = overrides?.password ?? "Test1234";
@@ -30,7 +32,10 @@ export async function createTestUser(overrides?: { name?: string; email?: string
     },
   });
 
-  return { id: user.id, email, password, accessToken: signAccessToken(user.id) };
+  const { tokenHash, expiresAt } = generateRefreshToken();
+  const { sessionId } = await prisma.refreshToken.create({ data: { userId: user.id, tokenHash, expiresAt } });
+
+  return { id: user.id, email, password, accessToken: signAccessToken(user.id, sessionId) };
 }
 
 export function authHeader(user: TestUser): { authorization: string } {

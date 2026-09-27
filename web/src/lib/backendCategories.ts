@@ -6,6 +6,7 @@
 // stands in. Components subscribe with useCategories().
 import { useSyncExternalStore } from 'react'
 import { apiClient } from '@/lib/apiClient'
+import { currentLanguage } from '@/lib/i18n/translations'
 import { TAX_NODES, TAX_TRANSFER, TAX_VIS, taxNode, visColor } from '@/lib/taxonomy'
 import type { CategoryId } from '@/types'
 
@@ -166,18 +167,27 @@ export function childCategories(parentId: CategoryId, includeHidden = true): Cat
   return nodes.filter((n) => n.parentId === parentId && (includeHidden || !n.hidden))
 }
 
+// The name to show: a built-in category the user hasn't renamed reads in
+// the app language; a renamed or custom one is the user's own text.
+export function displayName(n: CategoryNode): string {
+  if (currentLanguage() !== 'en' || n.custom) return n.name
+  const tax = taxNode(n.id)
+  return tax && tax.name === n.name ? tax.nameEn : n.name
+}
+
 export function categoryName(id: CategoryId | null | undefined): string {
-  if (id === TRANSFER) return TAX_TRANSFER.name
-  return categoryNode(id)?.name ?? ''
+  if (id === TRANSFER) return currentLanguage() === 'en' ? TAX_TRANSFER.nameEn : TAX_TRANSFER.name
+  const n = categoryNode(id)
+  return n ? displayName(n) : ''
 }
 
 // "Alimentación · Mercado" for a leaf, "Alimentación" for a parent.
 export function categoryLabel(id: CategoryId | null | undefined): string {
-  if (id === TRANSFER) return TAX_TRANSFER.name
+  if (id === TRANSFER) return categoryName(TRANSFER)
   const n = categoryNode(id)
   if (!n) return ''
   const p = n.parentId ? byId.get(n.parentId) : undefined
-  return p ? `${p.name} · ${n.name}` : n.name
+  return p ? `${displayName(p)} · ${displayName(n)}` : displayName(n)
 }
 
 // Leaves inherit the parent's color.
