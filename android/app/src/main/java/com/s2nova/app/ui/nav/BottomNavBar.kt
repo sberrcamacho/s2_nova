@@ -1,37 +1,47 @@
 package com.s2nova.app.ui.nav
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.components.MockupIcons
+import com.s2nova.app.ui.components.strokeIcon
 import com.s2nova.app.ui.rememberStrings
+import com.s2nova.app.ui.theme.NovaColors
 
 private data class BottomTab(val route: String, val labelKey: StringKey, val icon: ImageVector)
 
@@ -44,6 +54,36 @@ private val TABS = listOf(
     BottomTab(NovaDestinations.REPORTS, StringKey.NAV_REPORTS, MockupIcons.Reportes),
 )
 
+private val PlusIcon = strokeIcon("Nuevo movimiento", "M12 5v14", "M5 12h14", strokeWidth = 2.6f)
+
+// The mockup's bar outline (viewBox 394×72): flat edges with a concave dip
+// under the "+" button. Stretched across the width; vertically it keeps the
+// mockup's ~67dp bar scale (`unitY` px per viewBox unit) so the system
+// gesture inset below doesn't deepen the dip.
+private fun barPath(size: Size, unitY: Float, closed: Boolean, inset: Float = 0f): Path {
+    val sx = size.width / 394f
+    val sy = unitY
+    fun x(v: Float) = v * sx
+    fun y(v: Float) = v * sy + inset
+    return Path().apply {
+        moveTo(0f, y(0f))
+        lineTo(x(138f), y(0f))
+        cubicTo(x(155f), y(0f), x(159f), y(6f), x(163f), y(14f))
+        cubicTo(x(171f), y(32f), x(182f), y(43f), x(197f), y(43f))
+        cubicTo(x(212f), y(43f), x(223f), y(32f), x(231f), y(14f))
+        cubicTo(x(235f), y(6f), x(239f), y(0f), x(256f), y(0f))
+        lineTo(size.width, y(0f))
+        if (closed) {
+            lineTo(size.width, size.height)
+            lineTo(0f, size.height)
+            close()
+        }
+    }
+}
+
+// The Android v2 mockup's bottom bar: a surface with a curved dip in the
+// middle, the raised "+" (60dp, 29dp above the bar) and four tabs — the
+// active one with an --accent2 icon and bold --text label, no pill.
 @Composable
 fun NovaBottomBar(
     currentRoute: String?,
@@ -51,29 +91,50 @@ fun NovaBottomBar(
     onFabClick: () -> Unit,
 ) {
     val t = rememberStrings()
-    Row(
+    val surface = MaterialTheme.colorScheme.surface
+    val line = MaterialTheme.colorScheme.outline
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
-            .border(width = 1.dp, color = MaterialTheme.colorScheme.outline)
-            // Keeps content clear of the system gesture bar / 3-button nav —
-            // without this the row's own 4.dp bottom padding sits behind it,
-            // so the gesture pill visually collides with the tab labels.
-            .windowInsetsPadding(WindowInsets.navigationBars)
-            .padding(start = 8.dp, top = 8.dp, end = 8.dp, bottom = 4.dp),
-        verticalAlignment = Alignment.Top,
+            .drawBehind {
+                val unitY = 67.dp.toPx() / 72f
+                drawPath(barPath(size, unitY, closed = true), surface)
+                drawPath(barPath(size, unitY, closed = false, inset = 0.5.dp.toPx()), line, style = Stroke(width = 1.dp.toPx()))
+            },
     ) {
-        TABS.forEachIndexed { index, tab ->
-            if (index == 2) {
-                FabSlot(onClick = onFabClick, modifier = Modifier.weight(1f))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                // Keeps the tabs clear of the system gesture bar / 3-button nav.
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .padding(start = 8.dp, top = 12.dp, end = 8.dp, bottom = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            TABS.forEachIndexed { index, tab ->
+                if (index == 2) Spacer(Modifier.weight(1f))
+                BottomTabItem(
+                    label = t(tab.labelKey),
+                    icon = tab.icon,
+                    selected = baseRoute(currentRoute) == tab.route,
+                    onClick = { onNavigate(tab.route) },
+                    modifier = Modifier.weight(1f),
+                )
             }
-            BottomTabItem(
-                label = t(tab.labelKey),
-                icon = tab.icon,
-                selected = baseRoute(currentRoute) == tab.route,
-                onClick = { onNavigate(tab.route) },
-                modifier = Modifier.weight(1f),
-            )
+        }
+        val addLabel = t(StringKey.NAV_ADD)
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .offset(y = (-29).dp)
+                .size(60.dp)
+                .shadow(elevation = 14.dp, shape = CircleShape, ambientColor = Color(0x806C5CE7), spotColor = Color(0x806C5CE7))
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primary)
+                .clickable(onClick = onFabClick)
+                .semantics { contentDescription = addLabel },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(PlusIcon, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
         }
     }
 }
@@ -86,47 +147,26 @@ private fun BottomTabItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
     Column(
-        modifier = modifier.clickable(onClick = onClick),
+        modifier = modifier
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onClick)
+            .padding(vertical = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .size(width = 58.dp, height = 30.dp)
-                .clip(RoundedCornerShape(50))
-                .background(if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(icon, contentDescription = label, tint = color, modifier = Modifier.size(22.dp))
+        Box(Modifier.size(width = 40.dp, height = 30.dp), contentAlignment = Alignment.Center) {
+            Icon(icon, contentDescription = null, tint = if (selected) NovaColors.current.accentText else muted, modifier = Modifier.size(24.dp))
         }
         Text(
             label,
-            color = color,
-            fontSize = 10.sp,
+            color = if (selected) MaterialTheme.colorScheme.onSurface else muted,
+            fontSize = 11.sp,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
             maxLines = 1,
             softWrap = false,
             overflow = TextOverflow.Clip,
-            modifier = Modifier.padding(top = 3.dp),
         )
-    }
-}
-
-@Composable
-private fun FabSlot(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val t = rememberStrings()
-    Box(modifier = modifier, contentAlignment = Alignment.TopCenter) {
-        Box(
-            modifier = Modifier
-                .size(52.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary)
-                .clickable(onClick = onClick),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(Icons.Filled.Add, contentDescription = t(StringKey.NAV_ADD), tint = MaterialTheme.colorScheme.onPrimary)
-        }
     }
 }
 
