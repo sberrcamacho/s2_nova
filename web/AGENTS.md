@@ -19,9 +19,9 @@ by one; a screen not yet migrated is unverified.
 layer (taxonomy, multi-currency), Inicio, Movimientos, Planes
 (Presupuestos · Metas · Préstamos), Reportes, Ajustes (profile, password,
 sessions, deletion, Monedas, Categorías), Nuevo movimiento,
-Billeteras, mini-guides, first run, guest mode; Inicio and Movimientos
-have had their v2 visual pass. Reportes and Ajustes' main page still
-await theirs. Movimientos lists every Programado on top of the current
+Billeteras, mini-guides, first run, guest mode; Inicio, Movimientos and
+Reportes have had their v2 visual pass. Ajustes' main page still awaits
+its own. Movimientos lists every Programado on top of the current
 month, then the month by day with each day's total; its detail shows the
 comprobante (Ver · Reemplazar · Descargar · Quitar, or attach one) and
 deletes in two steps when the movement is ≥ $200.000 or has a receipt
@@ -31,7 +31,7 @@ override never recolored them) and its hero bars are data-driven (the
 mockup's are fixed heights). The mockup's "Transporte subió 82% frente a
 julio" alert has no rule in the specs, backend or Android yet.
 Several specs (`AjustesPage`,
-`ReportesPage`, `userService`, `unit/currency`,
+`userService`, `unit/currency`,
 `unit/backendCategories`) still use pre-taxonomy fixtures and fail.
 
 ## Development Server
@@ -98,7 +98,11 @@ Reportes** — plus **Ajustes** in the footer. Pre-v2 paths (`/overview`,
   selector here. Every figure comes from `summaryService.getReport`
   (backend `GET /summary/report`, the same one Android's Reportes uses);
   only Flujo de caja's projection of active Programados is built
-  client-side, with Inicio's `upcomingWithin` rule. The pre-v2 Analytics,
+  client-side, with Inicio's 14-day `upcomingWithin` rule. "En qué se fue
+  el dinero" toggles Categorías (with the month-over-month rise) and
+  Subcategorías (the report's `subcategories`, per leaf); income sources
+  are named "Subcategoría — De". Flujo de caja's Entradas/Salidas/Flujo
+  neto are the current month's, as in the mockup. The pre-v2 Analytics,
   Insights and Reports pages folded into it and are gone.
 - **Ajustes** — `AjustesPage` (profile card, Preferencias, Seguridad) plus
   one route per sub-view under `pages/ajustes/`: `/ajustes/perfil`,

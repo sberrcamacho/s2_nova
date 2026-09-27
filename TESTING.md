@@ -14,8 +14,8 @@ never claim NOT RUN work as passing).
 The phase write-ups below describe the original QA pass; their per-file
 counts predate v2. Since then:
 
-- **Web**: `cd web && pnpm test` — 148 tests in 30 files, **11 failing**
-  in 5 files (`pages/AjustesPage`, `pages/ReportesPage`, `services/userService`,
+- **Web**: `cd web && pnpm test` — 149 tests in 30 files, **10 failing**
+  in 4 files (`pages/AjustesPage`, `services/userService`,
   `unit/currency`, `unit/backendCategories`). They use fixtures and
   expectations written before the v2 data layer (pre-taxonomy category
   ids like `'other'`, the old COP/USD currency switch) and need rewriting
@@ -29,7 +29,7 @@ counts predate v2. Since then:
   + `unit/guestApi` guest mode; all pass.
 - **Backend**: v2 added `tests/routes/v2.spec.ts` (taxonomy, currencies,
   scheduled/repeating movements, custom budgets, goal plans); the whole
-  backend suite is 185 tests in 14 files, all passing. The per-file
+  backend suite is 186 tests in 14 files, all passing. The per-file
   counts in Phase 1 were not re-taken.
 - **Android**: unchanged since Phase 3.
 

@@ -148,6 +148,12 @@ describe("summary routes", () => {
         { categoryId: transport.id, amount: 200000, previousAmount: 100000, change: 100, rising: true },
         { categoryId: bills.id, amount: 100000, previousAmount: 0, change: null, rising: false },
       ]);
+      // Rows tagged with a parent only show under the parent in "Subcategorías".
+      expect(body.subcategories).toEqual([
+        { categoryId: food.id, amount: 300000 },
+        { categoryId: transport.id, amount: 200000 },
+        { categoryId: bills.id, amount: 100000 },
+      ]);
       expect(body.dailyAverage).toBe(28571);
       expect(body.peakWeekday).toBe(6);
       expect(body.fixedShare).toBe(14);
@@ -180,6 +186,31 @@ describe("summary routes", () => {
       const res = await app.inject({ method: "GET", url: "/api/v1/summary/report?today=2026-08-21", headers: authHeader(user) });
       expect(res.json().netWorth.lent).toEqual({ outstanding: 420000, people: 1, settled: 1 });
       expect(res.json().netWorth.borrowed).toEqual({ outstanding: 0, people: 0, settled: 0 });
+    });
+
+    it("groups this month's spending by leaf and names income sources by leaf and who paid", async () => {
+      const user = await createTestUser();
+      const wallet = await createAccount(user.id);
+      const [food, groceries, cafes, work, salary] = await Promise.all(
+        ["exp.food", "exp.food.groceries", "exp.food.cafes", "inc.work", "inc.work.salary"].map((slug) => categoryBySlug(slug)),
+      );
+      const base = { accountId: wallet.id, description: "x", date: "2026-08-10" };
+      await post(user, { ...base, type: "EXPENSE", categoryId: food.id, subcategoryId: groceries.id, amount: 168500 });
+      await post(user, { ...base, type: "EXPENSE", categoryId: food.id, subcategoryId: cafes.id, amount: 21000 });
+      await post(user, { ...base, type: "EXPENSE", categoryId: food.id, amount: 5000 });
+      await post(user, { ...base, type: "INCOME", categoryId: work.id, subcategoryId: salary.id, counterpartyName: "Grupo Éxito", amount: 4400000 });
+
+      const res = await app.inject({ method: "GET", url: "/api/v1/summary/report?range=3&today=2026-08-21", headers: authHeader(user) });
+      const body = res.json();
+      expect(body.categories).toEqual([{ categoryId: food.id, amount: 194500, previousAmount: 0, change: null, rising: false }]);
+      expect(body.subcategories).toEqual([
+        { categoryId: groceries.id, amount: 168500 },
+        { categoryId: cafes.id, amount: 21000 },
+        { categoryId: food.id, amount: 5000 },
+      ]);
+      expect(body.incomeSources).toEqual([
+        { categoryId: salary.id, merchant: "Grupo Éxito", amount: 4400000, percentage: 100, monthlyMin: 0, monthlyMax: 4400000 },
+      ]);
     });
 
     it("has empty figures for a new user and rejects other ranges", async () => {

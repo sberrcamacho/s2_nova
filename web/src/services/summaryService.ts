@@ -73,6 +73,12 @@ export interface ReportCategory {
   rising: boolean
 }
 
+// This month's spending per leaf (Reportes' "Subcategorías").
+export interface ReportLeaf {
+  category: CategoryId
+  amount: number
+}
+
 export interface IncomeSource {
   category: CategoryId
   merchant: string | null
@@ -95,6 +101,7 @@ export interface Report {
   totals: ReportTotals
   previousTotals: ReportTotals
   categories: ReportCategory[]
+  subcategories: ReportLeaf[]
   dailyAverage: number
   peakWeekday: number | null // 0 = Sunday
   fixedShare: number | null
@@ -103,16 +110,18 @@ export interface Report {
   netWorth: { wallets: number; lent: LoanSide; borrowed: LoanSide; history: { month: string; balance: number }[] }
 }
 
-type BackendReport = Omit<Report, 'categories' | 'incomeSources'> & {
+type BackendReport = Omit<Report, 'categories' | 'subcategories' | 'incomeSources'> & {
   categories: (Omit<ReportCategory, 'category'> & { categoryId: string })[]
+  subcategories?: { categoryId: string; amount: number }[]
   incomeSources: (Omit<IncomeSource, 'category'> & { categoryId: string })[]
 }
 
 export async function getReport(range: ReportRange, today: string = todayISO()): Promise<Report> {
   const body = await apiClient.get<BackendReport>(`/summary/report?range=${range}&today=${today}`)
-  const [categories, incomeSources] = await Promise.all([
+  const [categories, subcategories, incomeSources] = await Promise.all([
     Promise.all(body.categories.map(async ({ categoryId, ...row }) => ({ ...row, category: await categorySlugFor(categoryId) }))),
+    Promise.all((body.subcategories ?? []).map(async ({ categoryId, amount }) => ({ amount, category: await categorySlugFor(categoryId) }))),
     Promise.all(body.incomeSources.map(async ({ categoryId, ...row }) => ({ ...row, category: await categorySlugFor(categoryId) }))),
   ])
-  return { ...body, categories, incomeSources }
+  return { ...body, categories, subcategories, incomeSources }
 }

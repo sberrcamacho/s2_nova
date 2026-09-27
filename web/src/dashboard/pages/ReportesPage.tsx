@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { CategoryMark } from '@/components/v2/CategoryMark'
 import { Money, MoneyText } from '@/components/v2/Money'
 import { RowSkeletons, SkeletonBar, SyncBanner } from '@/components/v2/Rows'
 import { accountService } from '@/services/accountService'
@@ -9,6 +10,7 @@ import { useAppData } from '@/state/AppDataContext'
 import { useCurrency } from '@/state/useCurrency'
 import { useHideAmounts } from '@/state/useHideAmounts'
 import { useTranslation } from '@/state/useTranslation'
+import { categoryLabel, categoryName } from '@/lib/backendCategories'
 import { categoryColor } from '@/lib/categoryGlyphs'
 import { cn } from '@/lib/cn'
 import { todayISO, weekdayLabel } from '@/lib/date'
@@ -159,12 +161,20 @@ function barCeiling(values: number[]): number {
 }
 
 function SpendingTab({ report }: { report: Report | null }) {
-  const { t, tCategory, language } = useTranslation()
+  const { t, language } = useTranslation()
   const { format } = useCurrency()
   const { hidden } = useHideAmounts()
   const subtitle = useRangeSubtitle(report)
   const ceiling = report ? barCeiling(report.months.flatMap((m) => [m.income, m.expenses])) : 1
-  const top = report?.categories.slice(0, 5) ?? null
+  // "Categorías" (parents, with the month-over-month trend) or
+  // "Subcategorías" (leaves; parent-only rows under the parent's name).
+  const [level, setLevel] = useState<'parent' | 'sub'>('parent')
+  const top =
+    report === null
+      ? null
+      : level === 'parent'
+        ? report.categories.slice(0, 6).map((c) => ({ ...c, label: categoryName(c.category) }))
+        : report.subcategories.slice(0, 6).map((c) => ({ ...c, label: categoryLabel(c.category), rising: false, change: null }))
 
   return (
     <>
@@ -201,7 +211,23 @@ function SpendingTab({ report }: { report: Report | null }) {
         </Card>
 
         <Card>
-          <CardTitle title={t('rep.whereMoneyWent')} subtitle={t('rep.topCategories')} />
+          <div className="flex flex-wrap items-start justify-between gap-2.5">
+            <CardTitle title={t('rep.whereMoneyWent')} subtitle={fill(t('rep.sameCategories'), monthYear(report?.month ?? todayISO().slice(0, 7), language))} />
+            <div role="radiogroup" aria-label={t('rep.whereMoneyWent')} className="flex gap-0.5 rounded-full border border-v2-line bg-v2-surface2 p-[3px]">
+              {(['parent', 'sub'] as const).map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  role="radio"
+                  aria-checked={level === k}
+                  onClick={() => setLevel(k)}
+                  className={cn('cursor-pointer rounded-full px-[11px] py-[5px] text-[11.5px] font-bold', level === k ? 'bg-v2-accent text-white' : 'text-v2-dim')}
+                >
+                  {t(k === 'parent' ? 'rep.level.parent' : 'rep.level.sub')}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="mt-[18px] flex flex-col gap-3.5">
             {top === null ? (
               <RowSkeletons count={4} />
@@ -209,18 +235,21 @@ function SpendingTab({ report }: { report: Report | null }) {
               <div className="text-[12.5px] text-v2-dim">{t('rep.noSpending')}</div>
             ) : (
               top.map((c) => (
-                <div key={c.category}>
-                  <div className="mb-1.5 flex justify-between gap-2.5 text-[12.5px] font-bold">
-                    <span>{tCategory(c.category)}</span>
-                    <span className={cn('font-numeric', c.rising ? 'text-v2-neg' : 'text-v2-muted')}>
-                      <Money hidden={hidden} inline>
-                        {format(c.amount)}
-                      </Money>
-                      {c.rising && ` · +${c.change}%`}
-                    </span>
-                  </div>
-                  <div className="h-1.5 overflow-hidden rounded-[3px] bg-v2-line">
-                    <div className="h-full" style={{ width: `${Math.round((c.amount / top[0]!.amount) * 100)}%`, background: categoryColor(c.category) }} />
+                <div key={c.category} className="flex items-center gap-2.5">
+                  <CategoryMark category={c.category} box={26} />
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1.5 flex justify-between gap-2.5 text-[12.5px] font-bold">
+                      <span>{c.label}</span>
+                      <span className={cn('font-numeric', c.rising ? 'text-v2-neg' : 'text-v2-muted')}>
+                        <Money hidden={hidden} inline>
+                          {format(c.amount)}
+                        </Money>
+                        {c.rising && ` · +${c.change}%`}
+                      </span>
+                    </div>
+                    <div className="h-1.5 overflow-hidden rounded-[3px] bg-v2-line">
+                      <div className="h-full" style={{ width: `${Math.round((c.amount / top[0]!.amount) * 100)}%`, background: categoryColor(c.category) }} />
+                    </div>
                   </div>
                 </div>
               ))
@@ -257,14 +286,14 @@ function KpiValue({ report, numeric, children }: { report: Report | null; numeri
 }
 
 function IncomeTab({ report }: { report: Report | null }) {
-  const { t, tCategory, language } = useTranslation()
+  const { t, language } = useTranslation()
   const { format } = useCurrency()
   const { hidden } = useHideAmounts()
   const subtitle = useRangeSubtitle(report)
   const ceiling = report ? barCeiling(report.months.flatMap((m) => [m.income, m.expenses])) : 1
   const sources = report?.incomeSources ?? null
-  const salary = sources?.find((s) => s.category === 'salary')
-  const freelance = sources?.find((s) => s.category === 'freelance')
+  const salary = sources?.find((s) => s.category === 'inc.work.salary')
+  const freelance = sources?.find((s) => s.category === 'inc.work.freelance')
 
   return (
     <div className="grid grid-cols-1 gap-[18px] min-[1100px]:grid-cols-2">
@@ -279,7 +308,7 @@ function IncomeTab({ report }: { report: Report | null }) {
             sources.map((s) => (
               <div key={`${s.category}|${s.merchant ?? ''}`}>
                 <div className="mb-[7px] flex justify-between gap-2.5 text-[13px] font-bold">
-                  <span>{s.merchant ? `${tCategory(s.category)} — ${s.merchant}` : tCategory(s.category)}</span>
+                  <span>{s.merchant ? `${categoryName(s.category)} — ${s.merchant}` : categoryName(s.category)}</span>
                   <span className="font-numeric whitespace-nowrap">
                     <Money hidden={hidden} inline>
                       {format(s.amount)}
@@ -288,7 +317,16 @@ function IncomeTab({ report }: { report: Report | null }) {
                   </span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-[4px] bg-v2-line">
-                  <div className="h-full" style={{ width: `${s.percentage}%`, background: s.category === 'salary' ? 'var(--v2-pos)' : categoryColor(s.category) }} />
+                  <div
+                    className="h-full"
+                    // The mockup: salary in the positive green, the rest of
+                    // Trabajo in its color at 65%, anything else in its color.
+                    style={{
+                      width: `${s.percentage}%`,
+                      background: s.category === 'inc.work.salary' ? 'var(--v2-pos)' : categoryColor(s.category),
+                      opacity: s.category !== 'inc.work.salary' && s.category.startsWith('inc.work') ? 0.65 : 1,
+                    }}
+                  />
                 </div>
               </div>
             ))
@@ -334,14 +372,17 @@ function CashFlowTab({ report, wallets, series }: { report: Report | null; walle
   const { format } = useCurrency()
   const { hidden } = useHideAmounts()
   const today = todayISO()
-  const walletTotal = wallets?.reduce((s, w) => s + w.currentBalance, 0) ?? null
-  // Every active Programado's next occurrence, due-today first, applied to
-  // today's wallet total — Inicio's "Próximos 14 días" rule over a year.
-  const events = useMemo(() => (series && walletTotal !== null ? upcomingWithin(series, today, walletTotal, 366) : null), [series, walletTotal, today])
+  // Each wallet in the principal currency, as Inicio's balance.
+  const walletTotal = wallets?.reduce((s, w) => s + w.principalBalance, 0) ?? null
+  // Inicio's "Próximos 14 días": each active Programado's next occurrence,
+  // due-today first, applied to today's wallet total.
+  const events = useMemo(() => (series && walletTotal !== null ? upcomingWithin(series, today, walletTotal, 14) : null), [series, walletTotal, today])
   const payday = events?.findIndex((e) => e.series.type === 'income') ?? -1
   const beforePayday = events ? (payday >= 0 ? events.slice(0, payday) : events) : []
   const lowest = beforePayday.reduce<(typeof beforePayday)[number] | null>((low, e) => (low === null || e.running < low.running ? e : low), null)
-  const net = report?.totals.savings ?? 0
+  // The mockup's Entradas/Salidas/Flujo neto are the current month's.
+  const month = report?.months[report.months.length - 1]
+  const net = month?.net ?? 0
 
   return (
     <div className="flex flex-col gap-[18px]">
@@ -349,7 +390,7 @@ function CashFlowTab({ report, wallets, series }: { report: Report | null; walle
         <Kpi label={t('rep.inflows')} className="px-5 py-[18px]">
           {report ? (
             <Money hidden={hidden} className="mt-1.5 block text-[24px] font-extrabold tracking-[-.025em] text-v2-pos">
-              {format(report.totals.income)}
+              {format(month?.income ?? 0)}
             </Money>
           ) : (
             <SkeletonBar className="mt-2.5 h-6 w-3/5" />
@@ -358,7 +399,7 @@ function CashFlowTab({ report, wallets, series }: { report: Report | null; walle
         <Kpi label={t('rep.outflows')} className="px-5 py-[18px]">
           {report ? (
             <Money hidden={hidden} className="mt-1.5 block text-[24px] font-extrabold tracking-[-.025em] text-v2-neg">
-              {format(report.totals.expenses)}
+              {format(month?.expenses ?? 0)}
             </Money>
           ) : (
             <SkeletonBar className="mt-2.5 h-6 w-3/5" />
@@ -432,7 +473,7 @@ function CashFlowTab({ report, wallets, series }: { report: Report | null; walle
 
 function NetWorthTab({ report, wallets }: { report: Report | null; wallets: Wallet[] | null }) {
   const { t, language } = useTranslation()
-  const { format } = useCurrency()
+  const { format, formatIn } = useCurrency()
   const { hidden } = useHideAmounts()
   const history = report?.netWorth.history ?? []
   const peak = Math.max(1, ...history.map((h) => h.balance))
@@ -481,7 +522,7 @@ function NetWorthTab({ report, wallets }: { report: Report | null; wallets: Wall
                   <div className="text-[11px] text-v2-dim">{t(`inicio.walletKind.${walletKind(w.accountType)}` as TranslationKey)}</div>
                 </div>
                 <Money hidden={hidden} className="text-[14px] font-extrabold">
-                  {format(w.currentBalance)}
+                  {formatIn(w.currentBalance, w.currency)}
                 </Money>
               </div>
             ))

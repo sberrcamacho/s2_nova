@@ -721,6 +721,7 @@ function report(s: GuestState, range: number, today: string) {
   const byMonth = new Map<string, { income: number; expenses: number }>()
   const bucketOf = (k: string) => byMonth.get(k) ?? byMonth.set(k, { income: 0, expenses: 0 }).get(k)!
   const categoryMonth = new Map<string, number>()
+  const leafMonth = new Map<string, number>()
   const weekdays = Array.from({ length: 7 }, () => 0)
   const fixedIds = new Set(['exp.housing', 'exp.utilities', 'exp.debt', ...s.series.filter((x) => x.active && x.type === 'EXPENSE').map((x) => x.categoryId)])
   let rangeFixed = 0
@@ -740,15 +741,20 @@ function report(s: GuestState, range: number, today: string) {
       bucket.expenses += amount
       const key = `${t.categoryId}|${month}`
       categoryMonth.set(key, (categoryMonth.get(key) ?? 0) + amount)
+      if (month === current) {
+        const leaf = t.subcategoryId ?? t.categoryId
+        leafMonth.set(leaf, (leafMonth.get(leaf) ?? 0) + amount)
+      }
     }
     if (!rangeKeys.includes(month)) continue
     if (t.type === 'EXPENSE') {
       weekdays[parse(t.date).getDay()] += amount
       if (fixedIds.has(t.categoryId)) rangeFixed += amount
     } else {
-      const merchant = t.merchant?.trim() || null
-      const key = `${t.categoryId}|${merchant ?? ''}`
-      const source = sources.get(key) ?? sources.set(key, { categoryId: t.categoryId, merchant, amount: 0, monthly: new Map() }).get(key)!
+      const leaf = t.subcategoryId ?? t.categoryId
+      const merchant = t.counterpartyName?.trim() || t.merchant?.trim() || null
+      const key = `${leaf}|${merchant ?? ''}`
+      const source = sources.get(key) ?? sources.set(key, { categoryId: leaf, merchant, amount: 0, monthly: new Map() }).get(key)!
       source.amount += amount
       source.monthly.set(month, (source.monthly.get(month) ?? 0) + amount)
     }
@@ -802,6 +808,7 @@ function report(s: GuestState, range: number, today: string) {
         return { categoryId, amount, previousAmount, change, rising: change !== null && change >= 50 }
       })
       .sort((a, b) => b.amount - a.amount),
+    subcategories: [...leafMonth.entries()].map(([categoryId, amount]) => ({ categoryId, amount })).sort((a, b) => b.amount - a.amount),
     dailyAverage: Math.round((byMonth.get(current)?.expenses ?? 0) / parse(today).getDate()),
     peakWeekday: weekdays[peak] > 0 ? peak : null,
     fixedShare: totals.expenses > 0 ? Math.round((rangeFixed / totals.expenses) * 100) : null,

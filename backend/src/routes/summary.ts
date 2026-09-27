@@ -13,7 +13,17 @@ async function principalRows(userId: string, where: Prisma.TransactionWhereInput
   const [rows, wallets, principal] = await Promise.all([
     prisma.transaction.findMany({
       where: { userId, ...where },
-      select: { type: true, categoryId: true, merchant: true, transactionDate: true, amountMinor: true, walletAmountMinor: true, accountId: true },
+      select: {
+        type: true,
+        categoryId: true,
+        subcategoryId: true,
+        merchant: true,
+        counterpartyName: true,
+        transactionDate: true,
+        amountMinor: true,
+        walletAmountMinor: true,
+        accountId: true,
+      },
     }),
     prisma.account.findMany({ where: { userId }, select: { id: true, currency: true } }),
     principalOf(userId),
@@ -22,7 +32,9 @@ async function principalRows(userId: string, where: Prisma.TransactionWhereInput
   return rows.map((row) => ({
     type: row.type,
     categoryId: row.categoryId,
+    subcategoryId: row.subcategoryId,
     merchant: row.merchant,
+    counterpartyName: row.counterpartyName,
     transactionDate: row.transactionDate,
     _sum: { amountMinor: convertMinor(row.walletAmountMinor ?? row.amountMinor, currencyOf.get(row.accountId) ?? principal, principal) },
   }));
@@ -181,6 +193,10 @@ export async function summaryRoutes(app: FastifyInstance) {
       return bucket;
     };
     const categoryMonth = new Map<string, bigint>(); // `${categoryId}|${month}`
+    // This month's spending per leaf (the subcategory, or the category for
+    // rows tagged with the parent only) for the "Subcategorías" view
+    // (CATEGORY_SYSTEM.md: subcategory charts group by leaf).
+    const leafMonth = new Map<string, bigint>();
     const rangeKeySet = new Set(rangeKeys);
     const weekdays = Array.from({ length: 7 }, () => 0n);
     const fixedIds = new Set([...fixedCategories.map((c) => c.id), ...series.map((s) => s.categoryId)]);
@@ -196,16 +212,23 @@ export async function summaryRoutes(app: FastifyInstance) {
       if (row.type === "EXPENSE") {
         const key = `${row.categoryId}|${month}`;
         categoryMonth.set(key, (categoryMonth.get(key) ?? 0n) + amount);
+        if (month === currentMonth) {
+          const leaf = row.subcategoryId ?? row.categoryId;
+          leafMonth.set(leaf, (leafMonth.get(leaf) ?? 0n) + amount);
+        }
       }
       if (!rangeKeySet.has(month)) continue;
       if (row.type === "EXPENSE") {
         weekdays[row.transactionDate.getUTCDay()]! += amount;
         if (fixedIds.has(row.categoryId)) rangeFixed += amount;
       } else {
-        const merchant = row.merchant?.trim() || null;
-        const key = `${row.categoryId}|${merchant ?? ""}`;
+        // A source is the leaf category plus who paid ("De", else the
+        // merchant): "Salario — Grupo Éxito".
+        const leaf = row.subcategoryId ?? row.categoryId;
+        const merchant = row.counterpartyName?.trim() || row.merchant?.trim() || null;
+        const key = `${leaf}|${merchant ?? ""}`;
         let source = sources.get(key);
-        if (!source) sources.set(key, (source = { categoryId: row.categoryId, merchant, amount: 0n, monthly: new Map() }));
+        if (!source) sources.set(key, (source = { categoryId: leaf, merchant, amount: 0n, monthly: new Map() }));
         source.amount += amount;
         source.monthly.set(month, (source.monthly.get(month) ?? 0n) + amount);
       }
@@ -280,6 +303,9 @@ export async function summaryRoutes(app: FastifyInstance) {
       totals,
       previousTotals: sumOf(previousKeys),
       categories: monthCategories,
+      subcategories: [...leafMonth.entries()]
+        .map(([categoryId, amount]) => ({ categoryId, amount }))
+        .sort((a, b) => (a.amount === b.amount ? 0 : a.amount > b.amount ? -1 : 1)),
       dailyAverage: monthExpenses / BigInt(today.getUTCDate()),
       peakWeekday: weekdays[peak]! > 0n ? peak : null,
       fixedShare: totals.expenses > 0n ? Math.round((Number(rangeFixed) / Number(totals.expenses)) * 100) : null,
