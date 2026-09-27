@@ -14,6 +14,10 @@ describe('mapMeResponse', () => {
       email: 'ada@example.com',
       createdAt: '2024-03-05T12:00:00.000Z',
       hasPassword: true,
+      passwordChangedAt: null,
+      phone: null,
+      city: null,
+      principalCurrency: 'USD',
       preferences: {
         language: 'en',
         currency: 'USD',

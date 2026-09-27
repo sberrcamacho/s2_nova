@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatCOP, formatCOPCompact, formatCurrency, formatUSD, formatUSDCompact, COP_PER_USD } from '@/lib/currency'
+import { currencyInfo, formatCOP, formatCurrency, formatCurrencyCompact, formatMoney, referenceRate } from '@/lib/currency'
 
 describe('formatCOP', () => {
   it('groups thousands with a period and no decimals', () => {
@@ -20,40 +20,52 @@ describe('formatCOP', () => {
   })
 })
 
-describe('formatUSD', () => {
-  it('converts from the underlying COP amount using the fixed reference rate', () => {
-    expect(formatUSD(COP_PER_USD * 10)).toBe('$10.00')
+// The mockup's fmtCur (CURRENCIES_AND_WALLETS.md §2): the currency's
+// symbol, Colombian grouping, decimals only when the value has them.
+describe('formatMoney', () => {
+  it("uses each currency's symbol", () => {
+    expect(formatMoney(168_500, 'COP')).toBe('$168.500')
+    expect(formatMoney(5.99, 'USD')).toBe('US$5,99')
+    expect(formatMoney(320, 'USD')).toBe('US$320')
+    expect(formatMoney(12, 'EUR')).toBe('€12')
   })
 
-  it('always shows exactly two decimals', () => {
-    expect(formatUSD(COP_PER_USD * 1.005)).toBe('$1.01')
+  it('signs with a true minus, and a plus only when asked', () => {
+    expect(formatMoney(-21_000)).toBe('−$21.000')
+    expect(formatMoney(200, 'USD', { signed: true })).toBe('+US$200')
   })
 })
 
 describe('formatCurrency', () => {
-  it('dispatches to formatCOP for COP and formatUSD for USD', () => {
-    expect(formatCurrency(4000, 'COP')).toBe('$4.000')
-    expect(formatCurrency(4000, 'USD')).toBe('$1.00')
+  it('keeps whole pesos for COP and the symbol format for other currencies', () => {
+    expect(formatCurrency(4000.4, 'COP')).toBe('$4.000')
+    expect(formatCurrency(4000, 'USD')).toBe('US$4.000')
   })
 })
 
-describe('formatCOPCompact', () => {
+describe('formatCurrencyCompact', () => {
   it('renders millions with one decimal below 10M and none at/above it', () => {
-    expect(formatCOPCompact(2_500_000)).toBe('$2,5M')
-    expect(formatCOPCompact(12_000_000)).toBe('$12M')
+    expect(formatCurrencyCompact(2_500_000, 'COP')).toBe('$2,5M')
+    expect(formatCurrencyCompact(12_000_000, 'COP')).toBe('$12M')
   })
 
   it('renders thousands as a rounded K value', () => {
-    expect(formatCOPCompact(45_000)).toBe('$45K')
+    expect(formatCurrencyCompact(45_000, 'COP')).toBe('$45K')
   })
 
   it('falls back to full formatting below 1,000', () => {
-    expect(formatCOPCompact(500)).toBe('$500')
+    expect(formatCurrencyCompact(500, 'COP')).toBe('$500')
   })
 })
 
-describe('formatUSDCompact', () => {
-  it('converts to USD before applying compact thresholds', () => {
-    expect(formatUSDCompact(COP_PER_USD * 2_000_000)).toBe('$2.0M')
+describe('referenceRate', () => {
+  it('converts through the COP reference rates', () => {
+    expect(referenceRate('USD', 'COP')).toBe(3950)
+    expect(referenceRate('COP', 'COP')).toBe(1)
+    expect(referenceRate('EUR', 'USD')).toBeCloseTo(4300 / 3950)
+  })
+
+  it('falls back to COP for an unknown code', () => {
+    expect(currencyInfo('XYZ').code).toBe('COP')
   })
 })

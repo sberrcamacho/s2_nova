@@ -81,8 +81,7 @@ run, mini-guides, barcode scanning.
 | First run (`ONBOARDING.md` §2: moneda principal › primera billetera) | Done, visually verified against the mockup |
 | Guest mode (`ONBOARDING.md` §1: in-memory example account, "Modo invitado" banner) | Done, visually verified against the mockup |
 
-Web test suite: 149 tests, 9 failing outside the migrated v2 screens because their fixtures
-predate the v2 data layer (details in `TESTING.md`).
+Web test suite: 150 tests in 30 files, all passing (details in `TESTING.md`).
 
 ## Deployment
 

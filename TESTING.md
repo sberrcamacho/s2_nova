@@ -14,13 +14,9 @@ never claim NOT RUN work as passing).
 The phase write-ups below describe the original QA pass; their per-file
 counts predate v2. Since then:
 
-- **Web**: `cd web && pnpm test` — 149 tests in 30 files, **9 failing**
-  in 3 files (`services/userService`,
-  `unit/currency`, `unit/backendCategories`). They use fixtures and
-  expectations written before the v2 data layer (pre-taxonomy category
-  ids like `'other'`, the old COP/USD currency switch) and need rewriting
-  against the taxonomy ids and `lib/currency.ts`'s `fmtCur` format; check
-  each one before assuming its screen is fine. `pages/PlanesPage` covers
+- **Web**: `cd web && pnpm test` — 150 tests in 30 files, all passing.
+  Every v2 screen has its spec (`pages/*`, taxonomy ids and
+  `lib/currency.ts`'s `fmtCur` format throughout). `pages/PlanesPage` covers
   the v2 Planes modals (budgets, goals, loans, abonos) and
   `forms/NewTransactionPanel` + `unit/nuevoMovimiento` the v2 Nuevo
   movimiento, `pages/BilleterasPage`, `pages/MonedasPage` and

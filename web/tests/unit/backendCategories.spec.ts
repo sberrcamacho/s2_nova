@@ -27,9 +27,9 @@ describe('backendCategories', () => {
     expect(calls).toBe(1)
   })
 
-  it('falls back to "other" for an unknown backend category id', async () => {
+  it('falls back to "exp.other" for an unknown backend category id', async () => {
     server.use(http.get(`${BASE}/categories`, () => HttpResponse.json(CATEGORIES)))
-    expect(await categorySlugFor('does-not-exist')).toBe('other')
+    expect(await categorySlugFor('does-not-exist')).toBe('exp.other')
   })
 
   it('throws for an unknown slug rather than silently returning undefined', async () => {

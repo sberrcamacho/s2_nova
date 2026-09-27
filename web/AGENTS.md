@@ -29,8 +29,7 @@ optional action). Inicio's goal rings keep the grey the mockup draws (its v2
 override never recolored them) and its hero bars are data-driven (the
 mockup's are fixed heights). The mockup's "Transporte subió 82% frente a
 julio" alert has no rule in the specs, backend or Android yet.
-Several specs (`userService`, `unit/currency`,
-`unit/backendCategories`) still use pre-taxonomy fixtures and fail.
+The whole test suite passes.
 
 ## Development Server
 
