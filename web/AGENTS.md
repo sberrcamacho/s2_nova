@@ -19,7 +19,8 @@ by one; a screen not yet migrated is unverified.
 layer (taxonomy, multi-currency), Inicio, Movimientos, Planes
 (Presupuestos · Metas · Préstamos), Reportes, Ajustes (profile, password,
 sessions, deletion, Monedas, Categorías), Nuevo movimiento,
-Billeteras. Still missing: guest mode and the first-run card (ONBOARDING.md), mini-guides.
+Billeteras, mini-guides. Still missing: guest mode and the first run
+(ONBOARDING.md).
 Several specs (`AjustesPage`,
 `InicioPage`, `ReportesPage`, `userService`, `unit/currency`,
 `unit/backendCategories`) still use pre-taxonomy fixtures and fail.
@@ -107,6 +108,13 @@ Reportes** — plus **Ajustes** in the footer. Pre-v2 paths (`/overview`,
   endpoints (`/me/sessions`, `/me/footprint`, `/me/export`, `DELETE /me`);
   the password rules shown live are re-checked by `POST /me/password`.
   The sidebar's avatar and name open `/ajustes/perfil`, as in the mockup.
+
+Mini-guides (`dashboard/components/GuideCard.tsx`, ONBOARDING.md §3):
+one card bottom-right on Inicio, Movimientos, Planes, Reportes and
+Billeteras until "Entendido"; "Omitir guías" turns them off and
+Ajustes › "Ver otra vez" resets them. `guidesSeen`/`guidesOff` are server
+preferences shared with Android. The card hides while anything marked
+`aria-modal` is open.
 
 Toasts (`components/ui/Toast.tsx`) follow the mockup: one inverted pill
 at the bottom centre, 2.6 s, the same for confirmations and errors.

@@ -77,9 +77,10 @@ run, mini-guides, barcode scanning.
 | Billeteras page (sidebar entry + modal, wallet currency) | Done, visually verified against the mockup |
 | Ajustes › Monedas (principal, add/remove with two-step confirmation) | Done, visually verified against the mockup |
 | Ajustes › Categorías (rename, icon, hide, custom nodes, two-step delete) | Done, visually verified against the mockup |
-| Guest mode, first-run card, mini-guides (`ONBOARDING.md`) | **Pending** |
+| Mini-guides (`ONBOARDING.md` §3, `guidesSeen` shared with Android) | Done, visually verified against the mockup |
+| Guest mode, first run (`ONBOARDING.md` §1–2) | **Pending** |
 
-Web test suite: 135 tests, 13 failing outside the migrated v2 screens because their fixtures
+Web test suite: 138 tests, 13 failing outside the migrated v2 screens because their fixtures
 predate the v2 data layer (details in `TESTING.md`).
 
 ## Deployment

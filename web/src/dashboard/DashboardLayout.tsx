@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { Sidebar } from '@/dashboard/components/Sidebar'
+import { GuideCard } from '@/dashboard/components/GuideCard'
 import { Header } from '@/dashboard/components/Header'
 import { NewTransactionPanel } from '@/components/panels/NewTransactionPanel'
 import { useTranslation } from '@/state/useTranslation'
@@ -55,6 +56,7 @@ export function DashboardLayout() {
         </div>
       </div>
       {newTxOpen && <NewTransactionPanel onClose={closeNewTx} />}
+      <GuideCard />
     </>
   )
 }
