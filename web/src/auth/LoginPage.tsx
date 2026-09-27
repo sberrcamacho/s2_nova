@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -150,8 +150,17 @@ function RememberMeCheckbox({ checked, onChange }: { checked: boolean; onChange:
   )
 }
 
+// The mockup's "enter" glyph (IC.enter).
+function EnterIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-none text-v2-muted" aria-hidden="true">
+      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4 M10 17l5-5-5-5 M15 12H3" />
+    </svg>
+  )
+}
+
 export default function LoginPage() {
-  const { login, loginWithGoogle, error, clearError, isSubmitting } = useAuth()
+  const { user, login, loginWithGoogle, enterGuest, logout, error, clearError, isSubmitting } = useAuth()
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
@@ -166,6 +175,18 @@ export default function LoginPage() {
   // it is what replays the `animate-shake` CSS animation, since re-applying
   // the same class name a second time is a no-op.
   const [shakeKey, setShakeKey] = useState(0)
+
+  // Arriving here ends a guest session (nothing is kept). On mount only, so
+  // "Continuar como invitado" on this same page isn't undone.
+  useEffect(() => {
+    if (user?.isGuest) logout()
+  }, [])
+
+  const onGuest = async () => {
+    clearError()
+    await enterGuest()
+    navigate('/inicio', { replace: true })
+  }
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -334,6 +355,16 @@ export default function LoginPage() {
               {t('auth.submitLogin')}
             </Button>
           </form>
+
+          <button
+            type="button"
+            onClick={() => void onGuest()}
+            className="flex h-12 cursor-pointer items-center justify-center gap-[9px] rounded-[12px] border border-v2-line2 text-[13.5px] font-bold text-v2-text hover:border-v2-accent2"
+          >
+            <EnterIcon />
+            Continuar como invitado
+          </button>
+          <div className="-mt-2 text-center text-[11.5px] text-v2-dim [line-height:normal]">Explora una cuenta de ejemplo. No se guarda nada.</div>
 
           <div className="text-center text-xs" style={{ color: 'var(--color-login-text-muted)' }}>
             {t('auth.noAccount')}{' '}

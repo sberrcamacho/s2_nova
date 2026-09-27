@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { apiClient } from '@/lib/apiClient'
+import { apiClient, setGuestHandler } from '@/lib/apiClient'
 import { resetCategoryCache } from '@/lib/backendCategories'
+import { createGuestApi } from '@/lib/guestApi'
 import { authService } from '@/services/authService'
 import { userService } from '@/services/userService'
 import type { AuthCredentials, RegisterInput, User } from '@/types'
@@ -14,6 +15,7 @@ interface AuthContextValue {
   login: (credentials: AuthCredentials) => Promise<boolean>
   register: (input: RegisterInput) => Promise<boolean>
   loginWithGoogle: (idToken: string) => Promise<boolean>
+  enterGuest: () => Promise<void>
   logout: () => void
   clearError: () => void
   updateUser: (patch: Partial<User>) => void
@@ -97,8 +99,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsSubmitting(false)
         }
       },
+      // "Continuar como invitado" (ONBOARDING.md §1): the example account,
+      // answered in memory by lib/guestApi.ts until the guest signs out.
+      enterGuest: async () => {
+        setGuestHandler(createGuestApi())
+        resetCategoryCache()
+        const me = await userService.getCurrentUser()
+        setUser({ ...me, isGuest: true })
+      },
       logout: () => {
         void authService.logout()
+        setGuestHandler(null)
         apiClient.setAccessToken(null)
         resetCategoryCache()
         setUser(null)

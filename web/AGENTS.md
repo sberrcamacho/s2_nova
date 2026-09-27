@@ -19,8 +19,9 @@ by one; a screen not yet migrated is unverified.
 layer (taxonomy, multi-currency), Inicio, Movimientos, Planes
 (Presupuestos · Metas · Préstamos), Reportes, Ajustes (profile, password,
 sessions, deletion, Monedas, Categorías), Nuevo movimiento,
-Billeteras, mini-guides, first run. Still missing: guest mode
-(ONBOARDING.md §1).
+Billeteras, mini-guides, first run, guest mode. Inicio, Movimientos,
+Reportes and Ajustes' main page still await their v2 visual pass (e.g.
+Inicio's first row is `1.35fr 1fr`; the mockup splits it evenly).
 Several specs (`AjustesPage`,
 `InicioPage`, `ReportesPage`, `userService`, `unit/currency`,
 `unit/backendCategories`) still use pre-taxonomy fixtures and fail.
@@ -118,6 +119,18 @@ the principal is saved with the wallet (`PUT /me/currencies/principal`
 only works before any wallet exists), then the preference is set and the
 user lands on Inicio. The back arrow on step 1 signs out to Crear cuenta.
 An older account that already has wallets is just marked done.
+
+Guest mode (`lib/guestApi.ts`, ONBOARDING.md §1): Login's "Continuar como
+invitado" calls `AuthContext.enterGuest()`, which installs an in-memory
+stand-in for the backend behind `apiClient` (`setGuestHandler`): every
+service call is answered locally with the backend's wire shapes and
+nothing reaches the server. It holds the mockup's example account (the
+same seed as Android's `DemoData`, plus eleven earlier months from the
+mockup's `BAR_DATA` so the charts have a history) and mirrors the
+backend's balance, budget, goal, alert and summary rules, so everything is
+interactive. `user.isGuest` shows the "Modo invitado" banner above every
+page (`DashboardLayout`); guides are on. Signing out, reloading, or
+reaching Login/Crear cuenta (the banner's button) drops the account.
 
 Mini-guides (`dashboard/components/GuideCard.tsx`, ONBOARDING.md §3):
 one card bottom-right on Inicio, Movimientos, Planes, Reportes and

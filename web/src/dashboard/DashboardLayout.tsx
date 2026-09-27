@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Sidebar } from '@/dashboard/components/Sidebar'
 import { GuideCard } from '@/dashboard/components/GuideCard'
 import { Header } from '@/dashboard/components/Header'
 import { NewTransactionPanel } from '@/components/panels/NewTransactionPanel'
+import { useAuth } from '@/state/AuthContext'
 import { useTranslation } from '@/state/useTranslation'
 import type { TranslationKey } from '@/lib/i18n/translations'
 
@@ -23,7 +24,25 @@ function isTyping(target: EventTarget | null): boolean {
   return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable)
 }
 
+// "Modo invitado" (ONBOARDING.md §1), above every page. "Crear cuenta"
+// leaves the example account on the way (RegisterPage signs the guest out).
+function GuestBanner() {
+  const navigate = useNavigate()
+  return (
+    <div className="mx-7 mt-[18px] flex items-center gap-3.5 rounded-[14px] border border-[rgba(108,92,231,.35)] bg-[rgba(108,92,231,.12)] px-4 py-3">
+      <div className="min-w-0 flex-1">
+        <span className="text-[12.5px] font-extrabold">Modo invitado.</span>{' '}
+        <span className="text-[12px] text-v2-muted">Estás usando datos de ejemplo. No se guarda nada.</span>
+      </div>
+      <button type="button" onClick={() => navigate('/register')} className="cursor-pointer rounded-[10px] bg-v2-accent px-3.5 py-2 text-[12px] font-extrabold text-white">
+        Crear cuenta
+      </button>
+    </div>
+  )
+}
+
 export function DashboardLayout() {
+  const { user } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [newTxOpen, setNewTxOpen] = useState(false)
   const location = useLocation()
@@ -50,6 +69,7 @@ export function DashboardLayout() {
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
           <Header title={title} onMenuClick={() => setSidebarOpen(true)} onNewTransaction={() => setNewTxOpen(true)} />
+          {user?.isGuest && <GuestBanner />}
           <main className="flex-1">
             <Outlet />
           </main>

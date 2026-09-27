@@ -14,7 +14,7 @@ never claim NOT RUN work as passing).
 The phase write-ups below describe the original QA pass; their per-file
 counts predate v2. Since then:
 
-- **Web**: `cd web && pnpm test` — 141 tests in 28 files, **13 failing**
+- **Web**: `cd web && pnpm test` — 148 tests in 30 files, **13 failing**
   in 6 files (`pages/AjustesPage`,
   `pages/InicioPage`, `pages/ReportesPage`, `services/userService`,
   `unit/currency`, `unit/backendCategories`). They use fixtures and
@@ -26,7 +26,8 @@ counts predate v2. Since then:
   `forms/NewTransactionPanel` + `unit/nuevoMovimiento` the v2 Nuevo
   movimiento, `pages/BilleterasPage`, `pages/MonedasPage` and
   `pages/CategoriasPage` the Billeteras page and Ajustes › Monedas and
-  Categorías, `components/GuideCard` the mini-guides; all pass.
+  Categorías, `components/GuideCard` the mini-guides, `pages/GuestMode`
+  + `unit/guestApi` guest mode; all pass.
 - **Backend**: v2 added `tests/routes/v2.spec.ts` (taxonomy, currencies,
   scheduled/repeating movements, custom budgets, goal plans); the whole
   backend suite is 185 tests in 14 files, all passing. The per-file

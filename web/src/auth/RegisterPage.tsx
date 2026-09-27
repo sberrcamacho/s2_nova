@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -164,7 +164,13 @@ function PasswordStrengthMeter({ password }: { password: string }) {
 }
 
 export default function RegisterPage() {
-  const { register, loginWithGoogle, error, clearError, isSubmitting } = useAuth()
+  const { user, register, loginWithGoogle, logout, error, clearError, isSubmitting } = useAuth()
+
+  // The guest banner's "Crear cuenta" lands here: the example account ends
+  // (nothing is kept) and a real one starts.
+  useEffect(() => {
+    if (user?.isGuest) logout()
+  }, [])
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [name, setName] = useState('')

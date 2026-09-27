@@ -2,8 +2,8 @@
 // through (CATEGORY_SYSTEM.md). Nodes are keyed by the taxonomy's stable
 // dotted id (== the backend's Category.slug, e.g. 'exp.food.groceries');
 // the backend row's UUID is only used on the wire (categoryIdFor /
-// categorySlugFor). Until GET /categories loads — and in guest mode — the
-// bundled taxonomy stands in. Components subscribe with useCategories().
+// categorySlugFor). Until GET /categories loads, the bundled taxonomy
+// stands in. Components subscribe with useCategories().
 import { useSyncExternalStore } from 'react'
 import { apiClient } from '@/lib/apiClient'
 import { TAX_NODES, TAX_TRANSFER, TAX_VIS, taxNode, visColor } from '@/lib/taxonomy'
@@ -88,10 +88,8 @@ function toNodes(rows: BackendCategory[]): CategoryNode[] {
 }
 
 let loading: Promise<void> | null = null
-let guest = false
 
 function load(): Promise<void> {
-  if (guest) return Promise.resolve()
   if (!loading) {
     loading = apiClient
       .get<BackendCategory[]>('/categories')
@@ -108,21 +106,6 @@ function load(): Promise<void> {
 export async function refreshCategories(): Promise<void> {
   loading = null
   await load()
-}
-
-// Guest mode: the bundled taxonomy, editable locally.
-export function setCategoryGuest(on: boolean) {
-  guest = on
-  loading = null
-  publish(bundled())
-}
-
-export function isCategoryGuest(): boolean {
-  return guest
-}
-
-export function replaceLocalCategories(next: CategoryNode[]) {
-  publish(next)
 }
 
 export async function categoryIdFor(slug: CategoryId): Promise<string> {
@@ -156,7 +139,6 @@ export async function movementCategory(categoryId: string, subcategoryId: string
 
 export function resetCategoryCache() {
   loading = null
-  guest = false
   publish(bundled())
 }
 

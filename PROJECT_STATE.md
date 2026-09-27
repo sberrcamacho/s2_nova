@@ -79,9 +79,9 @@ run, mini-guides, barcode scanning.
 | Ajustes › Categorías (rename, icon, hide, custom nodes, two-step delete) | Done, visually verified against the mockup |
 | Mini-guides (`ONBOARDING.md` §3, `guidesSeen` shared with Android) | Done, visually verified against the mockup |
 | First run (`ONBOARDING.md` §2: moneda principal › primera billetera) | Done, visually verified against the mockup |
-| Guest mode (`ONBOARDING.md` §1) | **Pending** |
+| Guest mode (`ONBOARDING.md` §1: in-memory example account, "Modo invitado" banner) | Done, visually verified against the mockup |
 
-Web test suite: 141 tests, 13 failing outside the migrated v2 screens because their fixtures
+Web test suite: 148 tests, 13 failing outside the migrated v2 screens because their fixtures
 predate the v2 data layer (details in `TESTING.md`).
 
 ## Deployment
