@@ -14,8 +14,8 @@ never claim NOT RUN work as passing).
 The phase write-ups below describe the original QA pass; their per-file
 counts predate v2. Since then:
 
-- **Web**: `cd web && pnpm test` — 149 tests in 30 files, **10 failing**
-  in 4 files (`pages/AjustesPage`, `services/userService`,
+- **Web**: `cd web && pnpm test` — 149 tests in 30 files, **9 failing**
+  in 3 files (`services/userService`,
   `unit/currency`, `unit/backendCategories`). They use fixtures and
   expectations written before the v2 data layer (pre-taxonomy category
   ids like `'other'`, the old COP/USD currency switch) and need rewriting

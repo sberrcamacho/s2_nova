@@ -14,17 +14,19 @@ const SESSIONS = [
 ]
 
 describe('Ajustes', () => {
-  it('shows the profile, the wallet total in the currency line and the open sessions', async () => {
+  it('shows the profile, the currencies, the categories and the open sessions', async () => {
     mockSession()
+    const currency = (code: string, isPrincipal: boolean) => ({ code, name: code, symbol: '$', decimals: 0, isPrincipal, rate: 1, wallets: 0 })
     server.use(
-      http.get(`${BASE}/accounts`, () => HttpResponse.json([{ id: 'w1', name: 'Nequi', type: 'BANK_DEBIT', currentBalance: 16_147_300, initialBalance: 0 }])),
+      http.get(`${BASE}/me/currencies`, () => HttpResponse.json([currency('COP', true), currency('USD', false), currency('EUR', false)])),
       http.get(`${BASE}/me/sessions`, () => HttpResponse.json(SESSIONS)),
     )
     renderApp(<AjustesPage />, { route: '/ajustes' })
 
     expect(await screen.findByText('Ada Lovelace')).toBeInTheDocument()
     expect(screen.getByText('Miembro desde marzo 2024')).toBeInTheDocument()
-    expect(await screen.findByText('Peso colombiano, sin decimales · $16.147.300')).toBeInTheDocument()
+    expect(await screen.findByText('COP principal · USD, EUR')).toBeInTheDocument()
+    expect(await screen.findByText('14 de gasto · 7 de ingreso')).toBeInTheDocument()
     expect(await screen.findByText('Este navegador · S2 Nova app · Pixel 8')).toBeInTheDocument()
   })
 

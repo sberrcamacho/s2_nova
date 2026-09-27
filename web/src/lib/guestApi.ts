@@ -153,7 +153,10 @@ interface GuestState {
     city: string | null
     createdAt: string
     preferences: Row & { guidesSeen: string[]; guidesOff: boolean }
+    passwordChangedAt: string
   }
+  // The mockup's Ajustes › Sesiones activas.
+  sessions: { id: string; device: string | null; kind: 'desktop' | 'phone' | 'tablet'; lastActiveAt: string; current: boolean }[]
   principal: string
   currencies: string[]
   categories: GCategory[]
@@ -396,6 +399,8 @@ function seed(): GuestState {
       phone: null,
       city: null,
       createdAt: `${today}T12:00:00.000Z`,
+      // "Cambiada hace 4 meses", as in the mockup.
+      passwordChangedAt: new Date(Date.now() - 122 * 86_400_000).toISOString(),
       // Guides are on for guests.
       preferences: {
         language: 'es',
@@ -410,6 +415,11 @@ function seed(): GuestState {
         guidesOff: false,
       },
     },
+    sessions: [
+      { id: 'guest-session-1', device: null, kind: 'desktop', lastActiveAt: new Date().toISOString(), current: true },
+      { id: 'guest-session-2', device: 'S2 Nova app · Pixel 8', kind: 'phone', lastActiveAt: new Date(Date.now() - 2 * 3_600_000).toISOString(), current: false },
+      { id: 'guest-session-3', device: 'Safari · iPad', kind: 'tablet', lastActiveAt: new Date(Date.now() - 3 * 86_400_000).toISOString(), current: false },
+    ],
     principal: 'COP',
     currencies: ['COP', 'USD', 'EUR'],
     categories,
@@ -967,7 +977,7 @@ function listCurrencies(s: GuestState) {
 }
 
 function me(s: GuestState) {
-  return { id: 'guest', ...s.me, hasPassword: false, passwordChangedAt: null, principalCurrency: s.principal }
+  return { id: 'guest', ...s.me, hasPassword: true, principalCurrency: s.principal }
 }
 
 function serializeAccount(s: GuestState, a: GAccount) {
@@ -1285,8 +1295,15 @@ function route(s: GuestState, method: Method, path: string, body: Row): unknown 
     Object.assign(s.me.preferences, body)
     return undefined
   }
-  if (is('GET', '/me/sessions')) return [{ id: 'guest', device: null, kind: 'desktop', lastActiveAt: new Date().toISOString(), current: true }]
-  if (is('DELETE', '/me/sessions')) return undefined
+  if (is('GET', '/me/sessions')) return s.sessions
+  if (is('DELETE', '/me/sessions')) {
+    s.sessions = s.sessions.filter((x) => x.current)
+    return undefined
+  }
+  if (is('DELETE', '/me/sessions/:id')) {
+    s.sessions = s.sessions.filter((x) => x.current || x.id !== p[2])
+    return undefined
+  }
   if (is('GET', '/me/footprint')) {
     return {
       transactions: s.txs.length,
