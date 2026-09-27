@@ -19,11 +19,14 @@ by one; a screen not yet migrated is unverified.
 layer (taxonomy, multi-currency), Inicio, Movimientos, Planes
 (Presupuestos · Metas · Préstamos), Reportes, Ajustes (profile, password,
 sessions, deletion, Monedas, Categorías), Nuevo movimiento,
-Billeteras, mini-guides, first run, guest mode. Inicio, Movimientos,
-Reportes and Ajustes' main page still await their v2 visual pass (e.g.
-Inicio's first row is `1.35fr 1fr`; the mockup splits it evenly).
+Billeteras, mini-guides, first run, guest mode; Inicio has had its v2
+visual pass. Movimientos, Reportes and Ajustes' main page still await
+theirs. Inicio's goal rings keep the grey the mockup draws (its v2
+override never recolored them) and its hero bars are data-driven (the
+mockup's are fixed heights). The mockup's "Transporte subió 82% frente a
+julio" alert has no rule in the specs, backend or Android yet.
 Several specs (`AjustesPage`,
-`InicioPage`, `ReportesPage`, `userService`, `unit/currency`,
+`ReportesPage`, `userService`, `unit/currency`,
 `unit/backendCategories`) still use pre-taxonomy fixtures and fail.
 
 ## Development Server

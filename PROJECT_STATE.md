@@ -68,7 +68,7 @@ run, mini-guides, barcode scanning.
 | Area | Status |
 |---|---|
 | v2 data layer (taxonomy registry, multi-currency formatting, `categoryService`, `currencyService`) | Done (`21a2d78`) |
-| Inicio | Done |
+| Inicio | Done, visually verified against the mockup |
 | Movimientos (list, detail dialog, delete) | Done |
 | Planes › Presupuestos, Metas, Préstamos (mockup modals, two-step delete, abonos) | Done, visually verified against the mockup |
 | Reportes | Done |
@@ -81,7 +81,7 @@ run, mini-guides, barcode scanning.
 | First run (`ONBOARDING.md` §2: moneda principal › primera billetera) | Done, visually verified against the mockup |
 | Guest mode (`ONBOARDING.md` §1: in-memory example account, "Modo invitado" banner) | Done, visually verified against the mockup |
 
-Web test suite: 148 tests, 13 failing outside the migrated v2 screens because their fixtures
+Web test suite: 148 tests, 11 failing outside the migrated v2 screens because their fixtures
 predate the v2 data layer (details in `TESTING.md`).
 
 ## Deployment

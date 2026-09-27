@@ -5,6 +5,7 @@ import { ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
 import { Money, MoneyText } from '@/components/v2/Money'
 import { RowButton, RowSkeletons, SkeletonBar, SyncBanner } from '@/components/v2/Rows'
 import { EventDialog } from '@/dashboard/components/EventDialog'
+import { WALLET_KINDS } from '@/dashboard/components/WalletModal'
 import { accountService } from '@/services/accountService'
 import { alertService, type AppAlert } from '@/services/alertService'
 import { goalService } from '@/services/goalService'
@@ -181,7 +182,7 @@ export default function InicioPage() {
         <SyncBanner onRetry={retry} />
       )}
 
-      <div className="grid grid-cols-1 items-stretch gap-[18px] min-[1100px]:grid-cols-[1.35fr_1fr]">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(340px,100%),1fr))] items-stretch gap-[18px]">
         {/* Balance hero */}
         <section
           className="relative overflow-hidden rounded-[20px] border border-v2-line2 px-7 py-[26px] text-white"
@@ -243,7 +244,9 @@ export default function InicioPage() {
                   </div>
                   <div className="min-w-0 flex-1 text-left">
                     <div className="text-[12.5px] font-bold">{w.name}</div>
-                    <div className="text-[11px] text-v2-dim">{t(`inicio.walletKind.${walletKind(w.accountType)}` as TranslationKey)}</div>
+                    <div className="text-[11px] text-v2-dim">
+                      {WALLET_KINDS.find((k) => k.type === w.accountType)?.label ?? t(`inicio.walletKind.${walletKind(w.accountType)}` as TranslationKey)}
+                    </div>
                   </div>
                   <div className="text-right">
                     <Money hidden={hidden} className="block text-[13.5px] font-extrabold">
@@ -370,7 +373,9 @@ export default function InicioPage() {
                     <RowButton key={g.id} last={i === arr.length - 1} onClick={() => navigate('/planes?tab=metas')}>
                       <div
                         className="flex h-[50px] w-[50px] flex-none items-center justify-center rounded-full"
-                        style={{ background: `conic-gradient(${mark.color} ${pct}%, var(--v2-line) 0)` }}
+                        // The mockup's Inicio ring keeps the "Otros gastos" grey (catColor of
+                        // a goal); only the glyph takes the plan icon's color.
+                        style={{ background: `conic-gradient(${categoryColor('exp.other')} ${pct}%, var(--v2-line) 0)` }}
                       >
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-v2-surface">
                           <Glyph paths={mark.glyph} size={17} color={mark.color} />
@@ -462,7 +467,7 @@ export default function InicioPage() {
                     <div className="min-w-0 flex-1 text-left">
                       <div className="text-[12.5px] font-bold">{ev.series.name}</div>
                       <div className="text-[11px] text-v2-dim">
-                        {ev.dueToday ? t('inicio.upcoming.dueToday') : `${tCategory(ev.series.category)} · ${wallet?.name ?? ''}`}
+                        {ev.dueToday ? t('inicio.upcoming.dueToday') : `${tCategory(ev.series.category)} · ${shortWallet(wallet?.name ?? '')}`}
                       </div>
                     </div>
                     <div className="text-right">
@@ -690,7 +695,7 @@ function LoansCard({ loans, wallets, hidden, onOpen }: { loans: Transaction[] | 
               {fill(t(next.loanKind === 'lent' ? 'alert.loanLent.title' : 'alert.loanBorrowed.title'), next.counterpartyName ?? t('loans.unknownPerson'))}
             </div>
             <div className="text-[11px] text-v2-dim">
-              {fill(t('inicio.loans.due'), shortDate(next.dueDate!, language), wallets?.find((w) => w.id === next.accountId)?.name ?? '')}
+              {fill(t('inicio.loans.due'), shortDate(next.dueDate!, language), shortWallet(wallets?.find((w) => w.id === next.accountId)?.name ?? ''))}
             </div>
           </div>
           <Money hidden={hidden} className="text-[13px] font-extrabold">

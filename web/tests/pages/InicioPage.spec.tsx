@@ -21,7 +21,7 @@ function mockInicio({ alertsFail = false, empty = false } = {}) {
     http.get(`${BASE}/alerts`, () =>
       alertsFail
         ? new HttpResponse(null, { status: 500 })
-        : HttpResponse.json(empty ? [] : [{ id: 'goal:1', kind: 'GOAL_NEAR', goalId: '1', name: 'Portátil nuevo', themeIcon: 'TECHNOLOGY', percentage: 90, remaining: 520_000 }]),
+        : HttpResponse.json(empty ? [] : [{ id: 'loan:1', kind: 'LOAN_OPEN', transactionId: '1', loanKind: 'LENT', counterpartyName: 'Camilo Restrepo', outstanding: 420_000, dueDate: '2026-09-15', overdue: false }]),
     ),
     http.get(`${BASE}/goals`, () => HttpResponse.json([])),
     http.get(`${BASE}/recurring-series`, () => HttpResponse.json([])),
@@ -37,14 +37,14 @@ describe('InicioPage', () => {
     expect(await screen.findByText('$16.147.300')).toBeInTheDocument()
     expect(screen.getByText('$4.288.500')).toBeInTheDocument()
     expect(screen.getByText('2 billeteras')).toBeInTheDocument()
-    expect(await screen.findByText('Portátil nuevo está al 90%')).toBeInTheDocument()
-    expect(screen.getByText('$520.000').parentElement).toHaveTextContent('Faltan $520.000 para cumplirla.')
+    expect(await screen.findByText('Camilo Restrepo te debe')).toBeInTheDocument()
+    expect(screen.getByText('$420.000').parentElement).toHaveTextContent('$420.000 · vence 15 sep.')
 
     await user.click(screen.getByRole('button', { name: 'Descartar' }))
-    expect(screen.queryByText('Portátil nuevo está al 90%')).not.toBeInTheDocument()
+    expect(screen.queryByText('Camilo Restrepo te debe')).not.toBeInTheDocument()
     expect(screen.getByText('Sin alertas pendientes.')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Restaurar' }))
-    expect(screen.getByText('Portátil nuevo está al 90%')).toBeInTheDocument()
+    expect(screen.getByText('Camilo Restrepo te debe')).toBeInTheDocument()
   })
 
   it('hides amounts from screen readers when blurBalance is on', async () => {
@@ -55,7 +55,7 @@ describe('InicioPage', () => {
     expect(balance).toHaveAttribute('aria-hidden', 'true')
     expect(screen.getAllByText('Monto oculto').length).toBeGreaterThan(0)
     // Amounts inside alert copy blur too; the rest of the sentence stays.
-    expect(await screen.findByText('$520.000')).toHaveAttribute('aria-hidden', 'true')
+    expect(await screen.findByText('$420.000')).toHaveAttribute('aria-hidden', 'true')
     expect(screen.getByRole('button', { name: 'Mostrar montos' })).toBeInTheDocument()
   })
 
