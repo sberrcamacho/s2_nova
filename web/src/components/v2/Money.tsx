@@ -6,6 +6,7 @@ import { formatMoney } from '@/lib/currency'
 // An amount that blurs (9px, per STAGE-2-INICIO) when amounts are hidden.
 // Blurred text is aria-hidden and replaced for screen readers by
 // "Monto oculto", so a hidden balance is never read aloud.
+// Hovering a blurred amount unblurs it, to peek at it briefly.
 // `inline` keeps the surrounding sentence's font (amounts inside copy).
 export function Money({ hidden, children, className, style, inline }: { hidden: boolean; children: string; className?: string; style?: CSSProperties; inline?: boolean }) {
   const { t } = useTranslation()
@@ -19,7 +20,7 @@ export function Money({ hidden, children, className, style, inline }: { hidden: 
   }
   return (
     <span className={cn(base, className)} style={style}>
-      <span aria-hidden="true" style={{ filter: 'blur(9px)' }}>
+      <span aria-hidden="true" className="blur-[9px] transition-[filter] duration-150 hover:blur-none">
         {children}
       </span>
       <span className="sr-only">{t('inicio.amountHidden')}</span>
