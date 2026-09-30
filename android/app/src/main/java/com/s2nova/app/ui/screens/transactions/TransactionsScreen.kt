@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,7 +38,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
 import com.s2nova.app.data.fmtDate
-import com.s2nova.app.data.formatMoney
+import com.s2nova.app.data.formatApprox
 import com.s2nova.app.ui.screens.addtransaction.shortWallet
 import com.s2nova.app.data.formatDayGroupDate
 import com.s2nova.app.data.todayISO
@@ -61,6 +62,7 @@ private enum class TypeFilter(val key: StringKey) {
     PENDING(StringKey.TXN_LIST_FILTER_PENDING),
 }
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun TransactionsScreen(
     onOpenRecurring: () -> Unit,
@@ -92,9 +94,12 @@ fun TransactionsScreen(
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
             Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-                Row(
+                // Wraps instead of clipping the last pill on narrow phones or
+                // with large text.
+                FlowRow(
                     modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 12.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     TypeFilter.entries.forEach { f ->
                         FilterPill(label = t(f.key), selected = filter == f, onClick = { filter = f })
@@ -139,7 +144,7 @@ fun TransactionsScreen(
                                 buildAnnotatedString {
                                     append("$dayLabel · ")
                                     withStyle(SpanStyle(color = if (sched) colors.warning else if (netTotal >= 0) colors.positive else colors.textDim)) {
-                                        append((if (netTotal >= 0) "+" else "\u2212") + formatMoney(kotlin.math.abs(netTotal), principal))
+                                        append((if (netTotal >= 0) "+" else "\u2212") + formatApprox(kotlin.math.abs(netTotal), principal))
                                     }
                                 },
                                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.5.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.1.em, fontFeatureSettings = "tnum"),
@@ -172,6 +177,7 @@ private fun FilterPill(label: String, selected: Boolean, onClick: () -> Unit) {
         fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
         color = if (selected) MaterialTheme.colorScheme.onPrimary else colors.pillText,
         maxLines = 1,
+        softWrap = false,
         modifier = Modifier
             .clip(RoundedCornerShape(50))
             .background(if (selected) MaterialTheme.colorScheme.primary else colors.pillSurface)
@@ -196,6 +202,8 @@ private fun MovimientosHeader(title: String, programados: String, onOpenRecurrin
             fontWeight = FontWeight.ExtraBold,
             letterSpacing = (-0.42).sp,
             color = MaterialTheme.colorScheme.onBackground,
+            maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f).padding(start = 2.dp),
         )
         Box(
@@ -208,7 +216,7 @@ private fun MovimientosHeader(title: String, programados: String, onOpenRecurrin
                 .padding(horizontal = 12.dp),
             contentAlignment = Alignment.Center,
         ) {
-            Text(programados, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = colors.accentText)
+            Text(programados, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = colors.accentText, maxLines = 1, softWrap = false)
         }
     }
 }

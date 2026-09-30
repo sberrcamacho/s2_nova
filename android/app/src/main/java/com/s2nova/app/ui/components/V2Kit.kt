@@ -68,6 +68,7 @@ fun glyphIcon(paths: List<String>, strokeWidth: Float = 2.25f): ImageVector {
 // Mockup icon set (IC) used by the v2 screens, 1.9 stroke.
 object V2Icons {
     val clock = listOf("M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z", "M12 7v5l3 2")
+    val close = listOf("M18 6 6 18", "M6 6l12 12")
     val cal = listOf("M4 5h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z", "M3 10h18", "M8 3v4", "M16 3v4")
     val repeat = listOf("M3 12a9 9 0 0 1 15-6.7L21 8", "M21 3v5h-5", "M21 12a9 9 0 0 1-15 6.7L3 16", "M3 21v-5h5")
     val clip = listOf("M21 11.5 12.5 20a5 5 0 0 1-7-7L14 4.5a3.5 3.5 0 0 1 5 5L10.5 18a2 2 0 0 1-3-3L15 7.5")
@@ -86,6 +87,9 @@ object V2Icons {
     val title = listOf("M4 7V5h16v2", "M12 5v14", "M9 19h6")
     val enter = listOf("M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4", "M10 17l5-5-5-5", "M15 12H3")
     val wallet = listOf("M3 7h18a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12", "M17 13h.01")
+    val back = listOf("M19 12H5", "M12 19l-7-7 7-7")
+    val chevronRight = listOf("M9 6l6 6-6 6")
+    val chevronDown = listOf("M6 9l6 6 6-6")
 }
 
 @Composable
@@ -251,12 +255,14 @@ fun V2Button(
             .fillMaxWidth()
             .then(if (glow && enabled) Modifier.androidShadow(primary) else Modifier)
             .clip(RoundedCornerShape(14.dp))
-            .background(if (enabled) primary else colors.sheetSurface)
+            // Disabled keeps a visible container: sheetSurface is the page
+            // background in light, which left the label floating.
+            .background(if (enabled) primary else MaterialTheme.colorScheme.outline)
             .clickable(enabled = enabled, onClick = onClick)
-            .padding(vertical = verticalPadding),
+            .padding(vertical = verticalPadding, horizontal = 16.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(label, fontSize = fontSize, fontWeight = FontWeight.ExtraBold, color = if (enabled) Color.White else colors.textDim)
+        Text(label, fontSize = fontSize, fontWeight = FontWeight.ExtraBold, color = if (enabled) Color.White else colors.textDim, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 

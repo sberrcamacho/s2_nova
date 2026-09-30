@@ -17,7 +17,7 @@ import { useNewMovement } from '@/state/NewMovementContext'
 import { useHideAmounts } from '@/state/useHideAmounts'
 import { useToast } from '@/state/ToastContext'
 import { TRANSFER, allCategories, categoryLabel, categoryName, categoryNode, useCategories } from '@/lib/backendCategories'
-import { currencyInfo, formatMoney, referenceRate } from '@/lib/currency'
+import { currencyInfo, formatApprox, formatMoney, referenceRate } from '@/lib/currency'
 import { addDays } from '@/lib/inicio'
 import { shortWallet } from '@/lib/movimientos'
 import { longDate, shortDayMonth } from '@/lib/planCopy'
@@ -230,7 +230,7 @@ export default function MovimientosPage() {
             aria-label={tr('bud.category')}
             value={cat}
             onChange={(e) => setCat(e.target.value)}
-            className="ml-auto h-[34px] cursor-pointer rounded-[10px] border border-v2-line2 bg-v2-surface px-2.5 text-[12px] font-bold text-v2-text outline-none"
+            className="ml-auto h-[34px] min-w-0 max-w-full cursor-pointer rounded-[10px] border border-v2-line2 bg-v2-surface px-2.5 text-[12px] font-bold text-v2-text outline-none"
           >
             <option value="">{tr('mv.allCategories')}</option>
             {catOptions.map((o) => (
@@ -308,12 +308,12 @@ function MovementRow({ x, last, wallet, principal, hidden, onOpen }: { x: Transa
       <CategoryMark category={x.type === 'transfer' ? TRANSFER : x.category} box={36} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-[7px] text-[12.5px] font-bold">
-          <span className="min-w-0 flex-[0_1_auto] truncate">{x.description || label}</span>
+          <span className="min-w-0 flex-[0_1_auto] truncate" title={x.description || label}>{x.description || label}</span>
           {x.attachment && <Icon paths={IC.clip} size={13} color="var(--v2-dim)" />}
           {x.recurringSeriesId && <Icon paths={IC.repeat} size={13} color="var(--v2-dim)" />}
-          {sched && <span className="flex-none rounded-full bg-[rgba(240,180,41,.14)] px-[7px] py-0.5 text-[10px] font-extrabold text-v2-warn">{tr('mv.scheduledOne')}</span>}
+          {sched && <span className="flex-none whitespace-nowrap rounded-full bg-[rgba(240,180,41,.14)] px-[7px] py-0.5 text-[10px] font-extrabold text-v2-warn">{tr('mv.scheduledOne')}</span>}
         </div>
-        <div className="mt-[3px] truncate text-[11px] text-v2-dim">{sub}</div>
+        <div className="mt-[3px] truncate text-[11px] text-v2-dim" title={sub}>{sub}</div>
       </div>
       <div className="flex-none whitespace-nowrap text-right">
         <Money hidden={hidden} className="block text-[13px] font-extrabold" style={{ color }}>
@@ -321,7 +321,7 @@ function MovementRow({ x, last, wallet, principal, hidden, onOpen }: { x: Transa
         </Money>
         {x.currency !== principal && (
           <Money hidden={hidden} className="mt-0.5 block text-[10.5px] text-v2-dim">
-            {`≈ ${formatMoney(x.amount * referenceRate(x.currency, principal), principal)}`}
+            {`≈ ${formatApprox(x.amount * referenceRate(x.currency, principal), principal)}`}
           </Money>
         )}
       </div>

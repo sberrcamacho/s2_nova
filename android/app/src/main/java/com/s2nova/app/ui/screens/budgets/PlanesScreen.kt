@@ -40,6 +40,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -130,6 +133,7 @@ fun PlanesScreen(initialTab: Int = 0, initialLoanSide: LoanKind = LoanKind.LENT)
 private fun PlanesTabs(labels: List<String>, selected: Int, onSelect: (Int) -> Unit) {
     val line = MaterialTheme.colorScheme.outline
     val accent = MaterialTheme.colorScheme.primary
+    // Scrolls instead of wrapping a label ("Présta / mos") with large text.
     Row(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         modifier = Modifier
@@ -138,7 +142,8 @@ private fun PlanesTabs(labels: List<String>, selected: Int, onSelect: (Int) -> U
             .drawBehind {
                 val h = 1.dp.toPx()
                 drawRect(line, topLeft = Offset(0f, size.height - h), size = Size(size.width, h))
-            },
+            }
+            .horizontalScroll(rememberScrollState()),
     ) {
         labels.forEachIndexed { index, label ->
             val on = index == selected
@@ -157,6 +162,8 @@ private fun PlanesTabs(labels: List<String>, selected: Int, onSelect: (Int) -> U
                     }
                     .padding(horizontal = 14.dp, vertical = 10.dp)
                     .padding(bottom = 1.dp),
+                maxLines = 1,
+                softWrap = false,
             )
         }
     }
@@ -199,6 +206,8 @@ private fun BudgetsTab() {
                         Text(t(StringKey.BUDGETS_SPENT_LABEL), fontSize = 11.sp, color = colors.textDim)
                         Text(
                             format(totalSpent),
+                            maxLines = 1,
+                            softWrap = false,
                             fontSize = 22.sp,
                             fontWeight = FontWeight.ExtraBold,
                             letterSpacing = (-0.55).sp,
@@ -208,7 +217,7 @@ private fun BudgetsTab() {
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text(t(StringKey.BUDGETS_LIMIT_TOTAL), fontSize = 11.sp, color = colors.textDim)
-                        Text(format(totalLimit), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(format(totalLimit), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, softWrap = false)
                     }
                 }
                 NovaProgressBar(
@@ -323,11 +332,11 @@ private fun BudgetCard(progress: BudgetProgress, onEdit: () -> Unit) {
             if (custom) PlanMark(b.icon, 38.dp) else CatMark(b.category, 38.dp)
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(b.name ?: repo.name(b.category), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, modifier = Modifier.weight(1f))
-                    Text("${progress.percentage}%", fontSize = 11.5.sp, fontWeight = FontWeight.ExtraBold, color = tone, modifier = Modifier.clip(RoundedCornerShape(999.dp)).background(bg).padding(horizontal = 8.dp, vertical = 3.dp))
+                    Text(b.name ?: repo.name(b.category), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                    Text("${progress.percentage}%", fontSize = 11.5.sp, fontWeight = FontWeight.ExtraBold, color = tone, maxLines = 1, softWrap = false, modifier = Modifier.clip(RoundedCornerShape(999.dp)).background(bg).padding(horizontal = 8.dp, vertical = 3.dp))
                     Icon(MockupIcons.Pencil, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(15.dp))
                 }
-                Text(scope, fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), maxLines = 1)
+                Text(scope, fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
                     tr(StringKey.NM_X_OF_Y, formatMoney(progress.spent, principal), formatMoney(b.limit, principal)) + " · " + period,
                     fontSize = 11.5.sp, color = colors.textDim, modifier = Modifier.padding(top = 3.dp), style = TextStyle(fontFeatureSettings = TNUM),
@@ -335,5 +344,20 @@ private fun BudgetCard(progress: BudgetProgress, onEdit: () -> Unit) {
             }
         }
         NovaProgressBar(percentage = progress.percentage.coerceAtMost(100), color = tone, height = 6.dp, cornerRadius = 3.dp, modifier = Modifier.padding(top = 12.dp))
+        // The state in words, so it isn't carried by the bar's color alone
+        // (same copy as the web's budgetStateNote).
+        Text(budgetStateNote(progress, principal), fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 9.dp), style = TextStyle(fontFeatureSettings = TNUM))
+    }
+}
+
+private fun budgetStateNote(progress: BudgetProgress, principal: String): String {
+    val b = progress.budget
+    val start = b.startDate
+    return when {
+        b.period == BudgetPeriod.CUSTOM && b.kind == BudgetKind.CATEGORY && start != null && start > java.time.LocalDate.now().toString() -> tr(StringKey.PLAN_STATE_NOT_STARTED)
+        progress.spent > b.limit -> tr(StringKey.PLAN_STATE_OVER, formatMoney(progress.spent - b.limit, principal))
+        progress.percentage >= 90 -> tr(StringKey.PLAN_STATE_NEAR)
+        progress.percentage >= 65 -> tr(StringKey.PLAN_STATE_WATCH)
+        else -> tr(StringKey.PLAN_STATE_OK)
     }
 }

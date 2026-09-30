@@ -85,6 +85,13 @@ export function formatMoney(value: number, code = 'COP', opts: { signed?: boolea
   return `${sign}${c.symbol}${groupNumber(value, c.decimals)}`
 }
 
+// A converted amount ("≈ $23.660"): rounded to the target currency's own
+// decimals first, so a conversion never shows cents a peso doesn't have.
+export function formatApprox(value: number, code: string): string {
+  const factor = 10 ** currencyInfo(code).decimals
+  return formatMoney(Math.round(value * factor) / factor, code)
+}
+
 // Colombian peso formatting: "$125.000" — period as thousands separator,
 // no decimals, no currency code.
 export function formatCOP(value: number, opts: { signed?: boolean } = {}): string {

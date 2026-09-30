@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @import 'tailwindcss';
 
 /* ────────────────────────────────────────────────────────────────────────
@@ -29,15 +29,15 @@
   /* Text */
   --color-text: #111118;
   --color-text-secondary: #666673;
-  --color-text-tertiary: #9c9caa;
+  --color-text-tertiary: #6b6b7a; /* 5.24:1 on surface */
 
   /* Financial semantics */
-  --color-positive: #22a06b;
-  --color-positive-soft: rgba(34, 160, 107, 0.12);
-  --color-negative: #d64545;
-  --color-negative-soft: rgba(214, 69, 69, 0.12);
-  --color-warning: #b5760f;
-  --color-warning-soft: rgba(181, 118, 15, 0.12);
+  --color-positive: #0f7a4a;
+  --color-positive-soft: rgba(15, 122, 74, 0.12);
+  --color-negative: #c0362f;
+  --color-negative-soft: rgba(192, 54, 47, 0.12);
+  --color-warning: #8f5a00;
+  --color-warning-soft: rgba(143, 90, 0, 0.12);
 
   /* Balance hero — a dark surface in BOTH themes; every value here is
      explicit rather than inherited so the card renders identically no
@@ -94,18 +94,25 @@
   --v2-line2: #dcdce6;
   --v2-text: #111118;
   --v2-muted: #666673;
-  --v2-dim: #767686;
+  --v2-dim: #6b6b7a;
   --v2-accent: #6657e8;
   --v2-accent2: #5a4ad6;
   --v2-accent3: #4a3cc4;
-  --v2-pos: #22a06b;
-  --v2-neg: #d64545;
-  --v2-warn: #b5760f;
+  --v2-pos: #0f7a4a;
+  --v2-neg: #c0362f;
+  --v2-warn: #8f5a00;
   --v2-neg-soft: #f0d2d2;
   --v2-hero-a: #16123a;
   --v2-hero-b: #1d1650;
   --v2-hero-c: #241a5e;
   --v2-hero-line: #35305c;
+  /* Text on the balance hero, which stays dark navy in both themes, so it
+     can't use the light theme's text or semantic colors (DESIGN-SYSTEM.md
+     §2.3). Each is ≥ 5:1 across the whole gradient. */
+  --hero-overline: #a69dff;
+  --hero-label: rgba(255, 255, 255, 0.72);
+  --hero-positive: #32c98a;
+  --hero-negative: #ff7a7a;
 }
 
 [data-theme='dark'] {
@@ -130,7 +137,7 @@
   /* Text */
   --color-text: #ffffff;
   --color-text-secondary: #a8a8b8;
-  --color-text-tertiary: #6f6f82;
+  --color-text-tertiary: #8e8ea0; /* 5.98:1 on surface */
 
   /* Financial semantics */
   --color-positive: #32c98a;
@@ -188,7 +195,7 @@
   --v2-line2: #262635;
   --v2-text: #ffffff;
   --v2-muted: #a8a8b8;
-  --v2-dim: #6f6f82;
+  --v2-dim: #8e8ea0;
   --v2-accent: #6c5ce7;
   --v2-accent2: #a69dff;
   --v2-accent3: #8578ff;
@@ -206,8 +213,9 @@
    [data-theme] updates every bg, text, and border utility instantly,
    with no React re-render ── */
 @theme inline {
-  --font-sans: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
-  --font-numeric: 'Inter', 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  /* One family (DESIGN-SYSTEM.md §3): Plus Jakarta Sans has tabular figures. */
+  --font-numeric: 'Plus Jakarta Sans', system-ui, sans-serif;
 
   --color-bg: var(--color-bg);
   --color-bg-secondary: var(--color-bg-secondary);

@@ -60,14 +60,14 @@ export default function BudgetsPage({ adding, onAddingDone }: { adding: boolean;
               <div className="flex items-center gap-2.5">
                 {b.kind === 'custom' ? <PlanMark icon={b.icon} box={36} /> : <CategoryMark category={b.category ?? 'exp.other'} box={36} />}
                 <div className="min-w-0 flex-1">
-                  <div className="text-[13.5px] font-extrabold">{b.name ?? categoryName(b.category)}</div>
-                  <div className="mt-px text-[11px] text-v2-dim">{budgetScope(b, walletName)}</div>
+                  <div className="truncate text-[13.5px] font-extrabold" title={b.name ?? categoryName(b.category)}>{b.name ?? categoryName(b.category)}</div>
+                  <div className="mt-px truncate text-[11px] text-v2-dim" title={budgetScope(b, walletName)}>{budgetScope(b, walletName)}</div>
                 </div>
-                <span className="rounded-full px-2 py-[3px] text-[11.5px] font-extrabold" style={{ color: tone, background: bg }}>
+                <span className="flex-none whitespace-nowrap rounded-full px-2 py-[3px] text-[11.5px] font-extrabold" style={{ color: tone, background: bg }}>
                   {b.percentage}%
                 </span>
               </div>
-              <Money hidden={hidden} className="mt-2 block text-[20px] font-extrabold tracking-[-.025em]">
+              <Money hidden={hidden} className="mt-2 block whitespace-nowrap text-[20px] font-extrabold tracking-[-.025em]">
                 {format(b.spent)}
               </Money>
               <div className="mt-0.5 text-[11.5px] text-v2-dim">
@@ -79,7 +79,7 @@ export default function BudgetsPage({ adding, onAddingDone }: { adding: boolean;
               <div className="mt-3.5 h-1.5 overflow-hidden rounded-[3px] bg-v2-line">
                 <div className="h-full" style={{ width: `${Math.min(100, b.percentage)}%`, background: tone }} />
               </div>
-              <div className="mt-2.5 flex justify-between gap-2.5 text-[11.5px]">
+              <div className="mt-2.5 flex flex-wrap justify-between gap-x-2.5 gap-y-1 text-[11.5px]">
                 <span className="text-v2-muted">{budgetStateNote(b, today, format)}</span>
                 <span className="text-v2-dim">{budgetPeriodLabel(b)}</span>
               </div>

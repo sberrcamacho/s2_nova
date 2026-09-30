@@ -236,10 +236,12 @@ export function Pills<T>({ options, value, onChange }: { options: { value: T; la
 }
 
 // An option tile: the mockup's 44px content-box (46px with its border)
-// rounded box + a two-line label (budget and Nuevo movimiento option rows).
+// rounded box + a one-line label (budget and Nuevo movimiento option rows).
+// A long label (a budget's name) truncates with its full text in the tooltip,
+// matching Android, instead of breaking mid-word onto a second line.
 export function OptionTile({ icon, label, on, open, onClick }: { icon: ReactNode; label: string; on: boolean; open?: boolean; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} className="flex min-w-0 cursor-pointer flex-col items-center gap-1.5">
+    <button type="button" onClick={onClick} title={label} aria-expanded={open} className="flex min-w-0 cursor-pointer flex-col items-center gap-1.5">
       <span
         className="flex h-[46px] w-[46px] items-center justify-center rounded-[14px] border"
         style={{
@@ -252,7 +254,7 @@ export function OptionTile({ icon, label, on, open, onClick }: { icon: ReactNode
         {icon}
       </span>
       <span
-        className="line-clamp-2 max-w-full overflow-hidden text-center text-[11px] leading-[1.3] [overflow-wrap:anywhere]"
+        className="max-w-full truncate text-center text-[11px] leading-[1.3]"
         style={{ fontWeight: on ? 800 : 600, color: on ? 'var(--v2-text)' : 'var(--v2-muted)' }}
       >
         {label}

@@ -16,6 +16,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -278,11 +281,12 @@ private fun LoanCard(txn: Transaction, outstanding: Double, onPay: () -> Unit, o
             .clip(shape)
             .background(MaterialTheme.colorScheme.surface)
             .border(1.dp, MaterialTheme.colorScheme.outline, shape)
-            .padding(16.dp),
+            // The actions row is 48 dp tall, so the bottom padding is smaller.
+            .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 2.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(txn.counterpartyName ?: txn.description, fontSize = 13.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                Text(txn.counterpartyName ?: txn.description, fontSize = 13.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                 Text(due, fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
             }
             Text(
@@ -290,6 +294,8 @@ private fun LoanCard(txn: Transaction, outstanding: Double, onPay: () -> Unit, o
                 fontSize = 14.5.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = if (txn.loanSettled) colors.textDim else MaterialTheme.colorScheme.onBackground,
+                maxLines = 1,
+                softWrap = false,
                 modifier = Modifier.padding(start = 12.dp),
             )
         }
@@ -300,25 +306,15 @@ private fun LoanCard(txn: Transaction, outstanding: Double, onPay: () -> Unit, o
             cornerRadius = 3.dp,
             modifier = Modifier.padding(top = 12.dp),
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(top = 12.dp)) {
+        // Text actions with 48 dp tall targets; accentText keeps AA in dark
+        // (primary was 3.9:1 on the dark surface).
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 2.dp).offset(x = (-8).dp)) {
             if (txn.loanSettled) {
-                Text(t(StringKey.LOANS_SETTLED), fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = colors.positive)
+                Text(t(StringKey.LOANS_SETTLED), fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = colors.positive, maxLines = 1, modifier = Modifier.padding(horizontal = 8.dp))
             } else {
-                Text(
-                    t(StringKey.LOANS_REGISTER_PAYMENT),
-                    fontSize = 12.5.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.clickable(onClick = onPay),
-                )
+                LoanAction(t(StringKey.LOANS_REGISTER_PAYMENT), colors.accentText, onPay)
             }
-            Text(
-                t(StringKey.LOANS_EDIT_ACTION),
-                fontSize = 12.5.sp,
-                fontWeight = FontWeight.Bold,
-                color = colors.accentText,
-                modifier = Modifier.clickable(onClick = onEdit),
-            )
+            LoanAction(t(StringKey.LOANS_EDIT_ACTION), colors.accentText, onEdit)
         }
     }
 }
@@ -467,5 +463,15 @@ private fun LoanPaySheet(
                 onClick = { onConfirm(amount!!, walletId!!) },
             )
         }
+    }
+}
+
+@Composable
+private fun LoanAction(label: String, color: androidx.compose.ui.graphics.Color, onClick: () -> Unit) {
+    Box(
+        Modifier.heightIn(min = 48.dp).clip(RoundedCornerShape(10.dp)).clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick).padding(horizontal = 8.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(label, fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = color, maxLines = 1, softWrap = false)
     }
 }

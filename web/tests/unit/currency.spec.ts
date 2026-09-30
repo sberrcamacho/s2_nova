@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { currencyInfo, formatCOP, formatCurrency, formatCurrencyCompact, formatMoney, referenceRate } from '@/lib/currency'
+import { currencyInfo, formatApprox, formatCOP, formatCurrency, formatCurrencyCompact, formatMoney, referenceRate } from '@/lib/currency'
 
 describe('formatCOP', () => {
   it('groups thousands with a period and no decimals', () => {
@@ -33,6 +33,13 @@ describe('formatMoney', () => {
   it('signs with a true minus, and a plus only when asked', () => {
     expect(formatMoney(-21_000)).toBe('−$21.000')
     expect(formatMoney(200, 'USD', { signed: true })).toBe('+US$200')
+  })
+})
+
+describe('formatApprox', () => {
+  it("rounds a conversion to the target currency's decimals", () => {
+    expect(formatApprox(23_660.5, 'COP')).toBe('$23.661')
+    expect(formatApprox(5.994, 'USD')).toBe(formatMoney(5.99, 'USD'))
   })
 })
 

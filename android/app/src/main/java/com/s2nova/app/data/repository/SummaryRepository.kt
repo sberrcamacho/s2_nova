@@ -37,7 +37,7 @@ class SummaryRepository(
     // Reportes for a 3/6/12-month range ending with `today`'s month. Demo
     // mode derives the same shape from the fictitious transactions instead.
     suspend fun report(range: Int, today: String = todayISO(), demoTransactions: () -> List<Transaction> = { emptyList() }): Report {
-        if (DemoModeFlag.active) return AnalyticsHelpers.report(demoTransactions(), range)
+        if (DemoModeFlag.active) return AnalyticsHelpers.report(demoTransactions(), range, com.s2nova.app.data.AppContainer.currencyRepository.principal)
         val body = api.getReport(range, today)
         return Report(
             range = body.range,

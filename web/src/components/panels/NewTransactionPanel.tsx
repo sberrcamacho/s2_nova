@@ -261,7 +261,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
               (future ? t('nm.budget.whenRecorded') : val > 0 ? t('nm.budget.withThis') : '')}
           </div>
         </div>
-        <span className="font-numeric flex-none rounded-full px-2 py-[3px] text-[11.5px] font-extrabold" style={{ color: tone, background: bg }}>
+        <span className="font-numeric flex-none whitespace-nowrap rounded-full px-2 py-[3px] text-[11.5px] font-extrabold" style={{ color: tone, background: bg }}>
           {pct}%
         </span>
       </div>
@@ -481,9 +481,9 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
           {catDone && leaf ? <CategoryMark category={leaf} box={38} /> : <GlyphMark paths={TAX_VIS.other.glyph} color="var(--v2-dim)" box={38} />}
           <div className="min-w-0 flex-1">
             <div className="text-[10px] font-extrabold tracking-[.1em] text-v2-dim">{t('nm.category')}</div>
-            <div className="mt-0.5 text-[13.5px] font-extrabold">{catDone && leaf ? categoryLabel(leaf) : t('nm.pickCategory')}</div>
+            <div className="mt-0.5 truncate text-[13.5px] font-extrabold" title={catDone && leaf ? categoryLabel(leaf) : undefined}>{catDone && leaf ? categoryLabel(leaf) : t('nm.pickCategory')}</div>
           </div>
-          <span className="text-[12px] font-bold text-v2-accent2">{t('nm.change')}</span>
+          <span className="flex-none whitespace-nowrap text-[12px] font-bold text-v2-accent2">{t('nm.change')}</span>
         </button>
       )}
 
@@ -503,7 +503,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
               writePref(PREFS.calc, calc ? '0' : '1')
               setCalc(!calc)
             }}
-            className="box-border flex h-9 flex-none cursor-pointer items-center gap-1.5 rounded-full border px-[11px] text-[11.5px] font-extrabold text-white"
+            className="box-border flex h-9 flex-none cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border px-[11px] text-[11.5px] font-extrabold text-white"
             style={{ background: calc ? 'rgba(255,255,255,.28)' : 'rgba(255,255,255,.1)', borderColor: calc ? '#fff' : 'transparent' }}
           >
             <Icon paths={IC.calc} size={14} color="#fff" />
@@ -512,10 +512,10 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
           <button
             type="button"
             onClick={() => toggleSection('currency')}
-            className="flex h-[34px] cursor-pointer items-center gap-[5px] rounded-full bg-[rgba(255,255,255,.14)] px-3 text-[12px] font-extrabold text-white"
+            className="flex h-[34px] flex-none cursor-pointer items-center gap-[5px] whitespace-nowrap rounded-full bg-[rgba(255,255,255,.14)] px-3 text-[12px] font-extrabold text-white"
           >
             {code}
-            <span className="text-[9px] opacity-70">▼</span>
+            <Icon paths={['M6 9l6 6 6-6']} size={13} color="rgba(255,255,255,.7)" />
           </button>
         </div>
         <input
@@ -868,11 +868,11 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
             <Icon paths={attach.photo ? IC.image : IC.file} size={16} color="var(--v2-accent2)" />
           </span>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-[12.5px] font-bold">{attach.name}</div>
+            <div className="truncate text-[12.5px] font-bold" title={attach.name}>{attach.name}</div>
             <div className="text-[11px] text-v2-dim">{`${t(attach.photo ? 'nm.photo' : 'nm.document')} · ${fileSize(attach.size)}`}</div>
           </div>
-          <button type="button" aria-label={t('nm.removeAttachment')} onClick={() => setAttach(null)} className="cursor-pointer p-1 text-[13px] text-v2-dim">
-            ✕
+          <button type="button" aria-label={t('nm.removeAttachment')} title={t('nm.removeAttachment')} onClick={() => setAttach(null)} className="flex h-8 w-8 flex-none cursor-pointer items-center justify-center rounded-[8px] hover:bg-v2-subtle">
+            <Icon paths={['M18 6 6 18', 'M6 6l12 12']} size={14} color="var(--v2-dim)" />
           </button>
         </div>
       )}

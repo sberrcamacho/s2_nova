@@ -3,6 +3,10 @@ package com.s2nova.app.ui.screens.addtransaction
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -399,14 +403,24 @@ fun AddTransactionScreen(
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Row(
-            Modifier.padding(start = 18.dp, end = 18.dp, top = 10.dp, bottom = 14.dp),
+            // 48 dp back target; the 13 dp start keeps the arrow where it was.
+            Modifier.padding(start = 13.dp, end = 18.dp, top = 5.dp, bottom = 9.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Box(Modifier.size(38.dp).clip(CircleShape).noRippleClick(onBack), contentAlignment = Alignment.Center) {
-                Text("←", fontSize = 19.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            val backLabel = tr(StringKey.COMMON_BACK)
+            Box(
+                Modifier.size(48.dp).clip(CircleShape).clickable(onClick = onBack, role = Role.Button)
+                    .semantics { contentDescription = backLabel },
+                contentAlignment = Alignment.Center,
+            ) {
+                V2Icon(V2Icons.back, MaterialTheme.colorScheme.onSurfaceVariant, 22.dp)
             }
-            Text(tr(if (editSeriesId != null) StringKey.NM_EDIT_SERIES else if (editTransactionId != null) StringKey.NM_EDIT else StringKey.NM_TITLE), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp, color = MaterialTheme.colorScheme.onBackground)
+            Text(
+                tr(if (editSeriesId != null) StringKey.NM_EDIT_SERIES else if (editTransactionId != null) StringKey.NM_EDIT else StringKey.NM_TITLE),
+                fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp, color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
+            )
         }
         Column(
             Modifier.weight(1f).imePadding().verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, bottom = 20.dp),
@@ -458,7 +472,7 @@ fun AddTransactionScreen(
                             fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM),
                         )
                     }
-                    Text("$n%", fontSize = 11.5.sp, fontWeight = FontWeight.ExtraBold, color = tone, modifier = Modifier.clip(RoundedCornerShape(999.dp)).background(bg).padding(horizontal = 8.dp, vertical = 3.dp), style = TextStyle(fontFeatureSettings = TNUM))
+                    Text("$n%", fontSize = 11.5.sp, fontWeight = FontWeight.ExtraBold, color = tone, maxLines = 1, softWrap = false, modifier = Modifier.clip(RoundedCornerShape(999.dp)).background(bg).padding(horizontal = 8.dp, vertical = 3.dp), style = TextStyle(fontFeatureSettings = TNUM))
                 }
             }
 
@@ -489,8 +503,13 @@ fun AddTransactionScreen(
                         Text(a.name, fontSize = 12.5.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onBackground)
                         Text(tr(if (a.isPhoto) StringKey.NM_PHOTO else StringKey.NM_DOCUMENT) + " · " + a.sizeLabel, fontSize = 11.sp, color = colors.textDim)
                     }
-                    Box(Modifier.size(32.dp).clip(CircleShape).noRippleClick { s.attach = null }, contentAlignment = Alignment.Center) {
-                        Text("✕", fontSize = 14.sp, color = colors.textDim)
+                    val removeLabel = tr(StringKey.COMMON_DELETE) + " " + a.name
+                    Box(
+                        Modifier.size(40.dp).clip(CircleShape).clickable(role = Role.Button) { s.attach = null }
+                            .semantics { contentDescription = removeLabel },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        V2Icon(V2Icons.close, colors.textDim, 16.dp)
                     }
                 }
             }
@@ -568,15 +587,18 @@ private fun Hero(s: NmState, cur: String, wcur: String, rate: Double, value: Dou
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(999.dp)).background(white.copy(alpha = 0.08f)).padding(4.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            // Equal thirds, unless the text is scaled up: then each segment is
+            // sized by its label so "Transferencia" isn't cut off.
+            val bigText = androidx.compose.ui.platform.LocalDensity.current.fontScale > 1.15f
             listOf(TransactionType.EXPENSE to tr(StringKey.NM_TYPE_EXPENSE), TransactionType.INCOME to tr(StringKey.NM_TYPE_INCOME), TransactionType.TRANSFER to tr(StringKey.NM_TYPE_TRANSFER)).forEach { (t, label) ->
                 val on = s.type == t
                 Box(
                     // A movement's type is fixed once saved.
-                    Modifier.weight(1f).clip(RoundedCornerShape(999.dp)).background(if (on) white else Color.Transparent)
+                    Modifier.weight(if (bigText) label.length.toFloat() + 4f else 1f).clip(RoundedCornerShape(999.dp)).background(if (on) white else Color.Transparent)
                         .alpha(if (typeLocked && !on) 0.5f else 1f).noRippleClick { if (!typeLocked) s.switchType(t) }.padding(vertical = 10.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(label, fontSize = 12.sp, fontWeight = if (on) FontWeight.ExtraBold else FontWeight.Medium, color = if (on) Color(0xFF211A4D) else white.copy(alpha = 0.75f))
+                    Text(label, fontSize = 12.sp, fontWeight = if (on) FontWeight.ExtraBold else FontWeight.Medium, color = if (on) Color(0xFF211A4D) else white.copy(alpha = 0.75f), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 4.dp))
                 }
             }
         }
@@ -610,7 +632,7 @@ private fun Hero(s: NmState, cur: String, wcur: String, rate: Double, value: Dou
                     fontSize = 14.5.sp, fontWeight = FontWeight.ExtraBold, color = white, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 3.dp),
                 )
             }
-            Text("›", fontSize = 18.sp, color = white.copy(alpha = 0.6f))
+            V2Icon(V2Icons.chevronRight, white.copy(alpha = 0.6f), 18.dp)
         }
         // MONTO row
         val padOpen = s.sheet == NmSheet.PAD
@@ -633,8 +655,8 @@ private fun Hero(s: NmState, cur: String, wcur: String, rate: Double, value: Dou
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(5.dp),
             ) {
-                Text(cur, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = white)
-                Text("▼", fontSize = 9.sp, color = white.copy(alpha = 0.7f))
+                Text(cur, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = white, maxLines = 1, softWrap = false)
+                V2Icon(V2Icons.chevronDown, white.copy(alpha = 0.7f), 14.dp, 2.4f)
             }
         }
         if (cur != wcur) {

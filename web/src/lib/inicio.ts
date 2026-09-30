@@ -2,6 +2,7 @@
 // Financial figures themselves — balances, budget progress, loan
 // outstanding, alerts, monthly totals — come from the backend; these only
 // arrange, label and project them for display.
+import { referenceRate } from '@/lib/currency'
 import type { BudgetProgress } from '@/services/budgetService'
 import type { AccountType, CategoryId, Goal, LanguageCode, RecurringSeries, Transaction } from '@/types'
 
@@ -164,14 +165,15 @@ export interface UpcomingEvent {
   series: RecurringSeries
   date: string // the occurrence date shown (today for a due/overdue one)
   dueToday: boolean
-  signed: number // negative for an expense
-  running: number // projected balance after this event
+  signed: number // negative for an expense, in the series' own currency
+  running: number // projected balance after this event, in the principal currency
 }
 
 // Active Programados whose next occurrence falls within `days` of today.
 // Anything due today or overdue sorts first and is dated today; the running
-// balance starts from the wallet total and applies each event in order.
-export function upcomingWithin(series: RecurringSeries[], today: string, startBalance: number, days = 14): UpcomingEvent[] {
+// balance starts from the wallet total (in `principal`) and applies each
+// event in order, converted at the reference rate when it's in another currency.
+export function upcomingWithin(series: RecurringSeries[], today: string, startBalance: number, days = 14, principal?: string): UpcomingEvent[] {
   const horizon = addDays(today, days)
   let running = startBalance
   return series
@@ -183,7 +185,7 @@ export function upcomingWithin(series: RecurringSeries[], today: string, startBa
     })
     .map(({ s, dueToday }) => {
       const signed = s.type === 'expense' ? -s.amount : s.amount
-      running += signed
+      running += principal ? signed * referenceRate(s.currency, principal) : signed
       return { series: s, date: dueToday ? today : s.nextOccurrenceDate, dueToday, signed, running }
     })
 }

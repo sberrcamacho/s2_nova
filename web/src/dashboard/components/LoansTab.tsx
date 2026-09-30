@@ -103,21 +103,22 @@ export function LoansTab({ side, onSide, adding, onAddingDone }: { side: LoanKin
               <div className="flex items-center gap-3">
                 <CategoryMark category="other" box={38} />
                 <div className="min-w-0 flex-1">
-                  <div className="text-[14px] font-extrabold">{l.counterpartyName ?? t('loans.unknownPerson')}</div>
+                  <div className="truncate text-[14px] font-extrabold" title={l.counterpartyName ?? undefined}>{l.counterpartyName ?? t('loans.unknownPerson')}</div>
                   <div className="mt-0.5 text-[11.5px] text-v2-dim">{meta}</div>
                 </div>
                 <span
-                  className="rounded-full px-[9px] py-[3px] text-[11px] font-extrabold"
+                  className="flex-none whitespace-nowrap rounded-full px-[9px] py-[3px] text-[11px] font-extrabold"
                   style={done ? { color: 'var(--v2-pos)', background: 'rgba(50,201,138,.14)' } : { color: 'var(--v2-warn)', background: 'rgba(240,180,41,.14)' }}
                 >
                   {done ? t('loans.settled') : t('loans.pending')}
                 </span>
               </div>
-              <div className="flex items-baseline justify-between gap-2.5">
-                <Money hidden={hidden} className="text-[20px] font-extrabold">
+              {/* Each figure stays on one line; on a narrow card the progress note moves below. */}
+              <div className="flex flex-wrap items-baseline justify-between gap-x-2.5 gap-y-1">
+                <Money hidden={hidden} className="whitespace-nowrap text-[20px] font-extrabold">
                   {done ? format(l.amount) : fill(t('loans.pendingAmount'), format(out))}
                 </Money>
-                <Money hidden={hidden} className="text-[11.5px] text-v2-dim">
+                <Money hidden={hidden} className="whitespace-nowrap text-[11.5px] text-v2-dim">
                   {fill(t('loans.progress'), format(paid), format(l.amount), pct)}
                 </Money>
               </div>
@@ -209,8 +210,8 @@ function SummaryCard({ label, children }: { label: string; children: React.React
 function HistoryRow({ label, amount, color, hidden }: { label: string; amount: string; color: string; hidden: boolean }) {
   return (
     <div className="flex justify-between gap-2.5 py-1.5 text-[12px]">
-      <span className="text-v2-muted">{label}</span>
-      <Money hidden={hidden} className="font-extrabold" style={{ color }}>
+      <span className="min-w-0 text-v2-muted">{label}</span>
+      <Money hidden={hidden} className="flex-none whitespace-nowrap font-extrabold" style={{ color }}>
         {amount}
       </Money>
     </div>

@@ -84,8 +84,10 @@ export default function GoalsPage({ adding, onAddingDone }: { adding: boolean; o
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2.5">
-                      <div className="min-w-0 text-[14px] font-extrabold leading-[1.3] tracking-[-.01em]">{g.name}</div>
-                      <span className="font-numeric text-[12px] font-extrabold" style={{ color: ic.color }}>
+                      <div className="min-w-0 truncate text-[14px] font-extrabold leading-[1.3] tracking-[-.01em]" title={g.name}>{g.name}</div>
+                      {/* The ring keeps the goal's color; the figure uses text color, since the
+                          lighter goal colors fall under 4.5:1 on a light surface. */}
+                      <span className="font-numeric flex-none whitespace-nowrap text-[12px] font-extrabold text-v2-muted">
                         {g.percentage}%
                       </span>
                     </div>

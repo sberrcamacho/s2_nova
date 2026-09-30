@@ -13,6 +13,7 @@ import { useTranslation } from '@/state/useTranslation'
 import { categoryLabel, categoryName } from '@/lib/backendCategories'
 import { categoryColor } from '@/lib/categoryGlyphs'
 import { cn } from '@/lib/cn'
+import { formatApprox, referenceRate } from '@/lib/currency'
 import { todayISO, weekdayLabel } from '@/lib/date'
 import { MONTHS_SHORT, fill, monthAbbr, monthYear, shortDate, upcomingWithin, walletKind } from '@/lib/inicio'
 import type { TranslationKey } from '@/lib/i18n/translations'
@@ -369,14 +370,14 @@ function IncomeTab({ report }: { report: Report | null }) {
 
 function CashFlowTab({ report, wallets, series }: { report: Report | null; wallets: Wallet[] | null; series: RecurringSeries[] | null }) {
   const { t, language } = useTranslation()
-  const { format } = useCurrency()
+  const { format, formatIn, currency: principal } = useCurrency()
   const { hidden } = useHideAmounts()
   const today = todayISO()
   // Each wallet in the principal currency, as Inicio's balance.
   const walletTotal = wallets?.reduce((s, w) => s + w.principalBalance, 0) ?? null
   // Inicio's "Próximos 14 días": each active Programado's next occurrence,
   // due-today first, applied to today's wallet total.
-  const events = useMemo(() => (series && walletTotal !== null ? upcomingWithin(series, today, walletTotal, 14) : null), [series, walletTotal, today])
+  const events = useMemo(() => (series && walletTotal !== null ? upcomingWithin(series, today, walletTotal, 14, principal) : null), [series, walletTotal, today, principal])
   const payday = events?.findIndex((e) => e.series.type === 'income') ?? -1
   const beforePayday = events ? (payday >= 0 ? events.slice(0, payday) : events) : []
   const lowest = beforePayday.reduce<(typeof beforePayday)[number] | null>((low, e) => (low === null || e.running < low.running ? e : low), null)
@@ -436,11 +437,26 @@ function CashFlowTab({ report, wallets, series }: { report: Report | null; walle
                   <span className="w-16 flex-none text-[10.5px] font-bold tracking-[.08em] text-v2-dim">
                     {e.dueToday ? t('rep.today') : `${String(d).padStart(2, '0')} ${MONTHS_SHORT[language][m! - 1]!.toUpperCase()}`}
                   </span>
-                  <span className="min-w-0 flex-1 text-[13px] font-bold">{e.series.name}</span>
-                  <Money hidden={hidden} className={cn('w-[110px] flex-none text-right text-[13px] font-extrabold', e.signed < 0 ? 'text-v2-neg' : 'text-v2-pos')}>
-                    {`${e.signed < 0 ? '−' : '+'}${format(Math.abs(e.signed))}`}
-                  </Money>
-                  <Money hidden={hidden} className="w-[120px] flex-none text-right text-[12.5px] text-v2-muted">
+                  <span className="min-w-0 flex-1 truncate text-[13px] font-bold" title={e.series.name}>
+                    {e.series.name}
+                  </span>
+                  {/* The amount in the Programado's own currency (with the "≈" line when it
+                      isn't the principal), as in Inicio's Próximos 14 días. Below 520px the
+                      balance moves under it instead of taking its own column. */}
+                  <div className="min-w-[110px] flex-none text-right">
+                    <Money hidden={hidden} className={cn('block whitespace-nowrap text-[13px] font-extrabold', e.signed < 0 ? 'text-v2-neg' : 'text-v2-pos')}>
+                      {`${e.signed < 0 ? '−' : '+'}${formatIn(Math.abs(e.signed), e.series.currency)}`}
+                    </Money>
+                    {e.series.currency !== principal && (
+                      <Money hidden={hidden} className="block whitespace-nowrap text-[10.5px] text-v2-dim">
+                        {`≈ ${formatApprox(Math.abs(e.signed) * referenceRate(e.series.currency, principal), principal)}`}
+                      </Money>
+                    )}
+                    <Money hidden={hidden} className="block whitespace-nowrap text-[10.5px] text-v2-dim min-[520px]:hidden">
+                      {fill(t('inicio.upcoming.balance'), format(e.running))}
+                    </Money>
+                  </div>
+                  <Money hidden={hidden} className="w-[120px] flex-none whitespace-nowrap text-right text-[12.5px] text-v2-muted max-[519px]:hidden">
                     {format(e.running)}
                   </Money>
                 </div>

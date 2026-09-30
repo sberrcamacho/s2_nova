@@ -43,7 +43,7 @@ fun TransactionRow(
         TransactionType.TRANSFER -> money to MaterialTheme.colorScheme.onBackground
     }
     val conv = if (transaction.currency != principal) {
-        "≈ " + com.s2nova.app.data.formatMoney(abs(transaction.amount) * com.s2nova.app.data.AppContainer.currencyRepository.rate(transaction.currency, principal), principal)
+        "≈ " + com.s2nova.app.data.formatApprox(abs(transaction.amount) * com.s2nova.app.data.AppContainer.currencyRepository.rate(transaction.currency, principal), principal)
     } else null
     Column(modifier = modifier.let { if (onClick != null) it.clickable(onClick = onClick) else it }) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 12.dp)) {
@@ -65,8 +65,8 @@ fun TransactionRow(
                 Text(subtitle, fontSize = 11.sp, color = colors.textDim, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(start = 13.dp)) {
-                Text(amount, fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold, color = if (scheduled) MaterialTheme.colorScheme.onSurfaceVariant else color, style = androidx.compose.ui.text.TextStyle(fontFeatureSettings = TNUM))
-                if (conv != null) Text(conv, fontSize = 10.5.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), style = androidx.compose.ui.text.TextStyle(fontFeatureSettings = TNUM))
+                Text(amount, fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold, color = if (scheduled) MaterialTheme.colorScheme.onSurfaceVariant else color, maxLines = 1, softWrap = false, style = androidx.compose.ui.text.TextStyle(fontFeatureSettings = TNUM))
+                if (conv != null) Text(conv, fontSize = 10.5.sp, color = colors.textDim, maxLines = 1, softWrap = false, modifier = Modifier.padding(top = 2.dp), style = androidx.compose.ui.text.TextStyle(fontFeatureSettings = TNUM))
             }
         }
         HorizontalDivider(thickness = 1.dp, color = colors.dividerSubtle)

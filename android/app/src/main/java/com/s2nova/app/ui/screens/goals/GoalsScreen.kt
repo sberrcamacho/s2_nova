@@ -247,7 +247,7 @@ private fun GoalCard(goal: Goal, onEdit: () -> Unit, onPay: () -> Unit) {
             GoalRing(percentage = pct, icon = goal.icon)
             Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(goal.name, fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, modifier = Modifier.weight(1f))
+                    Text(goal.name, fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                     Icon(
                         MockupIcons.Pencil,
                         contentDescription = t(StringKey.GOALS_EDIT_TITLE),

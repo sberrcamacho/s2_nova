@@ -9,6 +9,7 @@ import {
   upcomingWithin,
   walletKind,
 } from '@/lib/inicio'
+import { referenceRate } from '@/lib/currency'
 import type { Goal, RecurringSeries, Transaction } from '@/types'
 
 const series = (over: Partial<RecurringSeries>): RecurringSeries => ({
@@ -42,6 +43,12 @@ describe('upcomingWithin (Próximos 14 días)', () => {
     expect(list.map((e) => e.series.id)).toEqual(['late', 'admin', 'netflix', 'salary'])
     expect(list[0]).toMatchObject({ dueToday: true, date: '2026-08-21' })
     expect(list.map((e) => e.running)).toEqual([16_137_300, 15_905_300, 15_860_300, 20_260_300])
+  })
+
+  it('converts a foreign Programado into the principal before running the balance', () => {
+    const [spotify] = upcomingWithin([series({ amount: 5.99, currency: 'USD' })], '2026-08-21', 1_000_000, 14, 'COP')
+    expect(spotify.signed).toBe(-5.99)
+    expect(spotify.running).toBeCloseTo(1_000_000 - 5.99 * referenceRate('USD', 'COP'))
   })
 })
 

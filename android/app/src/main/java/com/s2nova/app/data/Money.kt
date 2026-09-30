@@ -4,6 +4,7 @@ import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
 import kotlin.math.abs
+import kotlin.math.floor
 import kotlin.math.round
 
 // Multi-currency display (CURRENCIES_AND_WALLETS.md §2). Every amount shows
@@ -69,6 +70,16 @@ fun formatMoney(value: Double, code: String = "COP", signed: Boolean = false): S
     val digits = if (frac && c.decimals > 0) CENTS.format(cents) else if (frac) CENTS.format(cents).trimEnd('0').trimEnd(',') else WHOLE.format(cents)
     val sign = if (value < 0) "−" else if (signed && value > 0) "+" else ""
     return sign + c.symbol + digits
+}
+
+// A converted "≈" figure: rounded to the currency's own decimals, since a
+// conversion never lands on an exact amount ("≈ $23.661", not "$23.660,5").
+fun formatApprox(value: Double, code: String): String {
+    val decimals = Currencies.info(code).decimals
+    val factor = Math.pow(10.0, decimals.toDouble())
+    // Half-up like the web's Math.round; kotlin.math.round is half-even
+    // (23.660,5 would show as $23.660 here and $23.661 on the web).
+    return formatMoney(floor(value * factor + 0.5) / factor, code)
 }
 
 // Plain grouped number without symbol ("168.500", "5,99").

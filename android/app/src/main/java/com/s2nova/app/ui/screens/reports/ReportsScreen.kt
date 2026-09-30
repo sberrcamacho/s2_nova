@@ -39,6 +39,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -218,11 +221,13 @@ private fun TotalRow(label: String, value: String?, delta: Delta?) {
         if (value == null) {
             Box(Modifier.width(96.dp)) { Placeholder(1f, 13) }
         } else {
-            Text(value, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
+            Text(value, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, softWrap = false)
         }
         if (delta != null) {
             Text(
                 delta.text,
+                maxLines = 1,
+                softWrap = false,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = if (delta.good) colors.positive else colors.negative,
@@ -235,6 +240,7 @@ private fun TotalRow(label: String, value: String?, delta: Delta?) {
     }
 }
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun BarsCard(report: Report?, subtitle: String) {
     val t = rememberStrings()
@@ -244,13 +250,34 @@ private fun BarsCard(report: Report?, subtitle: String) {
     val language = rememberAppLanguage()
     val ceiling = (months.maxOfOrNull { maxOf(it.income, it.expenses) }?.toFloat() ?: 0f).coerceAtLeast(1f) * BAR_HEADROOM
     ReportCard {
-        CardTitle(t(StringKey.REPORTS_INCOME_VS_EXPENSES))
-        Text(subtitle, fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
+        val format = rememberCurrencyFormatter()
+        val income = t(StringKey.HOME_INCOME)
+        val expenses = t(StringKey.HOME_EXPENSES)
+        // Legend, as on the web: the bars' colors alone don't say which is
+        // which. It moves under the title when both don't fit on one line.
+        androidx.compose.foundation.layout.FlowRow(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(Modifier.padding(end = 12.dp)) {
+                CardTitle(t(StringKey.REPORTS_INCOME_VS_EXPENSES))
+                Text(subtitle, fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(top = 2.dp)) {
+                LegendItem(income, colors.positive)
+                LegendItem(expenses, colors.negative)
+            }
+        }
         Row(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.Bottom,
             modifier = Modifier
                 .padding(top = 16.dp)
+                // TalkBack reads the figures the bars draw.
+                .semantics {
+                    contentDescription = months.joinToString(". ") { m -> "${chartMonth(m.month, language)}: $income ${format(m.income)}, $expenses ${format(m.expenses)}" }
+                }
                 .fillMaxWidth()
                 .height(132.dp)
                 .drawBehind { drawLine(line, Offset(0f, size.height), Offset(size.width, size.height), 1.dp.toPx()) },
@@ -282,6 +309,14 @@ private fun BarsCard(report: Report?, subtitle: String) {
 }
 
 @Composable
+private fun LegendItem(label: String, color: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+        Box(Modifier.width(8.dp).height(8.dp).clip(RoundedCornerShape(2.dp)).background(color))
+        Text(label, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, softWrap = false)
+    }
+}
+
+@Composable
 private fun Bar(fraction: Float, color: Color, width: Dp) {
     val height by animateFloatAsState(fraction.coerceIn(0f, 1f), tween(300), label = "bar")
     Box(
@@ -308,8 +343,8 @@ private fun CategoryCard(report: Report?) {
                 val color = com.s2nova.app.ui.components.categoryColor(c.category)
                 Column {
                     Row(modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp)) {
-                        Text(categoryName(c.category), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
-                        Text(format(c.amount), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(categoryName(c.category), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                        Text(format(c.amount), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 12.dp))
                     }
                     // Width relative to the month's largest category, as on Web.
                     Box(Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(MaterialTheme.colorScheme.outline)) {

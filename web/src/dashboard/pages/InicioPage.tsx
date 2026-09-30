@@ -49,6 +49,7 @@ import {
 import type { TranslationKey } from '@/lib/i18n/translations'
 import type { Goal, RecurringSeries, Transaction, Wallet } from '@/types'
 import { cn } from '@/lib/cn'
+import { formatApprox, referenceRate } from '@/lib/currency'
 
 const TONE_VAR: Record<Tone, string> = { neg: 'var(--v2-neg)', warn: 'var(--v2-warn)', pos: 'var(--v2-pos)' }
 
@@ -138,8 +139,8 @@ export default function InicioPage() {
     .sort((a, b) => Number(FIRST.includes(b.kind)) - Number(FIRST.includes(a.kind)))
   const monthKey = today.slice(0, 7)
   const upcoming = useMemo(
-    () => (data.series && walletTotal !== null ? upcomingWithin(data.series, today, walletTotal, 14) : null),
-    [data.series, walletTotal, today],
+    () => (data.series && walletTotal !== null ? upcomingWithin(data.series, today, walletTotal, 14, principal) : null),
+    [data.series, walletTotal, today, principal],
   )
   const openSeries = openSeriesId ? data.series?.find((s) => s.id === openSeriesId) : undefined
 
@@ -190,12 +191,12 @@ export default function InicioPage() {
           style={{ background: 'linear-gradient(150deg,var(--v2-hero-a) 0%,var(--v2-hero-b) 55%,var(--v2-hero-c) 100%)' }}
         >
           <div aria-hidden="true" className="pointer-events-none absolute right-[-40px] top-[-70px] h-[220px] w-[220px] rounded-full bg-[rgba(108,92,231,.35)] blur-[52px]" />
-          <div className="relative">
+          <div className="relative [container-type:inline-size]">
             <div className="flex items-center justify-between gap-3">
-              <div className="text-[10.5px] font-bold tracking-[.11em] text-[#a69dff]">{t('inicio.balance')}</div>
-              <div className="flex items-center gap-2">
+              <div className="truncate text-[10.5px] font-bold tracking-[.11em] text-[var(--hero-overline)]">{t('inicio.balance')}</div>
+              <div className="flex flex-none items-center gap-2">
                 {data.wallets && (
-                  <div className="rounded-full bg-white/[.08] px-2.5 py-1 text-[10.5px] font-bold text-white/70">
+                  <div className="whitespace-nowrap rounded-full bg-white/[.08] px-2.5 py-1 text-[10.5px] font-bold text-[var(--hero-label)]">
                     {data.wallets.length === 1 ? t('inicio.walletsOne') : fill(t('inicio.walletsMany'), data.wallets.length)}
                   </div>
                 )}
@@ -214,13 +215,13 @@ export default function InicioPage() {
             {walletTotal === null ? (
               <SkeletonBar className="mt-[18px] h-[40px] w-[60%]" dark />
             ) : (
-              <Money hidden={hidden} className="mt-2.5 block text-[48px] font-extrabold leading-[1.2] tracking-[-.03em]">
+              <Money hidden={hidden} className="mt-2.5 block whitespace-nowrap text-[clamp(28px,15cqi,48px)] font-extrabold leading-[1.2] tracking-[-.03em]">
                 {format(walletTotal)}
               </Money>
             )}
             <div className="mt-4 flex gap-3">
-              <HeroStat label={t('inicio.monthIncome')} value={thisMonth ? format(thisMonth.income) : null} color="#32c98a" hidden={hidden} />
-              <HeroStat label={t('inicio.monthExpenses')} value={thisMonth ? format(thisMonth.expenses) : null} color="#ff6262" hidden={hidden} />
+              <HeroStat label={t('inicio.monthIncome')} value={thisMonth ? format(thisMonth.income) : null} color="var(--hero-positive)" hidden={hidden} />
+              <HeroStat label={t('inicio.monthExpenses')} value={thisMonth ? format(thisMonth.expenses) : null} color="var(--hero-negative)" hidden={hidden} />
             </div>
             <MonthBars months={data.months} language={language} />
           </div>
@@ -244,16 +245,16 @@ export default function InicioPage() {
                     <StrokeIcon paths={WALLET_ICON_PATHS[walletIcon(w.accountType)]} size={17} />
                   </div>
                   <div className="min-w-0 flex-1 text-left">
-                    <div className="text-[12.5px] font-bold">{w.name}</div>
-                    <div className="text-[11px] text-v2-dim">
+                    <div className="truncate text-[12.5px] font-bold" title={w.name}>{w.name}</div>
+                    <div className="truncate text-[11px] text-v2-dim">
                       {WALLET_KINDS.some((k) => k.type === w.accountType) ? walletKindLabel(w.accountType) : t(`inicio.walletKind.${walletKind(w.accountType)}` as TranslationKey)}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <Money hidden={hidden} className="block text-[13.5px] font-extrabold">
+                  <div className="flex-none text-right">
+                    <Money hidden={hidden} className="block whitespace-nowrap text-[13.5px] font-extrabold">
                       {formatIn(w.currentBalance, w.currency)}
                     </Money>
-                    <div className="font-numeric text-[10.5px] text-v2-dim">
+                    <div className="font-numeric whitespace-nowrap text-[10.5px] text-v2-dim">
                       {w.currency !== principal && (
                         <Money hidden={hidden} inline>
                           {`≈ ${format(w.principalBalance)} · `}
@@ -329,8 +330,8 @@ export default function InicioPage() {
                     <CategoryMark category={b.category!} box={34} />
                     <div className="flex min-w-0 flex-1 flex-col gap-1.5 text-left">
                       <div className="flex items-baseline justify-between gap-2.5">
-                        <span className="text-[12.5px] font-bold">{budgetScope(b, walletName)}</span>
-                        <Money hidden={hidden} className="text-[11.5px] text-v2-muted">
+                        <span className="line-clamp-2 min-w-0 text-[12.5px] font-bold" title={budgetScope(b, walletName)}>{budgetScope(b, walletName)}</span>
+                        <Money hidden={hidden} className="flex-none whitespace-nowrap text-[11.5px] text-v2-muted">
                           {`${format(b.spent)} / ${format(b.limit)}`}
                         </Money>
                       </div>
@@ -338,8 +339,8 @@ export default function InicioPage() {
                         <div className="h-full" style={{ width: `${Math.min(100, b.percentage)}%`, background: tone }} />
                       </div>
                       <div className="flex justify-between gap-2.5 text-[11px] text-v2-dim">
-                        <span>{budgetStateNote(b, today, format)}</span>
-                        <Money hidden={hidden}>
+                        <span className="min-w-0 truncate">{budgetStateNote(b, today, format)}</span>
+                        <Money hidden={hidden} className="flex-none whitespace-nowrap">
                           {b.remaining >= 0 ? fill(t('inicio.budgets.available'), format(b.remaining)) : fill(t('inicio.budgets.overBy'), format(-b.remaining))}
                         </Money>
                       </div>
@@ -383,15 +384,15 @@ export default function InicioPage() {
                         </div>
                       </div>
                       <div className="min-w-0 flex-1 text-left">
-                        <div className="text-[12.5px] font-bold">{g.name}</div>
-                        <Money hidden={hidden} className="mt-0.5 block text-[11.5px] text-v2-muted">
+                        <div className="truncate text-[12.5px] font-bold" title={g.name}>{g.name}</div>
+                        <Money hidden={hidden} className="mt-0.5 block truncate text-[11.5px] text-v2-muted">
                           {fill(t('inicio.goals.progress'), format(g.currentAmount), format(g.targetAmount))}
                         </Money>
                         <div className="mt-0.5 text-[11px] text-v2-dim">
                           {g.plan ? planText(g.plan, walletName(g.plan.accountId), format) : g.targetDate ? fill(t('goal.targetOn'), shortDayMonth(g.targetDate)) : t('goal.noTarget')}
                         </div>
                       </div>
-                      <span className="font-numeric text-[12px] font-extrabold text-v2-muted">{g.percentage}%</span>
+                      <span className="font-numeric flex-none text-[12px] font-extrabold text-v2-muted">{g.percentage}%</span>
                     </RowButton>
                   )
                 })
@@ -424,8 +425,8 @@ export default function InicioPage() {
                   <CategoryMark category={c.category} box={30} />
                   <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                     <div className="flex justify-between gap-2.5 text-[12px]">
-                      <span className="font-bold">{tCategory(c.category)}</span>
-                      <Money hidden={hidden} className="text-v2-muted">
+                      <span className="min-w-0 truncate font-bold" title={tCategory(c.category)}>{tCategory(c.category)}</span>
+                      <Money hidden={hidden} className="flex-none whitespace-nowrap text-v2-muted">
                         {format(c.amount)}
                       </Money>
                     </div>
@@ -433,7 +434,7 @@ export default function InicioPage() {
                       <div className="h-full" style={{ width: `${Math.round((c.amount / arr[0].amount) * 100)}%`, background: categoryColor(c.category) }} />
                     </div>
                   </div>
-                  <span className="font-numeric w-[34px] text-right text-[11px] font-extrabold text-v2-dim">{c.percentage}%</span>
+                  <span className="font-numeric w-[34px] flex-none text-right text-[11px] font-extrabold text-v2-dim">{c.percentage}%</span>
                 </div>
               ))
             )}
@@ -466,16 +467,21 @@ export default function InicioPage() {
                       <div className="font-numeric text-[15px] font-extrabold">{String(d).padStart(2, '0')}</div>
                     </div>
                     <div className="min-w-0 flex-1 text-left">
-                      <div className="text-[12.5px] font-bold">{ev.series.name}</div>
-                      <div className="text-[11px] text-v2-dim">
+                      <div className="truncate text-[12.5px] font-bold" title={ev.series.name}>{ev.series.name}</div>
+                      <div className="truncate text-[11px] text-v2-dim">
                         {ev.dueToday ? t('inicio.upcoming.dueToday') : `${tCategory(ev.series.category)} · ${shortWallet(wallet?.name ?? '')}`}
                       </div>
                     </div>
-                    <div className="text-right">
-                      <Money hidden={hidden} className={cn('block text-[13px] font-extrabold', ev.signed < 0 ? 'text-v2-neg' : 'text-v2-pos')}>
-                        {`${ev.signed < 0 ? '−' : '+'}${format(Math.abs(ev.signed))}`}
+                    <div className="flex-none text-right">
+                      <Money hidden={hidden} className={cn('block whitespace-nowrap text-[13px] font-extrabold', ev.signed < 0 ? 'text-v2-neg' : 'text-v2-pos')}>
+                        {`${ev.signed < 0 ? '−' : '+'}${formatIn(Math.abs(ev.signed), ev.series.currency)}`}
                       </Money>
-                      <Money hidden={hidden} className="block text-[10.5px] text-v2-dim">
+                      {ev.series.currency !== principal && (
+                        <Money hidden={hidden} className="block whitespace-nowrap text-[10.5px] text-v2-dim">
+                          {`≈ ${formatApprox(Math.abs(ev.signed) * referenceRate(ev.series.currency, principal), principal)}`}
+                        </Money>
+                      )}
+                      <Money hidden={hidden} className="block whitespace-nowrap text-[10.5px] text-v2-dim">
                         {fill(t('inicio.upcoming.balance'), format(ev.running))}
                       </Money>
                     </div>
@@ -522,12 +528,13 @@ function Card({ children, className }: { children: ReactNode; className?: string
 function CardHead({ title, subtitle, link, onLink }: { title: string; subtitle?: string; link?: string; onLink?: () => void }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
-      <div>
-        <h2 className="text-[14px] font-extrabold tracking-[-.01em]">{title}</h2>
+      <div className="min-w-0">
+        <h2 className="truncate text-[14px] font-extrabold tracking-[-.01em]" title={title}>{title}</h2>
         {subtitle && <div className="mt-0.5 text-[11.5px] text-v2-dim">{subtitle}</div>}
       </div>
       {link && (
-        <button type="button" onClick={onLink} className="cursor-pointer whitespace-nowrap text-[11.5px] font-extrabold text-v2-accent2">
+        // Padded to a 24px-tall pointer target without moving the text.
+        <button type="button" onClick={onLink} className="-mx-2 -my-1.5 min-h-6 flex-none cursor-pointer whitespace-nowrap rounded-[8px] px-2 py-1.5 text-[11.5px] font-extrabold text-v2-accent2 hover:bg-v2-subtle">
           {link}
         </button>
       )}
@@ -537,12 +544,12 @@ function CardHead({ title, subtitle, link, onLink }: { title: string; subtitle?:
 
 function HeroStat({ label, value, color, hidden }: { label: string; value: string | null; color: string; hidden: boolean }) {
   return (
-    <div className="flex-1 rounded-[14px] bg-white/[.06] px-3.5 py-[11px]">
-      <div className="text-[10.5px] text-white/[.62]">{label}</div>
+    <div className="min-w-0 flex-1 rounded-[14px] bg-white/[.06] px-3.5 py-[11px] [container-type:inline-size]">
+      <div className="truncate text-[10.5px] text-[var(--hero-label)]">{label}</div>
       {value === null ? (
         <SkeletonBar className="mt-1.5 h-4 w-[60%]" dark />
       ) : (
-        <Money hidden={hidden} className="mt-[3px] block text-[16px] font-extrabold" style={{ color }}>
+        <Money hidden={hidden} className="mt-[3px] block whitespace-nowrap text-[clamp(12px,11cqi,16px)] font-extrabold" style={{ color }}>
           {value}
         </Money>
       )}
@@ -572,7 +579,7 @@ function MonthBars({ months, language }: { months: MonthTotals[] | null; languag
           )
         })}
       </div>
-      <div className="mt-2 flex gap-[5px] text-[10px] text-white/50">
+      <div className="mt-2 flex gap-[5px] text-[10px] text-[var(--hero-label)]">
         {months.map((m) => (
           <span key={m.month} className="flex-1 text-center">
             {monthAbbr(m.month, language)}
@@ -620,7 +627,7 @@ function AlertCard({
     >
       <GlyphMark paths={copy.glyph} color={copy.color} box={32} />
       <div className="min-w-0 flex-1">
-        <div className="text-[12.5px] font-bold">{copy.title}</div>
+        <div className="text-[12.5px] font-bold [overflow-wrap:anywhere]">{copy.title}</div>
         <div className="mt-[3px] text-[11.5px] leading-[1.45] text-v2-dim">
           <MoneyText parts={copy.body} hidden={hidden} format={format} />
         </div>
@@ -632,7 +639,7 @@ function AlertCard({
                 e.stopPropagation()
                 onConfirm()
               }}
-              className="cursor-pointer text-v2-accent2"
+              className="min-h-6 cursor-pointer whitespace-nowrap text-v2-accent2"
             >
               {tr('inicio.plan.confirm')}
             </button>
@@ -642,7 +649,7 @@ function AlertCard({
                 e.stopPropagation()
                 onSkip()
               }}
-              className="cursor-pointer text-v2-muted"
+              className="min-h-6 cursor-pointer whitespace-nowrap text-v2-muted"
             >
               {tr('event.skip')}
             </button>
@@ -657,9 +664,9 @@ function AlertCard({
           e.stopPropagation()
           onDismiss()
         }}
-        className="flex h-[26px] w-[26px] flex-none cursor-pointer items-center justify-center rounded-[8px] text-v2-dim hover:bg-v2-subtle hover:text-v2-text"
+        className="-m-[3px] flex h-8 w-8 flex-none cursor-pointer items-center justify-center rounded-[8px] text-v2-dim hover:bg-v2-subtle hover:text-v2-text"
       >
-        <StrokeIcon paths={ICON_PATHS.close} size={13} />
+        <StrokeIcon paths={ICON_PATHS.close} size={14} />
       </button>
     </div>
   )
@@ -692,14 +699,14 @@ function LoansCard({ loans, wallets, hidden, onOpen }: { loans: Transaction[] | 
         >
           <CategoryMark category="other" box={34} />
           <div className="min-w-0 flex-1">
-            <div className="text-[12.5px] font-bold">
+            <div className="truncate text-[12.5px] font-bold">
               {fill(t(next.loanKind === 'lent' ? 'alert.loanLent.title' : 'alert.loanBorrowed.title'), next.counterpartyName ?? t('loans.unknownPerson'))}
             </div>
             <div className="text-[11px] text-v2-dim">
               {fill(t('inicio.loans.due'), shortDate(next.dueDate!, language), shortWallet(wallets?.find((w) => w.id === next.accountId)?.name ?? ''))}
             </div>
           </div>
-          <Money hidden={hidden} className="text-[13px] font-extrabold">
+          <Money hidden={hidden} className="flex-none whitespace-nowrap text-[13px] font-extrabold">
             {format(next.outstanding ?? 0)}
           </Money>
         </button>
@@ -710,12 +717,12 @@ function LoansCard({ loans, wallets, hidden, onOpen }: { loans: Transaction[] | 
 
 function LoanBox({ label, value, color, hidden }: { label: string; value: string | null; color: string; hidden: boolean }) {
   return (
-    <div className="rounded-[12px] border border-v2-line bg-v2-surface2 px-[13px] py-[11px]">
-      <div className="text-[10.5px] text-v2-dim">{label}</div>
+    <div className="min-w-0 rounded-[12px] border border-v2-line bg-v2-surface2 px-[13px] py-[11px] [container-type:inline-size]">
+      <div className="truncate text-[10.5px] text-v2-dim">{label}</div>
       {value === null ? (
         <SkeletonBar className="mt-1.5 h-4 w-[60%]" />
       ) : (
-        <Money hidden={hidden} className="mt-0.5 block text-[16px] font-extrabold" style={{ color }}>
+        <Money hidden={hidden} className="mt-0.5 block whitespace-nowrap text-[clamp(12px,11cqi,16px)] font-extrabold" style={{ color }}>
           {value}
         </Money>
       )}

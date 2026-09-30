@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -48,6 +49,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -56,6 +58,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.R
 import com.s2nova.app.data.AppContainer
 import com.s2nova.app.data.ThemeController
+import com.s2nova.app.data.formatApprox
+import com.s2nova.app.data.formatMoney
 import com.s2nova.app.ui.components.categoryColor
 import com.s2nova.app.data.model.AppAlert
 import com.s2nova.app.data.model.BudgetProgress
@@ -71,6 +75,9 @@ import com.s2nova.app.ui.components.CategoryIcon
 import com.s2nova.app.ui.components.CategoryIconSize
 import com.s2nova.app.ui.components.IconCircle
 import com.s2nova.app.ui.components.MockupIcons
+import com.s2nova.app.ui.components.TNUM
+import com.s2nova.app.ui.components.V2Icon
+import com.s2nova.app.ui.components.V2Icons
 import com.s2nova.app.ui.presentAlert
 import com.s2nova.app.ui.rememberAppLanguage
 import com.s2nova.app.ui.rememberCurrencyFormatter
@@ -373,9 +380,37 @@ private val MONTHS_EN = listOf("jan", "feb", "mar", "apr", "may", "jun", "jul", 
 private fun monthAbbr(date: LocalDate, language: com.s2nova.app.data.model.AppLanguage): String =
     (if (language == com.s2nova.app.data.model.AppLanguage.EN) MONTHS_EN else MONTHS_ES)[date.monthValue - 1]
 
-// Mockup money format with its typographic minus: "−$168.500" / "+$4.400.000".
-private fun signedAmount(format: CurrencyFormatter, amount: Double, income: Boolean): String =
-    (if (income) "+" else "−") + format(abs(amount))
+// A row's amount in its own currency, with its typographic sign
+// ("−US$5,99" / "+$4.400.000") kept as one unbreakable unit, plus the
+// "≈" principal-currency line for a foreign movement — the same rule as
+// Movimientos' TransactionRow. The column never shrinks; the title does.
+@Composable
+private fun AmountColumn(amount: Double, currency: String, income: Boolean) {
+    val colors = NovaColors.current
+    val principal = AppContainer.currencyRepository.principal
+    Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(start = 12.dp)) {
+        Text(
+            (if (income) "+" else "\u2212") + formatMoney(abs(amount), currency),
+            fontSize = 13.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = if (income) colors.positive else colors.negative,
+            maxLines = 1,
+            softWrap = false,
+            style = TextStyle(fontFeatureSettings = TNUM),
+        )
+        if (currency != principal) {
+            Text(
+                "≈ " + formatApprox(abs(amount) * AppContainer.currencyRepository.rate(currency, principal), principal),
+                fontSize = 10.5.sp,
+                color = colors.textDim,
+                maxLines = 1,
+                softWrap = false,
+                style = TextStyle(fontFeatureSettings = TNUM),
+                modifier = Modifier.padding(top = 2.dp),
+            )
+        }
+    }
+}
 
 private fun recentDateLabel(iso: String, today: LocalDate, t: (StringKey) -> String, language: com.s2nova.app.data.model.AppLanguage): String {
     val date = runCatching { LocalDate.parse(iso) }.getOrNull() ?: return iso
@@ -459,7 +494,8 @@ private fun BalanceHero(
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.2.sp,
-                    color = colors.accentText,
+                    color = colors.heroOverline,
+                    maxLines = 1,
                     modifier = Modifier.weight(1f),
                 )
                 if (walletCount > 0) {
@@ -475,13 +511,15 @@ private fun BalanceHero(
                             "$walletCount ${t(if (walletCount == 1) StringKey.HOME_WALLET_ONE else StringKey.HOME_WALLET_MANY)}",
                             fontSize = 10.5.sp,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = colors.heroLabel,
+                            maxLines = 1,
+                            softWrap = false,
                         )
                         Text(
                             "›",
                             fontSize = 12.sp,
                             lineHeight = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = colors.heroLabel,
                             modifier = Modifier.padding(start = 4.dp),
                         )
                     }
@@ -489,10 +527,13 @@ private fun BalanceHero(
             }
             Text(
                 balance,
-                fontSize = 34.sp,
                 fontWeight = FontWeight.ExtraBold,
                 letterSpacing = (-1.02).sp,
                 color = Color.White,
+                maxLines = 1,
+                softWrap = false,
+                autoSize = TextAutoSize.StepBased(minFontSize = 22.sp, maxFontSize = 34.sp),
+                style = TextStyle(fontFeatureSettings = TNUM),
                 modifier = Modifier
                     .padding(top = 10.dp)
                     // Unbounded: the mockup's CSS blur fades past the text box
@@ -507,7 +548,7 @@ private fun BalanceHero(
                     t(StringKey.HOME_BALANCE_TAP_TO_REVEAL),
                     fontSize = 10.5.sp,
                     fontWeight = FontWeight.Bold,
-                    color = colors.accentText,
+                    color = colors.heroOverline,
                     modifier = Modifier
                         .padding(top = 8.dp)
                         .clickable(onClick = onToggleReveal),
@@ -520,15 +561,15 @@ private fun BalanceHero(
                     t(StringKey.HOME_ADD_FIRST_WALLET),
                     fontSize = 10.5.sp,
                     fontWeight = FontWeight.Bold,
-                    color = colors.accentText,
+                    color = colors.heroOverline,
                     modifier = Modifier
                         .padding(top = 8.dp)
                         .clickable(onClick = onOpenWallets),
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(top = 18.dp)) {
-                HeroStatTile(label = t(StringKey.HOME_MONTH_INCOME), value = monthIncome, valueColor = colors.positive, modifier = Modifier.weight(1f))
-                HeroStatTile(label = t(StringKey.HOME_MONTH_EXPENSES), value = monthExpenses, valueColor = colors.negative, modifier = Modifier.weight(1f))
+                HeroStatTile(label = t(StringKey.HOME_MONTH_INCOME), value = monthIncome, valueColor = colors.heroPositive, modifier = Modifier.weight(1f))
+                HeroStatTile(label = t(StringKey.HOME_MONTH_EXPENSES), value = monthExpenses, valueColor = colors.heroNegative, modifier = Modifier.weight(1f))
             }
         }
     }
@@ -542,9 +583,20 @@ private fun HeroStatTile(label: String, value: String?, valueColor: Color, modif
             .background(Color.White.copy(alpha = 0.06f))
             .padding(horizontal = 13.dp, vertical = 11.dp),
     ) {
-        Text(label, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(label, fontSize = 10.sp, color = NovaColors.current.heroLabel, maxLines = 1, overflow = TextOverflow.Ellipsis)
         if (value != null) {
-            Text(value, fontSize = 14.5.sp, fontWeight = FontWeight.ExtraBold, color = valueColor, modifier = Modifier.padding(top = 3.dp))
+            // An amount is never cut or wrapped: it shrinks to fit the tile
+            // on narrow screens / large font scales instead.
+            Text(
+                value,
+                fontWeight = FontWeight.ExtraBold,
+                color = valueColor,
+                maxLines = 1,
+                softWrap = false,
+                autoSize = TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = 14.5.sp),
+                style = TextStyle(fontFeatureSettings = TNUM),
+                modifier = Modifier.padding(top = 3.dp),
+            )
         } else {
             // Loading skeleton: a 60%-width bar where the amount goes.
             Box(
@@ -572,7 +624,7 @@ private fun HomeAlertCard(alert: AppAlert, format: CurrencyFormatter, onOpen: ()
             .background(MaterialTheme.colorScheme.surface)
             .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))
             .clickable(onClick = onOpen)
-            .padding(start = 16.dp, end = 12.dp, top = 14.dp, bottom = 14.dp),
+            .padding(start = 16.dp, end = 4.dp, top = 14.dp, bottom = 14.dp),
     ) {
         IconCircle(icon = copy.icon, color = copy.color, size = CategoryIconSize.ALERT)
         Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
@@ -581,14 +633,14 @@ private fun HomeAlertCard(alert: AppAlert, format: CurrencyFormatter, onOpen: ()
         }
         Box(
             modifier = Modifier
-                .padding(start = 12.dp)
-                .size(32.dp)
+                .padding(start = 4.dp)
+                .size(48.dp)
                 .clip(CircleShape)
-                .clickable(onClick = onDismiss)
+                .clickable(onClick = onDismiss, role = Role.Button)
                 .semantics { contentDescription = t(StringKey.COMMON_DISMISS) },
             contentAlignment = Alignment.Center,
         ) {
-            Text("✕", fontSize = 15.sp, color = colors.textDim)
+            V2Icon(V2Icons.close, colors.textDim, 18.dp)
         }
     }
 }
@@ -609,7 +661,7 @@ private fun HomeCard(content: @Composable () -> Unit) {
 
 @Composable
 private fun CardTitle(text: String, modifier: Modifier = Modifier) {
-    Text(text, fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, modifier = modifier)
+    Text(text, fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = modifier)
 }
 
 @Composable
@@ -619,7 +671,9 @@ private fun CardLink(text: String, onClick: () -> Unit) {
         fontSize = 11.5.sp,
         fontWeight = FontWeight.Bold,
         color = NovaColors.current.accentText,
-        modifier = Modifier.clickable(onClick = onClick),
+        maxLines = 1,
+        softWrap = false,
+        modifier = Modifier.padding(start = 12.dp).clickable(onClick = onClick, role = Role.Button),
     )
 }
 
@@ -649,8 +703,8 @@ private fun HomeBudgetRow(progress: BudgetProgress, format: CurrencyFormatter, o
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Bottom,
         ) {
-            Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-            Text("${progress.percentage}%", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = tone)
+            Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+            Text("${progress.percentage}%", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = tone, maxLines = 1, softWrap = false, style = TextStyle(fontFeatureSettings = TNUM), modifier = Modifier.padding(start = 12.dp))
         }
         Box(
             modifier = Modifier
@@ -670,6 +724,9 @@ private fun HomeBudgetRow(progress: BudgetProgress, format: CurrencyFormatter, o
             "${format(progress.spent)} / ${format(progress.budget.limit)}",
             fontSize = 11.sp,
             color = colors.textDim,
+            maxLines = 1,
+            softWrap = false,
+            style = TextStyle(fontFeatureSettings = TNUM),
             modifier = Modifier.padding(top = 5.dp),
         )
     }
@@ -697,7 +754,7 @@ private fun UpcomingRow(item: UpcomingItem, format: CurrencyFormatter, language:
                 )
             }
             Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
-                Text(item.series.name, fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                Text(item.series.name, fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
                     if (item.dueToday) {
                         t(StringKey.HOME_UPCOMING_DUE_TODAY)
@@ -706,15 +763,11 @@ private fun UpcomingRow(item: UpcomingItem, format: CurrencyFormatter, language:
                     },
                     fontSize = 11.sp,
                     color = colors.textDim,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
-            Text(
-                signedAmount(format, item.series.amount, income),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = if (income) colors.positive else colors.negative,
-                modifier = Modifier.padding(start = 12.dp),
-            )
+            AmountColumn(amount = item.series.amount, currency = item.series.currency, income = income)
         }
         if (showDivider) {
             HorizontalDivider(thickness = 1.dp, color = colors.dividerSubtle)
@@ -747,13 +800,7 @@ private fun RecentRow(
                 )
                 Text(subtitle, fontSize = 11.sp, color = colors.textDim, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            Text(
-                signedAmount(format, transaction.amount, income),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = if (income) colors.positive else colors.negative,
-                modifier = Modifier.padding(start = 13.dp),
-            )
+            AmountColumn(amount = transaction.amount, currency = transaction.currency, income = income)
         }
         HorizontalDivider(thickness = 1.dp, color = colors.dividerSubtle)
     }

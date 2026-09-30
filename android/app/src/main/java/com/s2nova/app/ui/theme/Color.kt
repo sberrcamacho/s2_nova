@@ -2,8 +2,9 @@ package com.s2nova.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Ported 1:1 from web/src/index.css custom properties, so both platforms
-// share one visual identity. Keep in sync if the web tokens change.
+// Shared with web/src/index.css so both platforms share one visual
+// identity; DESIGN-SYSTEM.md §2 is the source for every value. Keep the two
+// in sync.
 
 // Light
 val LightBg = Color(0xFFF7F7FA) // mockup --bg
@@ -17,7 +18,7 @@ val LightPrimarySecondary = Color(0xFF7B6FF6)
 val LightAccentSoft = Color(0xFFEAE7FF)
 val LightText = Color(0xFF111118)
 val LightTextSecondary = Color(0xFF666673)
-val LightTextTertiary = Color(0xFF9C9CAA)
+val LightTextTertiary = Color(0xFF6B6B7A) // 5.24:1 on surface, 4.90:1 on bg
 
 // Dark — genuinely near-black, not dark gray.
 val DarkBg = Color(0xFF050507)
@@ -31,12 +32,12 @@ val DarkPrimarySecondary = Color(0xFF8578FF)
 val DarkAccentSoft = Color(0x296C5CE7) // rgba(108,92,231,0.16)
 val DarkText = Color(0xFFFFFFFF)
 val DarkTextSecondary = Color(0xFFA8A8B8)
-val DarkTextTertiary = Color(0xFF6F6F82)
+val DarkTextTertiary = Color(0xFF8E8EA0) // 5.98:1 on surface
 
 // Financial semantics (shared meaning across themes, different exact values).
-val LightPositive = Color(0xFF22A06B)
-val LightNegative = Color(0xFFD64545)
-val LightWarning = Color(0xFFB5760F)
+val LightPositive = Color(0xFF0F7A4A) // 5.38:1
+val LightNegative = Color(0xFFC0362F) // 5.51:1
+val LightWarning = Color(0xFF8F5A00) // 5.78:1
 val DarkPositive = Color(0xFF32C98A)
 val DarkNegative = Color(0xFFFF6262)
 val DarkWarning = Color(0xFFF0B429)
@@ -45,8 +46,8 @@ val OnPrimary = Color(0xFFFFFFFF)
 
 // v2 mockup tokens with no existing equivalent: --dim (captions, dates),
 // --accent2 (text links like "Ver todos") and --subtle (row dividers).
-val LightTextDim = Color(0xFF767686)
-val DarkTextDim = Color(0xFF6F6F82)
+val LightTextDim = Color(0xFF6B6B7A)
+val DarkTextDim = Color(0xFF8E8EA0)
 val LightAccentText = Color(0xFF5A4AD6)
 val DarkAccentText = Color(0xFFA69DFF)
 val LightDividerSubtle = Color(0xFFF0F0F5)
@@ -60,6 +61,14 @@ val HeroTo = Color(0xFF241A5E)
 // linear-gradient(150deg, #050507 0%, #151041 60%, #211a4d 100%)) — deliberately
 // richer/more saturated than a straight lerp between DarkBg and #211A4D would give.
 val DarkHeroMid = Color(0xFF151041)
+
+// Text on the balance hero. The hero stays dark in both themes, so it needs
+// its own on-dark colors: the light theme's text and semantic colors fall
+// under 3:1 on it. Each is ≥ 5:1 across the whole gradient.
+val HeroOverline = Color(0xFFA69DFF)
+val HeroLabel = Color(0xB8FFFFFF) // white at 72 %
+val HeroPositive = Color(0xFF32C98A)
+val HeroNegative = Color(0xFFFF7A7A)
 
 // Home balance hero card border — identical in both themes.
 val HeroBorder = Color(0xFF2B2450)

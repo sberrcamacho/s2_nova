@@ -79,10 +79,12 @@ export function Header({ title, onMenuClick, onNewTransaction }: HeaderProps) {
           type="button"
           onClick={onNewTransaction}
           aria-keyshortcuts="N"
-          className="flex h-[34px] flex-none cursor-pointer items-center gap-[7px] rounded-[10px] bg-v2-accent px-3.5 text-[12.5px] font-bold text-white shadow-[0_8px_24px_rgba(108,92,231,.35)]"
+          title={t('v2.header.newTx')}
+          // Icon-only on phones, where the label would push the button off-screen next to the period selector.
+          className="flex h-[34px] flex-none cursor-pointer items-center gap-[7px] rounded-[10px] bg-v2-accent px-3.5 text-[12.5px] font-bold text-white shadow-[0_8px_24px_rgba(108,92,231,.35)] max-[519px]:w-[34px] max-[519px]:justify-center max-[519px]:px-0"
         >
           <StrokeIcon paths={ICON_PATHS.plus} size={14} strokeWidth={2.6} />
-          {t('v2.header.newTx')}
+          <span className="whitespace-nowrap max-[519px]:sr-only">{t('v2.header.newTx')}</span>
         </button>
       </div>
     </header>

@@ -186,7 +186,6 @@ fun GridLabel(label: String, on: Boolean) {
         color = if (on) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,
         style = TextStyle(hyphens = androidx.compose.ui.text.style.Hyphens.Auto, lineBreak = androidx.compose.ui.text.style.LineBreak.Paragraph),
-        modifier = Modifier.widthIn(max = 74.dp),
     )
 }
 
@@ -200,6 +199,15 @@ fun GridChip(paths: List<String>, color: Color, on: Boolean, box: Dp = 52.dp, in
     ) {
         V2Icon(paths, color, inner * 0.46f, 2.25f)
     }
+}
+
+// Category grids drop to 3 columns when the text is large for the screen
+// (e.g. 360 dp at 130 %): at 4, "Alimentación" no longer fit and broke
+// mid-word.
+@Composable
+fun categoryGridColumns(): Int {
+    val config = androidx.compose.ui.platform.LocalConfiguration.current
+    return if (config.screenWidthDp / config.fontScale < 330f) 3 else 4
 }
 
 // n-column grid with the mockup's gaps.
@@ -224,7 +232,7 @@ private fun CategorySheet(s: NmState, onOpenCategories: () -> Unit) {
             Text(tr(StringKey.NM_CAT_STEP), fontSize = 11.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 4.dp))
         }
         Column(Modifier.heightIn(max = 520.dp).verticalScroll(rememberScrollState())) {
-            GridOf(repo.parents(s.isIncome, includeHidden = false), 4, 18.dp, 8.dp) { p ->
+            GridOf(repo.parents(s.isIncome, includeHidden = false), categoryGridColumns(), 18.dp, 8.dp) { p ->
                 val on = s.category == p.id
                 Column(
                     Modifier.noRippleClick {
@@ -258,7 +266,7 @@ private fun SubSheet(s: NmState) {
             Text(repo.name(parent), fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold, color = NovaColors.current.textDim, modifier = Modifier.padding(bottom = 1.dp))
         }
         val items = listOf<Pair<String?, String>>(null to tr(StringKey.NM_NONE_F)) + repo.children(parent).map { it.id to repo.name(it.id) }
-        GridOf(items, 4, 18.dp, 8.dp) { (id, name) ->
+        GridOf(items, categoryGridColumns(), 18.dp, 8.dp) { (id, name) ->
             val on = s.sub == id
             Column(
                 Modifier.noRippleClick {
