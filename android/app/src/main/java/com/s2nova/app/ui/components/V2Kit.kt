@@ -90,6 +90,10 @@ object V2Icons {
     val back = listOf("M19 12H5", "M12 19l-7-7 7-7")
     val chevronRight = listOf("M9 6l6 6-6 6")
     val chevronDown = listOf("M6 9l6 6 6-6")
+    // Same paths as Web's ICON_PATHS.eye / eyeOff / alertCircle.
+    val eye = listOf("M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z", "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z")
+    val eyeOff = listOf("M17.9 17.9A10 10 0 0 1 12 20c-7 0-11-8-11-8a18 18 0 0 1 5.1-5.9", "M9.9 4.2A9 9 0 0 1 12 4c7 0 11 8 11 8a18 18 0 0 1-2.2 3.2", "M14.1 14.1a3 3 0 1 1-4.2-4.2", "M1 1l22 22")
+    val alertCircle = listOf("M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z", "M12 8v5", "M12 16h.01")
 }
 
 @Composable

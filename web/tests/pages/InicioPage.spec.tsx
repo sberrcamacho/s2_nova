@@ -35,7 +35,9 @@ describe('InicioPage', () => {
     const user = userEvent.setup()
     renderApp(<InicioPage />)
     expect(await screen.findByText('$16.147.300')).toBeInTheDocument()
-    expect(screen.getByText('$4.288.500')).toBeInTheDocument()
+    expect(screen.getByText('+$4.288.500')).toBeInTheDocument()
+    // The stat tile is announced as one sentence.
+    expect(screen.getByText('Ingresos del mes, +$4.288.500')).toBeInTheDocument()
     expect(screen.getByText('2 billeteras')).toBeInTheDocument()
     expect(await screen.findByText('Camilo Restrepo te debe')).toBeInTheDocument()
     expect(screen.getByText('$420.000').parentElement).toHaveTextContent('$420.000 · vence 15 sep.')
@@ -56,7 +58,7 @@ describe('InicioPage', () => {
     expect(screen.getAllByText('Monto oculto').length).toBeGreaterThan(0)
     // Amounts inside alert copy blur too; the rest of the sentence stays.
     expect(await screen.findByText('$420.000')).toHaveAttribute('aria-hidden', 'true')
-    expect(screen.getByRole('button', { name: 'Mostrar montos' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Ocultar montos' })).toHaveAttribute('aria-pressed', 'true')
   })
 
   it('keeps loaded data and shows the retry banner when a refresh fails', async () => {
@@ -76,6 +78,6 @@ describe('InicioPage', () => {
     await waitFor(() => expect(screen.getByText('Agrega tu primera billetera')).toBeInTheDocument())
     expect(screen.getAllByText('$0').length).toBeGreaterThan(0)
     expect(screen.getByText('Nada programado en los próximos 14 días.')).toBeInTheDocument()
-    expect(screen.getByText('Sin gastos registrados este mes.')).toBeInTheDocument()
+    expect(screen.getByText('Aún no tienes metas.')).toBeInTheDocument()
   })
 })

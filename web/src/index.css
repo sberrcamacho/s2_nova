@@ -30,6 +30,8 @@
   --color-border: #ebebf2;
   --color-border-strong: #dcdce6;
   --color-border-input: #8c8c9c; /* 3.31:1 — inputs, checkboxes, outlines */
+  --color-divider: #f0f0f5;
+  --color-surface-sunken: #efeff4; /* progress tracks, input fills */
 
   /* Brand-derived: action and selection */
   --color-primary: #6622d6; /* white on it 7.60 */
@@ -143,6 +145,8 @@
   --color-border: #2e2e40;
   --color-border-strong: #3a3a4e;
   --color-border-input: #6a6a82; /* 3.66:1 */
+  --color-divider: #16161f;
+  --color-surface-sunken: #09090e;
 
   /* Brand-derived. Primary stays #6622D6 as a fill (white on it 7.60) but
      is only 2.5:1 on the dark surfaces, so text and icons use link/accent
@@ -253,6 +257,8 @@
   --color-accent: var(--color-accent);
   --color-focus: var(--color-focus);
   --color-border-input: var(--color-border-input);
+  --color-divider: var(--color-divider);
+  --color-surface-sunken: var(--color-surface-sunken);
   --color-accent-soft: var(--color-accent-soft);
   --color-highlight: var(--color-highlight);
   --color-on-primary: var(--on-primary);

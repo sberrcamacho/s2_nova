@@ -52,15 +52,19 @@ Reportes** — plus **Ajustes** in the footer. Pre-v2 paths (`/overview`,
 `/transactions`, `/budgets`, `/goals`, `/analytics`, `/insights`,
 `/reports`, `/settings`) redirect in `routes.tsx`.
 
-- **Inicio** (`InicioPage.tsx`) — v2-migrated. Balance hero (sum of
-  wallets, month income/expenses from `summaryService`, 6-month net bars),
-  Billeteras (row → `/billeteras`), Alertas (shared backend rules
-  via `alertService`; dismissals are per user in localStorage, pruned to
-  live ids), Presupuestos (all, by risk), Metas, Préstamos, Gasto por
-  categoría, Próximos 14 días with running balance (row → `EventDialog`:
-  confirm or skip a Programado through the backend, or "Eliminar serie"
-  in two clicks — not in the mockup; Web has no Programados page). Pure presentation
-  helpers live in `lib/inicio.ts` and `lib/alertCopy.ts`.
+- **Inicio** (`InicioPage.tsx`) — bento (DESIGN-SYSTEM.md §5.3, F2), a
+  12-column grid driven by a container query on the content width (12
+  columns from 1024 px, 2 from 640 px, 1 below). Balance hero (sum of
+  wallets, eye toggle for the shared hide-amounts preference, wallets pill
+  → `/billeteras`, 6-month net bars) · Ingresos / Gastos / Ahorro stat
+  tiles (month from `summaryService`, change vs last month) · Alertas
+  (shared backend rules via `alertService`; two shown, "Ver todas" expands;
+  dismissals are per user in localStorage, pruned to live ids) ·
+  Presupuestos (three riskiest) · Metas (three) · Movimientos recientes
+  (table, row → `/movimientos?tx=`) · Próximos 14 días with running balance
+  (row → `EventDialog`: confirm or skip a Programado through the backend,
+  or "Eliminar serie" in two clicks; Web has no Programados page). Pure
+  presentation helpers live in `lib/inicio.ts` and `lib/alertCopy.ts`.
 - **Movimientos** (`MovimientosPage.tsx`) — v2-migrated. One month at a
   time (`transactionService.getMonth`, which pages past the 200-row
   limit), chosen by the header's period selector (`?period=YYYY-MM`,

@@ -12,7 +12,7 @@ Tracker", stack guidelines for `jetpack-compose` and `html-tailwind`, chart
 and UX rule sets. The skill's generic fintech palette (gold/amber) was **not**
 used: the brand palette is fixed by the S2 Nova logo.
 
-**Status:** v1.1 · 2026-09-30 · F0 and F1 implemented on both clients (fixes, brand tokens, type roles and the 12 floor); F2–F4 pending.
+**Status:** v1.2 · 2026-09-30 · F0, F1 and F2 implemented on both clients (fixes, brand tokens, type roles and the 12 floor, bento Inicio); F3–F4 pending.
 
 ---
 
@@ -313,6 +313,11 @@ Rules:
   | < 768 | 1 |
 
   No dead space: every row's tiles fill the 12 columns.
+
+  As built (F2), the Inicio grid follows the **content width** (a CSS
+  container query), not the viewport, because the sidebar takes 248 px: 12
+  columns from 1024 px of content, 2 columns from 640 px, and 1 column below.
+  Card headers let their link drop under the title on narrow cards.
 - **Side panel:** 460 px on the right, `surface-raised`, elevation 1, scrim
   over the content. Used for Nuevo movimiento and row detail.
 - **Sidebar:**
@@ -482,10 +487,11 @@ padding or a pseudo-element on Web.
 - `hero-bg`, `radius-xl`, elevation 1, padding 20.
 - Content:
   - Label "Saldo total" (`overline`, `hero-text-secondary`).
-  - Eye button and "4 billeteras ›" on the same row, as a tonal pill on `hero-tile`.
-  - Balance in `display`.
-  - Optional: 6-month mini trend on Web.
-  - Month income/expense tiles in `hero-tile`.
+  - The eye button on the label's row (40 visual / 48 hit on Android, 32 px on Web, on `hero-tile`).
+  - Balance in `display`, stepping down to fit instead of wrapping.
+  - "4 billeteras ›" under the balance, as a tonal pill on `hero-tile` (on the label's row the label truncated at 360 dp / 130 %).
+  - Web only: the 6-month net trend, pinned to the bottom of the card.
+  - The month's income and expenses are **not** in the hero: they are the StatTiles next to it (§5.3).
 - Hidden mode follows §6.1.
 
 ### 6.10 Alert card

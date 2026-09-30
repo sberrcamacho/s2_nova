@@ -56,6 +56,7 @@ data class NovaExtraColors(
     val textDim: Color,
     val accentText: Color,
     val dividerSubtle: Color,
+    val surfaceSunken: Color,
     // Unselected filter pill (mockup pill(): --surface2, --chip-text,
     // 1px rgba(111,111,130,.4) border).
     val pillSurface: Color,
@@ -107,6 +108,7 @@ private val LightExtraColors = NovaExtraColors(
     textDim = LightTextDim,
     accentText = LightAccentText,
     dividerSubtle = LightDividerSubtle,
+    surfaceSunken = LightSurfaceSunken,
     pillSurface = LightBgSecondary,
     pillText = Color(0xFF23232C),
     bgDeep = Color(0xFFECECF3),
@@ -157,6 +159,7 @@ private val DarkExtraColors = NovaExtraColors(
     textDim = DarkTextDim,
     accentText = DarkAccentText,
     dividerSubtle = DarkDividerSubtle,
+    surfaceSunken = DarkSurfaceSunken,
     pillSurface = DarkSurfaceElevated,
     pillText = Color(0xFFE6E6EE),
     bgDeep = Color(0xFF09090E),

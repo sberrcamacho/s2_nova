@@ -162,7 +162,10 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   way (`TransactionRepository.paidSoFar`/`outstandingFor`), never a stored
   running total that could drift. The bottom bar is **Inicio · Movimientos ·
   [+] · Planes · Reportes** (architecture v2); Perfil is a stacked screen
-  opened from Inicio's avatar. Inicio's alert card and the bell sheet both
+  opened from Inicio's avatar. Inicio is a bento (DESIGN-SYSTEM.md §5.3):
+  hero, Ingresos / Gastos stat tiles, the top alert with its action,
+  Presupuestos beside Próximo pago, and the recent list; its eye button
+  flips the shared `blurBalance` preference. Inicio's alert card and the bell sheet both
   render `AlertRepository` (copy in `ui/AlertCopy.kt`), and alert targets
   deep-link into Planes via `NovaDestinations.budgets(tab, side)`. The
   Planes slot is **Planes**

@@ -1,4 +1,4 @@
-import { tr } from '@/lib/i18n/translations'
+import { tr, type TranslationKey } from '@/lib/i18n/translations'
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CategoryMark, Glyph, GlyphMark } from '@/components/v2/CategoryMark'
@@ -6,67 +6,57 @@ import { ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
 import { Money, MoneyText } from '@/components/v2/Money'
 import { RowButton, RowSkeletons, SkeletonBar, SyncBanner } from '@/components/v2/Rows'
 import { EventDialog } from '@/dashboard/components/EventDialog'
-import { WALLET_KINDS, walletKindLabel } from '@/dashboard/components/WalletModal'
 import { accountService } from '@/services/accountService'
 import { alertService, type AppAlert } from '@/services/alertService'
 import { goalService } from '@/services/goalService'
 import { recurringService } from '@/services/recurringService'
-import { summaryService, type CategorySummary, type MonthTotals } from '@/services/summaryService'
-import { transactionService } from '@/services/transactionService'
+import { summaryService, type MonthTotals } from '@/services/summaryService'
 import { useAppData } from '@/state/AppDataContext'
 import { useAuth } from '@/state/AuthContext'
 import { useCurrency } from '@/state/useCurrency'
 import { useHideAmounts } from '@/state/useHideAmounts'
 import { useTranslation } from '@/state/useTranslation'
 import { alertCopy } from '@/lib/alertCopy'
-import { budgetScope, budgetStateNote, planText, shortDayMonth } from '@/lib/planCopy'
+import { budgetScope, planText, shortDayMonth } from '@/lib/planCopy'
 import { shortWallet } from '@/lib/movimientos'
 import { useToast } from '@/state/ToastContext'
 import { goalMark, categoryColor } from '@/lib/categoryGlyphs'
+import { TRANSFER, categoryLabel } from '@/lib/backendCategories'
 import { todayISO } from '@/lib/date'
 import {
   MONTHS_LONG,
   MONTHS_SHORT,
-  WALLET_ICON_PATHS,
-  budgetNote,
   budgetTone,
   daysLeftInMonth,
   fill,
   loadDismissed,
   monthAbbr,
-  monthYear,
-  nextDueLoan,
-  openLoans,
   pruneDismissed,
   saveDismissed,
   shortDate,
   sortByRisk,
   upcomingWithin,
-  walletIcon,
-  walletKind,
   type Tone,
 } from '@/lib/inicio'
-import type { TranslationKey } from '@/lib/i18n/translations'
 import type { Goal, RecurringSeries, Transaction, Wallet } from '@/types'
 import { cn } from '@/lib/cn'
-import { formatApprox, referenceRate } from '@/lib/currency'
+import { formatApprox, formatMoney, referenceRate } from '@/lib/currency'
 
-const TONE_VAR: Record<Tone, string> = { neg: 'var(--v2-neg)', warn: 'var(--v2-warn)', pos: 'var(--v2-pos)' }
+const TONE_VAR: Record<Tone, string> = { neg: 'var(--color-negative)', warn: 'var(--color-warning)', pos: 'var(--color-positive)' }
+const TONE_ICON: Record<Tone, string> = { neg: ICON_PATHS.alertCircle, warn: ICON_PATHS.warn, pos: ICON_PATHS.check }
 
 interface InicioData {
   wallets: Wallet[] | null
   months: MonthTotals[] | null
-  categories: CategorySummary | null
   alerts: AppAlert[] | null
   goals: Goal[] | null
-  loans: Transaction[] | null
   series: RecurringSeries[] | null
 }
 
-const EMPTY: InicioData = { wallets: null, months: null, categories: null, alerts: null, goals: null, loans: null, series: null }
+const EMPTY: InicioData = { wallets: null, months: null, alerts: null, goals: null, series: null }
 
 // Each block keeps its last loaded data when a refresh fails (the sync
-// banner says so), per STAGE-2-INICIO §4 "Sync or network error".
+// banner says so).
 function useInicioData(version: number) {
   const [data, setData] = useState<InicioData>(EMPTY)
   const [syncFailed, setSyncFailed] = useState(false)
@@ -76,13 +66,11 @@ function useInicioData(version: number) {
     const results = await Promise.allSettled([
       accountService.getWallets(),
       summaryService.getMonths(6, today),
-      summaryService.getCategories(today),
       alertService.getAlerts(today),
       goalService.getGoals(),
-      transactionService.getLoans(),
       recurringService.getRecurringSeries(),
     ])
-    const keys = ['wallets', 'months', 'categories', 'alerts', 'goals', 'loans', 'series'] as const
+    const keys = ['wallets', 'months', 'alerts', 'goals', 'series'] as const
     setData((prev) => {
       const next = { ...prev } as Record<(typeof keys)[number], unknown>
       results.forEach((r, i) => {
@@ -100,17 +88,22 @@ function useInicioData(version: number) {
   return { data, syncFailed, refresh }
 }
 
+// Inicio as a bento summary (DESIGN-SYSTEM.md §5.2 / §5.3), laid out on the
+// page's own width: 12 columns from 1024 px (hero 8 + stats 4; Alertas,
+// Presupuestos and Metas 4 each; Movimientos recientes 8 + Próximos 14 días
+// 4), 2 columns from 640 px and a single column below.
 export default function InicioPage() {
-  const { t, tCategory, language } = useTranslation()
+  const { t, language } = useTranslation()
   const { format, formatIn, currency: principal } = useCurrency()
   const { hidden, toggle } = useHideAmounts()
   const { showToast } = useToast()
   const { user } = useAuth()
-  const { budgets, isLoading: appLoading, version, refresh: refreshAppData } = useAppData()
+  const { budgets, transactions, isLoading: appLoading, version, refresh: refreshAppData } = useAppData()
   const { data, syncFailed, refresh } = useInicioData(version)
   const navigate = useNavigate()
   const today = todayISO()
   const [openSeriesId, setOpenSeriesId] = useState<string | null>(null)
+  const [allAlerts, setAllAlerts] = useState(false)
 
   const userId = user?.id ?? 'anon'
   const [dismissed, setDismissed] = useState<string[]>(() => loadDismissed(userId))
@@ -131,16 +124,26 @@ export default function InicioPage() {
   const walletTotal = data.wallets?.reduce((s, w) => s + w.principalBalance, 0) ?? null
   const walletName = (id: string) => shortWallet(data.wallets?.find((w) => w.id === id)?.name ?? '')
   const thisMonth = data.months?.[data.months.length - 1]
-  // The Web mockup lists goal contributions and upcoming Programados first,
-  // and leaves "meta casi cumplida" to the Metas card.
+  const lastMonth = data.months?.[data.months.length - 2]
+  // Goal contributions and upcoming Programados first; "meta casi cumplida"
+  // is left to the Metas tile.
   const FIRST = ['goal_plan_due', 'goal_plan_auto', 'tx_planned']
   const visibleAlerts = (data.alerts ?? [])
     .filter((a) => !dismissed.includes(a.id) && a.kind !== 'goal_near')
     .sort((a, b) => Number(FIRST.includes(b.kind)) - Number(FIRST.includes(a.kind)))
-  const monthKey = today.slice(0, 7)
+  const shownAlerts = allAlerts ? visibleAlerts : visibleAlerts.slice(0, 2)
   const upcoming = useMemo(
     () => (data.series && walletTotal !== null ? upcomingWithin(data.series, today, walletTotal, 14, principal) : null),
     [data.series, walletTotal, today, principal],
+  )
+  const recent = useMemo(
+    () =>
+      transactions
+        .filter((x) => (x.status ?? 'completed') !== 'planned')
+        .slice()
+        .sort((a, b) => `${b.date}${b.time}`.localeCompare(`${a.date}${a.time}`))
+        .slice(0, 5),
+    [transactions],
   )
   const openSeries = openSeriesId ? data.series?.find((s) => s.id === openSeriesId) : undefined
 
@@ -178,179 +181,165 @@ export default function InicioPage() {
     }
   }
 
-  return (
-    <div className="flex flex-col gap-[18px] px-4 pb-10 pt-[26px] min-[760px]:px-7">
-      {syncFailed && (
-        <SyncBanner onRetry={retry} />
-      )}
+  const topBudgets = homeBudgets(budgets)
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(340px,100%),1fr))] items-stretch gap-[18px]">
-        {/* Balance hero */}
+  return (
+    <div className="@container flex flex-col gap-4 px-4 pb-10 pt-6 min-[760px]:px-7">
+      {syncFailed && <SyncBanner onRetry={retry} />}
+
+      <div className="grid grid-cols-1 gap-3 @min-[640px]:grid-cols-2 @min-[640px]:gap-4 @min-[1024px]:grid-cols-12">
+        {/* Balance hero, 8 */}
         <section
-          className="relative overflow-hidden rounded-[20px] border border-[var(--hero-line)] px-7 py-[26px] text-white shadow-[var(--shadow-md)]"
+          aria-label={t('inicio.balance')}
+          className="relative col-span-full overflow-hidden rounded-[16px] border border-[var(--hero-line)] px-6 py-5 text-white shadow-[var(--shadow-md)] @min-[1024px]:col-span-8"
           style={{ background: 'var(--hero-bg)' }}
         >
           <div aria-hidden="true" className="pointer-events-none absolute right-[-40px] top-[-70px] h-[220px] w-[220px] rounded-full bg-[var(--hero-glow)] blur-[52px]" />
-          <div className="relative [container-type:inline-size]">
+          <div className="relative flex h-full flex-col [container-type:inline-size]">
             <div className="flex items-center justify-between gap-3">
-              <div className="truncate text-overline font-bold uppercase text-[var(--hero-overline)]">{t('inicio.balance')}</div>
-              <div className="flex flex-none items-center gap-2">
-                {data.wallets && (
-                  <div className="whitespace-nowrap rounded-full bg-[var(--hero-tile)] px-2.5 py-1 text-caption font-bold text-[var(--hero-label)]">
-                    {data.wallets.length === 1 ? t('inicio.walletsOne') : fill(t('inicio.walletsMany'), data.wallets.length)}
-                  </div>
-                )}
-                <button
-                  type="button"
-                  onClick={toggle}
-                  title={hidden ? t('inicio.showAmounts') : t('inicio.hideAmounts')}
-                  aria-label={hidden ? t('inicio.showAmounts') : t('inicio.hideAmounts')}
-                  aria-pressed={hidden}
-                  className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-[10px] bg-[var(--hero-tile)] text-white hover:bg-white/[.2]"
-                >
-                  <StrokeIcon paths={hidden ? ICON_PATHS.eyeOff : ICON_PATHS.eye} size={16} />
-                </button>
-              </div>
+              <div className="truncate text-overline uppercase text-[var(--hero-overline)]">{t('inicio.balance')}</div>
+              <button
+                type="button"
+                onClick={toggle}
+                title={hidden ? t('inicio.showAmounts') : t('inicio.hideAmounts')}
+                aria-label={t('inicio.hideAmounts')}
+                aria-pressed={hidden}
+                className="flex h-8 w-8 flex-none cursor-pointer items-center justify-center rounded-full bg-[var(--hero-tile)] text-white hover:bg-white/[.2]"
+              >
+                <StrokeIcon paths={hidden ? ICON_PATHS.eyeOff : ICON_PATHS.eye} size={18} />
+              </button>
             </div>
             {walletTotal === null ? (
-              <SkeletonBar className="mt-[18px] h-[40px] w-[60%]" dark />
+              <SkeletonBar className="mt-3 h-[44px] w-[60%]" dark />
             ) : (
-              <Money hidden={hidden} className="mt-2.5 block whitespace-nowrap text-[clamp(28px,15cqi,48px)] font-extrabold leading-[1.2] tracking-[-.03em]">
+              <Money hidden={hidden} className="mt-1 block whitespace-nowrap text-[clamp(28px,11cqi,40px)] font-bold leading-[1.1] tracking-[-.01em]">
                 {format(walletTotal)}
               </Money>
             )}
-            <div className="mt-4 flex gap-3">
-              <HeroStat label={t('inicio.monthIncome')} value={thisMonth ? format(thisMonth.income) : null} color="var(--hero-positive)" hidden={hidden} />
-              <HeroStat label={t('inicio.monthExpenses')} value={thisMonth ? format(thisMonth.expenses) : null} color="var(--hero-negative)" hidden={hidden} />
-            </div>
+            {data.wallets && data.wallets.length > 0 && (
+              <button
+                type="button"
+                onClick={() => navigate('/billeteras')}
+                className="mt-3 inline-flex h-8 cursor-pointer self-start items-center gap-1 whitespace-nowrap rounded-full bg-[var(--hero-tile)] pl-3 pr-2 text-label font-semibold text-[var(--hero-label)] hover:bg-white/[.2]"
+              >
+                {data.wallets.length === 1 ? t('inicio.walletsOne') : fill(t('inicio.walletsMany'), data.wallets.length)}
+                <StrokeIcon paths={ICON_PATHS.chevronRight} size={16} />
+              </button>
+            )}
+            {data.wallets && data.wallets.length === 0 && (
+              <button type="button" onClick={() => navigate('/billeteras')} className="mt-3 cursor-pointer self-start text-label font-semibold text-[var(--hero-label)] underline">
+                {t('inicio.wallets.empty')}
+              </button>
+            )}
             <MonthBars months={data.months} language={language} />
           </div>
         </section>
 
-        {/* Billeteras */}
-        <Card className="flex flex-col">
-          <CardHead title={t('inicio.wallets.title')} subtitle={t('inicio.wallets.subtitle')} />
-          <div className="mt-2.5 flex flex-1 flex-col justify-center">
-            {data.wallets === null ? (
-              <RowSkeletons count={3} />
-            ) : data.wallets.length === 0 ? (
-              <div className="py-3 text-[12.5px] text-v2-dim">{t('inicio.wallets.empty')}</div>
+        {/* Ingresos / Gastos / Ahorro, 4 (stacked on wide pages) */}
+        <div className="col-span-full grid grid-cols-2 gap-3 @min-[640px]:grid-cols-3 @min-[640px]:gap-4 @min-[1024px]:col-span-4 @min-[1024px]:grid-cols-1">
+          <StatTile label={t('inicio.stat.income')} a11yLabel={t('inicio.monthIncome')} value={thisMonth?.income ?? null} previous={lastMonth?.income} previousMonth={lastMonth?.month} kind="income" hidden={hidden} />
+          <StatTile label={t('inicio.stat.expenses')} a11yLabel={t('inicio.monthExpenses')} value={thisMonth?.expenses ?? null} previous={lastMonth?.expenses} previousMonth={lastMonth?.month} kind="expense" hidden={hidden} />
+          <StatTile
+            label={t('inicio.stat.savings')}
+            a11yLabel={t('inicio.stat.monthSavings')}
+            value={thisMonth ? thisMonth.income - thisMonth.expenses : null}
+            previous={lastMonth ? lastMonth.income - lastMonth.expenses : undefined}
+            previousMonth={lastMonth?.month}
+            kind="net"
+            hidden={hidden}
+            className="col-span-2 @min-[640px]:col-span-1"
+          />
+        </div>
+
+        {/* Alertas, 4 */}
+        <Card className="col-span-full @min-[1024px]:col-span-4">
+          <CardHead
+            title={t('inicio.alerts.title')}
+            subtitle={data.alerts === null ? undefined : visibleAlerts.length === 0 ? undefined : visibleAlerts.length === 1 ? t('inicio.alerts.oneOpen') : fill(t('inicio.alerts.manyOpen'), visibleAlerts.length)}
+          />
+          <div className="mt-3 flex flex-col gap-2.5">
+            {data.alerts === null ? (
+              <RowSkeletons count={2} box={40} />
+            ) : visibleAlerts.length === 0 ? (
+              <div className="py-2 text-body-sm text-ink-tertiary">
+                {t('inicio.alerts.none')}{' '}
+                {dismissed.length > 0 && (
+                  <button type="button" onClick={() => setAndSaveDismissed([])} className="min-h-6 cursor-pointer font-semibold text-link">
+                    {t('inicio.alerts.restore')}
+                  </button>
+                )}
+              </div>
             ) : (
-              data.wallets.map((w, i, arr) => (
-                <RowButton key={w.id} last={i === arr.length - 1} onClick={() => navigate('/billeteras')}>
-                  <div
-                    className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full text-white"
-                    style={{ background: 'linear-gradient(150deg,var(--color-primary-pressed),var(--color-primary-secondary))' }}
+              <>
+                {shownAlerts.map((alert) => (
+                  <AlertCard
+                    key={alert.id}
+                    alert={alert}
+                    today={today}
+                    hidden={hidden}
+                    wallets={data.wallets ?? []}
+                    onOpen={() => openAlert(alert)}
+                    onConfirm={alert.kind === 'goal_plan_due' ? () => void resolvePlan(alert, true) : undefined}
+                    onSkip={alert.kind === 'goal_plan_due' ? () => void resolvePlan(alert, false) : undefined}
+                    onDismiss={() => setAndSaveDismissed([...dismissed, alert.id])}
+                  />
+                ))}
+                {visibleAlerts.length > 2 && (
+                  <button
+                    type="button"
+                    onClick={() => setAllAlerts((v) => !v)}
+                    aria-expanded={allAlerts}
+                    className="min-h-8 cursor-pointer self-start rounded-[8px] px-2 text-label font-semibold text-link hover:bg-v2-subtle"
                   >
-                    <StrokeIcon paths={WALLET_ICON_PATHS[walletIcon(w.accountType)]} size={17} />
-                  </div>
-                  <div className="min-w-0 flex-1 text-left">
-                    <div className="truncate text-[12.5px] font-bold" title={w.name}>{w.name}</div>
-                    <div className="truncate text-caption text-v2-dim">
-                      {WALLET_KINDS.some((k) => k.type === w.accountType) ? walletKindLabel(w.accountType) : t(`inicio.walletKind.${walletKind(w.accountType)}` as TranslationKey)}
-                    </div>
-                  </div>
-                  <div className="flex-none text-right">
-                    <Money hidden={hidden} className="block whitespace-nowrap text-[13.5px] font-extrabold">
-                      {formatIn(w.currentBalance, w.currency)}
-                    </Money>
-                    <div className="font-numeric whitespace-nowrap text-caption text-v2-dim">
-                      {w.currency !== principal && (
-                        <Money hidden={hidden} inline>
-                          {`≈ ${format(w.principalBalance)} · `}
-                        </Money>
-                      )}
-                      {fill(t('inicio.wallets.share'), walletTotal && walletTotal > 0 ? Math.round((w.principalBalance / walletTotal) * 100) : 0)}
-                    </div>
-                  </div>
-                  <span className="flex text-v2-dim">
-                    <StrokeIcon paths={ICON_PATHS.chevronRight} size={14} />
-                  </span>
-                </RowButton>
-              ))
+                    {allAlerts ? t('inicio.alerts.showLess') : fill(t('inicio.alerts.showAll'), visibleAlerts.length)}
+                  </button>
+                )}
+              </>
             )}
           </div>
         </Card>
-      </div>
 
-      {/* Alertas */}
-      {data.alerts !== null &&
-        (visibleAlerts.length > 0 ? (
-          <Card>
-            <CardHead
-              title={t('inicio.alerts.title')}
-              subtitle={visibleAlerts.length === 1 ? t('inicio.alerts.oneOpen') : fill(t('inicio.alerts.manyOpen'), visibleAlerts.length)}
-            />
-            <div className="mt-3.5 grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-2.5">
-              {visibleAlerts.map((alert) => (
-                <AlertCard
-                  key={alert.id}
-                  alert={alert}
-                  today={today}
-                  hidden={hidden}
-                  wallets={data.wallets ?? []}
-                  onOpen={() => openAlert(alert)}
-                  onConfirm={alert.kind === 'goal_plan_due' ? () => void resolvePlan(alert, true) : undefined}
-                  onSkip={alert.kind === 'goal_plan_due' ? () => void resolvePlan(alert, false) : undefined}
-                  onDismiss={() => setAndSaveDismissed([...dismissed, alert.id])}
-                />
-              ))}
-            </div>
-          </Card>
-        ) : (
-          <div className="px-1 text-[12px] text-v2-dim">
-            {t('inicio.alerts.none')}{' '}
-            {dismissed.length > 0 && (
-              <button type="button" onClick={() => setAndSaveDismissed([])} className="cursor-pointer font-bold text-v2-accent2">
-                {t('inicio.alerts.restore')}
-              </button>
-            )}
-          </div>
-        ))}
-
-      <div className="grid grid-cols-1 gap-[18px] min-[1100px]:grid-cols-[1.35fr_1fr]">
-        {/* Presupuestos */}
-        <Card>
-          <CardHead
-            title={t('inicio.budgets.title')}
-            subtitle={budgetsSubtitle(today, language, t)}
-            link={t('inicio.seeInPlanes')}
-            onLink={() => navigate('/planes?tab=presupuestos')}
-          />
-          <div className="mt-2.5 flex flex-col">
-            {appLoading && homeBudgets(budgets).length === 0 ? (
-              <RowSkeletons count={4} />
-            ) : homeBudgets(budgets).length === 0 ? (
-              <div className="py-3 text-[12.5px] text-v2-dim">{t('inicio.budgets.empty')}</div>
+        {/* Presupuestos, 4 */}
+        <Card className="@min-[1024px]:col-span-4">
+          <CardHead title={t('inicio.budgets.title')} subtitle={budgetsSubtitle(today, language, t)} link={t('inicio.seeInPlanes')} onLink={() => navigate('/planes?tab=presupuestos')} />
+          <div className="mt-2 flex flex-col">
+            {appLoading && topBudgets.length === 0 ? (
+              <RowSkeletons count={3} />
+            ) : topBudgets.length === 0 ? (
+              <div className="py-3 text-body-sm text-ink-tertiary">{t('inicio.budgets.empty')}</div>
             ) : (
-              homeBudgets(budgets).map((b, i, arr) => {
-                const tone = TONE_VAR[budgetTone(b.percentage)]
+              topBudgets.map((b, i, arr) => {
+                const tone = budgetTone(b.percentage)
+                const color = TONE_VAR[tone]
+                const state = b.percentage > 100 ? t('inicio.budgets.stateOver') : tone === 'pos' ? t('inicio.budgets.stateOk') : t('inicio.budgets.stateNear')
+                const name = budgetScope(b, walletName)
                 return (
                   <RowButton key={b.id} last={i === arr.length - 1} gap={12} onClick={() => navigate('/planes?tab=presupuestos')}>
-                    <CategoryMark category={b.category!} box={34} />
+                    <CategoryMark category={b.category!} box={40} />
                     <div className="flex min-w-0 flex-1 flex-col gap-1.5 text-left">
-                      <div className="flex items-baseline justify-between gap-2.5">
-                        <span className="line-clamp-2 min-w-0 text-[12.5px] font-bold" title={budgetScope(b, walletName)}>{budgetScope(b, walletName)}</span>
-                        <Money hidden={hidden} className="flex-none whitespace-nowrap text-caption text-v2-muted">
-                          {`${format(b.spent)} / ${format(b.limit)}`}
-                        </Money>
+                      <div className="flex items-center gap-2">
+                        <span className="min-w-0 flex-1 truncate text-title-sm font-semibold" title={name}>{name}</span>
+                        <span className="flex flex-none items-center gap-1 text-label font-semibold tabular-nums" style={{ color }}>
+                          {percentText(b.percentage, language)}
+                          <StrokeIcon paths={TONE_ICON[tone]} size={16} />
+                          <span className="sr-only">{state}</span>
+                        </span>
                       </div>
-                      <div className="h-1.5 overflow-hidden rounded-[3px] bg-v2-line">
-                        <div className="h-full" style={{ width: `${Math.min(100, b.percentage)}%`, background: tone }} />
+                      <div
+                        role="progressbar"
+                        aria-label={name}
+                        aria-valuenow={b.percentage}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuetext={`${percentText(b.percentage, language)}, ${state}`}
+                        className="h-2 overflow-hidden rounded-full bg-surface-sunken"
+                      >
+                        <div className="h-full rounded-full" style={{ width: `${Math.min(100, b.percentage)}%`, background: color }} />
                       </div>
-                      <div className="flex justify-between gap-2.5 text-caption text-v2-dim">
-                        <span className="min-w-0 truncate">{budgetStateNote(b, today, format)}</span>
-                        <Money hidden={hidden} className="flex-none whitespace-nowrap">
-                          {b.remaining >= 0 ? fill(t('inicio.budgets.available'), format(b.remaining)) : fill(t('inicio.budgets.overBy'), format(-b.remaining))}
-                        </Money>
-                      </div>
+                      <Money hidden={hidden} className="block truncate whitespace-nowrap text-body-sm text-ink-tertiary">
+                        {fill(t('inicio.budgets.of'), format(b.spent), format(b.limit))}
+                      </Money>
                     </div>
-                    <span
-                      className="font-numeric min-w-[34px] flex-none rounded-full px-2 py-[3px] text-center text-caption font-extrabold"
-                      style={{ color: tone, background: `color-mix(in oklab, ${tone} 14%, transparent)` }}
-                    >
-                      {b.percentage}%
-                    </span>
                   </RowButton>
                 )
               })
@@ -358,130 +347,105 @@ export default function InicioPage() {
           </div>
         </Card>
 
-        <div className="flex flex-col gap-[18px]">
-          {/* Metas */}
-          <Card>
-            <CardHead title={t('inicio.goals.title')} subtitle={t('inicio.goals.subtitle')} link={t('inicio.seeInPlanes')} onLink={() => navigate('/planes?tab=metas')} />
-            <div className="mt-2.5 flex flex-col">
-              {data.goals === null ? (
-                <RowSkeletons count={2} />
-              ) : data.goals.length === 0 ? (
-                <div className="py-3 text-[12.5px] text-v2-dim">{t('inicio.goals.empty')}</div>
-              ) : (
-                data.goals.map((g, i, arr) => {
-                  const mark = goalMark(g.icon)
-                  const pct = Math.min(100, g.percentage)
-                  return (
-                    <RowButton key={g.id} last={i === arr.length - 1} onClick={() => navigate('/planes?tab=metas')}>
-                      <div
-                        className="flex h-[50px] w-[50px] flex-none items-center justify-center rounded-full"
-                        // The mockup's Inicio ring keeps the "Otros gastos" grey (catColor of
-                        // a goal); only the glyph takes the plan icon's color.
-                        style={{ background: `conic-gradient(${categoryColor('exp.other')} ${pct}%, var(--v2-line) 0)` }}
-                      >
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-v2-surface">
-                          <Glyph paths={mark.glyph} size={17} color={mark.color} />
-                        </div>
-                      </div>
-                      <div className="min-w-0 flex-1 text-left">
-                        <div className="truncate text-[12.5px] font-bold" title={g.name}>{g.name}</div>
-                        <Money hidden={hidden} className="mt-0.5 block truncate text-caption text-v2-muted">
-                          {fill(t('inicio.goals.progress'), format(g.currentAmount), format(g.targetAmount))}
-                        </Money>
-                        <div className="mt-0.5 text-caption text-v2-dim">
-                          {g.plan ? planText(g.plan, walletName(g.plan.accountId), format) : g.targetDate ? fill(t('goal.targetOn'), shortDayMonth(g.targetDate)) : t('goal.noTarget')}
-                        </div>
-                      </div>
-                      <span className="font-numeric flex-none text-[12px] font-extrabold text-v2-muted">{g.percentage}%</span>
-                    </RowButton>
-                  )
-                })
-              )}
-            </div>
-          </Card>
-
-          {/* Préstamos */}
-          <LoansCard loans={data.loans} wallets={data.wallets} hidden={hidden} onOpen={(side) => navigate(`/planes?tab=prestamos${side ? `&side=${side}` : ''}`)} />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-[18px] min-[1100px]:grid-cols-[1fr_1.35fr]">
-        {/* Gasto por categoría */}
-        <Card>
-          <CardHead
-            title={t('inicio.categories.title')}
-            subtitle={monthYear(data.categories?.month ?? monthKey, language)}
-            link={t('inicio.seeInReportes')}
-            onLink={() => navigate('/reportes')}
-          />
-          <div className="mt-4 flex flex-col gap-[13px]">
-            {data.categories === null ? (
-              <RowSkeletons count={4} />
-            ) : data.categories.categories.length === 0 ? (
-              <div className="text-[12.5px] text-v2-dim">{t('inicio.categories.empty')}</div>
+        {/* Metas, 4 */}
+        <Card className="@min-[1024px]:col-span-4">
+          <CardHead title={t('inicio.goals.title')} subtitle={t('inicio.goals.subtitle')} link={t('inicio.seeInPlanes')} onLink={() => navigate('/planes?tab=metas')} />
+          <div className="mt-2 flex flex-col">
+            {data.goals === null ? (
+              <RowSkeletons count={2} />
+            ) : data.goals.length === 0 ? (
+              <div className="py-3 text-body-sm text-ink-tertiary">{t('inicio.goals.empty')}</div>
             ) : (
-              data.categories.categories.map((c, _, arr) => (
-                <div key={c.category} className="flex items-center gap-3">
-                  <CategoryMark category={c.category} box={30} />
-                  <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                    <div className="flex justify-between gap-2.5 text-[12px]">
-                      <span className="min-w-0 truncate font-bold" title={tCategory(c.category)}>{tCategory(c.category)}</span>
-                      <Money hidden={hidden} className="flex-none whitespace-nowrap text-v2-muted">
-                        {format(c.amount)}
+              data.goals.slice(0, 3).map((g, i, arr) => {
+                const mark = goalMark(g.icon)
+                const pct = Math.min(100, g.percentage)
+                return (
+                  <RowButton key={g.id} last={i === arr.length - 1} gap={12} onClick={() => navigate('/planes?tab=metas')}>
+                    <div
+                      aria-hidden="true"
+                      className="flex h-12 w-12 flex-none items-center justify-center rounded-full"
+                      style={{ background: `conic-gradient(${categoryColor('exp.other')} ${pct}%, var(--color-surface-sunken) 0)` }}
+                    >
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface">
+                        <Glyph paths={mark.glyph} size={18} color={mark.color} />
+                      </div>
+                    </div>
+                    <div className="min-w-0 flex-1 text-left">
+                      <div className="flex items-center gap-2">
+                        <span className="min-w-0 flex-1 truncate text-title-sm font-semibold" title={g.name}>{g.name}</span>
+                        <span className="flex-none text-label font-semibold tabular-nums text-ink-secondary">{percentText(g.percentage, language)}</span>
+                      </div>
+                      <Money hidden={hidden} className="block truncate text-body-sm text-ink-secondary">
+                        {fill(t('inicio.goals.progress'), format(g.currentAmount), format(g.targetAmount))}
                       </Money>
+                      <div className="truncate text-caption text-ink-tertiary">
+                        {g.plan ? planText(g.plan, walletName(g.plan.accountId), format) : g.targetDate ? fill(t('goal.targetOn'), shortDayMonth(g.targetDate)) : t('goal.noTarget')}
+                      </div>
                     </div>
-                    <div className="h-1.5 overflow-hidden rounded-[3px] bg-v2-line">
-                      <div className="h-full" style={{ width: `${Math.round((c.amount / arr[0].amount) * 100)}%`, background: categoryColor(c.category) }} />
-                    </div>
-                  </div>
-                  <span className="font-numeric w-[34px] flex-none text-right text-caption font-extrabold text-v2-dim">{c.percentage}%</span>
-                </div>
-              ))
+                  </RowButton>
+                )
+              })
             )}
           </div>
         </Card>
 
-        {/* Próximos 14 días */}
-        <Card>
-          <CardHead
-            title={t('inicio.upcoming.title')}
-            subtitle={t('inicio.upcoming.subtitle')}
-            link={t('inicio.seeInMovimientos')}
-            onLink={() => navigate('/movimientos')}
-          />
-          <div className="mt-2.5 flex flex-col">
+        {/* Movimientos recientes, 8 */}
+        <Card className="col-span-full @min-[1024px]:col-span-8">
+          <CardHead title={t('inicio.recent.title')} link={t('inicio.seeInMovimientos')} onLink={() => navigate('/movimientos')} />
+          {appLoading && recent.length === 0 ? (
+            <div className="mt-2">
+              <RowSkeletons count={5} box={40} />
+            </div>
+          ) : recent.length === 0 ? (
+            <div className="py-3 text-body-sm text-ink-tertiary">{t('inicio.recent.empty')}</div>
+          ) : (
+            <RecentTable
+              rows={recent}
+              wallets={data.wallets ?? []}
+              principal={principal}
+              hidden={hidden}
+              today={today}
+              onOpen={(id) => navigate(`/movimientos?tx=${id}`)}
+            />
+          )}
+        </Card>
+
+        {/* Próximos 14 días, 4 */}
+        <Card className="col-span-full @min-[1024px]:col-span-4">
+          <CardHead title={t('inicio.upcoming.title')} subtitle={t('inicio.upcoming.subtitle')} link={t('inicio.seeInMovimientos')} onLink={() => navigate('/movimientos')} />
+          <div className="mt-2 flex flex-col">
             {upcoming === null ? (
               <RowSkeletons count={3} />
             ) : upcoming.length === 0 ? (
-              <div className="pb-1 pt-3.5 text-[12.5px] text-v2-dim">{t('inicio.upcoming.empty')}</div>
+              <div className="py-3 text-body-sm text-ink-tertiary">{t('inicio.upcoming.empty')}</div>
             ) : (
               upcoming.map((ev, i, arr) => {
                 const [, m, d] = ev.date.split('-').map(Number)
                 const wallet = data.wallets?.find((w) => w.id === ev.series.accountId)
                 return (
-                  <RowButton key={ev.series.id} last={i === arr.length - 1} onClick={() => setOpenSeriesId(ev.series.id)}>
-                    <div className="w-[42px] flex-none text-center">
-                      <div className={cn('text-caption font-bold tracking-[.06em]', ev.dueToday ? 'text-v2-warn' : 'text-v2-dim')}>
-                        {ev.dueToday ? t('inicio.upcoming.today') : MONTHS_SHORT[language][m - 1].toUpperCase()}
+                  <RowButton key={ev.series.id} last={i === arr.length - 1} gap={12} onClick={() => setOpenSeriesId(ev.series.id)}>
+                    <div className="w-10 flex-none text-center">
+                      <div className={cn('text-overline uppercase', ev.dueToday ? 'text-warning' : 'text-ink-tertiary')}>
+                        {ev.dueToday ? t('inicio.upcoming.today') : MONTHS_SHORT[language][m - 1]}
                       </div>
-                      <div className="font-numeric text-[15px] font-extrabold">{String(d).padStart(2, '0')}</div>
+                      <div className="text-title-sm font-semibold tabular-nums">{String(d).padStart(2, '0')}</div>
                     </div>
                     <div className="min-w-0 flex-1 text-left">
-                      <div className="truncate text-[12.5px] font-bold" title={ev.series.name}>{ev.series.name}</div>
-                      <div className="truncate text-caption text-v2-dim">
-                        {ev.dueToday ? t('inicio.upcoming.dueToday') : `${tCategory(ev.series.category)} · ${shortWallet(wallet?.name ?? '')}`}
+                      <div className="truncate text-title-sm font-semibold" title={ev.series.name}>{ev.series.name}</div>
+                      <div className="truncate text-body-sm text-ink-tertiary">
+                        {ev.dueToday ? t('inicio.upcoming.dueToday') : `${categoryLabel(ev.series.category)} · ${shortWallet(wallet?.name ?? '')}`}
                       </div>
                     </div>
                     <div className="flex-none text-right">
-                      <Money hidden={hidden} className={cn('block whitespace-nowrap text-[13px] font-extrabold', ev.signed < 0 ? 'text-v2-neg' : 'text-v2-pos')}>
+                      <Money hidden={hidden} className={cn('block whitespace-nowrap text-amount font-semibold', ev.signed < 0 ? 'text-negative' : 'text-positive')}>
                         {`${ev.signed < 0 ? '−' : '+'}${formatIn(Math.abs(ev.signed), ev.series.currency)}`}
                       </Money>
                       {ev.series.currency !== principal && (
-                        <Money hidden={hidden} className="block whitespace-nowrap text-caption text-v2-dim">
+                        <Money hidden={hidden} className="block whitespace-nowrap text-caption text-ink-tertiary">
                           {`≈ ${formatApprox(Math.abs(ev.signed) * referenceRate(ev.series.currency, principal), principal)}`}
                         </Money>
                       )}
-                      <Money hidden={hidden} className="block whitespace-nowrap text-caption text-v2-dim">
+                      <Money hidden={hidden} className="block whitespace-nowrap text-caption text-ink-tertiary">
                         {fill(t('inicio.upcoming.balance'), format(ev.running))}
                       </Money>
                     </div>
@@ -519,22 +483,29 @@ function budgetsSubtitle(today: string, language: 'es' | 'en', t: (k: Translatio
   return fill(t('inicio.budgets.subtitle'), left, month)
 }
 
+// "94 %" in Spanish, "94%" in English.
+function percentText(value: number, language: 'es' | 'en'): string {
+  return language === 'en' ? `${value}%` : `${value} %`
+}
+
 // ── Pieces ──────────────────────────────────────────────────────────────
 
 function Card({ children, className }: { children: ReactNode; className?: string }) {
-  return <section className={cn('rounded-[16px] border border-v2-line bg-v2-surface p-5', className)}>{children}</section>
+  return <section className={cn('min-w-0 rounded-[16px] border border-border bg-surface p-5 text-ink', className)}>{children}</section>
 }
 
+// Card title row: `title` + an optional trailing link. On a narrow card the
+// link drops under the title instead of cutting it.
 function CardHead({ title, subtitle, link, onLink }: { title: string; subtitle?: string; link?: string; onLink?: () => void }) {
   return (
-    <div className="flex items-baseline justify-between gap-3">
-      <div className="min-w-0">
-        <h2 className="truncate text-[14px] font-extrabold tracking-[-.01em]" title={title}>{title}</h2>
-        {subtitle && <div className="mt-0.5 text-caption text-v2-dim">{subtitle}</div>}
+    <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+      <div className="min-w-0 flex-[1_1_11rem]">
+        <h2 className="truncate text-title font-semibold" title={title}>{title}</h2>
+        {subtitle && <div className="mt-0.5 line-clamp-2 text-body-sm text-ink-tertiary">{subtitle}</div>}
       </div>
       {link && (
-        // Padded to a 24px-tall pointer target without moving the text.
-        <button type="button" onClick={onLink} className="-mx-2 -my-1.5 min-h-6 flex-none cursor-pointer whitespace-nowrap rounded-[8px] px-2 py-1.5 text-caption font-extrabold text-v2-accent2 hover:bg-v2-subtle">
+        // Padded to a 32px-tall pointer target without moving the text.
+        <button type="button" onClick={onLink} className="-mx-2 mt-0.5 min-h-8 flex-none cursor-pointer whitespace-nowrap rounded-[8px] px-2 text-label font-semibold text-link hover:bg-v2-subtle">
           {link}
         </button>
       )}
@@ -542,29 +513,83 @@ function CardHead({ title, subtitle, link, onLink }: { title: string; subtitle?:
   )
 }
 
-function HeroStat({ label, value, color, hidden }: { label: string; value: string | null; color: string; hidden: boolean }) {
+// StatTile (DESIGN-SYSTEM.md §6.7): overline label, the month's figure with
+// its sign in `title`, and the change against last month with an arrow.
+// Whether the change is good or bad decides its color, not its sign.
+function StatTile({
+  label,
+  a11yLabel,
+  value,
+  previous,
+  previousMonth,
+  kind,
+  hidden,
+  className,
+}: {
+  label: string
+  a11yLabel: string
+  value: number | null
+  previous?: number
+  previousMonth?: string
+  kind: 'income' | 'expense' | 'net'
+  hidden: boolean
+  className?: string
+}) {
+  const { t, language } = useTranslation()
+  const { format } = useCurrency()
+  const positive = kind === 'income' || (kind === 'net' && (value ?? 0) >= 0)
+  const figure = value === null ? null : `${positive ? '+' : '−'}${format(Math.abs(value))}`
+  const change = value !== null && previous !== undefined && previous !== 0 ? Math.round(((value - previous) / Math.abs(previous)) * 100) : null
+  const favorable = change !== null && (kind === 'expense' ? change < 0 : change > 0)
+  const prevIndex = previousMonth ? Number(previousMonth.split('-')[1]) - 1 : -1
+  const changeText =
+    change !== null && prevIndex >= 0
+      ? `${change > 0 ? '↑ ' : change < 0 ? '↓ ' : ''}${percentText(Math.abs(change), language)} ${fill(t('inicio.stat.vs'), MONTHS_SHORT[language][prevIndex])}`
+      : t('inicio.stat.thisMonth')
+  const description = [
+    a11yLabel,
+    hidden ? t('inicio.amountHidden') : figure ?? '',
+    change !== null && change !== 0 && prevIndex >= 0 ? fill(t(change > 0 ? 'inicio.stat.more' : 'inicio.stat.less'), Math.abs(change), MONTHS_LONG[language][prevIndex]) : '',
+    change !== null && change !== 0 ? t(favorable ? 'inicio.stat.favorable' : 'inicio.stat.unfavorable') : '',
+  ]
+    .filter(Boolean)
+    .join(', ')
   return (
-    <div className="min-w-0 flex-1 rounded-[14px] bg-[var(--hero-tile)] px-3.5 py-[11px] [container-type:inline-size]">
-      <div className="truncate text-caption text-[var(--hero-label)]">{label}</div>
-      {value === null ? (
-        <SkeletonBar className="mt-1.5 h-4 w-[60%]" dark />
-      ) : (
-        <Money hidden={hidden} className="mt-[3px] block whitespace-nowrap text-[clamp(12px,11cqi,16px)] font-extrabold" style={{ color }}>
-          {value}
-        </Money>
-      )}
+    <div className={cn('min-w-0 rounded-[16px] border border-border bg-surface px-4 py-3.5 [container-type:inline-size]', className)}>
+      <span className="sr-only">{description}</span>
+      <div aria-hidden="true">
+        <div className="truncate text-overline uppercase text-ink-secondary">{label}</div>
+        {figure === null ? (
+          <SkeletonBar className="mt-1.5 h-5 w-[70%]" />
+        ) : (
+          <Money
+            hidden={hidden}
+            className={cn('mt-1 block whitespace-nowrap text-[clamp(14px,11cqi,20px)] font-semibold leading-[1.3]', positive ? 'text-positive' : 'text-negative')}
+          >
+            {figure}
+          </Money>
+        )}
+        <div
+          className={cn(
+            'mt-1 truncate text-caption tabular-nums',
+            change === null || change === 0 ? 'text-ink-tertiary' : favorable ? 'text-positive' : 'text-negative',
+          )}
+        >
+          {changeText}
+        </div>
+      </div>
     </div>
   )
 }
 
 // Six months of net savings (income − expenses), oldest first; the current
-// month is the solid accent bar, as in the mockup.
+// month is the solid bar.
 function MonthBars({ months, language }: { months: MonthTotals[] | null; language: 'es' | 'en' }) {
-  if (!months) return <SkeletonBar className="mt-[22px] h-14 w-full" dark />
+  if (!months) return <SkeletonBar className="mt-auto h-14 w-full pt-5" dark />
   const max = Math.max(1, ...months.map((m) => Math.abs(m.net)))
   return (
-    <div aria-hidden="true">
-      <div className="mt-[22px] flex h-14 items-end gap-[5px]">
+    <div aria-hidden="true" className="mt-auto pt-5">
+      <div className="flex h-14 items-end gap-[5px]">
         {months.map((m, i) => {
           const last = i === months.length - 1
           return (
@@ -590,6 +615,27 @@ function MonthBars({ months, language }: { months: MonthTotals[] | null; languag
   )
 }
 
+// The alert's semantic tone, shown as the card's leading bar: overdue and
+// over-budget are `negative`, pending payments `warning`, goal news
+// `positive` (same rule as Android's alertTone).
+function alertTone(alert: AppAlert): string {
+  switch (alert.kind) {
+    case 'series_due':
+    case 'loan_open':
+      return alert.overdue ? TONE_VAR.neg : TONE_VAR.warn
+    case 'budget_at_risk':
+      return alert.percentage > 100 ? TONE_VAR.neg : TONE_VAR.warn
+    case 'goal_near':
+    case 'goal_plan_auto':
+      return TONE_VAR.pos
+    default:
+      return TONE_VAR.warn
+  }
+}
+
+// Alert card (DESIGN-SYSTEM.md §6.10): a 4 px leading bar in the semantic
+// tone, the icon tile, a one-line title, a two-line body and an explicit
+// action, plus a dismiss button.
 function AlertCard({
   alert,
   today,
@@ -612,125 +658,138 @@ function AlertCard({
   const { t, tCategory, language } = useTranslation()
   const { format } = useCurrency()
   const copy = alertCopy(alert, today, language, t, tCategory, wallets)
+  const stop = (fn: () => void) => (e: React.MouseEvent) => {
+    e.stopPropagation()
+    fn()
+  }
   return (
     <div
-      role="button"
-      tabIndex={0}
       onClick={onOpen}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          onOpen()
-        }
-      }}
-      className="flex cursor-pointer items-start gap-3 rounded-[12px] border border-v2-line bg-v2-surface2 py-[13px] pl-[13px] pr-2.5 hover:border-v2-line2"
+      className="relative flex cursor-pointer items-start gap-3 overflow-hidden rounded-[12px] border border-border bg-surface py-3 pl-4 pr-1.5 hover:border-border-strong"
     >
-      <GlyphMark paths={copy.glyph} color={copy.color} box={32} />
+      <span aria-hidden="true" className="absolute inset-y-0 left-0 w-1" style={{ background: alertTone(alert) }} />
+      <GlyphMark paths={copy.glyph} color={copy.color} box={40} />
       <div className="min-w-0 flex-1">
-        <div className="text-[12.5px] font-bold [overflow-wrap:anywhere]">{copy.title}</div>
-        <div className="mt-[3px] text-caption leading-[1.45] text-v2-dim">
+        <div className="truncate text-title-sm font-semibold" title={copy.title}>{copy.title}</div>
+        <div className="mt-0.5 line-clamp-2 text-body-sm text-ink-tertiary">
           <MoneyText parts={copy.body} hidden={hidden} format={format} />
         </div>
-        {onConfirm && onSkip && (
-          <div className="mt-[9px] flex flex-wrap gap-x-3.5 gap-y-1.5 text-[12px] font-extrabold">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                onConfirm()
-              }}
-              className="min-h-6 cursor-pointer whitespace-nowrap text-v2-accent2"
-            >
-              {tr('inicio.plan.confirm')}
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          {onConfirm && onSkip ? (
+            <>
+              <button type="button" onClick={stop(onConfirm)} className={TONAL}>
+                {tr('inicio.plan.confirm')}
+              </button>
+              <button type="button" onClick={stop(onSkip)} className="h-8 cursor-pointer whitespace-nowrap rounded-[10px] px-2 text-label font-semibold text-link hover:bg-v2-subtle">
+                {tr('event.skip')}
+              </button>
+            </>
+          ) : (
+            <button type="button" onClick={stop(onOpen)} className={TONAL}>
+              {t('inicio.alerts.review')}
             </button>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                onSkip()
-              }}
-              className="min-h-6 cursor-pointer whitespace-nowrap text-v2-muted"
-            >
-              {tr('event.skip')}
-            </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
       <button
         type="button"
         title={t('inicio.alerts.dismiss')}
         aria-label={t('inicio.alerts.dismiss')}
-        onClick={(e) => {
-          e.stopPropagation()
-          onDismiss()
-        }}
-        className="-m-[3px] flex h-8 w-8 flex-none cursor-pointer items-center justify-center rounded-[8px] text-v2-dim hover:bg-v2-subtle hover:text-v2-text"
+        onClick={stop(onDismiss)}
+        className="flex h-8 w-8 flex-none cursor-pointer items-center justify-center rounded-[8px] text-ink-tertiary hover:bg-v2-subtle hover:text-ink"
       >
-        <StrokeIcon paths={ICON_PATHS.close} size={14} />
+        <StrokeIcon paths={ICON_PATHS.close} size={16} />
       </button>
     </div>
   )
 }
 
-function LoansCard({ loans, wallets, hidden, onOpen }: { loans: Transaction[] | null; wallets: Wallet[] | null; hidden: boolean; onOpen: (side?: 'lent' | 'borrowed') => void }) {
+// Tonal button (DESIGN-SYSTEM.md §6.3): primary-soft fill, 40 px on Web.
+const TONAL = 'h-10 cursor-pointer whitespace-nowrap rounded-[12px] bg-accent-soft px-4 text-label font-semibold text-on-primary-soft hover:brightness-95'
+
+// Movimientos recientes as a table: the movement (icon, title, meta), its
+// wallet and date on wide tiles, and the right-aligned amount. The title is
+// a button, so each row is reachable by keyboard; the whole row is
+// clickable with the pointer.
+function RecentTable({
+  rows,
+  wallets,
+  principal,
+  hidden,
+  today,
+  onOpen,
+}: {
+  rows: Transaction[]
+  wallets: Wallet[]
+  principal: string
+  hidden: boolean
+  today: string
+  onOpen: (id: string) => void
+}) {
   const { t, language } = useTranslation()
-  const { format } = useCurrency()
-  const open = loans ? openLoans(loans) : []
-  const settled = loans ? loans.filter((l) => (l.status ?? 'completed') === 'completed' && (l.outstanding ?? 0) === 0).length : 0
-  const sum = (kind: 'lent' | 'borrowed') => open.filter((l) => l.loanKind === kind).reduce((s, l) => s + (l.outstanding ?? 0), 0)
-  const next = loans ? nextDueLoan(loans) : undefined
+  const dateLabel = (iso: string) => (iso === today ? tr('event.today') : shortDate(iso, language))
   return (
-    <Card>
-      <CardHead
-        title={t('inicio.loans.title')}
-        subtitle={loans ? fill(t('inicio.loans.subtitle'), open.length, settled) : undefined}
-        link={t('inicio.seeInPlanes')}
-        onLink={() => onOpen()}
-      />
-      <div className="mt-3.5 grid grid-cols-2 gap-2.5">
-        <LoanBox label={t('inicio.loans.owedToYou')} value={loans ? format(sum('lent')) : null} color="var(--v2-pos)" hidden={hidden} />
-        <LoanBox label={t('inicio.loans.youOwe')} value={loans ? format(sum('borrowed')) : null} color="var(--v2-neg)" hidden={hidden} />
-      </div>
-      {next && (
-        <button
-          type="button"
-          onClick={() => onOpen(next.loanKind)}
-          className="mx-[-8px] mt-1 flex w-[calc(100%+16px)] cursor-pointer items-center gap-3 px-2 pt-3 text-left text-v2-text"
-        >
-          <CategoryMark category="other" box={34} />
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-[12.5px] font-bold">
-              {fill(t(next.loanKind === 'lent' ? 'alert.loanLent.title' : 'alert.loanBorrowed.title'), next.counterpartyName ?? t('loans.unknownPerson'))}
-            </div>
-            <div className="text-caption text-v2-dim">
-              {fill(t('inicio.loans.due'), shortDate(next.dueDate!, language), shortWallet(wallets?.find((w) => w.id === next.accountId)?.name ?? ''))}
-            </div>
-          </div>
-          <Money hidden={hidden} className="flex-none whitespace-nowrap text-[13px] font-extrabold">
-            {format(next.outstanding ?? 0)}
-          </Money>
-        </button>
-      )}
-    </Card>
+    <table className="mt-2 w-full table-fixed border-collapse text-left">
+      <thead>
+        <tr className="text-overline uppercase text-ink-tertiary">
+          <th scope="col" className="w-full pb-2 font-semibold">{t('inicio.recent.colTx')}</th>
+          <th scope="col" className="hidden w-[140px] pb-2 pl-4 font-semibold @min-[560px]:table-cell">{t('inicio.recent.colWallet')}</th>
+          <th scope="col" className="hidden w-[88px] pb-2 pl-4 font-semibold @min-[560px]:table-cell">{t('inicio.recent.colDate')}</th>
+          <th scope="col" className="w-[132px] pb-2 pl-4 text-right font-semibold">{t('inicio.recent.colAmount')}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((x) => {
+          const transfer = x.type === 'transfer'
+          const label = categoryLabel(transfer ? TRANSFER : x.category)
+          const wallet = shortWallet(wallets.find((w) => w.id === x.accountId)?.name ?? '')
+          const sign = transfer ? '' : x.type === 'income' ? '+' : '−'
+          const meta = [label, x.merchant || x.counterpartyName].filter(Boolean).join(' · ')
+          return (
+            <tr key={x.id} onClick={() => onOpen(x.id)} className="cursor-pointer border-t border-divider hover:bg-v2-subtle">
+              <td className="py-2.5 pr-2">
+                <div className="flex min-w-0 items-center gap-3">
+                  <CategoryMark category={transfer ? TRANSFER : x.category} box={40} />
+                  <div className="min-w-0 flex-1">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onOpen(x.id)
+                      }}
+                      className="block max-w-full cursor-pointer truncate text-left text-title-sm font-semibold"
+                      title={x.description || label}
+                    >
+                      {x.description || label}
+                    </button>
+                    <div className="truncate text-body-sm text-ink-tertiary">
+                      {meta}
+                      <span className="@min-[560px]:hidden">{` · ${dateLabel(x.date)} · ${wallet}`}</span>
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td className="hidden max-w-[160px] truncate py-2.5 pl-4 text-body-sm text-ink-secondary @min-[560px]:table-cell">{wallet}</td>
+              <td className="hidden whitespace-nowrap py-2.5 pl-4 text-body-sm tabular-nums text-ink-secondary @min-[560px]:table-cell">{dateLabel(x.date)}</td>
+              <td className="whitespace-nowrap py-2.5 pl-4 text-right">
+                <Money hidden={hidden} className={cn('block text-amount font-semibold', transfer ? 'text-ink' : x.type === 'income' ? 'text-positive' : 'text-negative')}>
+                  {`${sign}${formatMoney(x.amount, x.currency)}`}
+                </Money>
+                {x.currency !== principal && (
+                  <Money hidden={hidden} className="block text-caption text-ink-tertiary">
+                    {`≈ ${formatApprox(x.amount * referenceRate(x.currency, principal), principal)}`}
+                  </Money>
+                )}
+              </td>
+            </tr>
+          )
+        })}
+      </tbody>
+    </table>
   )
 }
 
-function LoanBox({ label, value, color, hidden }: { label: string; value: string | null; color: string; hidden: boolean }) {
-  return (
-    <div className="min-w-0 rounded-[12px] border border-v2-line bg-v2-surface2 px-[13px] py-[11px] [container-type:inline-size]">
-      <div className="truncate text-caption text-v2-dim">{label}</div>
-      {value === null ? (
-        <SkeletonBar className="mt-1.5 h-4 w-[60%]" />
-      ) : (
-        <Money hidden={hidden} className="mt-0.5 block whitespace-nowrap text-[clamp(12px,11cqi,16px)] font-extrabold" style={{ color }}>
-          {value}
-        </Money>
-      )}
-    </div>
-  )
-}
-
-// Inicio shows up to six monthly category budgets, riskiest first.
+// Inicio shows the three riskiest monthly category budgets.
 function homeBudgets(budgets: ReturnType<typeof useAppData>['budgets']) {
-  return sortByRisk(budgets.filter((b) => b.kind === 'category' && b.period === 'monthly')).slice(0, 6)
+  return sortByRisk(budgets.filter((b) => b.kind === 'category' && b.period === 'monthly')).slice(0, 3)
 }

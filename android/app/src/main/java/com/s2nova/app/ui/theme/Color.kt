@@ -68,6 +68,10 @@ val DarkAccentText = BrandColors.lilac // link, 7.83
 val LightDividerSubtle = Color(0xFFF0F0F5)
 val DarkDividerSubtle = Color(0xFF16161F)
 
+// Track of progress bars and input fills (DESIGN-SYSTEM.md §2.2 surface-sunken).
+val LightSurfaceSunken = Color(0xFFEFEFF4)
+val DarkSurfaceSunken = Color(0xFF09090E)
+
 // Brand-derived tokens with no Material slot (DESIGN-SYSTEM.md §2.2).
 val PrimaryPressed = BrandColors.indigo
 val LightAccent = BrandColors.blue // 6.52

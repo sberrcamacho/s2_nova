@@ -26,10 +26,11 @@ class SummaryRepository(
 ) {
     private val _months = MutableStateFlow<List<MonthlySummary>>(emptyList())
 
-    // Oldest first; the last entry is the current month.
+    // Oldest first; the last entry is the current month. Two months by
+    // default: Inicio's stat tiles compare this month with the previous one.
     val months: StateFlow<List<MonthlySummary>> = _months.asStateFlow()
 
-    suspend fun refresh(count: Int = 1, today: String = todayISO()) {
+    suspend fun refresh(count: Int = 2, today: String = todayISO()) {
         if (DemoModeFlag.active) return
         _months.value = api.getMonthSummaries(count, today).map(::toSummary)
     }

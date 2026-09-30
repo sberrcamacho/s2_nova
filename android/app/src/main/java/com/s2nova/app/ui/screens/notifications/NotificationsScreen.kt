@@ -172,7 +172,7 @@ private fun NotificationRow(
 
 // "Confirmar aporte" records the due contribution; "Omitir esta vez"
 // advances the plan (PLANS.md §3). The alert disappears either way.
-private fun resolveGoalPlan(goalId: String, alertId: String, confirm: Boolean) {
+internal fun resolveGoalPlan(goalId: String, alertId: String, confirm: Boolean) {
     AppContainer.alertRepository.markRead(alertId)
     AppContainer.alertRepository.removeLocal(alertId)
     AppContainer.appScope.launch {
