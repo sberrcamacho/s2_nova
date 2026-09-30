@@ -36,7 +36,7 @@ export function Tabs({ options, value, onChange, className }: TabsProps) {
             {opt.count !== undefined && (
               <span
                 className={cn(
-                  'rounded-full px-1.5 py-px text-[11px] font-bold',
+                  'rounded-full px-1.5 py-px text-caption font-bold',
                   active ? 'bg-white/20' : 'bg-surface text-ink-tertiary',
                 )}
               >

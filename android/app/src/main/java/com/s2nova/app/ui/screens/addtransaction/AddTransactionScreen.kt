@@ -78,7 +78,9 @@ import com.s2nova.app.ui.components.V2Pill
 import com.s2nova.app.ui.components.BareField
 import com.s2nova.app.ui.components.noRippleClick
 import com.s2nova.app.ui.components.toneOf
+import com.s2nova.app.ui.theme.BrandColors
 import com.s2nova.app.ui.theme.NovaColors
+import com.s2nova.app.ui.theme.heroSurface
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -469,10 +471,10 @@ fun AddTransactionScreen(
                         Text(
                             tr(if (autoBudget != null) StringKey.NM_BUDGET_BY_CATEGORY else StringKey.NM_BUDGET_CUSTOM, formatMoney(lineBudget.spent + valP, principal), formatMoney(b.limit, principal)) +
                                 (if (s.future) tr(StringKey.NM_BUDGET_WHEN_RECORDED) else if (value > 0) tr(StringKey.NM_BUDGET_WITH_THIS) else ""),
-                            fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM),
+                            fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM),
                         )
                     }
-                    Text("$n%", fontSize = 11.5.sp, fontWeight = FontWeight.ExtraBold, color = tone, maxLines = 1, softWrap = false, modifier = Modifier.clip(RoundedCornerShape(999.dp)).background(bg).padding(horizontal = 8.dp, vertical = 3.dp), style = TextStyle(fontFeatureSettings = TNUM))
+                    Text("$n%", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = tone, maxLines = 1, softWrap = false, modifier = Modifier.clip(RoundedCornerShape(999.dp)).background(bg).padding(horizontal = 8.dp, vertical = 3.dp), style = TextStyle(fontFeatureSettings = TNUM))
                 }
             }
 
@@ -501,7 +503,7 @@ fun AddTransactionScreen(
                     }
                     Column(Modifier.weight(1f)) {
                         Text(a.name, fontSize = 12.5.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onBackground)
-                        Text(tr(if (a.isPhoto) StringKey.NM_PHOTO else StringKey.NM_DOCUMENT) + " · " + a.sizeLabel, fontSize = 11.sp, color = colors.textDim)
+                        Text(tr(if (a.isPhoto) StringKey.NM_PHOTO else StringKey.NM_DOCUMENT) + " · " + a.sizeLabel, fontSize = 12.sp, color = colors.textDim)
                     }
                     val removeLabel = tr(StringKey.COMMON_DELETE) + " " + a.name
                     Box(
@@ -518,7 +520,7 @@ fun AddTransactionScreen(
                     V2Icon(V2Icons.repeat, colors.textDim, 13.dp)
                     Text(
                         repeatSummary(r, s.date) + " · " + tr(if (r.auto) StringKey.NM_AUTOMATIC else StringKey.NM_WITH_CONFIRMATION),
-                        fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, style = TextStyle(fontFeatureSettings = TNUM),
+                        fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, style = TextStyle(fontFeatureSettings = TNUM),
                     )
                 }
             }
@@ -581,8 +583,7 @@ private fun Hero(s: NmState, cur: String, wcur: String, rate: Double, value: Dou
     val white = Color.White
     val repo = AppContainer.categoryRepository
     Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp))
-            .background(Brush.linearGradient(listOf(colors.heroFrom, colors.heroTo), start = Offset(0f, 0f), end = Offset(900f, 1100f)))
+        Modifier.fillMaxWidth().heroSurface(RoundedCornerShape(22.dp))
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -598,7 +599,7 @@ private fun Hero(s: NmState, cur: String, wcur: String, rate: Double, value: Dou
                         .alpha(if (typeLocked && !on) 0.5f else 1f).noRippleClick { if (!typeLocked) s.switchType(t) }.padding(vertical = 10.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(label, fontSize = 12.sp, fontWeight = if (on) FontWeight.ExtraBold else FontWeight.Medium, color = if (on) Color(0xFF211A4D) else white.copy(alpha = 0.75f), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 4.dp))
+                    Text(label, fontSize = 12.sp, fontWeight = if (on) FontWeight.ExtraBold else FontWeight.Medium, color = if (on) BrandColors.indigo else white.copy(alpha = 0.85f), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 4.dp))
                 }
             }
         }
@@ -626,13 +627,13 @@ private fun Hero(s: NmState, cur: String, wcur: String, rate: Double, value: Dou
                 }
             }
             Column(Modifier.weight(1f)) {
-                Text(tr(StringKey.NM_CATEGORY), fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp, color = white.copy(alpha = 0.6f))
+                Text(tr(StringKey.NM_CATEGORY), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp, color = white.copy(alpha = 0.85f))
                 Text(
                     if (s.isTransfer) tr(StringKey.NM_TRANSFER_BETWEEN) else if (s.catPicked) repo.label(s.leaf) else tr(StringKey.NM_PICK_CATEGORY),
                     fontSize = 14.5.sp, fontWeight = FontWeight.ExtraBold, color = white, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 3.dp),
                 )
             }
-            V2Icon(V2Icons.chevronRight, white.copy(alpha = 0.6f), 18.dp)
+            V2Icon(V2Icons.chevronRight, white.copy(alpha = 0.85f), 18.dp)
         }
         // MONTO row
         val padOpen = s.sheet == NmSheet.PAD
@@ -644,10 +645,10 @@ private fun Hero(s: NmState, cur: String, wcur: String, rate: Double, value: Dou
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Column(Modifier.weight(1f)) {
-                Text(tr(StringKey.NM_AMOUNT).uppercase(), fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp, color = white.copy(alpha = 0.6f))
+                Text(tr(StringKey.NM_AMOUNT).uppercase(), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp, color = white.copy(alpha = 0.85f))
                 Text(
                     formatMoney(value, cur), fontSize = 30.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.9).sp,
-                    color = if (value > 0) white else white.copy(alpha = 0.4f), modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM), maxLines = 1,
+                    color = if (value > 0) white else white.copy(alpha = 0.85f), modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM), maxLines = 1,
                 )
             }
             Row(
@@ -656,24 +657,24 @@ private fun Hero(s: NmState, cur: String, wcur: String, rate: Double, value: Dou
                 horizontalArrangement = Arrangement.spacedBy(5.dp),
             ) {
                 Text(cur, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = white, maxLines = 1, softWrap = false)
-                V2Icon(V2Icons.chevronDown, white.copy(alpha = 0.7f), 14.dp, 2.4f)
+                V2Icon(V2Icons.chevronDown, white.copy(alpha = 0.85f), 14.dp, 2.4f)
             }
         }
         if (cur != wcur) {
             Text(
                 if (value > 0) tr(StringKey.NM_FX_APPROX, formatMoney(value * rate, wcur), wcur, shortWallet(walletName), cur, formatMoney(rate, wcur))
                 else tr(StringKey.NM_FX_LATER, wcur, shortWallet(walletName)),
-                fontSize = 11.5.sp, color = white.copy(alpha = 0.78f), modifier = Modifier.padding(horizontal = 4.dp), style = TextStyle(fontFeatureSettings = TNUM),
+                fontSize = 12.sp, color = white.copy(alpha = 0.85f), modifier = Modifier.padding(horizontal = 4.dp), style = TextStyle(fontFeatureSettings = TNUM),
             )
         }
         if (s.future) {
             Row(
-                Modifier.clip(RoundedCornerShape(999.dp)).background(Color(0x2EF0B429)).padding(horizontal = 11.dp, vertical = 5.dp),
+                Modifier.clip(RoundedCornerShape(999.dp)).background(colors.heroTile).padding(horizontal = 11.dp, vertical = 5.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(7.dp),
             ) {
-                V2Icon(V2Icons.cal, Color(0xFFF7CF6B), 13.dp)
-                Text(tr(StringKey.NM_SCHEDULED_CHIP) + " · ${fmtDate(s.date.toString())}" + if (s.seriesMode) "" else " · ${s.time}", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFFF7CF6B), maxLines = 1)
+                V2Icon(V2Icons.cal, white, 13.dp)
+                Text(tr(StringKey.NM_SCHEDULED_CHIP) + " · ${fmtDate(s.date.toString())}" + if (s.seriesMode) "" else " · ${s.time}", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = white, maxLines = 1)
             }
         }
     }
@@ -710,7 +711,7 @@ private fun OptionRow(s: NmState, pickedBudgetLabel: String?, hasGoals: Boolean)
 @Composable
 private fun NoWalletState(onAddWallet: () -> Unit, onBack: () -> Unit) {
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(32.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-        GlyphMark(V2Icons.wallet, MaterialTheme.colorScheme.primary, 56.dp)
+        GlyphMark(V2Icons.wallet, NovaColors.current.link, 56.dp)
         Text(tr(StringKey.NM_NO_WALLET_TITLE), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 16.dp))
         Text(tr(StringKey.NM_NO_WALLET_BODY), fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
         V2Button(tr(StringKey.NM_NO_WALLET_CTA), onClick = onAddWallet, modifier = Modifier.padding(top = 20.dp))

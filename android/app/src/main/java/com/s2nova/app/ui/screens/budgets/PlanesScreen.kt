@@ -132,7 +132,7 @@ fun PlanesScreen(initialTab: Int = 0, initialLoanSide: LoanKind = LoanKind.LENT)
 @Composable
 private fun PlanesTabs(labels: List<String>, selected: Int, onSelect: (Int) -> Unit) {
     val line = MaterialTheme.colorScheme.outline
-    val accent = MaterialTheme.colorScheme.primary
+    val accent = NovaColors.current.primaryBorder
     // Scrolls instead of wrapping a label ("Présta / mos") with large text.
     Row(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -170,6 +170,7 @@ private fun PlanesTabs(labels: List<String>, selected: Int, onSelect: (Int) -> U
 }
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 private fun BudgetsTab() {
     val budgetProgress by AppContainer.budgetRepository.budgetProgress.collectAsStateWithLifecycle()
     val colors = NovaColors.current
@@ -201,9 +202,11 @@ private fun BudgetsTab() {
                     .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(18.dp))
                     .padding(horizontal = 18.dp, vertical = 16.dp),
             ) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                // Both figures stay whole: when they don't fit side by side
+                // (small screen, large text) the limit moves to a second line.
+                FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Column {
-                        Text(t(StringKey.BUDGETS_SPENT_LABEL), fontSize = 11.sp, color = colors.textDim)
+                        Text(t(StringKey.BUDGETS_SPENT_LABEL), fontSize = 12.sp, color = colors.textDim)
                         Text(
                             format(totalSpent),
                             maxLines = 1,
@@ -215,8 +218,8 @@ private fun BudgetsTab() {
                             modifier = Modifier.padding(top = 3.dp),
                         )
                     }
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(t(StringKey.BUDGETS_LIMIT_TOTAL), fontSize = 11.sp, color = colors.textDim)
+                    Column {
+                        Text(t(StringKey.BUDGETS_LIMIT_TOTAL), fontSize = 12.sp, color = colors.textDim)
                         Text(format(totalLimit), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, softWrap = false)
                     }
                 }
@@ -229,7 +232,7 @@ private fun BudgetsTab() {
                 )
                 Text(
                     String.format(t(StringKey.BUDGETS_DAYS_LEFT_NOTE), daysLeft, format(available)),
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     color = colors.textDim,
                     modifier = Modifier.padding(top = 9.dp),
                 )
@@ -333,20 +336,20 @@ private fun BudgetCard(progress: BudgetProgress, onEdit: () -> Unit) {
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(b.name ?: repo.name(b.category), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                    Text("${progress.percentage}%", fontSize = 11.5.sp, fontWeight = FontWeight.ExtraBold, color = tone, maxLines = 1, softWrap = false, modifier = Modifier.clip(RoundedCornerShape(999.dp)).background(bg).padding(horizontal = 8.dp, vertical = 3.dp))
+                    Text("${progress.percentage}%", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = tone, maxLines = 1, softWrap = false, modifier = Modifier.clip(RoundedCornerShape(999.dp)).background(bg).padding(horizontal = 8.dp, vertical = 3.dp))
                     Icon(MockupIcons.Pencil, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(15.dp))
                 }
-                Text(scope, fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(scope, fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
                     tr(StringKey.NM_X_OF_Y, formatMoney(progress.spent, principal), formatMoney(b.limit, principal)) + " · " + period,
-                    fontSize = 11.5.sp, color = colors.textDim, modifier = Modifier.padding(top = 3.dp), style = TextStyle(fontFeatureSettings = TNUM),
+                    fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 3.dp), style = TextStyle(fontFeatureSettings = TNUM),
                 )
             }
         }
         NovaProgressBar(percentage = progress.percentage.coerceAtMost(100), color = tone, height = 6.dp, cornerRadius = 3.dp, modifier = Modifier.padding(top = 12.dp))
         // The state in words, so it isn't carried by the bar's color alone
         // (same copy as the web's budgetStateNote).
-        Text(budgetStateNote(progress, principal), fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 9.dp), style = TextStyle(fontFeatureSettings = TNUM))
+        Text(budgetStateNote(progress, principal), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 9.dp), style = TextStyle(fontFeatureSettings = TNUM))
     }
 }
 

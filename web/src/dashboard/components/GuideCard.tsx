@@ -51,9 +51,9 @@ export function GuideCard() {
     <div
       role="region"
       aria-label={t('guide.label')}
-      className="fixed right-6 bottom-6 z-[45] w-[354px] rounded-[16px] border border-[rgba(108,92,231,.45)] bg-v2-surface p-4 text-v2-text shadow-[0_18px_44px_rgba(0,0,0,.35)] [line-height:normal]"
+      className="fixed right-6 bottom-6 z-[45] w-[354px] rounded-[16px] border border-v2-accent-line/45 bg-v2-surface p-4 text-v2-text shadow-[0_18px_44px_rgba(0,0,0,.35)] [line-height:normal]"
     >
-      <div className="text-[10px] font-extrabold tracking-[.12em] text-v2-accent2">{`${t('guide.label').toUpperCase()} · ${copy('label').toUpperCase()}`}</div>
+      <div className="text-caption font-extrabold tracking-[.12em] text-v2-accent2">{`${t('guide.label').toUpperCase()} · ${copy('label').toUpperCase()}`}</div>
       <div className="mt-[7px] text-[14.5px] font-extrabold">{copy('title')}</div>
       <div className="mt-[5px] text-[12.5px] leading-[1.5] text-v2-muted [text-wrap:pretty]">{copy('body')}</div>
       <div className="mt-3 flex items-center gap-2.5">

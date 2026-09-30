@@ -186,8 +186,10 @@ left to the backend (a future date/time saves as PLANNED); the receipt is
 uploaded after the movement is created. Planes' forms are centered
 modals instead, as in the mockup.
 
-v2 screens use the mockup's own palette as `--v2-*` tokens
-(`bg-v2-surface`, `text-v2-dim`, …) in `index.css`, `line-height: normal`
+v2 screens use `--v2-*` tokens (`bg-v2-surface`, `text-v2-dim`, …) in
+`index.css`, whose values are the DESIGN-SYSTEM.md semantic tokens since F1
+(`v2-accent` = primary fill, `v2-accent2` = link text, `v2-accent-line` =
+selected boundaries; never use `v2-accent` as text on a surface), `line-height: normal`
 like the mockup, and `components/v2/` (CategoryMark with the mockup's
 category glyphs, Money for 9px-blurred hidden amounts, stroke icons).
 Hidden amounts are the shared `blurBalance` preference (`useHideAmounts`).
@@ -242,16 +244,12 @@ left a visible stray border, which is why it's not done that way).
 from `design_handoff_s2_nova_v2/design_handoff_s2_nova_overview/assets/logo-mark-dark.png` / `logo-mark-light.png` if the
 mark ever changes, rather than re-deriving one from the other.
 
-`LoginPage.tsx`/`RegisterPage.tsx` (`src/auth/`) follow the design handoff
-in `s2-nova-mockup/auth_handoff/`: a fixed 452px dark brand panel (always
-dark in both themes — the app theme only affects the form column) plus a
-340px form column, built as self-contained components rather than through
-a shared shell. Pixel-exact values that don't map onto an existing token
-live under a dedicated `--color-login-*` prefix in `src/index.css`
-(surface/border-focus/text-muted/label/primary/divider/checkbox-text, plus
-`positive`/`positive-bg` for Register's password-strength meter) — extend
-that prefix rather than approximating with a nearby general-purpose token
-when adding to either screen. `GoogleSignInButton` (`src/auth/`) takes an
+`LoginPage.tsx`/`RegisterPage.tsx` (`src/auth/`): a fixed 452px brand
+panel (always the dark hero's violet in both themes — the app theme only
+affects the form column) plus a 340px form column, built as self-contained
+components rather than through a shared shell. Their `--color-login-*`
+tokens are aliases of the semantic tokens (DESIGN-SYSTEM.md §10.2); use
+the semantic tokens for anything new. `GoogleSignInButton` (`src/auth/`) takes an
 optional `label` prop so Register can show "Registrarse con Google" instead
 of Login's default text.
 

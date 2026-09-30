@@ -110,7 +110,7 @@ fun NmSheets(
                             Text(Currencies.name(code) + " · " + code, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                             Text(
                                 if (code == wcur) tr(StringKey.NM_CURRENCY_OF, walletName) else "1 $code = " + formatMoney(rateTo(code, wcur), wcur) + " " + wcur,
-                                fontSize = 11.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM),
+                                fontSize = 12.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM),
                             )
                         }
                     }
@@ -149,7 +149,7 @@ fun NmSheets(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                     Column(Modifier.weight(1f)) {
                         Text(tr(if (s.isIncome) StringKey.NM_LOAN_BORROWED else StringKey.NM_LOAN_LENT), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                        Text(tr(StringKey.NM_LOAN_DETAIL), fontSize = 11.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 2.dp))
+                        Text(tr(StringKey.NM_LOAN_DETAIL), fontSize = 12.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 2.dp))
                     }
                     V2Switch(s.loan) { if (!s.editing) s.loan = !s.loan }
                 }
@@ -171,7 +171,7 @@ fun NmSheets(
 private fun androidx.compose.foundation.layout.RowScope.BudgetPickText(label: String, detail: String) {
     Column(Modifier.weight(1f)) {
         Text(label, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-        Text(detail, fontSize = 11.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM))
+        Text(detail, fontSize = 12.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM))
     }
 }
 
@@ -180,7 +180,7 @@ private fun androidx.compose.foundation.layout.RowScope.BudgetPickText(label: St
 fun GridLabel(label: String, on: Boolean) {
     Text(
         label,
-        fontSize = 10.5.sp,
+        fontSize = 12.sp,
         lineHeight = 13.sp,
         fontWeight = if (on) FontWeight.ExtraBold else FontWeight.SemiBold,
         color = if (on) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -229,7 +229,7 @@ private fun CategorySheet(s: NmState, onOpenCategories: () -> Unit) {
     NovaDraftSheet(onDismiss = { s.sheet = null }) {
         Column(Modifier.padding(start = 4.dp, end = 4.dp, bottom = 18.dp)) {
             Text(tr(if (s.isIncome) StringKey.NM_CAT_INCOME else StringKey.NM_CAT_EXPENSE), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
-            Text(tr(StringKey.NM_CAT_STEP), fontSize = 11.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 4.dp))
+            Text(tr(StringKey.NM_CAT_STEP), fontSize = 12.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 4.dp))
         }
         Column(Modifier.heightIn(max = 520.dp).verticalScroll(rememberScrollState())) {
             GridOf(repo.parents(s.isIncome, includeHidden = false), categoryGridColumns(), 18.dp, 8.dp) { p ->
@@ -263,7 +263,7 @@ private fun SubSheet(s: NmState) {
     NovaDraftSheet(onDismiss = { s.sheet = null }) {
         Row(Modifier.padding(start = 4.dp, end = 4.dp, bottom = 18.dp), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(tr(StringKey.NM_SUBCATEGORY), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
-            Text(repo.name(parent), fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold, color = NovaColors.current.textDim, modifier = Modifier.padding(bottom = 1.dp))
+            Text(repo.name(parent), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = NovaColors.current.textDim, modifier = Modifier.padding(bottom = 1.dp))
         }
         val items = listOf<Pair<String?, String>>(null to tr(StringKey.NM_NONE_F)) + repo.children(parent).map { it.id to repo.name(it.id) }
         GridOf(items, categoryGridColumns(), 18.dp, 8.dp) { (id, name) ->
@@ -320,7 +320,7 @@ private fun WhenSheet(s: NmState) {
                     })
                 }
             }
-            Text(tr(StringKey.NM_FUTURE), fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
+            Text(tr(StringKey.NM_FUTURE), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
             val nextFirst = today.plusMonths(1).withDayOfMonth(1)
             PillRow {
                 listOf(tr(StringKey.NM_TOMORROW) to today.plusDays(1), tr(StringKey.NM_IN_A_WEEK) to today.plusWeeks(1), dayMonthLabel(nextFirst) to nextFirst).forEach { (label, d) ->
@@ -357,7 +357,7 @@ private fun WhenSheet(s: NmState) {
                 else -> tr(StringKey.NM_WHEN_TODAY)
             }
             Text(
-                note, fontSize = 11.5.sp, lineHeight = 17.sp, color = if (future) colors.warning else colors.textDim,
+                note, fontSize = 12.sp, lineHeight = 17.sp, color = if (future) colors.warning else colors.textDim,
                 modifier = Modifier.padding(top = 12.dp).fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(if (future) Color(0x1FF0B429) else Color.Transparent)
                     .then(if (future) Modifier.padding(horizontal = 12.dp, vertical = 10.dp) else Modifier),
             )
@@ -381,7 +381,7 @@ fun MonthGrid(month: LocalDate, selected: LocalDate?, today: LocalDate, onPick: 
     val primary = MaterialTheme.colorScheme.primary
     Row(Modifier.fillMaxWidth().padding(bottom = 6.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
         listOf("L", "M", "M", "J", "V", "S", "D").forEach {
-            Text(it, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, color = colors.textDim, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+            Text(it, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = colors.textDim, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
         }
     }
     val lead = month.dayOfWeek.value - 1
@@ -472,7 +472,7 @@ fun ConfirmModeRow(label: String, detail: String, selected: Boolean, onClick: ()
     RadioRow(selected, onClick) {
         Column(Modifier.weight(1f)) {
             Text(label, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-            Text(detail, fontSize = 11.sp, lineHeight = 15.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 2.dp))
+            Text(detail, fontSize = 12.sp, lineHeight = 15.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 2.dp))
         }
     }
 }
@@ -560,7 +560,7 @@ fun AttachOptions(onCamera: () -> Unit, onGallery: () -> Unit, onDocument: () ->
             }
             Column(Modifier.weight(1f)) {
                 Text(copy.first, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                Text(copy.second, fontSize = 11.5.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 2.dp))
+                Text(copy.second, fontSize = 12.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 2.dp))
             }
         }
     }

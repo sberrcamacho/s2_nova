@@ -38,7 +38,7 @@ import com.s2nova.app.ui.theme.NovaColors
 fun SheetLabel(text: String) {
     Text(
         text,
-        fontSize = 11.5.sp,
+        fontSize = 12.sp,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(bottom = 8.dp),

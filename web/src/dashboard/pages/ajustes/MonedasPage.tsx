@@ -13,7 +13,7 @@ const errorText = (err: unknown) => (err instanceof Error ? err.message : tr('ap
 
 // The mockup's currency mark: the symbol in a 36px violet circle.
 function CurrencyMark({ children }: { children: ReactNode }) {
-  return <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-[rgba(108,92,231,.16)] text-[11.5px] font-extrabold text-v2-accent2">{children}</span>
+  return <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-v2-accent/16 text-caption font-extrabold text-v2-accent2">{children}</span>
 }
 
 // Ajustes › Monedas (Dashboard v2 isSettingsCurrencies,
@@ -60,15 +60,15 @@ export default function MonedasPage() {
       <div className="grid grid-cols-[minmax(0,1fr)_300px] items-start gap-[18px]">
         <div className="flex flex-col gap-3.5">
           <AjCard className="flex flex-col gap-2.5 p-5">
-            <div className="text-[10.5px] font-extrabold tracking-[.08em] text-v2-dim">{t('cur.principal').toUpperCase()}</div>
+            <div className="text-caption font-extrabold tracking-[.08em] text-v2-dim">{t('cur.principal').toUpperCase()}</div>
             {principal && (
               <div className="flex items-center gap-3">
                 <CurrencyMark>{principal.symbol}</CurrencyMark>
                 <div className="flex-1 text-[14px] font-extrabold">{`${currencyName(P, principal.name)} · ${P}`}</div>
-                <span className="rounded-full border border-v2-accent2 px-2 py-[3px] text-[10.5px] font-extrabold text-v2-accent2">{t('cur.principalBadge')}</span>
+                <span className="rounded-full border border-v2-accent2 px-2 py-[3px] text-caption font-extrabold text-v2-accent2">{t('cur.principalBadge')}</span>
               </div>
             )}
-            <div className="text-[11.5px] leading-[1.5] text-v2-dim">
+            <div className="text-caption leading-[1.5] text-v2-dim">
               {fill(t('cur.detected'), deviceRegion().country, P)}
             </div>
           </AjCard>
@@ -78,7 +78,7 @@ export default function MonedasPage() {
                 <CurrencyMark>{c.symbol}</CurrencyMark>
                 <div className="min-w-0 flex-1">
                   <div className="text-[13px] font-bold">{`${currencyName(c.code, c.name)} · ${c.code}`}</div>
-                  <div className="font-numeric mt-0.5 text-[11.5px] text-v2-dim">
+                  <div className="font-numeric mt-0.5 text-caption text-v2-dim">
                     {`1 ${c.code} = ${formatMoney(c.rate, P)} · ${c.wallets ? fill(t(c.wallets === 1 ? 'cur.walletOne' : 'cur.walletMany'), c.wallets) : t('cur.noWallets')}`}
                   </div>
                 </div>
@@ -98,7 +98,7 @@ export default function MonedasPage() {
               <CurrencyMark>{c.symbol}</CurrencyMark>
               <div className="min-w-0 flex-1">
                 <div className="text-[12.5px] font-bold">{`${currencyName(c.code, c.name)} · ${c.code}`}</div>
-                <div className="font-numeric text-[11px] text-v2-dim">{`1 ${c.code} = ${formatMoney(c.rate, P)}`}</div>
+                <div className="font-numeric text-caption text-v2-dim">{`1 ${c.code} = ${formatMoney(c.rate, P)}`}</div>
               </div>
               <span className="text-[16px] text-v2-accent2">+</span>
             </button>

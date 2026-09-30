@@ -61,7 +61,7 @@ fun NotificationsSheet(onDismiss: () -> Unit, onOpenAlertTarget: (AlertTarget) -
                 Text(t(StringKey.SETTINGS_NOTIFICATIONS), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
                 Text(
                     if (unreadCount > 0) "$unreadCount ${t(StringKey.NOTIF_UNREAD_SUFFIX)}" else t(StringKey.NOTIF_ALL_CAUGHT_UP),
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     color = colors.textDim,
                     modifier = Modifier.padding(top = 4.dp),
                 )
@@ -69,7 +69,7 @@ fun NotificationsSheet(onDismiss: () -> Unit, onOpenAlertTarget: (AlertTarget) -
             if (unreadCount > 0) {
                 Text(
                     t(StringKey.NOTIF_MARK_ALL_READ),
-                    fontSize = 11.5.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = colors.accentText,
                     modifier = Modifier.alignByBaseline().padding(start = 12.dp).clickable {
@@ -111,7 +111,7 @@ fun NotificationsSheet(onDismiss: () -> Unit, onOpenAlertTarget: (AlertTarget) -
                 notices.forEach { notice ->
                     NotificationRow(
                         icon = ScanIcon,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = NovaColors.current.link,
                         title = notice.title,
                         body = notice.message,
                         read = notice.read,
@@ -155,7 +155,7 @@ private fun NotificationRow(
             )
             Text(
                 body,
-                fontSize = 11.5.sp,
+                fontSize = 12.sp,
                 lineHeight = 16.1.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 3.dp),

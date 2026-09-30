@@ -97,7 +97,7 @@ fun RecurringScreen(onBack: () -> Unit, onNew: () -> Unit, onEdit: (String) -> U
                         .semantics { contentDescription = t(StringKey.RECURRING_NEW) },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text("+", fontSize = 22.sp, fontWeight = FontWeight.Light, color = MaterialTheme.colorScheme.primary)
+                    Text("+", fontSize = 22.sp, fontWeight = FontWeight.Light, color = NovaColors.current.link)
                 }
             },
         )
@@ -127,7 +127,7 @@ fun RecurringScreen(onBack: () -> Unit, onNew: () -> Unit, onEdit: (String) -> U
                         CategoryIcon(category = item.category, size = CategoryIconSize.ROW)
                         Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
                             Text(item.name, fontSize = 13.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                            Text(detail, fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
+                            Text(detail, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
                         }
                         Text(
                             (if (income) "+" else "−") + format(abs(item.amount)),
@@ -149,7 +149,7 @@ fun RecurringScreen(onBack: () -> Unit, onNew: () -> Unit, onEdit: (String) -> U
                         CardAction(t(StringKey.RECURRING_EDIT), colors.accentText) { onEdit(item.id) }
                         if (due) {
                             val label = t(if (overdue) StringKey.RECURRING_OVERDUE else StringKey.RECURRING_DUE_TODAY) + " · " + t(StringKey.RECURRING_CONFIRM)
-                            CardAction(label, MaterialTheme.colorScheme.primary) {
+                            CardAction(label, NovaColors.current.link) {
                                 afterOccurrence { AppContainer.recurringSeriesRepository.confirmOccurrence(item.id) }
                             }
                             CardAction(t(StringKey.RECURRING_SKIP), colors.accentText) {

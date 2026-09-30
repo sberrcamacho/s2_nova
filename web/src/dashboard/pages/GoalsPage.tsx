@@ -74,7 +74,7 @@ export default function GoalsPage({ adding, onAddingDone }: { adding: boolean; o
                 tabIndex={0}
                 onClick={() => setEditing(g)}
                 onKeyDown={(e) => e.key === 'Enter' && setEditing(g)}
-                className="cursor-pointer rounded-[16px] border border-v2-line bg-v2-surface p-5 hover:border-v2-line2 focus-visible:outline-2 focus-visible:outline-v2-accent"
+                className="cursor-pointer rounded-[16px] border border-v2-line bg-v2-surface p-5 hover:border-v2-line2 focus-visible:outline-2 focus-visible:outline-focus"
               >
                 <div className="flex items-center gap-[18px]">
                   <span className="flex h-[72px] w-[72px] flex-none items-center justify-center rounded-full" style={{ background: `conic-gradient(${ic.color} ${pct}%, var(--v2-line) 0)` }}>
@@ -91,7 +91,7 @@ export default function GoalsPage({ adding, onAddingDone }: { adding: boolean; o
                         {g.percentage}%
                       </span>
                     </div>
-                    <div className="mt-0.5 text-[11px] text-v2-dim">{g.targetDate ? fill(tr('goal.targetOn'), longDate(g.targetDate)) : tr('goal.noTarget')}</div>
+                    <div className="mt-0.5 text-caption text-v2-dim">{g.targetDate ? fill(tr('goal.targetOn'), longDate(g.targetDate)) : tr('goal.noTarget')}</div>
                     <div className="font-numeric mt-1.5 text-[18px] font-extrabold leading-[1.3] tracking-[-.02em]">
                       <Money hidden={hidden} inline>
                         {format(g.currentAmount)}
@@ -103,11 +103,11 @@ export default function GoalsPage({ adding, onAddingDone }: { adding: boolean; o
                         </Money>
                       </span>
                     </div>
-                    <div className="mt-1.5 text-[11.5px] leading-[1.5] text-v2-dim">{goalEtaText(g, transactions, today, language, t)}</div>
+                    <div className="mt-1.5 text-caption leading-[1.5] text-v2-dim">{goalEtaText(g, transactions, today, language, t)}</div>
                   </div>
                 </div>
                 {g.plan && (
-                  <div className="mt-3.5 flex items-center gap-2 rounded-[10px] bg-v2-surface2 px-3 py-[9px] text-[11.5px] font-semibold text-v2-muted">
+                  <div className="mt-3.5 flex items-center gap-2 rounded-[10px] bg-v2-surface2 px-3 py-[9px] text-caption font-semibold text-v2-muted">
                     <Icon paths={IC.repeat} size={13} color="var(--v2-dim)" />
                     <span className="font-numeric">
                       {`${planText(g.plan, walletName(g.plan.accountId), format)} · ${fill(tr('goal.next'), shortDayMonth(g.plan.nextDate))}`}

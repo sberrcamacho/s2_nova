@@ -24,8 +24,8 @@ export function KPICard({ label, value, icon, trend, tone = 'default', className
       )}
     >
       <div className="flex items-center justify-between">
-        <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-ink-tertiary">{label}</p>
-        {icon && <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-primary">{icon}</span>}
+        <p className="text-caption font-bold uppercase tracking-[0.06em] text-ink-tertiary">{label}</p>
+        {icon && <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-link">{icon}</span>}
       </div>
       <p className="font-numeric text-[26px] font-extrabold leading-none tracking-tight text-ink">{value}</p>
       {trend && (

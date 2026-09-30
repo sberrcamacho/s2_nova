@@ -173,7 +173,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
                                 Text(t(StringKey.SETTINGS_BLUR_BALANCE), fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
                                 Text(
                                     t(if (blurBalance) StringKey.SETTINGS_BLUR_BALANCE_HELP_ON else StringKey.SETTINGS_BLUR_BALANCE_HELP_OFF),
-                                    fontSize = 11.sp,
+                                    fontSize = 12.sp,
                                     lineHeight = 15.4.sp,
                                     color = colors.textDim,
                                     modifier = Modifier.padding(top = 3.dp),
@@ -187,7 +187,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
                         Column {
                             Row(verticalAlignment = Alignment.Bottom) {
                                 Text(t(StringKey.SETTINGS_AUTO_LOCK), fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f).alignByBaseline())
-                                Text(lockName(autoLockMinutes), fontSize = 11.5.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText, modifier = Modifier.padding(start = 12.dp).alignByBaseline())
+                                Text(lockName(autoLockMinutes), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText, modifier = Modifier.padding(start = 12.dp).alignByBaseline())
                             }
                             FlowRow(
                                 modifier = Modifier.padding(top = 11.dp),
@@ -206,7 +206,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
                                     biometric -> t(StringKey.SETTINGS_AUTO_LOCK_HELP_BIOMETRIC_AFTER).format(lockName(autoLockMinutes).lowercase())
                                     else -> t(StringKey.SETTINGS_AUTO_LOCK_HELP_PASSWORD_AFTER).format(lockName(autoLockMinutes).lowercase())
                                 },
-                                fontSize = 11.sp,
+                                fontSize = 12.sp,
                                 lineHeight = 15.4.sp,
                                 color = colors.textDim,
                                 modifier = Modifier.padding(top = 10.dp),
@@ -223,7 +223,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
                     Row(modifier = Modifier.padding(17.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(tr(StringKey.SET_GUIDES_AGAIN), fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-                            Text(tr(StringKey.SET_GUIDES_DETAIL), fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 3.dp))
+                            Text(tr(StringKey.SET_GUIDES_DETAIL), fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 3.dp))
                         }
                         Text("→", fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
@@ -231,7 +231,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
                 NovaCard(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.fillMaxWidth().padding(17.dp)) {
                         Text(t(StringKey.SETTINGS_ABOUT), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
-                        Text("S2 Nova · v${BuildConfig.VERSION_NAME}", fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+                        Text("S2 Nova · v${BuildConfig.VERSION_NAME}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
                     }
                 }
             }
@@ -246,7 +246,7 @@ private fun LinkCard(title: String, detail: String, modifier: Modifier, onClick:
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(title, fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
-                Text(detail, fontSize = 11.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 3.dp))
+                Text(detail, fontSize = 12.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 3.dp))
             }
             Text("›", fontSize = 18.sp, color = NovaColors.current.textDim)
         }
@@ -272,7 +272,7 @@ private fun FieldBox(label: String, value: String, onValueChange: (String) -> Un
             .border(1.dp, if (enabled) MaterialTheme.colorScheme.outlineVariant else MaterialTheme.colorScheme.outline, shape)
             .padding(horizontal = 15.dp, vertical = 13.dp),
     ) {
-        Text(label, fontSize = 10.5.sp, color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else colors.textDim)
+        Text(label, fontSize = 12.sp, color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else colors.textDim)
         Spacer(Modifier.height(3.dp))
         BasicTextField(
             value = value,
@@ -308,7 +308,7 @@ private fun <T> SegmentedRow(label: String, options: List<Pair<T, String>>, sele
                 val active = value == selected
                 Text(
                     text,
-                    fontSize = 11.5.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = if (active) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier

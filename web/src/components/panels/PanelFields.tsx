@@ -9,7 +9,7 @@ import type { Wallet } from '@/types'
 // fields themselves mirror Android's v2 sheets.
 
 export const panelInputClass =
-  'box-border h-11 w-full rounded-[12px] border border-v2-line bg-v2-sidebar px-3.5 text-[13px] text-v2-text outline-none placeholder:text-v2-dim focus:border-v2-accent'
+  'box-border h-11 w-full rounded-[12px] border border-v2-line bg-v2-sidebar px-3.5 text-[13px] text-v2-text outline-none placeholder:text-v2-dim focus:border-v2-accent-line'
 
 export function PanelField({ label, htmlFor, aside, note, children }: { label: string; htmlFor?: string; aside?: ReactNode; note?: string; children: ReactNode }) {
   return (
@@ -25,7 +25,7 @@ export function PanelField({ label, htmlFor, aside, note, children }: { label: s
         {aside}
       </div>
       {children}
-      {note && <div className="text-[11px] text-v2-dim">{note}</div>}
+      {note && <div className="text-caption text-v2-dim">{note}</div>}
     </div>
   )
 }

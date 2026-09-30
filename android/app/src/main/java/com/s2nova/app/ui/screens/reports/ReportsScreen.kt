@@ -228,7 +228,7 @@ private fun TotalRow(label: String, value: String?, delta: Delta?) {
                 delta.text,
                 maxLines = 1,
                 softWrap = false,
-                fontSize = 11.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = if (delta.good) colors.positive else colors.negative,
                 modifier = Modifier
@@ -262,7 +262,7 @@ private fun BarsCard(report: Report?, subtitle: String) {
         ) {
             Column(Modifier.padding(end = 12.dp)) {
                 CardTitle(t(StringKey.REPORTS_INCOME_VS_EXPENSES))
-                Text(subtitle, fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
+                Text(subtitle, fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(top = 2.dp)) {
                 LegendItem(income, colors.positive)
@@ -297,7 +297,7 @@ private fun BarsCard(report: Report?, subtitle: String) {
             months.forEach { m ->
                 Text(
                     chartMonth(m.month, language),
-                    fontSize = 10.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = colors.textDim,
                     textAlign = TextAlign.Center,
@@ -312,7 +312,7 @@ private fun BarsCard(report: Report?, subtitle: String) {
 private fun LegendItem(label: String, color: Color) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
         Box(Modifier.width(8.dp).height(8.dp).clip(RoundedCornerShape(2.dp)).background(color))
-        Text(label, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, softWrap = false)
+        Text(label, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, softWrap = false)
     }
 }
 

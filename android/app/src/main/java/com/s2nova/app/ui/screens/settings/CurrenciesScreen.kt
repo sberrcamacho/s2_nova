@@ -70,11 +70,11 @@ fun CurrenciesScreen(onBack: () -> Unit) {
             Box(Modifier.size(38.dp).clip(CircleShape).noRippleClick(onBack), contentAlignment = Alignment.Center) { Text("←", fontSize = 19.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             Text(tr(StringKey.CUR_TITLE), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
             Box(Modifier.size(38.dp).clip(CircleShape).noRippleClick { adding = true }, contentAlignment = Alignment.Center) {
-                Text("+", fontSize = 22.sp, fontWeight = FontWeight.Light, color = MaterialTheme.colorScheme.primary)
+                Text("+", fontSize = 22.sp, fontWeight = FontWeight.Light, color = NovaColors.current.link)
             }
         }
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(tr(StringKey.CUR_PRINCIPAL), fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(tr(StringKey.CUR_PRINCIPAL), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Column(
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(18.dp)).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -83,16 +83,16 @@ fun CurrenciesScreen(onBack: () -> Unit) {
                     SymbolBadge(Currencies.symbol(principal))
                     Column(Modifier.weight(1f)) {
                         Text(Currencies.name(principal), fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
-                        Text(principal, fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
+                        Text(principal, fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
                     }
-                    Text(tr(StringKey.CUR_PRINCIPAL_BADGE), fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText, modifier = Modifier.clip(RoundedCornerShape(999.dp)).border(1.dp, colors.accentText, RoundedCornerShape(999.dp)).padding(horizontal = 8.dp, vertical = 3.dp))
+                    Text(tr(StringKey.CUR_PRINCIPAL_BADGE), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText, modifier = Modifier.clip(RoundedCornerShape(999.dp)).border(1.dp, colors.accentText, RoundedCornerShape(999.dp)).padding(horizontal = 8.dp, vertical = 3.dp))
                 }
                 Text(
                     tr(StringKey.CUR_DETECTED, Currencies.deviceCountry(), principal),
-                    fontSize = 11.sp, lineHeight = 16.sp, color = colors.textDim,
+                    fontSize = 12.sp, lineHeight = 16.sp, color = colors.textDim,
                 )
             }
-            Text(tr(StringKey.CUR_OTHERS), fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 10.dp))
+            Text(tr(StringKey.CUR_OTHERS), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 10.dp))
             val others = currencies.filter { it.code != principal }
             Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(18.dp))) {
                 if (others.isEmpty()) Text(tr(StringKey.CUR_ONLY_PRINCIPAL), fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(16.dp))
@@ -104,7 +104,7 @@ fun CurrenciesScreen(onBack: () -> Unit) {
                             Text(Currencies.name(c.code, c.name) + " · " + c.code, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                             Text(
                                 "1 ${c.code} = " + formatMoney(c.rate, principal) + " · " + if (n > 0) tr(if (n == 1) StringKey.CUR_WALLET_ONE else StringKey.CUR_WALLET_MANY, n) else tr(StringKey.CUR_NO_WALLETS),
-                                fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM),
+                                fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM),
                             )
                         }
                         if (n == 0) {
@@ -127,7 +127,7 @@ fun CurrenciesScreen(onBack: () -> Unit) {
             DashedNewRow(label = tr(StringKey.CUR_ADD), onClick = { adding = true }, modifier = Modifier.padding(top = 4.dp))
             Text(
                 tr(StringKey.CUR_RATES_NOTE),
-                fontSize = 11.sp, lineHeight = 16.sp, color = colors.textDim, modifier = Modifier.padding(horizontal = 2.dp, vertical = 4.dp),
+                fontSize = 12.sp, lineHeight = 16.sp, color = colors.textDim, modifier = Modifier.padding(horizontal = 2.dp, vertical = 4.dp),
             )
         }
     }
@@ -148,7 +148,7 @@ fun CurrenciesScreen(onBack: () -> Unit) {
                         SymbolBadge(c.symbol)
                         Column(Modifier.weight(1f)) {
                             Text(Currencies.name(c.code, c.name) + " · " + c.code, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                            Text("1 ${c.code} = " + formatMoney(c.rate, principal), fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM))
+                            Text("1 ${c.code} = " + formatMoney(c.rate, principal), fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM))
                         }
                         Text("+", fontSize = 18.sp, color = colors.accentText)
                     }

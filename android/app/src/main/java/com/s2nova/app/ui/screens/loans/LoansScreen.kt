@@ -113,7 +113,7 @@ fun LoansTab(initialSide: LoanKind = LoanKind.LENT) {
                     .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(18.dp))
                     .padding(horizontal = 18.dp, vertical = 16.dp),
             ) {
-                Text(t(if (side == LoanKind.LENT) StringKey.LOANS_SUMMARY_LENT else StringKey.LOANS_SUMMARY_BORROWED), fontSize = 11.sp, color = colors.textDim)
+                Text(t(if (side == LoanKind.LENT) StringKey.LOANS_SUMMARY_LENT else StringKey.LOANS_SUMMARY_BORROWED), fontSize = 12.sp, color = colors.textDim)
                 Text(
                     format(outstandingTotal),
                     fontSize = 24.sp,
@@ -124,7 +124,7 @@ fun LoansTab(initialSide: LoanKind = LoanKind.LENT) {
                 )
                 Text(
                     "${items.size} $recordWord · $settledCount $settledWord",
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     color = colors.textDim,
                     modifier = Modifier.padding(top = 6.dp),
                 )
@@ -287,7 +287,7 @@ private fun LoanCard(txn: Transaction, outstanding: Double, onPay: () -> Unit, o
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(txn.counterpartyName ?: txn.description, fontSize = 13.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
-                Text(due, fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
+                Text(due, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
             }
             Text(
                 format(if (txn.loanSettled) txn.amount else outstanding),
@@ -301,7 +301,7 @@ private fun LoanCard(txn: Transaction, outstanding: Double, onPay: () -> Unit, o
         }
         NovaProgressBar(
             percentage = if (txn.amount > 0) ((paid / txn.amount) * 100).toInt().coerceIn(0, 100) else 0,
-            color = if (txn.loanSettled) colors.positive else MaterialTheme.colorScheme.primary,
+            color = if (txn.loanSettled) colors.positive else colors.link,
             height = 6.dp,
             cornerRadius = 3.dp,
             modifier = Modifier.padding(top = 12.dp),
@@ -433,14 +433,14 @@ private fun LoanPaySheet(
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 8.dp)) {
                     Text(
                         t(StringKey.GOAL_CONTRIBUTION_AMOUNT),
-                        fontSize = 11.5.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.weight(1f),
                     )
                     Text(
                         t(StringKey.LOANS_SETTLE_ALL_SHORTCUT),
-                        fontSize = 11.5.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = colors.accentText,
                         modifier = Modifier.clickable { amountText = com.s2nova.app.ui.screens.addtransaction.AmountPad.numStr(outstanding) },

@@ -54,23 +54,23 @@ export default function BudgetsPage({ adding, onAddingDone }: { adding: boolean;
               key={b.id}
               type="button"
               onClick={() => setEditing(b)}
-              className="cursor-pointer rounded-[16px] border bg-v2-surface px-5 py-[18px] text-left hover:!border-v2-line2 focus-visible:outline-2 focus-visible:outline-v2-accent"
+              className="cursor-pointer rounded-[16px] border bg-v2-surface px-5 py-[18px] text-left hover:!border-v2-line2 focus-visible:outline-2 focus-visible:outline-focus"
               style={{ borderColor: b.percentage >= 90 ? 'var(--v2-neg-soft)' : 'var(--v2-line)' }}
             >
               <div className="flex items-center gap-2.5">
                 {b.kind === 'custom' ? <PlanMark icon={b.icon} box={36} /> : <CategoryMark category={b.category ?? 'exp.other'} box={36} />}
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[13.5px] font-extrabold" title={b.name ?? categoryName(b.category)}>{b.name ?? categoryName(b.category)}</div>
-                  <div className="mt-px truncate text-[11px] text-v2-dim" title={budgetScope(b, walletName)}>{budgetScope(b, walletName)}</div>
+                  <div className="mt-px truncate text-caption text-v2-dim" title={budgetScope(b, walletName)}>{budgetScope(b, walletName)}</div>
                 </div>
-                <span className="flex-none whitespace-nowrap rounded-full px-2 py-[3px] text-[11.5px] font-extrabold" style={{ color: tone, background: bg }}>
+                <span className="flex-none whitespace-nowrap rounded-full px-2 py-[3px] text-caption font-extrabold" style={{ color: tone, background: bg }}>
                   {b.percentage}%
                 </span>
               </div>
               <Money hidden={hidden} className="mt-2 block whitespace-nowrap text-[20px] font-extrabold tracking-[-.025em]">
                 {format(b.spent)}
               </Money>
-              <div className="mt-0.5 text-[11.5px] text-v2-dim">
+              <div className="mt-0.5 text-caption text-v2-dim">
                 {`${tr('plan.of')} `}
                 <Money hidden={hidden} inline>
                   {format(b.limit)}
@@ -79,7 +79,7 @@ export default function BudgetsPage({ adding, onAddingDone }: { adding: boolean;
               <div className="mt-3.5 h-1.5 overflow-hidden rounded-[3px] bg-v2-line">
                 <div className="h-full" style={{ width: `${Math.min(100, b.percentage)}%`, background: tone }} />
               </div>
-              <div className="mt-2.5 flex flex-wrap justify-between gap-x-2.5 gap-y-1 text-[11.5px]">
+              <div className="mt-2.5 flex flex-wrap justify-between gap-x-2.5 gap-y-1 text-caption">
                 <span className="text-v2-muted">{budgetStateNote(b, today, format)}</span>
                 <span className="text-v2-dim">{budgetPeriodLabel(b)}</span>
               </div>

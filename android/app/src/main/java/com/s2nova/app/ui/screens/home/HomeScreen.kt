@@ -83,6 +83,7 @@ import com.s2nova.app.ui.rememberAppLanguage
 import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.theme.NovaColors
+import com.s2nova.app.ui.theme.heroSurface
 import com.s2nova.app.ui.theme.NovaExtraColors
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -188,7 +189,7 @@ fun HomeScreen(
                     .clip(RoundedCornerShape(10.dp)),
             )
             Column(modifier = Modifier.weight(1f).padding(start = 11.dp)) {
-                Text(t(greetingKey), fontSize = 11.sp, color = colors.textDim)
+                Text(t(greetingKey), fontSize = 12.sp, color = colors.textDim)
                 Text(
                     user?.name?.substringBefore(" ") ?: "",
                     fontSize = 16.sp,
@@ -401,7 +402,7 @@ private fun AmountColumn(amount: Double, currency: String, income: Boolean) {
         if (currency != principal) {
             Text(
                 "≈ " + formatApprox(abs(amount) * AppContainer.currencyRepository.rate(currency, principal), principal),
-                fontSize = 10.5.sp,
+                fontSize = 12.sp,
                 color = colors.textDim,
                 maxLines = 1,
                 softWrap = false,
@@ -462,36 +463,13 @@ private fun BalanceHero(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
-            .background(
-                // linear-gradient(150deg, hero-a 0%, hero-b 60%, hero-c 100%)
-                Brush.linearGradient(
-                    0f to colors.heroFrom,
-                    0.6f to colors.heroMid,
-                    1f to colors.heroTo,
-                ),
-            )
-            .border(1.dp, colors.heroBorder, RoundedCornerShape(24.dp))
-            // Glow toward the top-right corner (mockup: a 170px circle at
-            // top -56 / right -30, blur 46). Drawn behind the content rather
-            // than as a child so it never takes part in the card's layout; a
-            // radial gradient reads as the blurred circle without
-            // Modifier.blur's hard rectangular clip.
-            .drawBehind {
-                val center = Offset(size.width - 55.dp.toPx(), 29.dp.toPx())
-                val radius = (85 + 46).dp.toPx()
-                drawCircle(
-                    brush = Brush.radialGradient(listOf(Color(0x6B6C5CE7), Color(0x006C5CE7)), center = center, radius = radius),
-                    radius = radius,
-                    center = center,
-                )
-            },
+            .heroSurface(RoundedCornerShape(24.dp)),
     ) {
         Column(modifier = Modifier.padding(22.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 Text(
                     t(StringKey.HOME_BALANCE),
-                    fontSize = 10.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.2.sp,
                     color = colors.heroOverline,
@@ -503,13 +481,13 @@ private fun BalanceHero(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .clip(RoundedCornerShape(50))
-                            .background(Color.White.copy(alpha = 0.08f))
+                            .background(colors.heroTile)
                             .clickable(onClick = onOpenWallets)
                             .padding(start = 10.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
                     ) {
                         Text(
                             "$walletCount ${t(if (walletCount == 1) StringKey.HOME_WALLET_ONE else StringKey.HOME_WALLET_MANY)}",
-                            fontSize = 10.5.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = colors.heroLabel,
                             maxLines = 1,
@@ -546,7 +524,7 @@ private fun BalanceHero(
             if (blurred) {
                 Text(
                     t(StringKey.HOME_BALANCE_TAP_TO_REVEAL),
-                    fontSize = 10.5.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = colors.heroOverline,
                     modifier = Modifier
@@ -559,7 +537,7 @@ private fun BalanceHero(
                 // wallet list, since the balance is the sum of wallets.
                 Text(
                     t(StringKey.HOME_ADD_FIRST_WALLET),
-                    fontSize = 10.5.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = colors.heroOverline,
                     modifier = Modifier
@@ -580,10 +558,10 @@ private fun HeroStatTile(label: String, value: String?, valueColor: Color, modif
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(14.dp))
-            .background(Color.White.copy(alpha = 0.06f))
+            .background(NovaColors.current.heroTile)
             .padding(horizontal = 13.dp, vertical = 11.dp),
     ) {
-        Text(label, fontSize = 10.sp, color = NovaColors.current.heroLabel, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(label, fontSize = 12.sp, color = NovaColors.current.heroLabel, maxLines = 1, overflow = TextOverflow.Ellipsis)
         if (value != null) {
             // An amount is never cut or wrapped: it shrinks to fit the tile
             // on narrow screens / large font scales instead.
@@ -593,7 +571,7 @@ private fun HeroStatTile(label: String, value: String?, valueColor: Color, modif
                 color = valueColor,
                 maxLines = 1,
                 softWrap = false,
-                autoSize = TextAutoSize.StepBased(minFontSize = 10.sp, maxFontSize = 14.5.sp),
+                autoSize = TextAutoSize.StepBased(minFontSize = 12.sp, maxFontSize = 14.5.sp),
                 style = TextStyle(fontFeatureSettings = TNUM),
                 modifier = Modifier.padding(top = 3.dp),
             )
@@ -629,7 +607,7 @@ private fun HomeAlertCard(alert: AppAlert, format: CurrencyFormatter, onOpen: ()
         IconCircle(icon = copy.icon, color = copy.color, size = CategoryIconSize.ALERT)
         Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
             Text(copy.title, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
-            Text(copy.body, fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
+            Text(copy.body, fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
         }
         Box(
             modifier = Modifier
@@ -668,7 +646,7 @@ private fun CardTitle(text: String, modifier: Modifier = Modifier) {
 private fun CardLink(text: String, onClick: () -> Unit) {
     Text(
         text,
-        fontSize = 11.5.sp,
+        fontSize = 12.sp,
         fontWeight = FontWeight.Bold,
         color = NovaColors.current.accentText,
         maxLines = 1,
@@ -722,7 +700,7 @@ private fun HomeBudgetRow(progress: BudgetProgress, format: CurrencyFormatter, o
         }
         Text(
             "${format(progress.spent)} / ${format(progress.budget.limit)}",
-            fontSize = 11.sp,
+            fontSize = 12.sp,
             color = colors.textDim,
             maxLines = 1,
             softWrap = false,
@@ -742,7 +720,7 @@ private fun UpcomingRow(item: UpcomingItem, format: CurrencyFormatter, language:
             Column(modifier = Modifier.width(42.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     if (item.dueToday) t(StringKey.HOME_UPCOMING_TODAY) else monthAbbr(item.date, language).uppercase(),
-                    fontSize = 9.5.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = if (item.dueToday) colors.warning else colors.textDim,
                 )
@@ -761,7 +739,7 @@ private fun UpcomingRow(item: UpcomingItem, format: CurrencyFormatter, language:
                     } else {
                         t(StringKey.HOME_UPCOMING_SCHEDULED).format(intervalLabel(item.series.interval, t).lowercase())
                     },
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     color = colors.textDim,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
@@ -798,7 +776,7 @@ private fun RecentRow(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Text(subtitle, fontSize = 11.sp, color = colors.textDim, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(subtitle, fontSize = 12.sp, color = colors.textDim, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             AmountColumn(amount = transaction.amount, currency = transaction.currency, income = income)
         }
@@ -829,7 +807,7 @@ private fun GuestBanner(onCreateAccount: () -> Unit) {
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(tr(StringKey.GUEST_TITLE), fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
-            Text(tr(StringKey.GUEST_BODY), fontSize = 11.sp, lineHeight = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
+            Text(tr(StringKey.GUEST_BODY), fontSize = 12.sp, lineHeight = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
         }
         Text(
             tr(StringKey.AUTH_CREATE),

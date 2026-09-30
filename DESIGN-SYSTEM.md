@@ -12,7 +12,7 @@ Tracker", stack guidelines for `jetpack-compose` and `html-tailwind`, chart
 and UX rule sets. The skill's generic fintech palette (gold/amber) was **not**
 used: the brand palette is fixed by the S2 Nova logo.
 
-**Status:** v1.0 · 2026-09-28 · approved direction, not yet implemented.
+**Status:** v1.1 · 2026-09-30 · F0 and F1 implemented on both clients (fixes, brand tokens, type roles and the 12 floor); F2–F4 pending.
 
 ---
 
@@ -127,19 +127,24 @@ example, "−5 %" on Gastos is `positive`.
 
 | Token | Light | Dark |
 |---|---|---|
-| `hero-bg` | linear 135°: `#5712C2 → #6622D6 → #9A39F9` | base `#1A0B3D` + radial glow top-right using `gradient.brandDark` at 35 % |
+| `hero-bg` | linear 135°: `#5712C2` 0 % → `#6622D6` 50 % → `#9A39F9` 150 % (past the far corner, so the visible end is `#802EE8`) | base `#1A0B3D` + radial glow top-right: `#A80FFA` 35 % → `#0047F5` 22 % → transparent |
 | `hero-text` | `#FFFFFF` (≥ 4.85 over the whole gradient) | `#FFFFFF` (18.1) |
-| `hero-text-secondary` | `#FFFFFF` at 80 % | `#D485FB` (7.37) |
+| `hero-text-secondary` | `#FFFFFF` at 90 % (≥ 5.1) | `#D485FB` (≥ 5.1 over the glow) |
 | `hero-positive` / `hero-negative` | `#FFFFFF` + sign and arrow (no green/red on violet) | `#32C98A` (≥ 6.0) / `#FF7A7A` (≥ 5.1) over the whole gradient |
-| `hero-tile` | `#FFFFFF` at 12 % | `#FFFFFF` at 6 % |
+| `hero-tile` | `#FFFFFF` at 12 % (white on it ≥ 4.9) | `#FFFFFF` at 6 % |
 
 The hero is the only element that uses a brand gradient.
 
-Until F1 lands, the hero keeps its current dark navy gradient in **both**
-themes, so its text always uses the on-dark hero tokens (`HeroOverline`
-`#A69DFF`, `HeroLabel` white at 72 %, `HeroPositive` `#32C98A`,
-`HeroNegative` `#FF7A7A`), never the light theme's text or semantic colors,
-which fall under 3:1 on it.
+The hero's `#9A39F9` stop sits past the far corner because white text at
+80–90 % and white on a hero tile fall under 4.5:1 on `#9A39F9` itself.
+Everything on the hero (the amount card in Nuevo movimiento too) is white
+or `hero-*`; the light theme's text and semantic colors are never used on it.
+
+Primary as text: `#6622D6` is only 2.5:1 on the dark surfaces, so in dark
+theme text and icons use `link`, and selected boundaries, radio dots and tab
+indicators use `primary-border` (`#6622D6` light / `#A80FFA` dark, 3.6–3.9:1).
+On the inverted toast the action uses the opposite theme's `link`
+(`accent-inverse`).
 
 ### 2.3 Data visualization
 
@@ -597,6 +602,8 @@ padding or a pseudo-element on Web.
 | `surface` / `surface-raised` / `surface-sunken` | `--color-surface`, `--color-surface-raised`, `--color-surface-sunken` | `bg-surface`… | `NovaColors.surface`, `.surfaceRaised`, `.surfaceSunken` |
 | `text` / `text-secondary` / `text-tertiary` / `text-disabled` | `--color-text`, `--color-text-secondary`, … | `text-ink`, `text-ink-secondary`, … | `NovaColors.text`, `.textSecondary`, … |
 | `border` / `border-input` / `divider` | `--color-border`, `--color-border-input`, `--color-divider` | `border-border`… | `NovaColors.border`, `.borderInput`, `.divider` |
+| `primary-border` | `--color-primary-border`, `--v2-accent-line` | `border-primary-border`, `border-v2-accent-line` | `NovaColors.primaryBorder` |
+| hero | `--hero-bg`, `--hero-tile`, `--hero-overline`, `--hero-label`, … | `bg-[var(--hero-tile)]` | `Modifier.heroSurface()`, `NovaColors.heroTile`, … |
 | `primary`, `primary-pressed`, `on-primary`, `primary-soft`, `on-primary-soft` | `--color-primary`, … | `bg-primary`… | `MaterialTheme.colorScheme.primary`, `.onPrimary`, `.primaryContainer`, `.onPrimaryContainer` + `NovaColors.primaryPressed` |
 | `link`, `accent`, `focus-ring` | `--color-link`, `--color-accent`, `--color-focus` | `text-link`… | `NovaColors.link`, `.accent`, `.focus` |
 | `positive` / `negative` / `warning` (+ `-soft`) | `--color-positive`, `--color-positive-soft`, … | `text-positive`… | `NovaColors.positive`, `.positiveSoft`, … |
@@ -606,11 +613,22 @@ padding or a pseudo-element on Web.
 - **Web:**
   - Declare the tokens under `:root` / `[data-theme="dark"]` and register them in `@theme inline` (Tailwind v4 CSS-first theming), so components use `bg-primary`, never `bg-[#6622D6]` or `bg-[var(--…)]`.
   - Set `--font-sans` to Plus Jakarta Sans only; `.tabular` / the `amount` role adds `font-variant-numeric: tabular-nums`.
+- **Web (as of F1):** the screens still use the `v2-*` utilities; their values are
+  now the semantic tokens (`v2-accent` = primary, `v2-accent2` = link,
+  `v2-accent-line` = primary-border), and `--color-login-*` are aliases of the
+  semantic tokens. Renaming the utilities happens screen by screen in F2–F4.
+  The type roles exist as `text-caption`, `text-body-sm`, …; every text
+  smaller than 12 px became `text-caption`.
 - **Android:**
   - `Color.kt` holds `BrandColors` (primitives) and the light/dark semantic palettes.
   - `Theme.kt` maps them onto `ColorScheme` plus `NovaExtraColors` (`LocalNovaExtraColors`).
   - `Type.kt` defines the roles with explicit `lineHeight` and `fontFeatureSettings = "tnum"` on the numeric roles.
   - No hardcoded `Color(0x…)` or `fontSize = …sp` in screens.
+  - As of F1, `NovaType` holds the roles (line heights in `em`) and every
+    size under 12 sp was raised to 12. A bare `Text()` inherits only the
+    font family (`NovaDefaultTextStyle`), because most screens still size
+    text ad hoc and a role's line height would stretch it; screens move onto
+    the roles as they are redesigned in F2–F4.
 
 ### 10.2 Migration from the current tokens
 

@@ -1,6 +1,7 @@
 package com.s2nova.app.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -8,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
 
 // Financial-semantic + hero-gradient colors Material3's ColorScheme has no
 // slot for — exposed via CompositionLocal so any screen can reach them the
@@ -20,14 +20,26 @@ data class NovaExtraColors(
     val negativeSoft: Color,
     val warning: Color,
     val warningSoft: Color,
+    // Balance hero (DESIGN-SYSTEM.md §2.2): a three-stop diagonal gradient
+    // (heroMid at heroMidStop) plus a radial glow in the top-right corner.
     val heroFrom: Color,
     val heroMid: Color,
+    val heroMidStop: Float,
     val heroTo: Color,
+    val heroGlow: List<Color>,
     val heroBorder: Color,
-    val heroOverline: Color = HeroOverline,
-    val heroLabel: Color = HeroLabel,
-    val heroPositive: Color = HeroPositive,
-    val heroNegative: Color = HeroNegative,
+    val heroTile: Color,
+    val heroOverline: Color,
+    val heroLabel: Color,
+    val heroPositive: Color,
+    val heroNegative: Color,
+    // Brand-derived tokens with no Material slot.
+    val link: Color,
+    val accent: Color,
+    val focus: Color,
+    val primaryPressed: Color,
+    val primaryBorder: Color,
+    val borderInput: Color,
     val negativeBorder: Color,
     val navyPanel: Color,
     val scanSurface: Color,
@@ -62,23 +74,36 @@ private val LightExtraColors = NovaExtraColors(
     negativeSoft = LightNegative.copy(alpha = 0.12f),
     warning = LightWarning,
     warningSoft = LightWarning.copy(alpha = 0.12f),
-    heroFrom = HeroFrom,
-    heroMid = lerp(HeroFrom, HeroTo, 0.6f),
-    heroTo = HeroTo,
-    heroBorder = HeroBorder,
+    heroFrom = LightHeroFrom,
+    heroMid = LightHeroMid,
+    heroMidStop = 0.5f,
+    heroTo = LightHeroTo,
+    heroGlow = listOf(BrandColors.lilac.copy(alpha = 0.3f), BrandColors.lilac.copy(alpha = 0f)),
+    heroBorder = Color.White.copy(alpha = 0.16f),
+    heroTile = Color.White.copy(alpha = 0.12f),
+    heroOverline = Color.White.copy(alpha = 0.9f),
+    heroLabel = Color.White,
+    heroPositive = Color.White,
+    heroNegative = Color.White,
+    link = LightAccentText,
+    accent = LightAccent,
+    focus = LightAccent,
+    primaryPressed = PrimaryPressed,
+    primaryBorder = LightPrimaryBorder,
+    borderInput = LightBorderInput,
     negativeBorder = LightNegativeBorder,
     navyPanel = NavyPanel,
     scanSurface = Color(0xFF0B0B12),
     sheetSurface = LightBgSecondary,
     sheetGrip = LightSheetGrip,
     loginSurface = LoginSurfaceLight,
-    loginBorderFocus = LoginBorderFocusLight,
+    loginBorderFocus = LightPrimaryBorder,
     loginTextMuted = LightTextTertiary,
     loginLabel = LightTextSecondary,
-    loginPrimary = LoginPrimaryFlat,
+    loginPrimary = LightPrimary,
     loginPositive = LoginPositiveLight,
     loginPositiveBg = LoginPositiveBgLight,
-    loginHighlight = LoginHighlightLight,
+    loginHighlight = LightAccentText,
     textDim = LightTextDim,
     accentText = LightAccentText,
     dividerSubtle = LightDividerSubtle,
@@ -95,23 +120,40 @@ private val DarkExtraColors = NovaExtraColors(
     negativeSoft = DarkNegative.copy(alpha = 0.14f),
     warning = DarkWarning,
     warningSoft = DarkWarning.copy(alpha = 0.14f),
-    heroFrom = DarkBg,
-    heroMid = DarkHeroMid,
-    heroTo = Color(0xFF211A4D),
-    heroBorder = HeroBorder,
+    heroFrom = DarkHeroBase,
+    heroMid = DarkHeroBase,
+    heroMidStop = 0.5f,
+    heroTo = DarkHeroBase,
+    heroGlow = listOf(
+        BrandColors.electric.copy(alpha = 0.35f),
+        BrandColors.blue.copy(alpha = 0.22f),
+        BrandColors.cyan.copy(alpha = 0f),
+    ),
+    heroBorder = Color.White.copy(alpha = 0.1f),
+    heroTile = Color.White.copy(alpha = 0.06f),
+    heroOverline = BrandColors.lilac,
+    heroLabel = Color.White.copy(alpha = 0.8f),
+    heroPositive = Color(0xFF32C98A),
+    heroNegative = Color(0xFFFF7A7A),
+    link = DarkAccentText,
+    accent = DarkAccent,
+    focus = DarkAccent,
+    primaryPressed = PrimaryPressed,
+    primaryBorder = DarkPrimaryBorder,
+    borderInput = DarkBorderInput,
     negativeBorder = DarkNegativeBorder,
     navyPanel = NavyPanel,
     scanSurface = ScanSurface,
     sheetSurface = DarkSurfaceElevated,
     sheetGrip = DarkSheetGrip,
     loginSurface = LoginSurfaceDark,
-    loginBorderFocus = HeroTo,
+    loginBorderFocus = DarkPrimaryBorder,
     loginTextMuted = LoginTextMutedDark,
     loginLabel = LoginLabelDark,
-    loginPrimary = LoginPrimaryFlat,
+    loginPrimary = DarkPrimary,
     loginPositive = LoginPositiveDark,
     loginPositiveBg = LoginPositiveBgDark,
-    loginHighlight = LoginHighlightDark,
+    loginHighlight = DarkAccentText,
     textDim = DarkTextDim,
     accentText = DarkAccentText,
     dividerSubtle = DarkDividerSubtle,
@@ -137,7 +179,7 @@ private val LightScheme = lightColorScheme(
     outlineVariant = LightBorderStrong,
     error = LightNegative,
     primaryContainer = LightAccentSoft,
-    onPrimaryContainer = LightPrimary,
+    onPrimaryContainer = LightAccentText,
 )
 
 private val DarkScheme = darkColorScheme(
@@ -154,7 +196,7 @@ private val DarkScheme = darkColorScheme(
     outlineVariant = DarkBorderStrong,
     error = DarkNegative,
     primaryContainer = DarkAccentSoft,
-    onPrimaryContainer = DarkPrimarySecondary,
+    onPrimaryContainer = DarkAccentText,
 )
 
 @Composable
@@ -166,11 +208,9 @@ fun S2NovaTheme(
     val extraColors = if (darkTheme) DarkExtraColors else LightExtraColors
 
     CompositionLocalProvider(LocalNovaExtraColors provides extraColors) {
-        MaterialTheme(
-            colorScheme = colorScheme,
-            typography = NovaTypography,
-            content = content,
-        )
+        MaterialTheme(colorScheme = colorScheme, typography = NovaTypography) {
+            CompositionLocalProvider(LocalTextStyle provides NovaDefaultTextStyle, content = content)
+        }
     }
 }
 

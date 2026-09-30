@@ -18,7 +18,7 @@ const VARIANT_CLASSES: Record<Variant, string> = {
   primary:
     'bg-primary text-on-primary hover:brightness-110 active:brightness-95 shadow-[var(--shadow-primary)] disabled:shadow-none',
   secondary: 'bg-surface text-ink border border-border hover:bg-bg-secondary active:bg-border/40',
-  outline: 'bg-transparent text-primary border border-primary/40 hover:bg-accent-soft active:bg-accent-soft/70',
+  outline: 'bg-transparent text-link border border-primary/40 hover:bg-accent-soft active:bg-accent-soft/70',
   ghost: 'bg-transparent text-ink-secondary hover:bg-bg-secondary hover:text-ink',
   danger: 'bg-negative-soft text-negative border border-negative/20 hover:bg-negative/20',
 }

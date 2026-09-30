@@ -57,7 +57,7 @@ export function SidePanel({ title, onClose, footer, children }: SidePanelProps) 
   )
 }
 
-export const fieldLabelClass = 'text-[11px] font-bold tracking-[.06em] text-v2-muted'
+export const fieldLabelClass = 'text-caption font-bold tracking-[.06em] text-v2-muted'
 
 export function chipClass(on: boolean): string {
   return on

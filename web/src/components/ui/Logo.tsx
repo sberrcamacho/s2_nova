@@ -14,7 +14,7 @@ interface LogoProps {
 
 const MARK_SIZES = { sm: 32, md: 40, lg: 56 }
 const S2_SIZES = { sm: 'text-sm', md: 'text-base', lg: 'text-xl' }
-const NOVA_SIZES = { sm: 'text-[9px]', md: 'text-[10px]', lg: 'text-xs' }
+const NOVA_SIZES = { sm: 'text-caption', md: 'text-caption', lg: 'text-xs' }
 
 // The S2 Nova mark: a rounded hexagon glyph with a rising bar chart, shipped
 // as two theme-specific renders (a dark card for dark surfaces, a light card
@@ -53,7 +53,7 @@ export function Logo({ variant = 'full', size = 'md', tone = 'default', classNam
         >
           S2 <span className={cn('font-bold', inverted ? 'text-white/60' : 'text-ink-secondary')} style={{ fontWeight: 600 }}>Nova</span>
         </span>
-        <span className={cn('font-semibold uppercase tracking-[0.18em]', inverted ? 'text-white/35' : 'text-ink-tertiary', NOVA_SIZES[size])}>
+        <span className={cn('whitespace-nowrap font-semibold uppercase tracking-[.04em]', inverted ? 'text-white/70' : 'text-ink-tertiary', NOVA_SIZES[size])}>
           {tr('brand.tagline')}
         </span>
       </div>

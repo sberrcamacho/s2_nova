@@ -147,7 +147,7 @@ fun TransactionsScreen(
                                         append((if (netTotal >= 0) "+" else "\u2212") + formatApprox(kotlin.math.abs(netTotal), principal))
                                     }
                                 },
-                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.5.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.1.em, fontFeatureSettings = "tnum"),
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.1.em, fontFeatureSettings = "tnum"),
                                 color = if (sched) colors.warning else colors.textDim,
                                 modifier = Modifier.padding(top = if (index == 0) 8.dp else 18.dp, bottom = 4.dp),
                             )

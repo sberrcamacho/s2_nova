@@ -257,12 +257,12 @@ private fun GoalCard(goal: Goal, onEdit: () -> Unit, onPay: () -> Unit) {
                 }
                 Text(
                     "$pct% · " + (goal.targetDate?.let { tr(StringKey.GOAL_TARGET_ON, fmtDateLong(it)) } ?: tr(StringKey.GOAL_NO_TARGET)),
-                    fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp),
+                    fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp),
                 )
                 Text(
                     buildAnnotatedString {
                         append(format(goal.currentAmount))
-                        withStyle(SpanStyle(fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = colors.textDim)) { append(" " + tr(StringKey.GOAL_OF, format(goal.targetAmount))) }
+                        withStyle(SpanStyle(fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = colors.textDim)) { append(" " + tr(StringKey.GOAL_OF, format(goal.targetAmount))) }
                     },
                     fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.padding(top = 4.dp), style = TextStyle(fontFeatureSettings = TNUM),
@@ -273,7 +273,7 @@ private fun GoalCard(goal: Goal, onEdit: () -> Unit, onPay: () -> Unit) {
                         goal.currentAmount >= goal.targetAmount -> tr(StringKey.GOAL_MET)
                         else -> tr(StringKey.GOAL_LEFT, format(goal.targetAmount - goal.currentAmount))
                     },
-                    fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 3.dp),
+                    fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 3.dp),
                 )
             }
         }
@@ -285,7 +285,7 @@ private fun GoalCard(goal: Goal, onEdit: () -> Unit, onPay: () -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 V2Icon(V2Icons.repeat, colors.textDim, 13.dp)
-                Text(planText(plan, wallet, principal) + " · " + tr(StringKey.GOAL_NEXT, fmtDate(plan.nextDate)), fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, style = TextStyle(fontFeatureSettings = TNUM))
+                Text(planText(plan, wallet, principal) + " · " + tr(StringKey.GOAL_NEXT, fmtDate(plan.nextDate)), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, style = TextStyle(fontFeatureSettings = TNUM))
             }
         }
         Box(
@@ -419,7 +419,7 @@ private fun GoalDeleteSheet(
 @Composable
 private fun DestinationRow(label: String, detail: String, selected: Boolean, onClick: () -> Unit) {
     val colors = NovaColors.current
-    val accent = MaterialTheme.colorScheme.primary
+    val accent = NovaColors.current.primaryBorder
     val line2 = MaterialTheme.colorScheme.outlineVariant
     val surface = MaterialTheme.colorScheme.surface
     Row(
@@ -427,7 +427,7 @@ private fun DestinationRow(label: String, detail: String, selected: Boolean, onC
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(if (selected) Color(0x1F6C5CE7) else Color.Transparent)
+            .background(if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else Color.Transparent)
             .border(1.dp, if (selected) accent else line2, RoundedCornerShape(14.dp))
             .clickable(role = Role.RadioButton, onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 12.dp),
@@ -445,7 +445,7 @@ private fun DestinationRow(label: String, detail: String, selected: Boolean, onC
         }
         Column(modifier = Modifier.padding(start = 12.dp)) {
             Text(label, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-            Text(detail, fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
+            Text(detail, fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
         }
     }
 }
@@ -496,7 +496,7 @@ private fun GoalPaySheet(
                 }
             }
 
-            error?.let { Text(it, fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = colors.negative) }
+            error?.let { Text(it, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = colors.negative) }
 
             DraftSheetPrimaryButton(
                 label = t(StringKey.GOAL_CONTRIBUTION_SAVE),

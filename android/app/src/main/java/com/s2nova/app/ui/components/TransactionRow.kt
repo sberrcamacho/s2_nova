@@ -62,11 +62,11 @@ fun TransactionRow(
                     if (transaction.attachment != null) V2Icon(V2Icons.clip, colors.textDim, 13.dp)
                     if (transaction.recurringSeriesId != null) V2Icon(V2Icons.repeat, colors.textDim, 13.dp)
                 }
-                Text(subtitle, fontSize = 11.sp, color = colors.textDim, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(subtitle, fontSize = 12.sp, color = colors.textDim, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(start = 13.dp)) {
                 Text(amount, fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold, color = if (scheduled) MaterialTheme.colorScheme.onSurfaceVariant else color, maxLines = 1, softWrap = false, style = androidx.compose.ui.text.TextStyle(fontFeatureSettings = TNUM))
-                if (conv != null) Text(conv, fontSize = 10.5.sp, color = colors.textDim, maxLines = 1, softWrap = false, modifier = Modifier.padding(top = 2.dp), style = androidx.compose.ui.text.TextStyle(fontFeatureSettings = TNUM))
+                if (conv != null) Text(conv, fontSize = 12.sp, color = colors.textDim, maxLines = 1, softWrap = false, modifier = Modifier.padding(top = 2.dp), style = androidx.compose.ui.text.TextStyle(fontFeatureSettings = TNUM))
             }
         }
         HorizontalDivider(thickness = 1.dp, color = colors.dividerSubtle)

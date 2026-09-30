@@ -9,7 +9,7 @@ interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 const TONE_CLASSES: Record<Tone, string> = {
-  primary: 'bg-accent-soft text-primary',
+  primary: 'bg-accent-soft text-link',
   positive: 'bg-positive-soft text-positive',
   negative: 'bg-negative-soft text-negative',
   warning: 'bg-warning-soft text-warning',

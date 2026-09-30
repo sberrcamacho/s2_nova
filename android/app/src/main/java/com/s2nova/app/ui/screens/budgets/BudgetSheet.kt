@@ -155,7 +155,7 @@ fun BudgetSheet(draft: BudgetEditDraft, onChange: (BudgetEditDraft) -> Unit, onD
                                 Modifier.align(Alignment.BottomEnd).offset(2.dp, 2.dp).size(16.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary)
                                     .border(2.dp, colors.sheetSurface, CircleShape),
                                 contentAlignment = Alignment.Center,
-                            ) { Text("▾", fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, color = Color.White) }
+                            ) { Text("▾", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = Color.White) }
                         }
                         BareField(d.name, { name ->
                             if (d.custom) onChange(d.copy(name = name, icon = if (d.iconAuto) Taxonomy.guessPlanIcon(name) ?: "other" else d.icon))
@@ -208,9 +208,9 @@ fun BudgetSheet(draft: BudgetEditDraft, onChange: (BudgetEditDraft) -> Unit, onD
                     else (if (d.sub != null) tr(StringKey.BUD_SCOPE_ONLY, repo.label(d.sub)) else tr(StringKey.BUD_SCOPE_ALL, repo.name(d.category))) +
                         (if (wl.isNotEmpty()) tr(StringKey.BUD_SCOPE_FROM, wl.joinToString(", ")) else tr(StringKey.BUD_SCOPE_ALL_WALLETS)) + " · " +
                         tr(if (d.period == BudgetPeriod.CUSTOM) StringKey.BUD_SCOPE_NO_RESET else StringKey.BUD_SCOPE_RESET) + "."
-                    Text(note, fontSize = 11.sp, lineHeight = 16.sp, color = colors.textDim, modifier = Modifier.offset(y = (-4).dp), style = TextStyle(fontFeatureSettings = TNUM))
+                    Text(note, fontSize = 12.sp, lineHeight = 16.sp, color = colors.textDim, modifier = Modifier.offset(y = (-4).dp), style = TextStyle(fontFeatureSettings = TNUM))
                 }
-                d.error?.let { Text(it, fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = colors.negative) }
+                d.error?.let { Text(it, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = colors.negative) }
                 V2Button(tr(StringKey.COMMON_SAVE), enabled = d.valid, onClick = { onSave(d.toSave()) })
                 if (d.id != null) SheetTextAction(tr(StringKey.BUD_DELETE), colors.negative, onDelete, weight = FontWeight.ExtraBold)
             }

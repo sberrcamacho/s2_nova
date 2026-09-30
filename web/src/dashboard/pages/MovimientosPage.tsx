@@ -255,7 +255,7 @@ export default function MovimientosPage() {
             const sched = g.key === 'sched'
             return (
               <div key={g.key}>
-                <div className={cn('pb-1.5 text-[10.5px] font-bold tracking-[.1em]', gi === 0 ? 'pt-3' : 'pt-[22px]', sched ? 'text-v2-warn' : 'text-v2-dim')}>
+                <div className={cn('pb-1.5 text-caption font-bold tracking-[.1em]', gi === 0 ? 'pt-3' : 'pt-[22px]', sched ? 'text-v2-warn' : 'text-v2-dim')}>
                   {`${g.label} · `}
                   <Money hidden={hidden} style={{ color: sched ? 'var(--v2-warn)' : sum >= 0 ? 'var(--v2-pos)' : 'var(--v2-dim)' }}>
                     {`${sum >= 0 ? '+' : '−'}${formatMoney(Math.abs(sum), principal)}`}
@@ -311,16 +311,16 @@ function MovementRow({ x, last, wallet, principal, hidden, onOpen }: { x: Transa
           <span className="min-w-0 flex-[0_1_auto] truncate" title={x.description || label}>{x.description || label}</span>
           {x.attachment && <Icon paths={IC.clip} size={13} color="var(--v2-dim)" />}
           {x.recurringSeriesId && <Icon paths={IC.repeat} size={13} color="var(--v2-dim)" />}
-          {sched && <span className="flex-none whitespace-nowrap rounded-full bg-[rgba(240,180,41,.14)] px-[7px] py-0.5 text-[10px] font-extrabold text-v2-warn">{tr('mv.scheduledOne')}</span>}
+          {sched && <span className="flex-none whitespace-nowrap rounded-full bg-[rgba(240,180,41,.14)] px-[7px] py-0.5 text-caption font-extrabold text-v2-warn">{tr('mv.scheduledOne')}</span>}
         </div>
-        <div className="mt-[3px] truncate text-[11px] text-v2-dim" title={sub}>{sub}</div>
+        <div className="mt-[3px] truncate text-caption text-v2-dim" title={sub}>{sub}</div>
       </div>
       <div className="flex-none whitespace-nowrap text-right">
         <Money hidden={hidden} className="block text-[13px] font-extrabold" style={{ color }}>
           {`${sign(x)}${formatMoney(x.amount, x.currency)}`}
         </Money>
         {x.currency !== principal && (
-          <Money hidden={hidden} className="mt-0.5 block text-[10.5px] text-v2-dim">
+          <Money hidden={hidden} className="mt-0.5 block text-caption text-v2-dim">
             {`≈ ${formatApprox(x.amount * referenceRate(x.currency, principal), principal)}`}
           </Money>
         )}
@@ -480,7 +480,7 @@ function MovementDetail({
           <CategoryMark category={transfer ? TRANSFER : txn.category} box={44} />
           <div className="min-w-0 flex-1">
             <div className="text-[15px] font-extrabold">{txn.description || label}</div>
-            <div className="mt-0.5 text-[11.5px] text-v2-dim">{label}</div>
+            <div className="mt-0.5 text-caption text-v2-dim">{label}</div>
           </div>
           <button type="button" onClick={onClose} aria-label={tr('common.close')} className="flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-[9px] text-v2-dim">
             ✕
@@ -495,14 +495,14 @@ function MovementDetail({
             {`${sign(txn)}${formatMoney(txn.amount, txn.currency)}`}
           </Money>
           {txn.currency !== principal && (
-            <Money hidden={hidden} className="mt-0.5 block text-[11.5px] text-v2-dim">
+            <Money hidden={hidden} className="mt-0.5 block text-caption text-v2-dim">
               {`≈ ${formatMoney(abs, principal)} ${principal} · 1 ${txn.currency} = ${formatMoney(rate, principal)}`}
             </Money>
           )}
         </div>
         <span
           className={cn(
-            'self-start rounded-full px-2.5 py-1 text-[11px] font-extrabold',
+            'self-start rounded-full px-2.5 py-1 text-caption font-extrabold',
             sched ? 'bg-[rgba(240,180,41,.16)] text-v2-warn' : 'bg-[rgba(50,201,138,.14)] text-v2-pos',
           )}
         >
@@ -541,7 +541,7 @@ function MovementDetail({
             </button>
             <div className="min-w-0 flex-1">
               <div className="truncate text-[12.5px] font-bold">{attach.name}</div>
-              <div className="mt-0.5 text-[11px] text-v2-dim">{fill(tr('mv.receipt.meta'), photo ? tr('nm.photo') : 'PDF', sizeLabel(attach.size), shortDayMonth(localDay(attach.createdAt)))}</div>
+              <div className="mt-0.5 text-caption text-v2-dim">{fill(tr('mv.receipt.meta'), photo ? tr('nm.photo') : 'PDF', sizeLabel(attach.size), shortDayMonth(localDay(attach.createdAt)))}</div>
               <div className="mt-[9px] flex gap-3.5 text-[12px] font-extrabold">
                 <button type="button" onClick={() => setViewer(true)} className="cursor-pointer text-v2-accent2">
                   {tr('mv.receipt.see')}
@@ -658,7 +658,7 @@ function ReceiptViewer({ txnId, name, mime, photo, onClose }: { txnId: string; n
           <span>{tr('mv.receipt.preview')}</span>
         </div>
       )}
-      <div className="text-[11.5px] text-[#a8a8b8]">{tr('mv.receipt.clickClose')}</div>
+      <div className="text-caption text-[#a8a8b8]">{tr('mv.receipt.clickClose')}</div>
     </div>,
     document.body,
   )

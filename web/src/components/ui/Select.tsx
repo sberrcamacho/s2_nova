@@ -39,7 +39,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             aria-invalid={!!error}
             className={cn(
               'h-11 w-full appearance-none rounded-[var(--radius-md)] border bg-surface px-3.5 pr-10 text-sm font-medium text-ink',
-              'transition-colors duration-150 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20',
+              'transition-colors duration-150 focus:border-v2-accent-line focus:outline-none focus:ring-2 focus:ring-focus/20',
               'disabled:cursor-not-allowed disabled:opacity-50',
               error ? 'border-negative' : 'border-border',
               leftIcon && 'pl-10',

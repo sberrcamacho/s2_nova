@@ -90,7 +90,7 @@ fun NovaDraftSheet(
             if (subtitle != null) {
                 Text(
                     text = subtitle,
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     lineHeight = 16.sp,
                     color = colors.textDim,
                     modifier = Modifier.padding(start = 4.dp, end = 4.dp, top = 5.dp, bottom = 18.dp),

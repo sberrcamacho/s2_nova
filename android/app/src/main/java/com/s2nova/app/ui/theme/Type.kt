@@ -5,6 +5,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.s2nova.app.R
 
@@ -19,17 +20,52 @@ val NovaFontFamily = FontFamily(
     Font(R.font.plus_jakarta_sans_extrabold, FontWeight.ExtraBold),
 )
 
+// Type roles (DESIGN-SYSTEM.md §3), the same sizes as Web's `text-*` role
+// utilities in index.css. Every role has an explicit line height so wrapped
+// text never overlaps its neighbours, and 12 sp is the floor. The numeric
+// roles carry tabular figures.
+private fun role(size: Int, weight: FontWeight, lineHeight: Float, tracking: Float = 0f, tnum: Boolean = false) = TextStyle(
+    fontFamily = NovaFontFamily,
+    fontWeight = weight,
+    fontSize = size.sp,
+    lineHeight = lineHeight.em,
+    letterSpacing = (size * tracking).sp,
+    fontFeatureSettings = if (tnum) "tnum" else null,
+)
+
+object NovaType {
+    val display = role(40, FontWeight.Bold, 1.1f, -0.01f, tnum = true)
+    val displaySm = role(32, FontWeight.Bold, 1.15f, -0.01f, tnum = true)
+    val headline = role(28, FontWeight.Bold, 1.2f, -0.005f)
+    val title = role(20, FontWeight.SemiBold, 1.3f)
+    val titleSm = role(16, FontWeight.SemiBold, 1.35f)
+    val amount = role(16, FontWeight.SemiBold, 1.3f, tnum = true)
+    val body = role(16, FontWeight.Normal, 1.5f)
+    val bodySm = role(14, FontWeight.Medium, 1.45f)
+    val label = role(14, FontWeight.SemiBold, 1.3f)
+    val overline = role(12, FontWeight.SemiBold, 1.3f, 0.04f)
+    val caption = role(12, FontWeight.Medium, 1.35f)
+}
+
+// The style a bare Text() inherits. Screens still size much of their text
+// ad hoc (moving it onto the roles is part of each screen's redesign), so
+// the default carries only the family: an inherited role line height would
+// stretch every ad-hoc size with it.
+val NovaDefaultTextStyle = TextStyle(fontFamily = NovaFontFamily)
+
 val NovaTypography = Typography(
-    headlineLarge = TextStyle(fontFamily = NovaFontFamily, fontWeight = FontWeight.ExtraBold, fontSize = 28.sp, letterSpacing = (-0.3).sp),
-    headlineMedium = TextStyle(fontFamily = NovaFontFamily, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, letterSpacing = (-0.2).sp),
-    headlineSmall = TextStyle(fontFamily = NovaFontFamily, fontWeight = FontWeight.Bold, fontSize = 18.sp),
-    titleLarge = TextStyle(fontFamily = NovaFontFamily, fontWeight = FontWeight.Bold, fontSize = 17.sp),
-    titleMedium = TextStyle(fontFamily = NovaFontFamily, fontWeight = FontWeight.Bold, fontSize = 15.sp),
-    titleSmall = TextStyle(fontFamily = NovaFontFamily, fontWeight = FontWeight.SemiBold, fontSize = 13.sp),
-    bodyLarge = TextStyle(fontFamily = NovaFontFamily, fontWeight = FontWeight.Normal, fontSize = 15.sp),
-    bodyMedium = TextStyle(fontFamily = NovaFontFamily, fontWeight = FontWeight.Medium, fontSize = 13.5.sp),
-    bodySmall = TextStyle(fontFamily = NovaFontFamily, fontWeight = FontWeight.Medium, fontSize = 12.sp),
-    labelLarge = TextStyle(fontFamily = NovaFontFamily, fontWeight = FontWeight.Bold, fontSize = 13.sp),
-    labelMedium = TextStyle(fontFamily = NovaFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp, letterSpacing = 0.4.sp),
-    labelSmall = TextStyle(fontFamily = NovaFontFamily, fontWeight = FontWeight.Bold, fontSize = 10.sp, letterSpacing = 0.6.sp),
+    displayLarge = NovaType.display,
+    displaySmall = NovaType.displaySm,
+    headlineLarge = NovaType.headline,
+    headlineMedium = role(24, FontWeight.Bold, 1.25f),
+    headlineSmall = NovaType.title,
+    titleLarge = NovaType.title,
+    titleMedium = NovaType.titleSm,
+    titleSmall = NovaType.label,
+    bodyLarge = NovaType.body,
+    bodyMedium = NovaType.bodySm,
+    bodySmall = NovaType.caption,
+    labelLarge = NovaType.label,
+    labelMedium = role(12, FontWeight.SemiBold, 1.3f),
+    labelSmall = NovaType.overline,
 )

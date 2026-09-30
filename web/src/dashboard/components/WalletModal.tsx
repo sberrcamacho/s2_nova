@@ -117,7 +117,7 @@ export function WalletModal({ wallet, wallets, onClose, onSaved }: { wallet: Wal
             </Flat>
           ))}
         </div>
-        <div className="text-[11px] text-v2-dim">
+        <div className="text-caption text-v2-dim">
           {fill(tr('wallet.currencyHint'), currencyName(currency).toLowerCase())}
         </div>
       </div>

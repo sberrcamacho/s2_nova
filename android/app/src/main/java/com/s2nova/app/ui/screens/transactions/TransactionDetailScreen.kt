@@ -199,11 +199,11 @@ fun TransactionDetailScreen(
                 val wcur = wallet?.currency ?: principal
                 if (tx.currency != wcur || tx.currency != principal) {
                     val rate = AppContainer.currencyRepository.rate(tx.currency, principal)
-                    Text("≈ " + formatMoney(abs(tx.amount) * rate, principal) + " $principal · 1 ${tx.currency} = " + formatMoney(rate, principal), fontSize = 11.5.sp, color = colors.textDim, style = TextStyle(fontFeatureSettings = TNUM))
+                    Text("≈ " + formatMoney(abs(tx.amount) * rate, principal) + " $principal · 1 ${tx.currency} = " + formatMoney(rate, principal), fontSize = 12.sp, color = colors.textDim, style = TextStyle(fontFeatureSettings = TNUM))
                 }
                 Text(
                     tr(if (scheduled) StringKey.MV_STATE_SCHEDULED else StringKey.MV_STATE_RECORDED),
-                    fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = if (scheduled) colors.warning else colors.positive,
+                    fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = if (scheduled) colors.warning else colors.positive,
                     modifier = Modifier.padding(top = 4.dp).clip(RoundedCornerShape(999.dp)).background(if (scheduled) Color(0x29F0B429) else Color(0x2432C98A)).padding(horizontal = 10.dp, vertical = 4.dp),
                 )
             }
@@ -250,7 +250,7 @@ fun TransactionDetailScreen(
                     Thumb(a.isPdf, bytes, Modifier.size(width = 64.dp, height = 80.dp).noRippleClick { viewer = true })
                     Column(Modifier.weight(1f)) {
                         Text(a.name, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onBackground)
-                        Text(tr(StringKey.MV_RECEIPT_META, if (a.isPdf) "PDF" else tr(StringKey.NM_PHOTO), sizeLabel(a.size), fmtDate(a.createdAt)), fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
+                        Text(tr(StringKey.MV_RECEIPT_META, if (a.isPdf) "PDF" else tr(StringKey.NM_PHOTO), sizeLabel(a.size), fmtDate(a.createdAt)), fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
                         Row(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                             Text(tr(StringKey.MV_RECEIPT_SEE), fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText, modifier = Modifier.noRippleClick { viewer = true })
                             Text(tr(StringKey.MV_RECEIPT_REPLACE), fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText, modifier = Modifier.noRippleClick { attachSheet = true })

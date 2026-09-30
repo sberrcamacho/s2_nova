@@ -43,7 +43,7 @@ export function DetailDialog({ title, sub, chip, amount, rows, error, actions, o
           {chip}
           <div className="min-w-0 flex-1">
             <div className="text-[15px] font-extrabold tracking-[-.01em]">{title}</div>
-            <div className="mt-0.5 text-[11.5px] text-v2-dim">{sub}</div>
+            <div className="mt-0.5 text-caption text-v2-dim">{sub}</div>
           </div>
           <button
             type="button"

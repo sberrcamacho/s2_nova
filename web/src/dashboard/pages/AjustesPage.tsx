@@ -105,7 +105,7 @@ export default function AjustesPage() {
           <div className="min-w-0 flex-1">
             <div className="text-[16px] font-extrabold tracking-[-.015em]">{user.name}</div>
             <div className="mt-0.5 text-[12.5px] text-v2-dim">{city ? `${user.email} · ${city}` : user.email}</div>
-            <div className="mt-0.5 text-[11.5px] text-v2-dim">{memberSince}</div>
+            <div className="mt-0.5 text-caption text-v2-dim">{memberSince}</div>
           </div>
           <AjOutlineButton onClick={() => navigate('/ajustes/perfil')}>{t('aj.editProfile')}</AjOutlineButton>
         </div>
@@ -154,7 +154,7 @@ export default function AjustesPage() {
         <div className="flex items-center gap-4">
           <div className="min-w-0 flex-1">
             <AjCardTitle>{t('cat.title')}</AjCardTitle>
-            <div className="mt-0.5 text-[11.5px] text-v2-dim">{catSummary}</div>
+            <div className="mt-0.5 text-caption text-v2-dim">{catSummary}</div>
           </div>
           <AjOutlineButton onClick={() => navigate('/ajustes/categorias')}>{t('aj.manage')}</AjOutlineButton>
         </div>

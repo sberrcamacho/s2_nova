@@ -186,7 +186,7 @@ fun RegisterScreen(
                         HorizontalDivider(modifier = Modifier.weight(1f))
                         Text(
                             text = tr(StringKey.AUTH_OR),
-                            fontSize = 10.5.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.08.em,
                             color = colors.loginTextMuted,

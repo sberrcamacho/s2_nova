@@ -11,7 +11,7 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 const SIZE: Record<string, string> = { sm: 'h-8 w-8', md: 'h-10 w-10', lg: 'h-12 w-12' }
 const VARIANT: Record<string, string> = {
   default: 'bg-surface border border-border text-ink-secondary hover:text-ink hover:border-border-strong',
-  filled: 'bg-accent-soft text-primary hover:brightness-105',
+  filled: 'bg-accent-soft text-link hover:brightness-105',
   ghost: 'bg-transparent text-ink-secondary hover:bg-bg-secondary hover:text-ink',
 }
 

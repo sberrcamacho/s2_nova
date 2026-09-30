@@ -70,12 +70,13 @@ import com.s2nova.app.ui.StringKey
 
 private data class WalletDraft(val id: String?, val name: String, val kind: WalletKind, val amount: String, val currency: String, val auto: Boolean)
 
-// The wallet's glyph on the hero gradient (44 dp in lists, 40 dp in forms).
+// The wallet's glyph on a brand gradient (44 dp in lists, 40 dp in forms),
+// indigo → violet as on Web's wallet rows.
 @Composable
 fun WalletMark(kind: WalletKind, box: androidx.compose.ui.unit.Dp) {
     val colors = NovaColors.current
     Box(
-        Modifier.size(box).clip(CircleShape).background(Brush.linearGradient(listOf(colors.heroFrom, colors.heroTo))),
+        Modifier.size(box).clip(CircleShape).background(Brush.linearGradient(listOf(colors.primaryPressed, MaterialTheme.colorScheme.secondary))),
         contentAlignment = Alignment.Center,
     ) { V2Icon(kind.glyph, Color.White, 20.dp) }
 }
@@ -96,7 +97,7 @@ fun WalletsScreen(onBack: () -> Unit) {
             Box(Modifier.size(38.dp).clip(CircleShape).noRippleClick(onBack), contentAlignment = Alignment.Center) { Text("←", fontSize = 19.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             Text(tr(StringKey.WALLET_TITLE), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
             Box(Modifier.size(38.dp).clip(CircleShape).noRippleClick { draft = WalletDraft(null, "", WalletKind.CASH, "", principal, true) }, contentAlignment = Alignment.Center) {
-                Text("+", fontSize = 22.sp, fontWeight = FontWeight.Light, color = MaterialTheme.colorScheme.primary)
+                Text("+", fontSize = 22.sp, fontWeight = FontWeight.Light, color = NovaColors.current.link)
             }
         }
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -111,11 +112,11 @@ fun WalletsScreen(onBack: () -> Unit) {
                     WalletMark(kind, 44.dp)
                     Column(Modifier.weight(1f)) {
                         Text(w.name, fontSize = 13.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                        Text(kind.label + " · " + w.currency, fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(kind.label + " · " + w.currency, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text(formatMoney(w.currentBalance, w.currency), fontSize = 14.5.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, style = TextStyle(fontFeatureSettings = TNUM))
-                        if (w.currency != principal) Text("≈ " + formatMoney(w.principalBalance, principal), fontSize = 10.5.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM))
+                        if (w.currency != principal) Text("≈ " + formatMoney(w.principalBalance, principal), fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM))
                     }
                     Icon(MockupIcons.Pencil, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(15.dp))
                 }
@@ -125,7 +126,7 @@ fun WalletsScreen(onBack: () -> Unit) {
             }
             Text(
                 tr(StringKey.WALLET_TOTAL, formatMoney(wallets.sumOf { it.principalBalance }, principal), principal),
-                fontSize = 11.5.sp, color = colors.textDim, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
             )
         }
     }

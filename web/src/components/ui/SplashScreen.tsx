@@ -9,7 +9,7 @@ export function SplashScreen() {
         <p className="text-center text-base font-extrabold tracking-tight text-ink">
           S2 <span className="text-ink-secondary">Nova</span>
         </p>
-        <p className="text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-tertiary">
+        <p className="text-center text-caption font-semibold uppercase tracking-[.04em] text-ink-tertiary">
           {tr('brand.tagline')}
         </p>
       </div>

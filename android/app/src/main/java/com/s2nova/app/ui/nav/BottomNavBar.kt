@@ -128,7 +128,7 @@ fun NovaBottomBar(
                 .align(Alignment.TopCenter)
                 .offset(y = (-29).dp)
                 .size(60.dp)
-                .shadow(elevation = 14.dp, shape = CircleShape, ambientColor = Color(0x806C5CE7), spotColor = Color(0x806C5CE7))
+                .shadow(elevation = 14.dp, shape = CircleShape, ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.primary)
                 .clickable(onClick = onFabClick)
@@ -167,7 +167,7 @@ private fun BottomTabItem(
             softWrap = false,
             // Shrinks instead of clipping ("Moviment…") on narrow screens or
             // large font scales; 11sp whenever it fits.
-            autoSize = TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = 11.sp),
+            autoSize = TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = 12.sp),
         )
     }
 }

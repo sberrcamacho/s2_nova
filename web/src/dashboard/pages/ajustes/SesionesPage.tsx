@@ -59,9 +59,9 @@ export default function SesionesPage() {
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-[13px] font-bold">{session.device ?? t('aj.ses.unknown')}</span>
-                {session.current && <span className="rounded-[6px] bg-[rgba(124,240,187,.12)] px-[7px] py-0.5 text-[10.5px] font-bold text-v2-pos">{t('aj.ses.thisDevice')}</span>}
+                {session.current && <span className="rounded-[6px] bg-[rgba(124,240,187,.12)] px-[7px] py-0.5 text-caption font-bold text-v2-pos">{t('aj.ses.thisDevice')}</span>}
               </div>
-              <div className="mt-0.5 text-[11.5px] text-v2-dim">{session.current ? t('aj.ses.activeNow') : capitalize(timeAgo(session.lastActiveAt, now, t))}</div>
+              <div className="mt-0.5 text-caption text-v2-dim">{session.current ? t('aj.ses.activeNow') : capitalize(timeAgo(session.lastActiveAt, now, t))}</div>
             </div>
             {!session.current && (
               <button

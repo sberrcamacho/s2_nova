@@ -22,7 +22,7 @@ interface Draft {
 
 const EMPTY: Draft = { id: null, name: '', parentId: '', vis: 'other', hidden: false, err: '' }
 
-const fieldLabel = 'text-[11px] font-bold tracking-[.06em] text-v2-muted'
+const fieldLabel = 'text-caption font-bold tracking-[.06em] text-v2-muted'
 const field = 'box-border h-[42px] w-full rounded-[10px] border border-v2-line bg-v2-sidebar px-3 font-[inherit] text-[13px] text-v2-text outline-none'
 
 // Ajustes › Categorías (Dashboard v2 isSettingsCategories,
@@ -132,13 +132,13 @@ export default function CategoriasPage() {
                 <div role="button" tabIndex={0} onClick={() => openEdit(p)} onKeyDown={(e) => e.key === 'Enter' && openEdit(p)} className="flex cursor-pointer items-center gap-3">
                   <CategoryMark category={p.id} box={34} />
                   <div className="min-w-0 flex-1 text-[13px] font-extrabold">{displayName(p)}</div>
-                  {p.hidden && <span className="rounded-full border border-v2-line2 px-2 py-0.5 text-[10.5px] font-extrabold text-v2-dim">{tr('cat.hidden')}</span>}
+                  {p.hidden && <span className="rounded-full border border-v2-line2 px-2 py-0.5 text-caption font-extrabold text-v2-dim">{tr('cat.hidden')}</span>}
                   {p.custom && (
-                    <span className="rounded-full px-2 py-[3px] text-[10.5px] font-extrabold text-v2-accent2" style={{ background: 'color-mix(in oklab, var(--v2-accent2) 14%, transparent)' }}>
+                    <span className="rounded-full px-2 py-[3px] text-caption font-extrabold text-v2-accent2" style={{ background: 'color-mix(in oklab, var(--v2-accent2) 14%, transparent)' }}>
                       {tr('cat.custom')}
                     </span>
                   )}
-                  <span className="font-numeric text-[11px] text-v2-dim">{fill(tr(kids.length === 1 ? 'cat.subOne' : 'cat.subMany'), kids.length)}</span>
+                  <span className="font-numeric text-caption text-v2-dim">{fill(tr(kids.length === 1 ? 'cat.subOne' : 'cat.subMany'), kids.length)}</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5 pl-[46px]">
                   {kids.map((c) => {
@@ -148,7 +148,7 @@ export default function CategoriasPage() {
                         key={c.id}
                         type="button"
                         onClick={() => openEdit(c)}
-                        className={cn('cursor-pointer rounded-full border px-2.5 py-1 text-[11.5px] font-bold', lit ? 'text-v2-text' : 'border-v2-line bg-v2-surface2 text-v2-muted')}
+                        className={cn('cursor-pointer rounded-full border px-2.5 py-1 text-caption font-bold', lit ? 'text-v2-text' : 'border-v2-line bg-v2-surface2 text-v2-muted')}
                         style={lit ? { background: `color-mix(in oklab, ${p.color} 16%, transparent)`, borderColor: p.color } : undefined}
                       >
                         {displayName(c)}
@@ -158,7 +158,7 @@ export default function CategoriasPage() {
                   <button
                     type="button"
                     onClick={() => setDraft({ ...EMPTY, parentId: p.id, vis: p.vis })}
-                    className="cursor-pointer rounded-full border border-dashed border-v2-line2 px-2.5 py-1 text-[11.5px] font-extrabold text-v2-accent2"
+                    className="cursor-pointer rounded-full border border-dashed border-v2-line2 px-2.5 py-1 text-caption font-extrabold text-v2-accent2"
                   >
                     {tr('cat.addSub')}
                   </button>
@@ -171,10 +171,10 @@ export default function CategoriasPage() {
           <div className="flex items-start gap-2.5">
             <div className="min-w-0 flex-1">
               <div className="text-[14px] font-extrabold">{title}</div>
-              <div className="mt-0.5 text-[11.5px] leading-[1.45] text-v2-dim">{subtitle}</div>
+              <div className="mt-0.5 text-caption leading-[1.45] text-v2-dim">{subtitle}</div>
             </div>
             {editing && (
-              <button type="button" onClick={() => setDraft(EMPTY)} className="cursor-pointer whitespace-nowrap text-[11.5px] font-extrabold text-v2-accent2">
+              <button type="button" onClick={() => setDraft(EMPTY)} className="cursor-pointer whitespace-nowrap text-caption font-extrabold text-v2-accent2">
                 {tr('cat.addNew')}
               </button>
             )}
@@ -216,12 +216,12 @@ export default function CategoriasPage() {
               </div>
             </div>
           )}
-          {parent && <div className="text-[11px] text-v2-dim">{fill(tr('cat.parentColor'), displayName(parent))}</div>}
+          {parent && <div className="text-caption text-v2-dim">{fill(tr('cat.parentColor'), displayName(parent))}</div>}
           {canHide && (
             <div className="flex items-center gap-3">
               <div className="min-w-0 flex-1">
                 <div className="text-[12.5px] font-bold">{tr('cat.show')}</div>
-                <div className="mt-0.5 text-[11px] leading-[1.4] text-v2-dim">{tr('cat.showHint')}</div>
+                <div className="mt-0.5 text-caption leading-[1.4] text-v2-dim">{tr('cat.showHint')}</div>
               </div>
               <button
                 type="button"

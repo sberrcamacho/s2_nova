@@ -70,7 +70,7 @@ export function ModalTitle({ children }: { children: ReactNode }) {
 }
 
 export function Label({ children }: { children: ReactNode }) {
-  return <label className="text-[11px] font-bold tracking-[.06em] text-v2-muted">{children}</label>
+  return <label className="text-caption font-bold tracking-[.06em] text-v2-muted">{children}</label>
 }
 
 export function Field({ label, children, note }: { label: ReactNode; children: ReactNode; note?: ReactNode }) {
@@ -78,7 +78,7 @@ export function Field({ label, children, note }: { label: ReactNode; children: R
     <div className="flex flex-col gap-1.5">
       <Label>{label}</Label>
       {children}
-      {note && <div className="text-[11px] text-v2-dim">{note}</div>}
+      {note && <div className="text-caption text-v2-dim">{note}</div>}
     </div>
   )
 }
@@ -154,7 +154,7 @@ export function AmountField({
             }}
             className={cn(
               'flex h-7 w-7 flex-none cursor-pointer items-center justify-center rounded-full border',
-              calc ? 'border-v2-accent bg-[rgba(108,92,231,.2)]' : 'border-transparent bg-v2-surface2',
+              calc ? 'border-v2-accent-line bg-v2-accent/20' : 'border-transparent bg-v2-surface2',
             )}
           >
             <Icon paths={IC.calc} size={14} color={calc ? 'var(--v2-accent2)' : 'var(--v2-muted)'} />
@@ -174,9 +174,9 @@ export function AmountField({
                 className={cn(
                   'flex h-10 cursor-pointer select-none items-center justify-center rounded-[10px] border font-bold',
                   op
-                    ? 'border-transparent bg-[rgba(108,92,231,.16)] text-[17px] text-v2-accent2'
+                    ? 'border-transparent bg-v2-accent/16 text-[17px] text-v2-accent2'
                     : k === '='
-                      ? 'row-span-2 h-auto border-transparent bg-[rgba(108,92,231,.32)] text-[19px] text-white'
+                      ? 'row-span-2 h-auto border-transparent bg-v2-accent/32 text-[19px] text-white'
                       : k === 'C' || k === '⌫'
                         ? 'border-v2-line bg-v2-surface2 text-[13px] font-extrabold text-v2-muted'
                         : 'border-v2-line bg-v2-surface2 text-[15px] text-v2-text',
@@ -245,16 +245,16 @@ export function OptionTile({ icon, label, on, open, onClick }: { icon: ReactNode
       <span
         className="flex h-[46px] w-[46px] items-center justify-center rounded-[14px] border"
         style={{
-          background: on || open ? 'rgba(108,92,231,.16)' : 'var(--v2-surface2)',
-          borderColor: on || open ? 'var(--v2-accent)' : 'var(--v2-line2)',
-          outline: open ? '2px solid rgba(108,92,231,.35)' : 'none',
+          background: on || open ? 'color-mix(in srgb, var(--v2-accent) 16%, transparent)' : 'var(--v2-surface2)',
+          borderColor: on || open ? 'var(--v2-accent-line)' : 'var(--v2-line2)',
+          outline: open ? '2px solid color-mix(in srgb, var(--v2-accent-line) 35%, transparent)' : 'none',
           outlineOffset: 2,
         }}
       >
         {icon}
       </span>
       <span
-        className="max-w-full truncate text-center text-[11px] leading-[1.3]"
+        className="max-w-full truncate text-center text-caption leading-[1.3]"
         style={{ fontWeight: on ? 800 : 600, color: on ? 'var(--v2-text)' : 'var(--v2-muted)' }}
       >
         {label}
@@ -282,7 +282,7 @@ export function GridCell({ on, color, chip, label, onClick }: { on: boolean; col
       style={{ background: on ? `color-mix(in oklab, ${color} 14%, transparent)` : 'transparent', border: `1.5px solid ${on ? color : 'transparent'}` }}
     >
       {chip}
-      <span lang="es" className="w-full text-center text-[10.5px] font-bold leading-[1.2] text-v2-muted [overflow-wrap:break-word] [hyphens:auto]">
+      <span lang="es" className="w-full text-center text-caption font-bold leading-[1.2] text-v2-muted [overflow-wrap:break-word] [hyphens:auto]">
         {label}
       </span>
     </button>
@@ -315,7 +315,7 @@ export function RadioRow({ on, onClick, children, leading }: { on: boolean; onCl
       type="button"
       onClick={onClick}
       className="flex w-full cursor-pointer items-center gap-3 rounded-[14px] border px-3.5 py-3 text-left"
-      style={{ borderColor: on ? 'var(--v2-accent)' : 'var(--v2-line2)', background: on ? 'rgba(108,92,231,.12)' : 'transparent' }}
+      style={{ borderColor: on ? 'var(--v2-accent-line)' : 'var(--v2-line2)', background: on ? 'color-mix(in srgb, var(--v2-accent) 12%, transparent)' : 'transparent' }}
     >
       {leading}
       <div className="min-w-0 flex-1">{children}</div>
@@ -330,7 +330,7 @@ export function RadioDot({ on }: { on: boolean }) {
       // The mockup's 16px dot is content-box: 20px with its 2px border.
       className="h-5 w-5 flex-none rounded-full"
       style={{
-        border: `2px solid ${on ? 'var(--v2-accent)' : 'var(--v2-line2)'}`,
+        border: `2px solid ${on ? 'var(--v2-accent-line)' : 'var(--v2-line2)'}`,
         background: on ? 'var(--v2-accent)' : 'transparent',
         boxShadow: on ? 'inset 0 0 0 2.5px var(--v2-surface)' : 'none',
       }}
@@ -421,7 +421,7 @@ export function ConfirmDialog({ title, lines, ack, cta, onCancel, onConfirm }: {
         {step === 1 ? (
           <>
             <div className="text-[16px] font-extrabold">{title}</div>
-            <div className="text-[10.5px] font-extrabold tracking-[.08em] text-v2-dim">{tr('kit.willDelete')}</div>
+            <div className="text-caption font-extrabold tracking-[.08em] text-v2-dim">{tr('kit.willDelete')}</div>
             <div className="flex flex-col gap-[7px]">
               {lines.map((l) => (
                 <div key={l} className="flex gap-2.5 text-[12.5px] leading-[1.45] text-v2-muted">

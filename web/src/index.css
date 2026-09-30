@@ -2,28 +2,46 @@
 @import 'tailwindcss';
 
 /* ────────────────────────────────────────────────────────────────────────
-   S2 Nova design tokens
-   Light = clean white + purple/blue brand + green/red financial signals
-   Dark  = true deep black + bluish-purple brand, restrained + premium
+   S2 Nova design tokens — DESIGN-SYSTEM.md §2 is the source for every value
+   (keep in sync with android/.../ui/theme/Color.kt). Brand colors come from
+   the logo mark; income, expense and status use their own semantic colors.
    ──────────────────────────────────────────────────────────────────────── */
 
 :root {
+  /* Brand primitives (sampled from the logo; never used directly in
+     components) */
+  --brand-lilac: #d485fb;
+  --brand-violet400: #b859fb;
+  --brand-violet500: #9a39f9;
+  --brand-violet600: #6622d6;
+  --brand-indigo: #5712c2;
+  --brand-electric: #a80ffa;
+  --brand-blue: #0047f5;
+  --brand-cyan: #00c4fb;
+
   /* Surfaces */
   --color-bg: #ffffff;
   --color-bg-secondary: #f7f7fa;
   --color-surface: #ffffff;
   --color-surface-elevated: #ffffff;
-  --color-overlay: rgba(17, 17, 24, 0.5);
+  --color-overlay: rgba(17, 17, 24, 0.4);
 
   /* Borders */
   --color-border: #ebebf2;
   --color-border-strong: #dcdce6;
+  --color-border-input: #8c8c9c; /* 3.31:1 — inputs, checkboxes, outlines */
 
-  /* Brand */
-  --color-primary: #6657e8;
-  --color-primary-secondary: #7b6ff6;
-  --color-accent-soft: #eae7ff;
-  --color-highlight: #7b6ff6;
+  /* Brand-derived: action and selection */
+  --color-primary: #6622d6; /* white on it 7.60 */
+  --color-primary-pressed: #5712c2;
+  --color-primary-secondary: #9a39f9;
+  --color-primary-border: #6622d6; /* selected boundaries, ≥ 3:1 */
+  --color-accent-soft: #f0e9fb; /* primary-soft */
+  --color-on-primary-soft: #5712c2; /* 7.82 on primary-soft */
+  --color-highlight: #5712c2;
+  --color-link: #5712c2; /* 9.25 */
+  --color-accent: #0047f5; /* 6.52 */
+  --color-focus: #0047f5;
   --on-primary: #ffffff;
 
   /* Text */
@@ -39,24 +57,33 @@
   --color-warning: #8f5a00;
   --color-warning-soft: rgba(143, 90, 0, 0.12);
 
-  /* Balance hero — a dark surface in BOTH themes; every value here is
-     explicit rather than inherited so the card renders identically no
-     matter the app theme */
-  --hero-from: #16123a;
-  --hero-mid: #1d1650;
-  --hero-to: #241a5e;
-  --hero-border: #241a5e;
+  /* Balance hero (§2.2 "Hero card") — the only element with a brand
+     gradient. Light: the logo's violet ramp; #9A39F9 sits past the far
+     corner so the visible end (#802EE8) keeps white text ≥ 6:1 and white on
+     a hero tile ≥ 4.9:1. Income and expense are white here: the tile label
+     carries the meaning, never green/red on violet. */
+  --hero-bg: linear-gradient(135deg, #5712c2 0%, #6622d6 50%, #9a39f9 150%);
+  --hero-glow: rgba(212, 133, 251, 0.3);
+  --hero-line: rgba(255, 255, 255, 0.16);
+  --hero-tile: rgba(255, 255, 255, 0.12);
+  --hero-overline: rgba(255, 255, 255, 0.9);
+  --hero-label: #ffffff;
+  --hero-positive: #ffffff;
+  --hero-negative: #ffffff;
+  --hero-bar: #ffffff;
+  --hero-bar-soft: rgba(255, 255, 255, 0.34);
 
   /* Shadows */
   --shadow-xs: 0 1px 2px rgba(17, 17, 24, 0.04);
   --shadow-sm: 0 2px 8px rgba(17, 17, 24, 0.06);
   --shadow-md: 0 8px 24px rgba(17, 17, 24, 0.08);
   --shadow-lg: 0 16px 48px rgba(17, 17, 24, 0.12);
-  --shadow-primary: 0 8px 20px rgba(102, 87, 232, 0.28);
+  --shadow-primary: 0 8px 24px rgba(102, 34, 214, 0.3);
 
   /* Chart bar soft fills (non-peak bars) */
-  --chart-primary-soft: rgba(102, 87, 232, 0.24);
-  --chart-positive-soft: rgba(34, 160, 107, 0.26);
+  --chart-primary: #6622d6; /* series 1 */
+  --chart-primary-soft: rgba(102, 34, 214, 0.24);
+  --chart-positive-soft: rgba(15, 122, 74, 0.26);
 
   /* Accent-tinted border for highlighted gradient cards */
   --color-border-accent: #dcdce6;
@@ -64,27 +91,24 @@
   --scan-surface: #0b0b12;
   color-scheme: light;
 
-  /* Login/signup screens (design handoff s2-nova-mockup/auth_handoff/) — a
-     few pixel-exact tokens that don't cleanly map onto an existing near-
-     equivalent above; kept separate rather than approximated. */
-  --color-login-surface: #ffffff;
-  --color-login-input-text: #111118;
-  --color-login-border-focus: #7b6ff6;
-  --color-login-text-muted: #9c9caa;
-  --color-login-label: #666673;
-  --color-login-primary: #7b6ff6;
-  --color-login-primary-hover: #6c5ce7;
-  --color-login-danger: #d64545;
-  --color-login-divider-label: #9c9caa;
-  --color-login-checkbox-text: #666673;
-  /* Signup password-strength meter — doesn't match --color-positive exactly */
-  --color-login-positive: #12b981;
+  /* Login/signup screens — aliases of the semantic tokens (DESIGN-SYSTEM.md
+     §10.2); kept as names so the auth screens don't need a rename pass. */
+  --color-login-surface: var(--color-surface);
+  --color-login-input-text: var(--color-text);
+  --color-login-border-focus: var(--color-primary);
+  --color-login-text-muted: var(--color-text-tertiary);
+  --color-login-label: var(--color-text-secondary);
+  --color-login-primary: var(--color-primary);
+  --color-login-primary-hover: var(--color-primary-pressed);
+  --color-login-danger: var(--color-negative);
+  --color-login-divider-label: var(--color-text-tertiary);
+  --color-login-checkbox-text: var(--color-text-secondary);
+  --color-login-positive: var(--color-positive);
   --color-login-positive-bg: #e6e6ee;
 
-  /* v2 mockup tokens (s2_nova_stage2_handoff/S2 Nova Dashboard v2.dc.html,
-     the `.thm` palette) — used verbatim by the migrated v2 screens (shell,
-     Inicio, Planes). Kept separate from the older tokens above so screens
-     not yet migrated don't shift until their own stage. */
+  /* Screen tokens (the `v2-*` utilities). Same values as the semantic
+     tokens above; accent = primary (fills), accent2 = link (text on
+     surfaces), accent3 = primary-pressed / strongest brand fill. */
   --v2-bg: #f7f7fa;
   --v2-sidebar: #ffffff;
   --v2-surface: #ffffff;
@@ -95,24 +119,16 @@
   --v2-text: #111118;
   --v2-muted: #666673;
   --v2-dim: #6b6b7a;
-  --v2-accent: #6657e8;
-  --v2-accent2: #5a4ad6;
-  --v2-accent3: #4a3cc4;
+  --v2-accent: #6622d6;
+  --v2-accent2: #5712c2;
+  --v2-accent3: #5712c2;
+  --v2-accent-line: #6622d6;
+  --v2-accent-inverse: #d485fb; /* link on the inverted toast (#111118) */
   --v2-pos: #0f7a4a;
   --v2-neg: #c0362f;
   --v2-warn: #8f5a00;
   --v2-neg-soft: #f0d2d2;
-  --v2-hero-a: #16123a;
-  --v2-hero-b: #1d1650;
-  --v2-hero-c: #241a5e;
-  --v2-hero-line: #35305c;
-  /* Text on the balance hero, which stays dark navy in both themes, so it
-     can't use the light theme's text or semantic colors (DESIGN-SYSTEM.md
-     §2.3). Each is ≥ 5:1 across the whole gradient. */
-  --hero-overline: #a69dff;
-  --hero-label: rgba(255, 255, 255, 0.72);
-  --hero-positive: #32c98a;
-  --hero-negative: #ff7a7a;
+  --v2-hero-line: var(--hero-line);
 }
 
 [data-theme='dark'] {
@@ -121,17 +137,26 @@
   --color-bg-secondary: #09090e;
   --color-surface: #0e0e15;
   --color-surface-elevated: #13131d;
-  --color-overlay: rgba(0, 0, 0, 0.65);
+  --color-overlay: rgba(0, 0, 0, 0.6);
 
   /* Borders */
-  --color-border: #1c1c28;
-  --color-border-strong: #262635;
+  --color-border: #2e2e40;
+  --color-border-strong: #3a3a4e;
+  --color-border-input: #6a6a82; /* 3.66:1 */
 
-  /* Brand */
-  --color-primary: #6c5ce7;
-  --color-primary-secondary: #8578ff;
-  --color-accent-soft: rgba(108, 92, 231, 0.16);
-  --color-highlight: #a69dff;
+  /* Brand-derived. Primary stays #6622D6 as a fill (white on it 7.60) but
+     is only 2.5:1 on the dark surfaces, so text and icons use link/accent
+     and selected boundaries use the electric violet (3.77:1). */
+  --color-primary: #6622d6;
+  --color-primary-pressed: #5712c2;
+  --color-primary-secondary: #9a39f9;
+  --color-primary-border: #a80ffa;
+  --color-accent-soft: #270e3a;
+  --color-on-primary-soft: #d485fb; /* 7.06 */
+  --color-highlight: #d485fb;
+  --color-link: #d485fb; /* 7.83 */
+  --color-accent: #00c4fb; /* 9.42 */
+  --color-focus: #00c4fb;
   --on-primary: #ffffff;
 
   /* Text */
@@ -147,66 +172,60 @@
   --color-warning: #f0b429;
   --color-warning-soft: rgba(240, 180, 41, 0.14);
 
-  /* Balance hero — black to bluish-purple gradient, kept explicit like
-     the light theme's so the card looks the same in both themes */
-  --hero-from: #050507;
-  --hero-mid: #141034;
-  --hero-to: #211a4d;
-  --hero-border: #262635;
+  /* Balance hero — deep violet base with the dark mark's violet → blue
+     glow in the top-right corner. Every text color is ≥ 5:1 over the
+     brightest part of the glow. */
+  --hero-bg: radial-gradient(120% 110% at 100% 0%, rgba(168, 15, 250, 0.35) 0%, rgba(0, 71, 245, 0.22) 45%, rgba(0, 196, 251, 0) 80%), #1a0b3d;
+  --hero-glow: rgba(0, 196, 251, 0.14);
+  --hero-line: rgba(255, 255, 255, 0.1);
+  --hero-tile: rgba(255, 255, 255, 0.06);
+  --hero-overline: #d485fb;
+  --hero-label: rgba(255, 255, 255, 0.8);
+  --hero-positive: #32c98a;
+  --hero-negative: #ff7a7a;
+  --hero-bar: #00c4fb;
+  --hero-bar-soft: rgba(212, 133, 251, 0.3);
 
   /* Shadows — soft, restrained, no excess glow */
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.45);
-  --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 20px 56px rgba(0, 0, 0, 0.6);
-  --shadow-primary: 0 8px 24px rgba(108, 92, 231, 0.35);
+  --shadow-primary: 0 8px 24px rgba(102, 34, 214, 0.3);
 
   /* Chart bar soft fills (non-peak bars) */
-  --chart-primary-soft: rgba(165, 157, 255, 0.28);
+  --chart-primary: #b859fb;
+  --chart-primary-soft: rgba(184, 89, 251, 0.3);
   --chart-positive-soft: rgba(50, 201, 138, 0.28);
 
   /* Accent-tinted border for highlighted gradient cards */
-  --color-border-accent: #35305c;
+  --color-border-accent: #3a2a5c;
 
   --scan-surface: #000000;
   color-scheme: dark;
 
-  /* Login/signup screens (design handoff s2-nova-mockup/auth_handoff/) */
-  --color-login-surface: #0b0b14;
-  --color-login-input-text: rgba(255, 255, 255, 0.85);
-  --color-login-border-focus: #241a5e;
-  --color-login-text-muted: rgba(255, 255, 255, 0.5);
-  --color-login-label: rgba(255, 255, 255, 0.55);
-  --color-login-primary: #7b6ff6;
-  --color-login-primary-hover: #8578ff;
-  --color-login-danger: #d64545;
-  --color-login-divider-label: rgba(255, 255, 255, 0.35);
-  --color-login-checkbox-text: rgba(255, 255, 255, 0.6);
-  --color-login-positive: #7cf0bb;
   --color-login-positive-bg: rgba(255, 255, 255, 0.12);
 
-  /* v2 mockup tokens — dark `.thm` palette */
+  /* Screen tokens — dark */
   --v2-bg: #050507;
   --v2-sidebar: #0b0b14;
   --v2-surface: #0e0e15;
   --v2-surface2: #13131d;
   --v2-subtle: #16161f;
-  --v2-line: #1c1c28;
-  --v2-line2: #262635;
+  --v2-line: #2e2e40;
+  --v2-line2: #3a3a4e;
   --v2-text: #ffffff;
   --v2-muted: #a8a8b8;
   --v2-dim: #8e8ea0;
-  --v2-accent: #6c5ce7;
-  --v2-accent2: #a69dff;
-  --v2-accent3: #8578ff;
+  --v2-accent: #6622d6;
+  --v2-accent2: #d485fb;
+  --v2-accent3: #b859fb;
+  --v2-accent-line: #a80ffa;
+  --v2-accent-inverse: #5712c2; /* link on the inverted toast (white) */
   --v2-pos: #32c98a;
   --v2-neg: #ff6262;
   --v2-warn: #f0b429;
   --v2-neg-soft: #3a2029;
-  --v2-hero-a: #050507;
-  --v2-hero-b: #141034;
-  --v2-hero-c: #211a4d;
-  --v2-hero-line: #35305c;
 }
 
 /* ── Tailwind v4 theme mapping — CSS vars stay live, so switching
@@ -226,7 +245,14 @@
   --color-border-accent: var(--color-border-accent);
 
   --color-primary: var(--color-primary);
+  --color-primary-pressed: var(--color-primary-pressed);
   --color-primary-secondary: var(--color-primary-secondary);
+  --color-primary-border: var(--color-primary-border);
+  --color-on-primary-soft: var(--color-on-primary-soft);
+  --color-link: var(--color-link);
+  --color-accent: var(--color-accent);
+  --color-focus: var(--color-focus);
+  --color-border-input: var(--color-border-input);
   --color-accent-soft: var(--color-accent-soft);
   --color-highlight: var(--color-highlight);
   --color-on-primary: var(--on-primary);
@@ -268,10 +294,42 @@
   --color-v2-accent: var(--v2-accent);
   --color-v2-accent2: var(--v2-accent2);
   --color-v2-accent3: var(--v2-accent3);
+  --color-v2-accent-line: var(--v2-accent-line);
+  --color-v2-accent-inverse: var(--v2-accent-inverse);
   --color-v2-pos: var(--v2-pos);
   --color-v2-neg: var(--v2-neg);
   --color-v2-warn: var(--v2-warn);
   --color-v2-neg-soft: var(--v2-neg-soft);
+
+  /* Type roles (DESIGN-SYSTEM.md §3) — `text-caption`, `text-body-sm`, …
+     Size and line height together; weight stays a separate utility. 12 is
+     the floor: nothing in the app renders smaller. */
+  --text-display: 40px;
+  --text-display--line-height: 1.1;
+  --text-display--letter-spacing: -0.01em;
+  --text-display-sm: 32px;
+  --text-display-sm--line-height: 1.15;
+  --text-display-sm--letter-spacing: -0.01em;
+  --text-headline: 28px;
+  --text-headline--line-height: 1.2;
+  --text-headline--letter-spacing: -0.005em;
+  --text-title: 20px;
+  --text-title--line-height: 1.3;
+  --text-title-sm: 16px;
+  --text-title-sm--line-height: 1.35;
+  --text-amount: 16px;
+  --text-amount--line-height: 1.3;
+  --text-body: 16px;
+  --text-body--line-height: 1.5;
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 1.45;
+  --text-label: 14px;
+  --text-label--line-height: 1.3;
+  --text-overline: 12px;
+  --text-overline--line-height: 1.3;
+  --text-overline--letter-spacing: 0.04em;
+  --text-caption: 12px;
+  --text-caption--line-height: 1.35;
 
   --radius-xs: 6px;
   --radius-sm: 10px;
@@ -333,9 +391,10 @@ body {
   border-radius: 999px;
 }
 
-/* Visible, on-brand focus ring for keyboard navigation */
+/* Visible focus ring for keyboard navigation — the brand blue/cyan, ≥ 3:1
+   on every surface in both themes (DESIGN-SYSTEM.md §2.2 focus-ring) */
 :focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--color-focus);
   outline-offset: 2px;
   border-radius: 4px;
 }

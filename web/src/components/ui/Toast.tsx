@@ -22,7 +22,7 @@ export function ToastViewport() {
             dismissToast(toast.id)
             toast.action!.onClick()
           }}
-          className="cursor-pointer font-extrabold text-v2-accent"
+          className="cursor-pointer font-extrabold text-v2-accent-inverse"
         >
           {toast.action.label}
         </button>

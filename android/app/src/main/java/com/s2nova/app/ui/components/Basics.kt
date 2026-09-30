@@ -76,7 +76,7 @@ enum class BadgeTone { PRIMARY, POSITIVE, NEGATIVE, WARNING, NEUTRAL }
 fun StatusBadge(text: String, tone: BadgeTone, modifier: Modifier = Modifier) {
     val colors = NovaColors.current
     val (bg, fg) = when (tone) {
-        BadgeTone.PRIMARY -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.primary
+        BadgeTone.PRIMARY -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
         BadgeTone.POSITIVE -> colors.positiveSoft to colors.positive
         BadgeTone.NEGATIVE -> colors.negativeSoft to colors.negative
         BadgeTone.WARNING -> colors.warningSoft to colors.warning

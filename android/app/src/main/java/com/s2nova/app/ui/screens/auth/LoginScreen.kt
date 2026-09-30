@@ -169,7 +169,7 @@ fun LoginScreen(
                         HorizontalDivider(modifier = Modifier.weight(1f))
                         Text(
                             text = tr(StringKey.AUTH_OR),
-                            fontSize = 10.5.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.08.em,
                             color = colors.loginTextMuted,
@@ -221,7 +221,7 @@ fun LoginScreen(
                 }
                 Text(
                     tr(StringKey.AUTH_GUEST_HINT),
-                    fontSize = 11.5.sp,
+                    fontSize = 12.sp,
                     color = colors.textDim,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     // margin-top: -6px under the button.

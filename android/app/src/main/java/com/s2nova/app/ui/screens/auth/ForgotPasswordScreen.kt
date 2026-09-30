@@ -1,5 +1,6 @@
 package com.s2nova.app.ui.screens.auth
 
+import com.s2nova.app.ui.theme.NovaColors
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -40,7 +41,7 @@ fun ForgotPasswordScreen(onBackToLogin: () -> Unit) {
     ) {
         if (submitted) {
             Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
-                Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(bottom = 12.dp))
+                Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = NovaColors.current.link, modifier = Modifier.padding(bottom = 12.dp))
                 TextButton(onClick = onBackToLogin) { Text(tr(StringKey.AUTH_BACK_TO_LOGIN)) }
             }
         } else {

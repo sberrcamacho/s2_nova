@@ -164,7 +164,7 @@ fun PillRow(content: @Composable () -> Unit) {
 fun FieldLabel(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text,
-        fontSize = 11.5.sp,
+        fontSize = 12.sp,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier.padding(bottom = 8.dp),
@@ -173,7 +173,7 @@ fun FieldLabel(text: String, modifier: Modifier = Modifier) {
 
 @Composable
 fun FieldNote(text: String, modifier: Modifier = Modifier) {
-    Text(text = text, fontSize = 11.sp, lineHeight = 16.sp, color = NovaColors.current.textDim, modifier = modifier)
+    Text(text = text, fontSize = 12.sp, lineHeight = 16.sp, color = NovaColors.current.textDim, modifier = modifier)
 }
 
 // radioStyles(on): bordered row with a trailing dot.
@@ -193,7 +193,7 @@ fun RadioRow(
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
             .background(if (selected) primary.copy(alpha = 0.12f) else Color.Transparent)
-            .border(1.dp, if (selected) primary else line2, RoundedCornerShape(14.dp))
+            .border(1.dp, if (selected) NovaColors.current.primaryBorder else line2, RoundedCornerShape(14.dp))
             .clickable(role = Role.RadioButton, onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -208,7 +208,8 @@ fun RadioRow(
 
 @Composable
 fun RadioDot(selected: Boolean) {
-    val primary = MaterialTheme.colorScheme.primary
+    // An indicator, so it needs 3:1 against the surface: the boundary token.
+    val primary = NovaColors.current.primaryBorder
     val line2 = MaterialTheme.colorScheme.outlineVariant
     Box(
         modifier = Modifier
@@ -266,7 +267,7 @@ fun V2Button(
     }
 }
 
-// box-shadow 0 8px 24px rgba(108,92,231,.35) under the primary CTA.
+// The FAB/CTA glow (DESIGN-SYSTEM.md §4.3): primary at 35 %, 0 8 24.
 fun Modifier.androidShadow(color: Color): Modifier = this.drawBehind {
     drawIntoCanvas { canvas ->
         val paint = androidx.compose.ui.graphics.Paint()
@@ -293,14 +294,14 @@ fun OptionTile(paths: List<String>, label: String, on: Boolean, onClick: () -> U
                 .size(48.dp)
                 .clip(RoundedCornerShape(16.dp))
                 .background(if (on) primary.copy(alpha = 0.16f) else MaterialTheme.colorScheme.surface)
-                .border(1.dp, if (on) primary else MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp)),
+                .border(1.dp, if (on) colors.primaryBorder else MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp)),
             contentAlignment = Alignment.Center,
         ) {
             V2Icon(paths, iconTint ?: if (on) colors.accentText else MaterialTheme.colorScheme.onSurfaceVariant, 20.dp, if (paths == V2Icons.more) 1.9f else 1.9f)
         }
         Text(
             text = label,
-            fontSize = 10.5.sp,
+            fontSize = 12.sp,
             fontWeight = if (on) FontWeight.ExtraBold else FontWeight.SemiBold,
             color = if (on) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -396,7 +397,7 @@ fun SheetHeader(title: String, subtitle: String? = null, bottom: Dp = 14.dp, sub
         if (subtitle != null) {
             Text(
                 subtitle,
-                fontSize = 11.sp,
+                fontSize = 12.sp,
                 lineHeight = 16.sp,
                 color = NovaColors.current.textDim,
                 modifier = Modifier.padding(top = subtitleTop),

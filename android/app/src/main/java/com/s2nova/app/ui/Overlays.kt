@@ -141,7 +141,7 @@ fun ConfirmHost() {
             }
             if (step == 1) {
                 Text(r.title, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp, color = MaterialTheme.colorScheme.onBackground)
-                Text(tr(StringKey.CONFIRM_WILL_DELETE), fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.88.sp, color = colors.textDim)
+                Text(tr(StringKey.CONFIRM_WILL_DELETE), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.88.sp, color = colors.textDim)
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     r.lines.forEach { line ->
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -213,7 +213,7 @@ fun BoxScope.GuideCard(key: String, bottom: Dp, onOk: () -> Unit, onSkipAll: () 
             .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.45f), RoundedCornerShape(20.dp))
             .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 14.dp),
     ) {
-        Text(tr(StringKey.GUIDE_LABEL).uppercase() + " · " + screen.uppercase(), fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.2.sp, color = colors.accentText)
+        Text(tr(StringKey.GUIDE_LABEL).uppercase() + " · " + screen.uppercase(), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.2.sp, color = colors.accentText)
         Text(copy.first, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.15).sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 8.dp))
         Text(copy.second, fontSize = 12.5.sp, lineHeight = 19.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
         Row(Modifier.padding(top = 14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {

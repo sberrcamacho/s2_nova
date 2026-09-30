@@ -50,7 +50,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <img src={logoMarkDark} alt="S2 Nova" className="h-[30px] w-[30px] flex-none rounded-[9px] object-cover" />
           <div>
             <div className="text-[14px] font-extrabold tracking-[-.01em]">S2 Nova</div>
-            <div className="text-[9.5px] font-semibold tracking-[.1em] text-v2-dim">{t('v2.sidebar.tagline')}</div>
+            <div className="whitespace-nowrap text-caption font-semibold tracking-[.04em] text-v2-dim">{t('v2.sidebar.tagline')}</div>
           </div>
         </div>
 
@@ -72,7 +72,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               onClick={() => navigate('/ajustes/perfil')}
               title={t('v2.sidebar.editProfile')}
               aria-label={t('v2.sidebar.editProfile')}
-              className="flex h-[30px] w-[30px] flex-none cursor-pointer items-center justify-center rounded-full bg-v2-accent text-[11px] font-extrabold text-v2-text"
+              className="flex h-[30px] w-[30px] flex-none cursor-pointer items-center justify-center rounded-full bg-v2-accent text-caption font-extrabold text-v2-text"
             >
               {user?.avatarInitials ?? 'US'}
             </button>
@@ -84,7 +84,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               >
                 {user?.name ?? t('sidebar.fallbackUserName')}
               </button>
-              <button type="button" onClick={onLogout} className="block cursor-pointer text-[10.5px] font-bold text-v2-accent2">
+              <button type="button" onClick={onLogout} className="block cursor-pointer text-caption font-bold text-v2-accent2">
                 {t('v2.sidebar.logout')}
               </button>
             </div>
@@ -104,7 +104,7 @@ function SidebarLink({ item, onClick }: { item: { to: string; labelKey: Translat
       className={({ isActive }) =>
         cn(
           'flex items-center gap-[11px] rounded-[11px] px-3 py-[9px] text-[13px]',
-          isActive ? 'bg-v2-accent font-bold text-white shadow-[0_8px_24px_rgba(108,92,231,.35)]' : 'font-semibold text-v2-muted hover:text-v2-text',
+          isActive ? 'bg-v2-accent font-bold text-white shadow-[var(--shadow-primary)]' : 'font-semibold text-v2-muted hover:text-v2-text',
         )
       }
     >

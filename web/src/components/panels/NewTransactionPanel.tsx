@@ -85,7 +85,7 @@ function nowTime(): string {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
-const fieldLabel = 'text-[11px] font-bold tracking-[.06em] text-v2-muted'
+const fieldLabel = 'text-caption font-bold tracking-[.06em] text-v2-muted'
 const textInput =
   'box-border h-[42px] w-full rounded-[10px] border border-v2-line bg-v2-sidebar px-3 font-[inherit] text-[13px] text-v2-text outline-none [color-scheme:dark]'
 
@@ -104,7 +104,7 @@ function RowText({ label, detail }: { label: string; detail: string }) {
   return (
     <>
       <div className="text-[12.5px] font-bold">{label}</div>
-      <div className="font-numeric mt-0.5 text-[11px] leading-[1.4] text-v2-dim">{detail}</div>
+      <div className="font-numeric mt-0.5 text-caption leading-[1.4] text-v2-dim">{detail}</div>
     </>
   )
 }
@@ -256,12 +256,12 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
         {lineBudget.kind === 'custom' ? <PlanMark icon={lineBudget.icon} box={32} /> : <CategoryMark category={lineBudget.category!} box={32} />}
         <div className="min-w-0 flex-1">
           <div className="text-[12.5px] font-bold">{autoBudget && picked ? fill(t('nm.budget.addsTwo'), budgetLabel(lineBudget), picked.name!) : fill(t('nm.budget.adds'), budgetLabel(lineBudget))}</div>
-          <div className="font-numeric mt-0.5 text-[11px] text-v2-dim">
+          <div className="font-numeric mt-0.5 text-caption text-v2-dim">
             {fill(t(autoBudget ? 'nm.budget.byCategory' : 'nm.budget.custom'), format(lineBudget.spent + add), format(lineBudget.limit)) +
               (future ? t('nm.budget.whenRecorded') : val > 0 ? t('nm.budget.withThis') : '')}
           </div>
         </div>
-        <span className="font-numeric flex-none whitespace-nowrap rounded-full px-2 py-[3px] text-[11.5px] font-extrabold" style={{ color: tone, background: bg }}>
+        <span className="font-numeric flex-none whitespace-nowrap rounded-full px-2 py-[3px] text-caption font-extrabold" style={{ color: tone, background: bg }}>
           {pct}%
         </span>
       </div>
@@ -440,7 +440,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
           </div>
           {cat && subs.length > 0 && (
             <>
-              <div className="mt-1.5 text-[11px] font-bold tracking-[.06em] text-v2-muted">{fill(t('nm.subOf'), categoryName(cat))}</div>
+              <div className="mt-1.5 text-caption font-bold tracking-[.06em] text-v2-muted">{fill(t('nm.subOf'), categoryName(cat))}</div>
               <div className="grid grid-cols-5 gap-1">
                 {[{ id: null as CategoryId | null, name: t('nm.none.f') }, ...subs.map((s) => ({ id: s.id as CategoryId | null, name: categoryName(s.id) }))].map((x) => (
                   <GridCell
@@ -465,7 +465,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
               onClose()
               navigate(ctypeIncome ? '/ajustes/categorias?tab=ingresos' : '/ajustes/categorias')
             }}
-            className="cursor-pointer self-start text-[11.5px] font-bold text-v2-accent2"
+            className="cursor-pointer self-start text-caption font-bold text-v2-accent2"
           >
             {t('nm.manageCategories')}
           </button>
@@ -480,7 +480,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
         >
           {catDone && leaf ? <CategoryMark category={leaf} box={38} /> : <GlyphMark paths={TAX_VIS.other.glyph} color="var(--v2-dim)" box={38} />}
           <div className="min-w-0 flex-1">
-            <div className="text-[10px] font-extrabold tracking-[.1em] text-v2-dim">{t('nm.category')}</div>
+            <div className="text-caption font-extrabold tracking-[.1em] text-v2-dim">{t('nm.category')}</div>
             <div className="mt-0.5 truncate text-[13.5px] font-extrabold" title={catDone && leaf ? categoryLabel(leaf) : undefined}>{catDone && leaf ? categoryLabel(leaf) : t('nm.pickCategory')}</div>
           </div>
           <span className="flex-none whitespace-nowrap text-[12px] font-bold text-v2-accent2">{t('nm.change')}</span>
@@ -488,11 +488,11 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
       )}
 
       <div
-        className="relative flex flex-col gap-2 overflow-hidden rounded-[18px] border border-[#2b2450] px-[18px] py-4 text-white"
-        style={{ background: 'linear-gradient(150deg,var(--v2-hero-a) 0%,var(--v2-hero-b) 60%,var(--v2-hero-c) 100%)' }}
+        className="relative flex flex-col gap-2 overflow-hidden rounded-[18px] border border-[var(--hero-line)] px-[18px] py-4 text-white"
+        style={{ background: 'var(--hero-bg)' }}
       >
         <div className="flex items-center gap-2">
-          <label htmlFor="nt-amount" className="flex-1 text-[10.5px] font-bold tracking-[.11em] text-[#a69dff]">
+          <label htmlFor="nt-amount" className="flex-1 text-overline font-bold uppercase text-[var(--hero-overline)]">
             {t('nm.amount')}
           </label>
           <button
@@ -503,7 +503,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
               writePref(PREFS.calc, calc ? '0' : '1')
               setCalc(!calc)
             }}
-            className="box-border flex h-9 flex-none cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border px-[11px] text-[11.5px] font-extrabold text-white"
+            className="box-border flex h-9 flex-none cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border px-[11px] text-caption font-extrabold text-white"
             style={{ background: calc ? 'rgba(255,255,255,.28)' : 'rgba(255,255,255,.1)', borderColor: calc ? '#fff' : 'transparent' }}
           >
             <Icon paths={IC.calc} size={14} color="#fff" />
@@ -525,18 +525,18 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
           onChange={(e) => edit(setExpr)(typedExpr(e.target.value))}
           placeholder="0"
           inputMode="decimal"
-          className="w-full border-none bg-transparent px-0.5 py-px font-[inherit] text-[30px] [font-variant-numeric:tabular-nums] font-extrabold tracking-[-.02em] text-white outline-none"
+          className="w-full border-none bg-transparent px-0.5 py-px font-[inherit] text-[30px] [font-variant-numeric:tabular-nums] font-extrabold tracking-[-.02em] text-white outline-none placeholder:text-white/85"
         />
         {hasOps(expr) && <div className="font-numeric text-[15px] font-extrabold text-white">{'= ' + formatIn(val, code)}</div>}
-        <div className="text-[11px] text-[rgba(255,255,255,.55)]">{t('nm.opsHint')}</div>
+        <div className="text-caption text-white/85">{t('nm.opsHint')}</div>
         {code !== wcur && (
-          <div className="font-numeric text-[11.5px] text-[rgba(255,255,255,.8)]">
+          <div className="font-numeric text-caption text-[rgba(255,255,255,.8)]">
             {val > 0 ? fill(t('nm.fx.approx'), formatIn(val * rate, wcur), wcur, walletName, code, formatIn(rate, wcur)) : fill(t('nm.fx.later'), wcur, walletName)}
           </div>
         )}
         {future && (
-          <div className="flex items-center gap-[7px] self-start whitespace-nowrap rounded-full bg-[rgba(240,180,41,.18)] px-[11px] py-[5px] text-[11px] font-extrabold text-[#f7cf6b]">
-            <Icon paths={IC.cal} size={13} color="#f7cf6b" />
+          <div className="flex items-center gap-[7px] self-start whitespace-nowrap rounded-full bg-[var(--hero-tile)] px-[11px] py-[5px] text-caption font-extrabold text-white">
+            <Icon paths={IC.cal} size={13} color="#fff" />
             {`${t('nm.scheduledChip')} · ${fmtDate(date)} · ${time}`}
           </div>
         )}
@@ -554,9 +554,9 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
                 className={cn(
                   'flex h-11 cursor-pointer select-none items-center justify-center rounded-[11px] border font-bold',
                   op
-                    ? 'border-transparent bg-[rgba(108,92,231,.16)] text-[18px] text-v2-accent2'
+                    ? 'border-transparent bg-v2-accent/16 text-[18px] text-v2-accent2'
                     : k === '='
-                      ? 'row-span-2 h-auto border-transparent bg-[rgba(108,92,231,.32)] text-[20px] text-white'
+                      ? 'row-span-2 h-auto border-transparent bg-v2-accent/32 text-[20px] text-white'
                       : k === 'C' || k === '⌫'
                         ? 'border-v2-line bg-v2-surface2 text-[13px] font-extrabold text-v2-muted'
                         : 'border-v2-line bg-v2-surface2 text-[16px] text-v2-text',
@@ -658,7 +658,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
                 <input type="time" aria-label={t('nm.time')} value={time} onChange={(e) => edit(setTime)(e.target.value || now)} className={textInput} />
               </div>
               <div
-                className="rounded-[10px] text-[11.5px] leading-[1.45]"
+                className="rounded-[10px] text-caption leading-[1.45]"
                 style={{ padding: future ? '9px 11px' : 0, color: future ? 'var(--v2-warn)' : 'var(--v2-dim)', background: future ? 'rgba(240,180,41,.12)' : 'transparent' }}
               >
                 {future
@@ -672,7 +672,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
 
           {section === 'repeat' && (
             <>
-              <div className="font-numeric text-[11.5px] text-v2-dim">{repeatSummary(rp.freq ? rp : null, date)}</div>
+              <div className="font-numeric text-caption text-v2-dim">{repeatSummary(rp.freq ? rp : null, date)}</div>
               <PillRow>
                 <Flat on={!rp.freq} onClick={() => rpSet({ freq: null })}>
                   {t('nm.noRepeat')}
@@ -711,7 +711,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
                     </div>
                   )}
                   {rp.endMode === 'until' && <input type="date" aria-label={t('nm.endsOn')} value={rp.until} onChange={(e) => rpSet({ until: e.target.value })} className={textInput} />}
-                  <div className="font-numeric text-[11.5px] text-v2-muted">{date === today ? fill(t('nm.startsToday'), time) : fill(t('nm.startsOn'), fmtDateLong(date), time)}</div>
+                  <div className="font-numeric text-caption text-v2-muted">{date === today ? fill(t('nm.startsToday'), time) : fill(t('nm.startsOn'), fmtDateLong(date), time)}</div>
                   <div className={fieldLabel}>{t('nm.eachDate')}</div>
                   <div className="flex flex-col gap-2">
                     {(
@@ -722,7 +722,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
                     ).map(([k, label, detail]) => (
                       <RadioRow key={k} on={rp.confirm === k} onClick={() => rpSet({ confirm: k })}>
                         <div className="text-[12.5px] font-bold">{label}</div>
-                        <div className="mt-0.5 text-[11px] leading-[1.4] text-v2-dim">{detail}</div>
+                        <div className="mt-0.5 text-caption leading-[1.4] text-v2-dim">{detail}</div>
                       </RadioRow>
                     ))}
                   </div>
@@ -744,7 +744,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
 
           {section === 'currency' && (
             <>
-              <div className="text-[11.5px] leading-[1.45] text-v2-dim">{fill(t('nm.currency.hint'), walletName, wcur)}</div>
+              <div className="text-caption leading-[1.45] text-v2-dim">{fill(t('nm.currency.hint'), walletName, wcur)}</div>
               <div className="flex flex-col gap-2">
                 {(currencies.length ? currencies.map((c) => c.code) : [wcur]).map((c) => (
                   <RadioRow
@@ -755,7 +755,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
                       setSection(null)
                     })}
                     leading={
-                      <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-[rgba(108,92,231,.16)] text-[11.5px] font-extrabold text-v2-accent2">{currencyInfo(c).symbol}</span>
+                      <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-v2-accent/16 text-caption font-extrabold text-v2-accent2">{currencyInfo(c).symbol}</span>
                     }
                   >
                     <RowText label={`${currencyInfo(c).name} · ${c}`} detail={c === wcur ? fill(t('nm.currency.of'), walletName) : `1 ${c} = ${formatMoney(rateOf(c) / rateOf(wcur), wcur)} ${wcur}`} />
@@ -777,12 +777,12 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
                 ] as const
               ).map(([icon, label, detail, ref]) => (
                 <button key={label} type="button" onClick={() => ref.current?.click()} className="flex cursor-pointer items-center gap-3 py-1 text-left">
-                  <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-[rgba(108,92,231,.2)]">
+                  <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-v2-accent/20">
                     <Icon paths={icon} size={18} color="var(--v2-accent2)" />
                   </span>
                   <div>
                     <div className="text-[12.5px] font-bold">{label}</div>
-                    <div className="text-[11px] text-v2-dim">{detail}</div>
+                    <div className="text-caption text-v2-dim">{detail}</div>
                   </div>
                 </button>
               ))}
@@ -819,7 +819,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
 
           {section === 'bpick' && (
             <>
-              <div className="text-[11.5px] leading-[1.45] text-v2-dim">
+              <div className="text-caption leading-[1.45] text-v2-dim">
                 {autoBudget
                   ? fill(t('nm.bpick.auto'), budgetLabel(autoBudget))
                   : fill(t('nm.bpick.none'), cat ? categoryName(leaf) : t('nm.bpick.thisExpense'))}
@@ -842,7 +842,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
               <div className="flex items-center gap-3">
                 <div className="min-w-0 flex-1">
                   <div className="text-[12.5px] font-bold">{t(isInc ? 'nm.loan.borrowed' : 'nm.loan.lent')}</div>
-                  <div className="mt-0.5 text-[11px] text-v2-dim">{t('nm.loan.detail')}</div>
+                  <div className="mt-0.5 text-caption text-v2-dim">{t('nm.loan.detail')}</div>
                 </div>
                 <AjSwitch on={loan} label={t(isInc ? 'nm.loan.borrowed' : 'nm.loan.lent')} onToggle={() => !editing && setLoan(!loan)} />
               </div>
@@ -869,7 +869,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
           </span>
           <div className="min-w-0 flex-1">
             <div className="truncate text-[12.5px] font-bold" title={attach.name}>{attach.name}</div>
-            <div className="text-[11px] text-v2-dim">{`${t(attach.photo ? 'nm.photo' : 'nm.document')} · ${fileSize(attach.size)}`}</div>
+            <div className="text-caption text-v2-dim">{`${t(attach.photo ? 'nm.photo' : 'nm.document')} · ${fileSize(attach.size)}`}</div>
           </div>
           <button type="button" aria-label={t('nm.removeAttachment')} title={t('nm.removeAttachment')} onClick={() => setAttach(null)} className="flex h-8 w-8 flex-none cursor-pointer items-center justify-center rounded-[8px] hover:bg-v2-subtle">
             <Icon paths={['M18 6 6 18', 'M6 6l12 12']} size={14} color="var(--v2-dim)" />
@@ -878,7 +878,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
       )}
 
       {repeat && (
-        <div className="flex items-center gap-2 text-[11.5px] text-v2-muted">
+        <div className="flex items-center gap-2 text-caption text-v2-muted">
           <Icon paths={IC.repeat} size={13} color="var(--v2-dim)" />
           <span className="font-numeric">{`${repeatSummary(repeat, date)} · ${t(repeat.confirm === 'auto' ? 'nm.automatic' : 'nm.withConfirmation')}`}</span>
         </div>

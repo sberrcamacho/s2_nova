@@ -67,7 +67,7 @@ fun NovaTextField(
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
             text = label,
-            fontSize = 11.sp,
+            fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.06.em,
             color = colors.loginLabel,
@@ -128,7 +128,7 @@ fun NovaTextField(
         if (isError && errorMessage != null) {
             Text(
                 text = errorMessage,
-                fontSize = 11.sp,
+                fontSize = 12.sp,
                 color = colors.negative,
                 modifier = Modifier.padding(top = 6.dp),
             )

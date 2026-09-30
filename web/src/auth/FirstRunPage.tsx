@@ -88,7 +88,7 @@ export default function FirstRunPage() {
         </div>
 
         <div>
-          <div className="text-[10.5px] font-extrabold tracking-[.12em] text-v2-accent2">{fill(tr('first.step'), step + 1)}</div>
+          <div className="text-caption font-extrabold tracking-[.12em] text-v2-accent2">{fill(tr('first.step'), step + 1)}</div>
           <h1 className="mt-2 text-[26px] font-extrabold tracking-[-.025em]">{tr(step === 1 ? 'first.wallet.title' : 'first.currency.title')}</h1>
           <div className="mt-2 text-[13px] leading-[1.5] text-v2-muted [text-wrap:pretty]">
             {tr(step === 1 ? 'first.wallet.body' : 'first.currency.body')}
@@ -108,12 +108,12 @@ export default function FirstRunPage() {
                   tabIndex={0}
                   onClick={() => setPrincipal(code)}
                   onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setPrincipal(code)}
-                  className={cn('flex cursor-pointer items-center gap-3 rounded-[14px] border px-3.5 py-3', on ? 'border-v2-accent bg-[rgba(108,92,231,.12)]' : 'border-v2-line2 bg-transparent')}
+                  className={cn('flex cursor-pointer items-center gap-3 rounded-[14px] border px-3.5 py-3', on ? 'border-v2-accent-line bg-v2-accent/12' : 'border-v2-line2 bg-transparent')}
                 >
-                  <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-[rgba(108,92,231,.16)] text-[11.5px] font-extrabold text-v2-accent2">{c.symbol}</span>
+                  <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-v2-accent/16 text-caption font-extrabold text-v2-accent2">{c.symbol}</span>
                   <div className="min-w-0 flex-1">
                     <div className="text-[13px] font-bold">{`${currencyName(code, c.name)} · ${code}`}</div>
-                    {code === region.currency && <div className="mt-[3px] text-[11px] font-bold text-v2-accent2">{fill(tr('first.detected'), region.country)}</div>}
+                    {code === region.currency && <div className="mt-[3px] text-caption font-bold text-v2-accent2">{fill(tr('first.detected'), region.country)}</div>}
                   </div>
                   <span className={cn('h-5 w-5 flex-none rounded-full border-2', on ? 'border-v2-accent bg-v2-accent shadow-[inset_0_0_0_2.5px_var(--v2-surface)]' : 'border-v2-line2 bg-transparent')} />
                 </div>
@@ -142,7 +142,7 @@ export default function FirstRunPage() {
                 <span className="text-v2-accent2">{cur.symbol}</span>
                 {`${currencyName(principal, cur.name)} · ${principal}`}
               </div>
-              <div className="text-[11px] text-v2-dim">{tr('first.otherCurrencies')}</div>
+              <div className="text-caption text-v2-dim">{tr('first.otherCurrencies')}</div>
             </div>
             <div className="flex flex-col gap-1.5">
               <Label>{tr('wallet.balance')}</Label>

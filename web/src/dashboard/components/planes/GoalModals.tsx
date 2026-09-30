@@ -206,14 +206,14 @@ export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | nu
           setPlanOpen(!planOpen)
         }}
         className="flex cursor-pointer items-center gap-3 rounded-[12px] border px-3 py-2.5 text-left"
-        style={{ borderColor: plan ? 'var(--v2-accent)' : 'var(--v2-line2)', background: plan ? 'rgba(108,92,231,.08)' : 'transparent' }}
+        style={{ borderColor: plan ? 'var(--v2-accent-line)' : 'var(--v2-line2)', background: plan ? 'color-mix(in srgb, var(--v2-accent) 8%, transparent)' : 'transparent' }}
       >
-        <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-[10px] bg-[rgba(108,92,231,.16)]">
+        <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-[10px] bg-v2-accent/16">
           <Icon paths={IC.repeat} size={16} color="var(--v2-accent2)" />
         </span>
         <div className="min-w-0 flex-1">
           <div className="text-[12.5px] font-bold">{tr('goal.plan')}</div>
-          <div className="font-numeric mt-0.5 text-[11px] text-v2-dim">{planRow}</div>
+          <div className="font-numeric mt-0.5 text-caption text-v2-dim">{planRow}</div>
         </div>
       </button>
 
@@ -258,12 +258,12 @@ export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | nu
               ).map(([auto, text, detail]) => (
                 <RadioRow key={text} on={pl.autoConfirm === auto} onClick={() => plSet({ autoConfirm: auto })}>
                   <div className="text-[12.5px] font-bold">{text}</div>
-                  <div className="mt-0.5 text-[11px] leading-[1.4] text-v2-dim">{detail}</div>
+                  <div className="mt-0.5 text-caption leading-[1.4] text-v2-dim">{detail}</div>
                 </RadioRow>
               ))}
             </div>
           </Field>
-          {summary && <div className="font-numeric rounded-[12px] bg-[rgba(108,92,231,.12)] px-3 py-2.5 text-[12px] font-semibold leading-[1.45]">{summary}</div>}
+          {summary && <div className="font-numeric rounded-[12px] bg-v2-accent/12 px-3 py-2.5 text-[12px] font-semibold leading-[1.45]">{summary}</div>}
           <button
             type="button"
             onClick={() => {
@@ -327,7 +327,7 @@ export function GoalPayModal({ goal, wallets, onClose, onSaved }: { goal: Goal; 
         <PlanMark icon={goal.icon} box={38} />
         <div className="min-w-0 flex-1">
           <div className="text-[15px] font-extrabold">{fill(tr('goal.pay.title'), goal.name)}</div>
-          <div className="font-numeric mt-[3px] text-[11.5px] leading-[1.45] text-v2-dim">
+          <div className="font-numeric mt-[3px] text-caption leading-[1.45] text-v2-dim">
             {fill(tr('goal.pay.sub'), format(goal.currentAmount), format(goal.targetAmount))}
           </div>
         </div>

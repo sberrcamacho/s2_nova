@@ -104,10 +104,10 @@ export function LoansTab({ side, onSide, adding, onAddingDone }: { side: LoanKin
                 <CategoryMark category="other" box={38} />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[14px] font-extrabold" title={l.counterpartyName ?? undefined}>{l.counterpartyName ?? t('loans.unknownPerson')}</div>
-                  <div className="mt-0.5 text-[11.5px] text-v2-dim">{meta}</div>
+                  <div className="mt-0.5 text-caption text-v2-dim">{meta}</div>
                 </div>
                 <span
-                  className="flex-none whitespace-nowrap rounded-full px-[9px] py-[3px] text-[11px] font-extrabold"
+                  className="flex-none whitespace-nowrap rounded-full px-[9px] py-[3px] text-caption font-extrabold"
                   style={done ? { color: 'var(--v2-pos)', background: 'rgba(50,201,138,.14)' } : { color: 'var(--v2-warn)', background: 'rgba(240,180,41,.14)' }}
                 >
                   {done ? t('loans.settled') : t('loans.pending')}
@@ -118,7 +118,7 @@ export function LoansTab({ side, onSide, adding, onAddingDone }: { side: LoanKin
                 <Money hidden={hidden} className="whitespace-nowrap text-[20px] font-extrabold">
                   {done ? format(l.amount) : fill(t('loans.pendingAmount'), format(out))}
                 </Money>
-                <Money hidden={hidden} className="whitespace-nowrap text-[11.5px] text-v2-dim">
+                <Money hidden={hidden} className="whitespace-nowrap text-caption text-v2-dim">
                   {fill(t('loans.progress'), format(paid), format(l.amount), pct)}
                 </Money>
               </div>
@@ -126,7 +126,7 @@ export function LoansTab({ side, onSide, adding, onAddingDone }: { side: LoanKin
                 <div className="h-full" style={{ width: `${pct}%`, background: done ? 'var(--v2-pos)' : 'var(--v2-accent3)' }} />
               </div>
               <div className="flex flex-col border-t border-v2-subtle pt-2">
-                <div className="py-1 text-[10.5px] font-bold tracking-[.08em] text-v2-dim">{t('loans.history')}</div>
+                <div className="py-1 text-caption font-bold tracking-[.08em] text-v2-dim">{t('loans.history')}</div>
                 <HistoryRow
                   label={fill(t(isLent ? 'loans.historyLent' : 'loans.historyBorrowed'), shortDate(l.date, language), walletName(l.accountId))}
                   amount={`${isLent ? '−' : '+'}${format(l.amount)}`}
@@ -201,7 +201,7 @@ export function LoansTab({ side, onSide, adding, onAddingDone }: { side: LoanKin
 function SummaryCard({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="rounded-[16px] border border-v2-line bg-v2-surface p-5">
-      <div className="text-[10.5px] font-bold tracking-[.08em] text-v2-dim">{label}</div>
+      <div className="text-caption font-bold tracking-[.08em] text-v2-dim">{label}</div>
       {children}
     </div>
   )
@@ -256,10 +256,10 @@ function PayDialog({ loan, wallets, onClose, onSaved }: { loan: Transaction; wal
       >
         <div>
           <div className="text-[15px] font-extrabold">{t('loans.pay')}</div>
-          <div className="mt-0.5 text-[11.5px] text-v2-dim">{fill(t('loans.paySub'), loan.counterpartyName ?? t('loans.unknownPerson'), format(out))}</div>
+          <div className="mt-0.5 text-caption text-v2-dim">{fill(t('loans.paySub'), loan.counterpartyName ?? t('loans.unknownPerson'), format(out))}</div>
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-bold tracking-[.06em] text-v2-muted">
+          <label className="text-caption font-bold tracking-[.06em] text-v2-muted">
             {t('loans.payAmount')}
           </label>
           <AmountField
@@ -273,7 +273,7 @@ function PayDialog({ loan, wallets, onClose, onSaved }: { loan: Transaction; wal
             radius={12}
             label={t('loans.payAmount')}
           />
-          <div className="text-[11px] text-v2-dim">{t('loans.payHint')}</div>
+          <div className="text-caption text-v2-dim">{t('loans.payHint')}</div>
         </div>
         <div className="flex flex-col gap-2">
           <Label>{t(loan.loanKind === 'lent' ? 'loans.receiveIn' : 'loans.payFrom')}</Label>

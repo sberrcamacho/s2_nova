@@ -86,8 +86,8 @@ export default function ReportesPage() {
               aria-checked={range === r}
               onClick={() => setRange(r)}
               className={cn(
-                'cursor-pointer rounded-[9px] border px-[13px] py-[7px] text-[11.5px] font-bold',
-                range === r ? 'border-v2-accent bg-v2-accent text-v2-text' : 'border-v2-line bg-v2-surface text-v2-dim',
+                'cursor-pointer rounded-[9px] border px-[13px] py-[7px] text-caption font-bold',
+                range === r ? 'border-v2-accent bg-v2-accent text-white' : 'border-v2-line bg-v2-surface text-v2-dim',
               )}
             >
               {r}M
@@ -138,7 +138,7 @@ function CardTitle({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <div>
       <div className="text-[14px] font-extrabold tracking-[-.01em]">{title}</div>
-      {subtitle && <div className="mt-0.5 text-[11.5px] text-v2-dim">{subtitle}</div>}
+      {subtitle && <div className="mt-0.5 text-caption text-v2-dim">{subtitle}</div>}
     </div>
   )
 }
@@ -146,7 +146,7 @@ function CardTitle({ title, subtitle }: { title: string; subtitle?: string }) {
 function Kpi({ label, children, className, labelClass, style }: { label: string; children: ReactNode; className?: string; labelClass?: string; style?: CSSProperties }) {
   return (
     <div className={cn('rounded-[16px] border border-v2-line bg-v2-surface', className)} style={style}>
-      <div className={cn('text-[10px] font-bold uppercase tracking-[.1em]', labelClass ?? 'text-v2-dim')}>{label}</div>
+      <div className={cn('text-caption font-bold uppercase tracking-[.1em]', labelClass ?? 'text-v2-dim')}>{label}</div>
       {children}
     </div>
   )
@@ -183,7 +183,7 @@ function SpendingTab({ report }: { report: Report | null }) {
         <Card>
           <div className="flex items-baseline justify-between gap-3">
             <CardTitle title={t('rep.incomeVsExpenses')} subtitle={subtitle} />
-            <div className="flex gap-3 text-[11px] font-bold text-v2-muted">
+            <div className="flex gap-3 text-caption font-bold text-v2-muted">
               <span className="flex items-center gap-[5px]">
                 <span className="h-2 w-2 rounded-[2px] bg-v2-pos" />
                 {t('rep.income')}
@@ -204,7 +204,7 @@ function SpendingTab({ report }: { report: Report | null }) {
           </div>
           <div className="mt-2 flex gap-3.5">
             {report?.months.map((m) => (
-              <div key={m.month} className="flex-1 text-center text-[10.5px] font-semibold text-v2-dim">
+              <div key={m.month} className="flex-1 text-center text-caption font-semibold text-v2-dim">
                 {monthAbbr(m.month, language)}
               </div>
             ))}
@@ -222,7 +222,7 @@ function SpendingTab({ report }: { report: Report | null }) {
                   role="radio"
                   aria-checked={level === k}
                   onClick={() => setLevel(k)}
-                  className={cn('cursor-pointer rounded-full px-[11px] py-[5px] text-[11.5px] font-bold', level === k ? 'bg-v2-accent text-white' : 'text-v2-dim')}
+                  className={cn('cursor-pointer rounded-full px-[11px] py-[5px] text-caption font-bold', level === k ? 'bg-v2-accent text-white' : 'text-v2-dim')}
                 >
                   {t(k === 'parent' ? 'rep.level.parent' : 'rep.level.sub')}
                 </button>
@@ -334,7 +334,7 @@ function IncomeTab({ report }: { report: Report | null }) {
           )}
         </div>
         {salary && freelance && report && (
-          <div className="mt-[22px] border-t border-v2-subtle pt-3.5 text-[11.5px] leading-[1.6] text-v2-dim">
+          <div className="mt-[22px] border-t border-v2-subtle pt-3.5 text-caption leading-[1.6] text-v2-dim">
             <MoneyText
               parts={[{ template: t('rep.freelanceNote'), args: [{ amount: freelance.monthlyMin }, { amount: freelance.monthlyMax }, t(`rep.months.${report.range}` as TranslationKey)] }]}
               hidden={hidden}
@@ -358,7 +358,7 @@ function IncomeTab({ report }: { report: Report | null }) {
         </div>
         <div className="mt-2 flex gap-3.5">
           {report?.months.map((m) => (
-            <div key={m.month} className="flex-1 text-center text-[10.5px] font-semibold text-v2-dim">
+            <div key={m.month} className="flex-1 text-center text-caption font-semibold text-v2-dim">
               {monthAbbr(m.month, language)}
             </div>
           ))}
@@ -410,7 +410,7 @@ function CashFlowTab({ report, wallets, series }: { report: Report | null; walle
           label={t('rep.netFlow')}
           labelClass="text-v2-accent2"
           className="px-5 py-[18px]"
-          style={{ borderColor: 'var(--v2-hero-line)', background: 'linear-gradient(160deg,rgba(108,92,231,.22),var(--v2-surface) 70%)' }}
+          style={{ borderColor: 'var(--v2-hero-line)', background: 'linear-gradient(160deg,color-mix(in srgb, var(--v2-accent) 16%, transparent),var(--v2-surface) 70%)' }}
         >
           {report ? (
             <Money hidden={hidden} className="mt-1.5 block text-[24px] font-extrabold tracking-[-.025em]">
@@ -434,7 +434,7 @@ function CashFlowTab({ report, wallets, series }: { report: Report | null; walle
               const [, m, d] = e.date.split('-').map(Number)
               return (
                 <div key={e.series.id} className="flex items-center gap-4 border-b border-v2-subtle py-[13px]">
-                  <span className="w-16 flex-none text-[10.5px] font-bold tracking-[.08em] text-v2-dim">
+                  <span className="w-16 flex-none text-caption font-bold tracking-[.08em] text-v2-dim">
                     {e.dueToday ? t('rep.today') : `${String(d).padStart(2, '0')} ${MONTHS_SHORT[language][m! - 1]!.toUpperCase()}`}
                   </span>
                   <span className="min-w-0 flex-1 truncate text-[13px] font-bold" title={e.series.name}>
@@ -448,11 +448,11 @@ function CashFlowTab({ report, wallets, series }: { report: Report | null; walle
                       {`${e.signed < 0 ? '−' : '+'}${formatIn(Math.abs(e.signed), e.series.currency)}`}
                     </Money>
                     {e.series.currency !== principal && (
-                      <Money hidden={hidden} className="block whitespace-nowrap text-[10.5px] text-v2-dim">
+                      <Money hidden={hidden} className="block whitespace-nowrap text-caption text-v2-dim">
                         {`≈ ${formatApprox(Math.abs(e.signed) * referenceRate(e.series.currency, principal), principal)}`}
                       </Money>
                     )}
-                    <Money hidden={hidden} className="block whitespace-nowrap text-[10.5px] text-v2-dim min-[520px]:hidden">
+                    <Money hidden={hidden} className="block whitespace-nowrap text-caption text-v2-dim min-[520px]:hidden">
                       {fill(t('inicio.upcoming.balance'), format(e.running))}
                     </Money>
                   </div>
@@ -465,7 +465,7 @@ function CashFlowTab({ report, wallets, series }: { report: Report | null; walle
           )}
         </div>
         {lowest && (
-          <div className="mt-3.5 text-[11.5px] text-v2-dim">
+          <div className="mt-3.5 text-caption text-v2-dim">
             {/* The mockup sets the lowest balance in bold warning color. */}
             {t(payday >= 0 ? 'rep.lowestBeforeSalary' : 'rep.lowest')
               .split(/(\{\d\})/)
@@ -496,7 +496,7 @@ function NetWorthTab({ report, wallets }: { report: Report | null; wallets: Wall
 
   const side = (label: string, data: Report['netWorth']['lent'] | undefined, tone: string, emptyKey: TranslationKey) => (
     <div className="rounded-[14px] border border-v2-line bg-v2-surface2 p-4">
-      <div className="text-[10px] font-bold uppercase tracking-[.1em] text-v2-dim">{label}</div>
+      <div className="text-caption font-bold uppercase tracking-[.1em] text-v2-dim">{label}</div>
       {!data ? (
         <SkeletonBar className="mt-2.5 h-5 w-3/5" />
       ) : data.outstanding > 0 ? (
@@ -504,7 +504,7 @@ function NetWorthTab({ report, wallets }: { report: Report | null; wallets: Wall
           <Money hidden={hidden} className="mt-1.5 block text-[20px] font-extrabold" style={{ color: tone }}>
             {format(data.outstanding)}
           </Money>
-          <div className="mt-1 text-[11px] text-v2-dim">
+          <div className="mt-1 text-caption text-v2-dim">
             {[
               data.people === 1 ? t('rep.people.one') : fill(t('rep.people.many'), data.people),
               data.settled > 0 ? (data.settled === 1 ? t('rep.settled.one') : fill(t('rep.settled.many'), data.settled)) : null,
@@ -516,7 +516,7 @@ function NetWorthTab({ report, wallets }: { report: Report | null; wallets: Wall
       ) : (
         <>
           <div className="font-numeric mt-1.5 text-[20px] font-extrabold text-v2-dim">—</div>
-          <div className="mt-1 text-[11px] text-v2-dim">{t(emptyKey)}</div>
+          <div className="mt-1 text-caption text-v2-dim">{t(emptyKey)}</div>
         </>
       )}
     </div>
@@ -535,7 +535,7 @@ function NetWorthTab({ report, wallets }: { report: Report | null; wallets: Wall
                 <span className="h-[30px] w-[30px] flex-none rounded-[10px]" style={{ background: walletSquare(w.accountType) }} />
                 <div className="min-w-0 flex-1">
                   <div className="text-[13px] font-bold">{w.name}</div>
-                  <div className="text-[11px] text-v2-dim">{t(`inicio.walletKind.${walletKind(w.accountType)}` as TranslationKey)}</div>
+                  <div className="text-caption text-v2-dim">{t(`inicio.walletKind.${walletKind(w.accountType)}` as TranslationKey)}</div>
                 </div>
                 <Money hidden={hidden} className="text-[14px] font-extrabold">
                   {formatIn(w.currentBalance, w.currency)}
@@ -562,17 +562,17 @@ function NetWorthTab({ report, wallets }: { report: Report | null; wallets: Wall
           {side(t('rep.lent'), report?.netWorth.lent, 'var(--v2-pos)', 'rep.noLent')}
           {side(t('rep.borrowed'), report?.netWorth.borrowed, 'var(--v2-neg)', 'rep.noBorrowed')}
         </div>
-        <div className="mt-6 text-[11px] font-bold uppercase tracking-[.1em] text-v2-dim">{t('rep.lastSixMonths')}</div>
+        <div className="mt-6 text-caption font-bold uppercase tracking-[.1em] text-v2-dim">{t('rep.lastSixMonths')}</div>
         <div className="mt-3.5 flex h-[120px] items-end gap-2.5">
           {history.map((h, i, arr) => {
             const pct = Math.max(0, (h.balance / peak) * 100)
             // Mockup: the current month in accent3, months at 80%+ of the peak
             // a little stronger than the rest.
-            const background = i === arr.length - 1 ? 'var(--v2-accent3)' : pct >= 80 ? 'rgba(165,157,255,.32)' : 'rgba(165,157,255,.24)'
+            const background = i === arr.length - 1 ? 'var(--chart-primary)' : pct >= 80 ? 'color-mix(in srgb, var(--chart-primary) 40%, transparent)' : 'var(--chart-primary-soft)'
             return <div key={h.month} className="flex-1 rounded-t-[4px]" style={{ height: `${pct}%`, background }} />
           })}
         </div>
-        <div className="mt-2 flex justify-between text-[10.5px] text-v2-dim">
+        <div className="mt-2 flex justify-between text-caption text-v2-dim">
           {history.map((h) => (
             <span key={h.month}>{monthAbbr(h.month, language)}</span>
           ))}

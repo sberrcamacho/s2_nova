@@ -24,7 +24,7 @@ export function AjRow({ label, detail, danger, last, children }: { label: string
     <div className={cn('flex items-center gap-4 py-[15px]', !last && 'border-b border-v2-subtle')}>
       <div className="min-w-0 flex-1">
         <div className={cn('text-[13px] font-bold', danger && 'text-v2-neg')}>{label}</div>
-        <div className="mt-0.5 text-[11.5px] text-v2-dim">{detail}</div>
+        <div className="mt-0.5 text-caption text-v2-dim">{detail}</div>
       </div>
       {children}
     </div>
@@ -59,7 +59,7 @@ export function AjPills<T extends string>({ value, options, onChange }: { value:
             aria-checked={selected}
             onClick={() => onChange(option.value)}
             className={cn(
-              'cursor-pointer rounded-[9px] border px-[13px] py-[7px] text-[11.5px] font-bold',
+              'cursor-pointer rounded-[9px] border px-[13px] py-[7px] text-caption font-bold',
               selected ? 'border-v2-accent bg-v2-accent text-white' : 'border-v2-line2 bg-v2-surface2 text-v2-dim',
             )}
           >
@@ -116,10 +116,10 @@ export function AjSubHeader({ title, subtitle, danger, action, children }: { tit
 export function AjField({ label, tall, ...input }: { label: string; tall?: boolean } & InputHTMLAttributes<HTMLInputElement>) {
   return (
     <label className="flex min-w-0 flex-col gap-1.5">
-      <span className="text-[11px] font-bold tracking-[.06em] text-v2-muted">{label}</span>
+      <span className="text-caption font-bold tracking-[.06em] text-v2-muted">{label}</span>
       <input
         {...input}
-        className={cn('box-border w-full rounded-[12px]', tall ? 'h-12' : 'h-[46px]', ' border border-v2-line bg-v2-sidebar px-3.5 font-[inherit] text-[13px] text-v2-text outline-none placeholder:text-[#757575] focus:border-v2-accent')}
+        className={cn('box-border w-full rounded-[12px]', tall ? 'h-12' : 'h-[46px]', ' border border-v2-line bg-v2-sidebar px-3.5 font-[inherit] text-[13px] text-v2-text outline-none placeholder:text-[#757575] focus:border-v2-accent-line')}
       />
     </label>
   )

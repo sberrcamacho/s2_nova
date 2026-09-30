@@ -61,15 +61,15 @@ export default function BilleterasPage() {
             tabIndex={0}
             onClick={() => setEditing(w)}
             onKeyDown={(e) => e.key === 'Enter' && setEditing(w)}
-            className="flex cursor-pointer flex-col gap-3 rounded-[16px] border border-v2-line bg-v2-surface p-[18px] hover:border-v2-line2 focus-visible:outline-2 focus-visible:outline-v2-accent"
+            className="flex cursor-pointer flex-col gap-3 rounded-[16px] border border-v2-line bg-v2-surface p-[18px] hover:border-v2-line2 focus-visible:outline-2 focus-visible:outline-focus"
           >
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full" style={{ background: 'linear-gradient(150deg,var(--v2-hero-b),var(--v2-accent))' }}>
+              <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full" style={{ background: 'linear-gradient(150deg,var(--color-primary-pressed),var(--color-primary-secondary))' }}>
                 <Icon paths={walletGlyph(w.accountType)} size={18} color="#fff" />
               </span>
               <div className="min-w-0 flex-1">
                 <div className="text-[13.5px] font-extrabold">{w.name}</div>
-                <div className="mt-0.5 text-[11.5px] text-v2-dim">
+                <div className="mt-0.5 text-caption text-v2-dim">
                   {walletKindLabel(w.accountType)} · {w.currency}
                 </div>
               </div>
@@ -78,7 +78,7 @@ export default function BilleterasPage() {
               <Money hidden={hidden} className="block text-[22px] font-extrabold tracking-[-.02em]">
                 {formatIn(w.currentBalance, w.currency)}
               </Money>
-              <div className="font-numeric mt-0.5 text-[11.5px] text-v2-dim">
+              <div className="font-numeric mt-0.5 text-caption text-v2-dim">
                 {w.currency !== principal && (
                   <Money hidden={hidden} inline>
                     {`≈ ${format(w.principalBalance)}`}

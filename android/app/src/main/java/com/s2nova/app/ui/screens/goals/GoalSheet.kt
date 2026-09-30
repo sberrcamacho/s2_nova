@@ -144,7 +144,7 @@ fun GoalDraftSheet(draft: GoalDraft, onDraftChange: (GoalDraft) -> Unit, onDismi
                 val primary = MaterialTheme.colorScheme.primary
                 Row(
                     Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(if (plan != null) primary.copy(alpha = 0.08f) else Color.Transparent)
-                        .border(1.dp, if (plan != null) primary else MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(14.dp))
+                        .border(1.dp, if (plan != null) NovaColors.current.primaryBorder else MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(14.dp))
                         .noRippleClick {
                             gp = plan?.let { p ->
                                 PlanDraft(com.s2nova.app.ui.screens.addtransaction.AmountPad.numStr(p.amount), Freq.entries.first { it.interval == p.frequency }, p.walletId, p.startDate, p.endMode, p.count ?: 12, p.endDate.orEmpty(), p.autoConfirm)
@@ -161,7 +161,7 @@ fun GoalDraftSheet(draft: GoalDraft, onDraftChange: (GoalDraft) -> Unit, onDismi
                         val wallet = plan?.let { p -> wallets.firstOrNull { it.id == p.walletId }?.name?.let(::shortWallet) }.orEmpty()
                         Text(
                             plan?.let { planText(it, wallet, principal) } ?: tr(StringKey.GOAL_PLAN_EMPTY),
-                            fontSize = 11.sp, lineHeight = 15.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM),
+                            fontSize = 12.sp, lineHeight = 15.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM),
                         )
                     }
                     Text("›", fontSize = 18.sp, color = colors.textDim)

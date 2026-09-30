@@ -9,7 +9,10 @@ import { useAuth } from '@/state/AuthContext'
 import { useTranslation } from '@/state/useTranslation'
 import { cn } from '@/lib/cn'
 
-const BRAND_PANEL_GRADIENT = 'linear-gradient(150deg,#16123a 0%,#1d1650 55%,#241a5e 100%)'
+// Always dark in both themes: the dark hero's deep violet with the dark
+// mark's violet → blue glow (DESIGN-SYSTEM.md §2.2 hero-bg, dark).
+const BRAND_PANEL_GRADIENT =
+  'radial-gradient(120% 90% at 100% 0%, rgba(168,15,250,.35) 0%, rgba(0,71,245,.22) 45%, rgba(0,196,251,0) 80%), #1a0b3d'
 
 function BrandPanel() {
   const { t } = useTranslation()
@@ -20,7 +23,7 @@ function BrandPanel() {
     >
       <div
         className="pointer-events-none absolute -right-[60px] -top-20 h-[260px] w-[260px] rounded-full"
-        style={{ background: 'rgba(123,111,246,.4)', filter: 'blur(60px)' }}
+        style={{ background: 'rgba(168,15,250,.3)', filter: 'blur(60px)' }}
         aria-hidden="true"
       />
 
@@ -28,7 +31,7 @@ function BrandPanel() {
         <Logo variant="mark" tone="inverted" size="sm" />
         <div>
           <div className="text-[15px] font-extrabold tracking-[-0.01em]">S2 Nova</div>
-          <div className="text-[9.5px] font-semibold tracking-[0.1em] text-white/42">PERSONAL FINANCE</div>
+          <div className="whitespace-nowrap text-caption font-semibold tracking-[.04em] text-white/70">PERSONAL FINANCE</div>
         </div>
       </div>
 
@@ -43,8 +46,8 @@ function BrandPanel() {
           <svg viewBox="0 0 376 132" width="100%" height="132" className="block overflow-visible" aria-hidden="true">
             <defs>
               <linearGradient id="loginAreaGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#8578ff" stopOpacity=".55" />
-                <stop offset="100%" stopColor="#8578ff" stopOpacity="0" />
+                <stop offset="0%" stopColor="#d485fb" stopOpacity=".55" />
+                <stop offset="100%" stopColor="#d485fb" stopOpacity="0" />
               </linearGradient>
             </defs>
             <line x1="0" y1="33" x2="376" y2="33" stroke="rgba(255,255,255,.08)" strokeWidth="1" />
@@ -57,7 +60,7 @@ function BrandPanel() {
             <path
               d="M0 104 C 34 96, 46 68, 78 66 S 130 88, 156 74 S 208 34, 235 40 S 292 30, 313 20 S 358 14, 376 8"
               fill="none"
-              stroke="#a59dff"
+              stroke="#d485fb"
               strokeWidth="2.5"
               strokeLinecap="round"
             />
@@ -69,7 +72,7 @@ function BrandPanel() {
               strokeDasharray="5 6"
               strokeLinecap="round"
             />
-            <circle cx="376" cy="8" r="5" fill="#050507" stroke="#a59dff" strokeWidth="2.5" />
+            <circle cx="376" cy="8" r="5" fill="#050507" stroke="#d485fb" strokeWidth="2.5" />
           </svg>
 
           <div className="flex items-center gap-[18px]">
@@ -80,7 +83,7 @@ function BrandPanel() {
                 cy="33"
                 r="27"
                 fill="none"
-                stroke="#8578ff"
+                stroke="#d485fb"
                 strokeWidth="8"
                 strokeLinecap="round"
                 strokeDasharray="98 172"
@@ -99,7 +102,7 @@ function BrandPanel() {
             </svg>
             <div className="flex flex-1 flex-col gap-2">
               <div className="flex items-center gap-2.5">
-                <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#8578ff]" />
+                <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#d485fb]" />
                 <span className="text-[12.5px] text-white/72">{t('auth.hero.byCategory')}</span>
               </div>
               <div className="flex items-center gap-2.5">
@@ -115,7 +118,7 @@ function BrandPanel() {
         </div>
       </div>
 
-      <div className="relative text-[11.5px] text-white/45">{t('auth.encryptedData')}</div>
+      <div className="relative text-caption text-white/45">{t('auth.encryptedData')}</div>
     </div>
   )
 }
@@ -236,7 +239,7 @@ export default function LoginPage() {
           <div className="flex items-center gap-3">
             <div className="h-px flex-1 bg-border" />
             <span
-              className="text-[10.5px] font-bold tracking-[0.08em]"
+              className="text-caption font-bold tracking-[0.08em]"
               style={{ color: 'var(--color-login-divider-label)' }}
             >
               {t('auth.orWithEmail')}
@@ -254,7 +257,7 @@ export default function LoginPage() {
               <div className="flex flex-col gap-1.5">
                 <label
                   htmlFor="login-email"
-                  className="text-[11px] font-bold tracking-[0.06em]"
+                  className="text-caption font-bold tracking-[0.06em]"
                   style={{ color: 'var(--color-login-label)' }}
                 >
                   {t('auth.emailFieldLabel')}
@@ -288,7 +291,7 @@ export default function LoginPage() {
                 <div className="flex items-center justify-between">
                   <label
                     htmlFor="login-password"
-                    className="text-[11px] font-bold tracking-[0.06em]"
+                    className="text-caption font-bold tracking-[0.06em]"
                     style={{ color: 'var(--color-login-label)' }}
                   >
                     {t('auth.passwordFieldLabel')}
@@ -296,7 +299,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     title={t('common.comingSoon')}
-                    className="text-[11px] font-bold text-highlight"
+                    className="text-caption font-bold text-highlight"
                   >
                     {t('auth.forgotPassword')}
                   </button>
@@ -364,7 +367,7 @@ export default function LoginPage() {
             <EnterIcon />
             {t('auth.guest')}
           </button>
-          <div className="-mt-2 text-center text-[11.5px] text-v2-dim [line-height:normal]">{t('auth.guestHint')}</div>
+          <div className="-mt-2 text-center text-caption text-v2-dim [line-height:normal]">{t('auth.guestHint')}</div>
 
           <div className="text-center text-xs" style={{ color: 'var(--color-login-text-muted)' }}>
             {t('auth.noAccount')}{' '}

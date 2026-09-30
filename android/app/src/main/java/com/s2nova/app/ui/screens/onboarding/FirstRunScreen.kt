@@ -91,7 +91,7 @@ fun FirstRunScreen(onBackToSignup: () -> Unit, onDone: () -> Unit) {
         }
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 24.dp, end = 24.dp, top = 18.dp, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(22.dp)) {
             Column {
-                Text(tr(StringKey.FIRST_STEP, step + 1), fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.2.sp, color = colors.accentText)
+                Text(tr(StringKey.FIRST_STEP, step + 1), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.2.sp, color = colors.accentText)
                 Text(tr(if (step == 1) StringKey.FIRST_WALLET_TITLE else StringKey.FIRST_CURRENCY_TITLE), fontSize = 26.sp, lineHeight = 30.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.78).sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 10.dp))
                 Text(
                     tr(if (step == 1) StringKey.FIRST_WALLET_BODY else StringKey.FIRST_CURRENCY_BODY),
@@ -104,7 +104,7 @@ fun FirstRunScreen(onBackToSignup: () -> Unit, onDone: () -> Unit) {
                         RadioRow(principal == code, { principal = code }, leading = { SymbolBadge(Currencies.symbol(code)) }) {
                             Column(Modifier.weight(1f)) {
                                 Text(Currencies.name(code) + " · " + code, fontSize = 13.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                                if (code == detected) Text(tr(StringKey.FIRST_DETECTED, Currencies.deviceCountry()), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = colors.accentText, modifier = Modifier.padding(top = 3.dp))
+                                if (code == detected) Text(tr(StringKey.FIRST_DETECTED, Currencies.deviceCountry()), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = colors.accentText, modifier = Modifier.padding(top = 3.dp))
                             }
                         }
                     }

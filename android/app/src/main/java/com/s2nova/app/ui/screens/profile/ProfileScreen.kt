@@ -107,8 +107,8 @@ fun ProfileScreen(
                         }
                         Column(modifier = Modifier.weight(1f).padding(start = 14.dp)) {
                             Text(user?.name ?: "", fontSize = 15.5.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.155).sp, color = MaterialTheme.colorScheme.onBackground)
-                            Text(user?.email ?: "", fontSize = 11.5.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
-                            if (placeAndSince != null) Text(placeAndSince, fontSize = 11.sp, color = colors.textDim)
+                            Text(user?.email ?: "", fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
+                            if (placeAndSince != null) Text(placeAndSince, fontSize = 12.sp, color = colors.textDim)
                         }
                     }
                 }
@@ -117,7 +117,7 @@ fun ProfileScreen(
                     Column {
                         // The mockup's Billeteras chip colour is `var(--accent)29`,
                         // invalid CSS, so that circle never paints — only its glyph.
-                        ProfileRow(MockupIcons.Billeteras, MaterialTheme.colorScheme.primary, chipFill = false, t(StringKey.WALLETS_TITLE), walletsDetail, onOpenWallets)
+                        ProfileRow(MockupIcons.Billeteras, NovaColors.current.link, chipFill = false, t(StringKey.WALLETS_TITLE), walletsDetail, onOpenWallets)
                         ProfileRow(MockupIcons.Programados, subscriptionsColor, chipFill = true, t(StringKey.RECURRING_TITLE), recurringDetail, onOpenRecurring)
                         ProfileRow(MockupIcons.Ajustes, billsColor, chipFill = true, t(StringKey.TITLE_SETTINGS), t(StringKey.PROFILE_SETTINGS_DETAIL), onOpenSettings)
                     }
@@ -170,7 +170,7 @@ private fun ProfileRow(icon: ImageVector, color: Color, chipFill: Boolean, label
             }
             Column(modifier = Modifier.weight(1f).padding(start = 14.dp)) {
                 Text(label, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                Text(detail, fontSize = 11.sp, color = colors.textDim)
+                Text(detail, fontSize = 12.sp, color = colors.textDim)
             }
             Text("›", fontSize = 15.sp, color = colors.grip2, modifier = Modifier.padding(start = 14.dp))
         }

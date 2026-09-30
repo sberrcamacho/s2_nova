@@ -86,12 +86,12 @@ fun CategoriesScreen(initialIncome: Boolean, onBack: () -> Unit) {
             Box(Modifier.size(38.dp).clip(CircleShape).noRippleClick(onBack), contentAlignment = Alignment.Center) { Text("←", fontSize = 19.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             Text(tr(StringKey.CAT_TITLE), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
             Box(Modifier.size(38.dp).clip(CircleShape).noRippleClick { draft = CatDraft(null, "", null, "other") }, contentAlignment = Alignment.Center) {
-                Text("+", fontSize = 22.sp, fontWeight = FontWeight.Light, color = MaterialTheme.colorScheme.primary)
+                Text("+", fontSize = 22.sp, fontWeight = FontWeight.Light, color = NovaColors.current.link)
             }
         }
         UnderlineTabs(listOf(tr(StringKey.CAT_TAB_EXPENSES), tr(StringKey.CAT_TAB_INCOME)), if (income) 1 else 0) { income = it == 1 }
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(tr(StringKey.CAT_SUBTITLE), fontSize = 11.sp, lineHeight = 16.sp, color = colors.textDim)
+            Text(tr(StringKey.CAT_SUBTITLE), fontSize = 12.sp, lineHeight = 16.sp, color = colors.textDim)
             repo.parents(income).forEach { p ->
                 val kids = repo.children(p.id)
                 Column(
@@ -103,7 +103,7 @@ fun CategoriesScreen(initialIncome: Boolean, onBack: () -> Unit) {
                         CatMark(p.id, 38.dp)
                         Column(Modifier.weight(1f)) {
                             Text(repo.displayName(p), fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
-                            Text(tr(if (kids.size == 1) StringKey.CAT_SUB_ONE else StringKey.CAT_SUB_MANY, kids.size), fontSize = 11.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
+                            Text(tr(if (kids.size == 1) StringKey.CAT_SUB_ONE else StringKey.CAT_SUB_MANY, kids.size), fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
                         }
                         if (p.hidden) Tag(tr(StringKey.CAT_HIDDEN), colors.textDim, MaterialTheme.colorScheme.outlineVariant)
                         if (p.custom) Tag(tr(StringKey.CAT_YOURS), colors.accentText, colors.accentText)
@@ -113,7 +113,7 @@ fun CategoriesScreen(initialIncome: Boolean, onBack: () -> Unit) {
                     androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         kids.forEach { c ->
                             Text(
-                                repo.displayName(c), fontSize = 11.sp, fontWeight = FontWeight.Bold,
+                                repo.displayName(c), fontSize = 12.sp, fontWeight = FontWeight.Bold,
                                 color = if (c.custom) (if (color.luminance() > 0.5f) Color(0xFF111118) else Color.White) else colors.pillText,
                                 modifier = Modifier.clip(RoundedCornerShape(999.dp)).background(if (c.custom) color else color.copy(alpha = 0.12f))
                                     .border(1.dp, color.copy(alpha = 0.35f), RoundedCornerShape(999.dp))
@@ -122,7 +122,7 @@ fun CategoriesScreen(initialIncome: Boolean, onBack: () -> Unit) {
                         }
                         val line2 = MaterialTheme.colorScheme.outlineVariant
                         Text(
-                            tr(StringKey.CAT_ADD_SUB), fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText,
+                            tr(StringKey.CAT_ADD_SUB), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText,
                             modifier = Modifier.clip(RoundedCornerShape(999.dp)).drawBehind {
                                 drawRoundRect(line2, style = Stroke(1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(3.dp.toPx(), 2.dp.toPx()))), cornerRadius = androidx.compose.ui.geometry.CornerRadius(size.height / 2))
                             }.noRippleClick { draft = CatDraft(null, "", p.id, p.vis) }.padding(horizontal = 9.dp, vertical = 4.dp),
@@ -172,13 +172,13 @@ fun CategoriesScreen(initialIncome: Boolean, onBack: () -> Unit) {
                         }
                     }
                 } else {
-                    Text(tr(StringKey.CAT_PARENT_COLOR, repo.displayName(parent)), fontSize = 11.sp, color = colors.textDim)
+                    Text(tr(StringKey.CAT_PARENT_COLOR, repo.displayName(parent)), fontSize = 12.sp, color = colors.textDim)
                 }
                 if (editing != null && !editing.custom && editing.parentId == null) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                         Column(Modifier.weight(1f)) {
                             Text(tr(StringKey.CAT_SHOW), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                            Text(tr(StringKey.CAT_SHOW_HINT), fontSize = 11.sp, lineHeight = 15.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
+                            Text(tr(StringKey.CAT_SHOW_HINT), fontSize = 12.sp, lineHeight = 15.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
                         }
                         V2Switch(!d.hidden) { draft = d.copy(hidden = !d.hidden) }
                     }
@@ -233,14 +233,14 @@ private fun askDelete(n: CategoryNode, income: Boolean, onDone: () -> Unit) {
 
 @Composable
 private fun Tag(label: String, color: Color, border: Color) {
-    Text(label, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, color = color, modifier = Modifier.clip(RoundedCornerShape(999.dp)).border(1.dp, border, RoundedCornerShape(999.dp)).padding(horizontal = 7.dp, vertical = 2.dp))
+    Text(label, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = color, modifier = Modifier.clip(RoundedCornerShape(999.dp)).border(1.dp, border, RoundedCornerShape(999.dp)).padding(horizontal = 7.dp, vertical = 2.dp))
 }
 
 // catTabs: text tabs over a 1 dp --line rule, 2 dp accent underline.
 @Composable
 fun UnderlineTabs(labels: List<String>, selected: Int, onSelect: (Int) -> Unit) {
     val line = MaterialTheme.colorScheme.outline
-    val accent = MaterialTheme.colorScheme.primary
+    val accent = NovaColors.current.primaryBorder
     Row(
         Modifier.fillMaxWidth().drawBehind { drawRect(line, topLeft = Offset(0f, size.height - 1.dp.toPx()), size = androidx.compose.ui.geometry.Size(size.width, 1.dp.toPx())) }.padding(horizontal = 20.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),

@@ -86,7 +86,7 @@ fun AmountPadSheet(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
                         V2Icon(if (mode) V2Icons.calc else V2Icons.keypad, if (on) Color.White else MaterialTheme.colorScheme.onSurfaceVariant, 14.dp)
-                        Text(label, fontSize = 11.5.sp, fontWeight = FontWeight.ExtraBold, color = if (on) Color.White else MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(label, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = if (on) Color.White else MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }

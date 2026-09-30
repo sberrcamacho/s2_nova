@@ -68,14 +68,14 @@ private fun ActionRow(
         Box(
             modifier = Modifier
                 .size(44.dp)
-                .background(Color(0x386C5CE7), CircleShape), // rgba(108,92,231,.22)
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.22f), CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             Icon(icon, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(20.dp))
         }
         Column(modifier = Modifier.padding(start = 14.dp)) {
             Text(title, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-            Text(subtitle, fontSize = 11.5.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
+            Text(subtitle, fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
         }
     }
 }

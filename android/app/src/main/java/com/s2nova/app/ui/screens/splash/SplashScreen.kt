@@ -1,5 +1,6 @@
 package com.s2nova.app.ui.screens.splash
 
+import com.s2nova.app.ui.theme.NovaColors
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -38,7 +39,7 @@ fun SplashScreen() {
                 modifier = Modifier.size(72.dp),
             )
             CircularProgressIndicator(
-                color = MaterialTheme.colorScheme.primary,
+                color = NovaColors.current.link,
                 modifier = Modifier
                     .padding(top = 24.dp)
                     .size(28.dp),

@@ -187,16 +187,16 @@ export default function InicioPage() {
       <div className="grid grid-cols-[repeat(auto-fit,minmax(min(340px,100%),1fr))] items-stretch gap-[18px]">
         {/* Balance hero */}
         <section
-          className="relative overflow-hidden rounded-[20px] border border-v2-line2 px-7 py-[26px] text-white"
-          style={{ background: 'linear-gradient(150deg,var(--v2-hero-a) 0%,var(--v2-hero-b) 55%,var(--v2-hero-c) 100%)' }}
+          className="relative overflow-hidden rounded-[20px] border border-[var(--hero-line)] px-7 py-[26px] text-white shadow-[var(--shadow-md)]"
+          style={{ background: 'var(--hero-bg)' }}
         >
-          <div aria-hidden="true" className="pointer-events-none absolute right-[-40px] top-[-70px] h-[220px] w-[220px] rounded-full bg-[rgba(108,92,231,.35)] blur-[52px]" />
+          <div aria-hidden="true" className="pointer-events-none absolute right-[-40px] top-[-70px] h-[220px] w-[220px] rounded-full bg-[var(--hero-glow)] blur-[52px]" />
           <div className="relative [container-type:inline-size]">
             <div className="flex items-center justify-between gap-3">
-              <div className="truncate text-[10.5px] font-bold tracking-[.11em] text-[var(--hero-overline)]">{t('inicio.balance')}</div>
+              <div className="truncate text-overline font-bold uppercase text-[var(--hero-overline)]">{t('inicio.balance')}</div>
               <div className="flex flex-none items-center gap-2">
                 {data.wallets && (
-                  <div className="whitespace-nowrap rounded-full bg-white/[.08] px-2.5 py-1 text-[10.5px] font-bold text-[var(--hero-label)]">
+                  <div className="whitespace-nowrap rounded-full bg-[var(--hero-tile)] px-2.5 py-1 text-caption font-bold text-[var(--hero-label)]">
                     {data.wallets.length === 1 ? t('inicio.walletsOne') : fill(t('inicio.walletsMany'), data.wallets.length)}
                   </div>
                 )}
@@ -206,7 +206,7 @@ export default function InicioPage() {
                   title={hidden ? t('inicio.showAmounts') : t('inicio.hideAmounts')}
                   aria-label={hidden ? t('inicio.showAmounts') : t('inicio.hideAmounts')}
                   aria-pressed={hidden}
-                  className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-[10px] bg-white/[.08] text-white/75 hover:bg-white/[.14]"
+                  className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-[10px] bg-[var(--hero-tile)] text-white hover:bg-white/[.2]"
                 >
                   <StrokeIcon paths={hidden ? ICON_PATHS.eyeOff : ICON_PATHS.eye} size={16} />
                 </button>
@@ -240,13 +240,13 @@ export default function InicioPage() {
                 <RowButton key={w.id} last={i === arr.length - 1} onClick={() => navigate('/billeteras')}>
                   <div
                     className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full text-white"
-                    style={{ background: 'linear-gradient(150deg,var(--v2-hero-b),var(--v2-accent))' }}
+                    style={{ background: 'linear-gradient(150deg,var(--color-primary-pressed),var(--color-primary-secondary))' }}
                   >
                     <StrokeIcon paths={WALLET_ICON_PATHS[walletIcon(w.accountType)]} size={17} />
                   </div>
                   <div className="min-w-0 flex-1 text-left">
                     <div className="truncate text-[12.5px] font-bold" title={w.name}>{w.name}</div>
-                    <div className="truncate text-[11px] text-v2-dim">
+                    <div className="truncate text-caption text-v2-dim">
                       {WALLET_KINDS.some((k) => k.type === w.accountType) ? walletKindLabel(w.accountType) : t(`inicio.walletKind.${walletKind(w.accountType)}` as TranslationKey)}
                     </div>
                   </div>
@@ -254,7 +254,7 @@ export default function InicioPage() {
                     <Money hidden={hidden} className="block whitespace-nowrap text-[13.5px] font-extrabold">
                       {formatIn(w.currentBalance, w.currency)}
                     </Money>
-                    <div className="font-numeric whitespace-nowrap text-[10.5px] text-v2-dim">
+                    <div className="font-numeric whitespace-nowrap text-caption text-v2-dim">
                       {w.currency !== principal && (
                         <Money hidden={hidden} inline>
                           {`≈ ${format(w.principalBalance)} · `}
@@ -331,14 +331,14 @@ export default function InicioPage() {
                     <div className="flex min-w-0 flex-1 flex-col gap-1.5 text-left">
                       <div className="flex items-baseline justify-between gap-2.5">
                         <span className="line-clamp-2 min-w-0 text-[12.5px] font-bold" title={budgetScope(b, walletName)}>{budgetScope(b, walletName)}</span>
-                        <Money hidden={hidden} className="flex-none whitespace-nowrap text-[11.5px] text-v2-muted">
+                        <Money hidden={hidden} className="flex-none whitespace-nowrap text-caption text-v2-muted">
                           {`${format(b.spent)} / ${format(b.limit)}`}
                         </Money>
                       </div>
                       <div className="h-1.5 overflow-hidden rounded-[3px] bg-v2-line">
                         <div className="h-full" style={{ width: `${Math.min(100, b.percentage)}%`, background: tone }} />
                       </div>
-                      <div className="flex justify-between gap-2.5 text-[11px] text-v2-dim">
+                      <div className="flex justify-between gap-2.5 text-caption text-v2-dim">
                         <span className="min-w-0 truncate">{budgetStateNote(b, today, format)}</span>
                         <Money hidden={hidden} className="flex-none whitespace-nowrap">
                           {b.remaining >= 0 ? fill(t('inicio.budgets.available'), format(b.remaining)) : fill(t('inicio.budgets.overBy'), format(-b.remaining))}
@@ -346,7 +346,7 @@ export default function InicioPage() {
                       </div>
                     </div>
                     <span
-                      className="font-numeric min-w-[34px] flex-none rounded-full px-2 py-[3px] text-center text-[11.5px] font-extrabold"
+                      className="font-numeric min-w-[34px] flex-none rounded-full px-2 py-[3px] text-center text-caption font-extrabold"
                       style={{ color: tone, background: `color-mix(in oklab, ${tone} 14%, transparent)` }}
                     >
                       {b.percentage}%
@@ -385,10 +385,10 @@ export default function InicioPage() {
                       </div>
                       <div className="min-w-0 flex-1 text-left">
                         <div className="truncate text-[12.5px] font-bold" title={g.name}>{g.name}</div>
-                        <Money hidden={hidden} className="mt-0.5 block truncate text-[11.5px] text-v2-muted">
+                        <Money hidden={hidden} className="mt-0.5 block truncate text-caption text-v2-muted">
                           {fill(t('inicio.goals.progress'), format(g.currentAmount), format(g.targetAmount))}
                         </Money>
-                        <div className="mt-0.5 text-[11px] text-v2-dim">
+                        <div className="mt-0.5 text-caption text-v2-dim">
                           {g.plan ? planText(g.plan, walletName(g.plan.accountId), format) : g.targetDate ? fill(t('goal.targetOn'), shortDayMonth(g.targetDate)) : t('goal.noTarget')}
                         </div>
                       </div>
@@ -434,7 +434,7 @@ export default function InicioPage() {
                       <div className="h-full" style={{ width: `${Math.round((c.amount / arr[0].amount) * 100)}%`, background: categoryColor(c.category) }} />
                     </div>
                   </div>
-                  <span className="font-numeric w-[34px] flex-none text-right text-[11px] font-extrabold text-v2-dim">{c.percentage}%</span>
+                  <span className="font-numeric w-[34px] flex-none text-right text-caption font-extrabold text-v2-dim">{c.percentage}%</span>
                 </div>
               ))
             )}
@@ -461,14 +461,14 @@ export default function InicioPage() {
                 return (
                   <RowButton key={ev.series.id} last={i === arr.length - 1} onClick={() => setOpenSeriesId(ev.series.id)}>
                     <div className="w-[42px] flex-none text-center">
-                      <div className={cn('text-[9.5px] font-bold tracking-[.06em]', ev.dueToday ? 'text-v2-warn' : 'text-v2-dim')}>
+                      <div className={cn('text-caption font-bold tracking-[.06em]', ev.dueToday ? 'text-v2-warn' : 'text-v2-dim')}>
                         {ev.dueToday ? t('inicio.upcoming.today') : MONTHS_SHORT[language][m - 1].toUpperCase()}
                       </div>
                       <div className="font-numeric text-[15px] font-extrabold">{String(d).padStart(2, '0')}</div>
                     </div>
                     <div className="min-w-0 flex-1 text-left">
                       <div className="truncate text-[12.5px] font-bold" title={ev.series.name}>{ev.series.name}</div>
-                      <div className="truncate text-[11px] text-v2-dim">
+                      <div className="truncate text-caption text-v2-dim">
                         {ev.dueToday ? t('inicio.upcoming.dueToday') : `${tCategory(ev.series.category)} · ${shortWallet(wallet?.name ?? '')}`}
                       </div>
                     </div>
@@ -477,11 +477,11 @@ export default function InicioPage() {
                         {`${ev.signed < 0 ? '−' : '+'}${formatIn(Math.abs(ev.signed), ev.series.currency)}`}
                       </Money>
                       {ev.series.currency !== principal && (
-                        <Money hidden={hidden} className="block whitespace-nowrap text-[10.5px] text-v2-dim">
+                        <Money hidden={hidden} className="block whitespace-nowrap text-caption text-v2-dim">
                           {`≈ ${formatApprox(Math.abs(ev.signed) * referenceRate(ev.series.currency, principal), principal)}`}
                         </Money>
                       )}
-                      <Money hidden={hidden} className="block whitespace-nowrap text-[10.5px] text-v2-dim">
+                      <Money hidden={hidden} className="block whitespace-nowrap text-caption text-v2-dim">
                         {fill(t('inicio.upcoming.balance'), format(ev.running))}
                       </Money>
                     </div>
@@ -530,11 +530,11 @@ function CardHead({ title, subtitle, link, onLink }: { title: string; subtitle?:
     <div className="flex items-baseline justify-between gap-3">
       <div className="min-w-0">
         <h2 className="truncate text-[14px] font-extrabold tracking-[-.01em]" title={title}>{title}</h2>
-        {subtitle && <div className="mt-0.5 text-[11.5px] text-v2-dim">{subtitle}</div>}
+        {subtitle && <div className="mt-0.5 text-caption text-v2-dim">{subtitle}</div>}
       </div>
       {link && (
         // Padded to a 24px-tall pointer target without moving the text.
-        <button type="button" onClick={onLink} className="-mx-2 -my-1.5 min-h-6 flex-none cursor-pointer whitespace-nowrap rounded-[8px] px-2 py-1.5 text-[11.5px] font-extrabold text-v2-accent2 hover:bg-v2-subtle">
+        <button type="button" onClick={onLink} className="-mx-2 -my-1.5 min-h-6 flex-none cursor-pointer whitespace-nowrap rounded-[8px] px-2 py-1.5 text-caption font-extrabold text-v2-accent2 hover:bg-v2-subtle">
           {link}
         </button>
       )}
@@ -544,8 +544,8 @@ function CardHead({ title, subtitle, link, onLink }: { title: string; subtitle?:
 
 function HeroStat({ label, value, color, hidden }: { label: string; value: string | null; color: string; hidden: boolean }) {
   return (
-    <div className="min-w-0 flex-1 rounded-[14px] bg-white/[.06] px-3.5 py-[11px] [container-type:inline-size]">
-      <div className="truncate text-[10.5px] text-[var(--hero-label)]">{label}</div>
+    <div className="min-w-0 flex-1 rounded-[14px] bg-[var(--hero-tile)] px-3.5 py-[11px] [container-type:inline-size]">
+      <div className="truncate text-caption text-[var(--hero-label)]">{label}</div>
       {value === null ? (
         <SkeletonBar className="mt-1.5 h-4 w-[60%]" dark />
       ) : (
@@ -573,13 +573,13 @@ function MonthBars({ months, language }: { months: MonthTotals[] | null; languag
               className="flex-1 rounded-[3px]"
               style={{
                 height: `${Math.max(4, Math.round((Math.abs(m.net) / max) * 83))}%`,
-                background: last ? 'var(--v2-accent3)' : `rgba(165,157,255,${(0.22 + i * 0.035).toFixed(2)})`,
+                background: last ? 'var(--hero-bar)' : 'var(--hero-bar-soft)',
               }}
             />
           )
         })}
       </div>
-      <div className="mt-2 flex gap-[5px] text-[10px] text-[var(--hero-label)]">
+      <div className="mt-2 flex gap-[5px] text-caption text-[var(--hero-label)]">
         {months.map((m) => (
           <span key={m.month} className="flex-1 text-center">
             {monthAbbr(m.month, language)}
@@ -628,7 +628,7 @@ function AlertCard({
       <GlyphMark paths={copy.glyph} color={copy.color} box={32} />
       <div className="min-w-0 flex-1">
         <div className="text-[12.5px] font-bold [overflow-wrap:anywhere]">{copy.title}</div>
-        <div className="mt-[3px] text-[11.5px] leading-[1.45] text-v2-dim">
+        <div className="mt-[3px] text-caption leading-[1.45] text-v2-dim">
           <MoneyText parts={copy.body} hidden={hidden} format={format} />
         </div>
         {onConfirm && onSkip && (
@@ -702,7 +702,7 @@ function LoansCard({ loans, wallets, hidden, onOpen }: { loans: Transaction[] | 
             <div className="truncate text-[12.5px] font-bold">
               {fill(t(next.loanKind === 'lent' ? 'alert.loanLent.title' : 'alert.loanBorrowed.title'), next.counterpartyName ?? t('loans.unknownPerson'))}
             </div>
-            <div className="text-[11px] text-v2-dim">
+            <div className="text-caption text-v2-dim">
               {fill(t('inicio.loans.due'), shortDate(next.dueDate!, language), shortWallet(wallets?.find((w) => w.id === next.accountId)?.name ?? ''))}
             </div>
           </div>
@@ -718,7 +718,7 @@ function LoansCard({ loans, wallets, hidden, onOpen }: { loans: Transaction[] | 
 function LoanBox({ label, value, color, hidden }: { label: string; value: string | null; color: string; hidden: boolean }) {
   return (
     <div className="min-w-0 rounded-[12px] border border-v2-line bg-v2-surface2 px-[13px] py-[11px] [container-type:inline-size]">
-      <div className="truncate text-[10.5px] text-v2-dim">{label}</div>
+      <div className="truncate text-caption text-v2-dim">{label}</div>
       {value === null ? (
         <SkeletonBar className="mt-1.5 h-4 w-[60%]" />
       ) : (
