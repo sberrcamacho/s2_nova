@@ -69,15 +69,15 @@ describe('Reportes', () => {
     expect(screen.getByText('8,4')).toBeInTheDocument()
     // A category up 50% or more against last month carries its rise.
     expect(screen.getByText('Agosto 2026 · mismas categorías que tus movimientos')).toBeInTheDocument()
-    expect(screen.getByText('Transporte').parentElement).toHaveTextContent('$95.500 · +82%')
-    expect(screen.getByText('Alimentación').parentElement).not.toHaveTextContent('+')
+    expect(screen.getByText('Transporte').parentElement).toHaveTextContent('$95.500 · ↑ 82%')
+    expect(screen.getByText('Alimentación').parentElement).not.toHaveTextContent('↑')
     expect(screen.getByText('Últimos 6 meses')).toBeInTheDocument()
 
     // "Subcategorías": leaves, and parent-only spending under the parent.
     await user.click(screen.getByRole('radio', { name: 'Subcategorías' }))
     expect(screen.getByText('Alimentación · Mercado')).toBeInTheDocument()
     expect(screen.getByText('Alimentación').parentElement).toHaveTextContent('$212.400')
-    expect(screen.getByText('Transporte').parentElement).not.toHaveTextContent('+82%')
+    expect(screen.getByText('Transporte').parentElement).not.toHaveTextContent('82%')
 
     await user.click(screen.getByRole('radio', { name: '3M' }))
     expect(await screen.findByText('Últimos 3 meses')).toBeInTheDocument()
@@ -101,6 +101,7 @@ describe('Reportes', () => {
     expect(within(lent).getByText('$420.000')).toBeInTheDocument()
     expect(lent).toHaveTextContent('1 persona · 1 saldado')
     expect(screen.getByText('Recibido').parentElement).toHaveTextContent('Sin deudas pendientes')
-    expect(screen.getByText('$16.147.300')).toBeInTheDocument()
+    // The total, plus the same figure in the history chart's table.
+    expect(screen.getAllByText('$16.147.300').length).toBeGreaterThan(0)
   })
 })

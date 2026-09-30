@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { BarChart, ChartLegend } from '@/components/v2/BarChart'
 import { CategoryMark } from '@/components/v2/CategoryMark'
 import { Money, MoneyText } from '@/components/v2/Money'
 import { RowSkeletons, SkeletonBar, SyncBanner } from '@/components/v2/Rows'
@@ -26,10 +27,6 @@ const TABS: { id: 'gastos' | 'ingresos' | 'flujo' | 'patrimonio'; labelKey: Tran
   { id: 'patrimonio', labelKey: 'rep.tab.netWorth' },
 ]
 const RANGES: ReportRange[] = [3, 6, 12]
-
-// The tallest bar fills ~74% of the plot, as in the mockup (its 4,42M top
-// month on a fixed 6M scale), leaving the same headroom above.
-const BAR_HEADROOM = 1.36
 
 // Patrimonio's wallet squares: each wallet type's mockup color at 0x29
 // alpha. The mockup's savings color is `var(--accent)29`, which is invalid
@@ -74,10 +71,11 @@ export default function ReportesPage() {
     <div className="flex flex-col gap-[18px] px-4 pb-10 pt-[26px] min-[760px]:px-7">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-[24px] font-extrabold tracking-[-.025em]">{t('rep.title')}</h1>
-          <div className="mt-[3px] text-[12.5px] text-v2-dim">{monthYear(report?.month ?? today.slice(0, 7), language)}</div>
+          <h1 className="text-headline font-bold">{t('rep.title')}</h1>
+          <div className="mt-0.5 text-body-sm text-ink-tertiary">{monthYear(report?.month ?? today.slice(0, 7), language)}</div>
         </div>
-        <div role="radiogroup" aria-label={t('rep.title')} className="flex gap-2">
+        {/* Segmented 3M / 6M / 12M (DESIGN-SYSTEM.md §6.5). */}
+        <div role="radiogroup" aria-label={t('rep.range')} className="flex h-10 gap-1 rounded-[12px] bg-surface-sunken p-1">
           {RANGES.map((r) => (
             <button
               key={r}
@@ -86,8 +84,8 @@ export default function ReportesPage() {
               aria-checked={range === r}
               onClick={() => setRange(r)}
               className={cn(
-                'cursor-pointer rounded-[9px] border px-[13px] py-[7px] text-caption font-bold',
-                range === r ? 'border-v2-accent bg-v2-accent text-white' : 'border-v2-line bg-v2-surface text-v2-dim',
+                'min-w-12 cursor-pointer rounded-[9px] px-3 text-label tabular-nums',
+                range === r ? 'border border-border bg-surface font-semibold text-ink shadow-[0_1px_2px_rgba(0,0,0,.08)]' : 'font-medium text-ink-secondary hover:text-ink',
               )}
             >
               {r}M
@@ -96,7 +94,7 @@ export default function ReportesPage() {
         </div>
       </div>
 
-      <div role="tablist" className="flex gap-1 overflow-x-auto border-b border-v2-line">
+      <div role="tablist" className="flex gap-1 overflow-x-auto border-b border-border">
         {TABS.map((x) => {
           const on = x.id === tab
           return (
@@ -107,8 +105,8 @@ export default function ReportesPage() {
               aria-selected={on}
               onClick={() => setParams({ tab: x.id }, { replace: true })}
               className={cn(
-                'mb-[-1px] flex-none cursor-pointer border-b-2 px-3.5 py-2.5 text-[12.5px]',
-                on ? 'border-v2-accent3 font-extrabold text-v2-text' : 'border-transparent font-semibold text-v2-dim',
+                'mb-[-1px] min-h-11 flex-none cursor-pointer whitespace-nowrap border-b-2 px-3.5 text-label',
+                on ? 'border-primary-border font-semibold text-ink' : 'border-transparent font-medium text-ink-secondary hover:text-ink',
               )}
             >
               {t(x.labelKey)}
@@ -128,7 +126,7 @@ export default function ReportesPage() {
 
 function Card({ children, className, style }: { children: ReactNode; className?: string; style?: CSSProperties }) {
   return (
-    <div className={cn('rounded-[16px] border border-v2-line bg-v2-surface p-5', className)} style={style}>
+    <div className={cn('min-w-0 rounded-[16px] border border-border bg-surface p-5', className)} style={style}>
       {children}
     </div>
   )
@@ -137,16 +135,16 @@ function Card({ children, className, style }: { children: ReactNode; className?:
 function CardTitle({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <div>
-      <div className="text-[14px] font-extrabold tracking-[-.01em]">{title}</div>
-      {subtitle && <div className="mt-0.5 text-caption text-v2-dim">{subtitle}</div>}
+      <h2 className="text-title font-semibold">{title}</h2>
+      {subtitle && <div className="mt-0.5 text-body-sm text-ink-tertiary">{subtitle}</div>}
     </div>
   )
 }
 
 function Kpi({ label, children, className, labelClass, style }: { label: string; children: ReactNode; className?: string; labelClass?: string; style?: CSSProperties }) {
   return (
-    <div className={cn('rounded-[16px] border border-v2-line bg-v2-surface', className)} style={style}>
-      <div className={cn('text-caption font-bold uppercase tracking-[.1em]', labelClass ?? 'text-v2-dim')}>{label}</div>
+    <div className={cn('min-w-0 rounded-[16px] border border-border bg-surface', className)} style={style}>
+      <div className={cn('truncate text-overline uppercase', labelClass ?? 'text-ink-secondary')}>{label}</div>
       {children}
     </div>
   )
@@ -157,16 +155,21 @@ function useRangeSubtitle(report: Report | null) {
   return fill(t('rep.lastMonths'), report?.range ?? 6)
 }
 
-function barCeiling(values: number[]): number {
-  return Math.max(1, ...values) * BAR_HEADROOM
-}
-
 function SpendingTab({ report }: { report: Report | null }) {
   const { t, language } = useTranslation()
   const { format } = useCurrency()
   const { hidden } = useHideAmounts()
   const subtitle = useRangeSubtitle(report)
-  const ceiling = report ? barCeiling(report.months.flatMap((m) => [m.income, m.expenses])) : 1
+  // Income and expenses in a fixed order, with their sign in the legend so
+  // the pair isn't told apart by color alone.
+  const flowSeries = [
+    { key: 'income', label: t('rep.income'), color: 'var(--color-positive)', sign: '+' },
+    { key: 'expense', label: t('rep.expenses'), color: 'var(--color-negative)', sign: '−' },
+  ]
+  const peak = report?.months.reduce<(typeof report.months)[number] | null>((p, m) => (p === null || m.expenses > p.expenses ? m : p), null)
+  const flowSummary = report
+    ? fill(t('rep.summary.flow'), subtitle, hidden ? t('inicio.amountHidden') : format(report.totals.income), hidden ? t('inicio.amountHidden') : format(report.totals.expenses), peak ? monthAbbr(peak.month, language) : '—')
+    : ''
   // "Categorías" (parents, with the month-over-month trend) or
   // "Subcategorías" (leaves; parent-only rows under the parent's name).
   const [level, setLevel] = useState<'parent' | 'sub'>('parent')
@@ -181,40 +184,30 @@ function SpendingTab({ report }: { report: Report | null }) {
     <>
       <div className="grid grid-cols-1 gap-[18px] min-[1100px]:grid-cols-[1.45fr_1fr]">
         <Card>
-          <div className="flex items-baseline justify-between gap-3">
+          <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
             <CardTitle title={t('rep.incomeVsExpenses')} subtitle={subtitle} />
-            <div className="flex gap-3 text-caption font-bold text-v2-muted">
-              <span className="flex items-center gap-[5px]">
-                <span className="h-2 w-2 rounded-[2px] bg-v2-pos" />
-                {t('rep.income')}
-              </span>
-              <span className="flex items-center gap-[5px]">
-                <span className="h-2 w-2 rounded-[2px] bg-v2-neg" />
-                {t('rep.expenses')}
-              </span>
-            </div>
+            <ChartLegend series={flowSeries} />
           </div>
-          <div className="mt-[22px] flex h-[236px] items-end gap-3.5 border-b border-v2-line pb-0.5">
-            {report?.months.map((m) => (
-              <div key={m.month} className="flex h-full flex-1 items-end justify-center gap-1">
-                <div className="w-[46%] max-w-[26px] rounded-t-[4px] bg-v2-pos transition-[height] duration-300" style={{ height: `${(m.income / ceiling) * 100}%` }} />
-                <div className="w-[46%] max-w-[26px] rounded-t-[4px] bg-v2-neg transition-[height] duration-300" style={{ height: `${(m.expenses / ceiling) * 100}%` }} />
-              </div>
-            ))}
-          </div>
-          <div className="mt-2 flex gap-3.5">
-            {report?.months.map((m) => (
-              <div key={m.month} className="flex-1 text-center text-caption font-semibold text-v2-dim">
-                {monthAbbr(m.month, language)}
-              </div>
-            ))}
+          <div className="mt-5">
+            {report === null ? (
+              <SkeletonBar className="h-[236px] w-full" />
+            ) : (
+              <BarChart
+                labels={report.months.map((m) => monthAbbr(m.month, language))}
+                series={flowSeries.map((x) => ({ ...x, values: report.months.map((m) => (x.key === 'income' ? m.income : m.expenses)) }))}
+                format={format}
+                hidden={hidden}
+                summary={flowSummary}
+                tableCaption={t('rep.incomeVsExpenses')}
+              />
+            )}
           </div>
         </Card>
 
         <Card>
           <div className="flex flex-wrap items-start justify-between gap-2.5">
             <CardTitle title={t('rep.whereMoneyWent')} subtitle={fill(t('rep.sameCategories'), monthYear(report?.month ?? todayISO().slice(0, 7), language))} />
-            <div role="radiogroup" aria-label={t('rep.whereMoneyWent')} className="flex gap-0.5 rounded-full border border-v2-line bg-v2-surface2 p-[3px]">
+            <div role="radiogroup" aria-label={t('rep.whereMoneyWent')} className="flex gap-0.5 rounded-full border border-border bg-v2-surface2 p-[3px]">
               {(['parent', 'sub'] as const).map((k) => (
                 <button
                   key={k}
@@ -222,7 +215,7 @@ function SpendingTab({ report }: { report: Report | null }) {
                   role="radio"
                   aria-checked={level === k}
                   onClick={() => setLevel(k)}
-                  className={cn('cursor-pointer rounded-full px-[11px] py-[5px] text-caption font-bold', level === k ? 'bg-v2-accent text-white' : 'text-v2-dim')}
+                  className={cn('cursor-pointer rounded-full px-[11px] py-[5px] text-caption font-bold', level === k ? 'bg-v2-accent text-white' : 'text-ink-tertiary')}
                 >
                   {t(k === 'parent' ? 'rep.level.parent' : 'rep.level.sub')}
                 </button>
@@ -233,23 +226,23 @@ function SpendingTab({ report }: { report: Report | null }) {
             {top === null ? (
               <RowSkeletons count={4} />
             ) : top.length === 0 ? (
-              <div className="text-[12.5px] text-v2-dim">{t('rep.noSpending')}</div>
+              <div className="text-body-sm text-ink-tertiary">{t('rep.noSpending')}</div>
             ) : (
               top.map((c) => (
                 <div key={c.category} className="flex items-center gap-2.5">
-                  <CategoryMark category={c.category} box={26} />
+                  <CategoryMark category={c.category} box={32} />
                   <div className="min-w-0 flex-1">
-                    <div className="mb-1.5 flex justify-between gap-2.5 text-[12.5px] font-bold">
-                      <span>{c.label}</span>
-                      <span className={cn('font-numeric', c.rising ? 'text-v2-neg' : 'text-v2-muted')}>
+                    <div className="mb-1.5 flex justify-between gap-2.5 text-label font-semibold">
+                      <span className="min-w-0 truncate" title={c.label}>{c.label}</span>
+                      <span className={cn('font-numeric flex-none whitespace-nowrap', c.rising ? 'text-negative' : 'text-ink-secondary')}>
                         <Money hidden={hidden} inline>
                           {format(c.amount)}
                         </Money>
-                        {c.rising && ` · +${c.change}%`}
+                        {c.rising && ` · ↑ ${c.change}%`}
                       </span>
                     </div>
-                    <div className="h-1.5 overflow-hidden rounded-[3px] bg-v2-line">
-                      <div className="h-full" style={{ width: `${Math.round((c.amount / top[0]!.amount) * 100)}%`, background: categoryColor(c.category) }} />
+                    <div className="h-2 overflow-hidden rounded-full bg-surface-sunken">
+                      <div className="h-full rounded-full" style={{ width: `${Math.round((c.amount / top[0]!.amount) * 100)}%`, background: categoryColor(c.category) }} />
                     </div>
                   </div>
                 </div>
@@ -283,7 +276,7 @@ function SpendingTab({ report }: { report: Report | null }) {
 
 function KpiValue({ report, numeric, children }: { report: Report | null; numeric?: boolean; children: ReactNode }) {
   if (!report) return <SkeletonBar className="mt-2.5 h-5 w-3/5" />
-  return <div className={cn('mt-1.5 text-[22px] font-extrabold tracking-[-.025em]', numeric && 'font-numeric')}>{children}</div>
+  return <div className={cn('mt-1 text-title font-semibold', numeric && 'font-numeric')}>{children}</div>
 }
 
 function IncomeTab({ report }: { report: Report | null }) {
@@ -291,7 +284,8 @@ function IncomeTab({ report }: { report: Report | null }) {
   const { format } = useCurrency()
   const { hidden } = useHideAmounts()
   const subtitle = useRangeSubtitle(report)
-  const ceiling = report ? barCeiling(report.months.flatMap((m) => [m.income, m.expenses])) : 1
+  const best = report?.months.reduce<(typeof report.months)[number] | null>((p, m) => (p === null || m.income > p.income ? m : p), null)
+  const incomeSummary = best ? fill(t('rep.summary.income'), monthAbbr(best.month, language), hidden ? t('inicio.amountHidden') : format(best.income)) : ''
   const sources = report?.incomeSources ?? null
   const salary = sources?.find((s) => s.category === 'inc.work.salary')
   const freelance = sources?.find((s) => s.category === 'inc.work.freelance')
@@ -304,7 +298,7 @@ function IncomeTab({ report }: { report: Report | null }) {
           {sources === null ? (
             <RowSkeletons count={3} />
           ) : sources.length === 0 ? (
-            <div className="text-[12.5px] text-v2-dim">{t('rep.noIncome')}</div>
+            <div className="text-body-sm text-ink-tertiary">{t('rep.noIncome')}</div>
           ) : (
             sources.map((s) => (
               <div key={`${s.category}|${s.merchant ?? ''}`}>
@@ -314,7 +308,7 @@ function IncomeTab({ report }: { report: Report | null }) {
                     <Money hidden={hidden} inline>
                       {format(s.amount)}
                     </Money>{' '}
-                    <span className="font-semibold text-v2-dim">{s.percentage}%</span>
+                    <span className="font-semibold text-ink-tertiary">{s.percentage}%</span>
                   </span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-[4px] bg-v2-line">
@@ -324,7 +318,7 @@ function IncomeTab({ report }: { report: Report | null }) {
                     // Trabajo in its color at 65%, anything else in its color.
                     style={{
                       width: `${s.percentage}%`,
-                      background: s.category === 'inc.work.salary' ? 'var(--v2-pos)' : categoryColor(s.category),
+                      background: s.category === 'inc.work.salary' ? 'var(--color-positive)' : categoryColor(s.category),
                       opacity: s.category !== 'inc.work.salary' && s.category.startsWith('inc.work') ? 0.65 : 1,
                     }}
                   />
@@ -334,7 +328,7 @@ function IncomeTab({ report }: { report: Report | null }) {
           )}
         </div>
         {salary && freelance && report && (
-          <div className="mt-[22px] border-t border-v2-subtle pt-3.5 text-caption leading-[1.6] text-v2-dim">
+          <div className="mt-[22px] border-t border-divider pt-3.5 text-caption leading-[1.6] text-ink-tertiary">
             <MoneyText
               parts={[{ template: t('rep.freelanceNote'), args: [{ amount: freelance.monthlyMin }, { amount: freelance.monthlyMax }, t(`rep.months.${report.range}` as TranslationKey)] }]}
               hidden={hidden}
@@ -346,22 +340,21 @@ function IncomeTab({ report }: { report: Report | null }) {
 
       <Card>
         <CardTitle title={t('rep.incomeByMonth')} subtitle={t('rep.incomeByMonthSub')} />
-        <div className="mt-[22px] flex h-[212px] items-end gap-3.5 border-b border-v2-line">
-          {report?.months.map((m, i, arr) => (
-            <div key={m.month} className="flex h-full flex-1 items-end">
-              <div
-                className="w-full rounded-t-[4px] transition-[height] duration-300"
-                style={{ height: `${(m.income / ceiling) * 100}%`, background: i === arr.length - 1 ? 'var(--v2-pos)' : 'color-mix(in srgb, var(--v2-pos) 28%, transparent)' }}
-              />
-            </div>
-          ))}
-        </div>
-        <div className="mt-2 flex gap-3.5">
-          {report?.months.map((m) => (
-            <div key={m.month} className="flex-1 text-center text-caption font-semibold text-v2-dim">
-              {monthAbbr(m.month, language)}
-            </div>
-          ))}
+        <div className="mt-5">
+          {report === null ? (
+            <SkeletonBar className="h-[212px] w-full" />
+          ) : (
+            <BarChart
+              labels={report.months.map((m) => monthAbbr(m.month, language))}
+              series={[{ key: 'income', label: t('rep.income'), color: 'var(--color-positive)', values: report.months.map((m) => m.income) }]}
+              format={format}
+              hidden={hidden}
+              height={200}
+              highlightLast
+              summary={incomeSummary}
+              tableCaption={t('rep.incomeByMonth')}
+            />
+          )}
         </div>
       </Card>
     </div>
@@ -390,7 +383,7 @@ function CashFlowTab({ report, wallets, series }: { report: Report | null; walle
       <div className="grid grid-cols-1 gap-3.5 min-[760px]:grid-cols-3">
         <Kpi label={t('rep.inflows')} className="px-5 py-[18px]">
           {report ? (
-            <Money hidden={hidden} className="mt-1.5 block text-[24px] font-extrabold tracking-[-.025em] text-v2-pos">
+            <Money hidden={hidden} className="mt-1.5 block text-[24px] font-extrabold tracking-[-.025em] text-positive">
               {format(month?.income ?? 0)}
             </Money>
           ) : (
@@ -399,7 +392,7 @@ function CashFlowTab({ report, wallets, series }: { report: Report | null; walle
         </Kpi>
         <Kpi label={t('rep.outflows')} className="px-5 py-[18px]">
           {report ? (
-            <Money hidden={hidden} className="mt-1.5 block text-[24px] font-extrabold tracking-[-.025em] text-v2-neg">
+            <Money hidden={hidden} className="mt-1.5 block text-[24px] font-extrabold tracking-[-.025em] text-negative">
               {format(month?.expenses ?? 0)}
             </Money>
           ) : (
@@ -428,13 +421,13 @@ function CashFlowTab({ report, wallets, series }: { report: Report | null; walle
           {events === null ? (
             <RowSkeletons count={4} />
           ) : events.length === 0 ? (
-            <div className="py-3 text-[12.5px] text-v2-dim">{t('rep.upcomingEmpty')}</div>
+            <div className="py-3 text-body-sm text-ink-tertiary">{t('rep.upcomingEmpty')}</div>
           ) : (
             events.map((e) => {
               const [, m, d] = e.date.split('-').map(Number)
               return (
-                <div key={e.series.id} className="flex items-center gap-4 border-b border-v2-subtle py-[13px]">
-                  <span className="w-16 flex-none text-caption font-bold tracking-[.08em] text-v2-dim">
+                <div key={e.series.id} className="flex items-center gap-4 border-b border-divider py-[13px]">
+                  <span className="w-16 flex-none text-caption font-bold tracking-[.08em] text-ink-tertiary">
                     {e.dueToday ? t('rep.today') : `${String(d).padStart(2, '0')} ${MONTHS_SHORT[language][m! - 1]!.toUpperCase()}`}
                   </span>
                   <span className="min-w-0 flex-1 truncate text-[13px] font-bold" title={e.series.name}>
@@ -444,19 +437,19 @@ function CashFlowTab({ report, wallets, series }: { report: Report | null; walle
                       isn't the principal), as in Inicio's Próximos 14 días. Below 520px the
                       balance moves under it instead of taking its own column. */}
                   <div className="min-w-[110px] flex-none text-right">
-                    <Money hidden={hidden} className={cn('block whitespace-nowrap text-[13px] font-extrabold', e.signed < 0 ? 'text-v2-neg' : 'text-v2-pos')}>
+                    <Money hidden={hidden} className={cn('block whitespace-nowrap text-[13px] font-extrabold', e.signed < 0 ? 'text-negative' : 'text-positive')}>
                       {`${e.signed < 0 ? '−' : '+'}${formatIn(Math.abs(e.signed), e.series.currency)}`}
                     </Money>
                     {e.series.currency !== principal && (
-                      <Money hidden={hidden} className="block whitespace-nowrap text-caption text-v2-dim">
+                      <Money hidden={hidden} className="block whitespace-nowrap text-caption text-ink-tertiary">
                         {`≈ ${formatApprox(Math.abs(e.signed) * referenceRate(e.series.currency, principal), principal)}`}
                       </Money>
                     )}
-                    <Money hidden={hidden} className="block whitespace-nowrap text-caption text-v2-dim min-[520px]:hidden">
+                    <Money hidden={hidden} className="block whitespace-nowrap text-caption text-ink-tertiary min-[520px]:hidden">
                       {fill(t('inicio.upcoming.balance'), format(e.running))}
                     </Money>
                   </div>
-                  <Money hidden={hidden} className="w-[120px] flex-none whitespace-nowrap text-right text-[12.5px] text-v2-muted max-[519px]:hidden">
+                  <Money hidden={hidden} className="w-[120px] flex-none whitespace-nowrap text-right text-[12.5px] text-ink-secondary max-[519px]:hidden">
                     {format(e.running)}
                   </Money>
                 </div>
@@ -465,13 +458,13 @@ function CashFlowTab({ report, wallets, series }: { report: Report | null; walle
           )}
         </div>
         {lowest && (
-          <div className="mt-3.5 text-caption text-v2-dim">
+          <div className="mt-3.5 text-caption text-ink-tertiary">
             {/* The mockup sets the lowest balance in bold warning color. */}
             {t(payday >= 0 ? 'rep.lowestBeforeSalary' : 'rep.lowest')
               .split(/(\{\d\})/)
               .map((chunk, i) =>
                 chunk === '{0}' ? (
-                  <Money key={i} hidden={hidden} className="font-bold text-v2-warn">
+                  <Money key={i} hidden={hidden} className="font-bold text-warning">
                     {format(lowest.running)}
                   </Money>
                 ) : chunk === '{1}' ? (
@@ -492,11 +485,10 @@ function NetWorthTab({ report, wallets }: { report: Report | null; wallets: Wall
   const { format, formatIn } = useCurrency()
   const { hidden } = useHideAmounts()
   const history = report?.netWorth.history ?? []
-  const peak = Math.max(1, ...history.map((h) => h.balance))
 
   const side = (label: string, data: Report['netWorth']['lent'] | undefined, tone: string, emptyKey: TranslationKey) => (
-    <div className="rounded-[14px] border border-v2-line bg-v2-surface2 p-4">
-      <div className="text-caption font-bold uppercase tracking-[.1em] text-v2-dim">{label}</div>
+    <div className="rounded-[14px] border border-border bg-v2-surface2 p-4">
+      <div className="text-caption font-bold uppercase tracking-[.1em] text-ink-tertiary">{label}</div>
       {!data ? (
         <SkeletonBar className="mt-2.5 h-5 w-3/5" />
       ) : data.outstanding > 0 ? (
@@ -504,7 +496,7 @@ function NetWorthTab({ report, wallets }: { report: Report | null; wallets: Wall
           <Money hidden={hidden} className="mt-1.5 block text-[20px] font-extrabold" style={{ color: tone }}>
             {format(data.outstanding)}
           </Money>
-          <div className="mt-1 text-caption text-v2-dim">
+          <div className="mt-1 text-caption text-ink-tertiary">
             {[
               data.people === 1 ? t('rep.people.one') : fill(t('rep.people.many'), data.people),
               data.settled > 0 ? (data.settled === 1 ? t('rep.settled.one') : fill(t('rep.settled.many'), data.settled)) : null,
@@ -515,8 +507,8 @@ function NetWorthTab({ report, wallets }: { report: Report | null; wallets: Wall
         </>
       ) : (
         <>
-          <div className="font-numeric mt-1.5 text-[20px] font-extrabold text-v2-dim">—</div>
-          <div className="mt-1 text-caption text-v2-dim">{t(emptyKey)}</div>
+          <div className="font-numeric mt-1.5 text-[20px] font-extrabold text-ink-tertiary">—</div>
+          <div className="mt-1 text-caption text-ink-tertiary">{t(emptyKey)}</div>
         </>
       )}
     </div>
@@ -531,11 +523,11 @@ function NetWorthTab({ report, wallets }: { report: Report | null; wallets: Wall
             <RowSkeletons count={3} box={30} />
           ) : (
             wallets.map((w) => (
-              <div key={w.id} className="flex items-center gap-3.5 border-b border-v2-subtle py-[13px]">
+              <div key={w.id} className="flex items-center gap-3.5 border-b border-divider py-[13px]">
                 <span className="h-[30px] w-[30px] flex-none rounded-[10px]" style={{ background: walletSquare(w.accountType) }} />
                 <div className="min-w-0 flex-1">
                   <div className="text-[13px] font-bold">{w.name}</div>
-                  <div className="text-caption text-v2-dim">{t(`inicio.walletKind.${walletKind(w.accountType)}` as TranslationKey)}</div>
+                  <div className="text-caption text-ink-tertiary">{t(`inicio.walletKind.${walletKind(w.accountType)}` as TranslationKey)}</div>
                 </div>
                 <Money hidden={hidden} className="text-[14px] font-extrabold">
                   {formatIn(w.currentBalance, w.currency)}
@@ -544,8 +536,8 @@ function NetWorthTab({ report, wallets }: { report: Report | null; wallets: Wall
             ))
           )}
         </div>
-        <div className="mt-4 flex items-baseline justify-between border-t border-v2-line pt-3.5">
-          <span className="text-[12.5px] font-bold text-v2-muted">{t('rep.netWorth')}</span>
+        <div className="mt-4 flex items-baseline justify-between border-t border-border pt-3.5">
+          <span className="text-[12.5px] font-bold text-ink-secondary">{t('rep.netWorth')}</span>
           {report ? (
             <Money hidden={hidden} className="text-[22px] font-extrabold tracking-[-.025em]">
               {format(report.netWorth.wallets)}
@@ -559,23 +551,25 @@ function NetWorthTab({ report, wallets }: { report: Report | null; wallets: Wall
       <Card>
         <CardTitle title={t('rep.loans')} subtitle={t('rep.loansSub')} />
         <div className="mt-[18px] grid grid-cols-1 gap-3.5 min-[520px]:grid-cols-2">
-          {side(t('rep.lent'), report?.netWorth.lent, 'var(--v2-pos)', 'rep.noLent')}
-          {side(t('rep.borrowed'), report?.netWorth.borrowed, 'var(--v2-neg)', 'rep.noBorrowed')}
+          {side(t('rep.lent'), report?.netWorth.lent, 'var(--color-positive)', 'rep.noLent')}
+          {side(t('rep.borrowed'), report?.netWorth.borrowed, 'var(--color-negative)', 'rep.noBorrowed')}
         </div>
-        <div className="mt-6 text-caption font-bold uppercase tracking-[.1em] text-v2-dim">{t('rep.lastSixMonths')}</div>
-        <div className="mt-3.5 flex h-[120px] items-end gap-2.5">
-          {history.map((h, i, arr) => {
-            const pct = Math.max(0, (h.balance / peak) * 100)
-            // Mockup: the current month in accent3, months at 80%+ of the peak
-            // a little stronger than the rest.
-            const background = i === arr.length - 1 ? 'var(--chart-primary)' : pct >= 80 ? 'color-mix(in srgb, var(--chart-primary) 40%, transparent)' : 'var(--chart-primary-soft)'
-            return <div key={h.month} className="flex-1 rounded-t-[4px]" style={{ height: `${pct}%`, background }} />
-          })}
-        </div>
-        <div className="mt-2 flex justify-between text-caption text-v2-dim">
-          {history.map((h) => (
-            <span key={h.month}>{monthAbbr(h.month, language)}</span>
-          ))}
+        <div className="mt-6 text-caption font-bold uppercase tracking-[.1em] text-ink-tertiary">{t('rep.lastSixMonths')}</div>
+        <div className="mt-3.5">
+          {report === null ? (
+            <SkeletonBar className="h-[140px] w-full" />
+          ) : (
+            <BarChart
+              labels={history.map((h) => monthAbbr(h.month, language))}
+              series={[{ key: 'netWorth', label: t('rep.netWorth'), color: 'var(--chart-primary)', values: history.map((h) => Math.max(0, h.balance)) }]}
+              format={format}
+              hidden={hidden}
+              height={140}
+              highlightLast
+              summary={fill(t('rep.summary.netWorth'), hidden ? t('inicio.amountHidden') : format(report.netWorth.wallets))}
+              tableCaption={t('rep.lastSixMonths')}
+            />
+          )}
         </div>
       </Card>
     </div>

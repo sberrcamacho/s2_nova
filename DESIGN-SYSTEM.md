@@ -12,7 +12,7 @@ Tracker", stack guidelines for `jetpack-compose` and `html-tailwind`, chart
 and UX rule sets. The skill's generic fintech palette (gold/amber) was **not**
 used: the brand palette is fixed by the S2 Nova logo.
 
-**Status:** v1.3 · 2026-09-30 · F0–F3 implemented on both clients (fixes, brand tokens, type roles and the 12 floor, bento Inicio, Nuevo movimiento); F4 pending.
+**Status:** v1.4 · 2026-09-30 · F0–F3 implemented on both clients (fixes, brand tokens, type roles and the 12 floor, bento Inicio, Nuevo movimiento); F4 in progress (Reportes done; the remaining screens pending).
 
 ---
 
@@ -173,6 +173,12 @@ On the inverted toast the action uses the opposite theme's `link`
   - a one-sentence text summary for screen readers;
   - a table alternative on Web;
   - an empty state and a skeleton while loading.
+- **As built (F4):** Web's `components/v2/BarChart.tsx` (value axis with
+  compact units such as "$6 M" / "$850 mil", a "nice" top of 1–8 × 10ⁿ,
+  `divider` gridlines, each month a focusable button with a tooltip, a
+  screen-reader summary and a "Ver como tabla" table) is used by every
+  Reportes chart; Android's `BarsCard` draws the same axis and gridlines
+  and shows the tapped month in a readout above the plot.
 
 ---
 
