@@ -28,7 +28,7 @@ describe('English', () => {
     renderApp(<NewTransactionPanel onClose={() => undefined} />)
     expect(await screen.findByRole('dialog', { name: 'New transaction' })).toBeInTheDocument()
     expect(screen.getByRole('radio', { name: 'Expense' })).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('Title')).toBeInTheDocument()
+    expect(screen.getByLabelText('Title')).toBeInTheDocument()
     expect(screen.getByText('Save transaction')).toBeInTheDocument()
     screen.getByText('Pick a category').click()
     expect(await screen.findByText('What did you spend on?')).toBeInTheDocument()

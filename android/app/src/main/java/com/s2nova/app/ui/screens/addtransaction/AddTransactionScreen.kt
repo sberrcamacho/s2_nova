@@ -1,6 +1,17 @@
 package com.s2nova.app.ui.screens.addtransaction
 
 import android.content.Context
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.semantics.stateDescription
+import com.s2nova.app.ui.theme.NovaType
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -403,12 +414,18 @@ fun AddTransactionScreen(
         }
     }
 
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    // Progressive disclosure (DESIGN-SYSTEM.md §5.3): type, amount,
+    // category, wallet, the budget line and the title up front; everything
+    // optional behind "Más opciones", which starts open when an option is
+    // already set (editing). Guardar stays fixed at the bottom.
+    var moreOpen by remember { mutableStateOf(s.whenOn || s.repeat != null || s.attach != null || s.note.isNotBlank() || s.from.isNotBlank() || s.customBudgetId != null || s.loan || s.goalId != null) }
+
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).imePadding()) {
         Row(
-            // 48 dp back target; the 13 dp start keeps the arrow where it was.
-            Modifier.padding(start = 13.dp, end = 18.dp, top = 5.dp, bottom = 9.dp),
+            // 48 dp back target.
+            Modifier.padding(start = 4.dp, end = 16.dp, top = 4.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             val backLabel = tr(StringKey.COMMON_BACK)
             Box(
@@ -416,19 +433,21 @@ fun AddTransactionScreen(
                     .semantics { contentDescription = backLabel },
                 contentAlignment = Alignment.Center,
             ) {
-                V2Icon(V2Icons.back, MaterialTheme.colorScheme.onSurfaceVariant, 22.dp)
+                V2Icon(V2Icons.back, MaterialTheme.colorScheme.onSurfaceVariant, 24.dp)
             }
             Text(
                 tr(if (editSeriesId != null) StringKey.NM_EDIT_SERIES else if (editTransactionId != null) StringKey.NM_EDIT else StringKey.NM_TITLE),
-                fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp, color = MaterialTheme.colorScheme.onBackground,
+                style = NovaType.title, color = MaterialTheme.colorScheme.onBackground,
                 maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
             )
         }
         Column(
-            Modifier.weight(1f).imePadding().verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, bottom = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp),
+            Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Hero(s, cur, wcur, rate, value, wallet.name, typeLocked = s.editing)
+            TypeSegmented(s, typeLocked = s.editing)
+            AmountHero(s, cur, wcur, rate, value, wallet.name)
+            CategoryRow(s)
 
             Column {
                 FieldLabel(tr(if (s.isIncome) StringKey.NM_WALLET_IN else if (s.isTransfer) StringKey.NM_WALLET_FROM else StringKey.NM_WALLET))
@@ -460,71 +479,57 @@ fun AddTransactionScreen(
                 val label = b.name ?: repo.name(b.category)
                 Row(
                     Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surface)
-                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp)).padding(horizontal = 14.dp, vertical = 11.dp),
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp)).padding(horizontal = 16.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    if (b.kind == BudgetKind.CUSTOM) PlanMark(b.icon, 34.dp) else CatMark(b.category, 34.dp)
+                    if (b.kind == BudgetKind.CUSTOM) PlanMark(b.icon, 40.dp) else CatMark(b.category, 40.dp)
                     Column(Modifier.weight(1f)) {
                         val pickedLabel = pickedBudget?.let { it.budget.name ?: "" }
-                        Text(if (autoBudget != null && pickedBudget != null) tr(StringKey.NM_BUDGET_ADDS_TWO, label, pickedLabel) else tr(StringKey.NM_BUDGET_ADDS, label), fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                        Row(verticalAlignment = Alignment.Top) {
+                            Text(
+                                if (autoBudget != null && pickedBudget != null) tr(StringKey.NM_BUDGET_ADDS_TWO, label, pickedLabel) else tr(StringKey.NM_BUDGET_ADDS, label),
+                                style = NovaType.label, color = MaterialTheme.colorScheme.onBackground, maxLines = 2, overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f).padding(top = 2.dp),
+                            )
+                            Row(
+                                Modifier.padding(start = 8.dp).clip(RoundedCornerShape(999.dp)).background(bg).padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                // The state icon, so the tone isn't carried by color alone.
+                                V2Icon(if (n >= 90) V2Icons.alertCircle else if (n >= 65) V2Icons.warn else V2Icons.check, tone, 14.dp)
+                                Text("$n%", style = NovaType.label.copy(fontFeatureSettings = TNUM), color = tone, maxLines = 1, softWrap = false)
+                            }
+                        }
                         Text(
                             tr(if (autoBudget != null) StringKey.NM_BUDGET_BY_CATEGORY else StringKey.NM_BUDGET_CUSTOM, formatMoney(lineBudget.spent + valP, principal), formatMoney(b.limit, principal)) +
                                 (if (s.future) tr(StringKey.NM_BUDGET_WHEN_RECORDED) else if (value > 0) tr(StringKey.NM_BUDGET_WITH_THIS) else ""),
-                            fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM),
+                            style = NovaType.bodySm.copy(fontFeatureSettings = TNUM), color = colors.textDim, modifier = Modifier.padding(top = 2.dp),
                         )
                     }
-                    Text("$n%", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = tone, maxLines = 1, softWrap = false, modifier = Modifier.clip(RoundedCornerShape(999.dp)).background(bg).padding(horizontal = 8.dp, vertical = 3.dp), style = TextStyle(fontFeatureSettings = TNUM))
                 }
             }
 
-            InputBox(height = 50.dp) {
-                V2Icon(V2Icons.title, colors.textDim, 16.dp)
-                BareField(s.title, { s.title = it.take(60) }, tr(StringKey.NM_TITLE_PH))
-            }
-            if (!s.seriesMode) {
-                InputBox(height = 50.dp) {
-                    V2Icon(V2Icons.note, colors.textDim, 16.dp)
-                    BareField(s.note, { s.note = it.take(500) }, tr(StringKey.NM_NOTE_PH), fontWeight = FontWeight.SemiBold)
+            Column {
+                FieldLabel(tr(StringKey.NM_TITLE_PH))
+                InputBox(height = 52.dp) {
+                    V2Icon(V2Icons.title, colors.textDim, 20.dp)
+                    BareField(s.title, { s.title = it.take(60) }, tr(StringKey.NM_TITLE_EXAMPLE))
                 }
             }
 
-            OptionRow(s, pickedBudget?.budget?.name, goals.isNotEmpty())
+            MoreOptions(s, open = moreOpen, onToggle = { moreOpen = !moreOpen }, pickedBudgetLabel = pickedBudget?.budget?.name, goalName = goals.firstOrNull { it.id == s.goalId }?.name)
 
-            s.attach?.let { a ->
-                Row(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surface)
-                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(14.dp)).padding(horizontal = 12.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Box(Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)).background(colors.sheetSurface), contentAlignment = Alignment.Center) {
-                        V2Icon(if (a.isPhoto) V2Icons.image else V2Icons.file, colors.accentText, 18.dp)
-                    }
-                    Column(Modifier.weight(1f)) {
-                        Text(a.name, fontSize = 12.5.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onBackground)
-                        Text(tr(if (a.isPhoto) StringKey.NM_PHOTO else StringKey.NM_DOCUMENT) + " · " + a.sizeLabel, fontSize = 12.sp, color = colors.textDim)
-                    }
-                    val removeLabel = tr(StringKey.COMMON_DELETE) + " " + a.name
-                    Box(
-                        Modifier.size(40.dp).clip(CircleShape).clickable(role = Role.Button) { s.attach = null }
-                            .semantics { contentDescription = removeLabel },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        V2Icon(V2Icons.close, colors.textDim, 16.dp)
-                    }
-                }
+            if (editSeriesId != null) {
+                DraftSheetDeleteRow(label = t(StringKey.RECURRING_DELETE), onClick = { deleting = true })
             }
-            s.repeat?.let { r ->
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    V2Icon(V2Icons.repeat, colors.textDim, 13.dp)
-                    Text(
-                        repeatSummary(r, s.date) + " · " + tr(if (r.auto) StringKey.NM_AUTOMATIC else StringKey.NM_WITH_CONFIRMATION),
-                        fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, style = TextStyle(fontFeatureSettings = TNUM),
-                    )
-                }
-            }
-
+        }
+        // Guardar, fixed above the gesture bar.
+        Box(
+            Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background)
+                .navigationBarsPadding().padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 12.dp),
+        ) {
             V2Button(
                 label = tr(if (s.seriesMode) StringKey.NM_SAVE_SERIES else if (s.future) StringKey.NM_SAVE_SCHEDULED else if (s.repeat != null) StringKey.NM_SAVE_REPEAT else StringKey.NM_SAVE),
                 enabled = s.valid && !s.saving,
@@ -533,9 +538,6 @@ fun AddTransactionScreen(
                 fontSize = 14.sp,
                 glow = true,
             )
-            if (editSeriesId != null) {
-                DraftSheetDeleteRow(label = t(StringKey.RECURRING_DELETE), onClick = { deleting = true })
-            }
         }
     }
 
@@ -577,134 +579,230 @@ fun AddTransactionScreen(
     )
 }
 
+// Segmented control (DESIGN-SYSTEM.md §6.5): a `surface-sunken` track; the
+// selected segment is `surface` with weight 600. 44 dp tall, tab semantics.
 @Composable
-private fun Hero(s: NmState, cur: String, wcur: String, rate: Double, value: Double, walletName: String, typeLocked: Boolean = false) {
+private fun TypeSegmented(s: NmState, typeLocked: Boolean) {
     val colors = NovaColors.current
-    val white = Color.White
-    val repo = AppContainer.categoryRepository
-    Column(
-        Modifier.fillMaxWidth().heroSurface(RoundedCornerShape(22.dp))
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+    Row(
+        Modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(14.dp)).background(colors.surfaceSunken).padding(4.dp).selectableGroup(),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(999.dp)).background(white.copy(alpha = 0.08f)).padding(4.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            // Equal thirds, unless the text is scaled up: then each segment is
-            // sized by its label so "Transferencia" isn't cut off.
-            val bigText = androidx.compose.ui.platform.LocalDensity.current.fontScale > 1.15f
-            listOf(TransactionType.EXPENSE to tr(StringKey.NM_TYPE_EXPENSE), TransactionType.INCOME to tr(StringKey.NM_TYPE_INCOME), TransactionType.TRANSFER to tr(StringKey.NM_TYPE_TRANSFER)).forEach { (t, label) ->
-                val on = s.type == t
-                Box(
-                    // A movement's type is fixed once saved.
-                    Modifier.weight(if (bigText) label.length.toFloat() + 4f else 1f).clip(RoundedCornerShape(999.dp)).background(if (on) white else Color.Transparent)
-                        .alpha(if (typeLocked && !on) 0.5f else 1f).noRippleClick { if (!typeLocked) s.switchType(t) }.padding(vertical = 10.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(label, fontSize = 12.sp, fontWeight = if (on) FontWeight.ExtraBold else FontWeight.Medium, color = if (on) BrandColors.indigo else white.copy(alpha = 0.85f), maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 4.dp))
-                }
-            }
-        }
-        // CATEGORÍA row
-        val catOpen = s.sheet == NmSheet.CATEGORY || s.sheet == NmSheet.SUB
-        Row(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(white.copy(alpha = 0.05f))
-                .border(if (catOpen) 1.5.dp else 1.dp, if (catOpen) white else white.copy(alpha = 0.18f), RoundedCornerShape(16.dp))
-                .noRippleClick { if (!s.isTransfer) s.sheet = NmSheet.CATEGORY }.padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            val picked = s.catPicked || s.isTransfer
+        // Equal thirds, unless the text is scaled up: then each segment is
+        // sized by its label so "Transferencia" isn't cut off.
+        val bigText = androidx.compose.ui.platform.LocalDensity.current.fontScale > 1.15f
+        listOf(TransactionType.EXPENSE to tr(StringKey.NM_TYPE_EXPENSE), TransactionType.INCOME to tr(StringKey.NM_TYPE_INCOME), TransactionType.TRANSFER to tr(StringKey.NM_TYPE_TRANSFER)).forEach { (t, label) ->
+            val on = s.type == t
             Box(
-                Modifier.size(44.dp).clip(CircleShape).background(if (picked) white.copy(alpha = 0.14f) else Color.Transparent)
-                    .then(if (picked) Modifier else Modifier.drawBehind {
-                        drawCircle(white.copy(alpha = 0.45f), radius = size.minDimension / 2 - 0.75.dp.toPx(), style = Stroke(1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 3.dp.toPx()))))
-                    }).alpha(if (picked) 1f else 0.55f),
+                Modifier.weight(if (bigText) label.length.toFloat() + 4f else 1f).fillMaxHeight()
+                    .then(if (on) Modifier.shadow(2.dp, RoundedCornerShape(10.dp)) else Modifier)
+                    .clip(RoundedCornerShape(10.dp)).background(if (on) MaterialTheme.colorScheme.surface else Color.Transparent)
+                    // The border keeps the selected segment visible in dark
+                    // theme, where surface and the track are close.
+                    .then(if (on) Modifier.border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(10.dp)) else Modifier)
+                    // A movement's type is fixed once saved.
+                    .alpha(if (typeLocked && !on) 0.38f else 1f)
+                    .selectable(selected = on, enabled = !typeLocked, role = Role.Tab) { s.switchType(t) },
                 contentAlignment = Alignment.Center,
             ) {
-                if (s.isTransfer) {
-                    V2Icon(listOf("M4 8h14l-3-3", "M20 16H6l3 3"), white, 18.dp, 2.25f)
-                } else {
-                    V2Icon(repo.glyph(s.leaf), Color(repo.color(s.category)), 18.dp, 2.25f)
-                }
-            }
-            Column(Modifier.weight(1f)) {
-                Text(tr(StringKey.NM_CATEGORY), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp, color = white.copy(alpha = 0.85f))
                 Text(
-                    if (s.isTransfer) tr(StringKey.NM_TRANSFER_BETWEEN) else if (s.catPicked) repo.label(s.leaf) else tr(StringKey.NM_PICK_CATEGORY),
-                    fontSize = 14.5.sp, fontWeight = FontWeight.ExtraBold, color = white, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 3.dp),
+                    label, style = NovaType.label.copy(fontWeight = if (on) FontWeight.SemiBold else FontWeight.Medium),
+                    color = if (on) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 4.dp),
                 )
-            }
-            V2Icon(V2Icons.chevronRight, white.copy(alpha = 0.85f), 18.dp)
-        }
-        // MONTO row
-        val padOpen = s.sheet == NmSheet.PAD
-        Row(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(white.copy(alpha = 0.05f))
-                .border(if (padOpen) 1.5.dp else 1.dp, if (padOpen) white else white.copy(alpha = 0.18f), RoundedCornerShape(16.dp))
-                .noRippleClick { s.sheet = NmSheet.PAD }.padding(start = 14.dp, end = 12.dp, top = 10.dp, bottom = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text(tr(StringKey.NM_AMOUNT).uppercase(), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp, color = white.copy(alpha = 0.85f))
-                Text(
-                    formatMoney(value, cur), fontSize = 30.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.9).sp,
-                    color = if (value > 0) white else white.copy(alpha = 0.85f), modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM), maxLines = 1,
-                )
-            }
-            Row(
-                Modifier.height(34.dp).clip(RoundedCornerShape(999.dp)).background(white.copy(alpha = 0.14f)).noRippleClick { if (!s.isTransfer) s.sheet = NmSheet.CURRENCY }.padding(horizontal = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(5.dp),
-            ) {
-                Text(cur, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = white, maxLines = 1, softWrap = false)
-                V2Icon(V2Icons.chevronDown, white.copy(alpha = 0.85f), 14.dp, 2.4f)
-            }
-        }
-        if (cur != wcur) {
-            Text(
-                if (value > 0) tr(StringKey.NM_FX_APPROX, formatMoney(value * rate, wcur), wcur, shortWallet(walletName), cur, formatMoney(rate, wcur))
-                else tr(StringKey.NM_FX_LATER, wcur, shortWallet(walletName)),
-                fontSize = 12.sp, color = white.copy(alpha = 0.85f), modifier = Modifier.padding(horizontal = 4.dp), style = TextStyle(fontFeatureSettings = TNUM),
-            )
-        }
-        if (s.future) {
-            Row(
-                Modifier.clip(RoundedCornerShape(999.dp)).background(colors.heroTile).padding(horizontal = 11.dp, vertical = 5.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(7.dp),
-            ) {
-                V2Icon(V2Icons.cal, white, 13.dp)
-                Text(tr(StringKey.NM_SCHEDULED_CHIP) + " · ${fmtDate(s.date.toString())}" + if (s.seriesMode) "" else " · ${s.time}", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = white, maxLines = 1)
             }
         }
     }
 }
 
+// The amount card on the hero surface: "MONTO", the figure in `display-sm`
+// and the currency pill; then the conversion line and the Programado chip.
 @Composable
-private fun OptionRow(s: NmState, pickedBudgetLabel: String?, hasGoals: Boolean) {
-    data class Opt(val sheet: NmSheet, val label: String, val on: Boolean, val icon: List<String>)
-    val whenShort = if (s.date == s.today) (if (s.time == s.nowTime) tr(StringKey.NM_NOW) else tr(StringKey.NM_TODAY_AT, s.time)) else fmtDate(s.date.toString())
+private fun AmountHero(s: NmState, cur: String, wcur: String, rate: Double, value: Double, walletName: String) {
+    val colors = NovaColors.current
+    val white = Color.White
+    val padOpen = s.sheet == NmSheet.PAD
+    Column(
+        Modifier.fillMaxWidth()
+            .heroSurface(RoundedCornerShape(20.dp))
+            .then(if (padOpen) Modifier.border(2.dp, white, RoundedCornerShape(20.dp)) else Modifier)
+            .clickable(role = Role.Button, onClickLabel = tr(StringKey.NM_AMOUNT)) { s.sheet = NmSheet.PAD }
+            .padding(start = 20.dp, end = 12.dp, top = 12.dp, bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(tr(StringKey.NM_AMOUNT).uppercase(), style = NovaType.overline, color = colors.heroOverline, modifier = Modifier.weight(1f))
+            // Currency pill: 40 dp visual in a 48 dp target.
+            Box(
+                Modifier.height(48.dp).clip(RoundedCornerShape(999.dp)).clickable(enabled = !s.isTransfer, role = Role.Button) { s.sheet = NmSheet.CURRENCY },
+                contentAlignment = Alignment.Center,
+            ) {
+                Row(
+                    Modifier.height(40.dp).clip(RoundedCornerShape(999.dp)).background(colors.heroTile).padding(horizontal = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(cur, style = NovaType.label, color = white, maxLines = 1, softWrap = false)
+                    if (!s.isTransfer) V2Icon(V2Icons.chevronDown, white, 16.dp, 2.4f)
+                }
+            }
+        }
+        Text(
+            formatMoney(value, cur), style = NovaType.displaySm, color = white, maxLines = 1, softWrap = false,
+            autoSize = TextAutoSize.StepBased(minFontSize = 20.sp, maxFontSize = 32.sp),
+            modifier = Modifier.padding(end = 8.dp),
+        )
+        if (cur != wcur) {
+            Text(
+                if (value > 0) tr(StringKey.NM_FX_APPROX, formatMoney(value * rate, wcur), wcur, shortWallet(walletName), cur, formatMoney(rate, wcur))
+                else tr(StringKey.NM_FX_LATER, wcur, shortWallet(walletName)),
+                style = NovaType.caption.copy(fontFeatureSettings = TNUM), color = colors.heroLabel, modifier = Modifier.padding(end = 8.dp),
+            )
+        }
+        if (s.future) {
+            Row(
+                Modifier.padding(top = 4.dp).clip(RoundedCornerShape(999.dp)).background(colors.heroTile).padding(horizontal = 12.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                V2Icon(V2Icons.cal, white, 16.dp)
+                Text(tr(StringKey.NM_SCHEDULED_CHIP) + " · ${fmtDate(s.date.toString())}" + if (s.seriesMode) "" else " · ${s.time}", style = NovaType.label, color = white, maxLines = 1)
+            }
+        }
+    }
+}
+
+// Category row: the picked category (or "Elige una categoría" behind a
+// dashed mark), opening the category sheet. Transfers show their own row.
+@Composable
+private fun CategoryRow(s: NmState) {
+    val colors = NovaColors.current
+    val repo = AppContainer.categoryRepository
+    val open = s.sheet == NmSheet.CATEGORY || s.sheet == NmSheet.SUB
+    val picked = s.catPicked || s.isTransfer
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 64.dp).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surface)
+            .border(if (open) 2.dp else 1.dp, if (open) colors.primaryBorder else MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp))
+            .clickable(enabled = !s.isTransfer, role = Role.Button) { s.sheet = NmSheet.CATEGORY }
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        if (s.isTransfer) {
+            GlyphMark(listOf("M4 8h14l-3-3", "M20 16H6l3 3"), colors.link, 40.dp)
+        } else if (picked) {
+            CatMark(s.leaf, 40.dp)
+        } else {
+            Box(
+                Modifier.size(40.dp).drawBehind {
+                    drawCircle(colors.borderInput, radius = size.minDimension / 2 - 0.75.dp.toPx(), style = Stroke(1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 3.dp.toPx()))))
+                },
+                contentAlignment = Alignment.Center,
+            ) { V2Icon(repo.glyph(s.leaf), colors.textDim, 20.dp) }
+        }
+        Column(Modifier.weight(1f)) {
+            Text(tr(StringKey.NM_CATEGORY), style = NovaType.overline, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                if (s.isTransfer) tr(StringKey.NM_TRANSFER_BETWEEN) else if (s.catPicked) repo.label(s.leaf) else tr(StringKey.NM_PICK_CATEGORY),
+                style = NovaType.titleSm, color = if (picked) MaterialTheme.colorScheme.onBackground else colors.link,
+                maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp),
+            )
+        }
+        if (!s.isTransfer) V2Icon(V2Icons.chevronRight, colors.textDim, 20.dp)
+    }
+}
+
+// "Más opciones": a disclosure row with a summary of what is set, and when
+// open, one full-width row per option (label + current value), the note
+// field and the receipt. Each row opens its sheet.
+@Composable
+private fun MoreOptions(s: NmState, open: Boolean, onToggle: () -> Unit, pickedBudgetLabel: String?, goalName: String?) {
+    val colors = NovaColors.current
+    data class Opt(val sheet: NmSheet, val label: String, val value: String?, val icon: List<String>)
+    val whenShort = if (s.date == s.today) (if (s.time == s.nowTime) tr(StringKey.NM_NOW) else tr(StringKey.NM_TODAY_AT, s.time)) else fmtDate(s.date.toString()) + if (s.seriesMode) "" else " · ${s.time}"
+    val loanOrGoal = listOfNotNull(if (s.loan) tr(StringKey.NM_LOAN) else null, goalName).joinToString(" · ").ifBlank { null }
     val opts = buildList {
-        add(Opt(NmSheet.WHEN, whenShort, s.whenOn, if (s.future) V2Icons.cal else V2Icons.clock))
-        add(Opt(NmSheet.REPEAT, repeatShort(s.repeat), s.repeat != null, V2Icons.repeat))
+        add(Opt(NmSheet.WHEN, tr(StringKey.NM_SECTION_WHEN), whenShort.takeIf { s.whenOn } ?: tr(StringKey.NM_NOW), if (s.future) V2Icons.cal else V2Icons.clock))
+        add(Opt(NmSheet.REPEAT, tr(StringKey.NM_REPEAT), s.repeat?.let { repeatSummary(it, s.date) + " · " + tr(if (it.auto) StringKey.NM_AUTOMATIC else StringKey.NM_WITH_CONFIRMATION) } ?: tr(StringKey.NM_NO_REPEAT), V2Icons.repeat))
         // A series has no receipt, payer, budget or goal of its own.
         if (s.seriesMode) return@buildList
-        add(Opt(NmSheet.ATTACH, tr(if (s.attach != null) StringKey.NM_ONE_ATTACHMENT else StringKey.NM_ATTACH), s.attach != null, V2Icons.clip))
-        if (s.isIncome) add(Opt(NmSheet.FROM, s.from.ifBlank { tr(StringKey.NM_FROM) }, s.from.isNotBlank(), V2Icons.person))
-        if (!s.isIncome && !s.isTransfer) add(Opt(NmSheet.BPICK, pickedBudgetLabel ?: tr(StringKey.NM_BUDGET), pickedBudgetLabel != null, V2Icons.target))
-        if (!s.isTransfer) add(Opt(NmSheet.MORE, tr(StringKey.NM_MORE), s.loan || s.goalId != null, V2Icons.more))
+        add(Opt(NmSheet.ATTACH, tr(StringKey.NM_ATTACH), s.attach?.name ?: tr(StringKey.NM_OPTIONAL), V2Icons.clip))
+        if (s.isIncome) add(Opt(NmSheet.FROM, tr(StringKey.NM_FROM), s.from.ifBlank { tr(StringKey.NM_OPTIONAL) }, V2Icons.person))
+        if (!s.isIncome && !s.isTransfer) add(Opt(NmSheet.BPICK, tr(StringKey.NM_BUDGET), pickedBudgetLabel ?: tr(StringKey.NM_BPICK_NONE_DETAIL), V2Icons.target))
+        if (!s.isTransfer) add(Opt(NmSheet.MORE, tr(StringKey.NM_SECTION_MORE), loanOrGoal ?: tr(StringKey.NM_NONE_M), V2Icons.more))
     }
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        opts.forEach { o ->
-            OptionTile(o.icon, o.label, o.on, {
-                when (o.sheet) {
-                    NmSheet.WHEN -> { s.cal = s.date.withDayOfMonth(1); s.whenBack = null; s.sheet = NmSheet.WHEN }
-                    NmSheet.REPEAT -> { s.rpDraft = s.repeat ?: RepeatDraft(); s.sheet = NmSheet.REPEAT }
-                    else -> s.sheet = o.sheet
+    val summary = listOfNotNull(
+        whenShort.takeIf { s.whenOn },
+        s.repeat?.let { repeatShort(it) },
+        s.note.takeIf { it.isNotBlank() }?.let { tr(StringKey.NM_NOTE_LABEL) },
+        s.attach?.let { tr(StringKey.NM_ONE_ATTACHMENT) },
+        s.from.takeIf { it.isNotBlank() && s.isIncome },
+        pickedBudgetLabel.takeIf { !s.isIncome && !s.isTransfer },
+        loanOrGoal,
+    ).joinToString(" · ")
+    val stateLabel = tr(if (open) StringKey.NM_EXPANDED else StringKey.NM_COLLAPSED)
+
+    Column(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp)),
+    ) {
+        Row(
+            Modifier.fillMaxWidth().heightIn(min = 56.dp).clickable(role = Role.Button, onClick = onToggle)
+                .semantics { stateDescription = stateLabel }
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(tr(StringKey.NM_MORE_OPTIONS), style = NovaType.titleSm, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (summary.isNotBlank()) {
+                    Text(summary, style = NovaType.bodySm, color = colors.link, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
-            }, Modifier.weight(1f))
+            }
+            V2Icon(V2Icons.chevronDown, colors.textDim, 20.dp, modifier = Modifier.padding(start = 8.dp).rotate(if (open) 180f else 0f))
         }
-        repeat(5 - opts.size) { Box(Modifier.weight(1f)) }
+        if (open) {
+            opts.forEach { o ->
+                HorizontalDivider(thickness = 1.dp, color = colors.dividerSubtle, modifier = Modifier.padding(horizontal = 16.dp))
+                Row(
+                    Modifier.fillMaxWidth().heightIn(min = 56.dp).clickable(role = Role.Button) {
+                        when (o.sheet) {
+                            NmSheet.WHEN -> { s.cal = s.date.withDayOfMonth(1); s.whenBack = null; s.sheet = NmSheet.WHEN }
+                            NmSheet.REPEAT -> { s.rpDraft = s.repeat ?: RepeatDraft(); s.sheet = NmSheet.REPEAT }
+                            else -> s.sheet = o.sheet
+                        }
+                    }.padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    V2Icon(o.icon, colors.link, 20.dp)
+                    Column(Modifier.weight(1f)) {
+                        Text(o.label, style = NovaType.label, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        if (o.value != null) Text(o.value, style = NovaType.bodySm.copy(fontFeatureSettings = TNUM), color = colors.textDim, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    }
+                    if (o.sheet == NmSheet.ATTACH && s.attach != null) {
+                        val a = s.attach!!
+                        val removeLabel = tr(StringKey.COMMON_DELETE) + " " + a.name
+                        Box(
+                            Modifier.size(48.dp).clip(CircleShape).clickable(role = Role.Button) { s.attach = null }
+                                .semantics { contentDescription = removeLabel },
+                            contentAlignment = Alignment.Center,
+                        ) { V2Icon(V2Icons.close, colors.textDim, 20.dp) }
+                    } else {
+                        V2Icon(V2Icons.chevronRight, colors.textDim, 20.dp)
+                    }
+                }
+            }
+            if (!s.seriesMode) {
+                HorizontalDivider(thickness = 1.dp, color = colors.dividerSubtle, modifier = Modifier.padding(horizontal = 16.dp))
+                Column(Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 16.dp)) {
+                    FieldLabel(tr(StringKey.NM_NOTE_LABEL))
+                    InputBox(height = 52.dp) {
+                        V2Icon(V2Icons.note, colors.textDim, 20.dp)
+                        BareField(s.note, { s.note = it.take(500) }, tr(StringKey.NM_NOTE_PH))
+                    }
+                }
+            }
+        }
     }
 }
 

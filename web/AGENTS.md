@@ -178,12 +178,14 @@ wallet can't be deleted.
 
 The header's "Nuevo movimiento" button (and the `N` shortcut) opens
 `components/panels/NewTransactionPanel.tsx` inside `SidePanel.tsx` (the
-mockup's 460px side panel): type, "Elige una categoría" (inline
-category/subcategory grid), the amount hero with typed arithmetic and the
-Teclado/Calculadora switch, wallet, the automatic budget line,
-Título/Nota, and the option tiles (Fecha y hora, Repetir, Adjuntar, De,
-Presupuesto, Más) whose sections open inline — NEW_MOVEMENT.md and
-WEB_PARITY.md. The pure helpers (evalExpr, calculator keys, Repetir
+mockup's 460px side panel), in progressive disclosure (DESIGN-SYSTEM.md
+§5.3, F3): type, the amount hero with typed arithmetic and the
+Teclado/Calculadora switch, "Elige una categoría" (inline
+category/subcategory grid), wallet, the automatic budget line and a
+labeled Título; everything optional sits in a collapsed "Más opciones"
+(rows Fecha y hora, Repetir, Adjuntar, De or Presupuesto, Préstamo o meta,
+each showing its value and opening its section inline, plus the Nota
+field), open from the start only when editing a movement that has one. The pure helpers (evalExpr, calculator keys, Repetir
 summaries) live in `lib/nuevoMovimiento.ts`; pad mode, last wallet and
 "Como el anterior" are per-device localStorage preferences. The status is
 left to the backend (a future date/time saves as PLANNED); the receipt is

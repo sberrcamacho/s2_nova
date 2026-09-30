@@ -12,7 +12,7 @@ Tracker", stack guidelines for `jetpack-compose` and `html-tailwind`, chart
 and UX rule sets. The skill's generic fintech palette (gold/amber) was **not**
 used: the brand palette is fixed by the S2 Nova logo.
 
-**Status:** v1.2 · 2026-09-30 · F0, F1 and F2 implemented on both clients (fixes, brand tokens, type roles and the 12 floor, bento Inicio); F3–F4 pending.
+**Status:** v1.3 · 2026-09-30 · F0–F3 implemented on both clients (fixes, brand tokens, type roles and the 12 floor, bento Inicio, Nuevo movimiento); F4 pending.
 
 ---
 
@@ -353,9 +353,13 @@ Nuevo movimiento (both, progressive disclosure):
 3. Category row.
 4. Wallet chips.
 5. Budget impact line.
-6. A collapsed "Más opciones" section (Fecha y hora, Repetir, Nota,
-   Adjuntar, Presupuesto, De).
-7. The "Guardar movimiento" button, fixed at the bottom.
+6. A labeled Título field (required, so it stays on the first level).
+7. A collapsed "Más opciones" section: one full-width row per option with
+   its current value (Fecha y hora, Repetir, Adjuntar, De on income or
+   Presupuesto on expenses, Préstamo o meta), then the Nota field. Its
+   header summarises what is set, and it starts open when editing a
+   movement that has an option set.
+8. The "Guardar movimiento" button, fixed at the bottom.
 
 ---
 
