@@ -12,14 +12,11 @@ backend, one database, one user identity and one domain model:
 - `backend/` — the shared API (Node.js + TypeScript + Fastify + Prisma/
   PostgreSQL). It is the single source of truth for financial data and
   business rules. See `backend/AGENTS.md`.
-- `design_handoff_s2_nova_v2/` — the v2 interactive mockups
-  (`S2 Nova Android v2.dc.html`, `S2 Nova Dashboard v2.dc.html`) — the
-  visual source of truth — plus the product specs in `docs/`
-  (`PRODUCT_ARCHITECTURE.md`, `CATEGORY_SYSTEM.md`,
-  `CURRENCIES_AND_WALLETS.md`, `NEW_MOVEMENT.md`, `PLANS.md`,
-  `ONBOARDING.md`, `WEB_PARITY.md`) and the category taxonomy source
-  `s2-categories.js` (generated into each app by `scripts/gen-taxonomy.mjs`,
-  which adds the English names from `scripts/taxonomy-en.json`).
+- `scripts/gen-taxonomy.mjs` — generates each app's category taxonomy
+  (adding the English names from `scripts/taxonomy-en.json`). It still reads
+  `design_handoff_s2_nova_v2/s2-categories.js`, which is no longer in the
+  repo; the generated taxonomy files are committed, so don't re-run it until
+  the source is moved.
 
 **Functional parity.** Android and Web are functionally the same
 application: every operation that changes the user's financial data
@@ -49,138 +46,16 @@ first — it has the concrete dev commands, structure, and conventions.
 
 # UI IMPLEMENTATION RULES
 
-## SOURCE OF TRUTH
+The old v2 mockups (`design_handoff_s2_nova_v2/`) are no longer the visual
+source of truth; mentions of "the mockup" in the per-app `AGENTS.md` files
+are historical. The only fixed visual constraint is the palette of the S2
+Nova brand mark (`web/src/assets/logo-mark-*.png`,
+`android/app/src/main/res/drawable-nodpi/logo_mark_*.png`); everything else
+follows `DESIGN-SYSTEM.md` (reasoning in `DESIGN_AUDIT.md`). See `CLAUDE.md` for the full visual rules and the mandatory
+screenshot verification loop.
 
-The provided mockups are the SINGLE SOURCE OF TRUTH for the visual design.
-
-When implementing a screen, reproduce the corresponding mockup as accurately
-as technically possible.
-
-Do NOT treat the mockup as inspiration.
-Do NOT redesign it.
-Do NOT improve it according to your own design preferences.
-Do NOT substitute elements with existing components merely because they already exist.
-
-If the mockup and the existing application disagree, the mockup takes priority
-for the visual appearance of that screen.
-
----
-
-## COMPONENT REUSE
-
-Existing components may ONLY be reused when they are visually identical to
-the component required by the mockup.
-
-If an existing component differs in:
-
-- size
-- spacing
-- typography
-- color
-- border radius
-- icon
-- alignment
-- padding
-- layout
-- elevation/shadow
-- behavior
-
-then DO NOT reuse it.
-
-Create a new component or modify the existing component only if doing so
-preserves the exact appearance required by the mockup.
-
-Do not force the mockup to fit the existing component architecture.
-
----
-
-## NO CREATIVE INTERPRETATION
-
-You are implementing a design, not designing a new one.
-
-Do not:
-
-- add UI elements that are not present in the mockup
-- remove UI elements that are present in the mockup
-- change the layout
-- change colors
-- change typography
-- change spacing
-- change button shapes
-- change navigation placement
-- introduce additional cards
-- introduce additional animations
-- introduce additional functionality
-- "modernize" the interface
-- make the interface "cleaner"
-- make the interface "more consistent" with existing screens
-
-If something appears unusual in the mockup, reproduce it anyway.
-
----
-
-## EXISTING CODE
-
-Before modifying a screen:
-
-1. Inspect the existing implementation.
-2. Inspect the target mockup.
-3. Identify differences.
-4. Implement the mockup.
-5. Do not modify unrelated screens.
-6. Do not refactor unrelated components.
-7. Do not perform general UI cleanup.
-
-The existence of an older component is NOT a reason to use it.
-
----
-
-## EXACTNESS
-
-Prioritize visual fidelity over code reuse.
-
-The following order of priority applies:
-
-1. Mockup visual fidelity
-2. Required functionality
-3. Existing architecture
-4. Code reuse
-5. Personal design judgment
-
-Never sacrifice #1 to improve #3 or #4.
-
----
-
-## WHEN INFORMATION IS MISSING
-
-If the mockup does not specify something, use the smallest possible
-implementation necessary to make the screen functional.
-
-Do not invent significant visual elements.
-
----
-
-## VERIFICATION
-
-Before declaring the screen complete, compare the implementation against
-the mockup.
-
-Check:
-
-- overall layout
-- element positions
-- dimensions
-- spacing
-- typography
-- colors
-- borders
-- corner radius
-- icons
-- images
-- buttons
-- navigation
-- alignment
-- screen proportions
-
-If the implementation differs visibly from the mockup, fix it before
-considering the task complete.
+- Apply every visual change to both clients so they stay consistent.
+- Accessibility is required: text contrast ≥ 4.5:1 (UI boundaries ≥ 3:1),
+  Android touch targets ≥ 48 dp, text ≥ 12 sp/px, never color alone.
+- Do not modify unrelated screens or refactor unrelated components as part
+  of a visual change.
