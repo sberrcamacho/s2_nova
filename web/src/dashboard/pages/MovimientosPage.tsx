@@ -206,16 +206,17 @@ export default function MovimientosPage() {
     <div className="flex flex-col gap-[18px] px-4 pb-10 pt-[26px] min-[760px]:px-7">
       {syncFailed && <SyncBanner onRetry={() => void retry()} />}
 
-      <div className="flex flex-col gap-3.5">
+      <div className="flex flex-col gap-3">
         <div>
-          <h1 className="text-[24px] font-extrabold tracking-[-.025em]">{tr('guide.movimientos.label')}</h1>
-          <div className="mt-1 text-[12.5px] text-v2-dim">{subtitle}</div>
+          <h1 className="text-headline font-bold">{tr('guide.movimientos.label')}</h1>
+          <div className="mt-1 text-body-sm text-ink-secondary">{subtitle}</div>
         </div>
-        <div className="flex flex-wrap items-center gap-1.5">
-          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={tr('mv.type')}>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={tr('mv.type')}>
             {FILTERS.map((key) => (
               <Flat
                 key={key}
+                role="radio"
                 on={filter === key}
                 onClick={() => {
                   setFilter(key)
@@ -230,7 +231,7 @@ export default function MovimientosPage() {
             aria-label={tr('bud.category')}
             value={cat}
             onChange={(e) => setCat(e.target.value)}
-            className="ml-auto h-[34px] min-w-0 max-w-full cursor-pointer rounded-[10px] border border-v2-line2 bg-v2-surface px-2.5 text-[12px] font-bold text-v2-text outline-none"
+            className="ml-auto h-8 min-w-0 max-w-full cursor-pointer rounded-[8px] border border-border-input bg-surface px-2.5 text-label font-semibold text-ink"
           >
             <option value="">{tr('mv.allCategories')}</option>
             {catOptions.map((o) => (
@@ -242,41 +243,46 @@ export default function MovimientosPage() {
         </div>
       </div>
 
-      <section className="flex flex-col rounded-[16px] border border-v2-line bg-v2-surface px-5 py-2">
-        {!filtered ? (
-          <RowSkeletons count={6} box={36} />
-        ) : groups.length === 0 ? (
-          <div className="py-[30px] text-center text-[12.5px] text-v2-dim">{tr('mv.empty')}</div>
-        ) : (
-          groups.map((g, gi) => {
+      {/* Flat layout: one `surface` card per day, its heading and net total above it. */}
+      {!filtered ? (
+        <section className="rounded-[16px] border border-border bg-surface px-5 py-2">
+          <RowSkeletons count={6} box={40} />
+        </section>
+      ) : groups.length === 0 ? (
+        <section className="rounded-[16px] border border-border bg-surface px-5 py-[30px] text-center text-body-sm text-ink-secondary">{tr('mv.empty')}</section>
+      ) : (
+        <div className="flex flex-col gap-5">
+          {groups.map((g) => {
             const unit = 10 ** currencyInfo(principal).decimals
             const raw = g.items.reduce((a, x) => a + (x.type === 'transfer' ? 0 : x.type === 'income' ? 1 : -1) * toPrincipal(x), 0)
             const sum = (Math.sign(raw) * Math.round(Math.abs(raw) * unit)) / unit
             const sched = g.key === 'sched'
             return (
-              <div key={g.key}>
-                <div className={cn('pb-1.5 text-caption font-bold tracking-[.1em]', gi === 0 ? 'pt-3' : 'pt-[22px]', sched ? 'text-v2-warn' : 'text-v2-dim')}>
-                  {`${g.label} · `}
-                  <Money hidden={hidden} style={{ color: sched ? 'var(--v2-warn)' : sum >= 0 ? 'var(--v2-pos)' : 'var(--v2-dim)' }}>
+              <section key={g.key} aria-labelledby={`mv-day-${g.key}`}>
+                <h2 id={`mv-day-${g.key}`} className={cn('flex items-baseline gap-3 px-1 pb-2 text-overline font-semibold uppercase', sched ? 'text-warning' : 'text-ink-tertiary')}>
+                  <span className="min-w-0 flex-1 truncate">{g.label}</span>
+                  <Money hidden={hidden} className={cn('flex-none tabular-nums', sched ? 'text-warning' : sum >= 0 ? 'text-positive' : 'text-ink-tertiary')}>
                     {`${sum >= 0 ? '+' : '−'}${formatMoney(Math.abs(sum), principal)}`}
                   </Money>
+                </h2>
+                <div className="overflow-hidden rounded-[16px] border border-border bg-surface">
+                  {g.items.map((x, i) => (
+                    <MovementRow
+                      key={x.id}
+                      x={x}
+                      last={i === g.items.length - 1}
+                      wallet={walletShort(x.accountId)}
+                      principal={principal}
+                      hidden={hidden}
+                      onOpen={() => setOpenId(x.id)}
+                    />
+                  ))}
                 </div>
-                {g.items.map((x, i) => (
-                  <MovementRow
-                    key={x.id}
-                    x={x}
-                    last={i === g.items.length - 1}
-                    wallet={walletShort(x.accountId)}
-                    principal={principal}
-                    hidden={hidden}
-                    onOpen={() => setOpenId(x.id)}
-                  />
-                ))}
-              </div>
+              </section>
             )
-          })
-        )}
-      </section>
+          })}
+        </div>
+      )}
 
       {open && (
         <MovementDetail
@@ -294,33 +300,42 @@ export default function MovimientosPage() {
   )
 }
 
+// ListRow (DESIGN-SYSTEM.md §6.2): icon 40, a one-line title and meta line,
+// and an intrinsic-width amount column; at least 56 px tall. The attachment
+// and repeat badges and a Programado's `warning` clock sit in the meta line.
 function MovementRow({ x, last, wallet, principal, hidden, onOpen }: { x: Transaction; last: boolean; wallet: string; principal: string; hidden: boolean; onOpen: () => void }) {
   const sched = isSched(x)
   const label = categoryLabel(x.type === 'transfer' ? TRANSFER : x.category)
   const sub = `${label} · ${[x.merchant || x.counterpartyName, wallet].filter(Boolean).join(' · ')} · ${sched ? `${shortDayMonth(x.date)} ` : ''}${x.time}`
-  const color = sched || x.type === 'transfer' ? 'var(--v2-muted)' : x.type === 'income' ? 'var(--v2-pos)' : 'var(--v2-neg)'
+  const color = x.type === 'transfer' ? 'text-ink' : x.type === 'income' ? 'text-positive' : 'text-negative'
+  const title = x.description || label
   return (
     <button
       type="button"
       onClick={onOpen}
-      className={cn('mx-[-10px] flex w-[calc(100%+20px)] cursor-pointer items-center gap-3.5 rounded-[12px] px-2.5 py-[13px] text-left text-v2-text hover:bg-v2-subtle', !last && 'border-b border-v2-subtle')}
+      className={cn('flex min-h-14 w-full cursor-pointer items-center gap-3 px-4 py-3 text-left text-ink hover:bg-surface-sunken', !last && 'border-b border-divider')}
     >
-      <CategoryMark category={x.type === 'transfer' ? TRANSFER : x.category} box={36} />
+      <CategoryMark category={x.type === 'transfer' ? TRANSFER : x.category} box={40} />
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-[7px] text-[12.5px] font-bold">
-          <span className="min-w-0 flex-[0_1_auto] truncate" title={x.description || label}>{x.description || label}</span>
-          {x.attachment && <Icon paths={IC.clip} size={13} color="var(--v2-dim)" />}
-          {x.recurringSeriesId && <Icon paths={IC.repeat} size={13} color="var(--v2-dim)" />}
-          {sched && <span className="flex-none whitespace-nowrap rounded-full bg-[rgba(240,180,41,.14)] px-[7px] py-0.5 text-caption font-extrabold text-v2-warn">{tr('mv.scheduledOne')}</span>}
+        <div className="truncate text-title-sm font-semibold" title={title}>{title}</div>
+        <div className="flex min-w-0 items-center gap-1.5 text-body-sm text-ink-secondary">
+          {sched && (
+            <>
+              <Icon paths={IC.clock} size={14} color="var(--color-warning)" />
+              <span className="sr-only">{tr('mv.scheduledOne')}</span>
+            </>
+          )}
+          <span className="min-w-0 truncate" title={sub}>{sub}</span>
+          {x.attachment && <Icon paths={IC.clip} size={14} color="currentColor" />}
+          {x.recurringSeriesId && <Icon paths={IC.repeat} size={14} color="currentColor" />}
         </div>
-        <div className="mt-[3px] truncate text-caption text-v2-dim" title={sub}>{sub}</div>
       </div>
-      <div className="flex-none whitespace-nowrap text-right">
-        <Money hidden={hidden} className="block text-[13px] font-extrabold" style={{ color }}>
+      <div className="flex-none whitespace-nowrap pl-2 text-right">
+        <Money hidden={hidden} className={cn('block text-amount font-semibold tabular-nums', color)}>
           {`${sign(x)}${formatMoney(x.amount, x.currency)}`}
         </Money>
         {x.currency !== principal && (
-          <Money hidden={hidden} className="mt-0.5 block text-caption text-v2-dim">
+          <Money hidden={hidden} className="block text-caption tabular-nums text-ink-tertiary">
             {`≈ ${formatApprox(x.amount * referenceRate(x.currency, principal), principal)}`}
           </Money>
         )}

@@ -322,22 +322,7 @@ private fun <T> SegmentedRow(label: String, options: List<Pair<T, String>>, sele
     }
 }
 
-// The mockup's shared `pill()`.
+// The shared chip (V2Pill, DESIGN-SYSTEM.md §6.5).
 @Composable
-private fun LockPill(label: String, selected: Boolean, onClick: () -> Unit) {
-    val colors = NovaColors.current
-    val shape = RoundedCornerShape(50)
-    Text(
-        label,
-        fontSize = 12.sp,
-        fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
-        color = if (selected) Color.White else colors.pillText,
-        modifier = Modifier
-            .clip(shape)
-            .background(if (selected) MaterialTheme.colorScheme.primary else colors.pillSurface)
-            .border(1.dp, if (selected) Color.Transparent else colors.pillBorder, shape)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 15.dp, vertical = 10.dp),
-    )
-}
+private fun LockPill(label: String, selected: Boolean, onClick: () -> Unit) = com.s2nova.app.ui.components.V2Pill(label, selected, onClick)
 

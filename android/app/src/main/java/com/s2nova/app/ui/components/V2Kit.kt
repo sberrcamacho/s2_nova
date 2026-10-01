@@ -34,6 +34,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -134,23 +137,37 @@ fun Modifier.noRippleClick(onClick: () -> Unit): Modifier = this.clickable(
     onClick = onClick,
 )
 
-// pill(label, selected): 9×14 padding, 12 sp, accent when selected.
+// Chip (DESIGN-SYSTEM.md §6.5): 40 dp tall on a 48 dp touch target, 16 dp
+// padding, `label` text on one line. Unselected: `surface` + `border-input`;
+// selected: `primary` fill + a leading check, so selection is not color
+// alone. It exposes its selected state (radio by default; pass
+// Role.Checkbox for a multi-select collection).
 @Composable
-fun V2Pill(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun V2Pill(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, role: Role = Role.RadioButton) {
     val colors = NovaColors.current
-    Text(
-        text = label,
-        fontSize = 12.sp,
-        fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
-        color = if (selected) Color.White else colors.pillText,
-        maxLines = 1,
+    val shape = RoundedCornerShape(999.dp)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
         modifier = modifier
-            .clip(RoundedCornerShape(999.dp))
-            .background(if (selected) MaterialTheme.colorScheme.primary else colors.pillSurface)
-            .border(1.dp, if (selected) Color.Transparent else colors.pillBorder, RoundedCornerShape(999.dp))
-            .clickable(role = Role.RadioButton, onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 9.dp),
-    )
+            .minimumInteractiveComponentSize()
+            .heightIn(min = 40.dp)
+            .clip(shape)
+            .background(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface)
+            .border(1.dp, if (selected) Color.Transparent else colors.borderInput, shape)
+            .selectable(selected = selected, role = role, onClick = onClick)
+            .padding(start = if (selected) 12.dp else 16.dp, end = 16.dp),
+    ) {
+        if (selected) V2Icon(V2Icons.check, MaterialTheme.colorScheme.onPrimary, 18.dp, strokeWidth = 2.4f)
+        Text(
+            text = label,
+            style = com.s2nova.app.ui.theme.NovaType.label,
+            color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            softWrap = false,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+        )
+    }
 }
 
 // "display:flex;flex-wrap:wrap;gap:8px" pill rows.

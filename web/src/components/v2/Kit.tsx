@@ -208,16 +208,19 @@ function writeCalcPref(on: boolean) {
   }
 }
 
+// Chip (DESIGN-SYSTEM.md §6.5): 32 px tall, 16 px padding, `label` text on
+// one line. Unselected: `surface` + `border-input`; selected: `primary` fill
+// plus a leading check (`.chip-on`), so selection is not color alone.
 export function flatClass(on: boolean): string {
   return cn(
-    'cursor-pointer whitespace-nowrap rounded-[10px] border px-[13px] py-2 text-[12px] font-bold',
-    on ? 'border-v2-accent bg-v2-accent text-white' : 'border-v2-line2 bg-v2-surface2 text-v2-muted',
+    'inline-flex h-8 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border text-label font-semibold transition-colors duration-150 motion-reduce:transition-none',
+    on ? 'chip-on border-transparent bg-primary pl-3 pr-4 text-on-primary' : 'border-border-input bg-surface px-4 text-ink hover:bg-surface-sunken',
   )
 }
 
-export function Flat({ on, onClick, children, className }: { on: boolean; onClick: () => void; children: ReactNode; className?: string }) {
+export function Flat({ on, onClick, children, className, role }: { on: boolean; onClick: () => void; children: ReactNode; className?: string; role?: 'radio' | 'checkbox' }) {
   return (
-    <button type="button" onClick={onClick} className={cn(flatClass(on), className)}>
+    <button type="button" role={role} aria-checked={role ? on : undefined} aria-pressed={role ? undefined : on} onClick={onClick} className={cn(flatClass(on), className)}>
       {children}
     </button>
   )
@@ -225,9 +228,9 @@ export function Flat({ on, onClick, children, className }: { on: boolean; onClic
 
 export function Pills<T>({ options, value, onChange }: { options: { value: T; label: string }[]; value: T; onChange: (v: T) => void }) {
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-wrap gap-2" role="radiogroup">
       {options.map((o) => (
-        <Flat key={String(o.value)} on={o.value === value} onClick={() => onChange(o.value)}>
+        <Flat key={String(o.value)} role="radio" on={o.value === value} onClick={() => onChange(o.value)}>
           {o.label}
         </Flat>
       ))}

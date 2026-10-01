@@ -12,7 +12,7 @@ Tracker", stack guidelines for `jetpack-compose` and `html-tailwind`, chart
 and UX rule sets. The skill's generic fintech palette (gold/amber) was **not**
 used: the brand palette is fixed by the S2 Nova logo.
 
-**Status:** v1.4 · 2026-09-30 · F0–F3 implemented on both clients (fixes, brand tokens, type roles and the 12 floor, bento Inicio, Nuevo movimiento); F4 in progress (Reportes done; the remaining screens pending).
+**Status:** v1.4 · 2026-09-30 · F0–F3 implemented on both clients (fixes, brand tokens, type roles and the 12 floor, bento Inicio, Nuevo movimiento); F4 in progress (Reportes, Movimientos and the shared chip done; Planes, Billeteras and Ajustes pending).
 
 ---
 
@@ -408,7 +408,7 @@ padding or a pseudo-element on Web.
   - The title column takes the rest (`weight(1f)` / `min-width: 0`) and truncates.
 - Trailing badges (attachment, repeat) sit in the meta line, not next to the title.
 - The whole row is one touch target. It is announced as "Mercado semanal, Éxito, Bancolombia, gasto 168.500 pesos".
-- Pending or programado rows show a `warning` "Programado" tag in the meta line.
+- Pending or programado rows show a `warning` clock icon at the start of the meta line, and their accessible name includes "Programado". In Movimientos they already sit under the `warning` "Programados" heading; a full tag crowded the meta line out at 360 dp / 130 % (F4).
 
 ### 6.3 Buttons
 
@@ -449,6 +449,7 @@ padding or a pseudo-element on Web.
   - The collection wraps or scrolls horizontally with a visible edge fade.
   - Unselected: `surface` + 1 px `border-input` + `text`.
   - Selected: `primary` fill + `on-primary` + a leading check icon, so selection is not color alone.
+  - As built (F4): Android `V2Pill` (also behind `SheetPill`, the auto-lock options and the Movimientos filters) and Web `flatClass` / `chipClass` / `Flat` / `Pills` (the check is the `.chip-on` mask in `index.css`). Single-choice collections expose radio semantics; multi-select ones checkbox (Android) or `aria-pressed` (Web).
 - **Segmented** (Gasto | Ingreso | Transferencia, 3M/6M/12M, theme):
   - `surface-sunken` track; the selected segment is `surface` with elevation 1 and weight 600.
   - Height 44 dp / 36 px. It exposes tab or radio semantics.

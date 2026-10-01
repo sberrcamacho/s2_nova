@@ -2,6 +2,7 @@ import type { CSSProperties, InputHTMLAttributes, ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from '@/state/useTranslation'
 import { cn } from '@/lib/cn'
+import { flatClass } from '@/components/v2/Kit'
 
 // The Ajustes building blocks, drawn to the Dashboard v2 mockup's
 // Settings views (cards, rows, pills, switches, form fields, buttons).
@@ -48,7 +49,7 @@ export function AjOutlineButton({ onClick, danger, children }: { onClick: () => 
 
 export function AjPills<T extends string>({ value, options, onChange }: { value: T; options: { value: T; label: string }[]; onChange: (value: T) => void }) {
   return (
-    <div className="flex gap-1.5" role="radiogroup">
+    <div className="flex flex-wrap gap-2" role="radiogroup">
       {options.map((option) => {
         const selected = option.value === value
         return (
@@ -58,10 +59,7 @@ export function AjPills<T extends string>({ value, options, onChange }: { value:
             role="radio"
             aria-checked={selected}
             onClick={() => onChange(option.value)}
-            className={cn(
-              'cursor-pointer rounded-[9px] border px-[13px] py-[7px] text-caption font-bold',
-              selected ? 'border-v2-accent bg-v2-accent text-white' : 'border-v2-line2 bg-v2-surface2 text-v2-dim',
-            )}
+            className={flatClass(selected)}
           >
             {option.label}
           </button>

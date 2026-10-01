@@ -497,6 +497,17 @@ button {
   display: none;
 }
 
+/* Chip (DESIGN-SYSTEM.md §6.5): a selected chip leads with a check, so
+   selection is not color alone. The glyph is the IC.check path. */
+.chip-on::before {
+  content: '';
+  flex: none;
+  width: 16px;
+  height: 16px;
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
 /* Respect the OS-level motion preference: keep the shimmer/shake/fade
    effects from being disorienting for anyone who has asked for less
    motion, without losing the underlying state change they communicate. */

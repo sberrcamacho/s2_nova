@@ -258,7 +258,7 @@ fun BudgetSheet(draft: BudgetEditDraft, onChange: (BudgetEditDraft) -> Unit, onD
                     wallets.forEach { w ->
                         V2Pill(shortWallet(w.name), w.id in d.walletIds, {
                             onChange(d.copy(walletIds = if (w.id in d.walletIds) d.walletIds - w.id else d.walletIds + w.id))
-                        })
+                        }, role = androidx.compose.ui.semantics.Role.Checkbox)
                     }
                 }
                 BSheet.PERIOD -> {

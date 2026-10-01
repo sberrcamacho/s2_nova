@@ -1,3 +1,4 @@
+import { flatClass } from '@/components/v2/Kit'
 import { useEffect, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
@@ -59,10 +60,9 @@ export function SidePanel({ title, onClose, footer, children }: SidePanelProps) 
 
 export const fieldLabelClass = 'text-caption font-bold tracking-[.06em] text-v2-muted'
 
+// The shared chip (DESIGN-SYSTEM.md §6.5).
 export function chipClass(on: boolean): string {
-  return on
-    ? 'cursor-pointer rounded-[10px] border border-v2-accent bg-v2-accent px-[13px] py-2 text-[12px] font-bold text-white'
-    : 'cursor-pointer rounded-[10px] border border-v2-line2 bg-v2-surface2 px-[13px] py-2 text-[12px] font-bold text-v2-muted'
+  return flatClass(on)
 }
 
 export const secondaryButtonClass = 'cursor-pointer rounded-[10px] border border-v2-line2 px-4 py-2.5 text-[12.5px] font-bold text-v2-muted'

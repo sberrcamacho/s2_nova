@@ -13,7 +13,24 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.semantics.semantics
+import com.s2nova.app.ui.components.V2Icon
+import com.s2nova.app.ui.components.V2Icons
+import com.s2nova.app.ui.theme.NovaType
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -87,34 +104,33 @@ fun TransactionsScreen(
     }
 
     Scaffold(
-        // Movimientos is a bottom-bar tab (v2): title at 21, no back arrow,
-        // and the "Programados" pill on the right.
+        // Movimientos is a bottom-bar tab: headline title, no back arrow, and
+        // the Programados screen on the right.
         topBar = { MovimientosHeader(title = t(StringKey.TITLE_TRANSACTIONS), programados = t(StringKey.HOME_UPCOMING_LINK), onOpenRecurring = onOpenRecurring) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
-            Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-                // Wraps instead of clipping the last pill on narrow phones or
-                // with large text.
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    TypeFilter.entries.forEach { f ->
-                        FilterPill(label = t(f.key), selected = filter == f, onClick = { filter = f })
-                    }
+            // Chips wrap instead of clipping the last one on narrow phones or
+            // with large text.
+            FlowRow(
+                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 8.dp).selectableGroup(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                TypeFilter.entries.forEach { f ->
+                    FilterPill(label = t(f.key), selected = filter == f, onClick = { filter = f })
                 }
             }
 
             if (filtered.isEmpty()) {
                 Text(
                     tr(StringKey.MV_EMPTY),
-                    fontSize = 12.sp, lineHeight = 18.sp, color = colors.textDim, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    style = NovaType.bodySm, color = colors.textDim, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 28.dp),
                 )
             } else {
-                LazyColumn(contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 20.dp)) {
+                // Flat layout (DESIGN-SYSTEM.md §5.1): one `surface` card per day
+                // with `divider` between rows. The bottom padding clears the FAB.
+                LazyColumn(contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 56.dp)) {
                     val principal = AppContainer.currencyRepository.principal
                     val scheduled = filtered.filter { it.status == TransactionStatus.PLANNED }.sortedBy { it.date + it.time }
                     val groups = buildList {
@@ -123,7 +139,7 @@ fun TransactionsScreen(
                             .groupBy { it.date }.forEach { (d, list) -> add(d to list) }
                     }
                     groups.forEachIndexed { index, (key, txns) ->
-                        item {
+                        item(key = "h-$key") {
                             // Transfers stay inside the user's wallets, so they don't move the day's net.
                             val netTotal = txns.sumOf {
                                 val v = it.amount * AppContainer.currencyRepository.rate(it.currency, principal)
@@ -135,31 +151,59 @@ fun TransactionsScreen(
                             }
                             val sched = key == "sched"
                             val dayLabel = when (key) {
-                                "sched" -> tr(StringKey.MV_SCHEDULED).uppercase()
+                                "sched" -> tr(StringKey.MV_SCHEDULED)
                                 today -> t(StringKey.TXN_LIST_TODAY)
                                 yesterday -> t(StringKey.TXN_LIST_YESTERDAY)
                                 else -> formatDayGroupDate(key)
                             }.uppercase()
-                            Text(
-                                buildAnnotatedString {
-                                    append("$dayLabel · ")
-                                    withStyle(SpanStyle(color = if (sched) colors.warning else if (netTotal >= 0) colors.positive else colors.textDim)) {
-                                        append((if (netTotal >= 0) "+" else "\u2212") + formatApprox(kotlin.math.abs(netTotal), principal))
-                                    }
-                                },
-                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.1.em, fontFeatureSettings = "tnum"),
-                                color = if (sched) colors.warning else colors.textDim,
-                                modifier = Modifier.padding(top = if (index == 0) 8.dp else 18.dp, bottom = 4.dp),
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 4.dp, end = 4.dp, top = if (index == 0) 8.dp else 20.dp, bottom = 8.dp)
+                                    .semantics(mergeDescendants = true) { heading() },
+                            ) {
+                                Text(
+                                    dayLabel,
+                                    style = NovaType.overline,
+                                    color = if (sched) colors.warning else colors.textDim,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                Text(
+                                    (if (netTotal >= 0) "+" else "\u2212") + formatApprox(kotlin.math.abs(netTotal), principal),
+                                    style = NovaType.overline.copy(fontFeatureSettings = "tnum"),
+                                    color = if (sched) colors.warning else if (netTotal >= 0) colors.positive else colors.textDim,
+                                    maxLines = 1,
+                                    softWrap = false,
+                                    modifier = Modifier.padding(start = 12.dp),
+                                )
+                            }
                         }
-                        items(txns, key = { it.id }) { txn: Transaction ->
+                        itemsIndexed(txns, key = { _, it -> it.id }) { i, txn: Transaction ->
                             val walletName = wallets.firstOrNull { it.id == txn.walletId }?.name?.let { shortWallet(it) }
                             val subtitle = if (txn.status == TransactionStatus.PLANNED) {
-                                listOfNotNull(tr(StringKey.MV_SCHEDULED_ONE), fmtDate(txn.date), walletName).joinToString(" · ")
+                                listOfNotNull(fmtDate(txn.date), walletName).joinToString(" · ")
                             } else {
                                 listOfNotNull((txn.merchant ?: txn.counterpartyName)?.takeIf { it.isNotBlank() }, walletName).joinToString(" · ")
                             }
-                            TransactionRow(transaction = txn, subtitle = subtitle, onClick = { onOpenDetail(txn.id) })
+                            val first = i == 0
+                            val last = i == txns.lastIndex
+                            val shape = RoundedCornerShape(
+                                topStart = if (first) 20.dp else 0.dp, topEnd = if (first) 20.dp else 0.dp,
+                                bottomStart = if (last) 20.dp else 0.dp, bottomEnd = if (last) 20.dp else 0.dp,
+                            )
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(shape)
+                                    .background(MaterialTheme.colorScheme.surface)
+                                    .cardBorder(MaterialTheme.colorScheme.outline, first, last),
+                            ) {
+                                TransactionRow(transaction = txn, subtitle = subtitle, onClick = { onOpenDetail(txn.id) })
+                                if (!last) HorizontalDivider(thickness = 1.dp, color = colors.dividerSubtle, modifier = Modifier.padding(horizontal = 16.dp))
+                            }
                         }
                     }
                 }
@@ -168,55 +212,94 @@ fun TransactionsScreen(
     }
 }
 
-@Composable
-private fun FilterPill(label: String, selected: Boolean, onClick: () -> Unit) {
-    val colors = NovaColors.current
-    Text(
-        label,
-        fontSize = 12.sp,
-        fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
-        color = if (selected) MaterialTheme.colorScheme.onPrimary else colors.pillText,
-        maxLines = 1,
-        softWrap = false,
-        modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .background(if (selected) MaterialTheme.colorScheme.primary else colors.pillSurface)
-            .border(1.dp, if (selected) Color.Transparent else colors.pillBorder, RoundedCornerShape(50))
-            .selectable(selected = selected, onClick = onClick, role = androidx.compose.ui.semantics.Role.RadioButton)
-            .padding(horizontal = 14.dp, vertical = 9.dp),
-    )
-}
+// A day card is split across lazy items (one per row), so each item draws
+// its part of the card's 1 dp border: both sides, plus the rounded top edge
+// on the first row and the rounded bottom edge on the last. A one-row card
+// uses a plain border.
+private fun Modifier.cardBorder(color: Color, first: Boolean, last: Boolean): Modifier =
+    if (first && last) this.border(1.dp, color, RoundedCornerShape(20.dp)) else this.drawWithContent {
+        drawContent()
+        val w = 1.dp.toPx()
+        val r = 20.dp.toPx()
+        val t = w / 2
+        val x0 = t
+        val x1 = size.width - t
+        val h = size.height
+        val y = h - t
+        val path = Path().apply {
+            when {
+                first -> {
+                    moveTo(x0, h)
+                    lineTo(x0, t + r)
+                    arcTo(Rect(x0, t, x0 + 2 * r, t + 2 * r), 180f, 90f, false)
+                    lineTo(x1 - r, t)
+                    arcTo(Rect(x1 - 2 * r, t, x1, t + 2 * r), 270f, 90f, false)
+                    lineTo(x1, h)
+                }
+                last -> {
+                    moveTo(x0, 0f)
+                    lineTo(x0, y - r)
+                    arcTo(Rect(x0, y - 2 * r, x0 + 2 * r, y), 180f, -90f, false)
+                    lineTo(x1 - r, y)
+                    arcTo(Rect(x1 - 2 * r, y - 2 * r, x1, y), 90f, -90f, false)
+                    lineTo(x1, 0f)
+                }
+                else -> {
+                    moveTo(x0, 0f); lineTo(x0, h)
+                    moveTo(x1, 0f); lineTo(x1, h)
+                }
+            }
+        }
+        drawPath(path, color, style = Stroke(w))
+    }
 
 @Composable
+private fun FilterPill(label: String, selected: Boolean, onClick: () -> Unit) = com.s2nova.app.ui.components.V2Pill(label, selected, onClick)
+
+// The title keeps its full width: when it and the labeled Programados button
+// don't fit on one line (narrow phones, large text), the button drops to an
+// icon-only 48 dp button with the same accessible name.
+@Composable
 private fun MovimientosHeader(title: String, programados: String, onOpenRecurring: () -> Unit) {
-    val colors = NovaColors.current
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 18.dp, end = 18.dp, top = 10.dp, bottom = 12.dp),
-    ) {
-        Text(
-            title,
-            fontSize = 21.sp,
-            fontWeight = FontWeight.ExtraBold,
-            letterSpacing = (-0.42).sp,
-            color = MaterialTheme.colorScheme.onBackground,
-            maxLines = 1,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f).padding(start = 2.dp),
-        )
-        Box(
-            modifier = Modifier
-                .height(34.dp)
-                .clip(RoundedCornerShape(50))
-                .background(MaterialTheme.colorScheme.surface)
-                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(50))
-                .clickable(onClick = onOpenRecurring)
-                .padding(horizontal = 12.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(programados, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = colors.accentText, maxLines = 1, softWrap = false)
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)) {
+        val titleWidth = with(density) { measurer.measure(title, NovaType.headline).size.width.toDp() }
+        val labelWidth = with(density) { measurer.measure(programados, NovaType.label).size.width.toDp() }
+        // 14 + 18 icon + 8 + label + 14, plus a 16 dp gap after the title.
+        val labeled = titleWidth + 16.dp + 54.dp + labelWidth <= maxWidth
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                title,
+                style = NovaType.headline,
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f).semantics { heading() },
+            )
+            // Secondary button (§6.3) at the tonal height: 40 dp on a 48 dp target.
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .height(48.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable(role = Role.Button, onClick = onOpenRecurring)
+                    .then(if (labeled) Modifier else Modifier.width(48.dp).semantics { contentDescription = programados }),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .height(40.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surface)
+                        .border(1.dp, NovaColors.current.borderInput, RoundedCornerShape(12.dp))
+                        .padding(horizontal = if (labeled) 14.dp else 10.dp),
+                ) {
+                    V2Icon(V2Icons.repeat, MaterialTheme.colorScheme.onSurface, 18.dp)
+                    if (labeled) Text(programados, style = NovaType.label, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, softWrap = false)
+                }
+            }
         }
     }
 }

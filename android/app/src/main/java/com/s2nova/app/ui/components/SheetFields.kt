@@ -86,24 +86,9 @@ fun SheetInput(
     )
 }
 
-// Mockup pill(): the same unselected/selected treatment as Movimientos' filters.
+// The shared chip (V2Pill, DESIGN-SYSTEM.md §6.5).
 @Composable
-fun SheetPill(label: String, selected: Boolean, onClick: () -> Unit) {
-    val colors = NovaColors.current
-    Text(
-        label,
-        fontSize = 12.sp,
-        fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
-        color = if (selected) MaterialTheme.colorScheme.onPrimary else colors.pillText,
-        maxLines = 1,
-        modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .background(if (selected) MaterialTheme.colorScheme.primary else colors.pillSurface)
-            .border(1.dp, if (selected) Color.Transparent else colors.pillBorder, RoundedCornerShape(50))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 9.dp),
-    )
-}
+fun SheetPill(label: String, selected: Boolean, onClick: () -> Unit) = com.s2nova.app.ui.components.V2Pill(label, selected, onClick)
 
 // Mockup shortWallet: "Bancolombia — Ahorros" reads as "Bancolombia".
 fun shortWalletName(name: String): String = name.substringBefore('—').trim()
