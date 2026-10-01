@@ -87,6 +87,7 @@ import com.s2nova.app.ui.components.shortWalletName
 import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.theme.NovaColors
+import com.s2nova.app.ui.theme.NovaType
 import kotlinx.coroutines.launch
 import com.s2nova.app.ui.tr
 
@@ -111,7 +112,7 @@ fun GoalsTab(snackbarHostState: SnackbarHostState) {
     }
 
     LazyColumn(
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 20.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
@@ -227,13 +228,17 @@ private fun goalNote(goal: Goal, t: (StringKey) -> String, format: (Double) -> S
     else -> String.format(t(StringKey.GOALS_NOTE_LEFT), format(goal.targetAmount - goal.currentAmount))
 }
 
+// Flat goal card: the progress ring (goal color, with the percentage in
+// text next to it), name and an edit button on a 48 dp target, then "x de
+// y" and what's left across the card, the periodic plan, and "Abonar" as a tonal button: a list of
+// goals has several, so none of them is the screen's primary action.
 @Composable
 private fun GoalCard(goal: Goal, onEdit: () -> Unit, onPay: () -> Unit) {
     val colors = NovaColors.current
     val principal = AppContainer.currencyRepository.principal
     val format = { v: Double -> formatMoney(v, principal) }
     val t = rememberStrings()
-    val shape = RoundedCornerShape(18.dp)
+    val shape = RoundedCornerShape(20.dp)
     val pct = goal.percentage.coerceAtMost(100)
     Column(
         modifier = Modifier
@@ -241,59 +246,69 @@ private fun GoalCard(goal: Goal, onEdit: () -> Unit, onPay: () -> Unit) {
             .clip(shape)
             .background(MaterialTheme.colorScheme.surface)
             .border(1.dp, MaterialTheme.colorScheme.outline, shape)
-            .padding(horizontal = 18.dp, vertical = 16.dp),
+            .padding(start = 16.dp, end = 4.dp, top = 4.dp, bottom = 16.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            GoalRing(percentage = pct, icon = goal.icon)
-            Column(modifier = Modifier.weight(1f).padding(start = 16.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(goal.name, fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                    Icon(
-                        MockupIcons.Pencil,
-                        contentDescription = t(StringKey.GOALS_EDIT_TITLE),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 8.dp).clip(CircleShape).clickable(onClick = onEdit).padding(2.dp).size(15.dp),
-                    )
-                }
+            Box(modifier = Modifier.padding(top = 12.dp)) { GoalRing(percentage = pct, icon = goal.icon) }
+            Column(modifier = Modifier.weight(1f).padding(start = 16.dp, top = 12.dp)) {
+                Text(goal.name, style = NovaType.titleSm, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                 Text(
                     "$pct% · " + (goal.targetDate?.let { tr(StringKey.GOAL_TARGET_ON, fmtDateLong(it)) } ?: tr(StringKey.GOAL_NO_TARGET)),
-                    fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp),
-                )
-                Text(
-                    buildAnnotatedString {
-                        append(format(goal.currentAmount))
-                        withStyle(SpanStyle(fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = colors.textDim)) { append(" " + tr(StringKey.GOAL_OF, format(goal.targetAmount))) }
-                    },
-                    fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(top = 4.dp), style = TextStyle(fontFeatureSettings = TNUM),
-                )
-                Text(
-                    when {
-                        goal.currentAmount <= 0 -> tr(StringKey.GOAL_NO_PAYMENTS)
-                        goal.currentAmount >= goal.targetAmount -> tr(StringKey.GOAL_MET)
-                        else -> tr(StringKey.GOAL_LEFT, format(goal.targetAmount - goal.currentAmount))
-                    },
-                    fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 3.dp),
+                    style = NovaType.bodySm, color = colors.textDim,
                 )
             }
-        }
-        goal.plan?.let { plan ->
-            val wallet = AppContainer.walletRepository.wallets.value.firstOrNull { it.id == plan.walletId }?.name?.let(::shortWallet) ?: ""
-            Row(
-                Modifier.padding(top = 12.dp).fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(colors.sheetSurface).padding(horizontal = 12.dp, vertical = 9.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .clickable(role = Role.Button, onClickLabel = t(StringKey.GOALS_EDIT_TITLE), onClick = onEdit),
             ) {
-                V2Icon(V2Icons.repeat, colors.textDim, 13.dp)
-                Text(planText(plan, wallet, principal) + " · " + tr(StringKey.GOAL_NEXT, fmtDate(plan.nextDate)), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, style = TextStyle(fontFeatureSettings = TNUM))
+                Icon(MockupIcons.Pencil, contentDescription = t(StringKey.GOALS_EDIT_TITLE), tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
             }
         }
-        Box(
-            modifier = Modifier.padding(top = 14.dp).fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary)
-                .clickable(role = Role.Button, onClick = onPay).padding(11.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(tr(StringKey.GOAL_PAY), fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = Color.White)
+        // The figures span the card so "x de y" stays whole on narrow screens.
+        Column(modifier = Modifier.padding(top = 12.dp, end = 12.dp)) {
+            Text(
+                buildAnnotatedString {
+                    append(format(goal.currentAmount))
+                    withStyle(SpanStyle(fontSize = 14.sp, fontWeight = FontWeight.Medium, color = colors.textDim)) { append(" " + tr(StringKey.GOAL_OF, format(goal.targetAmount))) }
+                },
+                style = NovaType.amount.copy(fontSize = 18.sp), color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                when {
+                    goal.currentAmount <= 0 -> tr(StringKey.GOAL_NO_PAYMENTS)
+                    goal.currentAmount >= goal.targetAmount -> tr(StringKey.GOAL_MET)
+                    else -> tr(StringKey.GOAL_LEFT, format(goal.targetAmount - goal.currentAmount))
+                },
+                style = NovaType.bodySm.copy(fontFeatureSettings = TNUM), color = colors.textDim,
+            )
+        }
+        Column(modifier = Modifier.padding(end = 12.dp)) {
+            goal.plan?.let { plan ->
+                val wallet = AppContainer.walletRepository.wallets.value.firstOrNull { it.id == plan.walletId }?.name?.let(::shortWallet) ?: ""
+                Row(
+                    Modifier.padding(top = 12.dp).fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(colors.surfaceSunken).padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    V2Icon(V2Icons.repeat, colors.textDim, 16.dp)
+                    Text(planText(plan, wallet, principal) + " · " + tr(StringKey.GOAL_NEXT, fmtDate(plan.nextDate)), style = NovaType.bodySm.copy(fontFeatureSettings = TNUM), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp)
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .clickable(role = Role.Button, onClick = onPay),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(tr(StringKey.GOAL_PAY), style = NovaType.label, color = MaterialTheme.colorScheme.onPrimaryContainer, maxLines = 1, softWrap = false)
+            }
         }
     }
 }

@@ -99,6 +99,11 @@ export function walletIcon(type: AccountType): keyof typeof WALLET_ICON_PATHS {
 }
 
 // ── Budgets ────────────────────────────────────────────────────────────
+// "94 %" in Spanish, "94%" in English.
+export function percentText(value: number, language: 'es' | 'en'): string {
+  return language === 'en' ? `${value}%` : `${value} %`
+}
+
 export type Tone = 'neg' | 'warn' | 'pos'
 
 // Same rule as Android: ≥90 negative, ≥65 warning, else positive.

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -108,24 +109,25 @@ fun Modifier.dashedBorder(color: Color): Modifier = this.drawBehind {
     )
 }
 
-// Dashed "+ <label>" row for adding a new budget/goal/loan — mockup:
-// 1.5dp dashed --line2 border, 16dp corners, 14dp padding, a text "+" at
-// 15 and the label at 12.5 ExtraBold, both in --accent2.
+// Dashed "+ <label>" row for adding a new budget, goal or loan: a 1.5 dp
+// dashed border, a plus icon and the `label` text in `link`, on a 52 dp
+// target that reads as a button.
 @Composable
 fun DashedNewRow(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val accent = NovaColors.current.accentText
+    val link = NovaColors.current.link
     Box(
         modifier = modifier
             .fillMaxWidth()
+            .heightIn(min = 52.dp)
             .clip(RoundedCornerShape(16.dp))
             .dashedBorder(MaterialTheme.colorScheme.outlineVariant)
-            .clickable(onClick = onClick)
-            .padding(14.dp),
+            .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("+", color = accent, fontSize = 15.sp, lineHeight = 15.sp, fontWeight = FontWeight.ExtraBold)
-            Text(label, color = accent, fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold)
+            V2Icon(V2Icons.plus, link, 18.dp, strokeWidth = 2.2f)
+            Text(label, style = com.s2nova.app.ui.theme.NovaType.label, color = link, maxLines = 1, softWrap = false)
         }
     }
 }

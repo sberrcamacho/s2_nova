@@ -65,6 +65,7 @@ import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.shortDateLabel
 import com.s2nova.app.ui.theme.NovaColors
+import com.s2nova.app.ui.theme.NovaType
 import kotlinx.coroutines.launch
 import com.s2nova.app.ui.tr
 
@@ -94,7 +95,7 @@ fun LoansTab(initialSide: LoanKind = LoanKind.LENT) {
     val settledWord = if (settledCount == 1) t(StringKey.LOANS_SETTLED_WORD_ONE) else t(StringKey.LOANS_SETTLED_WORD_MANY)
 
     LazyColumn(
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 20.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
@@ -109,24 +110,24 @@ fun LoansTab(initialSide: LoanKind = LoanKind.LENT) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(18.dp))
-                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(18.dp))
-                    .padding(horizontal = 18.dp, vertical = 16.dp),
+                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(20.dp))
+                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))
+                    .padding(16.dp),
             ) {
-                Text(t(if (side == LoanKind.LENT) StringKey.LOANS_SUMMARY_LENT else StringKey.LOANS_SUMMARY_BORROWED), fontSize = 12.sp, color = colors.textDim)
+                Text(t(if (side == LoanKind.LENT) StringKey.LOANS_SUMMARY_LENT else StringKey.LOANS_SUMMARY_BORROWED).uppercase(), style = NovaType.overline, color = colors.textDim, maxLines = 1, softWrap = false)
                 Text(
                     format(outstandingTotal),
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    letterSpacing = (-0.6).sp,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(top = 3.dp),
+                    style = NovaType.headline.copy(fontFeatureSettings = "tnum"),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    softWrap = false,
+                    modifier = Modifier.padding(top = 2.dp),
                 )
                 Text(
                     "${items.size} $recordWord · $settledCount $settledWord",
-                    fontSize = 12.sp,
-                    color = colors.textDim,
-                    modifier = Modifier.padding(top = 6.dp),
+                    style = NovaType.bodySm,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp),
                 )
             }
         }
@@ -162,8 +163,7 @@ fun LoansTab(initialSide: LoanKind = LoanKind.LENT) {
             item {
                 Text(
                     t(if (side == LoanKind.LENT) StringKey.LOANS_EMPTY_LENT else StringKey.LOANS_EMPTY_BORROWED),
-                    fontSize = 12.5.sp,
-                    lineHeight = 19.sp,
+                    style = NovaType.bodySm,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 24.dp),
@@ -259,8 +259,8 @@ fun LoansTab(initialSide: LoanKind = LoanKind.LENT) {
     }
 }
 
-// Mockup loan card: person and due line, the outstanding amount (the
-// principal, dimmed, once settled), a 6dp paid bar, then the actions.
+// Loan card: person and due line, the outstanding amount (the principal,
+// dimmed, once settled), an 8 dp paid bar, then the actions.
 @Composable
 private fun LoanCard(txn: Transaction, outstanding: Double, onPay: () -> Unit, onEdit: () -> Unit) {
     val colors = NovaColors.current
@@ -274,7 +274,7 @@ private fun LoanCard(txn: Transaction, outstanding: Double, onPay: () -> Unit, o
         val base = txn.dueDate?.let { "${t(StringKey.LOANS_DUE)} ${shortDateLabel(it, language)}" } ?: t(StringKey.LOANS_NO_DUE_DATE)
         base + if (paid > 0) String.format(t(StringKey.LOANS_PAID_NOTE), format(paid), format(txn.amount)) else ""
     }
-    val shape = RoundedCornerShape(18.dp)
+    val shape = RoundedCornerShape(20.dp)
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -286,14 +286,13 @@ private fun LoanCard(txn: Transaction, outstanding: Double, onPay: () -> Unit, o
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(txn.counterpartyName ?: txn.description, fontSize = 13.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
-                Text(due, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
+                Text(txn.counterpartyName ?: txn.description, style = NovaType.titleSm, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                Text(due, style = NovaType.bodySm.copy(fontFeatureSettings = "tnum"), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Text(
                 format(if (txn.loanSettled) txn.amount else outstanding),
-                fontSize = 14.5.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = if (txn.loanSettled) colors.textDim else MaterialTheme.colorScheme.onBackground,
+                style = NovaType.amount,
+                color = if (txn.loanSettled) colors.textDim else MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 softWrap = false,
                 modifier = Modifier.padding(start = 12.dp),
@@ -302,15 +301,19 @@ private fun LoanCard(txn: Transaction, outstanding: Double, onPay: () -> Unit, o
         NovaProgressBar(
             percentage = if (txn.amount > 0) ((paid / txn.amount) * 100).toInt().coerceIn(0, 100) else 0,
             color = if (txn.loanSettled) colors.positive else colors.link,
-            height = 6.dp,
-            cornerRadius = 3.dp,
+            height = 8.dp,
+            cornerRadius = 4.dp,
             modifier = Modifier.padding(top = 12.dp),
         )
         // Text actions with 48 dp tall targets; accentText keeps AA in dark
         // (primary was 3.9:1 on the dark surface).
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 2.dp).offset(x = (-8).dp)) {
             if (txn.loanSettled) {
-                Text(t(StringKey.LOANS_SETTLED), fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = colors.positive, maxLines = 1, modifier = Modifier.padding(horizontal = 8.dp))
+                // The settled state carries a check, not just the green.
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.padding(horizontal = 8.dp)) {
+                    com.s2nova.app.ui.components.V2Icon(com.s2nova.app.ui.components.V2Icons.check, colors.positive, 16.dp)
+                    Text(t(StringKey.LOANS_SETTLED), style = NovaType.label, color = colors.positive, maxLines = 1, softWrap = false)
+                }
             } else {
                 LoanAction(t(StringKey.LOANS_REGISTER_PAYMENT), colors.accentText, onPay)
             }
@@ -472,6 +475,6 @@ private fun LoanAction(label: String, color: androidx.compose.ui.graphics.Color,
         Modifier.heightIn(min = 48.dp).clip(RoundedCornerShape(10.dp)).clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick).padding(horizontal = 8.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(label, fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = color, maxLines = 1, softWrap = false)
+        Text(label, style = NovaType.label, color = color, maxLines = 1, softWrap = false)
     }
 }

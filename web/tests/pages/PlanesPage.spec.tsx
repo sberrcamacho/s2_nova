@@ -48,8 +48,8 @@ describe('Planes', () => {
     const user = userEvent.setup()
     renderApp(<PlanesPage />, { route: '/planes?tab=presupuestos' })
 
-    const card = (await screen.findByText('Servicios públicos · Todas')).closest('button')!
-    expect(within(card).getByText('92%')).toBeInTheDocument()
+    const card = (await screen.findByText('Servicios públicos · Todas · Mensual · se reinicia el 1')).closest('button')!
+    expect(within(card).getByText('92 %')).toBeInTheDocument()
     expect(card).toHaveTextContent('de $450.000')
     expect(card).toHaveTextContent('Cerca del límite')
     expect(card).toHaveTextContent('Mensual · se reinicia el 1')
@@ -106,7 +106,7 @@ describe('Planes', () => {
     const user = userEvent.setup()
     renderApp(<PlanesPage />, { route: '/planes?tab=presupuestos' })
 
-    await user.click((await screen.findByText('Servicios públicos · Todas')).closest('button')!)
+    await user.click((await screen.findByText('Servicios públicos · Todas · Mensual · se reinicia el 1')).closest('button')!)
     const dialog = screen.getByRole('dialog', { name: 'Editar presupuesto' })
     await user.click(within(dialog).getByRole('button', { name: 'Servicios públicos' }))
     await user.click(within(dialog).getByRole('button', { name: 'Alimentación' }))
@@ -128,7 +128,7 @@ describe('Planes', () => {
     const user = userEvent.setup()
     renderApp(<PlanesPage />, { route: '/planes?tab=presupuestos' })
 
-    await user.click((await screen.findByText('Servicios públicos · Todas')).closest('button')!)
+    await user.click((await screen.findByText('Servicios públicos · Todas · Mensual · se reinicia el 1')).closest('button')!)
     await user.click(screen.getByRole('button', { name: 'Eliminar presupuesto' }))
     const confirm = screen.getByRole('alertdialog')
     expect(confirm).toHaveTextContent('$414.000 gastados de $450.000 · Mensual · se reinicia el 1')
@@ -190,7 +190,7 @@ describe('Planes', () => {
     const user = userEvent.setup()
     renderApp(<PlanesPage />, { route: '/planes?tab=metas' })
 
-    await user.click(await screen.findByRole('button', { name: '+Abonar' }))
+    await user.click(await screen.findByRole('button', { name: 'Abonar' }))
     const dialog = screen.getByRole('dialog', { name: 'Abonar a Viaje a Perú' })
     await user.type(within(dialog).getByPlaceholderText('0'), '100000')
     await user.click(within(dialog).getByRole('radio', { name: 'Nequi' }))

@@ -96,6 +96,7 @@ object V2Icons {
     // Same paths as Web's ICON_PATHS.eye / eyeOff / alertCircle.
     val eye = listOf("M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z", "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z")
     val eyeOff = listOf("M17.9 17.9A10 10 0 0 1 12 20c-7 0-11-8-11-8a18 18 0 0 1 5.1-5.9", "M9.9 4.2A9 9 0 0 1 12 4c7 0 11 8 11 8a18 18 0 0 1-2.2 3.2", "M14.1 14.1a3 3 0 1 1-4.2-4.2", "M1 1l22 22")
+    val plus = listOf("M12 5v14", "M5 12h14")
     val alertCircle = listOf("M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z", "M12 8v5", "M12 16h.01")
 }
 

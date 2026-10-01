@@ -12,7 +12,7 @@ Tracker", stack guidelines for `jetpack-compose` and `html-tailwind`, chart
 and UX rule sets. The skill's generic fintech palette (gold/amber) was **not**
 used: the brand palette is fixed by the S2 Nova logo.
 
-**Status:** v1.4 · 2026-09-30 · F0–F3 implemented on both clients (fixes, brand tokens, type roles and the 12 floor, bento Inicio, Nuevo movimiento); F4 in progress (Reportes, Movimientos and the shared chip done; Planes, Billeteras and Ajustes pending).
+**Status:** v1.4 · 2026-09-30 · F0–F3 implemented on both clients (fixes, brand tokens, type roles and the 12 floor, bento Inicio, Nuevo movimiento); F4 in progress (Reportes, Movimientos, the shared chip and Planes done; Billeteras and Ajustes pending).
 
 ---
 
@@ -492,6 +492,7 @@ padding or a pseudo-element on Web.
 
 - Layout: the name (`title-sm`) and the percentage + icon on the first line, the bar, then `$84.800 de $90.000` (`body-sm`, tnum) below. Nothing overlaps the bar.
 - It exposes `progressBarRangeInfo` / `role="progressbar"` with `aria-valuenow`, and a text state.
+- As built (F4, Planes): both clients keep the display thresholds they already shared with Inicio (positive < 65 %, warning 65–89 %, negative ≥ 90 %) instead of the 80/100 split above; the state note ("Holgado", "Vigílalo", "Cerca del límite", "Superado por …") sits on the line under the bar next to the figures. A list with several cards uses tonal buttons for the per-card action ("Abonar", "Registrar abono"), so the screen keeps one primary button.
 
 ### 6.9 HeroCard
 

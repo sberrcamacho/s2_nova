@@ -13,22 +13,25 @@ import { useCurrency } from '@/state/useCurrency'
 import { useHideAmounts } from '@/state/useHideAmounts'
 import { useTranslation } from '@/state/useTranslation'
 import { todayISO } from '@/lib/date'
+import { budgetTone, percentText, type Tone } from '@/lib/inicio'
+import { ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
+import { cn } from '@/lib/cn'
 import type { Wallet } from '@/types'
 
-// The mockup's toneOf(): color + pill background by percentage.
-function toneOf(pct: number): [string, string] {
-  return pct >= 90 ? ['var(--v2-neg)', 'rgba(255,98,98,.14)'] : pct >= 65 ? ['var(--v2-warn)', 'rgba(240,180,41,.16)'] : ['var(--v2-pos)', 'rgba(50,201,138,.14)']
-}
+const TONE_VAR: Record<Tone, string> = { neg: 'var(--color-negative)', warn: 'var(--color-warning)', pos: 'var(--color-positive)' }
+const TONE_ICON: Record<Tone, string> = { neg: ICON_PATHS.alertCircle, warn: ICON_PATHS.warn, pos: ICON_PATHS.check }
 
-// Planes › Presupuestos (Web v2 mockup `isBudgets`): one card per budget
-// with its mark, scope, spent/limit, state note and period. A card opens
+// Planes › Presupuestos: one flat card per budget, laid out as a BudgetBar
+// (DESIGN-SYSTEM.md §6.8): the name with the percentage and its state icon,
+// the scope and period, the 8 px bar, then "spent de limit" with the state
+// in words, so the tone never travels by color alone. A card opens
 // the budget modal; the header's "Nuevo presupuesto" (PlanesPage) creates one.
 export default function BudgetsPage({ adding, onAddingDone }: { adding: boolean; onAddingDone: () => void }) {
   useCategories()
   const { budgets, version, refresh, notifyChanged } = useAppData()
   const { format } = useCurrency()
   const { hidden } = useHideAmounts()
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const [editing, setEditing] = useState<BudgetProgress | null>(null)
   const [wallets, setWallets] = useState<Wallet[]>([])
   const today = todayISO()
@@ -46,48 +49,61 @@ export default function BudgetsPage({ adding, onAddingDone }: { adding: boolean;
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-3.5 min-[760px]:grid-cols-2 min-[1100px]:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 min-[760px]:grid-cols-2 min-[1100px]:grid-cols-3">
         {sorted.map((b) => {
-          const [tone, bg] = toneOf(b.percentage)
+          const tone = budgetTone(b.percentage)
+          const color = TONE_VAR[tone]
+          const name = b.name ?? categoryName(b.category)
+          const scope = `${budgetScope(b, walletName)} · ${budgetPeriodLabel(b)}`
+          const state = budgetStateNote(b, today, format)
           return (
             <button
               key={b.id}
               type="button"
               onClick={() => setEditing(b)}
-              className="cursor-pointer rounded-[16px] border bg-v2-surface px-5 py-[18px] text-left hover:!border-v2-line2 focus-visible:outline-2 focus-visible:outline-focus"
-              style={{ borderColor: b.percentage >= 90 ? 'var(--v2-neg-soft)' : 'var(--v2-line)' }}
+              aria-label={`${tr('bud.edit')}: ${name}`}
+              className={cn(
+                'flex cursor-pointer flex-col rounded-[16px] border bg-surface p-5 text-left text-ink hover:border-border-strong',
+                b.percentage >= 90 ? 'border-negative-soft' : 'border-border',
+              )}
             >
-              <div className="flex items-center gap-2.5">
-                {b.kind === 'custom' ? <PlanMark icon={b.icon} box={36} /> : <CategoryMark category={b.category ?? 'exp.other'} box={36} />}
+              <div className="flex items-center gap-3">
+                {b.kind === 'custom' ? <PlanMark icon={b.icon} box={40} /> : <CategoryMark category={b.category ?? 'exp.other'} box={40} />}
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-[13.5px] font-extrabold" title={b.name ?? categoryName(b.category)}>{b.name ?? categoryName(b.category)}</div>
-                  <div className="mt-px truncate text-caption text-v2-dim" title={budgetScope(b, walletName)}>{budgetScope(b, walletName)}</div>
+                  <div className="flex items-center gap-2">
+                    <span className="min-w-0 flex-1 truncate text-title-sm font-semibold" title={name}>{name}</span>
+                    <span className="flex flex-none items-center gap-1 text-label font-semibold tabular-nums" style={{ color }}>
+                      {percentText(b.percentage, language)}
+                      <StrokeIcon paths={TONE_ICON[tone]} size={16} />
+                    </span>
+                  </div>
+                  <div className="truncate text-body-sm text-ink-secondary" title={scope}>{scope}</div>
                 </div>
-                <span className="flex-none whitespace-nowrap rounded-full px-2 py-[3px] text-caption font-extrabold" style={{ color: tone, background: bg }}>
-                  {b.percentage}%
+              </div>
+              <div
+                role="progressbar"
+                aria-label={name}
+                aria-valuenow={b.percentage}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuetext={`${percentText(b.percentage, language)}, ${state}`}
+                className="mt-3 h-2 overflow-hidden rounded-full bg-surface-sunken"
+              >
+                <div className="h-full rounded-full" style={{ width: `${Math.min(100, b.percentage)}%`, background: color }} />
+              </div>
+              <div className="mt-2 flex flex-wrap justify-between gap-x-3 gap-y-0.5 text-body-sm tabular-nums">
+                <span className="whitespace-nowrap">
+                  <Money hidden={hidden} inline>{format(b.spent)}</Money>
+                  {` ${tr('plan.of')} `}
+                  <Money hidden={hidden} inline>{format(b.limit)}</Money>
                 </span>
-              </div>
-              <Money hidden={hidden} className="mt-2 block whitespace-nowrap text-[20px] font-extrabold tracking-[-.025em]">
-                {format(b.spent)}
-              </Money>
-              <div className="mt-0.5 text-caption text-v2-dim">
-                {`${tr('plan.of')} `}
-                <Money hidden={hidden} inline>
-                  {format(b.limit)}
-                </Money>
-              </div>
-              <div className="mt-3.5 h-1.5 overflow-hidden rounded-[3px] bg-v2-line">
-                <div className="h-full" style={{ width: `${Math.min(100, b.percentage)}%`, background: tone }} />
-              </div>
-              <div className="mt-2.5 flex flex-wrap justify-between gap-x-2.5 gap-y-1 text-caption">
-                <span className="text-v2-muted">{budgetStateNote(b, today, format)}</span>
-                <span className="text-v2-dim">{budgetPeriodLabel(b)}</span>
+                <span className="whitespace-nowrap" style={{ color: tone === 'pos' ? 'var(--color-text-secondary)' : color }}>{state}</span>
               </div>
             </button>
           )
         })}
       </div>
-      {budgets.length === 0 && <div className="p-5 text-center text-[12.5px] text-v2-dim">{t('plans.budgetsEmpty')}</div>}
+      {budgets.length === 0 && <div className="p-5 text-center text-body-sm text-ink-secondary">{t('plans.budgetsEmpty')}</div>}
 
       {(editing || adding) && (
         <BudgetModal

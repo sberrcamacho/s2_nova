@@ -30,21 +30,21 @@ export default function PlanesPage() {
       <div className="flex flex-col gap-3.5">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-[24px] font-extrabold tracking-[-.025em]">{t('planes.title')}</h1>
-            <div className="mt-[3px] text-[12.5px] text-v2-dim">{t('planes.subtitle')}</div>
+            <h1 className="text-headline font-bold">{t('planes.title')}</h1>
+            <div className="mt-1 text-body-sm text-ink-secondary">{t('planes.subtitle')}</div>
           </div>
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="box-border flex h-[34px] cursor-pointer items-center gap-[7px] whitespace-nowrap rounded-[10px] bg-v2-accent px-3.5 text-[12.5px] font-bold text-white"
+            className="flex h-11 cursor-pointer items-center gap-2 whitespace-nowrap rounded-[12px] bg-primary px-4 text-label font-semibold text-on-primary hover:bg-primary-pressed"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" className="flex-none">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" className="flex-none">
               <path d="M12 5v14 M5 12h14" />
             </svg>
             {addLabel}
           </button>
         </div>
-        <div role="tablist" className="flex border-b border-v2-line">
+        <div role="tablist" className="flex overflow-x-auto border-b border-border scrollbar-none">
           {TABS.map((x) => {
             const on = x.id === tab
             return (
@@ -58,8 +58,8 @@ export default function PlanesPage() {
                   setParams({ tab: x.id }, { replace: true })
                 }}
                 className={cn(
-                  'mb-[-1px] cursor-pointer border-b-2 px-3.5 py-2.5 text-[12.5px]',
-                  on ? 'border-v2-accent3 font-extrabold text-v2-text' : 'border-transparent font-semibold text-v2-dim',
+                  'mb-[-1px] h-10 flex-none cursor-pointer whitespace-nowrap border-b-2 px-4 text-label',
+                  on ? 'border-primary-border font-bold text-ink' : 'border-transparent font-semibold text-ink-secondary hover:text-ink',
                 )}
               >
                 {t(x.labelKey)}

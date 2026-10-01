@@ -31,6 +31,7 @@ import {
   fill,
   loadDismissed,
   monthAbbr,
+  percentText,
   pruneDismissed,
   saveDismissed,
   shortDate,
@@ -481,11 +482,6 @@ function budgetsSubtitle(today: string, language: 'es' | 'en', t: (k: Translatio
   if (left === 0) return fill(t('inicio.budgets.subtitleLast'), month)
   if (left === 1) return fill(t('inicio.budgets.subtitleOne'), month)
   return fill(t('inicio.budgets.subtitle'), left, month)
-}
-
-// "94 %" in Spanish, "94%" in English.
-function percentText(value: number, language: 'es' | 'en'): string {
-  return language === 'en' ? `${value}%` : `${value} %`
 }
 
 // ── Pieces ──────────────────────────────────────────────────────────────
