@@ -12,7 +12,7 @@ Tracker", stack guidelines for `jetpack-compose` and `html-tailwind`, chart
 and UX rule sets. The skill's generic fintech palette (gold/amber) was **not**
 used: the brand palette is fixed by the S2 Nova logo.
 
-**Status:** v1.4 · 2026-09-30 · F0–F3 implemented on both clients (fixes, brand tokens, type roles and the 12 floor, bento Inicio, Nuevo movimiento); F4 in progress (Reportes, Movimientos, the shared chip, Planes and Billeteras done; Ajustes pending).
+**Status:** v1.4 · 2026-09-30 · F0–F3 implemented on both clients (fixes, brand tokens, type roles and the 12 floor, bento Inicio, Nuevo movimiento); F4 implemented on the main screens (Reportes, Movimientos, the shared chip, Planes, Billeteras and Ajustes); the Ajustes sub-screens, Programados, the movement detail and the sheets inherit the shared components but have not had their own review.
 
 ---
 

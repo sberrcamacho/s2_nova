@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AjCard, AjCardTitle, AjOutlineButton, AjPills, AjRow, AjSwitch } from '@/dashboard/components/ajustes/AjustesUi'
+import { AjCard, AjCardTitle, AjOutlineButton, AjPills, AjRow, AjSegmented, AjSwitch } from '@/dashboard/components/ajustes/AjustesUi'
 import { parentCategories, useCategories } from '@/lib/backendCategories'
 import { currencyService, type UserCurrency } from '@/services/currencyService'
 import { userService, type Session } from '@/services/userService'
@@ -95,17 +95,18 @@ export default function AjustesPage() {
   return (
     <div className="flex max-w-[976px] flex-col gap-[18px] px-7 pt-[26px] pb-10">
       <div>
-        <h1 className="text-[24px] font-extrabold tracking-[-.025em]">{t('aj.title')}</h1>
-        <div className="mt-[3px] text-[12.5px] text-v2-dim">{t('aj.subtitle')}</div>
+        <h1 className="text-headline font-bold">{t('aj.title')}</h1>
+        <div className="mt-1 text-body-sm text-ink-secondary">{t('aj.subtitle')}</div>
       </div>
 
       <AjCard className="p-5">
-        <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 flex-none items-center justify-center rounded-full bg-v2-accent text-[18px] font-extrabold">{initialsOf(user.name)}</div>
-          <div className="min-w-0 flex-1">
-            <div className="text-[16px] font-extrabold tracking-[-.015em]">{user.name}</div>
-            <div className="mt-0.5 text-[12.5px] text-v2-dim">{city ? `${user.email} · ${city}` : user.email}</div>
-            <div className="mt-0.5 text-caption text-v2-dim">{memberSince}</div>
+        {/* The button drops under the identity on a narrow card. */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+          <div className="flex h-14 w-14 flex-none items-center justify-center rounded-full bg-primary text-title font-semibold text-on-primary">{initialsOf(user.name)}</div>
+          <div className="min-w-[180px] flex-1">
+            <div className="truncate text-title font-semibold">{user.name}</div>
+            <div className="truncate text-body-sm text-ink-secondary">{city ? `${user.email} · ${city}` : user.email}</div>
+            <div className="text-body-sm text-ink-tertiary">{memberSince}</div>
           </div>
           <AjOutlineButton onClick={() => navigate('/ajustes/perfil')}>{t('aj.editProfile')}</AjOutlineButton>
         </div>
@@ -115,7 +116,8 @@ export default function AjustesPage() {
         <AjCardTitle>{t('aj.preferences')}</AjCardTitle>
         <div className="mt-2 flex flex-col">
           <AjRow label={t('aj.language')} detail={t('aj.languageHint')}>
-            <AjPills<LanguageCode>
+            <AjSegmented<LanguageCode>
+              label={t('aj.language')}
               value={language}
               onChange={setLanguage}
               options={[
@@ -131,7 +133,8 @@ export default function AjustesPage() {
             <AjOutlineButton onClick={replayGuides}>{t('aj.guides.again')}</AjOutlineButton>
           </AjRow>
           <AjRow label={t('aj.theme')} detail={t('aj.themeHint')}>
-            <AjPills<ThemePreference>
+            <AjSegmented<ThemePreference>
+              label={t('aj.theme')}
               value={theme}
               onChange={onTheme}
               options={[
@@ -154,7 +157,7 @@ export default function AjustesPage() {
         <div className="flex items-center gap-4">
           <div className="min-w-0 flex-1">
             <AjCardTitle>{t('cat.title')}</AjCardTitle>
-            <div className="mt-0.5 text-caption text-v2-dim">{catSummary}</div>
+            <div className="text-body-sm text-ink-secondary">{catSummary}</div>
           </div>
           <AjOutlineButton onClick={() => navigate('/ajustes/categorias')}>{t('aj.manage')}</AjOutlineButton>
         </div>

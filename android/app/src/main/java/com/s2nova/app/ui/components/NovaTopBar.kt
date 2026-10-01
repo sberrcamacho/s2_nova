@@ -64,25 +64,26 @@ fun BackHeader(
         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = 18.dp, end = 18.dp, top = 10.dp, bottom = 12.dp),
+            .padding(start = 4.dp, end = 12.dp, top = 4.dp, bottom = 4.dp),
     ) {
+        // Back is an icon button on a 48 dp target.
         androidx.compose.foundation.layout.Box(
             modifier = Modifier
-                .size(38.dp)
+                .size(48.dp)
                 .clip(androidx.compose.foundation.shape.CircleShape)
-                .clickable(onClick = onBack)
+                .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onBack)
                 .semantics { contentDescription = t(StringKey.COMMON_BACK) },
             contentAlignment = androidx.compose.ui.Alignment.Center,
         ) {
-            Text("←", fontSize = 19.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            V2Icon(V2Icons.back, MaterialTheme.colorScheme.onBackground, 24.dp)
         }
         Text(
             title,
-            fontSize = 17.sp,
-            fontWeight = FontWeight.ExtraBold,
-            letterSpacing = (-0.255).sp,
+            style = com.s2nova.app.ui.theme.NovaType.title,
             color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.weight(1f).padding(start = 12.dp),
+            maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f).padding(start = 4.dp),
         )
         action?.invoke()
     }

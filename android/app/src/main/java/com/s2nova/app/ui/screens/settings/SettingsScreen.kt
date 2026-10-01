@@ -52,6 +52,18 @@ import com.s2nova.app.ui.components.NovaDraftSheet
 import com.s2nova.app.ui.components.NovaSwitch
 import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.theme.NovaColors
+import com.s2nova.app.ui.theme.NovaType
+import com.s2nova.app.ui.components.V2Icon
+import com.s2nova.app.ui.components.V2Icons
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import com.s2nova.app.ui.theme.NovaFontFamily
 import kotlinx.coroutines.launch
 import com.s2nova.app.ui.tr
@@ -109,7 +121,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(start = 20.dp, end = 20.dp, bottom = 24.dp),
+                    .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 SectionTitle(t(StringKey.SETTINGS_PERSONAL_INFO))
@@ -117,26 +129,27 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
                 FieldBox(label = t(StringKey.SETTINGS_EMAIL), value = user?.email ?: "", onValueChange = {}, enabled = false)
                 FieldBox(label = t(StringKey.SETTINGS_PHONE), value = phone, onValueChange = { phone = it })
                 FieldBox(label = t(StringKey.SETTINGS_CITY), value = city, onValueChange = { city = it })
-                Text(
-                    t(StringKey.SETTINGS_SAVE_CHANGES),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color.White,
+                // Primary button (§6.3): 52 dp, full width.
+                Box(
+                    contentAlignment = Alignment.Center,
                     modifier = Modifier
                         .padding(top = 4.dp)
-                        .clip(RoundedCornerShape(14.dp))
+                        .fillMaxWidth()
+                        .height(52.dp)
+                        .clip(RoundedCornerShape(12.dp))
                         .background(MaterialTheme.colorScheme.primary)
-                        .clickable {
+                        .clickable(role = Role.Button) {
                             scope.launch {
                                 AppContainer.authRepository.updateProfile(name = name, phone = phone.trim().ifBlank { null }, city = city.trim().ifBlank { null })
                             }
-                        }
-                        .padding(horizontal = 20.dp, vertical = 12.dp),
-                )
+                        },
+                ) {
+                    Text(t(StringKey.SETTINGS_SAVE_CHANGES), style = NovaType.label, color = MaterialTheme.colorScheme.onPrimary, maxLines = 1, softWrap = false)
+                }
 
                 SectionTitle(t(StringKey.SETTINGS_PREFERENCES), modifier = Modifier.padding(top = 16.dp))
                 NovaCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(17.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         SwitchRow(t(StringKey.SETTINGS_DARK_MODE), isDark) { ThemeController.setDark(it) }
                         SwitchRow(t(StringKey.SETTINGS_NOTIFICATIONS), notifications) {
                             persist({ p -> p.copy(notifications = it) }, UpdatePreferencesRequest(notifications = it))
@@ -167,32 +180,29 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
 
                 SectionTitle(t(StringKey.SETTINGS_PRIVACY_SESSION), modifier = Modifier.padding(top = 16.dp))
                 NovaCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(17.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(t(StringKey.SETTINGS_BLUR_BALANCE), fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+                                Text(t(StringKey.SETTINGS_BLUR_BALANCE), style = NovaType.titleSm, color = MaterialTheme.colorScheme.onSurface)
                                 Text(
                                     t(if (blurBalance) StringKey.SETTINGS_BLUR_BALANCE_HELP_ON else StringKey.SETTINGS_BLUR_BALANCE_HELP_OFF),
-                                    fontSize = 12.sp,
-                                    lineHeight = 15.4.sp,
+                                    style = NovaType.bodySm,
                                     color = colors.textDim,
-                                    modifier = Modifier.padding(top = 3.dp),
                                 )
                             }
                             NovaSwitch(checked = blurBalance, onCheckedChange = {
                                 persist({ p -> p.copy(blurBalance = it) }, UpdatePreferencesRequest(blurBalance = it))
                             })
                         }
-                        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outline))
+                        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(colors.dividerSubtle))
                         Column {
                             Row(verticalAlignment = Alignment.Bottom) {
-                                Text(t(StringKey.SETTINGS_AUTO_LOCK), fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f).alignByBaseline())
-                                Text(lockName(autoLockMinutes), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText, modifier = Modifier.padding(start = 12.dp).alignByBaseline())
+                                Text(t(StringKey.SETTINGS_AUTO_LOCK), style = NovaType.titleSm, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f).alignByBaseline())
+                                Text(lockName(autoLockMinutes), style = NovaType.label, color = colors.link, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 12.dp).alignByBaseline())
                             }
                             FlowRow(
-                                modifier = Modifier.padding(top = 11.dp),
+                                modifier = Modifier.padding(top = 8.dp),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
                                 LOCK_OPTIONS.forEach { minutes ->
                                     LockPill(lockName(minutes), selected = autoLockMinutes == minutes) {
@@ -206,10 +216,9 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
                                     biometric -> t(StringKey.SETTINGS_AUTO_LOCK_HELP_BIOMETRIC_AFTER).format(lockName(autoLockMinutes).lowercase())
                                     else -> t(StringKey.SETTINGS_AUTO_LOCK_HELP_PASSWORD_AFTER).format(lockName(autoLockMinutes).lowercase())
                                 },
-                                fontSize = 12.sp,
-                                lineHeight = 15.4.sp,
+                                style = NovaType.bodySm,
                                 color = colors.textDim,
-                                modifier = Modifier.padding(top = 10.dp),
+                                modifier = Modifier.padding(top = 8.dp),
                             )
                         }
                     }
@@ -220,18 +229,18 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
                     scope.launch { AppContainer.authRepository.updateGuides(emptySet(), false) }
                     com.s2nova.app.ui.Snack.show(tr(StringKey.SET_GUIDES_TOAST))
                 }) {
-                    Row(modifier = Modifier.padding(17.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(tr(StringKey.SET_GUIDES_AGAIN), fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-                            Text(tr(StringKey.SET_GUIDES_DETAIL), fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 3.dp))
+                            Text(tr(StringKey.SET_GUIDES_AGAIN), style = NovaType.titleSm, color = MaterialTheme.colorScheme.onSurface)
+                            Text(tr(StringKey.SET_GUIDES_DETAIL), style = NovaType.bodySm, color = colors.textDim)
                         }
-                        Text("→", fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        V2Icon(V2Icons.chevronRight, colors.textDim, 20.dp)
                     }
                 }
                 NovaCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.fillMaxWidth().padding(17.dp)) {
-                        Text(t(StringKey.SETTINGS_ABOUT), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
-                        Text("S2 Nova · v${BuildConfig.VERSION_NAME}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+                    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                        Text(t(StringKey.SETTINGS_ABOUT), style = NovaType.titleSm, color = MaterialTheme.colorScheme.onSurface)
+                        Text("S2 Nova · v${BuildConfig.VERSION_NAME}", style = NovaType.bodySm, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -245,78 +254,97 @@ private fun LinkCard(title: String, detail: String, modifier: Modifier, onClick:
     NovaCard(modifier = modifier.fillMaxWidth(), onClick = onClick) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(title, fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
-                Text(detail, fontSize = 12.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 3.dp))
+                Text(title, style = NovaType.titleSm, color = MaterialTheme.colorScheme.onSurface)
+                Text(detail, style = NovaType.bodySm, color = NovaColors.current.textDim)
             }
-            Text("›", fontSize = 18.sp, color = NovaColors.current.textDim)
+            V2Icon(V2Icons.chevronRight, NovaColors.current.textDim, 20.dp)
         }
     }
 }
 
 @Composable
 private fun SectionTitle(text: String, modifier: Modifier = Modifier) {
-    Text(text, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, modifier = modifier)
+    Text(text, style = NovaType.title, color = MaterialTheme.colorScheme.onBackground, modifier = modifier.semantics { heading() })
 }
 
-// The mockup's personal-info box: a muted caption over the value; the
-// email (not editable here) sits on --bg-deep with dimmed text.
+// Input (§6.6): a visible label above the field; the field is 52 dp tall
+// with a `border-input` border. The email (not editable here) sits on
+// `surface-sunken` with dimmed text.
 @Composable
 private fun FieldBox(label: String, value: String, onValueChange: (String) -> Unit, enabled: Boolean = true) {
     val colors = NovaColors.current
-    val shape = RoundedCornerShape(14.dp)
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(if (enabled) Color.Transparent else colors.bgDeep)
-            .border(1.dp, if (enabled) MaterialTheme.colorScheme.outlineVariant else MaterialTheme.colorScheme.outline, shape)
-            .padding(horizontal = 15.dp, vertical = 13.dp),
-    ) {
-        Text(label, fontSize = 12.sp, color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else colors.textDim)
-        Spacer(Modifier.height(3.dp))
+    val shape = RoundedCornerShape(12.dp)
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(label, style = NovaType.label, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 2.dp, bottom = 6.dp))
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
             enabled = enabled,
             singleLine = true,
-            textStyle = TextStyle(
-                fontFamily = NovaFontFamily,
-                fontSize = 13.5.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = if (enabled) MaterialTheme.colorScheme.onBackground else colors.textDim,
-            ),
+            textStyle = NovaType.body.copy(color = if (enabled) MaterialTheme.colorScheme.onSurface else colors.textDim),
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+            modifier = Modifier.fillMaxWidth().semantics { contentDescription = label },
+            decorationBox = { inner ->
+                Box(
+                    contentAlignment = Alignment.CenterStart,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 52.dp)
+                        .clip(shape)
+                        .background(if (enabled) MaterialTheme.colorScheme.surface else colors.surfaceSunken)
+                        .border(1.dp, if (enabled) colors.borderInput else MaterialTheme.colorScheme.outline, shape)
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                ) { inner() }
+            },
         )
     }
 }
 
+// A switch row: the whole row toggles, on a 56 dp target.
 @Composable
 private fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
-        NovaSwitch(checked = checked, onCheckedChange = onChange)
+    Row(
+        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).toggleable(value = checked, role = Role.Switch, onValueChange = onChange),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(label, style = NovaType.titleSm, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
+        NovaSwitch(checked = checked, onCheckedChange = null)
     }
 }
 
+// Segmented (§6.5): `surface-sunken` track, the selected segment on
+// `surface` with a border and weight 600; 44 dp tall, radio semantics.
 @Composable
 private fun <T> SegmentedRow(label: String, options: List<Pair<T, String>>, selected: T, onSelect: (T) -> Unit) {
     val colors = NovaColors.current
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
-        Row(modifier = Modifier.clip(RoundedCornerShape(50)).background(colors.bgDeep)) {
+    Row(modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(label, style = NovaType.titleSm, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
+        Row(
+            modifier = Modifier.height(44.dp).clip(RoundedCornerShape(12.dp)).background(colors.surfaceSunken).padding(4.dp).selectableGroup(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
             options.forEach { (value, text) ->
                 val active = value == selected
-                Text(
-                    text,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (active) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                val shape = RoundedCornerShape(8.dp)
+                Box(
+                    contentAlignment = Alignment.Center,
                     modifier = Modifier
-                        .clip(RoundedCornerShape(50))
-                        .background(if (active) MaterialTheme.colorScheme.primary else Color.Transparent)
-                        .clickable { onSelect(value) }
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                )
+                        .fillMaxHeight()
+                        .clip(shape)
+                        .background(if (active) MaterialTheme.colorScheme.surface else Color.Transparent)
+                        .then(if (active) Modifier.border(1.dp, MaterialTheme.colorScheme.outline, shape) else Modifier)
+                        .selectable(selected = active, role = Role.RadioButton) { onSelect(value) }
+                        .padding(horizontal = 12.dp),
+                ) {
+                    Text(
+                        text,
+                        style = NovaType.label.copy(fontWeight = if (active) FontWeight.SemiBold else FontWeight.Medium),
+                        color = if (active) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        softWrap = false,
+                    )
+                }
             }
         }
     }

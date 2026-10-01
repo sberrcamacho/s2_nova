@@ -4,28 +4,28 @@ import { useTranslation } from '@/state/useTranslation'
 import { cn } from '@/lib/cn'
 import { flatClass } from '@/components/v2/Kit'
 
-// The Ajustes building blocks, drawn to the Dashboard v2 mockup's
-// Settings views (cards, rows, pills, switches, form fields, buttons).
+// The Ajustes building blocks on the design-system tokens and type roles
+// (cards, rows, chips, segmented control, switches, form fields, buttons).
 
 export function AjCard({ className, style, children }: { className?: string; style?: CSSProperties; children: ReactNode }) {
   return (
-    <div className={cn('rounded-[16px] border border-v2-line bg-v2-surface', className)} style={style}>
+    <div className={cn('rounded-[16px] border border-border bg-surface text-ink', className)} style={style}>
       {children}
     </div>
   )
 }
 
 export function AjCardTitle({ children }: { children: ReactNode }) {
-  return <div className="text-[14px] font-extrabold tracking-[-.01em]">{children}</div>
+  return <h2 className="text-title font-semibold">{children}</h2>
 }
 
 // A settings row: label + detail on the left, a control on the right.
 export function AjRow({ label, detail, danger, last, children }: { label: string; detail: ReactNode; danger?: boolean; last?: boolean; children: ReactNode }) {
   return (
-    <div className={cn('flex items-center gap-4 py-[15px]', !last && 'border-b border-v2-subtle')}>
-      <div className="min-w-0 flex-1">
-        <div className={cn('text-[13px] font-bold', danger && 'text-v2-neg')}>{label}</div>
-        <div className="mt-0.5 text-caption text-v2-dim">{detail}</div>
+    <div className={cn('flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3.5', !last && 'border-b border-divider')}>
+      <div className="min-w-[180px] flex-1">
+        <div className={cn('text-title-sm font-semibold', danger && 'text-negative')}>{label}</div>
+        <div className="text-body-sm text-ink-secondary">{detail}</div>
       </div>
       {children}
     </div>
@@ -38,8 +38,8 @@ export function AjOutlineButton({ onClick, danger, children }: { onClick: () => 
       type="button"
       onClick={onClick}
       className={cn(
-        'flex-none cursor-pointer rounded-[10px] border px-3.5 py-2 text-[12px] font-bold',
-        danger ? 'border-[rgba(255,98,98,.35)] text-v2-neg hover:bg-[rgba(255,98,98,.1)]' : 'border-v2-line2 text-v2-muted hover:text-v2-text',
+        'h-9 flex-none cursor-pointer whitespace-nowrap rounded-[12px] border bg-surface px-4 text-label font-semibold',
+        danger ? 'border-negative text-negative hover:bg-negative-soft' : 'border-border-input text-ink hover:bg-surface-sunken',
       )}
     >
       {children}
@@ -69,6 +69,33 @@ export function AjPills<T extends string>({ value, options, onChange }: { value:
   )
 }
 
+// Segmented (§6.5): `surface-sunken` track, the selected segment on
+// `surface` with a border and weight 600; 36 px tall, radio semantics.
+export function AjSegmented<T extends string>({ value, options, onChange, label }: { value: T; options: { value: T; label: string }[]; onChange: (value: T) => void; label: string }) {
+  return (
+    <div role="radiogroup" aria-label={label} className="flex h-9 flex-none gap-1 rounded-[10px] bg-surface-sunken p-1">
+      {options.map((option) => {
+        const selected = option.value === value
+        return (
+          <button
+            key={option.value}
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            onClick={() => onChange(option.value)}
+            className={cn(
+              'cursor-pointer whitespace-nowrap rounded-[7px] border px-3 text-label',
+              selected ? 'border-border bg-surface font-semibold text-ink shadow-[var(--shadow-sm)]' : 'border-transparent font-medium text-ink-secondary hover:text-ink',
+            )}
+          >
+            {option.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 export function AjSwitch({ on, label, onToggle }: { on: boolean; label: string; onToggle: () => void }) {
   return (
     <button
@@ -78,12 +105,12 @@ export function AjSwitch({ on, label, onToggle }: { on: boolean; label: string; 
       aria-label={label}
       onClick={onToggle}
       className={cn(
-        // The mockup's 42×24 track plus its 3px padding (content-box sizing).
-        'flex h-[30px] w-[48px] flex-none cursor-pointer rounded-full p-[3px] transition-[background] duration-200',
-        on ? 'justify-end bg-v2-accent' : 'justify-start bg-v2-line2',
+        // A 48×30 track with a 24 px knob; the off track is `border-input` (3:1).
+        'flex h-[30px] w-[48px] flex-none cursor-pointer rounded-full p-[3px] transition-[background] duration-150 motion-reduce:transition-none',
+        on ? 'justify-end bg-primary' : 'justify-start bg-border-input',
       )}
     >
-      <span className="block h-[18px] w-[18px] rounded-full bg-white" />
+      <span className="block h-6 w-6 rounded-full bg-white" />
     </button>
   )
 }
@@ -94,13 +121,13 @@ export function AjSubHeader({ title, subtitle, danger, action, children }: { tit
   const { t } = useTranslation()
   return (
     <div className="flex flex-col gap-2.5">
-      <Link to="/ajustes" className="self-start text-[12px] font-bold text-v2-accent2">
+      <Link to="/ajustes" className="-mx-1 flex min-h-8 items-center self-start rounded-[8px] px-1 text-label font-semibold text-link hover:bg-surface-sunken">
         {t('aj.back')}
       </Link>
-      <div className="flex items-end justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className={cn('text-[24px] font-extrabold tracking-[-.025em]', danger && 'text-v2-neg')}>{title}</h1>
-          <div className="mt-[3px] text-[12.5px] text-v2-dim">{subtitle}</div>
+          <h1 className={cn('text-headline font-bold', danger && 'text-negative')}>{title}</h1>
+          <div className="mt-1 text-body-sm text-ink-secondary">{subtitle}</div>
         </div>
         {action}
       </div>
@@ -109,15 +136,15 @@ export function AjSubHeader({ title, subtitle, danger, action, children }: { tit
   )
 }
 
-// `tall`: the password view's inputs have no box-sizing in the mockup, so
-// they render 48px (46 + border) instead of the other forms' 46.
+// Input (§6.6): a visible label above a 44 px field (`tall`: 48 px, the
+// password view).
 export function AjField({ label, tall, ...input }: { label: string; tall?: boolean } & InputHTMLAttributes<HTMLInputElement>) {
   return (
     <label className="flex min-w-0 flex-col gap-1.5">
-      <span className="text-caption font-bold tracking-[.06em] text-v2-muted">{label}</span>
+      <span className="text-overline font-semibold text-ink-secondary">{label}</span>
       <input
         {...input}
-        className={cn('box-border w-full rounded-[12px]', tall ? 'h-12' : 'h-[46px]', ' border border-v2-line bg-v2-sidebar px-3.5 font-[inherit] text-[13px] text-v2-text outline-none placeholder:text-[#757575] focus:border-v2-accent-line')}
+        className={cn('box-border w-full rounded-[8px] border border-border-input bg-surface px-3.5 font-[inherit] text-body text-ink placeholder:text-ink-tertiary focus:border-primary-border disabled:bg-surface-sunken disabled:text-ink-tertiary', tall ? 'h-12' : 'h-11')}
       />
     </label>
   )
@@ -127,7 +154,7 @@ export function AjMessage({ ok, children }: { ok?: boolean; children: ReactNode 
   return (
     <div
       role={ok ? 'status' : 'alert'}
-      className={cn('rounded-[10px] px-3 py-2.5 text-[12px] font-bold', ok ? 'bg-[rgba(124,240,187,.1)] text-v2-pos' : 'bg-[rgba(255,98,98,.1)] text-v2-neg')}
+      className={cn('rounded-[10px] px-3 py-2.5 text-body-sm font-semibold', ok ? 'bg-positive-soft text-positive' : 'bg-negative-soft text-negative')}
     >
       {children}
     </div>
@@ -138,16 +165,14 @@ export function AjActions({ onCancel, submitLabel, onSubmit, submitClassName, di
   const { t } = useTranslation()
   return (
     <div className="flex justify-end gap-2">
-      <button type="button" onClick={onCancel} className="cursor-pointer rounded-[10px] border border-v2-line2 px-4 py-2.5 text-[12.5px] font-bold text-v2-muted">
+      <button type="button" onClick={onCancel} className="h-11 cursor-pointer whitespace-nowrap rounded-[12px] border border-border-input bg-surface px-4 text-label font-semibold text-ink hover:bg-surface-sunken">
         {t('aj.cancel')}
       </button>
       <button
         type="button"
         onClick={onSubmit}
         aria-disabled={disabled}
-        // Stretched to Cancelar's bordered height with its label kept at the
-        // top, like the mockup's div button.
-        className={cn('flex items-start rounded-[10px] px-4 py-2.5 text-[12.5px] font-bold text-white', submitClassName ?? 'bg-v2-accent', disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer')}
+        className={cn('flex h-11 items-center whitespace-nowrap rounded-[12px] px-4 text-label font-semibold text-white', submitClassName ?? 'bg-primary hover:bg-primary-pressed', disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer')}
       >
         {submitLabel}
       </button>

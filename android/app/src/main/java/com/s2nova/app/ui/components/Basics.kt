@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -47,25 +48,27 @@ fun AmountText(amount: Double, type: TransactionType, modifier: Modifier = Modif
     )
 }
 
-// The mockup's switch: a 42x24 track with 3px padding and no box-sizing,
-// so it renders 48x30, and an 18dp white knob that sits at the top of the
-// padded area (the flex row doesn't centre it). Material3's Switch can't
-// be sized to match, hence this small replacement.
+// Switch: a 48x30 track with a 24 dp knob centred vertically. It exposes
+// switch semantics; pass a null callback when the parent row is the toggle
+// (the row then owns the click and the semantics).
 @Composable
-fun NovaSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit, modifier: Modifier = Modifier) {
-    val trackColor = if (checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
-    val offset by animateDpAsState(targetValue = if (checked) 27.dp else 3.dp, animationSpec = tween(150), label = "switchKnob")
+fun NovaSwitch(checked: Boolean, onCheckedChange: ((Boolean) -> Unit)?, modifier: Modifier = Modifier) {
+    val trackColor = if (checked) MaterialTheme.colorScheme.primary else NovaColors.current.borderInput
+    val offset by animateDpAsState(targetValue = if (checked) 21.dp else 3.dp, animationSpec = tween(150), label = "switchKnob")
     Box(
         modifier = modifier
             .size(width = 48.dp, height = 30.dp)
             .clip(RoundedCornerShape(50))
             .background(trackColor)
-            .clickable { onCheckedChange(!checked) },
+            .then(
+                if (onCheckedChange != null) Modifier.toggleable(value = checked, role = androidx.compose.ui.semantics.Role.Switch, onValueChange = onCheckedChange)
+                else Modifier,
+            ),
     ) {
         Box(
             modifier = Modifier
                 .offset(x = offset, y = 3.dp)
-                .size(18.dp)
+                .size(24.dp)
                 .background(Color.White, CircleShape),
         )
     }
