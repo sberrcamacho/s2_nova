@@ -3,6 +3,8 @@ package com.s2nova.app.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -37,18 +39,20 @@ fun TermsCheckbox(
     val colors = NovaColors.current
 
     Row(
-        verticalAlignment = Alignment.Top,
-        modifier = modifier.clickable { onCheckedChange(!checked) },
+        verticalAlignment = Alignment.CenterVertically,
+        // The whole row is the 48 dp target and reads as a checkbox.
+        modifier = modifier
+            .heightIn(min = 48.dp)
+            .toggleable(value = checked, role = androidx.compose.ui.semantics.Role.Checkbox, onValueChange = onCheckedChange),
     ) {
         Box(
             modifier = Modifier
-                .padding(top = 1.dp)
                 .size(20.dp)
                 .clip(RoundedCornerShape(6.dp))
                 .background(if (checked) colors.loginPrimary else Color.Transparent)
                 .then(
                     if (!checked) {
-                        Modifier.border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(6.dp))
+                        Modifier.border(1.5.dp, colors.borderInput, RoundedCornerShape(6.dp))
                     } else {
                         Modifier
                     },

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -80,7 +81,7 @@ fun RegisterScreen(
                 .size(40.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(colors.loginSurface)
-                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
+                .border(1.dp, com.s2nova.app.ui.theme.NovaColors.current.borderInput, RoundedCornerShape(12.dp))
                 .clickable(onClick = onGoToLogin),
             contentAlignment = Alignment.Center,
         ) {
@@ -232,19 +233,20 @@ fun RegisterScreen(
             horizontalArrangement = Arrangement.Center,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 26.dp),
+                .padding(top = 8.dp, bottom = 12.dp)
+                .heightIn(min = 48.dp)
+                .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onGoToLogin),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = tr(StringKey.AUTH_HAVE_ACCOUNT) + " ",
-                fontSize = 13.sp,
-                color = colors.loginTextMuted,
+                style = com.s2nova.app.ui.theme.NovaType.bodySm,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
                 text = tr(StringKey.AUTH_LOGIN_TITLE),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                color = colors.loginHighlight,
-                modifier = Modifier.clickable(onClick = onGoToLogin),
+                style = com.s2nova.app.ui.theme.NovaType.label,
+                color = colors.link,
             )
         }
     }

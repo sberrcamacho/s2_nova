@@ -106,7 +106,7 @@ function SignupTermsCheckbox({ checked, onChange }: { checked: boolean; onChange
         className="mt-px flex h-4 w-4 shrink-0 items-center justify-center rounded-[5px]"
         style={{
           background: checked ? 'var(--color-login-primary)' : 'transparent',
-          border: checked ? 'none' : '1px solid var(--color-border)',
+          border: checked ? 'none' : '1.5px solid var(--color-border-input)',
         }}
       >
         {checked && (
@@ -282,7 +282,7 @@ export default function RegisterPage() {
                     background: 'var(--color-login-surface)',
                     color: 'var(--color-login-input-text)',
                     boxShadow: 'none',
-                    ...(nameError ? {} : { borderColor: 'var(--color-border)' }),
+                    ...(nameError ? {} : { borderColor: 'var(--color-border-input)' }),
                   }}
                   required
                 />
@@ -315,7 +315,7 @@ export default function RegisterPage() {
                     boxShadow: 'none',
                     ...(emailError
                       ? {}
-                      : { borderColor: emailFocused ? 'var(--color-login-border-focus)' : 'var(--color-border)' }),
+                      : { borderColor: emailFocused ? 'var(--color-login-border-focus)' : 'var(--color-border-input)' }),
                   }}
                   required
                 />
@@ -359,7 +359,7 @@ export default function RegisterPage() {
                     letterSpacing: showPassword ? undefined : '0.22em',
                     ...(passwordError
                       ? {}
-                      : { borderColor: passwordFocused ? 'var(--color-login-border-focus)' : 'var(--color-border)' }),
+                      : { borderColor: passwordFocused ? 'var(--color-login-border-focus)' : 'var(--color-border-input)' }),
                   }}
                   required
                 />

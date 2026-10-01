@@ -121,7 +121,7 @@ export function GoogleSignInButton({
         style={{
           background,
           opacity: isPressed ? 0.9 : 1,
-          border: theme === 'light' ? '1px solid var(--color-border)' : 'none',
+          border: theme === 'light' ? '1px solid var(--color-border-input)' : 'none',
         }}
         aria-hidden="true"
       >

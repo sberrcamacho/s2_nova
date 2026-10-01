@@ -42,12 +42,14 @@ fun NovaPrimaryButton(
             .fillMaxWidth()
             .height(56.dp)
             .clip(RoundedCornerShape(16.dp))
+            // Disabled dims the whole button (38 %), not only its label.
+            .alpha(if (!clickable) 0.38f else if (pressed) 0.9f else 1f)
             .background(colors.loginPrimary)
-            .alpha(if (!clickable) 0.5f else if (pressed) 0.9f else 1f)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
                 enabled = clickable,
+                role = androidx.compose.ui.semantics.Role.Button,
                 onClick = onClick,
             ),
         contentAlignment = Alignment.Center,
@@ -58,8 +60,9 @@ fun NovaPrimaryButton(
             Text(
                 text = text,
                 color = Color.White,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.ExtraBold,
+                style = com.s2nova.app.ui.theme.NovaType.label.copy(fontSize = 16.sp),
+                maxLines = 1,
+                softWrap = false,
             )
         }
     }

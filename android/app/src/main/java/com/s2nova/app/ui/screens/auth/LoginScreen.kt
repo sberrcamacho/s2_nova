@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -129,12 +130,12 @@ fun LoginScreen(
                 Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = tr(StringKey.AUTH_FORGOT),
-                        fontSize = 12.5.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.loginPrimary,
+                        style = com.s2nova.app.ui.theme.NovaType.label,
+                        // `link`, not `primary`: primary is 2.5:1 on the dark background.
+                        color = colors.link,
                         modifier = Modifier
-                            .clickable(onClick = onForgotPassword)
-                            .padding(vertical = 8.dp),
+                            .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onForgotPassword)
+                            .padding(vertical = 14.dp),
                     )
                 }
             }
@@ -211,7 +212,7 @@ fun LoginScreen(
                         .fillMaxWidth()
                         .height(52.dp)
                         .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
-                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+                        .border(1.dp, com.s2nova.app.ui.theme.NovaColors.current.borderInput, androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
                         .clickable(onClick = onGuest),
                     horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp, androidx.compose.ui.Alignment.CenterHorizontally),
                     verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
@@ -240,19 +241,20 @@ fun LoginScreen(
             horizontalArrangement = Arrangement.Center,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 26.dp),
+                .padding(top = 8.dp, bottom = 12.dp)
+                .heightIn(min = 48.dp)
+                .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onGoToRegister),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = tr(StringKey.AUTH_NEW_HERE) + " ",
-                fontSize = 13.sp,
-                color = colors.loginTextMuted,
+                style = com.s2nova.app.ui.theme.NovaType.bodySm,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
                 text = tr(StringKey.AUTH_CREATE),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                color = if (isDark) MaterialTheme.colorScheme.onBackground else colors.loginPrimary,
-                modifier = Modifier.clickable(onClick = onGoToRegister),
+                style = com.s2nova.app.ui.theme.NovaType.label,
+                color = colors.link,
             )
         }
     }

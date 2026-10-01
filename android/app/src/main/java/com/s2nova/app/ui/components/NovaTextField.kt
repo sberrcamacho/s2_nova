@@ -60,7 +60,8 @@ fun NovaTextField(
     val borderColor = when {
         isError -> colors.negative
         focused -> colors.loginBorderFocus
-        else -> MaterialTheme.colorScheme.outline
+        // `border-input`: an input boundary needs 3:1.
+        else -> colors.borderInput
     }
     val textColor = MaterialTheme.colorScheme.onBackground
 

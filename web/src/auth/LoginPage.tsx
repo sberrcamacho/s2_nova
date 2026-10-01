@@ -137,7 +137,7 @@ function RememberMeCheckbox({ checked, onChange }: { checked: boolean; onChange:
         className="flex h-4 w-4 shrink-0 items-center justify-center rounded-[5px]"
         style={{
           background: checked ? 'var(--color-login-primary)' : 'transparent',
-          border: checked ? 'none' : '1px solid var(--color-border)',
+          border: checked ? 'none' : '1.5px solid var(--color-border-input)',
         }}
       >
         {checked && (
@@ -281,7 +281,7 @@ export default function LoginPage() {
                     boxShadow: 'none',
                     ...(emailError
                       ? {}
-                      : { borderColor: emailFocused ? 'var(--color-login-border-focus)' : 'var(--color-border)' }),
+                      : { borderColor: emailFocused ? 'var(--color-login-border-focus)' : 'var(--color-border-input)' }),
                   }}
                   required
                 />
@@ -334,7 +334,7 @@ export default function LoginPage() {
                     letterSpacing: showPassword ? undefined : '0.22em',
                     ...(passwordError
                       ? {}
-                      : { borderColor: passwordFocused ? 'var(--color-login-border-focus)' : 'var(--color-border)' }),
+                      : { borderColor: passwordFocused ? 'var(--color-login-border-focus)' : 'var(--color-border-input)' }),
                   }}
                   required
                 />
@@ -362,7 +362,7 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => void onGuest()}
-            className="flex h-12 cursor-pointer items-center justify-center gap-[9px] rounded-[12px] border border-v2-line2 text-[13.5px] font-bold text-v2-text hover:border-v2-accent2"
+            className="flex h-12 cursor-pointer items-center justify-center gap-[9px] rounded-[12px] border border-border-input text-label font-semibold text-ink hover:bg-surface-sunken"
           >
             <EnterIcon />
             {t('auth.guest')}
