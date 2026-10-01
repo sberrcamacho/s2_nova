@@ -59,12 +59,22 @@ import com.s2nova.app.ui.components.V2Icon
 import com.s2nova.app.ui.components.V2Pill
 import com.s2nova.app.ui.components.noRippleClick
 import com.s2nova.app.ui.theme.NovaColors
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
+import com.s2nova.app.ui.components.V2Icons
+import com.s2nova.app.ui.theme.NovaType
 import kotlinx.coroutines.launch
 import com.s2nova.app.ui.tr
 import com.s2nova.app.ui.StringKey
 
 // Billeteras (CURRENCIES_AND_WALLETS.md §4): each wallet has one currency;
-// foreign ones carry the "≈" principal line; the footer totals in the
+// foreign ones carry the "≈" principal line; the summary card totals in the
 // principal. Deleting one uses the two-step confirmation and lists how many
 // movements go with it; the last wallet can't be deleted.
 
@@ -92,42 +102,83 @@ fun WalletsScreen(onBack: () -> Unit) {
 
     LaunchedEffect(Unit) { runCatching { AppContainer.walletRepository.refresh() } }
 
+    val total = wallets.sumOf { it.principalBalance }
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        Row(Modifier.padding(start = 18.dp, end = 18.dp, top = 10.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Box(Modifier.size(38.dp).clip(CircleShape).noRippleClick(onBack), contentAlignment = Alignment.Center) { Text("←", fontSize = 19.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-            Text(tr(StringKey.WALLET_TITLE), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
-            Box(Modifier.size(38.dp).clip(CircleShape).noRippleClick { draft = WalletDraft(null, "", WalletKind.CASH, "", principal, true) }, contentAlignment = Alignment.Center) {
-                Text("+", fontSize = 22.sp, fontWeight = FontWeight.Light, color = NovaColors.current.link)
-            }
-        }
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            wallets.forEach { w ->
-                val kind = WalletKind.of(w.type)
-                Row(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(18.dp))
-                        .noRippleClick { draft = WalletDraft(w.id, w.name, kind, com.s2nova.app.ui.screens.addtransaction.AmountPad.numStr(w.currentBalance), w.currency, false) }.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    WalletMark(kind, 44.dp)
-                    Column(Modifier.weight(1f)) {
-                        Text(w.name, fontSize = 13.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                        Text(kind.label + " · " + w.currency, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(formatMoney(w.currentBalance, w.currency), fontSize = 14.5.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, style = TextStyle(fontFeatureSettings = TNUM))
-                        if (w.currency != principal) Text("≈ " + formatMoney(w.principalBalance, principal), fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM))
-                    }
-                    Icon(MockupIcons.Pencil, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(15.dp))
+        // Back and "Nueva billetera" are icon buttons on 48 dp targets.
+        Row(Modifier.padding(start = 4.dp, end = 12.dp, top = 4.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier.size(48.dp).clip(CircleShape).clickable(role = Role.Button, onClickLabel = tr(StringKey.COMMON_BACK), onClick = onBack).semantics { contentDescription = tr(StringKey.COMMON_BACK) },
+                contentAlignment = Alignment.Center,
+            ) { V2Icon(V2Icons.back, MaterialTheme.colorScheme.onBackground, 24.dp) }
+            Text(
+                tr(StringKey.WALLET_TITLE),
+                style = NovaType.title,
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f).padding(start = 4.dp).semantics { heading() },
+            )
+            val newLabel = tr(StringKey.WALLET_NEW)
+            Box(
+                Modifier.size(48.dp).clip(CircleShape)
+                    .clickable(role = Role.Button) { draft = WalletDraft(null, "", WalletKind.CASH, "", principal, true) }
+                    .semantics { contentDescription = newLabel },
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
+                    V2Icon(V2Icons.plus, MaterialTheme.colorScheme.onPrimaryContainer, 20.dp, strokeWidth = 2.2f)
                 }
             }
-            if (wallets.isEmpty()) {
-                Text(tr(StringKey.WALLET_EMPTY), fontSize = 12.sp, lineHeight = 18.sp, color = colors.textDim, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp))
+        }
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            val shape = RoundedCornerShape(20.dp)
+            // The total in the principal currency, with the conversion note.
+            if (wallets.isNotEmpty()) {
+                Column(
+                    Modifier.fillMaxWidth().clip(shape).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.outline, shape).padding(16.dp),
+                ) {
+                    Text(tr(StringKey.WALLET_TOTAL_LABEL, principal).uppercase(), style = NovaType.overline, color = colors.textDim, maxLines = 1, softWrap = false)
+                    Text(formatMoney(total, principal), style = NovaType.headline.copy(fontFeatureSettings = TNUM), color = MaterialTheme.colorScheme.onSurface, maxLines = 1, softWrap = false, modifier = Modifier.padding(top = 2.dp))
+                    if (wallets.any { it.currency != principal }) {
+                        Text(tr(StringKey.WALLET_TOTAL_NOTE), style = NovaType.bodySm, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+                    }
+                }
+                // Flat list: one `surface` card, a ListRow per wallet with `divider` between rows.
+                Column(Modifier.fillMaxWidth().clip(shape).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.outline, shape)) {
+                    wallets.forEachIndexed { index, w ->
+                        val kind = WalletKind.of(w.type)
+                        val share = if (total > 0) kotlin.math.round(w.principalBalance / total * 100).toInt() else 0
+                        // The share leads: it is the part worth keeping when the line truncates.
+                        val meta = tr(StringKey.WALLET_SHARE, share) + " · " + kind.label + " · " + w.currency
+                        val balance = formatMoney(w.currentBalance, w.currency)
+                        val approx = if (w.currency != principal) "≈ " + formatMoney(w.principalBalance, principal) else null
+                        val editLabel = tr(StringKey.WALLET_EDIT)
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 64.dp)
+                                .clickable(onClickLabel = editLabel, role = Role.Button) { draft = WalletDraft(w.id, w.name, kind, com.s2nova.app.ui.screens.addtransaction.AmountPad.numStr(w.currentBalance), w.currency, false) }
+                                .semantics(mergeDescendants = true) { contentDescription = listOfNotNull(w.name, meta, balance, approx).joinToString(", ") }
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            WalletMark(kind, 40.dp)
+                            Column(Modifier.weight(1f).padding(start = 12.dp)) {
+                                Text(w.name, style = NovaType.titleSm, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(meta, style = NovaType.bodySm, color = colors.textDim, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            }
+                            Column(horizontalAlignment = Alignment.End, modifier = Modifier.padding(start = 12.dp)) {
+                                Text(balance, style = NovaType.amount, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, softWrap = false)
+                                if (approx != null) Text(approx, style = NovaType.caption.copy(fontFeatureSettings = TNUM), color = colors.textDim, maxLines = 1, softWrap = false)
+                            }
+                            V2Icon(V2Icons.chevronRight, colors.textDim, 18.dp, modifier = Modifier.padding(start = 4.dp))
+                        }
+                        if (index < wallets.lastIndex) HorizontalDivider(thickness = 1.dp, color = colors.dividerSubtle, modifier = Modifier.padding(horizontal = 16.dp))
+                    }
+                }
+            } else {
+                Text(tr(StringKey.WALLET_EMPTY), style = NovaType.bodySm, color = colors.textDim, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp))
             }
-            Text(
-                tr(StringKey.WALLET_TOTAL, formatMoney(wallets.sumOf { it.principalBalance }, principal), principal),
-                fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-            )
         }
     }
 

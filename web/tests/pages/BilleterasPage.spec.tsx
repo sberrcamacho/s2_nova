@@ -31,10 +31,10 @@ describe('Billeteras', () => {
     const cop = (await screen.findByText('Bancolombia — Ahorros')).closest('[role=button]')!
     expect(cop).toHaveTextContent('Cuenta de ahorros · COP')
     expect(cop).toHaveTextContent('$13.740.000')
-    expect(cop).toHaveTextContent('92% del total')
+    expect(cop).toHaveTextContent('92 % del total')
     const usd = screen.getByText('Wise — Dólares').closest('[role=button]')!
     expect(usd).toHaveTextContent('US$320')
-    expect(usd).toHaveTextContent('≈ $1.264.000 8% del total')
+    expect(usd).toHaveTextContent('≈ $1.264.000 · 8 % del total')
   })
 
   it('creates a wallet in another currency', async () => {
@@ -50,7 +50,7 @@ describe('Billeteras', () => {
     renderApp(<BilleterasPage />, { route: '/billeteras' })
     await screen.findByText('Bancolombia — Ahorros')
 
-    await user.click(screen.getByRole('button', { name: '+ Nueva billetera' }))
+    await user.click(screen.getByRole('button', { name: 'Nueva billetera' }))
     const dialog = screen.getByRole('dialog', { name: 'Nueva billetera' })
     await user.type(within(dialog).getByPlaceholderText(/Nequi, Bancolombia/), 'Wise — Euros')
     await user.click(within(dialog).getByRole('button', { name: 'Cuenta de ahorros' }))

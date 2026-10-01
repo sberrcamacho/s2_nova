@@ -1,3 +1,4 @@
+import { ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
 import { fill, tr } from '@/lib/i18n/translations'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -44,16 +45,27 @@ export default function BilleterasPage() {
   return (
     <div className="flex flex-col gap-[18px] px-4 pb-10 pt-[26px] min-[760px]:px-7">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-[24px] font-extrabold tracking-[-.025em]">{tr('guide.billeteras.label')}</h1>
+        <h1 className="text-headline font-bold">{tr('guide.billeteras.label')}</h1>
         <button
           type="button"
           onClick={() => setEditing('new')}
-          className="box-border flex h-[34px] cursor-pointer items-center gap-[7px] whitespace-nowrap rounded-[10px] bg-v2-accent px-3.5 text-[12.5px] font-bold text-white"
+          className="flex h-11 cursor-pointer items-center gap-2 whitespace-nowrap rounded-[12px] bg-primary px-4 text-label font-semibold text-on-primary hover:bg-primary-pressed"
         >
-          {tr('wallet.newPlus')}
+          <StrokeIcon paths={ICON_PATHS.plus} size={16} strokeWidth={2.4} />
+          {tr('wallet.new')}
         </button>
       </div>
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-3.5">
+      {/* The total in the principal currency, with the conversion note. */}
+      {wallets && wallets.length > 0 && (
+        <section className="rounded-[16px] border border-border bg-surface p-5 text-ink">
+          <div className="text-overline font-semibold uppercase text-ink-tertiary">{fill(tr('wallet.totalLabel'), principal)}</div>
+          <Money hidden={hidden} className="mt-1 block text-headline font-bold tabular-nums">
+            {format(total)}
+          </Money>
+          {wallets.some((w) => w.currency !== principal) && <div className="mt-1 text-body-sm text-ink-secondary">{tr('wallet.totalNote')}</div>}
+        </section>
+      )}
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
         {wallets?.map((w) => (
           <div
             key={w.id}
@@ -61,29 +73,30 @@ export default function BilleterasPage() {
             tabIndex={0}
             onClick={() => setEditing(w)}
             onKeyDown={(e) => e.key === 'Enter' && setEditing(w)}
-            className="flex cursor-pointer flex-col gap-3 rounded-[16px] border border-v2-line bg-v2-surface p-[18px] hover:border-v2-line2 focus-visible:outline-2 focus-visible:outline-focus"
+            className="flex cursor-pointer flex-col gap-3 rounded-[16px] border border-border bg-surface p-5 text-ink hover:border-border-strong focus-visible:outline-2 focus-visible:outline-focus"
           >
             <div className="flex items-center gap-3">
               <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full" style={{ background: 'linear-gradient(150deg,var(--color-primary-pressed),var(--color-primary-secondary))' }}>
                 <Icon paths={walletGlyph(w.accountType)} size={18} color="#fff" />
               </span>
               <div className="min-w-0 flex-1">
-                <div className="text-[13.5px] font-extrabold">{w.name}</div>
-                <div className="mt-0.5 text-caption text-v2-dim">
+                <div className="truncate text-title-sm font-semibold" title={w.name}>{w.name}</div>
+                <div className="truncate text-body-sm text-ink-secondary">
                   {walletKindLabel(w.accountType)} · {w.currency}
                 </div>
               </div>
             </div>
             <div>
-              <Money hidden={hidden} className="block text-[22px] font-extrabold tracking-[-.02em]">
+              <Money hidden={hidden} className="block whitespace-nowrap text-title font-semibold tabular-nums">
                 {formatIn(w.currentBalance, w.currency)}
               </Money>
-              <div className="font-numeric mt-0.5 text-caption text-v2-dim">
+              <div className="text-body-sm tabular-nums text-ink-secondary">
                 {w.currency !== principal && (
                   <Money hidden={hidden} inline>
                     {`≈ ${format(w.principalBalance)}`}
                   </Money>
-                )}{' '}
+                )}
+                {w.currency !== principal && ' · '}
                 {share(w)}
               </div>
             </div>
@@ -93,7 +106,7 @@ export default function BilleterasPage() {
                 e.stopPropagation()
                 navigate(`/movimientos?q=${encodeURIComponent(shortWallet(w.name))}`)
               }}
-              className="cursor-pointer self-start text-[12px] font-bold text-v2-accent2"
+              className="-mx-1 flex min-h-8 cursor-pointer items-center self-start rounded-[8px] px-1 text-label font-semibold text-link hover:bg-surface-sunken"
             >
               {tr('wallet.seeMovements')}
             </button>
