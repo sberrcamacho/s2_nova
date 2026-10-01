@@ -228,7 +228,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-bg">
+    <div className="flex min-h-dvh w-full bg-bg">
       <SignupBrandPanel />
 
       <div className="flex min-w-0 flex-1 items-center justify-center overflow-y-auto p-6 min-[900px]:p-[38px]">

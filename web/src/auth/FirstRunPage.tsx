@@ -74,7 +74,7 @@ export default function FirstRunPage() {
   }
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-bg p-4 text-ink [line-height:normal] min-[640px]:p-10">
+    <div className="flex min-h-dvh w-full items-center justify-center bg-bg p-4 text-ink [line-height:normal] min-[640px]:p-10">
       <div className="flex w-[578px] max-w-full flex-col gap-[22px] rounded-[20px] border border-border bg-surface p-5 min-[640px]:p-7">
         <div className="flex items-center gap-3.5">
           <button type="button" onClick={back} aria-label={tr('common.back')} className="flex h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-[10px] border border-border-input text-ink hover:bg-surface-sunken">

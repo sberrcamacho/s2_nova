@@ -55,7 +55,7 @@ export function V2Modal({ width = 500, onClose, children, label }: { width?: num
         aria-modal="true"
         aria-label={label}
         onClick={(e) => e.stopPropagation()}
-        className="box-border flex max-h-[calc(100vh-48px)] max-w-full flex-col gap-5 overflow-y-auto overflow-x-hidden rounded-[18px] border border-border-input bg-surface px-[26px] py-6 text-ink shadow-[0_24px_60px_rgba(0,0,0,.45)]"
+        className="box-border flex max-h-[calc(100dvh-48px)] max-w-full flex-col gap-5 overflow-y-auto overflow-x-hidden rounded-[18px] border border-border-input bg-surface px-[26px] py-6 text-ink shadow-[0_24px_60px_rgba(0,0,0,.45)]"
         style={{ width }}
       >
         {children}

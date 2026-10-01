@@ -12,7 +12,7 @@ import { useTranslation } from '@/state/useTranslation'
 
 function Shell({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-bg p-6">
+    <div className="flex min-h-dvh w-full items-center justify-center bg-bg p-6">
       <div className="flex w-full max-w-[360px] flex-col gap-[18px]">
         <Logo variant="mark" size="sm" />
         <div>
