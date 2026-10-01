@@ -189,7 +189,7 @@ export default function AjustesPage() {
       </AjCard>
 
       <AjCard className="p-5">
-        <AjCardTitle>{t('aj.import')}</AjCardTitle>
+        <AjCardTitle>{t('aj.data')}</AjCardTitle>
         <div className="mt-2 flex flex-col">
           <AjRow label={t('aj.import')} detail={t('aj.importHint')} last>
             <AjOutlineButton onClick={() => navigate('/ajustes/importar')}>{t('aj.importBtn')}</AjOutlineButton>

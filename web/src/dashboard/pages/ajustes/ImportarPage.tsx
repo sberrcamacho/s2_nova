@@ -99,6 +99,7 @@ export default function ImportarPage() {
                     {fill(t(r.error === 'wallet' ? 'aj.imp.errWallet' : 'aj.imp.errInvalid'), String(r.row))}
                   </div>
                 ))}
+                {summary.invalid > 0 && <div className="text-body-sm text-ink-secondary">{t('aj.imp.fixHint')}</div>}
                 {summary.rows.length > 10 && <div className="text-body-sm text-ink-secondary">+{summary.rows.length - 10}</div>}
               </>
             )}

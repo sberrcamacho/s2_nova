@@ -10,16 +10,19 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -27,10 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -57,34 +57,10 @@ private val TABS = listOf(
 
 private val PlusIcon = strokeIcon("+", "M12 5v14", "M5 12h14", strokeWidth = 2.6f)
 
-// The mockup's bar outline (viewBox 394×72): flat edges with a concave dip
-// under the "+" button. Stretched across the width; vertically it keeps the
-// mockup's ~67dp bar scale (`unitY` px per viewBox unit) so the system
-// gesture inset below doesn't deepen the dip.
-private fun barPath(size: Size, unitY: Float, closed: Boolean, inset: Float = 0f): Path {
-    val sx = size.width / 394f
-    val sy = unitY
-    fun x(v: Float) = v * sx
-    fun y(v: Float) = v * sy + inset
-    return Path().apply {
-        moveTo(0f, y(0f))
-        lineTo(x(138f), y(0f))
-        cubicTo(x(155f), y(0f), x(159f), y(6f), x(163f), y(14f))
-        cubicTo(x(171f), y(32f), x(182f), y(43f), x(197f), y(43f))
-        cubicTo(x(212f), y(43f), x(223f), y(32f), x(231f), y(14f))
-        cubicTo(x(235f), y(6f), x(239f), y(0f), x(256f), y(0f))
-        lineTo(size.width, y(0f))
-        if (closed) {
-            lineTo(size.width, size.height)
-            lineTo(0f, size.height)
-            close()
-        }
-    }
-}
-
-// The Android v2 mockup's bottom bar: a surface with a curved dip in the
-// middle, the raised "+" (60dp, 29dp above the bar) and four tabs — the
-// active one with an --accent2 icon and bold --text label, no pill.
+// Bottom bar (DESIGN-SYSTEM.md §5.1): a flat `surface` bar with a hairline on
+// top, four tabs (icon + label; the active one gets a `primary-soft` pill
+// behind the icon and `primary` ink) and the raised "+" — a rounded square in
+// `primary` with the FAB glow.
 @Composable
 fun NovaBottomBar(
     currentRoute: String?,
@@ -97,22 +73,19 @@ fun NovaBottomBar(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .drawBehind {
-                val unitY = 67.dp.toPx() / 72f
-                drawPath(barPath(size, unitY, closed = true), surface)
-                drawPath(barPath(size, unitY, closed = false, inset = 0.5.dp.toPx()), line, style = Stroke(width = 1.dp.toPx()))
-            },
+            .background(surface)
+            .drawBehind { drawLine(line, Offset(0f, 0.5.dp.toPx()), Offset(size.width, 0.5.dp.toPx()), strokeWidth = 1.dp.toPx()) },
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 // Keeps the tabs clear of the system gesture bar / 3-button nav.
                 .windowInsetsPadding(WindowInsets.navigationBars)
-                .padding(start = 8.dp, top = 12.dp, end = 8.dp, bottom = 4.dp),
+                .padding(start = 4.dp, top = 10.dp, end = 4.dp, bottom = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             TABS.forEachIndexed { index, tab ->
-                if (index == 2) Spacer(Modifier.weight(1f))
+                if (index == 2) Spacer(Modifier.weight(0.62f))
                 BottomTabItem(
                     label = t(tab.labelKey),
                     icon = tab.icon,
@@ -123,19 +96,20 @@ fun NovaBottomBar(
             }
         }
         val addLabel = t(StringKey.NAV_ADD)
+        val fabShape = RoundedCornerShape(20.dp)
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .offset(y = (-29).dp)
-                .size(60.dp)
-                .shadow(elevation = 14.dp, shape = CircleShape, ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
-                .clip(CircleShape)
+                .offset(y = (-26).dp)
+                .size(64.dp)
+                .shadow(elevation = 16.dp, shape = fabShape, ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.55f), spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.55f))
+                .clip(fabShape)
                 .background(MaterialTheme.colorScheme.primary)
-                .clickable(onClick = onFabClick)
+                .clickable(role = Role.Button, onClick = onFabClick)
                 .semantics { contentDescription = addLabel },
             contentAlignment = Alignment.Center,
         ) {
-            Icon(PlusIcon, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
+            Icon(PlusIcon, contentDescription = null, tint = Color.White, modifier = Modifier.size(26.dp))
         }
     }
 }
@@ -149,26 +123,39 @@ private fun BottomTabItem(
     modifier: Modifier = Modifier,
 ) {
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    val ink = NovaColors.current.accentText
     Column(
         modifier = modifier
-            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onClick)
-            .padding(vertical = 2.dp),
+            .heightIn(min = 48.dp)
+            .selectable(selected = selected, role = Role.Tab, interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(3.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Box(Modifier.size(width = 40.dp, height = 30.dp), contentAlignment = Alignment.Center) {
-            Icon(icon, contentDescription = null, tint = if (selected) NovaColors.current.accentText else muted, modifier = Modifier.size(24.dp))
+        Box(
+            Modifier
+                .size(width = 56.dp, height = 32.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(icon, contentDescription = null, tint = if (selected) ink else muted, modifier = Modifier.size(24.dp))
         }
-        Text(
-            label,
-            color = if (selected) MaterialTheme.colorScheme.onSurface else muted,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-            maxLines = 1,
-            softWrap = false,
-            // Shrinks instead of clipping ("Moviment…") on narrow screens or
-            // large font scales; 11sp whenever it fits.
-            autoSize = TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = 12.sp),
-        )
+        // Labels keep one size on every tab: the bar caps the system font
+        // scale at 1.0 (icon + 12 sp label is a fixed-height control) instead
+        // of shrinking only the longest label.
+        val density = androidx.compose.ui.platform.LocalDensity.current
+        androidx.compose.runtime.CompositionLocalProvider(
+            androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(density.density, fontScale = minOf(density.fontScale, 1f)),
+        ) {
+            Text(
+                label,
+                color = if (selected) ink else muted,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                fontSize = 12.sp,
+                maxLines = 1,
+                softWrap = false,
+            )
+        }
     }
 }
 

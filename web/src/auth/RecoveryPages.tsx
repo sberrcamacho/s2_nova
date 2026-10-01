@@ -1,11 +1,13 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Check, Circle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Logo } from '@/components/ui/Logo'
 import { EMAIL_PATTERN, passwordRules } from '@/lib/ajustes'
 import { ApiError } from '@/lib/apiClient'
 import { authService } from '@/services/authService'
+import { cn } from '@/lib/cn'
 import { useTranslation } from '@/state/useTranslation'
 
 function Shell({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
@@ -127,8 +129,9 @@ export function NuevaContrasenaPage() {
         <Input label={t('auth.rec.confirm')} type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} error={error || undefined} />
         <ul className="flex flex-col gap-1 text-body-sm">
           {rules.map((rule) => (
-            <li key={rule.key} className={rule.ok ? 'text-positive' : 'text-ink-secondary'}>
-              {rule.ok ? '✓' : '○'} {t(rule.key)}
+            <li key={rule.key} className={cn('flex items-center gap-2', rule.ok ? 'text-positive' : 'text-ink-secondary')}>
+              {rule.ok ? <Check className="h-4 w-4 flex-none" aria-hidden="true" /> : <Circle className="h-4 w-4 flex-none" aria-hidden="true" />}
+              {t(rule.key)}
             </li>
           ))}
         </ul>

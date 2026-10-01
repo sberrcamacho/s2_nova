@@ -239,16 +239,16 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
                         V2Icon(V2Icons.chevronRight, colors.textDim, 20.dp)
                     }
                 }
-                SectionTitle(tr(StringKey.SET_RISK_TITLE), modifier = Modifier.padding(top = 16.dp))
-                Text(tr(StringKey.SET_RISK_HINT), style = NovaType.bodySm, color = colors.textDim)
-                DangerLinkCard(tr(StringKey.SET_RESET_TITLE), tr(StringKey.SET_RESET_DETAIL), onOpenReset)
-                DangerLinkCard(tr(StringKey.SET_DELETE_TITLE), tr(StringKey.SET_DELETE_DETAIL), onOpenDelete)
                 NovaCard(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                         Text(t(StringKey.SETTINGS_ABOUT), style = NovaType.titleSm, color = MaterialTheme.colorScheme.onSurface)
                         Text("S2 Nova · v${BuildConfig.VERSION_NAME}", style = NovaType.bodySm, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
+                SectionTitle(tr(StringKey.SET_RISK_TITLE), modifier = Modifier.padding(top = 16.dp))
+                Text(tr(StringKey.SET_RISK_HINT), style = NovaType.bodySm, color = colors.textDim)
+                DangerLinkCard(tr(StringKey.SET_RESET_TITLE), tr(StringKey.SET_RESET_DETAIL), onOpenReset)
+                DangerLinkCard(tr(StringKey.SET_DELETE_TITLE), tr(StringKey.SET_DELETE_DETAIL), onOpenDelete)
             }
         }
     }
@@ -272,7 +272,7 @@ private fun LinkCard(title: String, detail: String, modifier: Modifier, onClick:
 @Composable
 private fun DangerLinkCard(title: String, detail: String, onClick: () -> Unit) {
     val colors = NovaColors.current
-    NovaCard(modifier = Modifier.fillMaxWidth().border(1.dp, colors.negativeBorder, RoundedCornerShape(16.dp)), onClick = onClick) {
+    NovaCard(modifier = Modifier.fillMaxWidth().border(1.dp, colors.negative, RoundedCornerShape(16.dp)), onClick = onClick) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(title, style = NovaType.titleSm, color = colors.negative)

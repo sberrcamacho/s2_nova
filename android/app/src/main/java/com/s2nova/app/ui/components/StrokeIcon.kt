@@ -30,9 +30,10 @@ fun strokeIcon(name: String, vararg paths: String, strokeWidth: Float = 1.9f): I
 
 object MockupIcons {
     val Inicio = strokeIcon("Inicio", "M3 10.2 12 3.4l9 6.8V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z")
-    val Movimientos = strokeIcon("Movimientos", "M8 6h13", "M8 12h13", "M8 18h13", "M3.5 6h.01", "M3.5 12h.01", "M3.5 18h.01")
-    val Planes = strokeIcon("Planes", "M3 8h15a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3H5a2 2 0 0 1-2-2z", "M3 8V6a2 2 0 0 1 2-2h11", "M17 14h.01")
-    val Reportes = strokeIcon("Reportes", "M5 21V10", "M12 21V4", "M19 21v-7")
+    // Same four glyphs on Web (NAV_ICON_PATHS in web/src/components/v2/icons.tsx).
+    val Movimientos = strokeIcon("Movimientos", "M4 8h16", "M16 4l4 4-4 4", "M20 16H4", "M8 12l-4 4 4 4")
+    val Planes = strokeIcon("Planes", "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z", "M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z", "M12 11a1 1 0 1 0 0 2 1 1 0 0 0 0-2z")
+    val Reportes = strokeIcon("Reportes", "M4 4v16h16", "M9 16v-5", "M13 16V7", "M17 16v-3")
     val Bell = strokeIcon("Bell", "M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9", "M10.3 21a1.94 1.94 0 0 0 3.4 0")
     val Pencil = strokeIcon("Pencil", "M12 20h9", "M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z")
     val Calendar = strokeIcon("Calendar", "M4 5h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z", "M3 10h18", "M8 3v4", "M16 3v4")
