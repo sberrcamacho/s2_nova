@@ -44,6 +44,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import com.s2nova.app.ui.screens.recurring.RecurringScreen
 import com.s2nova.app.ui.screens.reports.ReportsScreen
 import com.s2nova.app.ui.screens.scanner.ScannerScreen
+import com.s2nova.app.ui.screens.settings.ChangePasswordScreen
+import com.s2nova.app.ui.screens.settings.RiskAction
+import com.s2nova.app.ui.screens.settings.RiskActionScreen
+import com.s2nova.app.ui.screens.auth.ResetPasswordScreen
 import com.s2nova.app.ui.screens.settings.SettingsScreen
 import com.s2nova.app.ui.screens.splash.SplashScreen
 import com.s2nova.app.ui.screens.transactions.TransactionDetailScreen
@@ -171,7 +175,13 @@ fun NovaApp() {
                 )
             }
             composable(NovaDestinations.FORGOT_PASSWORD) {
-                ForgotPasswordScreen(onBackToLogin = { navController.popBackStack() })
+                ForgotPasswordScreen(
+                    onBackToLogin = { navController.popBackStack() },
+                    onHaveCode = { navController.navigate(NovaDestinations.RESET_PASSWORD) },
+                )
+            }
+            composable(NovaDestinations.RESET_PASSWORD) {
+                ResetPasswordScreen(onBackToLogin = { navController.popBackStack(NovaDestinations.LOGIN, inclusive = false) })
             }
 
             composable(NovaDestinations.FIRST_RUN) {
@@ -309,7 +319,20 @@ fun NovaApp() {
                     onBack = { navController.popBackStack() },
                     onOpenCategories = { navController.navigate(NovaDestinations.categories()) },
                     onOpenCurrencies = { navController.navigate(NovaDestinations.CURRENCIES) },
+                    onOpenPassword = { navController.navigate(NovaDestinations.SETTINGS_PASSWORD) },
+                    onOpenReset = { navController.navigate(NovaDestinations.SETTINGS_RESET) },
+                    onOpenDelete = { navController.navigate(NovaDestinations.SETTINGS_DELETE) },
                 )
+            }
+            composable(NovaDestinations.SETTINGS_PASSWORD) { ChangePasswordScreen(onBack = { navController.popBackStack() }) }
+            composable(NovaDestinations.SETTINGS_RESET) {
+                RiskActionScreen(RiskAction.RESET, onBack = { navController.popBackStack() }, onDeleted = {})
+            }
+            composable(NovaDestinations.SETTINGS_DELETE) {
+                RiskActionScreen(RiskAction.DELETE, onBack = { navController.popBackStack() }, onDeleted = {
+                    DemoModeFlag.set(false)
+                    navController.navigateAsRoot(NovaDestinations.LOGIN)
+                })
             }
             composable(
                 NovaDestinations.CATEGORIES,

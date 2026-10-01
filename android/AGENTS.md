@@ -80,9 +80,12 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   `User` model) — both editable from `SettingsScreen` and shown on
   `ProfileScreen` as `"{city} · desde {mes} {año}"`, per the mockup. Editing
   name/phone/city (`AuthRepository.updateProfile`) calls the real backend.
-  Ajustes follows the Android v2 mockup exactly, so changing the password,
-  managing sessions and deleting the account are Web-only (Ajustes ›
-  Seguridad); the email is read-only here. Ajustes links to Categorías and
+  Ajustes offers Cambiar contraseña and a Zona de riesgo (Restablecer datos,
+  Eliminar cuenta; `SecurityScreens.kt`), both confirmed with the current
+  password. Managing sessions stays on Web (Ajustes › Seguridad); the email
+  is read-only here. "Olvidaste tu contraseña" mails a code that
+  `ResetPasswordScreen` exchanges for a new password. List screens show
+  `NovaSkeletonRows` until `AppContainer.dataLoaded` flips. Ajustes links to Categorías and
   Monedas and offers "Ver las guías otra vez". Demo mode has no switch any more;
   signing out also leaves it. Every request carries
   `User-Agent: S2Nova-Android/<version> (<model>)` so Web's session list

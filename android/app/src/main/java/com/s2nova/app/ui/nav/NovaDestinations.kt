@@ -31,6 +31,10 @@ object NovaDestinations {
     const val SETTINGS = "settings"
     const val CATEGORIES = "categories?income={income}"
     const val CURRENCIES = "currencies"
+    const val SETTINGS_PASSWORD = "settings_password"
+    const val SETTINGS_RESET = "settings_reset"
+    const val SETTINGS_DELETE = "settings_delete"
+    const val RESET_PASSWORD = "reset_password"
 
     fun categories(income: Boolean = false) = "categories?income=$income"
     fun transactionDetail(id: String) = "transaction_detail/$id"

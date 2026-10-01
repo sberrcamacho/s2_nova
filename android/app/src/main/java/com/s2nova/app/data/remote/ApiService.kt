@@ -32,6 +32,12 @@ interface ApiService {
     @POST("auth/activity")
     suspend fun activity(): Response<Unit>
 
+    @POST("auth/forgot-password")
+    suspend fun forgotPassword(@Body body: ForgotPasswordRequest): Response<Unit>
+
+    @POST("auth/reset-password")
+    suspend fun resetPassword(@Body body: ResetPasswordRequest): Response<Unit>
+
     @POST("auth/google")
     suspend fun loginWithGoogle(@Body body: GoogleLoginRequest): SessionResponse
 
@@ -41,6 +47,18 @@ interface ApiService {
     @PATCH("me")
     suspend fun updateProfile(@Body body: UpdateProfileRequest): MeResponse
 
+
+    @POST("me/password")
+    suspend fun changePassword(@Body body: ChangePasswordRequest): Response<Unit>
+
+    @POST("me/reset-data")
+    suspend fun resetData(@Body body: PasswordConfirmRequest): Response<Unit>
+
+    @HTTP(method = "DELETE", path = "me", hasBody = true)
+    suspend fun deleteMe(@Body body: PasswordConfirmRequest): Response<Unit>
+
+    @GET("transactions/titles")
+    suspend fun getTransactionTitles(@Query("type") type: String? = null, @Query("limit") limit: Int = 4): TransactionTitlesDto
 
     @PATCH("me/preferences")
     suspend fun updatePreferences(@Body body: UpdatePreferencesRequest): MeResponse

@@ -132,6 +132,7 @@ object AppContainer {
         walletRepository.principal = "COP"
         walletRepository.loadDemo(DemoData.wallets)
         transactionRepository.loadDemo(DemoData.transactions)
+        dataLoaded.value = true
         budgetRepository.loadDemo(DemoData.budgetProgress)
         goalRepository.loadDemo(DemoData.goals)
         recurringSeriesRepository.loadDemo(DemoData.recurringSeries)
@@ -146,7 +147,20 @@ object AppContainer {
     // start. Individual failures don't block the others; a screen that
     // needs data it couldn't load will show an empty state rather than
     // crash the whole refresh.
+    // False until the first refreshUserData() of a session ends; list screens
+    // show placeholders (not their empty state) until then.
+    val dataLoaded = kotlinx.coroutines.flow.MutableStateFlow(false)
+
     suspend fun refreshUserData() {
+        dataLoaded.value = false
+        try {
+            refreshUserDataNow()
+        } finally {
+            dataLoaded.value = true
+        }
+    }
+
+    private suspend fun refreshUserDataNow() {
         runCatching { categoryRepository.refresh() }
         runCatching { currencyRepository.refresh() }
         walletRepository.principal = currencyRepository.principal

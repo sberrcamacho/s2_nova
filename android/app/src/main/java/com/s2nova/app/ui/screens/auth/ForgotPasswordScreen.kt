@@ -32,14 +32,18 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
+import com.s2nova.app.data.AppContainer
+import kotlinx.coroutines.launch
 import com.s2nova.app.ui.components.NovaPrimaryButton
 import com.s2nova.app.ui.components.NovaTextField
 import com.s2nova.app.ui.theme.NovaType
 
 @Composable
-fun ForgotPasswordScreen(onBackToLogin: () -> Unit) {
+fun ForgotPasswordScreen(onBackToLogin: () -> Unit, onHaveCode: () -> Unit = {}) {
     var email by remember { mutableStateOf("") }
     var submitted by remember { mutableStateOf(false) }
+    var busy by remember { mutableStateOf(false) }
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
 
     AuthLayout(
         title = tr(if (submitted) StringKey.AUTH_CHECK_EMAIL else StringKey.AUTH_FORGOT),
@@ -52,6 +56,7 @@ fun ForgotPasswordScreen(onBackToLogin: () -> Unit) {
         if (submitted) {
             Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
                 Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = NovaColors.current.positive, modifier = Modifier.padding(bottom = 12.dp))
+                NovaPrimaryButton(text = tr(StringKey.AUTH_HAVE_CODE), onClick = onHaveCode)
                 BackToLogin(onBackToLogin)
             }
         } else {
@@ -63,7 +68,25 @@ fun ForgotPasswordScreen(onBackToLogin: () -> Unit) {
                     label = tr(StringKey.AUTH_EMAIL),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 )
-                NovaPrimaryButton(text = tr(StringKey.AUTH_SEND), onClick = { submitted = true }, enabled = email.isNotBlank())
+                NovaPrimaryButton(
+                    text = tr(StringKey.AUTH_SEND),
+                    loading = busy,
+                    enabled = email.isNotBlank() && !busy,
+                    onClick = {
+                        busy = true
+                        scope.launch {
+                            // The server answers the same for every email, so the
+                            // confirmation shows whatever the outcome (except offline).
+                            AppContainer.authRepository.forgotPassword(email)
+                                .onSuccess { submitted = true }
+                                .onFailure { com.s2nova.app.ui.Snack.show(tr(StringKey.API_OFFLINE)) }
+                            busy = false
+                        }
+                    },
+                )
+                Box(modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).clip(RoundedCornerShape(12.dp)).clickable(role = Role.Button, onClick = onHaveCode), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                    Text(tr(StringKey.AUTH_HAVE_CODE), style = NovaType.label, color = NovaColors.current.link, maxLines = 1, softWrap = false)
+                }
                 BackToLogin(onBackToLogin)
             }
         }
@@ -71,6 +94,9 @@ fun ForgotPasswordScreen(onBackToLogin: () -> Unit) {
 }
 
 // A text button in `link` on a 48 dp target.
+@Composable
+internal fun BackToLoginLink(onClick: () -> Unit) = BackToLogin(onClick)
+
 @Composable
 private fun BackToLogin(onClick: () -> Unit) {
     Box(

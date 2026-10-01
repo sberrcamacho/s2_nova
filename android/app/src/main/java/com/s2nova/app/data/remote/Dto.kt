@@ -10,6 +10,21 @@ import kotlinx.serialization.Serializable
 data class RegisterRequest(val name: String, val email: String, val password: String)
 
 @Serializable
+data class ForgotPasswordRequest(val email: String)
+
+@Serializable
+data class ResetPasswordRequest(val token: String, val newPassword: String)
+
+@Serializable
+data class ChangePasswordRequest(val currentPassword: String? = null, val newPassword: String)
+
+@Serializable
+data class PasswordConfirmRequest(val password: String)
+
+@Serializable
+data class TransactionTitlesDto(val titles: List<String> = emptyList())
+
+@Serializable
 data class LoginRequest(val email: String, val password: String)
 
 @Serializable

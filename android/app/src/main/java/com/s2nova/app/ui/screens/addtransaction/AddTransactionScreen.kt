@@ -19,6 +19,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -180,6 +181,10 @@ class NmState(initialCalc: Boolean) {
     var subSheetFor by mutableStateOf<String?>(null)
     var expr by mutableStateOf("")
     var title by mutableStateOf("")
+    // The title starts as a suggestion (generic the first time, then the one
+    // used last) until the user types their own.
+    var titleTouched by mutableStateOf(false)
+    var titleHints by mutableStateOf<List<String>>(emptyList())
     var note by mutableStateOf("")
     val openedAt: LocalDateTime = LocalDateTime.now()
     val nowTime: String = openedAt.toLocalTime().toString().take(5)
@@ -302,6 +307,21 @@ fun AddTransactionScreen(
                 st.sheet = null
             }
         }
+    }
+    // Pre-fills the title for a new movement: a generic one for the type, then
+    // the title used last once the history answers.
+    androidx.compose.runtime.LaunchedEffect(s.type) {
+        if (s.editing) return@LaunchedEffect
+        if (!s.titleTouched) {
+            s.title = tr(when (s.type) {
+                TransactionType.INCOME -> StringKey.NM_TITLE_GENERIC_INCOME
+                TransactionType.TRANSFER -> StringKey.NM_TITLE_GENERIC_TRANSFER
+                else -> StringKey.NM_TITLE_GENERIC_EXPENSE
+            })
+        }
+        val hints = AppContainer.transactionRepository.recentTitles(s.type)
+        s.titleHints = hints
+        if (hints.isNotEmpty() && !s.titleTouched) s.title = hints.first()
     }
     if (s.walletId == null || wallets.none { it.id == s.walletId }) s.walletId = wallets.first().id
     val wallet = wallets.first { it.id == s.walletId }
@@ -515,7 +535,16 @@ fun AddTransactionScreen(
                 FieldLabel(tr(StringKey.NM_TITLE_PH))
                 InputBox(height = 52.dp) {
                     V2Icon(V2Icons.title, colors.textDim, 20.dp)
-                    BareField(s.title, { s.title = it.take(60) }, tr(StringKey.NM_TITLE_EXAMPLE))
+                    BareField(s.title, { s.titleTouched = true; s.title = it.take(60) }, tr(StringKey.NM_TITLE_EXAMPLE))
+                }
+                val hints = s.titleHints.filter { it != s.title }
+                if (hints.isNotEmpty()) {
+                    Row(
+                        modifier = Modifier.padding(top = 8.dp).horizontalScroll(androidx.compose.foundation.rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        hints.forEach { h -> com.s2nova.app.ui.components.V2Pill(h, selected = false, onClick = { s.titleTouched = true; s.title = h }, role = Role.Button) }
+                    }
                 }
             }
 

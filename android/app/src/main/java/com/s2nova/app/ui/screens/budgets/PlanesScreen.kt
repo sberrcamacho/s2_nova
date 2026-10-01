@@ -208,6 +208,7 @@ private fun BudgetsTab() {
     LaunchedEffect(Unit) { runCatching { AppContainer.budgetRepository.refresh() } }
 
     val progressList = budgetProgress.sortedByDescending { it.percentage }
+    val dataLoaded by AppContainer.dataLoaded.collectAsStateWithLifecycle()
     val totalLimit = progressList.sumOf { it.budget.limit }
     val totalSpent = progressList.sumOf { it.spent }
     val totalPct = if (totalLimit > 0) ((totalSpent / totalLimit) * 100).toInt() else 0
@@ -268,7 +269,9 @@ private fun BudgetsTab() {
             BudgetCard(progress) { draft = BudgetEditDraft.from(progress) }
         }
 
-        if (progressList.isEmpty()) {
+        if (progressList.isEmpty() && !dataLoaded) {
+            item { com.s2nova.app.ui.components.NovaSkeletonRows(count = 3, modifier = Modifier.padding(vertical = 8.dp)) }
+        } else if (progressList.isEmpty()) {
             item {
                 Text(
                     t(StringKey.BUDGETS_EMPTY),

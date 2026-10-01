@@ -94,6 +94,18 @@ class TransactionRepository(
         _transactions.value = api.getTransactions().mapNotNull { it.toTransaction(categoryRepository) }
     }
 
+    // Titles already used (most recent first) to pre-fill the "Título" field.
+    // Guests compute them from the in-memory list; a failed call just means
+    // no suggestion.
+    suspend fun recentTitles(type: TransactionType, limit: Int = 4): List<String> {
+        if (type == TransactionType.TRANSFER) return emptyList()
+        if (DemoModeFlag.active) {
+            return _transactions.value.filter { it.type == type && it.description.isNotBlank() }
+                .sortedByDescending { it.date }.map { it.description }.distinct().take(limit)
+        }
+        return runCatching { api.getTransactionTitles(type.name, limit).titles }.getOrDefault(emptyList())
+    }
+
     fun loadDemo(transactions: List<Transaction>) {
         _transactions.value = transactions
         demoFiles.clear()

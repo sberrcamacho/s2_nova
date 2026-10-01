@@ -76,10 +76,10 @@ private val LOCK_OPTIONS = listOf(1, 5, 15, 60, 0)
 // Compose draws borders inside, hence the +1dp on bordered boxes below.
 // Ajustes (Android v2 mockup): Información personal, Preferencias,
 // Privacidad y sesión, "Repetir el tutorial" (a sheet over this screen)
-// and Acerca de. Password, sessions and account deletion live on Web.
+// Cambiar contraseña, Zona de riesgo and Acerca de. Sessions live on Web.
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpenCurrencies: () -> Unit = {}) {
+fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpenCurrencies: () -> Unit = {}, onOpenPassword: () -> Unit = {}, onOpenReset: () -> Unit = {}, onOpenDelete: () -> Unit = {}) {
     val user by AppContainer.authRepository.currentUser.collectAsStateWithLifecycle()
     val darkOverride by ThemeController.darkOverride.collectAsStateWithLifecycle()
     val isDark = darkOverride ?: androidx.compose.foundation.isSystemInDarkTheme()
@@ -224,6 +224,8 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
                     }
                 }
 
+                LinkCard(tr(StringKey.SET_PW_TITLE), tr(StringKey.SET_PW_DETAIL), Modifier.padding(top = 8.dp), onOpenPassword)
+
                 // "Ver las guías otra vez" resets the mini-guides (ONBOARDING.md §3).
                 NovaCard(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), onClick = {
                     scope.launch { AppContainer.authRepository.updateGuides(emptySet(), false) }
@@ -237,6 +239,10 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
                         V2Icon(V2Icons.chevronRight, colors.textDim, 20.dp)
                     }
                 }
+                SectionTitle(tr(StringKey.SET_RISK_TITLE), modifier = Modifier.padding(top = 16.dp))
+                Text(tr(StringKey.SET_RISK_HINT), style = NovaType.bodySm, color = colors.textDim)
+                DangerLinkCard(tr(StringKey.SET_RESET_TITLE), tr(StringKey.SET_RESET_DETAIL), onOpenReset)
+                DangerLinkCard(tr(StringKey.SET_DELETE_TITLE), tr(StringKey.SET_DELETE_DETAIL), onOpenDelete)
                 NovaCard(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                         Text(t(StringKey.SETTINGS_ABOUT), style = NovaType.titleSm, color = MaterialTheme.colorScheme.onSurface)
@@ -258,6 +264,21 @@ private fun LinkCard(title: String, detail: String, modifier: Modifier, onClick:
                 Text(detail, style = NovaType.bodySm, color = NovaColors.current.textDim)
             }
             V2Icon(V2Icons.chevronRight, NovaColors.current.textDim, 20.dp)
+        }
+    }
+}
+
+// A LinkCard whose title is in `negative` and whose border is the danger one.
+@Composable
+private fun DangerLinkCard(title: String, detail: String, onClick: () -> Unit) {
+    val colors = NovaColors.current
+    NovaCard(modifier = Modifier.fillMaxWidth().border(1.dp, colors.negativeBorder, RoundedCornerShape(16.dp)), onClick = onClick) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(title, style = NovaType.titleSm, color = colors.negative)
+                Text(detail, style = NovaType.bodySm, color = colors.textDim)
+            }
+            V2Icon(V2Icons.chevronRight, colors.textDim, 20.dp)
         }
     }
 }

@@ -121,7 +121,10 @@ fun TransactionsScreen(
                 }
             }
 
-            if (filtered.isEmpty()) {
+            val loaded by AppContainer.dataLoaded.collectAsStateWithLifecycle()
+            if (!loaded && filtered.isEmpty()) {
+                com.s2nova.app.ui.components.NovaSkeletonRows(count = 6, modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp))
+            } else if (filtered.isEmpty()) {
                 Text(
                     tr(StringKey.MV_EMPTY),
                     style = NovaType.bodySm, color = colors.textDim, textAlign = androidx.compose.ui.text.style.TextAlign.Center,

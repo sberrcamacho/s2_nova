@@ -65,6 +65,7 @@ import com.s2nova.app.ui.tr
 @Composable
 fun RecurringScreen(onBack: () -> Unit, onNew: () -> Unit, onEdit: (String) -> Unit) {
     val series by AppContainer.recurringSeriesRepository.series.collectAsStateWithLifecycle()
+    val dataLoaded by AppContainer.dataLoaded.collectAsStateWithLifecycle()
     val format = rememberCurrencyFormatter()
     val t = rememberStrings()
     val language = rememberAppLanguage()
@@ -159,7 +160,9 @@ fun RecurringScreen(onBack: () -> Unit, onNew: () -> Unit, onEdit: (String) -> U
                     }
                 }
             }
-            if (series.isEmpty()) {
+            if (series.isEmpty() && !dataLoaded) {
+                item { com.s2nova.app.ui.components.NovaSkeletonRows(count = 3, modifier = Modifier.padding(vertical = 8.dp)) }
+            } else if (series.isEmpty()) {
                 item {
                     Text(
                         t(StringKey.RECURRING_EMPTY),

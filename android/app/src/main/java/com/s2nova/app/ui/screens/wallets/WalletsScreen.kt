@@ -132,6 +132,9 @@ fun WalletsScreen(onBack: () -> Unit) {
         }
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             val shape = RoundedCornerShape(20.dp)
+            if (wallets.isEmpty() && !AppContainer.dataLoaded.collectAsStateWithLifecycle().value) {
+                com.s2nova.app.ui.components.NovaSkeletonRows(count = 3)
+            }
             // The total in the principal currency, with the conversion note.
             if (wallets.isNotEmpty()) {
                 Column(

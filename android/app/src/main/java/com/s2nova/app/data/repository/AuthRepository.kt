@@ -8,6 +8,12 @@ import com.s2nova.app.data.model.Currency
 import com.s2nova.app.data.model.User
 import com.s2nova.app.data.model.UserPreferences
 import com.s2nova.app.data.remote.ApiClient
+import com.s2nova.app.data.remote.ChangePasswordRequest
+import com.s2nova.app.data.remote.ForgotPasswordRequest
+import com.s2nova.app.data.remote.PasswordConfirmRequest
+import com.s2nova.app.data.remote.ResetPasswordRequest
+import retrofit2.HttpException
+import retrofit2.Response
 import com.s2nova.app.data.remote.GoogleLoginRequest
 import com.s2nova.app.data.remote.LoginRequest
 import com.s2nova.app.data.remote.MeResponse
@@ -162,6 +168,39 @@ class AuthRepository(
             val response = ApiClient.api.updateProfile(UpdateProfileRequest(name, email, phone, city, currentPassword))
             _currentUser.value = response.toUser()
         }
+
+    private fun Response<Unit>.requireOk() {
+        if (!isSuccessful) throw HttpException(this)
+    }
+
+    // "Olvidaste tu contraseña": the server always answers 204 (it never
+    // reveals which emails have an account) and mails a one-time code.
+    suspend fun forgotPassword(email: String): Result<Unit> = runCatching {
+        ApiClient.authApi.forgotPassword(ForgotPasswordRequest(email.trim())).requireOk()
+    }
+
+    suspend fun resetPassword(token: String, newPassword: String): Result<Unit> = runCatching {
+        ApiClient.authApi.resetPassword(ResetPasswordRequest(token.trim(), newPassword)).requireOk()
+    }
+
+    // Ajustes › Cambiar contraseña: the server keeps this session and closes
+    // the others.
+    suspend fun changePassword(currentPassword: String, newPassword: String): Result<Unit> = runCatching {
+        if (DemoModeFlag.active) error(com.s2nova.app.ui.tr(com.s2nova.app.ui.StringKey.API_GUEST))
+        ApiClient.api.changePassword(ChangePasswordRequest(currentPassword, newPassword)).requireOk()
+    }
+
+    // Ajustes › Zona de riesgo. Both confirm with the current password.
+    suspend fun resetData(password: String): Result<Unit> = runCatching {
+        if (DemoModeFlag.active) error(com.s2nova.app.ui.tr(com.s2nova.app.ui.StringKey.API_GUEST))
+        ApiClient.api.resetData(PasswordConfirmRequest(password)).requireOk()
+    }
+
+    suspend fun deleteAccount(password: String): Result<Unit> = runCatching {
+        if (DemoModeFlag.active) error(com.s2nova.app.ui.tr(com.s2nova.app.ui.StringKey.API_GUEST))
+        ApiClient.api.deleteMe(PasswordConfirmRequest(password)).requireOk()
+        logout()
+    }
 
     // "Cierre automático" heartbeat: tells the server the user is still
     // active, so its own idle check leaves the session alone (backend
