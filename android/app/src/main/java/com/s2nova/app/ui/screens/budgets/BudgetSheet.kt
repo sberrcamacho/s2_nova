@@ -83,19 +83,20 @@ data class BudgetEditDraft(
     val start: String = "",
     val end: String = "",
     val auto: Boolean = true,
+    // The name is typed by the user (otherwise it is the suggested category name).
+    val nameTouched: Boolean = false,
     val error: String? = null,
 ) {
     val custom get() = kind == BudgetKind.CUSTOM
     val valid get() = com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(limit) > 0 &&
         (period != BudgetPeriod.CUSTOM || (start.isNotBlank() && end.isNotBlank() && end >= start)) &&
-        (if (custom) name.isNotBlank() else category != null)
+        name.isNotBlank() && (custom || category != null)
 
     fun toSave(): BudgetRepository.Draft {
-        val repo = AppContainer.categoryRepository
         val scope = sub ?: category
         return BudgetRepository.Draft(
             kind = kind,
-            name = if (custom) name.trim() else name.trim().ifBlank { null }?.takeUnless { it == repo.name(scope) },
+            name = name.trim(),
             category = if (custom) null else scope,
             icon = if (custom) icon else null,
             walletIds = if (custom) emptyList() else walletIds,
@@ -112,10 +113,10 @@ data class BudgetEditDraft(
             val repo = AppContainer.categoryRepository
             val node = repo.node(b.category)
             return BudgetEditDraft(
-                id = b.id, kind = b.kind, name = b.name ?: repo.name(b.category), limit = com.s2nova.app.ui.screens.addtransaction.AmountPad.numStr(b.limit),
+                id = b.id, kind = b.kind, name = b.name ?: if (b.kind == BudgetKind.CUSTOM) "" else repo.name(b.category), limit = com.s2nova.app.ui.screens.addtransaction.AmountPad.numStr(b.limit),
                 category = node?.parentId ?: b.category, sub = if (node?.parentId != null) b.category else null,
                 icon = b.icon ?: "other", iconAuto = false, walletIds = b.walletIds, period = b.period,
-                start = b.startDate.orEmpty(), end = b.endDate.orEmpty(), auto = false,
+                start = b.startDate.orEmpty(), end = b.endDate.orEmpty(), auto = false, nameTouched = true,
             )
         }
     }
@@ -138,8 +139,8 @@ fun BudgetSheet(draft: BudgetEditDraft, onChange: (BudgetEditDraft) -> Unit, onD
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Column {
                     PillRow {
-                        V2Pill(tr(StringKey.BUD_KIND_CATEGORY), !d.custom, { if (d.id == null) onChange(d.copy(kind = BudgetKind.CATEGORY)) })
-                        V2Pill(tr(StringKey.BUD_KIND_CUSTOM), d.custom, { if (d.id == null) onChange(d.copy(kind = BudgetKind.CUSTOM)) })
+                        V2Pill(tr(StringKey.BUD_KIND_CATEGORY), !d.custom, { if (d.id == null) onChange(d.copy(kind = BudgetKind.CATEGORY, name = if (d.nameTouched) d.name else (d.sub ?: d.category)?.let { repo.name(it) }.orEmpty())) })
+                        V2Pill(tr(StringKey.BUD_KIND_CUSTOM), d.custom, { if (d.id == null) onChange(d.copy(kind = BudgetKind.CUSTOM, name = if (d.nameTouched) d.name else "")) })
                     }
                     FieldNote(
                         tr(if (d.custom) StringKey.BUD_KIND_CUSTOM_HINT else StringKey.BUD_KIND_CATEGORY_HINT),
@@ -158,11 +159,11 @@ fun BudgetSheet(draft: BudgetEditDraft, onChange: (BudgetEditDraft) -> Unit, onD
                             ) { Text("▾", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = Color.White) }
                         }
                         BareField(d.name, { name ->
-                            if (d.custom) onChange(d.copy(name = name, icon = if (d.iconAuto) Taxonomy.guessPlanIcon(name) ?: "other" else d.icon))
+                            if (d.custom) onChange(d.copy(name = name, nameTouched = true, icon = if (d.iconAuto) Taxonomy.guessPlanIcon(name) ?: "other" else d.icon))
                             else {
                                 val leaf = Taxonomy.guessCategory(name, false)
                                 val g = suggestExpenseCategory(name)
-                                onChange(d.copy(name = name, category = if (d.auto && g != null) g else d.category, sub = if (d.auto && g != null) leaf?.takeIf { it != g } else d.sub))
+                                onChange(d.copy(name = name, nameTouched = name.isNotBlank(), category = if (d.auto && g != null) g else d.category, sub = if (d.auto && g != null) leaf?.takeIf { it != g } else d.sub))
                             }
                         }, tr(if (d.custom) StringKey.BUD_PH_CUSTOM else StringKey.BUD_PH_CATEGORY))
                     }
@@ -233,7 +234,7 @@ fun BudgetSheet(draft: BudgetEditDraft, onChange: (BudgetEditDraft) -> Unit, onD
                 BSheet.CAT -> GridOf(repo.parents(false), 5, 14.dp, 4.dp) { p ->
                     val on = d.category == p.id
                     Column(Modifier.noRippleClick {
-                        onChange(d.copy(category = p.id, sub = null, auto = false))
+                        onChange(d.copy(category = p.id, sub = null, auto = false, name = if (d.nameTouched) d.name else repo.name(p.id)))
                         bSheet = if (repo.children(p.id).isNotEmpty()) BSheet.SUB else null
                     }, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         GridChip(repo.glyph(p.id), Color(p.color), on, 46.dp, 30.dp)
@@ -245,7 +246,7 @@ fun BudgetSheet(draft: BudgetEditDraft, onChange: (BudgetEditDraft) -> Unit, onD
                     val items = listOf<Pair<String?, String>>(null to tr(StringKey.BUD_ALL)) + repo.children(parent).map { it.id to repo.name(it.id) }
                     GridOf(items, 5, 14.dp, 4.dp) { (id, name) ->
                         val on = d.sub == id
-                        Column(Modifier.noRippleClick { onChange(d.copy(sub = id, auto = false)); bSheet = null }, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Column(Modifier.noRippleClick { onChange(d.copy(sub = id, auto = false, name = if (d.nameTouched || d.category == null) d.name else repo.name(id ?: d.category))); bSheet = null }, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             GridChip(repo.glyph(id ?: parent), Color(repo.color(parent)), on, 46.dp, 30.dp)
                             GridLabel(name, on)
                         }

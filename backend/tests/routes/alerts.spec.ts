@@ -88,8 +88,8 @@ describe("alert routes", () => {
     const transport = await categoryBySlug("transportation");
 
     const servicios = (await inject(user, "POST", "/budgets", { name: "Servicios", categoryId: bills.id, amount: 100000, month: "2026-08" })).json();
-    const mercado = (await inject(user, "POST", "/budgets", { categoryId: food.id, amount: 100000, month: "2026-08" })).json();
-    await inject(user, "POST", "/budgets", { categoryId: transport.id, amount: 100000, month: "2026-08" });
+    const mercado = (await inject(user, "POST", "/budgets", { name: "Mercado", categoryId: food.id, amount: 100000, month: "2026-08" })).json();
+    await inject(user, "POST", "/budgets", { name: "Transporte", categoryId: transport.id, amount: 100000, month: "2026-08" });
     const spend = (categoryId: string, amount: number) =>
       inject(user, "POST", "/transactions", { accountId: wallet.id, type: "EXPENSE", categoryId, amount, description: "x", date: "2026-08-10" });
     await spend(bills.id, 90000); // exactly 90%
@@ -127,7 +127,7 @@ describe("alert routes", () => {
 
     const goal = (await inject(user, "POST", "/goals", { name: "Meta", targetAmount: 100000 })).json();
     await inject(user, "POST", "/transactions", { accountId: wallet.id, type: "EXPENSE", categoryId: other.id, amount: 92000, goalId: goal.id, description: "Aporte", date: "2026-08-02" });
-    await inject(user, "POST", "/budgets", { categoryId: bills.id, amount: 100000, month: "2026-08" });
+    await inject(user, "POST", "/budgets", { name: "Servicios 2", categoryId: bills.id, amount: 100000, month: "2026-08" });
     await inject(user, "POST", "/transactions", { accountId: wallet.id, type: "EXPENSE", categoryId: bills.id, amount: 95000, description: "Luz", date: "2026-08-03" });
     await inject(user, "POST", "/transactions", { accountId: wallet.id, type: "EXPENSE", categoryId: other.id, amount: 5000, loanKind: "LENT", counterpartyName: "X", dueDate: "2026-09-01", description: "Préstamo", date: "2026-08-04" });
     await inject(user, "POST", "/recurring-series", { name: "Internet", type: "EXPENSE", amount: 1, accountId: wallet.id, categoryId: bills.id, interval: "MONTHLY", startDate: "2026-08-21" });

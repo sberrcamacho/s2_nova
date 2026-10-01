@@ -235,6 +235,9 @@ const titlesQuerySchema = z.object({
   q: z.string().trim().max(60).optional(),
   type: z.enum(["EXPENSE", "INCOME"]).optional(),
   categoryId: z.string().uuid().optional(),
+  // With categoryId: narrows the hints to that subcategory, and `last` is the
+  // remembered title for the exact (category, subcategory) pair.
+  subcategoryId: z.string().uuid().optional(),
   limit: z.coerce.number().int().min(1).max(20).default(5),
 });
 
@@ -250,13 +253,24 @@ export async function transactionRoutes(app: FastifyInstance) {
         userId: request.userId!,
         type: query.type,
         categoryId: query.categoryId,
+        subcategoryId: query.subcategoryId,
         description: query.q ? { startsWith: query.q, mode: "insensitive" } : undefined,
       },
       _max: { transactionDate: true, createdAt: true },
       orderBy: [{ _max: { transactionDate: "desc" } }, { _max: { createdAt: "desc" } }],
       take: query.limit,
     });
-    return { titles: rows.map((row) => row.description) };
+    // "Recordar título": the title of the latest movement with this exact
+    // category + subcategory (no subcategory matches no subcategory). Derived
+    // from the movements themselves, so there is nothing extra to store.
+    const last = query.categoryId
+      ? await prisma.transaction.findFirst({
+          where: { userId: request.userId!, type: query.type, categoryId: query.categoryId, subcategoryId: query.subcategoryId ?? null },
+          orderBy: [{ transactionDate: "desc" }, { createdAt: "desc" }],
+          select: { description: true },
+        })
+      : null;
+    return { titles: rows.map((row) => row.description), last: last?.description ?? null };
   });
 
   app.get("/transactions", { preHandler: app.authenticate }, async (request) => {

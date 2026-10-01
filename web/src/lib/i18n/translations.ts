@@ -558,6 +558,7 @@ const dictionary = {
   "nm.titleGenericExpense": { es: "Gasto", en: "Expense" },
   "nm.titleGenericIncome": { es: "Ingreso", en: "Income" },
   "nm.titleGenericTransfer": { es: "Transferencia", en: "Transfer" },
+  "nm.titleSuggested": { es: "Sugerido", en: "Suggested" },
   "nm.titleHints": { es: "Títulos usados antes", en: "Titles used before" },
   "nm.titleEx": { es: "Ej.: Mercado semanal", en: "E.g. Weekly groceries" },
   "nm.noteLabel": { es: "Nota", en: "Note" },

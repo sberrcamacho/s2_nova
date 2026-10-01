@@ -4,7 +4,7 @@ import { SidePanel } from '@/components/panels/SidePanel'
 import { CategoryMark, GlyphMark, PlanMark } from '@/components/v2/CategoryMark'
 import { CancelButton, ErrorBox, Flat, GridCell, IC, Icon, RadioRow } from '@/components/v2/Kit'
 import { AjSwitch } from '@/dashboard/components/ajustes/AjustesUi'
-import { categoryColor, categoryGlyph, categoryLabel, categoryName, childCategories, isInCategory, parentCategories, parentOf, useCategories } from '@/lib/backendCategories'
+import { categoryColor, categoryIdFor, categoryGlyph, categoryLabel, categoryName, childCategories, isInCategory, parentCategories, parentOf, useCategories } from '@/lib/backendCategories'
 import { currencyInfo, formatMoney, referenceRate } from '@/lib/currency'
 import { todayISO } from '@/lib/date'
 import { shortWallet } from '@/lib/movimientos'
@@ -157,6 +157,9 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
   // The title starts as a suggestion (a generic one the first time, then the
   // one used last) until the user types their own.
   const titleTouched = useRef(!!e0)
+  // True while the title in the field is one the app suggested (shows the
+  // "Sugerido" tag); typing your own (or emptying the field) clears it.
+  const [titleSuggested, setTitleSuggested] = useState(!e0)
   const [titleHints, setTitleHints] = useState<string[]>([])
   const [note, setNote] = useState(e0?.note ?? '')
   const [date, setDate] = useState(e0?.date ?? today)
@@ -184,24 +187,36 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
   const photoInput = useRef<HTMLInputElement>(null)
   const docInput = useRef<HTMLInputElement>(null)
 
+  // Suggested title: with no category the generic one; with a category (and
+  // subcategory) the title last used for that exact pair, else its name.
   useEffect(() => {
     if (editing) return
     const generic = t(type === 'income' ? 'nm.titleGenericIncome' : type === 'expense' ? 'nm.titleGenericExpense' : 'nm.titleGenericTransfer')
-    if (!titleTouched.current) setTitle(generic)
+    if (!titleTouched.current) {
+      setTitle(type !== 'transfer' && cat ? categoryName(sub ?? cat) : generic)
+      setTitleSuggested(true)
+    }
     if (type === 'transfer') {
       setTitleHints([])
       return
     }
     let cancelled = false
-    transactionService.getTitles({ type: type === 'income' ? 'INCOME' : 'EXPENSE', limit: 4 }).then((list) => {
+    void (async () => {
+      let ids: { categoryId?: string; subcategoryId?: string } = {}
+      try {
+        if (cat) ids = { categoryId: await categoryIdFor(cat), subcategoryId: sub ? await categoryIdFor(sub) : undefined }
+      } catch {
+        ids = {}
+      }
+      const res = await transactionService.getTitleSuggestions({ type: type === 'income' ? 'INCOME' : 'EXPENSE', limit: 4, ...ids })
       if (cancelled) return
-      setTitleHints(list)
-      if (list[0] && !titleTouched.current) setTitle(list[0])
-    })
+      setTitleHints(res.titles)
+      if (cat && res.last && !titleTouched.current) setTitle(res.last)
+    })()
     return () => {
       cancelled = true
     }
-  }, [type])
+  }, [type, cat, sub])
 
   useEffect(() => {
     let cancelled = false
@@ -898,12 +913,20 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
       {budgetLine}
 
       <div className="flex flex-col gap-2">
-        <label htmlFor="nt-title" className={fieldLabel}>{t('nm.titlePh')}</label>
-        <input id="nt-title" value={title} onChange={(e) => { titleTouched.current = true; edit(setTitle)(e.target.value.slice(0, 60)) }} onFocus={(e) => { if (!titleTouched.current) e.target.select() }} placeholder={t('nm.titleEx')} className={textInput} />
+        <div className="flex items-center justify-between gap-2">
+          <label htmlFor="nt-title" className={fieldLabel}>{t('nm.titlePh')}</label>
+          {titleSuggested && title && (
+            <span className="inline-flex h-6 items-center gap-1 whitespace-nowrap rounded-full border border-primary-border px-2 text-caption font-bold text-ink">
+              <Icon paths={['M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z']} size={12} color="var(--color-primary-border)" />
+              {t('nm.titleSuggested')}
+            </span>
+          )}
+        </div>
+        <input id="nt-title" value={title} onChange={(e) => { const v = e.target.value.slice(0, 60); titleTouched.current = true; setTitleSuggested(false); edit(setTitle)(v) }} onFocus={(e) => { if (!titleTouched.current) e.target.select() }} placeholder={t('nm.titleEx')} className={textInput} />
         {titleHints.filter((h) => h !== title).length > 0 && (
           <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('nm.titleHints')}>
             {titleHints.filter((h) => h !== title).map((h) => (
-              <button key={h} type="button" onClick={() => { titleTouched.current = true; edit(setTitle)(h) }} className="inline-flex h-8 max-w-full cursor-pointer items-center whitespace-nowrap rounded-full border border-border-input px-3 text-body-sm text-ink-secondary hover:bg-surface-sunken">
+              <button key={h} type="button" onClick={() => { titleTouched.current = true; setTitleSuggested(false); edit(setTitle)(h) }} className="inline-flex h-8 max-w-full cursor-pointer items-center whitespace-nowrap rounded-full border border-border-input px-3 text-body-sm text-ink-secondary hover:bg-surface-sunken">
                 <span className="truncate">{h}</span>
               </button>
             ))}

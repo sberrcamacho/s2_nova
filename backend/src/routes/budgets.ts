@@ -32,7 +32,8 @@ const budgetFields = {
 const createBudgetSchema = z
   .object({ kind: z.enum(["CATEGORY", "CUSTOM"]).default("CATEGORY"), ...budgetFields })
   .refine((b) => b.kind === "CUSTOM" || Boolean(b.categoryId), { message: "categoryId is required.", path: ["categoryId"] })
-  .refine((b) => b.kind === "CATEGORY" || Boolean(b.name), { message: "name is required.", path: ["name"] })
+  // Every budget is named; clients suggest the category name for category budgets.
+  .refine((b) => Boolean(b.name), { message: "name is required.", path: ["name"] })
   .refine((b) => b.period === "MONTHLY" || (b.startDate && b.endDate && b.startDate <= b.endDate), {
     message: "A custom range needs startDate <= endDate.",
     path: ["endDate"],

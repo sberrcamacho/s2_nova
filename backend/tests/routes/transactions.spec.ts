@@ -755,16 +755,40 @@ describe("transaction routes", () => {
       await mk("Taxi", "2026-08-02");
 
       const all = await app.inject({ method: "GET", url: "/api/v1/transactions/titles", headers: authHeader(user) });
-      expect(all.json()).toEqual({ titles: ["Almuerzo", "Taxi"] });
+      expect(all.json()).toEqual({ titles: ["Almuerzo", "Taxi"], last: null });
 
       const filtered = await app.inject({ method: "GET", url: "/api/v1/transactions/titles?q=ta", headers: authHeader(user) });
-      expect(filtered.json()).toEqual({ titles: ["Taxi"] });
+      expect(filtered.json()).toEqual({ titles: ["Taxi"], last: null });
+    });
+
+    it("remembers the last title per exact category + subcategory pair", async () => {
+      const user = await createTestUser();
+      const other = await createTestUser();
+      const wallet = await createAccount(user.id);
+      const otherWallet = await createAccount(other.id);
+      const food = await categoryBySlug("food");
+      const groceries = await prisma.category.findFirstOrThrow({ where: { userId: null, parentId: food.id } });
+      const mk = (userId: string, accountId: string, description: string, day: string, subcategoryId?: string) =>
+        prisma.transaction.create({
+          data: { userId, accountId, type: "EXPENSE", amountMinor: 1000n, categoryId: food.id, subcategoryId, paymentMethod: "CASH", description, transactionDate: new Date(day) },
+        });
+      await mk(user.id, wallet.id, "Cena con Ana", "2026-08-01");
+      await mk(user.id, wallet.id, "Mercado de la semana", "2026-08-02", groceries.id);
+      await mk(user.id, wallet.id, "Cena en casa", "2026-08-05");
+      await mk(other.id, otherWallet.id, "De otra persona", "2026-08-09");
+
+      const get = async (qs: string) =>
+        (await app.inject({ method: "GET", url: `/api/v1/transactions/titles?type=EXPENSE&categoryId=${food.id}${qs}`, headers: authHeader(user) })).json();
+      expect((await get("")).last).toBe("Cena en casa");
+      expect((await get(`&subcategoryId=${groceries.id}`)).last).toBe("Mercado de la semana");
+      const none = await app.inject({ method: "GET", url: `/api/v1/transactions/titles?type=INCOME&categoryId=${food.id}`, headers: authHeader(user) });
+      expect(none.json().last).toBeNull();
     });
 
     it("is empty for a user with no movements", async () => {
       const user = await createTestUser();
       const res = await app.inject({ method: "GET", url: "/api/v1/transactions/titles", headers: authHeader(user) });
-      expect(res.json()).toEqual({ titles: [] });
+      expect(res.json()).toEqual({ titles: [], last: null });
     });
   });
 });

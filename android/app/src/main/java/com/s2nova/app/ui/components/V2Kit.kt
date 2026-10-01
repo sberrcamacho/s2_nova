@@ -71,6 +71,7 @@ fun glyphIcon(paths: List<String>, strokeWidth: Float = 2.25f): ImageVector {
 
 // Mockup icon set (IC) used by the v2 screens, 1.9 stroke.
 object V2Icons {
+    val sparkle = listOf("M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z")
     val clock = listOf("M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z", "M12 7v5l3 2")
     val close = listOf("M18 6 6 18", "M6 6l12 12")
     val cal = listOf("M4 5h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z", "M3 10h18", "M8 3v4", "M16 3v4")
@@ -183,6 +184,23 @@ fun PillRow(content: @Composable () -> Unit) {
 }
 
 // Section label: 11.5 sp / 700 muted, 8 dp below.
+// "Sugerido": marks a value the app filled in (never color alone — it has a
+// glyph and a word). Same wording and shape as Web's title tag.
+@Composable
+fun SuggestedTag(text: String, modifier: Modifier = Modifier) {
+    val accent = com.s2nova.app.ui.theme.NovaColors.current.accentText
+    Row(
+        modifier = modifier
+            .padding(bottom = 8.dp)
+            .border(1.dp, accent, RoundedCornerShape(50))
+            .padding(horizontal = 8.dp, vertical = 3.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        V2Icon(V2Icons.sparkle, accent, 12.dp)
+        Text(text, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, modifier = Modifier.padding(start = 4.dp))
+    }
+}
+
 @Composable
 fun FieldLabel(text: String, modifier: Modifier = Modifier) {
     Text(

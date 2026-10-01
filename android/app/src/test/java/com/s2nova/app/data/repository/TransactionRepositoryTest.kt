@@ -95,6 +95,25 @@ class TransactionRepositoryTest {
         assertEquals(0, server.requestCount)
     }
 
+    @Test
+    fun `demo title suggestions remember the last title for the exact category and subcategory`() = runTest {
+        DemoModeFlag.set(true)
+        val repository = TransactionRepository(CategoryRepository(server.apiService()), server.apiService())
+        fun tx(id: String, title: String, date: String, sub: String?) =
+            transaction(id, 1000.0).copy(description = title, category = "exp.food", subcategoryId = sub, date = date, loanKind = null)
+        repository.loadDemo(
+            listOf(
+                tx("a", "Cena con Ana", "2026-03-01", null),
+                tx("b", "Mercado de la semana", "2026-03-02", "exp.food.groceries"),
+                tx("c", "Cena en casa", "2026-03-05", null),
+            ),
+        )
+        assertEquals("Cena en casa", repository.titleSuggestions(TransactionType.EXPENSE, "exp.food", null).last)
+        assertEquals("Mercado de la semana", repository.titleSuggestions(TransactionType.EXPENSE, "exp.food", "exp.food.groceries").last)
+        assertEquals(null, repository.titleSuggestions(TransactionType.EXPENSE, "exp.health", null).last)
+        assertEquals(null, repository.titleSuggestions(TransactionType.INCOME, "exp.food", null).last)
+    }
+
     private fun transaction(id: String, amount: Double, parentLoanId: String? = null) = Transaction(
         id = id,
         walletId = "w1",

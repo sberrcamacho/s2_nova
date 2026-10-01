@@ -1,6 +1,7 @@
 package com.s2nova.app.data.repository
 
 import android.util.Base64
+import com.s2nova.app.data.model.CategoryId
 import com.s2nova.app.data.model.AttachmentMeta
 import com.s2nova.app.data.model.CounterpartyKind
 import com.s2nova.app.data.model.LoanKind
@@ -97,13 +98,25 @@ class TransactionRepository(
     // Titles already used (most recent first) to pre-fill the "Título" field.
     // Guests compute them from the in-memory list; a failed call just means
     // no suggestion.
-    suspend fun recentTitles(type: TransactionType, limit: Int = 4): List<String> {
-        if (type == TransactionType.TRANSFER) return emptyList()
+    // Titles for the "Título" field. `last` is the remembered title of the
+    // latest movement with this exact category + subcategory (null when none).
+    data class TitleSuggestions(val titles: List<String>, val last: String?)
+
+    suspend fun titleSuggestions(type: TransactionType, category: CategoryId? = null, sub: CategoryId? = null, limit: Int = 4): TitleSuggestions {
+        if (type == TransactionType.TRANSFER) return TitleSuggestions(emptyList(), null)
         if (DemoModeFlag.active) {
-            return _transactions.value.filter { it.type == type && it.description.isNotBlank() }
+            val ofType = _transactions.value.filter { it.type == type && it.description.isNotBlank() }
+            val titles = ofType.filter { category == null || it.category == category }
                 .sortedByDescending { it.date }.map { it.description }.distinct().take(limit)
+            val last = category?.let { c -> ofType.filter { it.category == c && it.subcategoryId == sub }.maxByOrNull { it.date }?.description }
+            return TitleSuggestions(titles, last)
         }
-        return runCatching { api.getTransactionTitles(type.name, limit).titles }.getOrDefault(emptyList())
+        return runCatching {
+            val categoryUuid: String? = category?.let { c -> categoryRepository.backendIdFor(c) }
+            val subUuid: String? = sub?.let { c -> categoryRepository.backendIdFor(c) }
+            val dto = api.getTransactionTitles(type.name, limit, categoryUuid, subUuid)
+            TitleSuggestions(dto.titles, dto.last)
+        }.getOrDefault(TitleSuggestions(emptyList(), null))
     }
 
     fun loadDemo(transactions: List<Transaction>) {

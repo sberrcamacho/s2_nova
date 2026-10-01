@@ -126,17 +126,21 @@ let cache: Transaction[] = []
 
 export const transactionService = {
   // Titles already used, most recent first — pre-fills the "Título" field.
-  // Best-effort: with no history (or offline) the form shows its generic one.
-  async getTitles(opts: { type?: 'EXPENSE' | 'INCOME'; categoryId?: string; limit?: number } = {}): Promise<string[]> {
+  // `last` is the remembered title for the exact category + subcategory pair.
+  // Best-effort: with no history (or offline) the form suggests the category name.
+  async getTitleSuggestions(
+    opts: { type?: 'EXPENSE' | 'INCOME'; categoryId?: string; subcategoryId?: string; limit?: number } = {},
+  ): Promise<{ titles: string[]; last: string | null }> {
     const params = new URLSearchParams()
     if (opts.type) params.set('type', opts.type)
     if (opts.categoryId) params.set('categoryId', opts.categoryId)
+    if (opts.subcategoryId) params.set('subcategoryId', opts.subcategoryId)
     if (opts.limit) params.set('limit', String(opts.limit))
     try {
-      const res = await apiClient.get<{ titles: string[] }>(`/transactions/titles?${params}`)
-      return res.titles
+      const res = await apiClient.get<{ titles: string[]; last?: string | null }>(`/transactions/titles?${params}`)
+      return { titles: res.titles, last: res.last ?? null }
     } catch {
-      return []
+      return { titles: [], last: null }
     }
   },
 

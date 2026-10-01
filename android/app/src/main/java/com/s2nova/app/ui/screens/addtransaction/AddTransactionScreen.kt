@@ -82,6 +82,8 @@ import com.s2nova.app.ui.components.InputBox
 import com.s2nova.app.ui.components.OptionTile
 import com.s2nova.app.ui.components.PillRow
 import com.s2nova.app.ui.components.PlanMark
+import com.s2nova.app.ui.components.SuggestedTag
+import com.s2nova.app.ui.components.categoryName
 import com.s2nova.app.ui.components.TNUM
 import com.s2nova.app.ui.components.V2Button
 import com.s2nova.app.ui.components.V2Icon
@@ -184,6 +186,9 @@ class NmState(initialCalc: Boolean) {
     // The title starts as a suggestion (generic the first time, then the one
     // used last) until the user types their own.
     var titleTouched by mutableStateOf(false)
+    // True while the title in the field is one the app suggested (shows the
+    // "Sugerido" tag); typing your own clears it.
+    var titleSuggested by mutableStateOf(true)
     var titleHints by mutableStateOf<List<String>>(emptyList())
     var note by mutableStateOf("")
     val openedAt: LocalDateTime = LocalDateTime.now()
@@ -308,20 +313,23 @@ fun AddTransactionScreen(
             }
         }
     }
-    // Pre-fills the title for a new movement: a generic one for the type, then
-    // the title used last once the history answers.
-    androidx.compose.runtime.LaunchedEffect(s.type) {
+    // Suggested title: with no category the generic one for the type; with a
+    // category (and subcategory) the title last used for that exact pair, else
+    // its name.
+    androidx.compose.runtime.LaunchedEffect(s.type, s.category, s.sub, s.catPicked) {
         if (s.editing) return@LaunchedEffect
+        val cat = if (s.catPicked && s.type != TransactionType.TRANSFER) s.category else null
         if (!s.titleTouched) {
-            s.title = tr(when (s.type) {
+            s.title = if (cat != null) categoryName(s.sub ?: cat) else tr(when (s.type) {
                 TransactionType.INCOME -> StringKey.NM_TITLE_GENERIC_INCOME
                 TransactionType.TRANSFER -> StringKey.NM_TITLE_GENERIC_TRANSFER
                 else -> StringKey.NM_TITLE_GENERIC_EXPENSE
             })
+            s.titleSuggested = true
         }
-        val hints = AppContainer.transactionRepository.recentTitles(s.type)
-        s.titleHints = hints
-        if (hints.isNotEmpty() && !s.titleTouched) s.title = hints.first()
+        val res = AppContainer.transactionRepository.titleSuggestions(s.type, cat, if (cat != null) s.sub else null)
+        s.titleHints = res.titles
+        if (cat != null && res.last != null && !s.titleTouched) s.title = res.last
     }
     if (s.walletId == null || wallets.none { it.id == s.walletId }) s.walletId = wallets.first().id
     val wallet = wallets.first { it.id == s.walletId }
@@ -532,10 +540,13 @@ fun AddTransactionScreen(
             }
 
             Column {
-                FieldLabel(tr(StringKey.NM_TITLE_PH))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    FieldLabel(tr(StringKey.NM_TITLE_PH))
+                    if (!s.editing && s.titleSuggested && s.title.isNotBlank()) SuggestedTag(tr(StringKey.NM_TITLE_SUGGESTED))
+                }
                 InputBox(height = 52.dp) {
                     V2Icon(V2Icons.title, colors.textDim, 20.dp)
-                    BareField(s.title, { s.titleTouched = true; s.title = it.take(60) }, tr(StringKey.NM_TITLE_EXAMPLE))
+                    BareField(s.title, { s.titleTouched = true; s.titleSuggested = false; s.title = it.take(60) }, tr(StringKey.NM_TITLE_EXAMPLE))
                 }
                 val hints = s.titleHints.filter { it != s.title }
                 if (hints.isNotEmpty()) {
@@ -543,7 +554,7 @@ fun AddTransactionScreen(
                         modifier = Modifier.padding(top = 8.dp).horizontalScroll(androidx.compose.foundation.rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        hints.forEach { h -> com.s2nova.app.ui.components.V2Pill(h, selected = false, onClick = { s.titleTouched = true; s.title = h }, role = Role.Button) }
+                        hints.forEach { h -> com.s2nova.app.ui.components.V2Pill(h, selected = false, onClick = { s.titleTouched = true; s.titleSuggested = false; s.title = h }, role = Role.Button) }
                     }
                 }
             }

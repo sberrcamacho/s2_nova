@@ -192,7 +192,7 @@ describe("v2 movements, currencies and plans", () => {
     ).json();
     expect(custom).toMatchObject({ kind: "CUSTOM", icon: "other" });
     const byCategory = (
-      await app.inject({ method: "POST", url: "/api/v1/budgets", headers: authHeader(user), payload: { categoryId: clothing.parentId, amount: 100000, month: "2026-09", walletIds: [a.id] } })
+      await app.inject({ method: "POST", url: "/api/v1/budgets", headers: authHeader(user), payload: { name: "Ropa", categoryId: clothing.parentId, amount: 100000, month: "2026-09", walletIds: [a.id] } })
     ).json();
     for (const [accountId, customBudgetId] of [[a.id, custom.id], [b.id, undefined]] as const) {
       await app.inject({

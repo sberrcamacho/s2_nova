@@ -50,14 +50,16 @@ interface Draft {
   start: string
   end: string
   auto: boolean
+  // The name is typed by the user (otherwise it is the suggested category name).
+  nameTouched: boolean
 }
 
 function draftOf(b: BudgetProgress | null): Draft {
-  if (!b) return { kind: 'category', name: '', limit: '', cat: null, sub: null, icon: 'other', iconAuto: true, walletIds: [], period: 'monthly', start: '', end: '', auto: true }
+  if (!b) return { kind: 'category', name: '', limit: '', cat: null, sub: null, icon: 'other', iconAuto: true, walletIds: [], period: 'monthly', start: '', end: '', auto: true, nameTouched: false }
   const custom = b.kind === 'custom'
   return {
     kind: b.kind,
-    name: b.name ?? '',
+    name: b.name ?? (custom ? '' : categoryName(b.category)),
     limit: numStr(b.limit),
     cat: custom ? null : (parentOf(b.category)?.id ?? null),
     sub: custom ? null : categoryNode(b.category)?.parentId ? (b.category ?? null) : null,
@@ -68,6 +70,7 @@ function draftOf(b: BudgetProgress | null): Draft {
     start: b.startDate ?? '',
     end: b.endDate ?? '',
     auto: false,
+    nameTouched: true,
   }
 }
 
@@ -91,16 +94,16 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
   }
 
   const custom = d.kind === 'custom'
-  const valid = evalExpr(d.limit) > 0 && (d.period !== 'custom' || (!!d.start && !!d.end && d.end >= d.start)) && (custom ? !!d.name.trim() : !!d.cat)
+  const valid = evalExpr(d.limit) > 0 && (d.period !== 'custom' || (!!d.start && !!d.end && d.end >= d.start)) && (custom ? !!d.name.trim() : !!d.cat && !!d.name.trim())
   const leaf = d.sub ?? d.cat
   const wl = d.walletIds.length ? d.walletIds.map((id) => shortWallet(wallets.find((w) => w.id === id)?.name ?? '')) : null
   const nameGuess = custom ? null : d.auto ? guessCategory(d.name, false) : null
 
   const onName = (v: string) => {
-    if (custom) return set({ name: v, icon: d.iconAuto ? (guessPlanIcon(v) ?? 'other') : d.icon })
+    if (custom) return set({ name: v, nameTouched: true, icon: d.iconAuto ? (guessPlanIcon(v) ?? 'other') : d.icon })
     const lf = d.auto ? guessCategory(v, false) : null
     const p = lf ? parentOf(lf) : undefined
-    set({ name: v, ...(lf && p ? { cat: p.id, sub: lf !== p.id ? lf : null } : {}) })
+    set({ name: v, nameTouched: v.trim().length > 0, ...(lf && p ? { cat: p.id, sub: lf !== p.id ? lf : null } : {}) })
   }
 
   const tiles: { k: Exclude<Section, null>; label: string; on: boolean; icon: React.ReactNode }[] = custom
@@ -130,10 +133,10 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
         ` · ${t(d.period === 'custom' ? 'bud.scope.noReset' : 'bud.scope.reset')}.`
 
   const save = async () => {
-    if (!valid) return setErr(t(custom && !d.name.trim() ? 'bud.err.name' : !custom && !d.cat ? 'nm.err.category' : 'bud.err.amount'))
+    if (!valid) return setErr(t(!custom && !d.cat ? 'nm.err.category' : !d.name.trim() ? 'bud.err.name' : 'bud.err.amount'))
     const draft: BudgetDraft = {
       kind: d.kind,
-      name: d.name.trim() || null,
+      name: d.name.trim(),
       category: custom ? undefined : (leaf ?? undefined),
       icon: custom ? d.icon : undefined,
       walletIds: custom ? [] : d.walletIds,
@@ -189,7 +192,7 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
               key={k}
               on={d.kind === k}
               onClick={() => {
-                set({ kind: k })
+                set({ kind: k, ...(d.nameTouched ? {} : { name: k === 'custom' || !d.cat ? '' : categoryName(d.sub ?? d.cat) }) })
                 setSection(null)
               }}
               className="flex-1 text-center"
@@ -256,7 +259,7 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
                 chip={<CategoryMark category={x.id} box={36} />}
                 label={categoryName(x.id)}
                 onClick={() => {
-                  set({ cat: x.id, sub: null, auto: false })
+                  set({ cat: x.id, sub: null, auto: false, ...(d.nameTouched ? {} : { name: categoryName(x.id) }) })
                   if (!childCategories(x.id, false).length) setSection(null)
                 }}
               />
@@ -274,7 +277,7 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
                     chip={<GlyphMark paths={categoryGlyph(x.id ?? d.cat)} color={categoryColor(d.cat)} box={36} />}
                     label={x.name}
                     onClick={() => {
-                      set({ sub: x.id, auto: false })
+                      set({ sub: x.id, auto: false, ...(d.nameTouched || !d.cat ? {} : { name: categoryName(x.id ?? d.cat) }) })
                       setSection(null)
                     }}
                   />

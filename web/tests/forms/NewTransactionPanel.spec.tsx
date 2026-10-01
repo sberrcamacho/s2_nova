@@ -75,6 +75,43 @@ describe('NewTransactionPanel', () => {
     expect(screen.getByLabelText('Título')).toHaveValue('Gasto')
   })
 
+  it('suggests the category, then the subcategory name, tags it, and remembers the last title', async () => {
+    mockPanel()
+    server.use(
+      http.get(`${BASE}/transactions/titles`, ({ request }) => {
+        const q = new URL(request.url).searchParams
+        const last = q.get('subcategoryId') === 'uuid-exp.food.groceries' ? 'Mercado de la semana' : null
+        return HttpResponse.json({ titles: [], last })
+      }),
+    )
+    const user = userEvent.setup()
+    await open()
+    // Even the generic first title is a suggestion.
+    expect(screen.getByLabelText('Título')).toHaveValue('Gasto')
+    expect(screen.getByText('Sugerido')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /Elige una categoría/ }))
+    await user.click(screen.getByRole('button', { name: 'Alimentación' }))
+    await waitFor(() => expect(screen.getByLabelText('Título')).toHaveValue('Alimentación'))
+    expect(screen.getByText('Sugerido')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Mercado' }))
+    await waitFor(() => expect(screen.getByLabelText('Título')).toHaveValue('Mercado de la semana'))
+    expect(screen.getByText('Sugerido')).toBeInTheDocument()
+  })
+
+  it('stops suggesting once the user writes their own title', async () => {
+    mockPanel()
+    const user = userEvent.setup()
+    await open()
+    await pickCategory(user, 'Alimentación', 'Mercado')
+    await waitFor(() => expect(screen.getByLabelText('Título')).toHaveValue('Mercado'))
+    await user.clear(screen.getByLabelText('Título'))
+    await user.type(screen.getByLabelText('Título'), 'Cena con Ana')
+    expect(screen.queryByText('Sugerido')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /Alimentación · Mercado/ }))
+    await user.click(screen.getByRole('button', { name: 'Alimentación' }))
+    expect(screen.getByLabelText('Título')).toHaveValue('Cena con Ana')
+  })
+
   it('evaluates typed arithmetic and posts the expense with its subcategory', async () => {
     const sent = mockPanel()
     const user = userEvent.setup()

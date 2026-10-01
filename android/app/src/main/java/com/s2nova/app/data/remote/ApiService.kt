@@ -58,7 +58,12 @@ interface ApiService {
     suspend fun deleteMe(@Body body: PasswordConfirmRequest): Response<Unit>
 
     @GET("transactions/titles")
-    suspend fun getTransactionTitles(@Query("type") type: String? = null, @Query("limit") limit: Int = 4): TransactionTitlesDto
+    suspend fun getTransactionTitles(
+        @Query("type") type: String? = null,
+        @Query("limit") limit: Int = 4,
+        @Query("categoryId") categoryId: String? = null,
+        @Query("subcategoryId") subcategoryId: String? = null,
+    ): TransactionTitlesDto
 
     @PATCH("me/preferences")
     suspend fun updatePreferences(@Body body: UpdatePreferencesRequest): MeResponse

@@ -47,7 +47,7 @@ describe("budget routes", () => {
         method: "POST",
         url: "/api/v1/budgets",
         headers: authHeader(user),
-        payload: { categoryId: category.id, amount: 500000 },
+        payload: { name: "Presupuesto", categoryId: category.id, amount: 500000 },
       });
       expect(res.statusCode).toBe(201);
       expect(res.json()).toMatchObject({ amount: 500000, spent: 0, percentage: 0, status: "ON_TRACK" });
@@ -60,7 +60,7 @@ describe("budget routes", () => {
         method: "POST",
         url: "/api/v1/budgets",
         headers: authHeader(user),
-        payload: { categoryId: category.id, amount: 300000, month: "2026-09" },
+        payload: { name: "Presupuesto", categoryId: category.id, amount: 300000, month: "2026-09" },
       });
       expect(res.statusCode).toBe(201);
       // A monthly budget starts on the explicit month; `month` is the month
@@ -74,7 +74,7 @@ describe("budget routes", () => {
         method: "POST",
         url: "/api/v1/budgets",
         headers: authHeader(user),
-        payload: { categoryId: "00000000-0000-0000-0000-000000000000", amount: 100000 },
+        payload: { name: "Presupuesto", categoryId: "00000000-0000-0000-0000-000000000000", amount: 100000 },
       });
       expect(res.statusCode).toBe(422);
     });
@@ -90,7 +90,7 @@ describe("budget routes", () => {
         method: "POST",
         url: "/api/v1/budgets",
         headers: authHeader(user),
-        payload: { categoryId: category.id, amount: 200000, month: "2026-07" },
+        payload: { name: "Presupuesto", categoryId: category.id, amount: 200000, month: "2026-07" },
       });
       expect(first.statusCode).toBe(201);
 
@@ -98,7 +98,7 @@ describe("budget routes", () => {
         method: "POST",
         url: "/api/v1/budgets",
         headers: authHeader(user),
-        payload: { categoryId: category.id, amount: 200000, month: "2026-07" },
+        payload: { name: "Presupuesto", categoryId: category.id, amount: 200000, month: "2026-07" },
       });
       expect(second.statusCode).toBe(409);
     });
@@ -112,15 +112,24 @@ describe("budget routes", () => {
         method: "POST",
         url: "/api/v1/budgets",
         headers: authHeader(user),
-        payload: { categoryId: category.id, amount: 100000, month: "2026-07" },
+        payload: { name: "Presupuesto", categoryId: category.id, amount: 100000, month: "2026-07" },
       });
       const res = await app.inject({
         method: "POST",
         url: "/api/v1/budgets",
         headers: authHeader(user),
-        payload: { categoryId: category.id, amount: 100000, month: "2026-08" },
+        payload: { name: "Presupuesto", categoryId: category.id, amount: 100000, month: "2026-08" },
       });
       expect(res.statusCode).toBe(409);
+    });
+  });
+
+  describe("POST /budgets name", () => {
+    it("requires a name for category budgets too", async () => {
+      const user = await createTestUser();
+      const category = await categoryBySlug("food");
+      const res = await app.inject({ method: "POST", url: "/api/v1/budgets", headers: authHeader(user), payload: { categoryId: category.id, amount: 1000 } });
+      expect(res.statusCode).toBe(400);
     });
   });
 
@@ -133,13 +142,13 @@ describe("budget routes", () => {
         method: "POST",
         url: "/api/v1/budgets",
         headers: authHeader(userA),
-        payload: { categoryId: category.id, amount: 100000, month: "2026-10" },
+        payload: { name: "Presupuesto", categoryId: category.id, amount: 100000, month: "2026-10" },
       });
       await app.inject({
         method: "POST",
         url: "/api/v1/budgets",
         headers: authHeader(userB),
-        payload: { categoryId: category.id, amount: 100000, month: "2026-10" },
+        payload: { name: "Presupuesto", categoryId: category.id, amount: 100000, month: "2026-10" },
       });
 
       const res = await app.inject({ method: "GET", url: "/api/v1/budgets?month=2026-10", headers: authHeader(userA) });
@@ -171,7 +180,7 @@ describe("budget routes", () => {
         method: "POST",
         url: "/api/v1/budgets",
         headers: authHeader(user),
-        payload: { categoryId: category.id, amount: 100000, month: "2026-11" },
+        payload: { name: "Presupuesto", categoryId: category.id, amount: 100000, month: "2026-11" },
       });
       const budget = budgetRes.json();
       await spendAgainstBudget(app, user, wallet.id, category.id, budget.id, 60000);
@@ -189,7 +198,7 @@ describe("budget routes", () => {
         method: "POST",
         url: "/api/v1/budgets",
         headers: authHeader(user),
-        payload: { categoryId: category.id, amount: 100000, month: "2026-12" },
+        payload: { name: "Presupuesto", categoryId: category.id, amount: 100000, month: "2026-12" },
       });
       const budget = budgetRes.json();
       await spendAgainstBudget(app, user, wallet.id, category.id, budget.id, 85000);
@@ -207,7 +216,7 @@ describe("budget routes", () => {
         method: "POST",
         url: "/api/v1/budgets",
         headers: authHeader(user),
-        payload: { categoryId: category.id, amount: 100000, month: "2027-01" },
+        payload: { name: "Presupuesto", categoryId: category.id, amount: 100000, month: "2027-01" },
       });
       const budget = budgetRes.json();
       await spendAgainstBudget(app, user, wallet.id, category.id, budget.id, 120000);
@@ -226,7 +235,7 @@ describe("budget routes", () => {
         method: "POST",
         url: "/api/v1/budgets",
         headers: authHeader(user),
-        payload: { categoryId: category.id, amount: 100000, month: "2027-02" },
+        payload: { name: "Presupuesto", categoryId: category.id, amount: 100000, month: "2027-02" },
       });
       const id = createRes.json().id;
 
@@ -246,15 +255,15 @@ describe("budget routes", () => {
       const transport = await categoryBySlug("transportation");
       const bills = await categoryBySlug("bills");
       const create = (categoryId: string) =>
-        app.inject({ method: "POST", url: "/api/v1/budgets", headers: authHeader(user), payload: { categoryId, amount: 100000, month: "2027-04" } })
+        app.inject({ method: "POST", url: "/api/v1/budgets", headers: authHeader(user), payload: { name: "Presupuesto", categoryId, amount: 100000, month: "2027-04" } })
       const id = (await create(food.id)).json().id;
       await create(transport.id);
 
-      const moved = await app.inject({ method: "PATCH", url: `/api/v1/budgets/${id}`, headers: authHeader(user), payload: { categoryId: bills.id } });
+      const moved = await app.inject({ method: "PATCH", url: `/api/v1/budgets/${id}`, headers: authHeader(user), payload: { name: "Presupuesto", categoryId: bills.id } });
       expect(moved.statusCode).toBe(200);
       expect(moved.json().categoryId).toBe(bills.id);
 
-      const taken = await app.inject({ method: "PATCH", url: `/api/v1/budgets/${id}`, headers: authHeader(user), payload: { categoryId: transport.id } });
+      const taken = await app.inject({ method: "PATCH", url: `/api/v1/budgets/${id}`, headers: authHeader(user), payload: { name: "Presupuesto", categoryId: transport.id } });
       expect(taken.statusCode).toBe(409);
     });
 
@@ -266,7 +275,7 @@ describe("budget routes", () => {
         method: "POST",
         url: "/api/v1/budgets",
         headers: authHeader(owner),
-        payload: { categoryId: category.id, amount: 100000, month: "2027-03" },
+        payload: { name: "Presupuesto", categoryId: category.id, amount: 100000, month: "2027-03" },
       });
       const id = createRes.json().id;
 
@@ -289,7 +298,7 @@ describe("budget routes", () => {
         method: "POST",
         url: "/api/v1/budgets",
         headers: authHeader(user),
-        payload: { categoryId: category.id, amount: 100000, month: "2027-04" },
+        payload: { name: "Presupuesto", categoryId: category.id, amount: 100000, month: "2027-04" },
       });
       const budget = budgetRes.json();
       const txnRes = await app.inject({
@@ -324,7 +333,7 @@ describe("budget routes", () => {
         method: "POST",
         url: "/api/v1/budgets",
         headers: authHeader(owner),
-        payload: { categoryId: category.id, amount: 100000, month: "2027-05" },
+        payload: { name: "Presupuesto", categoryId: category.id, amount: 100000, month: "2027-05" },
       });
       const id = createRes.json().id;
 
