@@ -17,6 +17,11 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.window.DialogWindowProvider
+import androidx.core.view.WindowCompat
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,6 +41,23 @@ import kotlin.math.pow
 // corners, a centered 32x4 grab handle, a 65%-black scrim, and
 // `padding: 8px 20px 26px` content insets. Built once so every screen that
 // used to show an AlertDialog for these flows converts to the same look.
+// A sheet lives in its own window, which starts with light system-bar
+// defaults: on 3-button navigation that painted a light bar under a dark
+// sheet. This matches the window's navigation bar to the app theme the sheet
+// is drawn in (transparent, so the sheet surface shows through, with icons
+// that contrast with it).
+@Composable
+internal fun SheetSystemBars() {
+    val view = LocalView.current
+    val dark = NovaColors.current.sheetSurface.luminance() < 0.5f
+    SideEffect {
+        val window = (view.parent as? DialogWindowProvider)?.window ?: return@SideEffect
+        window.navigationBarColor = android.graphics.Color.TRANSPARENT
+        if (android.os.Build.VERSION.SDK_INT >= 29) window.isNavigationBarContrastEnforced = false
+        WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !dark
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NovaDraftSheet(
@@ -74,6 +96,7 @@ fun NovaDraftSheet(
             }
         },
     ) {
+        SheetSystemBars()
         Column(
             modifier = modifier
                 .fillMaxWidth()

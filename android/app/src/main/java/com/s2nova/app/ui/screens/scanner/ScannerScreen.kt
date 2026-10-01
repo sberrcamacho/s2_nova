@@ -238,6 +238,7 @@ fun ScannerScreen(
     val found = scanState as? ScanState.Found
     if (found != null) {
         ModalBottomSheet(onDismissRequest = { scanState = ScanState.Scanning }) {
+            com.s2nova.app.ui.components.SheetSystemBars()
             ProductFoundSheet(
                 product = found.product,
                 wallets = wallets,
