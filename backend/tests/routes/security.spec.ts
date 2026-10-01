@@ -148,6 +148,27 @@ describe("security routes", () => {
     for (const title of ["Movimientos", "Presupuestos", "Metas", "Préstamos"]) expect(res.body).toContain(`\r\n${title}\r\n`.slice(title === "Movimientos" ? 2 : 0));
   });
 
+  it("resets financial data but keeps the account, only with the right password", async () => {
+    const user = await createTestUser();
+    const wallet = await createAccount(user.id);
+    const food = await categoryBySlug("food");
+    await prisma.transaction.create({
+      data: { userId: user.id, accountId: wallet.id, type: "EXPENSE", amountMinor: 1000n, categoryId: food.id, paymentMethod: "CASH", description: "x", transactionDate: new Date("2026-08-01") },
+    });
+    await prisma.budget.create({ data: { userId: user.id, categoryId: food.id, amountMinor: 1000n, startDate: new Date("2026-08-01") } });
+
+    const wrong = await app.inject({ method: "POST", url: "/api/v1/me/reset-data", headers: authHeader(user), payload: { password: "nope" } });
+    expect(wrong.statusCode).toBe(401);
+    expect(await prisma.transaction.count({ where: { userId: user.id } })).toBe(1);
+
+    const res = await app.inject({ method: "POST", url: "/api/v1/me/reset-data", headers: authHeader(user), payload: { password: user.password } });
+    expect(res.statusCode).toBe(204);
+    expect(await prisma.user.findUnique({ where: { id: user.id } })).not.toBeNull();
+    expect(await prisma.transaction.count({ where: { userId: user.id } })).toBe(0);
+    expect(await prisma.budget.count({ where: { userId: user.id } })).toBe(0);
+    expect(await prisma.account.count({ where: { userId: user.id } })).toBe(0);
+  });
+
   it("deletes the account and everything in it only with the right password", async () => {
     const user = await createTestUser();
     const wallet = await createAccount(user.id);

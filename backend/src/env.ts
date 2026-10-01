@@ -14,6 +14,12 @@ const envSchema = z.object({
     .string()
     .default("")
     .transform((value) => value.split(",").map((origin) => origin.trim()).filter(Boolean)),
+  // Transactional email (password recovery) through Resend's HTTP API. Left
+  // unset, the message is printed to the server log instead of being sent.
+  RESEND_API_KEY: z.string().default(""),
+  MAIL_FROM: z.string().default("S2 Nova <no-reply@s2nova.app>"),
+  // Where the recovery link in the email points (the Web client).
+  WEB_APP_URL: z.string().default("http://localhost:8443"),
 });
 
 const parsed = envSchema.safeParse(process.env);

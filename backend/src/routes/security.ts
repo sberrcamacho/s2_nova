@@ -80,6 +80,40 @@ export async function securityRoutes(app: FastifyInstance) {
     return { transactions, budgets, goals, loans, wallets, recurringSeries };
   });
 
+  // Ajustes › Zona de riesgo: wipes every financial record but keeps the
+  // account, profile and preferences. Same ordering as the account deletion
+  // so rows pointing at categories (ON DELETE RESTRICT) go first.
+  app.post(
+    "/me/reset-data",
+    { preHandler: app.authenticate, config: { rateLimit: ACCOUNT_RATE_LIMIT } },
+    async (request, reply) => {
+      const body = deleteAccountSchema.parse(request.body);
+      const userId = request.userId!;
+
+      const identity = await prisma.authIdentity.findUnique({
+        where: { userId_provider: { userId, provider: "PASSWORD" } },
+      });
+      if (!identity?.credentialHash) {
+        return reply.status(409).send({ error: "Set a password before resetting your data." });
+      }
+      if (!(await verifyPassword(identity.credentialHash, body.password))) {
+        return reply.status(401).send({ error: "Incorrect password." });
+      }
+
+      await prisma.$transaction([
+        prisma.transaction.deleteMany({ where: { userId } }),
+        prisma.recurringSeries.deleteMany({ where: { userId } }),
+        prisma.budget.deleteMany({ where: { userId } }),
+        prisma.goal.deleteMany({ where: { userId } }),
+        prisma.account.deleteMany({ where: { userId } }),
+        prisma.categoryOverride.deleteMany({ where: { userId } }),
+        prisma.userCurrency.deleteMany({ where: { userId } }),
+        prisma.category.deleteMany({ where: { userId } }),
+      ]);
+      return reply.status(204).send();
+    },
+  );
+
   // Permanent deletion, confirmed with the current password. Rows that
   // reference categories with ON DELETE RESTRICT go first so the user's
   // cascade never trips over them; everything else cascades from users.

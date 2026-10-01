@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { env } from "../env.js";
 import { GoogleNotConfiguredError, verifyGoogleIdToken } from "../lib/googleAuth.js";
+import { sendPasswordResetMail } from "../lib/mailer.js";
 import { hashPassword, verifyPassword } from "../lib/password.js";
 import { prisma } from "../lib/prisma.js";
 import { ROTATION_GRACE_MS, SESSION_MAX_AGE_MS, isIdle, revokeSession } from "../lib/sessions.js";
@@ -30,6 +31,18 @@ const loginSchema = z.object({
 const googleSchema = z.object({
   idToken: z.string().min(1),
 });
+
+const forgotPasswordSchema = z.object({
+  email: z.string().trim().email(),
+});
+
+// Same rules as Ajustes › Cambiar contraseña: 8+ characters with a number.
+const resetPasswordSchema = z.object({
+  token: z.string().min(16).max(200),
+  newPassword: z.string().min(8).max(200).regex(/\d/, "Must include a number."),
+});
+
+const PASSWORD_RESET_TTL_MS = 30 * 60 * 1000;
 
 const refreshBodySchema = z.object({
   refreshToken: z.string().min(1).optional(),
@@ -297,6 +310,61 @@ export async function authRoutes(app: FastifyInstance) {
     });
     return reply.status(204).send();
   });
+
+  // "Olvidaste la contraseña": always answers 204 so the endpoint can't be
+  // used to find out which emails have an account. The one-time token is
+  // mailed; only its hash is stored.
+  app.post(
+    "/auth/forgot-password",
+    { config: { rateLimit: AUTH_RATE_LIMIT } },
+    async (request, reply) => {
+      const body = forgotPasswordSchema.parse(request.body);
+      const user = await prisma.user.findUnique({ where: { email: body.email.toLowerCase() } });
+      if (user) {
+        const { token, tokenHash } = generateRefreshToken();
+        await prisma.$transaction([
+          prisma.passwordResetToken.deleteMany({ where: { userId: user.id, usedAt: null } }),
+          prisma.passwordResetToken.create({
+            data: { userId: user.id, tokenHash, expiresAt: new Date(Date.now() + PASSWORD_RESET_TTL_MS) },
+          }),
+        ]);
+        const link = `${env.WEB_APP_URL.replace(/\/$/, "")}/restablecer?token=${encodeURIComponent(token)}`;
+        try {
+          await sendPasswordResetMail({ to: user.email, name: user.name, link, token });
+        } catch (error) {
+          request.log.error({ err: error }, "password reset email failed");
+        }
+      }
+      return reply.status(204).send();
+    },
+  );
+
+  // Consumes the emailed token, sets the new password (creating the password
+  // identity for a Google-only user) and closes every session.
+  app.post(
+    "/auth/reset-password",
+    { config: { rateLimit: AUTH_RATE_LIMIT } },
+    async (request, reply) => {
+      const body = resetPasswordSchema.parse(request.body);
+      const record = await prisma.passwordResetToken.findUnique({ where: { tokenHash: hashRefreshToken(body.token) } });
+      if (!record || record.usedAt || record.expiresAt < new Date()) {
+        return reply.status(400).send({ error: "Reset link is invalid or expired." });
+      }
+
+      const credentialHash = await hashPassword(body.newPassword);
+      const now = new Date();
+      await prisma.$transaction([
+        prisma.authIdentity.upsert({
+          where: { userId_provider: { userId: record.userId, provider: "PASSWORD" } },
+          update: { credentialHash, credentialUpdatedAt: now },
+          create: { userId: record.userId, provider: "PASSWORD", credentialHash, credentialUpdatedAt: now },
+        }),
+        prisma.passwordResetToken.update({ where: { id: record.id }, data: { usedAt: now } }),
+        prisma.refreshToken.updateMany({ where: { userId: record.userId, revokedAt: null }, data: { revokedAt: now } }),
+      ]);
+      return reply.status(204).send();
+    },
+  );
 
   app.post("/auth/logout", async (request, reply) => {
     const cookieToken = request.cookies[REFRESH_COOKIE];

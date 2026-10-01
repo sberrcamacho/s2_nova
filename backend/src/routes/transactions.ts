@@ -116,7 +116,8 @@ const createTransactionSchema = z
     counterpartyName: z.string().trim().min(1).max(120).optional(),
     counterpartyKind: counterpartyKindEnum.optional(),
     dueDate: dateOnly.optional(),
-    // "Título" — required (NEW_MOVEMENT.md); never suggested.
+    // "Título" — required (NEW_MOVEMENT.md). The server never invents one;
+    // the clients pre-fill it from GET /transactions/titles.
     description: z.string().trim().min(1).max(200),
     merchant: z.string().trim().max(120).optional(),
     note: z.string().trim().max(500).optional(),
@@ -230,7 +231,34 @@ async function priced(amount: number, currency: string, walletCurrency: string, 
   return { amountMinor, fxRate: rate, walletAmountMinor: convertMinor(amountMinor, currency, walletCurrency, rate) };
 }
 
+const titlesQuerySchema = z.object({
+  q: z.string().trim().max(60).optional(),
+  type: z.enum(["EXPENSE", "INCOME"]).optional(),
+  categoryId: z.string().uuid().optional(),
+  limit: z.coerce.number().int().min(1).max(20).default(5),
+});
+
 export async function transactionRoutes(app: FastifyInstance) {
+  // Titles the user has already used, most recently used first, so the
+  // clients can pre-fill the "Título" field. Empty for a brand-new user
+  // (the clients then show a generic first title).
+  app.get("/transactions/titles", { preHandler: app.authenticate }, async (request) => {
+    const query = titlesQuerySchema.parse(request.query);
+    const rows = await prisma.transaction.groupBy({
+      by: ["description"],
+      where: {
+        userId: request.userId!,
+        type: query.type,
+        categoryId: query.categoryId,
+        description: query.q ? { startsWith: query.q, mode: "insensitive" } : undefined,
+      },
+      _max: { transactionDate: true, createdAt: true },
+      orderBy: [{ _max: { transactionDate: "desc" } }, { _max: { createdAt: "desc" } }],
+      take: query.limit,
+    });
+    return { titles: rows.map((row) => row.description) };
+  });
+
   app.get("/transactions", { preHandler: app.authenticate }, async (request) => {
     const query = listQuerySchema.parse(request.query);
     const userId = request.userId!;

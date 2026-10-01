@@ -19,6 +19,9 @@ const { verifyGoogleIdToken, GoogleNotConfiguredError } = vi.hoisted(() => {
 // google-auth-library itself.
 vi.mock("../../src/lib/googleAuth.js", () => ({ verifyGoogleIdToken, GoogleNotConfiguredError }));
 
+const { sendPasswordResetMail } = vi.hoisted(() => ({ sendPasswordResetMail: vi.fn() }));
+vi.mock("../../src/lib/mailer.js", () => ({ sendPasswordResetMail }));
+
 // Moves a rotated token's rotation back past the race grace window, so
 // replaying it counts as reuse rather than two racing refreshes.
 async function ageRotation(refreshToken: string) {
@@ -505,6 +508,59 @@ describe("auth routes", () => {
       );
       const statusCodes = attempts.map((res) => res.statusCode);
       expect(statusCodes.filter((code) => code === 429).length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("password recovery", () => {
+    async function register(email: string) {
+      const res = await app.inject({ method: "POST", url: "/api/v1/auth/register", payload: { name: "Ana", email, password: "secret123" } });
+      expect(res.statusCode).toBe(201);
+    }
+
+    it("mails a one-time token and lets the user set a new password with it", async () => {
+      const email = randomEmail();
+      await register(email);
+      sendPasswordResetMail.mockClear();
+
+      const forgot = await app.inject({ method: "POST", url: "/api/v1/auth/forgot-password", payload: { email } });
+      expect(forgot.statusCode).toBe(204);
+      expect(sendPasswordResetMail).toHaveBeenCalledTimes(1);
+      const { token } = sendPasswordResetMail.mock.calls[0][0];
+
+      const reset = await app.inject({ method: "POST", url: "/api/v1/auth/reset-password", payload: { token, newPassword: "newpass123" } });
+      expect(reset.statusCode).toBe(204);
+
+      const old = await app.inject({ method: "POST", url: "/api/v1/auth/login", payload: { email, password: "secret123" } });
+      expect(old.statusCode).toBe(401);
+      const fresh = await app.inject({ method: "POST", url: "/api/v1/auth/login", payload: { email, password: "newpass123" } });
+      expect(fresh.statusCode).toBe(200);
+
+      const again = await app.inject({ method: "POST", url: "/api/v1/auth/reset-password", payload: { token, newPassword: "another123" } });
+      expect(again.statusCode).toBe(400);
+    });
+
+    it("answers 204 for unknown emails without sending anything", async () => {
+      sendPasswordResetMail.mockClear();
+      const res = await app.inject({ method: "POST", url: "/api/v1/auth/forgot-password", payload: { email: randomEmail() } });
+      expect(res.statusCode).toBe(204);
+      expect(sendPasswordResetMail).not.toHaveBeenCalled();
+    });
+
+    it("rejects a bad, expired or weak reset", async () => {
+      const email = randomEmail();
+      await register(email);
+      sendPasswordResetMail.mockClear();
+      await app.inject({ method: "POST", url: "/api/v1/auth/forgot-password", payload: { email } });
+      const { token } = sendPasswordResetMail.mock.calls[0][0];
+
+      const bad = await app.inject({ method: "POST", url: "/api/v1/auth/reset-password", payload: { token: "x".repeat(40), newPassword: "newpass123" } });
+      expect(bad.statusCode).toBe(400);
+      const weak = await app.inject({ method: "POST", url: "/api/v1/auth/reset-password", payload: { token, newPassword: "nodigits" } });
+      expect(weak.statusCode).toBe(400);
+
+      await prisma.passwordResetToken.updateMany({ data: { expiresAt: new Date(Date.now() - 1000) } });
+      const expired = await app.inject({ method: "POST", url: "/api/v1/auth/reset-password", payload: { token, newPassword: "newpass123" } });
+      expect(expired.statusCode).toBe(400);
     });
   });
 });

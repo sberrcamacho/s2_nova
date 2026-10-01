@@ -740,4 +740,31 @@ describe("transaction routes", () => {
       expect(descriptions).toEqual(["A's"]);
     });
   });
+
+  describe("GET /transactions/titles", () => {
+    it("returns used titles, most recent first, filtered by prefix", async () => {
+      const user = await createTestUser();
+      const wallet = await createAccount(user.id);
+      const food = await categoryBySlug("food");
+      const mk = (description: string, day: string) =>
+        prisma.transaction.create({
+          data: { userId: user.id, accountId: wallet.id, type: "EXPENSE", amountMinor: 1000n, categoryId: food.id, paymentMethod: "CASH", description, transactionDate: new Date(day) },
+        });
+      await mk("Almuerzo", "2026-08-01");
+      await mk("Almuerzo", "2026-08-03");
+      await mk("Taxi", "2026-08-02");
+
+      const all = await app.inject({ method: "GET", url: "/api/v1/transactions/titles", headers: authHeader(user) });
+      expect(all.json()).toEqual({ titles: ["Almuerzo", "Taxi"] });
+
+      const filtered = await app.inject({ method: "GET", url: "/api/v1/transactions/titles?q=ta", headers: authHeader(user) });
+      expect(filtered.json()).toEqual({ titles: ["Taxi"] });
+    });
+
+    it("is empty for a user with no movements", async () => {
+      const user = await createTestUser();
+      const res = await app.inject({ method: "GET", url: "/api/v1/transactions/titles", headers: authHeader(user) });
+      expect(res.json()).toEqual({ titles: [] });
+    });
+  });
 });
