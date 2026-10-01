@@ -63,7 +63,9 @@ describe("budget routes", () => {
         payload: { categoryId: category.id, amount: 300000, month: "2026-09" },
       });
       expect(res.statusCode).toBe(201);
-      expect(res.json().month).toBe("2026-09");
+      // A monthly budget starts on the explicit month; `month` is the month
+      // being viewed (the current one), so it only matches while that is it.
+      expect(res.json().startDate).toMatch(/^2026-09-01/);
     });
 
     it("rejects an unknown category with 422", async () => {

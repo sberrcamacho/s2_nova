@@ -13,7 +13,7 @@ class HomeLogicTest {
     private val today = LocalDate.parse("2026-08-21")
 
     private fun series(id: String, next: String, active: Boolean = true) = RecurringSeries(
-        id = id, name = id, type = TransactionType.EXPENSE, amount = 1.0, walletId = "w", category = CategoryId.BILLS,
+        id = id, name = id, type = TransactionType.EXPENSE, amount = 1.0, walletId = "w", category = "exp.utilities",
         paymentMethod = PaymentMethod.CASH, interval = RecurrenceInterval.MONTHLY, nextOccurrenceDate = next,
         isDue = false, active = active,
     )

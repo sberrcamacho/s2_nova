@@ -38,7 +38,9 @@ describe('Guest mode example account', () => {
 
     const me = await userService.getCurrentUser()
     expect(me).toMatchObject({ name: 'Invitado', principalCurrency: 'COP', onboardingCompleted: true, guidesSeen: [], guidesOff: false })
-    expect((await summaryService.getMonths(6)).filter((m) => m.income > 0)).toHaveLength(6)
+    // The six months ending now have income, except the current one on the
+    // first days of a month, before its salary is dated.
+    expect((await summaryService.getMonths(6)).filter((m) => m.income > 0).length).toBeGreaterThanOrEqual(5)
   })
 
   it('applies a new expense to its wallet, the month and the budget', async () => {

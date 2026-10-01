@@ -57,20 +57,21 @@ class GoalRepositoryTest {
             ),
         )
         val repository = GoalRepository(server.apiService())
-        val goal = repository.create(name = "Carro", targetAmount = 20_000_000.0, targetDate = "2027-01-01")
+        val goal = repository.create(name = "Carro", icon = "travel", targetAmount = 20_000_000.0, initialAmount = 0.0, targetDate = "2027-01-01", plan = null)
         assertEquals("g2", goal?.id)
         assertEquals(listOf(goal), repository.goals.value)
     }
 
     @Test
-    fun `mutators no-op in demo mode without calling the network`() = runTest {
+    fun `mutators stay local in demo mode without calling the network`() = runTest {
         DemoModeFlag.set(true)
         val repository = GoalRepository(server.apiService())
         repository.refresh()
-        val created = repository.create(name = "x", targetAmount = 1.0)
+        val created = repository.create(name = "x", icon = "travel", targetAmount = 1.0, initialAmount = 0.0, targetDate = null, plan = null)
         assertEquals(0, server.requestCount)
-        assertTrue(repository.goals.value.isEmpty())
-        assertEquals(null, created)
+        // A guest creates the goal in memory, so it shows up without a backend.
+        assertEquals(listOf(created), repository.goals.value)
+        assertEquals("x", created?.name)
     }
 
     // Regression: deleteGoal was declared with @DELETE plus @Body, which

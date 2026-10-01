@@ -43,7 +43,7 @@ class SummaryRepositoryTest {
 
     @Test
     fun `report asks for the range and maps totals and categories`() = runTest {
-        server.enqueue(MockResponse().setBody("""[{"id": "uuid-food", "slug": "food", "name": "Alimentación", "icon": "food", "color": "#000", "kind": "EXPENSE"}]"""))
+        server.enqueue(MockResponse().setBody("""[{"id": "uuid-food", "slug": "exp.food", "name": "Alimentación", "icon": "food", "color": "#000", "kind": "EXPENSE"}]"""))
         server.enqueue(
             MockResponse().setBody(
                 """{"range": 3, "month": "2026-08",
@@ -63,7 +63,7 @@ class SummaryRepositoryTest {
         assertEquals(55, report.totals.savingsRate)
         assertEquals(4_410_000.0, report.previousTotals.income)
         assertEquals("2026-08", report.months.single().month)
-        assertEquals(CategoryId.FOOD, report.categories.single().category)
+        assertEquals("exp.food", report.categories.single().category)
         assertEquals(612_400.0, report.categories.single().amount)
     }
 }

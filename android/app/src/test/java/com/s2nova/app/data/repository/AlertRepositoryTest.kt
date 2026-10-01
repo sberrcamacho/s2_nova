@@ -27,7 +27,7 @@ class AlertRepositoryTest {
         server.enqueue(
             MockResponse().setBody(
                 """
-                [{"id": "cat-bills", "slug": "bills", "name": "Servicios", "icon": "bills", "color": "#000", "kind": "EXPENSE"}]
+                [{"id": "cat-bills", "slug": "exp.utilities", "name": "Servicios", "icon": "bills", "color": "#000", "kind": "EXPENSE"}]
                 """.trimIndent(),
             ),
         )
@@ -60,7 +60,7 @@ class AlertRepositoryTest {
         assertEquals(listOf("series:s1:2026-08-21", "loan:t1", "budget:b1:2026-08", "goal:g1"), alerts.map { it.id })
         val series = assertIs<AppAlert.SeriesDue>(alerts[0])
         assertEquals(TransactionType.EXPENSE, series.type)
-        assertEquals(CategoryId.BILLS, series.category)
+        assertEquals("exp.utilities", series.category)
         assertEquals("2026-08-21", series.dueDate)
         val loan = assertIs<AppAlert.LoanOpen>(alerts[1])
         assertEquals(LoanKind.LENT, loan.loanKind)

@@ -13,7 +13,7 @@ private fun txn(
     type: TransactionType,
     status: TransactionStatus = TransactionStatus.COMPLETED,
     date: String,
-    category: CategoryId = CategoryId.OTHER,
+    category: CategoryId = "exp.other",
 ) = Transaction(
     id = "t-${date}-$amount-$type-$status-${category}-${System.nanoTime()}",
     walletId = "w1",
@@ -48,13 +48,13 @@ class AnalyticsHelpersTest {
     @Test
     fun `categoryBreakdown excludes PLANNED and computes percentage of COMPLETED total`() {
         val transactions = listOf(
-            txn(75_000.0, TransactionType.EXPENSE, TransactionStatus.COMPLETED, date = "$month-01", category = CategoryId.FOOD),
-            txn(25_000.0, TransactionType.EXPENSE, TransactionStatus.COMPLETED, date = "$month-02", category = CategoryId.TRANSPORTATION),
-            txn(1_000_000.0, TransactionType.EXPENSE, TransactionStatus.PLANNED, date = "$month-03", category = CategoryId.SHOPPING),
+            txn(75_000.0, TransactionType.EXPENSE, TransactionStatus.COMPLETED, date = "$month-01", category = "exp.food"),
+            txn(25_000.0, TransactionType.EXPENSE, TransactionStatus.COMPLETED, date = "$month-02", category = "exp.transportation"),
+            txn(1_000_000.0, TransactionType.EXPENSE, TransactionStatus.PLANNED, date = "$month-03", category = "exp.shopping"),
         )
         val breakdown = AnalyticsHelpers.categoryBreakdown(transactions, monthKey = month)
         assertEquals(2, breakdown.size)
-        val food = breakdown.first { it.category == CategoryId.FOOD }
+        val food = breakdown.first { it.category == "exp.food" }
         assertEquals(75_000.0, food.amount)
         assertEquals(75, food.percentage)
     }

@@ -20,7 +20,7 @@ class TransactionRepositoryTest {
     private suspend fun categoryRepositoryWithFood(): CategoryRepository {
         server.enqueue(
             MockResponse().setBody(
-                """[{"id": "cat-food", "slug": "food", "name": "Comida", "icon": "food", "color": "#000", "kind": "EXPENSE"}]""",
+                """[{"id": "cat-food", "slug": "exp.food", "name": "Comida", "icon": "food", "color": "#000", "kind": "EXPENSE"}]""",
             ),
         )
         val categoryRepository = CategoryRepository(server.apiService())
@@ -51,7 +51,7 @@ class TransactionRepositoryTest {
         val repository = TransactionRepository(categoryRepository, server.apiService())
         repository.refresh()
         val transaction = repository.transactions.value.single()
-        assertEquals(CategoryId.FOOD, transaction.category)
+        assertEquals("exp.food", transaction.category)
         assertEquals(30000.0, transaction.amount)
         assertEquals(TransactionStatus.COMPLETED, transaction.status)
     }
@@ -101,7 +101,7 @@ class TransactionRepositoryTest {
         description = "d",
         amount = amount,
         type = TransactionType.EXPENSE,
-        category = CategoryId.OTHER,
+        category = "exp.other",
         date = "2026-03-01",
         paymentMethod = PaymentMethod.CASH,
         loanKind = if (parentLoanId == null) com.s2nova.app.data.model.LoanKind.LENT else null,

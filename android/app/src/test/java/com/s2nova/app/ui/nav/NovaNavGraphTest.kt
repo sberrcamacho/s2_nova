@@ -11,8 +11,8 @@ class NovaNavGraphTest {
     }
 
     @Test
-    fun `logged in but not onboarded routes to onboarding`() {
-        assertEquals(NovaDestinations.ONBOARDING_WELCOME, splashDestinationFor(loggedIn = true, onboardingDone = false))
+    fun `logged in but not onboarded routes to the first run`() {
+        assertEquals(NovaDestinations.FIRST_RUN, splashDestinationFor(loggedIn = true, onboardingDone = false))
     }
 
     @Test

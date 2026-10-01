@@ -37,15 +37,15 @@ class AuthMappingTest {
     }
 
     // Regression guard: a backend deployed before a preference existed
-    // returns preferences = null — this must never crash or silently turn on
-    // a password gate (autoLockMinutes) nobody asked for.
+    // returns preferences = null — this must never crash, and the app falls
+    // back to the secure default of a 5-minute auto-lock.
     @Test
     fun `toUser defaults sensibly when preferences is entirely absent`() {
         val user = meResponse(preferences = null).toUser()
         assertFalse(user.preferences.darkTheme)
         assertEquals(true, user.preferences.notifications)
         assertEquals(false, user.preferences.biometricLogin)
-        assertEquals(0, user.preferences.autoLockMinutes)
+        assertEquals(5, user.preferences.autoLockMinutes)
         assertEquals(Currency.COP, user.preferences.currency)
         assertEquals(AppLanguage.ES, user.preferences.language)
     }

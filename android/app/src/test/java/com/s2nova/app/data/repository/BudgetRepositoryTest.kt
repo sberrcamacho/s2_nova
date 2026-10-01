@@ -23,7 +23,7 @@ class BudgetRepositoryTest {
     fun `refresh maps server-computed spent, remaining, percentage and status through untouched`() = runTest {
         server.enqueue(
             MockResponse().setBody(
-                """[{"id": "cat-food", "slug": "food", "name": "Comida", "icon": "food", "color": "#000", "kind": "EXPENSE"}]""",
+                """[{"id": "cat-food", "slug": "exp.food", "name": "Comida", "icon": "food", "color": "#000", "kind": "EXPENSE"}]""",
             ),
         )
         val categoryRepository = CategoryRepository(server.apiService())
@@ -43,7 +43,7 @@ class BudgetRepositoryTest {
         val repository = BudgetRepository(categoryRepository, server.apiService())
         repository.refresh("2026-03")
         val progress = repository.budgetProgress.value.single()
-        assertEquals(CategoryId.FOOD, progress.budget.category)
+        assertEquals("exp.food", progress.budget.category)
         assertEquals(85, progress.percentage)
         assertEquals(BudgetStatus.NEAR_LIMIT, progress.status)
     }
