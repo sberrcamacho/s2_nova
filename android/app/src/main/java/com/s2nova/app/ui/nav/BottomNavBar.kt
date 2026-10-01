@@ -85,7 +85,7 @@ fun NovaBottomBar(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             TABS.forEachIndexed { index, tab ->
-                if (index == 2) Spacer(Modifier.weight(0.62f))
+                if (index == 2) Spacer(Modifier.weight(0.45f))
                 BottomTabItem(
                     label = t(tab.labelKey),
                     icon = tab.icon,
@@ -96,12 +96,12 @@ fun NovaBottomBar(
             }
         }
         val addLabel = t(StringKey.NAV_ADD)
-        val fabShape = RoundedCornerShape(20.dp)
+        val fabShape = RoundedCornerShape(16.dp)
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .offset(y = (-26).dp)
-                .size(64.dp)
+                .offset(y = (-20).dp)
+                .size(52.dp)
                 .shadow(elevation = 16.dp, shape = fabShape, ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.55f), spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.55f))
                 .clip(fabShape)
                 .background(MaterialTheme.colorScheme.primary)
@@ -109,7 +109,7 @@ fun NovaBottomBar(
                 .semantics { contentDescription = addLabel },
             contentAlignment = Alignment.Center,
         ) {
-            Icon(PlusIcon, contentDescription = null, tint = Color.White, modifier = Modifier.size(26.dp))
+            Icon(PlusIcon, contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
         }
     }
 }

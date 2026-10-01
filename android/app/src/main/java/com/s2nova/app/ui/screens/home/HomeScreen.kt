@@ -396,6 +396,9 @@ fun HomeScreen(
                                 style = NovaType.title,
                                 color = MaterialTheme.colorScheme.onBackground,
                                 maxLines = 1,
+                                // Shrinks (16–18 sp) beside "Ver todos" on a 360 dp phone
+                                // or with a larger system font instead of cutting the title.
+                                autoSize = TextAutoSize.StepBased(minFontSize = 14.sp, maxFontSize = 18.sp),
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.weight(1f),
                             )

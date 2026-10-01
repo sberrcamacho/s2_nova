@@ -73,10 +73,10 @@ fun LoginScreen(
             .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 24.dp),
     ) {
-        Spacer(modifier = Modifier.height(52.dp))
+        Spacer(modifier = Modifier.height(28.dp))
 
         // Header
-        Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             AuthLogo()
             Column {
                 Text(
@@ -96,7 +96,7 @@ fun LoginScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         // Scrollable middle: fields + actions, so the footer stays pinned near
         // the bottom on tall screens without breaking small-screen scrolling.
@@ -104,7 +104,7 @@ fun LoginScreen(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(28.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 NovaTextField(
