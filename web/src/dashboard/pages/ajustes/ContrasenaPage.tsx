@@ -62,9 +62,9 @@ export default function ContrasenaPage() {
         <AjField tall label={t('aj.pw.confirm')} type="password" autoComplete="new-password" value={confirm} onChange={edit(setConfirm)} placeholder={t('aj.pw.confirmPlaceholder')} />
         <div className="flex flex-col gap-[7px]">
           {rules.map((rule) => (
-            <div key={rule.key} className="flex items-center gap-[9px] text-[12px]">
-              <span className={cn('h-[7px] w-[7px] flex-none rounded-full', rule.ok ? 'bg-v2-pos' : 'bg-v2-line2')} />
-              <span className={rule.ok ? 'text-v2-text' : 'text-v2-dim'}>{t(rule.key)}</span>
+            <div key={rule.key} className="flex items-center gap-[9px] text-body-sm">
+              <span className={cn('h-[7px] w-[7px] flex-none rounded-full', rule.ok ? 'bg-positive' : 'bg-border-input')} />
+              <span className={rule.ok ? 'text-ink' : 'text-ink-secondary'}>{t(rule.key)}</span>
             </div>
           ))}
         </div>

@@ -1,3 +1,4 @@
+import { ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { ConfirmDialog } from '@/components/v2/Kit'
 import { AjCard, AjSubHeader } from '@/dashboard/components/ajustes/AjustesUi'
@@ -13,7 +14,7 @@ const errorText = (err: unknown) => (err instanceof Error ? err.message : tr('ap
 
 // The mockup's currency mark: the symbol in a 36px violet circle.
 function CurrencyMark({ children }: { children: ReactNode }) {
-  return <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-v2-accent/16 text-caption font-extrabold text-v2-accent2">{children}</span>
+  return <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-accent-soft text-caption font-semibold text-link">{children}</span>
 }
 
 // Ajustes › Monedas (Dashboard v2 isSettingsCurrencies,
@@ -60,30 +61,30 @@ export default function MonedasPage() {
       <div className="grid grid-cols-[minmax(0,1fr)_300px] items-start gap-[18px]">
         <div className="flex flex-col gap-3.5">
           <AjCard className="flex flex-col gap-2.5 p-5">
-            <div className="text-caption font-extrabold tracking-[.08em] text-v2-dim">{t('cur.principal').toUpperCase()}</div>
+            <div className="text-overline font-semibold text-ink-tertiary">{t('cur.principal').toUpperCase()}</div>
             {principal && (
               <div className="flex items-center gap-3">
                 <CurrencyMark>{principal.symbol}</CurrencyMark>
-                <div className="flex-1 text-[14px] font-extrabold">{`${currencyName(P, principal.name)} · ${P}`}</div>
-                <span className="rounded-full border border-v2-accent2 px-2 py-[3px] text-caption font-extrabold text-v2-accent2">{t('cur.principalBadge')}</span>
+                <div className="flex-1 text-title-sm font-semibold">{`${currencyName(P, principal.name)} · ${P}`}</div>
+                <span className="rounded-full border border-link px-2 py-[3px] text-caption font-semibold text-link">{t('cur.principalBadge')}</span>
               </div>
             )}
-            <div className="text-caption leading-[1.5] text-v2-dim">
+            <div className="text-body-sm text-ink-secondary">
               {fill(t('cur.detected'), deviceRegion().country, P)}
             </div>
           </AjCard>
           <AjCard className="px-5 py-2">
             {others.map((c, i) => (
-              <div key={c.code} className={cn('flex items-center gap-3 py-[13px]', i < others.length - 1 && 'border-b border-v2-subtle')}>
+              <div key={c.code} className={cn('flex items-center gap-3 min-h-14 py-2', i < others.length - 1 && 'border-b border-divider')}>
                 <CurrencyMark>{c.symbol}</CurrencyMark>
                 <div className="min-w-0 flex-1">
-                  <div className="text-[13px] font-bold">{`${currencyName(c.code, c.name)} · ${c.code}`}</div>
-                  <div className="font-numeric mt-0.5 text-caption text-v2-dim">
+                  <div className="text-title-sm font-semibold">{`${currencyName(c.code, c.name)} · ${c.code}`}</div>
+                  <div className="text-body-sm tabular-nums text-ink-secondary">
                     {`1 ${c.code} = ${formatMoney(c.rate, P)} · ${c.wallets ? fill(t(c.wallets === 1 ? 'cur.walletOne' : 'cur.walletMany'), c.wallets) : t('cur.noWallets')}`}
                   </div>
                 </div>
                 {c.wallets === 0 && (
-                  <button type="button" onClick={() => setRemoving(c)} className="cursor-pointer text-[12px] font-extrabold text-v2-neg">
+                  <button type="button" onClick={() => setRemoving(c)} className="-mr-2 flex min-h-8 cursor-pointer items-center rounded-[8px] px-2 text-label font-semibold text-negative hover:bg-negative-soft">
                     {t('mv.receipt.remove')}
                   </button>
                 )}
@@ -92,15 +93,15 @@ export default function MonedasPage() {
           </AjCard>
         </div>
         <AjCard className="px-[18px] py-4">
-          <div className="mb-1.5 text-[14px] font-extrabold">{t('cur.add')}</div>
+          <div className="mb-1.5 text-title font-semibold">{t('cur.add')}</div>
           {addable.map((c) => (
-            <button key={c.code} type="button" onClick={() => void add(c)} className="flex w-full cursor-pointer items-center gap-3 py-[9px] text-left">
+            <button key={c.code} type="button" onClick={() => void add(c)} className="-mx-2 flex min-h-12 w-[calc(100%+16px)] cursor-pointer items-center gap-3 rounded-[10px] px-2 py-1.5 text-left text-ink hover:bg-surface-sunken">
               <CurrencyMark>{c.symbol}</CurrencyMark>
               <div className="min-w-0 flex-1">
-                <div className="text-[12.5px] font-bold">{`${currencyName(c.code, c.name)} · ${c.code}`}</div>
-                <div className="font-numeric text-caption text-v2-dim">{`1 ${c.code} = ${formatMoney(c.rate, P)}`}</div>
+                <div className="text-label font-semibold">{`${currencyName(c.code, c.name)} · ${c.code}`}</div>
+                <div className="text-body-sm tabular-nums text-ink-secondary">{`1 ${c.code} = ${formatMoney(c.rate, P)}`}</div>
               </div>
-              <span className="text-[16px] text-v2-accent2">+</span>
+              <span className="flex-none text-link"><StrokeIcon paths={ICON_PATHS.plus} size={16} /></span>
             </button>
           ))}
         </AjCard>

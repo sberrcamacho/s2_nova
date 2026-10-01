@@ -59,6 +59,14 @@ import com.s2nova.app.ui.components.hexColor
 import com.s2nova.app.ui.components.noRippleClick
 import com.s2nova.app.ui.screens.addtransaction.GridOf
 import com.s2nova.app.ui.theme.NovaColors
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.ui.semantics.Role
+import com.s2nova.app.ui.components.BackHeader
+import com.s2nova.app.ui.components.HeaderAddButton
+import com.s2nova.app.ui.theme.NovaType
 import kotlinx.coroutines.launch
 import com.s2nova.app.ui.tr
 import com.s2nova.app.ui.StringKey
@@ -82,51 +90,52 @@ fun CategoriesScreen(initialIncome: Boolean, onBack: () -> Unit) {
     nodes.size
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        Row(Modifier.padding(start = 18.dp, end = 18.dp, top = 10.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Box(Modifier.size(38.dp).clip(CircleShape).noRippleClick(onBack), contentAlignment = Alignment.Center) { Text("←", fontSize = 19.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-            Text(tr(StringKey.CAT_TITLE), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
-            Box(Modifier.size(38.dp).clip(CircleShape).noRippleClick { draft = CatDraft(null, "", null, "other") }, contentAlignment = Alignment.Center) {
-                Text("+", fontSize = 22.sp, fontWeight = FontWeight.Light, color = NovaColors.current.link)
-            }
-        }
+        BackHeader(title = tr(StringKey.CAT_TITLE), onBack = onBack, action = { HeaderAddButton(tr(StringKey.CAT_NEW)) { draft = CatDraft(null, "", null, "other") } })
         UnderlineTabs(listOf(tr(StringKey.CAT_TAB_EXPENSES), tr(StringKey.CAT_TAB_INCOME)), if (income) 1 else 0) { income = it == 1 }
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(tr(StringKey.CAT_SUBTITLE), fontSize = 12.sp, lineHeight = 16.sp, color = colors.textDim)
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(tr(StringKey.CAT_SUBTITLE), style = NovaType.bodySm, color = MaterialTheme.colorScheme.onSurfaceVariant)
             repo.parents(income).forEach { p ->
                 val kids = repo.children(p.id)
                 Column(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surface)
-                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp)).padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surface)
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp)).padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Row(Modifier.noRippleClick { draft = CatDraft(p.id, repo.displayName(p), null, p.vis, p.hidden) }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        CatMark(p.id, 38.dp)
+                    Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).clip(RoundedCornerShape(12.dp)).clickable(role = Role.Button, onClickLabel = tr(StringKey.CAT_EDIT)) { draft = CatDraft(p.id, repo.displayName(p), null, p.vis, p.hidden) }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        CatMark(p.id, 40.dp)
                         Column(Modifier.weight(1f)) {
-                            Text(repo.displayName(p), fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
-                            Text(tr(if (kids.size == 1) StringKey.CAT_SUB_ONE else StringKey.CAT_SUB_MANY, kids.size), fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
+                            Text(repo.displayName(p), style = NovaType.titleSm, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                            Text(tr(if (kids.size == 1) StringKey.CAT_SUB_ONE else StringKey.CAT_SUB_MANY, kids.size), style = NovaType.bodySm, color = colors.textDim)
                         }
-                        if (p.hidden) Tag(tr(StringKey.CAT_HIDDEN), colors.textDim, MaterialTheme.colorScheme.outlineVariant)
-                        if (p.custom) Tag(tr(StringKey.CAT_YOURS), colors.accentText, colors.accentText)
-                        Icon(MockupIcons.Pencil, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(15.dp))
+                        if (p.hidden) Tag(tr(StringKey.CAT_HIDDEN), MaterialTheme.colorScheme.onSurfaceVariant, MaterialTheme.colorScheme.outlineVariant)
+                        if (p.custom) Tag(tr(StringKey.CAT_YOURS), colors.link, colors.link)
+                        Icon(MockupIcons.Pencil, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
                     }
                     val color = Color(p.color)
-                    androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         kids.forEach { c ->
-                            Text(
-                                repo.displayName(c), fontSize = 12.sp, fontWeight = FontWeight.Bold,
-                                color = if (c.custom) (if (color.luminance() > 0.5f) Color(0xFF111118) else Color.White) else colors.pillText,
-                                modifier = Modifier.clip(RoundedCornerShape(999.dp)).background(if (c.custom) color else color.copy(alpha = 0.12f))
+                            // A tappable chip: 40 dp tall, `label` text.
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier.heightIn(min = 40.dp).clip(RoundedCornerShape(999.dp)).background(if (c.custom) color else color.copy(alpha = 0.12f))
                                     .border(1.dp, color.copy(alpha = 0.35f), RoundedCornerShape(999.dp))
-                                    .noRippleClick { draft = CatDraft(c.id, repo.displayName(c), p.id, p.vis) }.padding(horizontal = 9.dp, vertical = 4.dp),
-                            )
+                                    .clickable(role = Role.Button, onClickLabel = tr(StringKey.CAT_EDIT_SUB)) { draft = CatDraft(c.id, repo.displayName(c), p.id, p.vis) }.padding(horizontal = 14.dp),
+                            ) {
+                                Text(
+                                    repo.displayName(c), style = NovaType.label, maxLines = 1, softWrap = false,
+                                    color = if (c.custom) (if (color.luminance() > 0.5f) Color(0xFF111118) else Color.White) else MaterialTheme.colorScheme.onSurface,
+                                )
+                            }
                         }
                         val line2 = MaterialTheme.colorScheme.outlineVariant
-                        Text(
-                            tr(StringKey.CAT_ADD_SUB), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText,
-                            modifier = Modifier.clip(RoundedCornerShape(999.dp)).drawBehind {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.heightIn(min = 40.dp).clip(RoundedCornerShape(999.dp)).drawBehind {
                                 drawRoundRect(line2, style = Stroke(1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(3.dp.toPx(), 2.dp.toPx()))), cornerRadius = androidx.compose.ui.geometry.CornerRadius(size.height / 2))
-                            }.noRippleClick { draft = CatDraft(null, "", p.id, p.vis) }.padding(horizontal = 9.dp, vertical = 4.dp),
-                        )
+                            }.clickable(role = Role.Button) { draft = CatDraft(null, "", p.id, p.vis) }.padding(horizontal = 14.dp),
+                        ) {
+                            Text(tr(StringKey.CAT_ADD_SUB), style = NovaType.label, color = colors.link, maxLines = 1, softWrap = false)
+                        }
                     }
                 }
             }
@@ -233,27 +242,32 @@ private fun askDelete(n: CategoryNode, income: Boolean, onDone: () -> Unit) {
 
 @Composable
 private fun Tag(label: String, color: Color, border: Color) {
-    Text(label, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = color, modifier = Modifier.clip(RoundedCornerShape(999.dp)).border(1.dp, border, RoundedCornerShape(999.dp)).padding(horizontal = 7.dp, vertical = 2.dp))
+    Text(label, style = NovaType.caption.copy(fontWeight = FontWeight.SemiBold), color = color, maxLines = 1, softWrap = false, modifier = Modifier.clip(RoundedCornerShape(999.dp)).border(1.dp, border, RoundedCornerShape(999.dp)).padding(horizontal = 7.dp, vertical = 2.dp))
 }
 
-// catTabs: text tabs over a 1 dp --line rule, 2 dp accent underline.
+// Text tabs over a 1 dp `border` rule with a 2 dp `primary-border`
+// indicator: `label` text, 48 dp tall, tab semantics.
 @Composable
 fun UnderlineTabs(labels: List<String>, selected: Int, onSelect: (Int) -> Unit) {
     val line = MaterialTheme.colorScheme.outline
     val accent = NovaColors.current.primaryBorder
     Row(
-        Modifier.fillMaxWidth().drawBehind { drawRect(line, topLeft = Offset(0f, size.height - 1.dp.toPx()), size = androidx.compose.ui.geometry.Size(size.width, 1.dp.toPx())) }.padding(horizontal = 20.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        Modifier.fillMaxWidth().drawBehind { drawRect(line, topLeft = Offset(0f, size.height - 1.dp.toPx()), size = androidx.compose.ui.geometry.Size(size.width, 1.dp.toPx())) }.padding(horizontal = 16.dp).selectableGroup(),
     ) {
         labels.forEachIndexed { i, label ->
             val on = i == selected
-            Text(
-                label, fontSize = 12.5.sp, fontWeight = if (on) FontWeight.ExtraBold else FontWeight.SemiBold,
-                color = if (on) MaterialTheme.colorScheme.onBackground else NovaColors.current.textDim,
-                modifier = Modifier.noRippleClick { onSelect(i) }.drawBehind {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.heightIn(min = 48.dp).selectable(selected = on, role = Role.Tab) { onSelect(i) }.drawBehind {
                     if (on) drawRect(accent, topLeft = Offset(0f, size.height - 2.dp.toPx()), size = androidx.compose.ui.geometry.Size(size.width, 2.dp.toPx()))
-                }.padding(horizontal = 12.dp, vertical = 10.dp),
-            )
+                }.padding(horizontal = 14.dp),
+            ) {
+                Text(
+                    label, style = NovaType.label.copy(fontWeight = if (on) FontWeight.Bold else FontWeight.SemiBold),
+                    color = if (on) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1, softWrap = false,
+                )
+            }
         }
     }
 }

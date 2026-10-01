@@ -50,24 +50,24 @@ export default function SesionesPage() {
       />
       <AjCard className="px-5 py-1.5">
         {sessions.map((session, i) => (
-          <div key={session.id} className={cn('flex items-center gap-3.5 py-[15px]', i < sessions.length - 1 && 'border-b border-v2-subtle')}>
-            <div className="flex h-[42px] w-[42px] flex-none items-center justify-center rounded-[11px] border border-v2-line2 bg-v2-surface2 text-v2-muted">
+          <div key={session.id} className={cn('flex items-center gap-3.5 py-[15px]', i < sessions.length - 1 && 'border-b border-divider')}>
+            <div className="flex h-[42px] w-[42px] flex-none items-center justify-center rounded-[11px] border border-border-input bg-surface-sunken text-ink-secondary">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d={DEVICE_ICON[session.kind]} />
               </svg>
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[13px] font-bold">{session.device ?? t('aj.ses.unknown')}</span>
-                {session.current && <span className="rounded-[6px] bg-[rgba(124,240,187,.12)] px-[7px] py-0.5 text-caption font-bold text-v2-pos">{t('aj.ses.thisDevice')}</span>}
+                <span className="text-title-sm font-semibold">{session.device ?? t('aj.ses.unknown')}</span>
+                {session.current && <span className="rounded-[6px] bg-positive-soft px-[7px] py-0.5 text-caption font-semibold text-positive">{t('aj.ses.thisDevice')}</span>}
               </div>
-              <div className="mt-0.5 text-caption text-v2-dim">{session.current ? t('aj.ses.activeNow') : capitalize(timeAgo(session.lastActiveAt, now, t))}</div>
+              <div className="text-body-sm text-ink-secondary">{session.current ? t('aj.ses.activeNow') : capitalize(timeAgo(session.lastActiveAt, now, t))}</div>
             </div>
             {!session.current && (
               <button
                 type="button"
                 onClick={() => run(userService.closeSession(session.id))}
-                className="flex-none cursor-pointer rounded-[10px] border border-v2-line2 px-3.5 py-2 text-[12px] font-bold text-v2-muted hover:text-v2-neg"
+                className="h-9 flex-none cursor-pointer whitespace-nowrap rounded-[12px] border border-border-input bg-surface px-4 text-label font-semibold text-ink hover:bg-surface-sunken"
               >
                 {t('aj.ses.signOut')}
               </button>

@@ -89,16 +89,7 @@ fun RecurringScreen(onBack: () -> Unit, onNew: () -> Unit, onEdit: (String) -> U
             title = t(StringKey.RECURRING_TITLE),
             onBack = onBack,
             action = {
-                Box(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clip(CircleShape)
-                        .clickable(onClick = onNew)
-                        .semantics { contentDescription = t(StringKey.RECURRING_NEW) },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text("+", fontSize = 22.sp, fontWeight = FontWeight.Light, color = NovaColors.current.link)
-                }
+                com.s2nova.app.ui.components.HeaderAddButton(t(StringKey.RECURRING_NEW), onNew)
             },
         )
         LazyColumn(

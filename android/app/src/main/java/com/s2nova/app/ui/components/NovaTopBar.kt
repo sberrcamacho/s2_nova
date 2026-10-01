@@ -1,5 +1,6 @@
 package com.s2nova.app.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -86,5 +87,27 @@ fun BackHeader(
             modifier = Modifier.weight(1f).padding(start = 4.dp),
         )
         action?.invoke()
+    }
+}
+
+// The "+" action of a secondary screen's header (new wallet, category,
+// currency, programado): a 40 dp tonal circle on a 48 dp target, named for
+// screen readers.
+@Composable
+fun HeaderAddButton(label: String, onClick: () -> Unit) {
+    androidx.compose.foundation.layout.Box(
+        modifier = Modifier
+            .size(48.dp)
+            .clip(androidx.compose.foundation.shape.CircleShape)
+            .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
+            .semantics { contentDescription = label },
+        contentAlignment = androidx.compose.ui.Alignment.Center,
+    ) {
+        androidx.compose.foundation.layout.Box(
+            modifier = Modifier.size(40.dp).clip(androidx.compose.foundation.shape.CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = androidx.compose.ui.Alignment.Center,
+        ) {
+            V2Icon(V2Icons.plus, MaterialTheme.colorScheme.onPrimaryContainer, 20.dp, strokeWidth = 2.2f)
+        }
     }
 }

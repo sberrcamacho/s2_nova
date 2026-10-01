@@ -62,8 +62,8 @@ export default function PerfilPage() {
       <AjSubHeader title={t('aj.editProfile')} subtitle={t('aj.pr.subtitle')} />
       <AjCard className="flex flex-col gap-[18px] p-[22px]">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 flex-none items-center justify-center rounded-full bg-v2-accent text-[20px] font-extrabold text-white">{initialsOf(draft.name)}</div>
-          <div className="text-[12px] text-v2-dim">{t('aj.pr.avatarHint')}</div>
+          <div className="flex h-16 w-16 flex-none items-center justify-center rounded-full bg-primary text-title font-semibold text-on-primary">{initialsOf(draft.name)}</div>
+          <div className="text-body-sm text-ink-secondary">{t('aj.pr.avatarHint')}</div>
         </div>
         <div className="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
           <AjField label={t('aj.pr.name')} type="text" autoComplete="name" value={draft.name} onChange={set('name')} placeholder={t('aj.pr.namePlaceholder')} />

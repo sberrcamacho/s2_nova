@@ -66,15 +66,15 @@ export default function EliminarPage() {
       <AjCard className="flex flex-col gap-3 p-[22px]" style={{ borderColor: 'rgba(255,98,98,.3)' }}>
         <AjCardTitle>{t('aj.del.what')}</AjCardTitle>
         {lines.map((line) => (
-          <div key={line} className="flex items-center gap-2.5 text-[12.5px]">
-            <span className="h-1.5 w-1.5 flex-none rounded-full bg-v2-neg" />
+          <div key={line} className="flex items-center gap-2.5 text-body-sm">
+            <span className="h-1.5 w-1.5 flex-none rounded-full bg-negative" />
             {line}
           </div>
         ))}
-        <div className="mt-1 flex items-center gap-4 border-t border-v2-subtle pt-3">
+        <div className="mt-1 flex items-center gap-4 border-t border-divider pt-3">
           <div className="min-w-0 flex-1">
-            <div className="text-[13px] font-bold">{t('aj.del.copy')}</div>
-            <div className="mt-0.5 text-caption text-v2-dim">{t('aj.del.copyHint')}</div>
+            <div className="text-title-sm font-semibold">{t('aj.del.copy')}</div>
+            <div className="text-body-sm text-ink-secondary">{t('aj.del.copyHint')}</div>
           </div>
           <AjOutlineButton onClick={exportData}>{t('aj.del.export')}</AjOutlineButton>
         </div>
@@ -83,11 +83,11 @@ export default function EliminarPage() {
       <AjCard className="flex flex-col gap-4 p-[22px]">
         <AjField label={t('aj.del.confirm')} type="text" autoComplete="off" value={word} onChange={(e) => setWord(e.target.value)} placeholder={CONFIRM_WORD} />
         <AjField label={t('aj.del.password')} type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
-        <button type="button" role="checkbox" aria-checked={ack} onClick={() => setAck((v) => !v)} className="flex cursor-pointer items-center gap-2.5 text-left text-[12.5px]">
+        <button type="button" role="checkbox" aria-checked={ack} onClick={() => setAck((v) => !v)} className="flex min-h-8 cursor-pointer items-center gap-2.5 text-left text-body-sm">
           <span
             className={cn(
               'box-border flex h-[18px] w-[18px] flex-none items-center justify-center rounded-[5px] border-[1.5px] text-white',
-              ack ? 'border-v2-neg bg-v2-neg' : 'border-v2-line2 bg-transparent',
+              ack ? 'border-negative bg-negative' : 'border-border-input bg-transparent',
             )}
           >
             {ack && (
@@ -98,7 +98,7 @@ export default function EliminarPage() {
           </span>
           <span>{t('aj.del.ack')}</span>
         </button>
-        <AjActions onCancel={() => navigate('/ajustes')} submitLabel={t('aj.del.submit')} onSubmit={remove} submitClassName="bg-v2-neg" disabled={!canDelete} />
+        <AjActions onCancel={() => navigate('/ajustes')} submitLabel={t('aj.del.submit')} onSubmit={remove} submitClassName="bg-negative" disabled={!canDelete} />
       </AjCard>
     </div>
   )

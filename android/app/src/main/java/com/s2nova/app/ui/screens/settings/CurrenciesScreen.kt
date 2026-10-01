@@ -46,6 +46,16 @@ import com.s2nova.app.ui.components.SymbolBadge
 import com.s2nova.app.ui.components.TNUM
 import com.s2nova.app.ui.components.noRippleClick
 import com.s2nova.app.ui.theme.NovaColors
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.semantics.Role
+import com.s2nova.app.ui.components.BackHeader
+import com.s2nova.app.ui.components.HeaderAddButton
+import com.s2nova.app.ui.components.V2Icon
+import com.s2nova.app.ui.components.V2Icons
+import com.s2nova.app.ui.theme.NovaType
 import kotlinx.coroutines.launch
 import com.s2nova.app.ui.tr
 import com.s2nova.app.ui.StringKey
@@ -66,49 +76,43 @@ fun CurrenciesScreen(onBack: () -> Unit) {
     val used = { code: String -> wallets.count { it.currency == code } }
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        Row(Modifier.padding(start = 18.dp, end = 18.dp, top = 10.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Box(Modifier.size(38.dp).clip(CircleShape).noRippleClick(onBack), contentAlignment = Alignment.Center) { Text("←", fontSize = 19.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-            Text(tr(StringKey.CUR_TITLE), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
-            Box(Modifier.size(38.dp).clip(CircleShape).noRippleClick { adding = true }, contentAlignment = Alignment.Center) {
-                Text("+", fontSize = 22.sp, fontWeight = FontWeight.Light, color = NovaColors.current.link)
-            }
-        }
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(tr(StringKey.CUR_PRINCIPAL), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        BackHeader(title = tr(StringKey.CUR_TITLE), onBack = onBack, action = { HeaderAddButton(tr(StringKey.CUR_ADD)) { adding = true } })
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(tr(StringKey.CUR_PRINCIPAL), style = NovaType.label, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Column(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(18.dp)).padding(16.dp),
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp)).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     SymbolBadge(Currencies.symbol(principal))
                     Column(Modifier.weight(1f)) {
-                        Text(Currencies.name(principal), fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
-                        Text(principal, fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
+                        Text(Currencies.name(principal), style = NovaType.titleSm, color = MaterialTheme.colorScheme.onSurface)
+                        Text(principal, style = NovaType.bodySm, color = colors.textDim)
                     }
-                    Text(tr(StringKey.CUR_PRINCIPAL_BADGE), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText, modifier = Modifier.clip(RoundedCornerShape(999.dp)).border(1.dp, colors.accentText, RoundedCornerShape(999.dp)).padding(horizontal = 8.dp, vertical = 3.dp))
+                    Text(tr(StringKey.CUR_PRINCIPAL_BADGE), style = NovaType.caption.copy(fontWeight = FontWeight.SemiBold), color = colors.link, maxLines = 1, softWrap = false, modifier = Modifier.clip(RoundedCornerShape(999.dp)).border(1.dp, colors.link, RoundedCornerShape(999.dp)).padding(horizontal = 8.dp, vertical = 3.dp))
                 }
                 Text(
                     tr(StringKey.CUR_DETECTED, Currencies.deviceCountry(), principal),
-                    fontSize = 12.sp, lineHeight = 16.sp, color = colors.textDim,
+                    style = NovaType.bodySm, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Text(tr(StringKey.CUR_OTHERS), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 10.dp))
+            Text(tr(StringKey.CUR_OTHERS), style = NovaType.label, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 10.dp))
             val others = currencies.filter { it.code != principal }
-            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(18.dp))) {
-                if (others.isEmpty()) Text(tr(StringKey.CUR_ONLY_PRINCIPAL), fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(16.dp))
+            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))) {
+                if (others.isEmpty()) Text(tr(StringKey.CUR_ONLY_PRINCIPAL), style = NovaType.bodySm, color = colors.textDim, modifier = Modifier.padding(16.dp))
                 others.forEachIndexed { i, c ->
                     val n = used(c.code)
-                    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 13.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         SymbolBadge(c.symbol)
                         Column(Modifier.weight(1f)) {
-                            Text(Currencies.name(c.code, c.name) + " · " + c.code, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                            Text(Currencies.name(c.code, c.name) + " · " + c.code, style = NovaType.titleSm, color = MaterialTheme.colorScheme.onSurface)
                             Text(
                                 "1 ${c.code} = " + formatMoney(c.rate, principal) + " · " + if (n > 0) tr(if (n == 1) StringKey.CUR_WALLET_ONE else StringKey.CUR_WALLET_MANY, n) else tr(StringKey.CUR_NO_WALLETS),
-                                fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM),
+                                style = NovaType.bodySm.copy(fontFeatureSettings = TNUM), color = colors.textDim,
                             )
                         }
                         if (n == 0) {
-                            Text(tr(StringKey.MV_RECEIPT_REMOVE), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = colors.negative, modifier = Modifier.noRippleClick {
+                            Text(tr(StringKey.MV_RECEIPT_REMOVE), style = NovaType.label, color = colors.negative, maxLines = 1, softWrap = false, modifier = Modifier.clip(RoundedCornerShape(12.dp)).clickable(role = Role.Button) {
                                 Confirm.ask(
                                     ConfirmRequest(
                                         title = tr(StringKey.CUR_REMOVE_TITLE, Currencies.name(c.code, c.name)),
@@ -118,16 +122,16 @@ fun CurrenciesScreen(onBack: () -> Unit) {
                                         onConfirm = { scope.launch { runCatching { repo.remove(c.code) } } },
                                     ),
                                 )
-                            })
-                        }
+                            }.padding(horizontal = 12.dp, vertical = 14.dp))
+                        } else Spacer(Modifier.width(12.dp))
                     }
-                    if (i < others.size - 1) HorizontalDivider(thickness = 1.dp, color = colors.dividerSubtle)
+                    if (i < others.size - 1) HorizontalDivider(thickness = 1.dp, color = colors.dividerSubtle, modifier = Modifier.padding(horizontal = 16.dp))
                 }
             }
             DashedNewRow(label = tr(StringKey.CUR_ADD), onClick = { adding = true }, modifier = Modifier.padding(top = 4.dp))
             Text(
                 tr(StringKey.CUR_RATES_NOTE),
-                fontSize = 12.sp, lineHeight = 16.sp, color = colors.textDim, modifier = Modifier.padding(horizontal = 2.dp, vertical = 4.dp),
+                style = NovaType.bodySm, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
             )
         }
     }
@@ -138,7 +142,7 @@ fun CurrenciesScreen(onBack: () -> Unit) {
             Column {
                 catalog.filter { c -> currencies.none { it.code == c.code } }.forEach { c ->
                     Row(
-                        Modifier.fillMaxWidth().noRippleClick {
+                        Modifier.fillMaxWidth().heightIn(min = 56.dp).clip(RoundedCornerShape(12.dp)).clickable(role = Role.Button) {
                             adding = false
                             scope.launch { runCatching { repo.add(c.code) }.onSuccess { Snack.show(tr(StringKey.CUR_ADDED, Currencies.name(c.code, c.name))) } }
                         }.padding(horizontal = 4.dp, vertical = 10.dp),
@@ -147,10 +151,10 @@ fun CurrenciesScreen(onBack: () -> Unit) {
                     ) {
                         SymbolBadge(c.symbol)
                         Column(Modifier.weight(1f)) {
-                            Text(Currencies.name(c.code, c.name) + " · " + c.code, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                            Text("1 ${c.code} = " + formatMoney(c.rate, principal), fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM))
+                            Text(Currencies.name(c.code, c.name) + " · " + c.code, style = NovaType.titleSm, color = MaterialTheme.colorScheme.onSurface)
+                            Text("1 ${c.code} = " + formatMoney(c.rate, principal), style = NovaType.bodySm.copy(fontFeatureSettings = TNUM), color = colors.textDim)
                         }
-                        Text("+", fontSize = 18.sp, color = colors.accentText)
+                        V2Icon(V2Icons.plus, colors.link, 20.dp)
                     }
                 }
             }
