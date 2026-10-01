@@ -146,7 +146,7 @@ fun ConfirmHost() {
                     r.lines.forEach { line ->
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             Box(Modifier.padding(top = 6.dp).size(6.dp).clip(CircleShape).background(colors.negative))
-                            Text(line, fontSize = 12.5.sp, lineHeight = 18.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, style = TextStyle(fontFeatureSettings = TNUM))
+                            Text(line, fontSize = 12.5.sp, lineHeight = 18.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM))
                         }
                     }
                 }

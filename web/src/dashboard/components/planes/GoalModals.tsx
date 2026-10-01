@@ -212,13 +212,13 @@ export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | nu
           <Icon paths={IC.repeat} size={16} color="var(--v2-accent2)" />
         </span>
         <div className="min-w-0 flex-1">
-          <div className="text-[12.5px] font-bold">{tr('goal.plan')}</div>
-          <div className="font-numeric mt-0.5 text-caption text-v2-dim">{planRow}</div>
+          <div className="text-body-sm font-semibold">{tr('goal.plan')}</div>
+          <div className="font-numeric mt-0.5 text-caption text-ink-secondary">{planRow}</div>
         </div>
       </button>
 
       {planOpen && (
-        <div className="flex flex-col gap-3 rounded-[14px] border border-v2-line2 bg-v2-surface2 p-3.5">
+        <div className="flex flex-col gap-3 rounded-[14px] border border-border-input bg-surface-sunken p-3.5">
           <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2.5">
             <Field label={tr('goal.plan.amount')}>
               <AmountField expr={pl.amount} onExpr={(v) => plSet({ amount: v })} label={tr('goal.plan.amountLabel')} />
@@ -237,11 +237,11 @@ export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | nu
             <Pills options={ends()} value={pl.endMode} onChange={(v) => plSet({ endMode: v })} />
             {pl.endMode === 'count' && (
               <div className="flex items-center gap-2.5">
-                <button type="button" onClick={() => plSet({ count: Math.max(1, pl.count - 1) })} className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-[10px] border border-v2-line2 text-[16px] font-bold">
+                <button type="button" onClick={() => plSet({ count: Math.max(1, pl.count - 1) })} className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-[10px] border border-border-input text-title-sm font-semibold">
                   −
                 </button>
-                <div className="font-numeric flex-1 text-center text-[14px] font-extrabold">{fill(tr('goal.nContributions'), pl.count)}</div>
-                <button type="button" onClick={() => plSet({ count: Math.min(120, pl.count + 1) })} className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-[10px] border border-v2-line2 text-[16px] font-bold">
+                <div className="font-numeric flex-1 text-center text-title-sm font-semibold">{fill(tr('goal.nContributions'), pl.count)}</div>
+                <button type="button" onClick={() => plSet({ count: Math.min(120, pl.count + 1) })} className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-[10px] border border-border-input text-title-sm font-semibold">
                   +
                 </button>
               </div>
@@ -257,20 +257,20 @@ export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | nu
                 ] as const
               ).map(([auto, text, detail]) => (
                 <RadioRow key={text} on={pl.autoConfirm === auto} onClick={() => plSet({ autoConfirm: auto })}>
-                  <div className="text-[12.5px] font-bold">{text}</div>
-                  <div className="mt-0.5 text-caption leading-[1.4] text-v2-dim">{detail}</div>
+                  <div className="text-body-sm font-semibold">{text}</div>
+                  <div className="mt-0.5 text-caption leading-[1.4] text-ink-secondary">{detail}</div>
                 </RadioRow>
               ))}
             </div>
           </Field>
-          {summary && <div className="font-numeric rounded-[12px] bg-v2-accent/12 px-3 py-2.5 text-[12px] font-semibold leading-[1.45]">{summary}</div>}
+          {summary && <div className="font-numeric rounded-[12px] bg-v2-accent/12 px-3 py-2.5 text-body-sm font-semibold leading-[1.45]">{summary}</div>}
           <button
             type="button"
             onClick={() => {
               setPlanState(null)
               setPlanOpen(false)
             }}
-            className="cursor-pointer self-start text-[12px] font-bold text-v2-neg"
+            className="cursor-pointer self-start text-body-sm font-semibold text-negative"
           >
             {tr('goal.plan.remove')}
           </button>
@@ -326,8 +326,8 @@ export function GoalPayModal({ goal, wallets, onClose, onSaved }: { goal: Goal; 
       <div className="flex items-center gap-3">
         <PlanMark icon={goal.icon} box={38} />
         <div className="min-w-0 flex-1">
-          <div className="text-[15px] font-extrabold">{fill(tr('goal.pay.title'), goal.name)}</div>
-          <div className="font-numeric mt-[3px] text-caption leading-[1.45] text-v2-dim">
+          <div className="text-title-sm font-semibold">{fill(tr('goal.pay.title'), goal.name)}</div>
+          <div className="font-numeric mt-[3px] text-caption leading-[1.45] text-ink-secondary">
             {fill(tr('goal.pay.sub'), format(goal.currentAmount), format(goal.targetAmount))}
           </div>
         </div>
@@ -356,7 +356,7 @@ export function GoalPayModal({ goal, wallets, onClose, onSaved }: { goal: Goal; 
         <button
           type="button"
           onClick={() => void confirm()}
-          className="whitespace-nowrap rounded-[10px] px-[18px] py-2.5 text-[12.5px] font-bold"
+          className="whitespace-nowrap rounded-[10px] px-[18px] py-2.5 text-body-sm font-semibold"
           style={{ cursor: ok ? 'pointer' : 'not-allowed', color: ok ? '#fff' : 'var(--v2-dim)', background: ok ? 'var(--v2-accent)' : 'var(--v2-surface2)' }}
         >
           {tr('goal.pay')}

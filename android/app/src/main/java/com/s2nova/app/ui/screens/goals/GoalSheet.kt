@@ -161,10 +161,10 @@ fun GoalDraftSheet(draft: GoalDraft, onDraftChange: (GoalDraft) -> Unit, onDismi
                         val wallet = plan?.let { p -> wallets.firstOrNull { it.id == p.walletId }?.name?.let(::shortWallet) }.orEmpty()
                         Text(
                             plan?.let { planText(it, wallet, principal) } ?: tr(StringKey.GOAL_PLAN_EMPTY),
-                            fontSize = 12.sp, lineHeight = 15.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM),
+                            fontSize = 12.sp, lineHeight = 15.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp), style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM),
                         )
                     }
-                    Text("›", fontSize = 18.sp, color = colors.textDim)
+                    com.s2nova.app.ui.components.V2Icon(com.s2nova.app.ui.components.V2Icons.chevronRight, colors.textDim, 20.dp)
                 }
                 V2Button(tr(StringKey.COMMON_SAVE), enabled = d.name.isNotBlank() && com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(d.target) > 0, onClick = onSave)
                 if (d.id != null) SheetTextAction(tr(StringKey.GOAL_DELETE), colors.negative, onRequestDelete, weight = FontWeight.ExtraBold)
@@ -220,7 +220,7 @@ fun GoalDraftSheet(draft: GoalDraft, onDraftChange: (GoalDraft) -> Unit, onDismi
                     Text(
                         summary, fontSize = 12.sp, lineHeight = 17.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)).padding(horizontal = 14.dp, vertical = 12.dp),
-                        style = TextStyle(fontFeatureSettings = TNUM),
+                        style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM),
                     )
                 }
                 V2Button(tr(StringKey.NM_APPLY), enabled = amt > 0 && p.walletId != null, onClick = {

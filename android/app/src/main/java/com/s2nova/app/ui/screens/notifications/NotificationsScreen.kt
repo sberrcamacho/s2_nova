@@ -35,6 +35,15 @@ import com.s2nova.app.ui.presentAlert
 import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.theme.NovaColors
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import com.s2nova.app.ui.theme.NovaType
 import com.s2nova.app.ui.tr
 
 // The bell sheet (v2 mockup `notifOpen`): the shared alerts from
@@ -53,38 +62,36 @@ fun NotificationsSheet(onDismiss: () -> Unit, onOpenAlertTarget: (AlertTarget) -
     val unreadCount = alerts.count { it.id !in readIds } + notices.count { !it.read }
 
     NovaDraftSheet(onDismiss = onDismiss) {
-        // align-items: baseline — "Marcar leídas" sits on the title's baseline.
         Row(
-            modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, bottom = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().padding(start = 4.dp, bottom = 12.dp),
         ) {
-            Column(modifier = Modifier.weight(1f).alignByBaseline()) {
-                Text(t(StringKey.SETTINGS_NOTIFICATIONS), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(t(StringKey.SETTINGS_NOTIFICATIONS), style = NovaType.title, color = MaterialTheme.colorScheme.onBackground)
                 Text(
                     if (unreadCount > 0) "$unreadCount ${t(StringKey.NOTIF_UNREAD_SUFFIX)}" else t(StringKey.NOTIF_ALL_CAUGHT_UP),
-                    fontSize = 12.sp,
-                    color = colors.textDim,
-                    modifier = Modifier.padding(top = 4.dp),
+                    style = NovaType.bodySm,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             if (unreadCount > 0) {
-                Text(
-                    t(StringKey.NOTIF_MARK_ALL_READ),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = colors.accentText,
-                    modifier = Modifier.alignByBaseline().padding(start = 12.dp).clickable {
+                // A text button on a 48 dp target.
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.heightIn(min = 48.dp).clip(RoundedCornerShape(12.dp)).clickable(role = Role.Button) {
                         AppContainer.alertRepository.markAllRead()
                         AppContainer.notificationRepository.markAllRead()
-                    },
-                )
+                    }.padding(horizontal = 12.dp),
+                ) {
+                    Text(t(StringKey.NOTIF_MARK_ALL_READ), style = NovaType.label, color = colors.link, maxLines = 1, softWrap = false)
+                }
             }
         }
 
         if (alerts.isEmpty() && notices.isEmpty()) {
             Text(
                 t(StringKey.NOTIF_EMPTY),
-                fontSize = 12.5.sp,
-                lineHeight = 18.75.sp,
+                style = NovaType.bodySm,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 28.dp),
@@ -135,38 +142,41 @@ private fun NotificationRow(
     onSkip: (() -> Unit)? = null,
 ) {
     val colors = NovaColors.current
-    val shape = RoundedCornerShape(14.dp)
+    val shape = RoundedCornerShape(16.dp)
+    val unreadLabel = tr(StringKey.NOTIF_UNREAD_ONE)
     Row(
         verticalAlignment = Alignment.Top,
         modifier = Modifier
             .fillMaxWidth()
-            .background(if (read) Color.Transparent else colors.sheetSurface, shape)
-            .border(1.dp, if (read) MaterialTheme.colorScheme.outline else Color.Transparent, shape)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 13.dp),
+            .clip(shape)
+            .background(if (read) Color.Transparent else MaterialTheme.colorScheme.surface, shape)
+            .border(1.dp, MaterialTheme.colorScheme.outline, shape)
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics { if (!read) stateDescription = unreadLabel }
+            .padding(start = 12.dp, end = 12.dp, top = 12.dp, bottom = if (onConfirm != null) 4.dp else 12.dp),
     ) {
         IconCircle(icon = icon, color = color, size = CategoryIconSize.ALERT)
         Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
             Text(
                 title,
-                fontSize = 13.sp,
-                fontWeight = if (read) FontWeight.SemiBold else FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.onBackground,
+                style = NovaType.titleSm.copy(fontWeight = if (read) FontWeight.Medium else FontWeight.SemiBold),
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Text(
                 body,
-                fontSize = 12.sp,
-                lineHeight = 16.1.sp,
+                style = NovaType.bodySm.copy(fontFeatureSettings = "tnum"),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 3.dp),
             )
             if (onConfirm != null && onSkip != null) {
-                Row(modifier = Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Text(tr(StringKey.PLAN_CONFIRM), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText, maxLines = 1, modifier = Modifier.clickable(onClick = onConfirm))
-                    Text(tr(StringKey.PLAN_SKIP), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, modifier = Modifier.clickable(onClick = onSkip))
+                @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+                androidx.compose.foundation.layout.FlowRow(modifier = Modifier.offset(x = (-8).dp)) {
+                    RowAction(tr(StringKey.PLAN_CONFIRM), colors.link, onConfirm)
+                    RowAction(tr(StringKey.PLAN_SKIP), MaterialTheme.colorScheme.onSurfaceVariant, onSkip)
                 }
             }
         }
+        // Unread is marked by a dot, not only by the weight and the fill.
+        if (!read) Box(Modifier.padding(start = 8.dp, top = 6.dp).size(8.dp).background(colors.link, androidx.compose.foundation.shape.CircleShape))
     }
 }
 
@@ -182,5 +192,16 @@ internal fun resolveGoalPlan(goalId: String, alertId: String, confirm: Boolean) 
             runCatching { AppContainer.walletRepository.refresh() }
             runCatching { AppContainer.alertRepository.refresh() }
         }
+    }
+}
+
+// A text action on a 48 dp target.
+@Composable
+private fun RowAction(label: String, color: Color, onClick: () -> Unit) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.heightIn(min = 48.dp).clip(RoundedCornerShape(12.dp)).clickable(role = Role.Button, onClick = onClick).padding(horizontal = 8.dp),
+    ) {
+        Text(label, style = NovaType.label, color = color, maxLines = 1, softWrap = false)
     }
 }

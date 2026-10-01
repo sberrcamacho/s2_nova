@@ -198,7 +198,7 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
             </Flat>
           ))}
         </div>
-        <div className="text-caption text-v2-dim">
+        <div className="text-caption text-ink-secondary">
           {t(custom ? 'bud.kind.customHint' : 'bud.kind.categoryHint')}
         </div>
       </div>
@@ -219,7 +219,7 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
           <button type="button" onClick={() => setSection(custom ? null : 'cat')} title={t('bud.pickCategory')} className="relative flex cursor-pointer">
             {custom ? <PlanMark icon={d.icon} box={38} /> : <CategoryMark category={leaf ?? 'exp.other'} box={38} />}
             {!custom && (
-              <span className="absolute -bottom-0.5 -right-0.5 box-border flex h-[15px] w-[15px] items-center justify-center rounded-full border-2 border-v2-surface bg-v2-accent text-caption text-white">▾</span>
+              <span className="absolute -bottom-0.5 -right-0.5 box-border flex h-[15px] w-[15px] items-center justify-center rounded-full border-2 border-v2-surface bg-primary text-caption text-white">▾</span>
             )}
           </button>
           <input value={d.name} onChange={(e) => onName(e.target.value)} placeholder={t(custom ? 'bud.ph.custom' : 'bud.ph.category')} className={`${inputClass} flex-1`} />
@@ -243,11 +243,11 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
         ))}
       </div>
 
-      {scopeNote && <div className="font-numeric text-caption leading-[1.45] text-v2-dim">{scopeNote}</div>}
+      {scopeNote && <div className="font-numeric text-caption leading-[1.45] text-ink-secondary">{scopeNote}</div>}
 
       {section === 'cat' && !custom && (
         <SectionBox>
-          <div className="grid grid-cols-[repeat(5,minmax(0,1fr))] gap-1">
+          <div className="grid grid-cols-[repeat(4,minmax(0,1fr))] gap-1">
             {parentCategories(false, false).map((x) => (
               <GridCell
                 key={x.id}
@@ -265,7 +265,7 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
           {d.cat && childCategories(d.cat, false).length > 0 && (
             <>
               <Label>{fill(t('nm.subOf'), categoryName(d.cat))}</Label>
-              <div className="grid grid-cols-[repeat(5,minmax(0,1fr))] gap-1">
+              <div className="grid grid-cols-[repeat(4,minmax(0,1fr))] gap-1">
                 {[{ id: null as string | null, name: t('bud.all') }, ...childCategories(d.cat, false).map((s) => ({ id: s.id as string | null, name: categoryName(s.id) }))].map((x) => (
                   <GridCell
                     key={x.id ?? 'all'}
@@ -287,7 +287,7 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
 
       {section === 'wallets' && !custom && (
         <SectionBox className="gap-2">
-          <div className="text-caption text-v2-dim">{t('bud.walletsHint')}</div>
+          <div className="text-caption text-ink-secondary">{t('bud.walletsHint')}</div>
           <div className="flex flex-wrap gap-1.5">
             <Flat on={!wl} onClick={() => set({ walletIds: [] })}>
               {t('bud.all')}

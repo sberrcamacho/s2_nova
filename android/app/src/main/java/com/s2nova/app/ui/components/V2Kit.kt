@@ -27,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.toArgb
@@ -195,7 +196,7 @@ fun FieldLabel(text: String, modifier: Modifier = Modifier) {
 
 @Composable
 fun FieldNote(text: String, modifier: Modifier = Modifier) {
-    Text(text = text, fontSize = 12.sp, lineHeight = 16.sp, color = NovaColors.current.textDim, modifier = modifier)
+    Text(text = text, style = com.s2nova.app.ui.theme.NovaType.caption, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = modifier)
 }
 
 // radioStyles(on): bordered row with a trailing dot.
@@ -277,15 +278,17 @@ fun V2Button(
         modifier = modifier
             .fillMaxWidth()
             .then(if (glow && enabled) Modifier.androidShadow(primary) else Modifier)
-            .clip(RoundedCornerShape(14.dp))
-            // Disabled keeps a visible container: sheetSurface is the page
-            // background in light, which left the label floating.
-            .background(if (enabled) primary else MaterialTheme.colorScheme.outline)
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(vertical = verticalPadding, horizontal = 16.dp),
+            // Primary button (§6.3): at least 52 dp; disabled is the same
+            // button at 38 %.
+            .alpha(if (enabled) 1f else 0.38f)
+            .clip(RoundedCornerShape(12.dp))
+            .background(primary)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .heightIn(min = 52.dp)
+            .padding(horizontal = 16.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(label, fontSize = fontSize, fontWeight = FontWeight.ExtraBold, color = if (enabled) Color.White else colors.textDim, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(label, style = com.s2nova.app.ui.theme.NovaType.label, color = MaterialTheme.colorScheme.onPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -397,7 +400,7 @@ fun MoneyInput(
     fontSize: TextUnit = 18.sp,
 ) {
     InputBox(horizontal = 16.dp, vertical = 13.dp) {
-        Text(symbol, fontSize = fontSize, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurfaceVariant, style = TextStyle(fontFeatureSettings = TNUM))
+        Text(symbol, fontSize = fontSize, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurfaceVariant, style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM))
         BareField(
             value = digits,
             onValueChange = { v -> onDigits(v.filter(Char::isDigit).take(12)) },
@@ -415,7 +418,7 @@ fun MoneyInput(
 @Composable
 fun SheetHeader(title: String, subtitle: String? = null, bottom: Dp = 14.dp, subtitleTop: Dp = 4.dp) {
     Column(Modifier.padding(start = 4.dp, end = 4.dp, bottom = bottom)) {
-        Text(title, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
+        Text(title, style = com.s2nova.app.ui.theme.NovaType.title, color = MaterialTheme.colorScheme.onBackground)
         if (subtitle != null) {
             Text(
                 subtitle,
@@ -423,7 +426,7 @@ fun SheetHeader(title: String, subtitle: String? = null, bottom: Dp = 14.dp, sub
                 lineHeight = 16.sp,
                 color = NovaColors.current.textDim,
                 modifier = Modifier.padding(top = subtitleTop),
-                style = TextStyle(fontFeatureSettings = TNUM),
+                style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM),
             )
         }
     }

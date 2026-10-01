@@ -1,3 +1,4 @@
+import { ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
 import { currentLanguage, fill, tr, type TranslationKey } from '@/lib/i18n/translations'
 import { MONTHS_LONG } from '@/lib/inicio'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -208,7 +209,7 @@ export default function MovimientosPage() {
 
       <div className="flex flex-col gap-3">
         <div>
-          <h1 className="text-headline font-bold">{tr('guide.movimientos.label')}</h1>
+          <h1 className="text-headline font-semibold">{tr('guide.movimientos.label')}</h1>
           <div className="mt-1 text-body-sm text-ink-secondary">{subtitle}</div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -494,44 +495,46 @@ function MovementDetail({
         <div className="flex items-center gap-3">
           <CategoryMark category={transfer ? TRANSFER : txn.category} box={44} />
           <div className="min-w-0 flex-1">
-            <div className="text-[15px] font-extrabold">{txn.description || label}</div>
-            <div className="mt-0.5 text-caption text-v2-dim">{label}</div>
+            <div className="text-title-sm font-semibold">{txn.description || label}</div>
+            <div className="mt-0.5 text-caption text-ink-secondary">{label}</div>
           </div>
-          <button type="button" onClick={onClose} aria-label={tr('common.close')} className="flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-[9px] text-v2-dim">
+          <button type="button" onClick={onClose} aria-label={tr('common.close')} className="flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-[9px] text-ink-secondary">
             ✕
           </button>
         </div>
         <div>
           <Money
             hidden={hidden}
-            className="block text-[28px] font-extrabold tracking-[-.025em]"
+            className="block text-[28px] font-semibold tracking-[-.025em]"
             style={{ color: sched || transfer ? 'var(--v2-text)' : txn.type === 'income' ? 'var(--v2-pos)' : 'var(--v2-neg)' }}
           >
             {`${sign(txn)}${formatMoney(txn.amount, txn.currency)}`}
           </Money>
           {txn.currency !== principal && (
-            <Money hidden={hidden} className="mt-0.5 block text-caption text-v2-dim">
+            <Money hidden={hidden} className="mt-0.5 block text-caption text-ink-secondary">
               {`≈ ${formatMoney(abs, principal)} ${principal} · 1 ${txn.currency} = ${formatMoney(rate, principal)}`}
             </Money>
           )}
         </div>
         <span
           className={cn(
-            'self-start rounded-full px-2.5 py-1 text-caption font-extrabold',
-            sched ? 'bg-[rgba(240,180,41,.16)] text-v2-warn' : 'bg-[rgba(50,201,138,.14)] text-v2-pos',
+            'flex items-center gap-1 self-start rounded-full px-2.5 py-1 text-caption font-semibold',
+            sched ? 'bg-warning-soft text-warning' : 'bg-positive-soft text-positive',
           )}
         >
+          {/* The state carries an icon, not just the tone. */}
+          <StrokeIcon paths={sched ? ICON_PATHS.clock : ICON_PATHS.check} size={14} />
           {tr(sched ? 'mv.state.scheduled' : 'mv.state.recorded')}
         </span>
         <div className="flex flex-col">
           {rows.map(([k, v]) => (
-            <div key={k} className="flex justify-between gap-3 border-b border-v2-subtle py-2.5 text-[12.5px]">
-              <span className="whitespace-nowrap text-v2-dim">{k}</span>
-              <span className="min-w-0 text-right font-numeric font-bold">{v}</span>
+            <div key={k} className="flex justify-between gap-3 border-b border-divider py-2.5 text-body-sm">
+              <span className="whitespace-nowrap text-ink-secondary">{k}</span>
+              <span className="min-w-0 text-right font-numeric font-semibold">{v}</span>
             </div>
           ))}
         </div>
-        <div className="text-[13px] font-extrabold">{tr('mv.receipt')}</div>
+        <div className="text-body-sm font-semibold">{tr('mv.receipt')}</div>
         <input
           ref={fileRef}
           type="file"
@@ -544,30 +547,30 @@ function MovementDetail({
           }}
         />
         {attach ? (
-          <div className="flex items-center gap-3.5 rounded-[14px] border border-v2-line p-2.5">
+          <div className="flex items-center gap-3.5 rounded-[14px] border border-border p-2.5">
             <button
               type="button"
               onClick={() => setViewer(true)}
               aria-label={tr('mv.receipt.view')}
-              className="flex h-[78px] w-[62px] flex-none cursor-pointer items-center justify-center rounded-[10px] border border-v2-line2"
+              className="flex h-[78px] w-[62px] flex-none cursor-pointer items-center justify-center rounded-[10px] border border-border-input"
               style={{ background: photo ? 'repeating-linear-gradient(135deg,var(--v2-surface2) 0 8px,var(--v2-subtle) 8px 16px)' : 'var(--v2-neg-soft)' }}
             >
               <Icon paths={photo ? IC.image : IC.file} size={20} color={photo ? 'var(--v2-muted)' : 'var(--v2-neg)'} />
             </button>
             <div className="min-w-0 flex-1">
-              <div className="truncate text-[12.5px] font-bold">{attach.name}</div>
-              <div className="mt-0.5 text-caption text-v2-dim">{fill(tr('mv.receipt.meta'), photo ? tr('nm.photo') : 'PDF', sizeLabel(attach.size), shortDayMonth(localDay(attach.createdAt)))}</div>
-              <div className="mt-[9px] flex gap-3.5 text-[12px] font-extrabold">
-                <button type="button" onClick={() => setViewer(true)} className="cursor-pointer text-v2-accent2">
+              <div className="truncate text-body-sm font-semibold">{attach.name}</div>
+              <div className="mt-0.5 text-caption text-ink-secondary">{fill(tr('mv.receipt.meta'), photo ? tr('nm.photo') : 'PDF', sizeLabel(attach.size), shortDayMonth(localDay(attach.createdAt)))}</div>
+              <div className="-ml-2 mt-1 flex flex-wrap text-label font-semibold">
+                <button type="button" onClick={() => setViewer(true)} className="flex min-h-8 cursor-pointer items-center rounded-[8px] px-2 text-link hover:bg-surface-sunken">
                   {tr('mv.receipt.see')}
                 </button>
-                <button type="button" onClick={() => fileRef.current?.click()} className="cursor-pointer text-v2-accent2">
+                <button type="button" onClick={() => fileRef.current?.click()} className="flex min-h-8 cursor-pointer items-center rounded-[8px] px-2 text-link hover:bg-surface-sunken">
                   {tr('mv.receipt.replace')}
                 </button>
-                <button type="button" onClick={() => void download()} className="cursor-pointer text-v2-accent2">
+                <button type="button" onClick={() => void download()} className="flex min-h-8 cursor-pointer items-center rounded-[8px] px-2 text-link hover:bg-surface-sunken">
                   {tr('mv.receipt.download')}
                 </button>
-                <button type="button" onClick={() => void removeAttachment()} className="cursor-pointer text-v2-neg">
+                <button type="button" onClick={() => void removeAttachment()} className="flex min-h-8 cursor-pointer items-center rounded-[8px] px-2 text-negative hover:bg-negative-soft">
                   {tr('mv.receipt.remove')}
                 </button>
               </div>
@@ -582,7 +585,7 @@ function MovementDetail({
               e.preventDefault()
               void upload(e.dataTransfer.files[0])
             }}
-            className="flex cursor-pointer items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-dashed border-v2-line2 p-3.5 text-[12.5px] font-extrabold text-v2-accent2"
+            className="flex cursor-pointer items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-dashed border-border-input p-3.5 text-body-sm font-semibold text-link"
           >
             <Icon paths={IC.clip} size={15} color="var(--v2-accent2)" />
             {tr('mv.receipt.attach')}
@@ -659,14 +662,14 @@ function ReceiptViewer({ txnId, name, mime, photo, onClose }: { txnId: string; n
 
   return createPortal(
     <div onClick={onClose} role="dialog" aria-modal="true" aria-label={name} className="fixed inset-0 z-[55] flex flex-col items-center justify-center gap-4 bg-[rgba(5,5,7,.92)] p-[30px] [line-height:normal]">
-      <div className="text-[13px] font-bold text-white">{name}</div>
+      <div className="text-body-sm font-semibold text-white">{name}</div>
       {url && photo ? (
         <img src={url} alt={name} className="max-h-[75vh] w-[420px] max-w-[90vw] rounded-[14px] border border-white/[.14] object-contain" />
       ) : url ? (
         <object data={url} type={mime} aria-label={name} className="aspect-[3/4] w-[420px] max-w-[90vw] rounded-[14px] border border-white/[.14] bg-white" />
       ) : (
         <div
-          className="flex aspect-[3/4] w-[420px] max-w-[90vw] flex-col items-center justify-center gap-2.5 rounded-[14px] border border-white/[.14] text-[12px] text-[#a8a8b8]"
+          className="flex aspect-[3/4] w-[420px] max-w-[90vw] flex-col items-center justify-center gap-2.5 rounded-[14px] border border-white/[.14] text-body-sm text-[#a8a8b8]"
           style={{ background: 'repeating-linear-gradient(135deg,#13131d 0 10px,#16161f 10px 20px)' }}
         >
           <Icon paths={photo ? IC.image : IC.file} size={20} color={photo ? 'var(--v2-muted)' : 'var(--v2-neg)'} />

@@ -9,7 +9,7 @@ import type { Wallet } from '@/types'
 // fields themselves mirror Android's v2 sheets.
 
 export const panelInputClass =
-  'box-border h-11 w-full rounded-[12px] border border-v2-line bg-v2-sidebar px-3.5 text-[13px] text-v2-text outline-none placeholder:text-v2-dim focus:border-v2-accent-line'
+  'box-border h-11 w-full rounded-[12px] border border-border bg-surface px-3.5 text-body-sm text-ink outline-none placeholder:text-ink-secondary focus:border-primary-border'
 
 export function PanelField({ label, htmlFor, aside, note, children }: { label: string; htmlFor?: string; aside?: ReactNode; note?: string; children: ReactNode }) {
   return (
@@ -25,7 +25,7 @@ export function PanelField({ label, htmlFor, aside, note, children }: { label: s
         {aside}
       </div>
       {children}
-      {note && <div className="text-caption text-v2-dim">{note}</div>}
+      {note && <div className="text-caption text-ink-secondary">{note}</div>}
     </div>
   )
 }
@@ -59,7 +59,7 @@ export function ColorChip({ label, color, selected, onClick }: { label: string; 
       role="radio"
       aria-checked={selected}
       onClick={onClick}
-      className="cursor-pointer whitespace-nowrap rounded-full border px-[13px] py-2 text-[12px]"
+      className="cursor-pointer whitespace-nowrap rounded-full border px-[13px] py-2 text-body-sm"
       style={
         selected
           ? { background: color, borderColor: 'transparent', color: inkOn(color), fontWeight: 800 }
@@ -72,4 +72,4 @@ export function ColorChip({ label, color, selected, onClick }: { label: string; 
 }
 
 export const dangerButtonClass =
-  'mr-auto cursor-pointer rounded-[10px] border border-[rgba(255,98,98,.35)] px-4 py-2.5 text-[12.5px] font-bold text-v2-neg disabled:cursor-not-allowed disabled:opacity-60'
+  'mr-auto cursor-pointer rounded-[10px] border border-[rgba(255,98,98,.35)] px-4 py-2.5 text-body-sm font-semibold text-negative disabled:cursor-not-allowed disabled:opacity-60'

@@ -20,6 +20,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
+import androidx.compose.foundation.layout.height
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -81,19 +83,17 @@ fun NovaDraftSheet(
             if (title != null) {
                 Text(
                     text = title,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.ExtraBold,
+                    style = com.s2nova.app.ui.theme.NovaType.title,
                     color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(start = 4.dp, end = 4.dp, bottom = if (subtitle != null) 0.dp else 18.dp),
+                    modifier = Modifier.padding(start = 4.dp, end = 4.dp, bottom = if (subtitle != null) 0.dp else 16.dp),
                 )
             }
             if (subtitle != null) {
                 Text(
                     text = subtitle,
-                    fontSize = 12.sp,
-                    lineHeight = 16.sp,
-                    color = colors.textDim,
-                    modifier = Modifier.padding(start = 4.dp, end = 4.dp, top = 5.dp, bottom = 18.dp),
+                    style = com.s2nova.app.ui.theme.NovaType.bodySm,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 4.dp, end = 4.dp, top = 2.dp, bottom = 16.dp),
                 )
             }
             content()
@@ -129,18 +129,18 @@ fun DraftSheetPrimaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val background = if (enabled) MaterialTheme.colorScheme.primary else NovaColors.current.pillSurface
-    val contentColor = if (enabled) Color.White else NovaColors.current.textDim
+    // Primary button (§6.3): 52 dp; disabled is the same button at 38 %.
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .background(background)
-            .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(vertical = 14.dp),
+            .height(52.dp)
+            .alpha(if (enabled) 1f else 0.38f)
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.primary)
+            .clickable(enabled = enabled, role = androidx.compose.ui.semantics.Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = label, color = contentColor, fontWeight = FontWeight.ExtraBold, fontSize = 13.sp)
+        Text(text = label, color = MaterialTheme.colorScheme.onPrimary, style = com.s2nova.app.ui.theme.NovaType.label, maxLines = 1, softWrap = false)
     }
 }
 

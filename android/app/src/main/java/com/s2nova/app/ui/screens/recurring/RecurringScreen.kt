@@ -47,6 +47,10 @@ import com.s2nova.app.ui.shortDateLabel
 import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.theme.NovaColors
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import com.s2nova.app.ui.theme.NovaType
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import com.s2nova.app.ui.tr
@@ -93,7 +97,7 @@ fun RecurringScreen(onBack: () -> Unit, onNew: () -> Unit, onEdit: (String) -> U
             },
         )
         LazyColumn(
-            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 20.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items(series, key = { it.id }) { item ->
@@ -109,41 +113,46 @@ fun RecurringScreen(onBack: () -> Unit, onNew: () -> Unit, onEdit: (String) -> U
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(18.dp))
+                        .clip(RoundedCornerShape(20.dp))
                         .background(MaterialTheme.colorScheme.surface)
-                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(18.dp))
-                        .padding(16.dp),
+                        // A due series carries the `warning` border, plus its text and clock.
+                        .border(1.dp, if (due) colors.warning else MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))
+                        // The actions row is 48 dp tall, so the bottom padding is smaller.
+                        .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         CategoryIcon(category = item.category, size = CategoryIconSize.ROW)
                         Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
-                            Text(item.name, fontSize = 13.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                            Text(detail, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
+                            Text(item.name, style = NovaType.titleSm, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                if (due) com.s2nova.app.ui.components.V2Icon(com.s2nova.app.ui.components.V2Icons.clock, colors.warning, 14.dp)
+                                // Two lines at most: the next date is the part that matters.
+                                Text(detail, style = NovaType.bodySm, color = if (due) colors.warning else MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                            }
                         }
                         Text(
                             (if (income) "+" else "−") + format(abs(item.amount)),
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = if (income) colors.positive else colors.negative,
+                            style = NovaType.amount,
+                            color = if (!item.active) colors.textDim else if (income) colors.positive else colors.negative,
+                            maxLines = 1,
+                            softWrap = false,
                             modifier = Modifier.padding(start = 12.dp),
                         )
                     }
                     @OptIn(ExperimentalLayoutApi::class)
                     FlowRow(
-                        modifier = Modifier.padding(top = 12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.padding(top = 4.dp).offset(x = (-8).dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        CardAction(if (item.active) t(StringKey.RECURRING_PAUSE) else t(StringKey.RECURRING_RESUME), MaterialTheme.colorScheme.primary) {
+                        CardAction(if (item.active) t(StringKey.RECURRING_PAUSE) else t(StringKey.RECURRING_RESUME), colors.link) {
                             scope.launch { runCatching { AppContainer.recurringSeriesRepository.setActive(item.id, !item.active) } }
                         }
-                        CardAction(t(StringKey.RECURRING_EDIT), colors.accentText) { onEdit(item.id) }
+                        CardAction(t(StringKey.RECURRING_EDIT), colors.link) { onEdit(item.id) }
                         if (due) {
-                            val label = t(if (overdue) StringKey.RECURRING_OVERDUE else StringKey.RECURRING_DUE_TODAY) + " · " + t(StringKey.RECURRING_CONFIRM)
-                            CardAction(label, NovaColors.current.link) {
+                            CardAction(t(StringKey.RECURRING_CONFIRM), colors.link, tonal = true) {
                                 afterOccurrence { AppContainer.recurringSeriesRepository.confirmOccurrence(item.id) }
                             }
-                            CardAction(t(StringKey.RECURRING_SKIP), colors.accentText) {
+                            CardAction(t(StringKey.RECURRING_SKIP), colors.link) {
                                 afterOccurrence { AppContainer.recurringSeriesRepository.skipOccurrence(item.id) }
                             }
                         }
@@ -154,8 +163,7 @@ fun RecurringScreen(onBack: () -> Unit, onNew: () -> Unit, onEdit: (String) -> U
                 item {
                     Text(
                         t(StringKey.RECURRING_EMPTY),
-                        fontSize = 12.sp,
-                        lineHeight = 18.sp,
+                        style = NovaType.bodySm,
                         color = colors.textDim,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp),
@@ -166,9 +174,25 @@ fun RecurringScreen(onBack: () -> Unit, onNew: () -> Unit, onEdit: (String) -> U
     }
 }
 
+// A text action on a 48 dp target; `tonal` is the card's main action
+// (confirming a due occurrence).
 @Composable
-private fun CardAction(label: String, color: Color, onClick: () -> Unit) {
-    Text(label, fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = color, modifier = Modifier.clickable(onClick = onClick))
+private fun CardAction(label: String, color: Color, tonal: Boolean = false, onClick: () -> Unit) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.heightIn(min = 48.dp).clip(RoundedCornerShape(12.dp)).clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick).padding(horizontal = if (tonal) 0.dp else 8.dp),
+    ) {
+        if (tonal) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.height(40.dp).background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(12.dp)).padding(horizontal = 16.dp),
+            ) {
+                Text(label, style = NovaType.label, color = MaterialTheme.colorScheme.onPrimaryContainer, maxLines = 1, softWrap = false)
+            }
+        } else {
+            Text(label, style = NovaType.label, color = color, maxLines = 1, softWrap = false)
+        }
+    }
 }
 
 private fun intervalLabel(interval: RecurrenceInterval, t: (StringKey) -> String) = when (interval) {

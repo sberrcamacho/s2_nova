@@ -16,7 +16,7 @@ import type { LoanKind, Transaction, Wallet } from '@/types'
 // mockup only creates loans; editing reuses the same modal (Android's loan
 // sheet edits too), with "Eliminar registro" behind the askConfirm steps.
 const loanInput =
-  'box-border h-11 w-full min-w-0 rounded-[12px] border border-v2-line bg-v2-sidebar px-3.5 font-[inherit] text-[13px] text-v2-text outline-none [color-scheme:dark] placeholder:text-v2-dim focus:border-v2-accent-line'
+  'box-border h-11 w-full min-w-0 rounded-[12px] border border-border bg-surface px-3.5 font-[inherit] text-body-sm text-ink outline-none [color-scheme:dark] placeholder:text-ink-secondary focus:border-primary-border'
 
 export function LoanModal({ loan, side, wallets, onClose, onSaved }: { loan: Transaction | null; side: LoanKind; wallets: Wallet[]; onClose: () => void; onSaved: (side: LoanKind) => void }) {
   const { addTransaction } = useAppData()
@@ -82,7 +82,7 @@ export function LoanModal({ loan, side, wallets, onClose, onSaved }: { loan: Tra
     <V2Modal width={460} onClose={onClose} label={title}>
       <div>
         <ModalTitle>{title}</ModalTitle>
-        <div className="mt-0.5 text-caption leading-[1.45] text-v2-dim">{tr('loan.hint')}</div>
+        <div className="mt-0.5 text-caption leading-[1.45] text-ink-secondary">{tr('loan.hint')}</div>
       </div>
       <div className="flex flex-col gap-2">
         <Label>{tr('loan.direction')}</Label>
@@ -119,7 +119,7 @@ export function LoanModal({ loan, side, wallets, onClose, onSaved }: { loan: Tra
       {err && <ErrorBox>{err}</ErrorBox>}
       <ModalFooter left={loan && <DangerLink onClick={() => setConfirming(true)}>{tr('loan.delete')}</DangerLink>}>
         <CancelButton onClick={onClose} />
-        <button type="button" onClick={save} disabled={busy} className="cursor-pointer self-stretch whitespace-nowrap rounded-[10px] bg-v2-accent px-4 py-2.5 text-[12.5px] font-bold text-white">
+        <button type="button" onClick={save} disabled={busy} className="cursor-pointer self-stretch whitespace-nowrap rounded-[10px] bg-primary px-4 py-2.5 text-body-sm font-semibold text-white">
           {tr('loan.save')}
         </button>
       </ModalFooter>

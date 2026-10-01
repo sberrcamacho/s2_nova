@@ -64,12 +64,12 @@ export function LoansTab({ side, onSide, adding, onAddingDone }: { side: LoanKin
 
       <div className="grid grid-cols-1 gap-4 min-[760px]:grid-cols-3">
         <SummaryCard label={t(isLent ? 'loans.pendingLent' : 'loans.pendingBorrowed')}>
-          <Money hidden={hidden} className="mt-1 block text-headline font-bold tabular-nums">
+          <Money hidden={hidden} className="mt-1 block text-headline font-semibold tabular-nums">
             {format(sideLoans.reduce((s, l) => s + outOf(l), 0))}
           </Money>
         </SummaryCard>
         <SummaryCard label={t(isLent ? 'loans.paidLent' : 'loans.paidBorrowed')}>
-          <Money hidden={hidden} className="mt-1 block text-headline font-bold tabular-nums">
+          <Money hidden={hidden} className="mt-1 block text-headline font-semibold tabular-nums">
             {format(sideLoans.reduce((s, l) => s + paidOf(l), 0))}
           </Money>
         </SummaryCard>
@@ -243,14 +243,14 @@ function PayDialog({ loan, wallets, onClose, onSaved }: { loan: Transaction; wal
         aria-modal="true"
         aria-label={t('loans.pay')}
         onClick={(e) => e.stopPropagation()}
-        className="flex w-[466px] max-w-full flex-col gap-4 rounded-[18px] border border-v2-line2 bg-v2-surface p-[22px] text-v2-text shadow-[0_24px_60px_rgba(0,0,0,.45)]"
+        className="flex w-[466px] max-w-full flex-col gap-4 rounded-[18px] border border-border-input bg-surface p-[22px] text-ink shadow-[0_24px_60px_rgba(0,0,0,.45)]"
       >
         <div>
-          <div className="text-[15px] font-extrabold">{t('loans.pay')}</div>
-          <div className="mt-0.5 text-caption text-v2-dim">{fill(t('loans.paySub'), loan.counterpartyName ?? t('loans.unknownPerson'), format(out))}</div>
+          <div className="text-title-sm font-semibold">{t('loans.pay')}</div>
+          <div className="mt-0.5 text-caption text-ink-secondary">{fill(t('loans.paySub'), loan.counterpartyName ?? t('loans.unknownPerson'), format(out))}</div>
         </div>
         <div className="flex flex-col gap-1.5">
-          <label className="text-caption font-bold tracking-[.06em] text-v2-muted">
+          <label className="text-caption font-semibold tracking-[.06em] text-ink-secondary">
             {t('loans.payAmount')}
           </label>
           <AmountField
@@ -264,7 +264,7 @@ function PayDialog({ loan, wallets, onClose, onSaved }: { loan: Transaction; wal
             radius={12}
             label={t('loans.payAmount')}
           />
-          <div className="text-caption text-v2-dim">{t('loans.payHint')}</div>
+          <div className="text-caption text-ink-secondary">{t('loans.payHint')}</div>
         </div>
         <div className="flex flex-col gap-2">
           <Label>{t(loan.loanKind === 'lent' ? 'loans.receiveIn' : 'loans.payFrom')}</Label>
@@ -279,7 +279,7 @@ function PayDialog({ loan, wallets, onClose, onSaved }: { loan: Transaction; wal
         {error && <ErrorBox>{error}</ErrorBox>}
         <div className="flex justify-end gap-2">
           <CancelButton onClick={onClose}>{t('common.cancel')}</CancelButton>
-          <button type="button" onClick={save} disabled={busy} className="cursor-pointer whitespace-nowrap rounded-[10px] bg-v2-accent px-4 py-2.5 text-[12.5px] font-bold text-white">
+          <button type="button" onClick={save} disabled={busy} className="cursor-pointer whitespace-nowrap rounded-[10px] bg-primary px-4 py-2.5 text-body-sm font-semibold text-white">
             {t('loans.paySave')}
           </button>
         </div>

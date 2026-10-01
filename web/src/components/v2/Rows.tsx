@@ -9,7 +9,7 @@ export function RowButton({ children, onClick, last, gap = 14 }: { children: Rea
     <button
       type="button"
       onClick={onClick}
-      className={cn('mx-[-8px] flex cursor-pointer items-center rounded-[10px] px-2 py-[11px] text-v2-text hover:bg-v2-subtle', !last && 'border-b border-v2-subtle')}
+      className={cn('mx-[-8px] flex cursor-pointer items-center rounded-[10px] px-2 py-[11px] text-ink hover:bg-surface-sunken', !last && 'border-b border-divider')}
       style={{ gap }}
     >
       {children}
@@ -42,9 +42,9 @@ export function RowSkeletons({ count, box = 34 }: { count: number; box?: number 
 export function SyncBanner({ onRetry }: { onRetry: () => void }) {
   const { t } = useTranslation()
   return (
-    <div role="status" className="flex items-center justify-between gap-3 rounded-[12px] bg-[color-mix(in_oklab,var(--v2-neg)_10%,transparent)] px-3.5 py-2.5 text-[12px] font-bold text-v2-neg">
+    <div role="status" className="flex items-center justify-between gap-3 rounded-[12px] bg-[color-mix(in_oklab,var(--v2-neg)_10%,transparent)] px-3.5 py-2.5 text-body-sm font-semibold text-negative">
       <span>{t('inicio.syncError')}</span>
-      <button type="button" onClick={onRetry} className="cursor-pointer font-extrabold text-v2-accent2">
+      <button type="button" onClick={onRetry} className="cursor-pointer font-semibold text-link">
         {t('inicio.retry')}
       </button>
     </div>

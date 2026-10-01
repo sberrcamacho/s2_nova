@@ -55,7 +55,7 @@ export function V2Modal({ width = 500, onClose, children, label }: { width?: num
         aria-modal="true"
         aria-label={label}
         onClick={(e) => e.stopPropagation()}
-        className="box-border flex max-h-[calc(100vh-48px)] max-w-full flex-col gap-5 overflow-y-auto overflow-x-hidden rounded-[18px] border border-v2-line2 bg-v2-surface px-[26px] py-6 text-v2-text shadow-[0_24px_60px_rgba(0,0,0,.45)]"
+        className="box-border flex max-h-[calc(100vh-48px)] max-w-full flex-col gap-5 overflow-y-auto overflow-x-hidden rounded-[18px] border border-border-input bg-surface px-[26px] py-6 text-ink shadow-[0_24px_60px_rgba(0,0,0,.45)]"
         style={{ width }}
       >
         {children}
@@ -66,7 +66,7 @@ export function V2Modal({ width = 500, onClose, children, label }: { width?: num
 }
 
 export function ModalTitle({ children }: { children: ReactNode }) {
-  return <div className="text-[15px] font-extrabold">{children}</div>
+  return <div className="text-title-sm font-semibold">{children}</div>
 }
 
 export function Label({ children }: { children: ReactNode }) {
@@ -78,7 +78,7 @@ export function Field({ label, children, note }: { label: ReactNode; children: R
     <div className="flex flex-col gap-1.5">
       <Label>{label}</Label>
       {children}
-      {note && <div className="text-caption text-v2-dim">{note}</div>}
+      {note && <div className="text-caption text-ink-secondary">{note}</div>}
     </div>
   )
 }
@@ -128,7 +128,7 @@ export function AmountField({
         className="box-border flex items-center gap-1.5 border border-border-input bg-surface pl-3 pr-1.5 focus-within:border-primary-border"
         style={{ height, borderRadius: radius, opacity: disabled ? 0.6 : 1 }}
       >
-        <span className="font-numeric font-extrabold text-v2-muted" style={{ fontSize }}>
+        <span className="font-numeric font-semibold text-ink-secondary" style={{ fontSize }}>
           {symbol}
         </span>
         <input
@@ -139,7 +139,7 @@ export function AmountField({
           aria-label={label}
           autoFocus={autoFocus}
           disabled={disabled}
-          className="min-w-0 flex-1 border-none bg-transparent px-0.5 py-px font-[inherit] font-extrabold text-v2-text outline-none [font-variant-numeric:tabular-nums]"
+          className="min-w-0 flex-1 border-none bg-transparent px-0.5 py-px font-[inherit] font-semibold text-ink outline-none [font-variant-numeric:tabular-nums]"
           style={{ fontSize }}
         />
         {!disabled && (
@@ -154,14 +154,14 @@ export function AmountField({
             }}
             className={cn(
               'flex h-7 w-7 flex-none cursor-pointer items-center justify-center rounded-full border',
-              calc ? 'border-v2-accent-line bg-v2-accent/20' : 'border-transparent bg-v2-surface2',
+              calc ? 'border-primary-border bg-v2-accent/20' : 'border-transparent bg-surface-sunken',
             )}
           >
             <Icon paths={IC.calc} size={14} color={calc ? 'var(--v2-accent2)' : 'var(--v2-muted)'} />
           </button>
         )}
       </div>
-      {hasOps(expr) && <div className="font-numeric text-[12px] font-extrabold text-v2-muted">{'= ' + symbol + total.toLocaleString(currentLanguage() === 'en' ? 'en-US' : 'es-CO', { maximumFractionDigits: 2 })}</div>}
+      {hasOps(expr) && <div className="font-numeric text-body-sm font-semibold text-ink-secondary">{'= ' + symbol + total.toLocaleString(currentLanguage() === 'en' ? 'en-US' : 'es-CO', { maximumFractionDigits: 2 })}</div>}
       {calc && !disabled && (
         <div className="grid grid-cols-4 gap-1.5">
           {CALC.map((k) => {
@@ -172,14 +172,14 @@ export function AmountField({
                 type="button"
                 onClick={() => onExpr(pressKey(expr, k))}
                 className={cn(
-                  'flex h-10 cursor-pointer select-none items-center justify-center rounded-[10px] border font-bold',
+                  'flex h-10 cursor-pointer select-none items-center justify-center rounded-[10px] border font-semibold',
                   op
-                    ? 'border-transparent bg-v2-accent/16 text-[17px] text-v2-accent2'
+                    ? 'border-transparent bg-v2-accent/16 text-[17px] text-link'
                     : k === '='
                       ? 'row-span-2 h-auto border-transparent bg-v2-accent/32 text-[19px] text-white'
                       : k === 'C' || k === '⌫'
-                        ? 'border-v2-line bg-v2-surface2 text-[13px] font-extrabold text-v2-muted'
-                        : 'border-v2-line bg-v2-surface2 text-[15px] text-v2-text',
+                        ? 'border-border bg-surface-sunken text-body-sm font-semibold text-ink-secondary'
+                        : 'border-border bg-surface-sunken text-title-sm text-ink',
                 )}
               >
                 {k}
@@ -269,7 +269,7 @@ export function OptionTile({ icon, label, on, open, onClick }: { icon: ReactNode
 // An inline section box ("Listo" closes the Nuevo movimiento ones).
 export function SectionBox({ children, className, style }: { children: ReactNode; className?: string; style?: CSSProperties }) {
   return (
-    <div className={cn('flex flex-col gap-2.5 rounded-[14px] border border-v2-line2 bg-v2-surface2 p-3', className)} style={style}>
+    <div className={cn('flex flex-col gap-2.5 rounded-[14px] border border-border-input bg-surface-sunken p-3', className)} style={style}>
       {children}
     </div>
   )
@@ -285,7 +285,7 @@ export function GridCell({ on, color, chip, label, onClick }: { on: boolean; col
       style={{ background: on ? `color-mix(in oklab, ${color} 14%, transparent)` : 'transparent', border: `1.5px solid ${on ? color : 'transparent'}` }}
     >
       {chip}
-      <span lang="es" className="w-full text-center text-caption font-bold leading-[1.2] text-v2-muted [overflow-wrap:break-word] [hyphens:auto]">
+      <span lang="es" className="w-full text-center text-caption font-medium leading-[1.25] text-ink [overflow-wrap:break-word] [hyphens:auto]">
         {label}
       </span>
     </button>
@@ -343,7 +343,7 @@ export function RadioDot({ on }: { on: boolean }) {
 
 export function ErrorBox({ children }: { children: ReactNode }) {
   return (
-    <div role="alert" className="rounded-[10px] bg-[rgba(255,98,98,.1)] px-3 py-2.5 text-[12px] font-bold text-v2-neg">
+    <div role="alert" className="rounded-[10px] bg-[rgba(255,98,98,.1)] px-3 py-2.5 text-body-sm font-semibold text-negative">
       {children}
     </div>
   )
@@ -351,7 +351,7 @@ export function ErrorBox({ children }: { children: ReactNode }) {
 
 export function CancelButton({ onClick, children = tr('common.cancel') }: { onClick: () => void; children?: ReactNode }) {
   return (
-    <button type="button" onClick={onClick} className="cursor-pointer whitespace-nowrap rounded-[10px] border border-v2-line2 px-4 py-2.5 text-[12.5px] font-bold text-v2-muted">
+    <button type="button" onClick={onClick} className="cursor-pointer whitespace-nowrap rounded-[10px] border border-border-input px-4 py-2.5 text-body-sm font-semibold text-ink-secondary">
       {children}
     </button>
   )
@@ -365,7 +365,7 @@ export function SaveButton({ valid, onClick, children = tr('common.save'), busy 
       type="button"
       onClick={onClick}
       disabled={busy}
-      className="whitespace-nowrap rounded-[10px] px-4 py-2.5 text-[12.5px] font-bold"
+      className="whitespace-nowrap rounded-[10px] px-4 py-2.5 text-body-sm font-semibold"
       style={{ cursor: valid ? 'pointer' : 'not-allowed', color: valid ? '#fff' : 'var(--v2-dim)', background: valid ? 'var(--v2-accent)' : 'var(--v2-surface2)' }}
     >
       {children}
@@ -375,7 +375,7 @@ export function SaveButton({ valid, onClick, children = tr('common.save'), busy 
 
 export function DangerLink({ onClick, children }: { onClick: () => void; children: ReactNode }) {
   return (
-    <button type="button" onClick={onClick} className="cursor-pointer text-[12.5px] font-bold text-v2-neg">
+    <button type="button" onClick={onClick} className="cursor-pointer text-body-sm font-semibold text-negative">
       {children}
     </button>
   )
@@ -407,7 +407,7 @@ export function ConfirmDialog({ title, lines, ack, cta, onCancel, onConfirm }: {
     window.addEventListener('keydown', onKey, true)
     return () => window.removeEventListener('keydown', onKey, true)
   }, [onCancel])
-  const secondary = 'cursor-pointer whitespace-nowrap rounded-[10px] border border-v2-line2 px-4 py-2.5 text-[12.5px] font-bold text-v2-muted'
+  const secondary = 'cursor-pointer whitespace-nowrap rounded-[10px] border border-border-input px-4 py-2.5 text-body-sm font-semibold text-ink-secondary'
   return createPortal(
     <div onClick={onCancel} className="fixed inset-0 z-[58] flex items-center justify-center bg-[rgba(6,6,12,.7)] p-6 [line-height:normal]">
       <div
@@ -416,18 +416,18 @@ export function ConfirmDialog({ title, lines, ack, cta, onCancel, onConfirm }: {
         aria-modal="true"
         aria-label={step === 1 ? title : tr('kit.cantUndo')}
         onClick={(e) => e.stopPropagation()}
-        className="flex w-[486px] max-w-full flex-col gap-3.5 rounded-[18px] border border-v2-line2 bg-v2-surface p-[22px] text-v2-text shadow-[0_24px_60px_rgba(0,0,0,.45)]"
+        className="flex w-[486px] max-w-full flex-col gap-3.5 rounded-[18px] border border-border-input bg-surface p-[22px] text-ink shadow-[0_24px_60px_rgba(0,0,0,.45)]"
       >
         <span className="flex h-[42px] w-[42px] items-center justify-center rounded-full bg-v2-neg-soft">
           <Icon paths={step === 1 ? IC.trash : IC.warn} size={20} color="var(--v2-neg)" />
         </span>
         {step === 1 ? (
           <>
-            <div className="text-[16px] font-extrabold">{title}</div>
-            <div className="text-caption font-extrabold tracking-[.08em] text-v2-dim">{tr('kit.willDelete')}</div>
+            <div className="text-title-sm font-semibold">{title}</div>
+            <div className="text-caption font-semibold tracking-[.08em] text-ink-secondary">{tr('kit.willDelete')}</div>
             <div className="flex flex-col gap-[7px]">
               {lines.map((l) => (
-                <div key={l} className="flex gap-2.5 text-[12.5px] leading-[1.45] text-v2-muted">
+                <div key={l} className="flex gap-2.5 text-body-sm leading-[1.45] text-ink-secondary">
                   <span className="mt-1.5 h-1.5 w-1.5 flex-none rounded-full bg-v2-neg" />
                   <span className="font-numeric">{l}</span>
                 </div>
@@ -437,22 +437,22 @@ export function ConfirmDialog({ title, lines, ack, cta, onCancel, onConfirm }: {
               <button type="button" onClick={onCancel} className={secondary}>
                 {tr('common.cancel')}
               </button>
-              <button type="button" onClick={() => setStep(2)} className="cursor-pointer rounded-[10px] border border-v2-neg px-4 py-2.5 text-[12.5px] font-bold text-v2-neg">
+              <button type="button" onClick={() => setStep(2)} className="cursor-pointer rounded-[10px] border border-v2-neg px-4 py-2.5 text-body-sm font-semibold text-negative">
                 {tr('kit.continue')}
               </button>
             </div>
           </>
         ) : (
           <>
-            <div className="text-[16px] font-extrabold">{tr('kit.cantUndo')}</div>
-            <button type="button" onClick={() => setChecked(!checked)} className="flex cursor-pointer items-start gap-3 rounded-[12px] border border-v2-line2 p-3 text-left">
+            <div className="text-title-sm font-semibold">{tr('kit.cantUndo')}</div>
+            <button type="button" onClick={() => setChecked(!checked)} className="flex cursor-pointer items-start gap-3 rounded-[12px] border border-border-input p-3 text-left">
               <span
                 className="box-border flex h-5 w-5 flex-none items-center justify-center rounded-[6px]"
                 style={{ border: `2px solid ${checked ? 'var(--v2-neg)' : 'var(--v2-line2)'}`, background: checked ? 'var(--v2-neg)' : 'transparent' }}
               >
                 {checked && <Icon paths={IC.check} size={12} color="#fff" />}
               </span>
-              <span className="text-[12.5px] leading-[1.45]">{ack}</span>
+              <span className="text-body-sm leading-[1.45]">{ack}</span>
             </button>
             <div className="flex justify-end gap-2">
               <button type="button" onClick={() => { setStep(1); setChecked(false) }} className={secondary}>
@@ -461,7 +461,7 @@ export function ConfirmDialog({ title, lines, ack, cta, onCancel, onConfirm }: {
               <button
                 type="button"
                 onClick={() => checked && onConfirm()}
-                className="rounded-[10px] px-4 py-2.5 text-[12.5px] font-bold"
+                className="rounded-[10px] px-4 py-2.5 text-body-sm font-semibold"
                 style={{ cursor: checked ? 'pointer' : 'not-allowed', background: checked ? 'var(--v2-neg)' : 'var(--v2-neg-soft)', color: checked ? '#fff' : 'var(--v2-dim)' }}
               >
                 {cta}

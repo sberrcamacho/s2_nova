@@ -37,34 +37,34 @@ export function SidePanel({ title, onClose, footer, children }: SidePanelProps) 
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="fixed bottom-0 right-0 top-0 z-[41] flex [line-height:normal] w-[461px] max-w-full flex-col border-l border-v2-line2 bg-v2-surface text-v2-text shadow-[-24px_0_60px_rgba(0,0,0,.4)]"
+        className="fixed bottom-0 right-0 top-0 z-[41] flex [line-height:normal] w-[461px] max-w-full flex-col border-l border-border-input bg-surface text-ink shadow-[-24px_0_60px_rgba(0,0,0,.4)]"
       >
-        <div className="flex items-center gap-3 border-b border-v2-line px-[22px] py-[18px]">
-          <div className="flex-1 text-[16px] font-extrabold tracking-[-.015em]">{title}</div>
+        <div className="flex items-center gap-3 border-b border-border px-[22px] py-[18px]">
+          <div className="flex-1 text-title-sm font-semibold tracking-[-.015em]">{title}</div>
           <button
             type="button"
             onClick={onClose}
             aria-label={t('common.close')}
-            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-[9px] text-v2-dim hover:bg-v2-subtle hover:text-v2-text"
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-[9px] text-ink-secondary hover:bg-surface-sunken hover:text-ink"
           >
             <StrokeIcon paths={ICON_PATHS.close} size={14} />
           </button>
         </div>
         <div className="grid min-h-0 flex-1 auto-rows-max content-start gap-5 overflow-y-auto overflow-x-hidden px-6 pb-7 pt-[22px]">{children}</div>
-        <div className="flex justify-end gap-2.5 border-t border-v2-line px-6 py-4">{footer}</div>
+        <div className="flex justify-end gap-2.5 border-t border-border px-6 py-4">{footer}</div>
       </div>
     </>,
     document.body,
   )
 }
 
-export const fieldLabelClass = 'text-caption font-bold tracking-[.06em] text-v2-muted'
+export const fieldLabelClass = 'text-caption font-semibold tracking-[.06em] text-ink-secondary'
 
 // The shared chip (DESIGN-SYSTEM.md §6.5).
 export function chipClass(on: boolean): string {
   return flatClass(on)
 }
 
-export const secondaryButtonClass = 'cursor-pointer rounded-[10px] border border-v2-line2 px-4 py-2.5 text-[12.5px] font-bold text-v2-muted'
-export const primaryButtonClass = 'cursor-pointer rounded-[10px] bg-v2-accent px-4 py-2.5 text-[12.5px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-60'
-export const errorBoxClass = 'rounded-[10px] bg-[rgba(255,98,98,.1)] px-3 py-2.5 text-[12px] font-bold text-v2-neg'
+export const secondaryButtonClass = 'cursor-pointer rounded-[10px] border border-border-input px-4 py-2.5 text-body-sm font-semibold text-ink-secondary'
+export const primaryButtonClass = 'cursor-pointer rounded-[10px] bg-primary px-4 py-2.5 text-body-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60'
+export const errorBoxClass = 'rounded-[10px] bg-[rgba(255,98,98,.1)] px-3 py-2.5 text-body-sm font-semibold text-negative'

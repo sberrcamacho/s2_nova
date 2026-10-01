@@ -778,7 +778,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
               {t('common.close')}
             </button>
           </div>
-          <div className="grid grid-cols-5 gap-1">
+          <div className="grid grid-cols-4 gap-1">
             {parentCategories(ctypeIncome, false).map((x) => (
               <GridCell
                 key={x.id}
@@ -800,7 +800,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
           {cat && subs.length > 0 && (
             <>
               <div className="mt-1.5 text-caption font-bold tracking-[.06em] text-v2-muted">{fill(t('nm.subOf'), categoryName(cat))}</div>
-              <div className="grid grid-cols-5 gap-1">
+              <div className="grid grid-cols-4 gap-1">
                 {[{ id: null as CategoryId | null, name: t('nm.none.f') }, ...subs.map((s) => ({ id: s.id as CategoryId | null, name: categoryName(s.id) }))].map((x) => (
                   <GridCell
                     key={x.id ?? 'none'}

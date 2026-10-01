@@ -77,6 +77,16 @@ import com.s2nova.app.ui.screens.addtransaction.AttachOptions
 import com.s2nova.app.ui.screens.addtransaction.shortWallet
 import com.s2nova.app.ui.screens.addtransaction.sizeLabel
 import com.s2nova.app.ui.theme.NovaColors
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import com.s2nova.app.ui.components.BackHeader
+import com.s2nova.app.ui.theme.NovaType
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -161,19 +171,19 @@ fun TransactionDetailScreen(
     }
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        Row(Modifier.padding(start = 18.dp, end = 18.dp, top = 10.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Box(Modifier.size(38.dp).clip(CircleShape).noRippleClick(onBack), contentAlignment = Alignment.Center) {
-                Text("←", fontSize = 19.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Text(tr(StringKey.MV_TITLE), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
+        BackHeader(title = tr(StringKey.MV_TITLE), onBack = onBack, action = {
             if (tx != null && tx.loanKind == null && tx.parentLoanId == null) {
-                Box(Modifier.size(38.dp).clip(CircleShape).noRippleClick { onEdit(tx.id) }, contentAlignment = Alignment.Center) {
-                    Icon(MockupIcons.Pencil, contentDescription = tr(StringKey.MV_EDIT), tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(17.dp))
+                val editLabel = tr(StringKey.MV_EDIT)
+                Box(
+                    Modifier.size(48.dp).clip(CircleShape).clickable(role = Role.Button) { onEdit(tx.id) }.semantics { contentDescription = editLabel },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(MockupIcons.Pencil, contentDescription = null, tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(22.dp))
                 }
             }
-        }
+        })
         if (tx == null) {
-            Text(tr(StringKey.MV_GONE), fontSize = 12.5.sp, color = colors.textDim, modifier = Modifier.padding(24.dp))
+            Text(tr(StringKey.MV_GONE), style = NovaType.bodySm, color = colors.textDim, modifier = Modifier.padding(24.dp))
             return@Column
         }
         val wallet = wallets.firstOrNull { it.id == tx.walletId }
@@ -181,31 +191,35 @@ fun TransactionDetailScreen(
         val scheduled = tx.status == TransactionStatus.PLANNED
         val income = tx.type == TransactionType.INCOME
         val transfer = tx.type == TransactionType.TRANSFER
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(22.dp)).background(MaterialTheme.colorScheme.surface)
-                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(22.dp)).padding(horizontal = 18.dp, vertical = 22.dp),
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surface)
+                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp)).padding(horizontal = 16.dp, vertical = 20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 CatMark(if (transfer) CategoryRepository.TRANSFER else tx.subcategoryId ?: tx.category, 56.dp)
-                Text(if (transfer) tr(StringKey.NM_TYPE_TRANSFER) else repo.label(tx.subcategoryId ?: tx.category), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+                Text(if (transfer) tr(StringKey.NM_TYPE_TRANSFER) else repo.label(tx.subcategoryId ?: tx.category), style = NovaType.bodySm, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
                 Text(
                     (if (income) "+" else if (transfer) "" else "−") + formatMoney(abs(tx.amount), tx.currency),
-                    fontSize = 30.sp, lineHeight = 34.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.9).sp, maxLines = 1,
-                    color = if (scheduled || transfer) MaterialTheme.colorScheme.onBackground else if (income) colors.positive else colors.negative,
-                    style = TextStyle(fontFeatureSettings = TNUM),
+                    style = NovaType.displaySm, maxLines = 1, softWrap = false,
+                    autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 20.sp, maxFontSize = 32.sp, stepSize = 1.sp),
+                    color = if (scheduled || transfer) MaterialTheme.colorScheme.onSurface else if (income) colors.positive else colors.negative,
                 )
                 val wcur = wallet?.currency ?: principal
                 if (tx.currency != wcur || tx.currency != principal) {
                     val rate = AppContainer.currencyRepository.rate(tx.currency, principal)
-                    Text("≈ " + formatMoney(abs(tx.amount) * rate, principal) + " $principal · 1 ${tx.currency} = " + formatMoney(rate, principal), fontSize = 12.sp, color = colors.textDim, style = TextStyle(fontFeatureSettings = TNUM))
+                    Text("≈ " + formatMoney(abs(tx.amount) * rate, principal) + " $principal · 1 ${tx.currency} = " + formatMoney(rate, principal), style = NovaType.caption.copy(fontFeatureSettings = TNUM), color = colors.textDim, textAlign = TextAlign.Center)
                 }
-                Text(
-                    tr(if (scheduled) StringKey.MV_STATE_SCHEDULED else StringKey.MV_STATE_RECORDED),
-                    fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = if (scheduled) colors.warning else colors.positive,
-                    modifier = Modifier.padding(top = 4.dp).clip(RoundedCornerShape(999.dp)).background(if (scheduled) Color(0x29F0B429) else Color(0x2432C98A)).padding(horizontal = 10.dp, vertical = 4.dp),
-                )
+                // The state carries an icon, not just the tone.
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.padding(top = 4.dp).clip(RoundedCornerShape(999.dp)).background(if (scheduled) colors.warningSoft else colors.positiveSoft).padding(horizontal = 10.dp, vertical = 4.dp),
+                ) {
+                    V2Icon(if (scheduled) V2Icons.clock else V2Icons.check, if (scheduled) colors.warning else colors.positive, 14.dp)
+                    Text(tr(if (scheduled) StringKey.MV_STATE_SCHEDULED else StringKey.MV_STATE_RECORDED), style = NovaType.caption.copy(fontWeight = FontWeight.SemiBold), color = if (scheduled) colors.warning else colors.positive, maxLines = 1, softWrap = false)
+                }
             }
 
             val autoBudget = if (!income && !transfer) budgets.firstOrNull { it.budget.kind == BudgetKind.CATEGORY && repo.isIn(tx.subcategoryId ?: tx.category, it.budget.category) } else null
@@ -221,46 +235,47 @@ fun TransactionDetailScreen(
                 series?.let { tr(StringKey.MV_REPEATS) to com.s2nova.app.ui.screens.addtransaction.repeatSummary(com.s2nova.app.ui.screens.addtransaction.repeatOf(it), java.time.LocalDate.parse(tx.date)) },
             )
             Column(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surface)
-                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(18.dp)).padding(horizontal = 16.dp, vertical = 2.dp),
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surface)
+                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp)).padding(horizontal = 16.dp, vertical = 2.dp),
             ) {
                 rows.forEachIndexed { i, (label, value) ->
                     Row(
                         Modifier.fillMaxWidth().then(if (i < rows.size - 1) Modifier.drawBehind {
                             drawLine(colors.dividerSubtle, Offset(0f, size.height), Offset(size.width, size.height), 1.dp.toPx())
-                        } else Modifier).padding(vertical = 12.dp),
+                        } else Modifier).padding(vertical = 14.dp).semantics(mergeDescendants = true) {},
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalAlignment = Alignment.Bottom,
+                        verticalAlignment = Alignment.Top,
                     ) {
-                        Text(label, fontSize = 12.sp, color = colors.textDim, maxLines = 1)
-                        Text(value, fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, textAlign = TextAlign.End, modifier = Modifier.weight(1f), style = TextStyle(fontFeatureSettings = TNUM))
+                        Text(label, style = NovaType.bodySm, color = colors.textDim, maxLines = 1, softWrap = false)
+                        Text(value, style = NovaType.label.copy(fontFeatureSettings = TNUM), color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.End, modifier = Modifier.weight(1f))
                     }
                 }
             }
 
-            Text(tr(StringKey.MV_RECEIPT), fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 4.dp))
+            Text(tr(StringKey.MV_RECEIPT), style = NovaType.title, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 8.dp).semantics { heading() })
             val a = tx.attachment
             if (a != null) {
                 Row(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surface)
-                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(18.dp)).padding(12.dp),
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surface)
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp)).padding(start = 12.dp, top = 12.dp, end = 4.dp, bottom = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
                     Thumb(a.isPdf, bytes, Modifier.size(width = 64.dp, height = 80.dp).noRippleClick { viewer = true })
                     Column(Modifier.weight(1f)) {
-                        Text(a.name, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onBackground)
-                        Text(tr(StringKey.MV_RECEIPT_META, if (a.isPdf) "PDF" else tr(StringKey.NM_PHOTO), sizeLabel(a.size), fmtDate(a.createdAt)), fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
-                        Row(Modifier.padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                            Text(tr(StringKey.MV_RECEIPT_SEE), fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText, modifier = Modifier.noRippleClick { viewer = true })
-                            Text(tr(StringKey.MV_RECEIPT_REPLACE), fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText, modifier = Modifier.noRippleClick { attachSheet = true })
-                            Text(tr(StringKey.MV_RECEIPT_REMOVE), fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = colors.negative, modifier = Modifier.noRippleClick {
+                        Text(a.name, style = NovaType.titleSm, maxLines = 1, overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onSurface)
+                        Text(tr(StringKey.MV_RECEIPT_META, if (a.isPdf) "PDF" else tr(StringKey.NM_PHOTO), sizeLabel(a.size), fmtDate(a.createdAt)), style = NovaType.bodySm, color = colors.textDim)
+                        @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+                        androidx.compose.foundation.layout.FlowRow(Modifier.offset(x = (-8).dp)) {
+                            DetailLink(tr(StringKey.MV_RECEIPT_SEE), colors.link) { viewer = true }
+                            DetailLink(tr(StringKey.MV_RECEIPT_REPLACE), colors.link) { attachSheet = true }
+                            DetailLink(tr(StringKey.MV_RECEIPT_REMOVE), colors.negative) {
                                 val repoTx = AppContainer.transactionRepository
                                 repoTx.hideAttachmentLocal(tx.id)
                                 Snack.show(tr(StringKey.MV_RECEIPT_REMOVED), onUndo = { repoTx.restoreAttachment(tx.id, a) }, onTimeout = {
                                     AppContainer.appScope.launch { runCatching { repoTx.removeAttachment(tx.id) } }
                                 })
-                            })
+                            }
                         }
                     }
                 }
@@ -269,19 +284,19 @@ fun TransactionDetailScreen(
                 Row(
                     Modifier.fillMaxWidth().drawBehind {
                         drawRoundRect(line2, style = Stroke(1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx()))), cornerRadius = androidx.compose.ui.geometry.CornerRadius(16.dp.toPx()))
-                    }.clip(RoundedCornerShape(16.dp)).noRippleClick { attachSheet = true }.padding(14.dp),
+                    }.clip(RoundedCornerShape(16.dp)).heightIn(min = 52.dp).clickable(role = Role.Button) { attachSheet = true }.padding(14.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    V2Icon(V2Icons.clip, colors.accentText, 16.dp)
-                    Text(tr(StringKey.MV_RECEIPT_ATTACH), fontSize = 12.5.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText)
+                    V2Icon(V2Icons.clip, colors.link, 18.dp)
+                    Text(tr(StringKey.MV_RECEIPT_ATTACH), style = NovaType.label, color = colors.link)
                 }
             }
             Box(
-                Modifier.padding(top = 6.dp).fillMaxWidth().clip(RoundedCornerShape(16.dp)).border(1.dp, colors.negative.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
-                    .noRippleClick { requestDelete(tx, walletName, scope, onDeleted) }.padding(14.dp),
+                Modifier.padding(top = 12.dp).fillMaxWidth().height(52.dp).clip(RoundedCornerShape(12.dp)).border(1.dp, colors.negative, RoundedCornerShape(12.dp))
+                    .clickable(role = Role.Button) { requestDelete(tx, walletName, scope, onDeleted) },
                 contentAlignment = Alignment.Center,
-            ) { Text(tr(StringKey.MV_DELETE), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = colors.negative) }
+            ) { Text(tr(StringKey.MV_DELETE), style = NovaType.label, color = colors.negative, maxLines = 1, softWrap = false) }
         }
 
         if (viewer && tx.attachment != null) {
@@ -289,9 +304,10 @@ fun TransactionDetailScreen(
             Dialog(onDismissRequest = { viewer = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
                 Column(Modifier.fillMaxSize().background(Color(0xF0050507)).padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 28.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(att.name, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                        Box(Modifier.size(38.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.1f)).noRippleClick { viewer = false }, contentAlignment = Alignment.Center) {
-                            Text("✕", fontSize = 15.sp, color = Color.White)
+                        Text(att.name, style = NovaType.titleSm, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                        val closeLabel = tr(StringKey.COMMON_DISMISS)
+                        Box(Modifier.size(48.dp).clip(CircleShape).clickable(role = Role.Button) { viewer = false }.semantics { contentDescription = closeLabel }, contentAlignment = Alignment.Center) {
+                            Box(Modifier.size(40.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.1f)), contentAlignment = Alignment.Center) { V2Icon(V2Icons.close, Color.White, 20.dp) }
                         }
                     }
                     Box(Modifier.weight(1f).fillMaxWidth().padding(vertical = 20.dp), contentAlignment = Alignment.Center) {
@@ -313,14 +329,14 @@ fun TransactionDetailScreen(
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Box(
                             Modifier.weight(1f).clip(RoundedCornerShape(14.dp)).border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(14.dp))
-                                .noRippleClick { shareFile(context, att.name, att.mime, bytes, send = true) }.padding(13.dp),
+                                .clickable(role = Role.Button) { shareFile(context, att.name, att.mime, bytes, send = true) }.heightIn(min = 52.dp),
                             contentAlignment = Alignment.Center,
-                        ) { Text(tr(StringKey.MV_SHARE), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = Color.White) }
+                        ) { Text(tr(StringKey.MV_SHARE), style = NovaType.label, color = Color.White) }
                         Box(
                             Modifier.weight(1f).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.primary)
-                                .noRippleClick { shareFile(context, att.name, att.mime, bytes, send = false) }.padding(13.dp),
+                                .clickable(role = Role.Button) { shareFile(context, att.name, att.mime, bytes, send = false) }.heightIn(min = 52.dp),
                             contentAlignment = Alignment.Center,
-                        ) { Text(tr(StringKey.MV_RECEIPT_DOWNLOAD), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = Color.White) }
+                        ) { Text(tr(StringKey.MV_RECEIPT_DOWNLOAD), style = NovaType.label, color = Color.White) }
                     }
                 }
             }
@@ -399,3 +415,14 @@ private fun shareFile(context: android.content.Context, name: String, mime: Stri
     runCatching { context.startActivity(Intent.createChooser(intent, name)) }
 }
 
+
+// A text action on a 48 dp target.
+@Composable
+private fun DetailLink(label: String, color: Color, onClick: () -> Unit) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.heightIn(min = 48.dp).clip(RoundedCornerShape(12.dp)).clickable(role = Role.Button, onClick = onClick).padding(horizontal = 8.dp),
+    ) {
+        Text(label, style = NovaType.label, color = color, maxLines = 1, softWrap = false)
+    }
+}

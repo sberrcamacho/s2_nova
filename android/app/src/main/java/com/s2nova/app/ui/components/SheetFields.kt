@@ -72,14 +72,15 @@ fun SheetInput(
         value = value,
         onValueChange = onValueChange,
         singleLine = true,
-        textStyle = style.copy(color = textColor),
+        // The caller's style carries size and weight; the family is the app's.
+        textStyle = com.s2nova.app.ui.theme.NovaDefaultTextStyle.merge(style).copy(color = textColor),
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         visualTransformation = if (grouped) ThousandsGroupingVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None,
         modifier = Modifier.fillMaxWidth(),
         decorationBox = { inner ->
             Box {
-                if (value.isEmpty()) Text(placeholder, style = style.copy(color = NovaColors.current.textDim, fontWeight = FontWeight.SemiBold))
+                if (value.isEmpty()) Text(placeholder, style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.merge(style).copy(color = NovaColors.current.textDim, fontWeight = FontWeight.Medium))
                 inner()
             }
         },

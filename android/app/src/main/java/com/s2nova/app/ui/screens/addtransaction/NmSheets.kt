@@ -110,7 +110,7 @@ fun NmSheets(
                             Text(Currencies.name(code) + " · " + code, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                             Text(
                                 if (code == wcur) tr(StringKey.NM_CURRENCY_OF, walletName) else "1 $code = " + formatMoney(rateTo(code, wcur), wcur) + " " + wcur,
-                                fontSize = 12.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM),
+                                fontSize = 12.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 2.dp), style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM),
                             )
                         }
                     }
@@ -171,7 +171,7 @@ fun NmSheets(
 private fun androidx.compose.foundation.layout.RowScope.BudgetPickText(label: String, detail: String) {
     Column(Modifier.weight(1f)) {
         Text(label, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-        Text(detail, fontSize = 12.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 2.dp), style = TextStyle(fontFeatureSettings = TNUM))
+        Text(detail, fontSize = 12.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 2.dp), style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM))
     }
 }
 
@@ -348,7 +348,7 @@ private fun WhenSheet(s: NmState) {
             ) {
                 V2Icon(V2Icons.clock, MaterialTheme.colorScheme.onSurfaceVariant, 16.dp)
                 Text(tr(StringKey.NM_TIME), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
-                Text(s.time, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, style = TextStyle(fontFeatureSettings = TNUM))
+                Text(s.time, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM))
             }
             val future = s.future
             val note = when {
@@ -449,7 +449,7 @@ private fun RepeatSheet(s: NmState) {
                         V2Icon(V2Icons.cal, MaterialTheme.colorScheme.onSurfaceVariant, 16.dp)
                         Text(
                             (if (s.date == s.today) tr(StringKey.NM_STARTS_TODAY) else tr(StringKey.NM_STARTS_ON, fmtDateLong(s.date.toString()))) + (if (s.seriesMode) "" else " · " + s.time),
-                            fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f), style = TextStyle(fontFeatureSettings = TNUM),
+                            fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f), style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM),
                         )
                         Text(tr(StringKey.NM_CHANGE), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = NovaColors.current.accentText)
                     }
@@ -481,7 +481,7 @@ fun ConfirmModeRow(label: String, detail: String, selected: Boolean, onClick: ()
 fun Stepper(label: String, onMinus: () -> Unit, onPlus: () -> Unit) {
     Row(Modifier.padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         StepBtn("−", onMinus)
-        Text(label, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, textAlign = TextAlign.Center, modifier = Modifier.weight(1f), style = TextStyle(fontFeatureSettings = TNUM))
+        Text(label, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, textAlign = TextAlign.Center, modifier = Modifier.weight(1f), style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM))
         StepBtn("+", onPlus)
     }
 }
@@ -507,7 +507,7 @@ fun DateBox(value: String, modifier: Modifier = Modifier, placeholder: String = 
     ) {
         val shown = runCatching { LocalDate.parse(value) }.getOrNull()?.let { "%02d/%02d/%04d".format(it.dayOfMonth, it.monthValue, it.year) }
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(shown ?: placeholder, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = if (shown != null) MaterialTheme.colorScheme.onBackground else NovaColors.current.textDim, style = TextStyle(fontFeatureSettings = TNUM), modifier = Modifier.weight(1f))
+            Text(shown ?: placeholder, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = if (shown != null) MaterialTheme.colorScheme.onBackground else NovaColors.current.textDim, style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM), modifier = Modifier.weight(1f))
             V2Icon(V2Icons.cal, MaterialTheme.colorScheme.onBackground, 15.dp)
         }
     }

@@ -208,7 +208,7 @@ fun BudgetSheet(draft: BudgetEditDraft, onChange: (BudgetEditDraft) -> Unit, onD
                     else (if (d.sub != null) tr(StringKey.BUD_SCOPE_ONLY, repo.label(d.sub)) else tr(StringKey.BUD_SCOPE_ALL, repo.name(d.category))) +
                         (if (wl.isNotEmpty()) tr(StringKey.BUD_SCOPE_FROM, wl.joinToString(", ")) else tr(StringKey.BUD_SCOPE_ALL_WALLETS)) + " · " +
                         tr(if (d.period == BudgetPeriod.CUSTOM) StringKey.BUD_SCOPE_NO_RESET else StringKey.BUD_SCOPE_RESET) + "."
-                    Text(note, fontSize = 12.sp, lineHeight = 16.sp, color = colors.textDim, modifier = Modifier.offset(y = (-4).dp), style = TextStyle(fontFeatureSettings = TNUM))
+                    Text(note, fontSize = 12.sp, lineHeight = 16.sp, color = colors.textDim, modifier = Modifier.offset(y = (-4).dp), style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM))
                 }
                 d.error?.let { Text(it, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = colors.negative) }
                 V2Button(tr(StringKey.COMMON_SAVE), enabled = d.valid, onClick = { onSave(d.toSave()) })

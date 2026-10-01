@@ -98,13 +98,13 @@ fun AmountPadSheet(
         ) {
             Text(
                 if (hasOps) AmountPad.format(expr) + " =" else "", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = colors.textDim,
-                maxLines = 1, modifier = Modifier.heightIn(min = 18.dp), style = TextStyle(fontFeatureSettings = TNUM),
+                maxLines = 1, modifier = Modifier.heightIn(min = 18.dp), style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM),
             )
             Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(currency, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText, modifier = Modifier.padding(bottom = 7.dp))
                 Text(
                     AmountPad.display(expr), fontSize = 34.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-1).sp,
-                    color = if (value > 0) MaterialTheme.colorScheme.onBackground else colors.textDim, style = TextStyle(fontFeatureSettings = TNUM), maxLines = 1,
+                    color = if (value > 0) MaterialTheme.colorScheme.onBackground else colors.textDim, style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM), maxLines = 1,
                 )
             }
         }
@@ -182,8 +182,8 @@ fun AmountField(
     val onClick = { if (enabled) open = true }
     val content: @Composable () -> Unit = {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(if (style == AmountBoxStyle.SHEET) 8.dp else 10.dp)) {
-            Text(symbol, fontSize = fontSize, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurfaceVariant, style = TextStyle(fontFeatureSettings = TNUM))
-            Text(shown, fontSize = fontSize, fontWeight = FontWeight.ExtraBold, color = textColor, maxLines = 1, style = TextStyle(fontFeatureSettings = TNUM))
+            Text(symbol, fontSize = fontSize, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurfaceVariant, style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM))
+            Text(shown, fontSize = fontSize, fontWeight = FontWeight.ExtraBold, color = textColor, maxLines = 1, style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM))
         }
     }
     when (style) {
