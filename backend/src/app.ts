@@ -17,6 +17,7 @@ import { healthRoutes } from "./routes/health.js";
 import { meRoutes } from "./routes/me.js";
 import { dataImportRoutes } from "./routes/dataImport.js";
 import { dataExportRoutes } from "./routes/dataExport.js";
+import { productRoutes } from "./routes/products.js";
 import { recurringSeriesRoutes } from "./routes/recurringSeries.js";
 import { securityRoutes } from "./routes/security.js";
 import { summaryRoutes } from "./routes/summary.js";
@@ -68,6 +69,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(categoryRoutes, { prefix: "/api/v1" });
   await app.register(currencyRoutes, { prefix: "/api/v1" });
   await app.register(transactionRoutes, { prefix: "/api/v1" });
+  await app.register(productRoutes, { prefix: "/api/v1" });
   await app.register(budgetRoutes, { prefix: "/api/v1" });
   await app.register(goalRoutes, { prefix: "/api/v1" });
   await app.register(recurringSeriesRoutes, { prefix: "/api/v1" });

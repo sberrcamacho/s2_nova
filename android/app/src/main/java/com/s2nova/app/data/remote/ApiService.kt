@@ -75,6 +75,9 @@ interface ApiService {
     @HTTP(method = "DELETE", path = "accounts/{id}", hasBody = true)
     suspend fun deleteAccount(@Path("id") id: String, @Body body: DeleteAccountRequest): Response<Unit>
 
+    @GET("products/{code}")
+    suspend fun getProduct(@Path("code") code: String): ProductDto
+
     @GET("categories")
     suspend fun getCategories(): List<CategoryDto>
 

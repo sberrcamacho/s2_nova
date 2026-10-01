@@ -10,6 +10,7 @@ import { Money } from '@/components/v2/Money'
 import { RowSkeletons, SyncBanner } from '@/components/v2/Rows'
 import { primaryButtonClass } from '@/components/panels/SidePanel'
 import { accountService } from '@/services/accountService'
+import { productService, type CatalogProduct } from '@/services/productService'
 import { recurringService } from '@/services/recurringService'
 import { transactionService } from '@/services/transactionService'
 import { useAppData } from '@/state/AppDataContext'
@@ -394,6 +395,7 @@ function MovementDetail({
   const { budgets } = useAppData()
   const openMovement = useNewMovement()
   const [series, setSeries] = useState<RecurringSeries | null>(null)
+  const [product, setProduct] = useState<CatalogProduct | null>(null)
   const [confirm, setConfirm] = useState(false)
   const [viewer, setViewer] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -410,6 +412,11 @@ function MovementDetail({
     )
   }, [txn.recurringSeriesId])
 
+  useEffect(() => {
+    setProduct(null)
+    if (txn.productId) void productService.get(txn.productId).then(setProduct)
+  }, [txn.productId])
+
   // The category budget this expense counts toward, if any.
   const budget = txn.type === 'expense' ? budgets.find((b) => b.kind !== 'custom' && !!b.category && inCategory(txn, b.category)) : undefined
 
@@ -421,6 +428,7 @@ function MovementDetail({
     [tr('mv.row.wallet'), transfer ? `${walletName} → ${shortWallet(walletTo?.name ?? '')}` : `${walletName} · ${wallet?.currency ?? txn.currency}`],
     txn.type === 'income' && txn.counterpartyName ? [tr('nm.from'), txn.counterpartyName] : null,
     txn.merchant ? [tr('mv.row.merchant'), txn.merchant] : null,
+    product ? [tr('mv.row.product'), [product.name, product.brand].filter(Boolean).join(' · ')] : null,
     budget ? [tr('nm.budget'), `${budget.name || categoryName(budget.category)} · ${budget.percentage}%`] : null,
     series ? [tr('mv.row.repeats'), repeatText(series, txn.date)] : null,
   ].filter((r): r is [string, string] => !!r)

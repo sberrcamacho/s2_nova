@@ -18,6 +18,11 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -57,16 +62,14 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
-import com.s2nova.app.data.mock.paymentMethods
 import com.s2nova.app.data.model.NewTransactionInput
 import com.s2nova.app.data.model.NotificationTone
-import com.s2nova.app.data.model.PaymentMethod
 import com.s2nova.app.data.model.Product
 import com.s2nova.app.data.model.TransactionType
+import com.s2nova.app.data.model.Wallet
 import com.s2nova.app.data.todayISO
 import com.s2nova.app.ui.components.categoryName
 import com.s2nova.app.ui.components.CategoryIcon
-import com.s2nova.app.ui.paymentMethodStringKey
 import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.StringKey
@@ -75,6 +78,7 @@ import kotlinx.coroutines.launch
 
 private sealed interface ScanState {
     data object Scanning : ScanState
+    data object Looking : ScanState
     data class Found(val product: Product) : ScanState
     data class NotFound(val code: String) : ScanState
 }
@@ -102,14 +106,18 @@ fun ScannerScreen(
 
     var scanState by remember { mutableStateOf<ScanState>(ScanState.Scanning) }
     var manualCode by remember { mutableStateOf("") }
-    var paymentMethod by remember { mutableStateOf(PaymentMethod.DEBIT_CARD) }
     val scope = rememberCoroutineScope()
     val wallets by AppContainer.walletRepository.wallets.collectAsStateWithLifecycle()
 
+    // Barcodes and QR payloads are the same thing: a code the backend resolves
+    // against its own table and public product databases.
     fun runScan(code: String) {
         if (scanState !is ScanState.Scanning) return
-        val product = AppContainer.productRepository.lookupBarcode(code)
-        scanState = if (product != null) ScanState.Found(product) else ScanState.NotFound(code)
+        scanState = ScanState.Looking
+        scope.launch {
+            val product = runCatching { AppContainer.productRepository.lookup(code) }.getOrNull()
+            scanState = if (product != null) ScanState.Found(product) else ScanState.NotFound(code)
+        }
     }
 
     Box(
@@ -164,7 +172,22 @@ fun ScannerScreen(
 
             Spacer(Modifier.weight(1f))
 
-            if (scanState is ScanState.NotFound) {
+            val notFound = scanState as? ScanState.NotFound
+            if (scanState is ScanState.Looking) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), color = androidx.compose.ui.graphics.Color.White, strokeWidth = 2.dp)
+                    Text(
+                        t(StringKey.SCANNER_LOOKING_UP),
+                        color = androidx.compose.ui.graphics.Color.White,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(start = 12.dp),
+                    )
+                }
+            } else if (notFound != null) {
                 Text(
                     t(StringKey.SCANNER_NOT_FOUND),
                     color = androidx.compose.ui.graphics.Color.White,
@@ -173,7 +196,7 @@ fun ScannerScreen(
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 )
                 TextButton(onClick = { scanState = ScanState.Scanning }, modifier = Modifier.fillMaxWidth()) {
-                    Text(t(StringKey.SCANNER_TRY_AGAIN), color = colors.negative)
+                    Text(t(StringKey.SCANNER_TRY_AGAIN), color = androidx.compose.ui.graphics.Color.White)
                 }
             } else {
                 Text(
@@ -217,38 +240,30 @@ fun ScannerScreen(
         ModalBottomSheet(onDismissRequest = { scanState = ScanState.Scanning }) {
             ProductFoundSheet(
                 product = found.product,
-                paymentMethod = paymentMethod,
-                onPaymentMethodChange = { paymentMethod = it },
+                wallets = wallets,
                 onDiscard = { scanState = ScanState.Scanning },
-                onConfirm = {
-                    // Scanner has no wallet picker of its own — uses the
-                    // first wallet, same "must have a wallet first" rule
-                    // AddTransactionScreen enforces. Confirm is a no-op if
-                    // none exists yet rather than silently failing.
-                    val walletId = wallets.firstOrNull()?.id
-                    if (walletId != null) {
-                        scope.launch {
-                            runCatching {
-                                AppContainer.transactionRepository.add(
-                                    NewTransactionInput(
-                                        walletId = walletId,
-                                        description = found.product.name,
-                                        amount = found.product.price,
-                                        type = TransactionType.EXPENSE,
-                                        category = found.product.category,
-                                        date = todayISO(),
-                                        merchant = found.product.brand,
-                                        productId = found.product.barcode,
-                                    ),
-                                )
-                                AppContainer.walletRepository.refresh()
-                                AppContainer.notificationRepository.add(
-                                    title = t(StringKey.SCANNER_NOTIF_TITLE),
-                                    message = "${t(StringKey.SCANNER_NOTIF_MESSAGE_PREFIX)}${found.product.name}${t(StringKey.SCANNER_NOTIF_MESSAGE_MIDDLE)}${format(found.product.price)}.",
-                                    tone = NotificationTone.INFO,
-                                )
-                                onPurchaseRegistered()
-                            }
+                onConfirm = { walletId, amount ->
+                    scope.launch {
+                        runCatching {
+                            AppContainer.transactionRepository.add(
+                                NewTransactionInput(
+                                    walletId = walletId,
+                                    description = found.product.name,
+                                    amount = amount,
+                                    type = TransactionType.EXPENSE,
+                                    category = found.product.category,
+                                    date = todayISO(),
+                                    merchant = found.product.brand.ifBlank { null },
+                                    productId = found.product.id,
+                                ),
+                            )
+                            AppContainer.walletRepository.refresh()
+                            AppContainer.notificationRepository.add(
+                                title = t(StringKey.SCANNER_NOTIF_TITLE),
+                                message = "${t(StringKey.SCANNER_NOTIF_MESSAGE_PREFIX)}${found.product.name}${t(StringKey.SCANNER_NOTIF_MESSAGE_MIDDLE)}${format(amount)}.",
+                                tone = NotificationTone.INFO,
+                            )
+                            onPurchaseRegistered()
                         }
                     }
                 },
@@ -320,55 +335,57 @@ private fun Corner(alignment: Alignment, color: androidx.compose.ui.graphics.Col
     }
 }
 
-// paymentMethod/onPaymentMethodChange are cosmetic only: the backend now
-// derives the saved transaction's payment method from whichever wallet the
-// purchase lands in (see data/model/Models.kt's PaymentMethod doc comment),
-// same as AddTransactionScreen. Scanner has no wallet picker of
-// its own (always uses the first wallet — see onConfirm below), so this
-// selector doesn't actually change anything about the saved record; kept
-// as-is since giving Scanner a real wallet picker is out of scope here.
+// The amount is typed by the user (public product databases carry no
+// prices); the sample products only suggest one. The purchase lands in the
+// wallet picked here — an expense like any other, linked to the product.
 @Composable
 private fun ProductFoundSheet(
     product: Product,
-    paymentMethod: PaymentMethod,
-    onPaymentMethodChange: (PaymentMethod) -> Unit,
+    wallets: List<Wallet>,
     onDiscard: () -> Unit,
-    onConfirm: () -> Unit,
+    onConfirm: (walletId: String, amount: Double) -> Unit,
 ) {
     val t = rememberStrings()
+    var amountText by remember { mutableStateOf(if (product.price > 0) product.price.toLong().toString() else "") }
+    var walletId by remember { mutableStateOf(wallets.firstOrNull()?.id) }
+    val amount = amountText.replace(',', '.').toDoubleOrNull() ?: 0.0
+    val canConfirm = walletId != null && amount > 0
     Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             CategoryIcon(category = product.category, size = com.s2nova.app.ui.components.CategoryIconSize.LG)
             Column(modifier = Modifier.padding(start = 14.dp)) {
                 Text(product.name, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
                 Text(
-                    "${product.brand} · ${product.unit} · ${categoryName(product.category)}",
+                    listOf(product.brand, product.unit, categoryName(product.category)).filter { it.isNotBlank() }.joinToString(" · "),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
-        val format = rememberCurrencyFormatter()
-        Text(
-            format(product.price),
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.ExtraBold,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(top = 16.dp),
+        OutlinedTextField(
+            value = amountText,
+            onValueChange = { v -> amountText = v.filter { it.isDigit() || it == '.' || it == ',' } },
+            label = { Text(t(StringKey.SCANNER_AMOUNT_LABEL)) },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
         )
 
-        Text(t(StringKey.ADD_TXN_PAYMENT_METHOD), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 20.dp, bottom = 8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            paymentMethods.take(3).forEach { pm ->
-                val selected = paymentMethod == pm.id
+        Text(t(StringKey.SCANNER_WALLET_LABEL), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
+        Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            wallets.forEach { w ->
+                val selected = walletId == w.id
                 Text(
-                    t(paymentMethodStringKey(pm.id)),
+                    w.name,
                     color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
                     style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
                     modifier = Modifier
                         .background(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(50))
-                        .clickable { onPaymentMethodChange(pm.id) }
-                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                        .clickable { walletId = w.id }
+                        .heightIn(min = 48.dp)
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
                 )
             }
         }
@@ -376,11 +393,12 @@ private fun ProductFoundSheet(
         Row(modifier = Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             TextButton(onClick = onDiscard, modifier = Modifier.weight(1f)) { Text(t(StringKey.SCANNER_DISCARD)) }
             Button(
-                onClick = onConfirm,
+                enabled = canConfirm,
+                onClick = { walletId?.let { onConfirm(it, amount) } },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 shape = RoundedCornerShape(14.dp),
                 modifier = Modifier.weight(1f),
-            ) { Text(t(StringKey.SCANNER_CONFIRM_PURCHASE)) }
+            ) { Text(t(StringKey.SCANNER_CONFIRM_PURCHASE), maxLines = 1) }
         }
     }
 }

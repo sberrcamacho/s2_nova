@@ -869,6 +869,7 @@ const dictionary = {
   "mv.row.note": { es: "Nota", en: "Note" },
   "mv.row.wallet": { es: "Billetera", en: "Wallet" },
   "mv.row.merchant": { es: "Comercio", en: "Merchant" },
+  "mv.row.product": { es: "Producto", en: "Product" },
   "mv.row.repeats": { es: "Se repite", en: "Repeats" },
   "mv.receipt.saved": { es: "Comprobante guardado en el movimiento", en: "Receipt saved to the transaction" },
   "mv.receipt.errSave": { es: "No se pudo guardar el comprobante.", en: "Couldn't save the receipt." },

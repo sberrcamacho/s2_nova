@@ -18,6 +18,12 @@ const envSchema = z.object({
   // unset, the message is printed to the server log instead of being sent.
   RESEND_API_KEY: z.string().default(""),
   MAIL_FROM: z.string().default("S2 Nova <no-reply@s2nova.app>"),
+  // Scanner: last-resort product identification with Claude + web search when
+  // no product database knows a barcode. Unset = that step is skipped.
+  ANTHROPIC_API_KEY: z.string().default(""),
+  // Same step through Google Gemini + Google Search grounding (free tier).
+  // Tried before Claude when both are set.
+  GEMINI_API_KEY: z.string().default(""),
   // Where the recovery link in the email points (the Web client).
   WEB_APP_URL: z.string().default("http://localhost:8443"),
 });

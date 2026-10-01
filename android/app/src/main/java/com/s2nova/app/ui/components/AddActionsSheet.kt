@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -24,6 +25,10 @@ import androidx.compose.ui.unit.sp
 import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.rememberStrings
 import com.s2nova.app.ui.theme.NovaColors
+
+// The scanner is built but parked as a future feature for now: its row shows
+// greyed out with "Próximamente" and does nothing. Flip to true to re-enable.
+private const val SCAN_ENABLED = false
 
 // The [+] action sheet (v2 mockup `addActions`): manual entry and scan.
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,7 +49,8 @@ fun AddActionsSheet(
         ActionRow(
             icon = MockupIcons.Scan,
             title = t(StringKey.ADD_ACTION_SCAN_TITLE),
-            subtitle = t(StringKey.ADD_ACTION_SCAN_SUBTITLE),
+            subtitle = if (SCAN_ENABLED) t(StringKey.ADD_ACTION_SCAN_SUBTITLE) else t(StringKey.ADD_ACTION_COMING_SOON),
+            enabled = SCAN_ENABLED,
             onClick = onScan,
         )
     }
@@ -55,13 +61,15 @@ private fun ActionRow(
     icon: ImageVector,
     title: String,
     subtitle: String,
+    enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
     val colors = NovaColors.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .alpha(if (enabled) 1f else 0.5f)
+            .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 4.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

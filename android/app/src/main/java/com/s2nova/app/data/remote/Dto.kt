@@ -528,3 +528,15 @@ data class AlertDto(
     val walletName: String? = null,
     val date: String? = null,
 )
+
+// backend/src/routes/products.ts — scanner catalog (barcode or QR payload).
+@Serializable
+data class ProductDto(
+    val id: String,
+    val barcode: String,
+    val name: String,
+    val brand: String? = null,
+    val categoryId: String? = null,
+    val imageUrl: String? = null,
+    val source: String? = null,
+)

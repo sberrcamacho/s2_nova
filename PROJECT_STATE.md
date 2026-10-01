@@ -61,7 +61,7 @@ budgets, goals with periodic contributions, Préstamos), Reportes,
 Billeteras with currency, Ajustes (Perfil, Seguridad, Monedas,
 Categorías), notifications with "Confirmar aporte" / "Omitir esta vez",
 two-step destructive confirmation + undo snackbar, guest mode, 2-step first
-run, mini-guides, barcode scanning.
+run, mini-guides, barcode and QR scanning (backend `/products` resolves codes against the local table, then Open Food/Beauty/Products/Pet Food Facts and UPCitemdb, caching hits; Web shows the linked product in the movement detail).
 
 ## Web — v2 migration status
 

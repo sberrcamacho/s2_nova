@@ -1,19 +1,33 @@
-import { productByBarcode, sampleBarcodes } from '@/data/products'
-import { delay } from '@/lib/async'
-import type { Product } from '@/types'
+import { apiClient } from '@/lib/apiClient'
 
-// Simulates a real product-lookup API (e.g. an external UPC/EAN database).
-// A barcode is only an identifier — this call is what actually resolves it
-// to product information, exactly as a real integration would.
+// Scanner catalog (backend/src/routes/products.ts). The camera lives on
+// Android; Web resolves a typed code or the product linked to a movement.
+export interface CatalogProduct {
+  id: string
+  barcode: string
+  name: string
+  brand: string | null
+  categoryId: string | null
+  imageUrl: string | null
+  source: string
+}
+
 export const productService = {
-  async lookupBarcode(barcode: string): Promise<Product | null> {
-    const product = productByBarcode[barcode]
-    return delay(product ?? null, 900)
+  // null when no database knows the code.
+  async lookup(code: string): Promise<CatalogProduct | null> {
+    try {
+      return await apiClient.get<CatalogProduct>(`/products/${encodeURIComponent(code.trim())}`)
+    } catch (err) {
+      if ((err as { status?: number }).status === 404) return null
+      throw err
+    }
   },
 
-  // Used by the scanner screen to simulate a camera successfully reading a
-  // code, since there is no real camera/decoder integration yet.
-  getRandomSampleBarcode(): string {
-    return sampleBarcodes[Math.floor(Math.random() * sampleBarcodes.length)]
+  async get(id: string): Promise<CatalogProduct | null> {
+    try {
+      return await apiClient.get<CatalogProduct>(`/products/id/${id}`)
+    } catch {
+      return null
+    }
   },
 }

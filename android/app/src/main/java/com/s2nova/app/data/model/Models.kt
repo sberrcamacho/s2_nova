@@ -257,6 +257,10 @@ data class BudgetProgress(
     val status: BudgetStatus,
 )
 
+// `id` is the backend row's UUID (what a movement's productId must carry);
+// null for the offline sample products. `price` is only a suggestion for
+// those samples — public product databases carry none, so it is 0.0 and the
+// user types the amount.
 data class Product(
     val barcode: String,
     val name: String,
@@ -264,6 +268,7 @@ data class Product(
     val category: CategoryId,
     val price: Double,
     val unit: String,
+    val id: String? = null,
 )
 
 enum class Currency { COP, USD }
