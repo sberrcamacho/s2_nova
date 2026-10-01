@@ -1,3 +1,4 @@
+import { StrokeIcon } from '@/components/v2/icons'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import logoMarkDark from '@/assets/logo-mark-dark.png'
@@ -73,24 +74,24 @@ export default function FirstRunPage() {
   }
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-v2-bg p-10 text-v2-text [line-height:normal]">
-      <div className="flex w-[578px] max-w-full flex-col gap-[22px] rounded-[22px] border border-v2-line bg-v2-surface p-7">
+    <div className="flex min-h-screen w-full items-center justify-center bg-bg p-4 text-ink [line-height:normal] min-[640px]:p-10">
+      <div className="flex w-[578px] max-w-full flex-col gap-[22px] rounded-[20px] border border-border bg-surface p-5 min-[640px]:p-7">
         <div className="flex items-center gap-3.5">
-          <button type="button" onClick={back} aria-label={tr('common.back')} className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-[10px] border border-v2-line2 text-v2-muted">
-            ←
+          <button type="button" onClick={back} aria-label={tr('common.back')} className="flex h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-[10px] border border-border-input text-ink hover:bg-surface-sunken">
+            <StrokeIcon paths="M19 12H5 M11 6l-6 6 6 6" size={18} />
           </button>
           <div className="flex flex-1 gap-1.5">
             {[0, 1].map((i) => (
-              <span key={i} className={cn('h-[3px] flex-1 rounded-[2px]', i <= step ? 'bg-v2-accent' : 'bg-v2-line2')} />
+              <span key={i} className={cn('h-1 flex-1 rounded-full', i <= step ? 'bg-primary-border' : 'bg-border')} />
             ))}
           </div>
           <img src={logoMarkDark} alt="S2 Nova" className="h-[30px] w-[30px] rounded-[9px] object-cover" />
         </div>
 
         <div>
-          <div className="text-caption font-extrabold tracking-[.12em] text-v2-accent2">{fill(tr('first.step'), step + 1)}</div>
-          <h1 className="mt-2 text-[26px] font-extrabold tracking-[-.025em]">{tr(step === 1 ? 'first.wallet.title' : 'first.currency.title')}</h1>
-          <div className="mt-2 text-[13px] leading-[1.5] text-v2-muted [text-wrap:pretty]">
+          <div className="text-overline font-semibold uppercase text-link">{fill(tr('first.step'), step + 1)}</div>
+          <h1 className="mt-2 text-headline font-bold">{tr(step === 1 ? 'first.wallet.title' : 'first.currency.title')}</h1>
+          <div className="mt-2 text-body-sm text-ink-secondary [text-wrap:pretty]">
             {tr(step === 1 ? 'first.wallet.body' : 'first.currency.body')}
           </div>
         </div>
@@ -108,14 +109,14 @@ export default function FirstRunPage() {
                   tabIndex={0}
                   onClick={() => setPrincipal(code)}
                   onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setPrincipal(code)}
-                  className={cn('flex cursor-pointer items-center gap-3 rounded-[14px] border px-3.5 py-3', on ? 'border-v2-accent-line bg-v2-accent/12' : 'border-v2-line2 bg-transparent')}
+                  className={cn('flex min-h-14 cursor-pointer items-center gap-3 rounded-[12px] border px-3.5 py-2.5', on ? 'border-primary-border bg-accent-soft' : 'border-border-input bg-transparent hover:bg-surface-sunken')}
                 >
-                  <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-v2-accent/16 text-caption font-extrabold text-v2-accent2">{c.symbol}</span>
+                  <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-accent-soft text-caption font-bold text-on-primary-soft">{c.symbol}</span>
                   <div className="min-w-0 flex-1">
-                    <div className="text-[13px] font-bold">{`${currencyName(code, c.name)} · ${code}`}</div>
-                    {code === region.currency && <div className="mt-[3px] text-caption font-bold text-v2-accent2">{fill(tr('first.detected'), region.country)}</div>}
+                    <div className="text-title-sm font-semibold">{`${currencyName(code, c.name)} · ${code}`}</div>
+                    {code === region.currency && <div className="text-body-sm text-link">{fill(tr('first.detected'), region.country)}</div>}
                   </div>
-                  <span className={cn('h-5 w-5 flex-none rounded-full border-2', on ? 'border-v2-accent bg-v2-accent shadow-[inset_0_0_0_2.5px_var(--v2-surface)]' : 'border-v2-line2 bg-transparent')} />
+                  <span className={cn('h-5 w-5 flex-none rounded-full border-2', on ? 'border-primary-border bg-primary-border shadow-[inset_0_0_0_3px_var(--color-surface)]' : 'border-border-input bg-transparent')} />
                 </div>
               )
             })}
@@ -128,9 +129,9 @@ export default function FirstRunPage() {
             </div>
             <div className="flex flex-col gap-2">
               <Label>{tr('wallet.type')}</Label>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={tr('wallet.type')}>
                 {WALLET_KINDS.map((k) => (
-                  <Flat key={k.type} on={type === k.type} onClick={() => setType(k.type)}>
+                  <Flat key={k.type} role="radio" on={type === k.type} onClick={() => setType(k.type)}>
                     {walletKindLabel(k.type)}
                   </Flat>
                 ))}
@@ -138,11 +139,11 @@ export default function FirstRunPage() {
             </div>
             <div className="flex flex-col gap-1.5">
               <Label>{tr('wallet.currency')}</Label>
-              <div className="flex h-[44px] items-center gap-2.5 rounded-[10px] border border-v2-line bg-v2-bg px-3 text-[13px] font-bold">
-                <span className="text-v2-accent2">{cur.symbol}</span>
+              <div className="flex h-11 items-center gap-2.5 rounded-[8px] border border-border bg-surface-sunken px-3 text-body-sm font-semibold">
+                <span className="text-link">{cur.symbol}</span>
                 {`${currencyName(principal, cur.name)} · ${principal}`}
               </div>
-              <div className="text-caption text-v2-dim">{tr('first.otherCurrencies')}</div>
+              <div className="text-caption text-ink-secondary">{tr('first.otherCurrencies')}</div>
             </div>
             <div className="flex flex-col gap-1.5">
               <Label>{tr('wallet.balance')}</Label>
@@ -155,7 +156,7 @@ export default function FirstRunPage() {
           type="button"
           onClick={() => void next()}
           disabled={!valid || busy}
-          className={cn('flex h-[46px] items-center justify-center rounded-[12px] text-[14px] font-extrabold', valid ? 'cursor-pointer bg-v2-accent text-white' : 'cursor-not-allowed bg-v2-surface2 text-v2-dim')}
+          className={cn('flex h-11 items-center justify-center rounded-[12px] bg-primary text-label font-semibold text-on-primary', valid ? 'cursor-pointer hover:bg-primary-pressed' : 'cursor-not-allowed opacity-40')}
         >
           {tr(step === 1 ? 'first.create' : 'kit.continue')}
         </button>

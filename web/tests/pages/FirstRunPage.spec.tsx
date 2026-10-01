@@ -58,7 +58,7 @@ describe('First run', () => {
     expect(screen.getByText('PASO 2 DE 2')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Crear billetera y entrar' })).toBeDisabled()
     await user.type(screen.getByPlaceholderText('Nequi, Bancolombia, Efectivo…'), 'Nequi')
-    await user.click(screen.getByRole('button', { name: 'Nequi' }))
+    await user.click(screen.getByRole('radio', { name: 'Nequi' }))
     await user.type(screen.getByPlaceholderText('0'), '350000')
     await user.click(screen.getByRole('button', { name: 'Crear billetera y entrar' }))
 

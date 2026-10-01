@@ -25,6 +25,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.s2nova.app.ui.tr
 import com.s2nova.app.ui.StringKey
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.input.KeyboardType
+import com.s2nova.app.ui.components.NovaPrimaryButton
+import com.s2nova.app.ui.components.NovaTextField
+import com.s2nova.app.ui.theme.NovaType
 
 @Composable
 fun ForgotPasswordScreen(onBackToLogin: () -> Unit) {
@@ -41,32 +51,36 @@ fun ForgotPasswordScreen(onBackToLogin: () -> Unit) {
     ) {
         if (submitted) {
             Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
-                Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = NovaColors.current.link, modifier = Modifier.padding(bottom = 12.dp))
-                TextButton(onClick = onBackToLogin) { Text(tr(StringKey.AUTH_BACK_TO_LOGIN)) }
+                Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = NovaColors.current.positive, modifier = Modifier.padding(bottom = 12.dp))
+                BackToLogin(onBackToLogin)
             }
         } else {
+            // The same labeled field and primary button as Login.
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                OutlinedTextField(
+                NovaTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = { Text(tr(StringKey.AUTH_EMAIL_FULL)) },
-                    leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null) },
-                    singleLine = true,
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier.fillMaxWidth(),
+                    label = tr(StringKey.AUTH_EMAIL),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 )
-                Button(
-                    onClick = { submitted = true },
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(tr(StringKey.AUTH_SEND), modifier = Modifier.padding(vertical = 6.dp))
-                }
-                TextButton(onClick = onBackToLogin, modifier = Modifier.fillMaxWidth()) {
-                    Text(tr(StringKey.AUTH_BACK_TO_LOGIN))
-                }
+                NovaPrimaryButton(text = tr(StringKey.AUTH_SEND), onClick = { submitted = true }, enabled = email.isNotBlank())
+                BackToLogin(onBackToLogin)
             }
         }
+    }
+}
+
+// A text button in `link` on a 48 dp target.
+@Composable
+private fun BackToLogin(onClick: () -> Unit) {
+    Box(
+        contentAlignment = androidx.compose.ui.Alignment.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(role = Role.Button, onClick = onClick),
+    ) {
+        Text(tr(StringKey.AUTH_BACK_TO_LOGIN), style = NovaType.label, color = NovaColors.current.link, maxLines = 1, softWrap = false)
     }
 }

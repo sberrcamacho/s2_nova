@@ -70,7 +70,7 @@ export function ModalTitle({ children }: { children: ReactNode }) {
 }
 
 export function Label({ children }: { children: ReactNode }) {
-  return <label className="text-caption font-bold tracking-[.06em] text-v2-muted">{children}</label>
+  return <label className="text-overline font-semibold text-ink-secondary">{children}</label>
 }
 
 export function Field({ label, children, note }: { label: ReactNode; children: ReactNode; note?: ReactNode }) {
@@ -84,7 +84,7 @@ export function Field({ label, children, note }: { label: ReactNode; children: R
 }
 
 export const inputClass =
-  'box-border h-[42px] w-full min-w-0 rounded-[10px] border border-v2-line bg-v2-sidebar px-3 font-[inherit] text-[13px] text-v2-text outline-none [color-scheme:dark] placeholder:text-v2-dim'
+  'box-border h-11 w-full min-w-0 rounded-[8px] border border-border-input bg-surface px-3 font-[inherit] text-body-sm text-ink outline-none placeholder:text-ink-tertiary focus:border-primary-border'
 
 export function TextInput({ value, onChange, placeholder, className, autoFocus }: { value: string; onChange: (v: string) => void; placeholder?: string; className?: string; autoFocus?: boolean }) {
   return <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} autoFocus={autoFocus} className={cn(inputClass, className)} />
@@ -125,7 +125,7 @@ export function AmountField({
   return (
     <div className="flex flex-col gap-1.5">
       <div
-        className="box-border flex items-center gap-1.5 border border-v2-line bg-v2-sidebar pl-3 pr-1.5"
+        className="box-border flex items-center gap-1.5 border border-border-input bg-surface pl-3 pr-1.5 focus-within:border-primary-border"
         style={{ height, borderRadius: radius, opacity: disabled ? 0.6 : 1 }}
       >
         <span className="font-numeric font-extrabold text-v2-muted" style={{ fontSize }}>

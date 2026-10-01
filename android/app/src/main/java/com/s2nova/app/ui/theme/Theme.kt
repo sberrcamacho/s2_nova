@@ -179,7 +179,9 @@ private val LightScheme = lightColorScheme(
     surfaceVariant = LightBgSecondary,
     onSurfaceVariant = LightTextSecondary,
     outline = LightBorder,
-    outlineVariant = LightBorderStrong,
+    // Material's outlineVariant carries the boundaries of inputs, radios and
+    // option cards across the app, so it is `border-input` (3:1).
+    outlineVariant = LightBorderInput,
     error = LightNegative,
     primaryContainer = LightAccentSoft,
     onPrimaryContainer = LightAccentText,
@@ -196,7 +198,7 @@ private val DarkScheme = darkColorScheme(
     surfaceVariant = DarkBgSecondary,
     onSurfaceVariant = DarkTextSecondary,
     outline = DarkBorder,
-    outlineVariant = DarkBorderStrong,
+    outlineVariant = DarkBorderInput,
     error = DarkNegative,
     primaryContainer = DarkAccentSoft,
     onPrimaryContainer = DarkAccentText,

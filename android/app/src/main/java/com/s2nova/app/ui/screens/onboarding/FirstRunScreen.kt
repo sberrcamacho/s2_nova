@@ -48,6 +48,14 @@ import com.s2nova.app.ui.components.V2Pill
 import com.s2nova.app.ui.components.noRippleClick
 import com.s2nova.app.ui.screens.wallets.WalletMark
 import com.s2nova.app.ui.theme.NovaColors
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import com.s2nova.app.ui.components.V2Icon
+import com.s2nova.app.ui.components.V2Icons
+import com.s2nova.app.ui.theme.NovaType
 import kotlinx.coroutines.launch
 import com.s2nova.app.ui.tr
 import com.s2nova.app.ui.StringKey
@@ -78,24 +86,30 @@ fun FirstRunScreen(onBackToSignup: () -> Unit, onDone: () -> Unit) {
     val valid = step == 0 || name.isNotBlank()
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        Row(Modifier.padding(start = 18.dp, end = 18.dp, top = 10.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            Box(Modifier.size(38.dp).clip(CircleShape).noRippleClick { if (step == 1) step = 0 else onBackToSignup() }, contentAlignment = Alignment.Center) {
-                Text("←", fontSize = 19.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(Modifier.padding(start = 4.dp, end = 4.dp, top = 4.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            val backLabel = tr(StringKey.COMMON_BACK)
+            Box(
+                Modifier.size(48.dp).clip(CircleShape)
+                    .clickable(role = Role.Button) { if (step == 1) step = 0 else onBackToSignup() }
+                    .semantics { contentDescription = backLabel },
+                contentAlignment = Alignment.Center,
+            ) {
+                V2Icon(V2Icons.back, MaterialTheme.colorScheme.onBackground, 24.dp)
             }
             Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 repeat(2) { i ->
-                    Box(Modifier.weight(1f).height(3.dp).clip(RoundedCornerShape(2.dp)).background(if (i <= step) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant))
+                    Box(Modifier.weight(1f).height(4.dp).clip(RoundedCornerShape(2.dp)).background(if (i <= step) NovaColors.current.primaryBorder else MaterialTheme.colorScheme.outline))
                 }
             }
-            Spacer(Modifier.width(38.dp))
+            Spacer(Modifier.width(48.dp))
         }
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 24.dp, end = 24.dp, top = 18.dp, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(22.dp)) {
             Column {
-                Text(tr(StringKey.FIRST_STEP, step + 1), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.2.sp, color = colors.accentText)
-                Text(tr(if (step == 1) StringKey.FIRST_WALLET_TITLE else StringKey.FIRST_CURRENCY_TITLE), fontSize = 26.sp, lineHeight = 30.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.78).sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 10.dp))
+                Text(tr(StringKey.FIRST_STEP, step + 1), style = NovaType.overline, color = colors.link)
+                Text(tr(if (step == 1) StringKey.FIRST_WALLET_TITLE else StringKey.FIRST_CURRENCY_TITLE), style = NovaType.headline, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 8.dp).semantics { heading() })
                 Text(
                     tr(if (step == 1) StringKey.FIRST_WALLET_BODY else StringKey.FIRST_CURRENCY_BODY),
-                    fontSize = 13.sp, lineHeight = 19.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 9.dp),
+                    style = NovaType.bodySm, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp),
                 )
             }
             if (step == 0) {
@@ -103,8 +117,8 @@ fun FirstRunScreen(onBackToSignup: () -> Unit, onDone: () -> Unit) {
                     listOf("COP", "USD", "EUR", "MXN", "PEN").let { if (detected in it) it else listOf(detected) + it }.forEach { code ->
                         RadioRow(principal == code, { principal = code }, leading = { SymbolBadge(Currencies.symbol(code)) }) {
                             Column(Modifier.weight(1f)) {
-                                Text(Currencies.name(code) + " · " + code, fontSize = 13.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                                if (code == detected) Text(tr(StringKey.FIRST_DETECTED, Currencies.deviceCountry()), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = colors.accentText, modifier = Modifier.padding(top = 3.dp))
+                                Text(Currencies.name(code) + " · " + code, style = NovaType.titleSm, color = MaterialTheme.colorScheme.onBackground)
+                                if (code == detected) Text(tr(StringKey.FIRST_DETECTED, Currencies.deviceCountry()), style = NovaType.bodySm, color = colors.link)
                             }
                         }
                     }
@@ -130,7 +144,7 @@ fun FirstRunScreen(onBackToSignup: () -> Unit, onDone: () -> Unit) {
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             SymbolBadge(Currencies.symbol(principal))
-                            Text(Currencies.name(principal) + " · " + principal, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                            Text(Currencies.name(principal) + " · " + principal, style = NovaType.titleSm, color = MaterialTheme.colorScheme.onBackground)
                         }
                         FieldNote(tr(StringKey.FIRST_OTHER_CURRENCIES), Modifier.padding(top = 8.dp))
                     }
