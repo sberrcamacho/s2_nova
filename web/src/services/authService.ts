@@ -32,6 +32,14 @@ export const authService = {
     return completeSession(response)
   },
 
+  async forgotPassword(email: string): Promise<void> {
+    await apiClient.post<void>('/auth/forgot-password', { email }, { skipAuthRetry: true })
+  },
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    await apiClient.post<void>('/auth/reset-password', { token, newPassword }, { skipAuthRetry: true })
+  },
+
   // "Cierre automático": tells the server the user is still active.
   async activity(): Promise<void> {
     try {

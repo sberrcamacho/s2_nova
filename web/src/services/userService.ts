@@ -88,6 +88,24 @@ export interface Footprint {
   recurringSeries: number
 }
 
+export const IMPORT_HEADER = ['fecha', 'titulo', 'monto', 'tipo', 'categoria', 'billetera']
+
+export interface ImportRow {
+  date: string
+  title: string
+  amount: number
+  type: 'INCOME' | 'EXPENSE'
+  category?: string
+  wallet: string
+}
+
+export interface ImportSummary {
+  total: number
+  valid: number
+  invalid: number
+  rows: { row: number; ok: boolean; error?: 'invalid' | 'wallet' }[]
+}
+
 export const userService = {
   async getCurrentUser(): Promise<User> {
     const me = await apiClient.get<MeResponse>('/me')
@@ -152,6 +170,20 @@ export const userService = {
     link.click()
     link.remove()
     URL.revokeObjectURL(url)
+  },
+
+  async resetData(password: string): Promise<void> {
+    await apiClient.post<void>('/me/reset-data', { password })
+  },
+
+  // CSV template for Ajustes › Importar datos (fecha, título, monto, tipo,
+  // categoría, billetera).
+  importTemplate(): string {
+    return `\uFEFF${IMPORT_HEADER.join(',')}\r\n2026-01-15,Almuerzo,18500,Gasto,Alimentación,Efectivo\r\n2026-01-31,Salario,2500000,Ingreso,,Bancolombia\r\n`
+  },
+
+  importTransactions(rows: ImportRow[], dryRun: boolean): Promise<ImportSummary> {
+    return apiClient.post<ImportSummary>('/me/import/transactions', { rows, dryRun })
   },
 
   async deleteAccount(password: string): Promise<void> {

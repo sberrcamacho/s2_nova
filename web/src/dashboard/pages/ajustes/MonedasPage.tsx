@@ -1,5 +1,6 @@
 import { ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { RowSkeletons } from '@/components/v2/Rows'
 import { ConfirmDialog } from '@/components/v2/Kit'
 import { AjCard, AjSubHeader } from '@/dashboard/components/ajustes/AjustesUi'
 import { cn } from '@/lib/cn'
@@ -28,10 +29,11 @@ export default function MonedasPage() {
   const { showToast } = useToast()
   const [mine, setMine] = useState<UserCurrency[]>([])
   const [catalog, setCatalog] = useState<UserCurrency[]>([])
+  const [loaded, setLoaded] = useState(false)
   const [removing, setRemoving] = useState<UserCurrency | null>(null)
 
   const load = useCallback(() => {
-    currencyService.getMine().then(setMine, (err) => showToast(errorText(err), 'error'))
+    currencyService.getMine().then(setMine, (err) => showToast(errorText(err), 'error')).finally(() => setLoaded(true))
     currencyService.getCatalog().then(setCatalog, () => setCatalog([]))
   }, [showToast])
   useEffect(load, [load])
@@ -74,6 +76,7 @@ export default function MonedasPage() {
             </div>
           </AjCard>
           <AjCard className="px-5 py-2">
+            {!loaded && <RowSkeletons count={2} box={36} />}
             {others.map((c, i) => (
               <div key={c.code} className={cn('flex items-center gap-3 min-h-14 py-2', i < others.length - 1 && 'border-b border-divider')}>
                 <CurrencyMark>{c.symbol}</CurrencyMark>

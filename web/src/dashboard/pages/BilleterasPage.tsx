@@ -65,7 +65,14 @@ export default function BilleterasPage() {
           {wallets.some((w) => w.currency !== principal) && <div className="mt-1 text-body-sm text-ink-secondary">{tr('wallet.totalNote')}</div>}
         </section>
       )}
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4" aria-busy={wallets === null}>
+        {wallets === null &&
+          Array.from({ length: 3 }, (_, i) => (
+            <div key={i} aria-hidden="true" className="flex h-[132px] animate-pulse flex-col justify-between rounded-[16px] border border-border bg-surface p-4">
+              <div className="h-4 w-1/2 rounded-[6px] bg-v2-line" />
+              <div className="h-6 w-2/3 rounded-[6px] bg-v2-line" />
+            </div>
+          ))}
         {wallets?.map((w) => (
           <div
             key={w.id}

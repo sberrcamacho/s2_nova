@@ -296,13 +296,9 @@ export default function LoginPage() {
                   >
                     {t('auth.passwordFieldLabel')}
                   </label>
-                  <button
-                    type="button"
-                    title={t('common.comingSoon')}
-                    className="text-caption font-bold text-highlight"
-                  >
+                  <Link to="/recuperar" className="inline-flex min-h-6 items-center text-caption font-bold text-highlight">
                     {t('auth.forgotPassword')}
-                  </button>
+                  </Link>
                 </div>
                 <Input
                   id="login-password"

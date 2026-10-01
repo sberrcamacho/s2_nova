@@ -64,8 +64,15 @@ describe('NewTransactionPanel', () => {
     await user.click(save)
     expect(screen.getByRole('alert')).toHaveTextContent('Escribe el monto.')
     await user.type(screen.getByLabelText('MONTO'), '5000')
+    await user.clear(screen.getByLabelText('Título'))
     await user.click(save)
     expect(screen.getByRole('alert')).toHaveTextContent('Escribe un título.')
+  })
+
+  it('starts with a generic title for the type until the user writes one', async () => {
+    mockPanel()
+    await open()
+    expect(screen.getByLabelText('Título')).toHaveValue('Gasto')
   })
 
   it('evaluates typed arithmetic and posts the expense with its subcategory', async () => {

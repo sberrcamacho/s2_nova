@@ -1,5 +1,6 @@
 import { tr } from '@/lib/i18n/translations'
 import { useEffect, useState } from 'react'
+import { RowSkeletons } from '@/components/v2/Rows'
 import { CategoryMark, PlanMark } from '@/components/v2/CategoryMark'
 import { Money } from '@/components/v2/Money'
 import { BudgetModal } from '@/dashboard/components/planes/BudgetModal'
@@ -28,7 +29,7 @@ const TONE_ICON: Record<Tone, string> = { neg: ICON_PATHS.alertCircle, warn: ICO
 // the budget modal; the header's "Nuevo presupuesto" (PlanesPage) creates one.
 export default function BudgetsPage({ adding, onAddingDone }: { adding: boolean; onAddingDone: () => void }) {
   useCategories()
-  const { budgets, version, refresh, notifyChanged } = useAppData()
+  const { budgets, version, refresh, notifyChanged, isLoading } = useAppData()
   const { format } = useCurrency()
   const { hidden } = useHideAmounts()
   const { t, language } = useTranslation()
@@ -103,7 +104,8 @@ export default function BudgetsPage({ adding, onAddingDone }: { adding: boolean;
           )
         })}
       </div>
-      {budgets.length === 0 && <div className="p-5 text-center text-body-sm text-ink-secondary">{t('plans.budgetsEmpty')}</div>}
+      {isLoading && budgets.length === 0 && <RowSkeletons count={4} box={40} />}
+      {!isLoading && budgets.length === 0 && <div className="p-5 text-center text-body-sm text-ink-secondary">{t('plans.budgetsEmpty')}</div>}
 
       {(editing || adding) && (
         <BudgetModal

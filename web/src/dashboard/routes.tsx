@@ -4,6 +4,7 @@ import { DashboardLayout } from '@/dashboard/DashboardLayout'
 import { ProtectedRoute } from '@/dashboard/ProtectedRoute'
 import LoginPage from '@/auth/LoginPage'
 import RegisterPage from '@/auth/RegisterPage'
+import { RecuperarPage, NuevaContrasenaPage } from '@/auth/RecoveryPages'
 import FirstRunPage from '@/auth/FirstRunPage'
 import InicioPage from '@/dashboard/pages/InicioPage'
 import MovimientosPage from '@/dashboard/pages/MovimientosPage'
@@ -14,6 +15,8 @@ import BilleterasPage from '@/dashboard/pages/BilleterasPage'
 import CategoriasPage from '@/dashboard/pages/ajustes/CategoriasPage'
 import ContrasenaPage from '@/dashboard/pages/ajustes/ContrasenaPage'
 import EliminarPage from '@/dashboard/pages/ajustes/EliminarPage'
+import ImportarPage from '@/dashboard/pages/ajustes/ImportarPage'
+import RestablecerPage from '@/dashboard/pages/ajustes/RestablecerPage'
 import PerfilPage from '@/dashboard/pages/ajustes/PerfilPage'
 import MonedasPage from '@/dashboard/pages/ajustes/MonedasPage'
 import SesionesPage from '@/dashboard/pages/ajustes/SesionesPage'
@@ -28,6 +31,8 @@ import SesionesPage from '@/dashboard/pages/ajustes/SesionesPage'
 export const dashboardRoutes: RouteObject[] = [
   { path: 'login', element: <LoginPage /> },
   { path: 'register', element: <RegisterPage /> },
+  { path: 'recuperar', element: <RecuperarPage /> },
+  { path: 'restablecer', element: <NuevaContrasenaPage /> },
   {
     element: <ProtectedRoute />,
     children: [
@@ -45,6 +50,8 @@ export const dashboardRoutes: RouteObject[] = [
           { path: 'ajustes/contrasena', element: <ContrasenaPage /> },
           { path: 'ajustes/sesiones', element: <SesionesPage /> },
           { path: 'ajustes/eliminar', element: <EliminarPage /> },
+          { path: 'ajustes/restablecer', element: <RestablecerPage /> },
+          { path: 'ajustes/importar', element: <ImportarPage /> },
           { path: 'ajustes/monedas', element: <MonedasPage /> },
           { path: 'ajustes/categorias', element: <CategoriasPage /> },
           { path: 'overview', element: <Navigate to="/inicio" replace /> },

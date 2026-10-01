@@ -7,6 +7,8 @@ import { CategoryMark } from '@/components/v2/CategoryMark'
 import { Money, MoneyText } from '@/components/v2/Money'
 import { RowSkeletons, SkeletonBar, SyncBanner } from '@/components/v2/Rows'
 import { accountService } from '@/services/accountService'
+import { userService } from '@/services/userService'
+import { useToast } from '@/state/ToastContext'
 import { recurringService } from '@/services/recurringService'
 import { summaryService, type Report, type ReportRange } from '@/services/summaryService'
 import { useAppData } from '@/state/AppDataContext'
@@ -37,6 +39,8 @@ const RANGES: ReportRange[] = [3, 6, 12]
 export default function ReportesPage() {
   const { t, language } = useTranslation()
   const { version } = useAppData()
+  const { showToast } = useToast()
+  const [exporting, setExporting] = useState(false)
   const [params, setParams] = useSearchParams()
   const tab = TABS.find((x) => x.id === params.get('tab'))?.id ?? 'gastos'
   const [range, setRange] = useState<ReportRange>(6)
@@ -54,6 +58,19 @@ export default function ReportesPage() {
     setFailed([r, w, s].some((x) => x.status === 'rejected'))
   }, [range, today])
 
+  const exportCsv = async () => {
+    if (exporting) return
+    setExporting(true)
+    try {
+      await userService.exportData()
+      showToast(t('rep.exported'), 'success')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : t('api.generic'), 'error')
+    } finally {
+      setExporting(false)
+    }
+  }
+
   useEffect(() => {
     void load()
   }, [load, version])
@@ -65,6 +82,10 @@ export default function ReportesPage() {
           <h1 className="text-headline font-bold">{t('rep.title')}</h1>
           <div className="mt-0.5 text-body-sm text-ink-tertiary">{monthYear(report?.month ?? today.slice(0, 7), language)}</div>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+        <button type="button" onClick={exportCsv} aria-busy={exporting} disabled={exporting} className="h-10 cursor-pointer whitespace-nowrap rounded-[12px] border border-border-input bg-surface px-4 text-label font-semibold text-ink hover:bg-surface-sunken disabled:cursor-wait disabled:opacity-60">
+          {t('rep.export')}
+        </button>
         {/* Segmented 3M / 6M / 12M (DESIGN-SYSTEM.md §6.5). */}
         <div role="radiogroup" aria-label={t('rep.range')} className="flex h-10 gap-1 rounded-[12px] bg-surface-sunken p-1">
           {RANGES.map((r) => (
@@ -82,6 +103,7 @@ export default function ReportesPage() {
               {r}M
             </button>
           ))}
+        </div>
         </div>
       </div>
 

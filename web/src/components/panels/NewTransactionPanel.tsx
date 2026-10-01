@@ -154,6 +154,10 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
   const [catDone, setCatDone] = useState(!!e0)
   const [expr, setExpr] = useState(e0 ? exprOf(e0.amount) : '')
   const [title, setTitle] = useState(e0?.description ?? '')
+  // The title starts as a suggestion (a generic one the first time, then the
+  // one used last) until the user types their own.
+  const titleTouched = useRef(!!e0)
+  const [titleHints, setTitleHints] = useState<string[]>([])
   const [note, setNote] = useState(e0?.note ?? '')
   const [date, setDate] = useState(e0?.date ?? today)
   const [time, setTime] = useState(e0?.time ?? now)
@@ -179,6 +183,25 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
   const [saving, setSaving] = useState(false)
   const photoInput = useRef<HTMLInputElement>(null)
   const docInput = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (editing) return
+    const generic = t(type === 'income' ? 'nm.titleGenericIncome' : type === 'expense' ? 'nm.titleGenericExpense' : 'nm.titleGenericTransfer')
+    if (!titleTouched.current) setTitle(generic)
+    if (type === 'transfer') {
+      setTitleHints([])
+      return
+    }
+    let cancelled = false
+    transactionService.getTitles({ type: type === 'income' ? 'INCOME' : 'EXPENSE', limit: 4 }).then((list) => {
+      if (cancelled) return
+      setTitleHints(list)
+      if (list[0] && !titleTouched.current) setTitle(list[0])
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [type])
 
   useEffect(() => {
     let cancelled = false
@@ -876,7 +899,16 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
 
       <div className="flex flex-col gap-2">
         <label htmlFor="nt-title" className={fieldLabel}>{t('nm.titlePh')}</label>
-        <input id="nt-title" value={title} onChange={(e) => edit(setTitle)(e.target.value.slice(0, 60))} placeholder={t('nm.titleEx')} className={textInput} />
+        <input id="nt-title" value={title} onChange={(e) => { titleTouched.current = true; edit(setTitle)(e.target.value.slice(0, 60)) }} onFocus={(e) => { if (!titleTouched.current) e.target.select() }} placeholder={t('nm.titleEx')} className={textInput} />
+        {titleHints.filter((h) => h !== title).length > 0 && (
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('nm.titleHints')}>
+            {titleHints.filter((h) => h !== title).map((h) => (
+              <button key={h} type="button" onClick={() => { titleTouched.current = true; edit(setTitle)(h) }} className="inline-flex h-8 max-w-full cursor-pointer items-center whitespace-nowrap rounded-full border border-border-input px-3 text-body-sm text-ink-secondary hover:bg-surface-sunken">
+                <span className="truncate">{h}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <MoreOptions

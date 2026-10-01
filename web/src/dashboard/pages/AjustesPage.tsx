@@ -182,8 +182,29 @@ export default function AjustesPage() {
               ]}
             />
           </AjRow>
-          <AjRow label={t('aj.sessions')} detail={sessionsSummary}>
+          <AjRow label={t('aj.sessions')} detail={sessionsSummary} last>
             <AjOutlineButton onClick={() => navigate('/ajustes/sesiones')}>{t('aj.manage')}</AjOutlineButton>
+          </AjRow>
+        </div>
+      </AjCard>
+
+      <AjCard className="p-5">
+        <AjCardTitle>{t('aj.import')}</AjCardTitle>
+        <div className="mt-2 flex flex-col">
+          <AjRow label={t('aj.import')} detail={t('aj.importHint')} last>
+            <AjOutlineButton onClick={() => navigate('/ajustes/importar')}>{t('aj.importBtn')}</AjOutlineButton>
+          </AjRow>
+        </div>
+      </AjCard>
+
+      <AjCard className="p-5" style={{ borderColor: 'var(--color-negative)' }}>
+        <h2 className="text-title font-semibold text-negative">{t('aj.risk.title')}</h2>
+        <div className="text-body-sm text-ink-secondary">{t('aj.risk.hint')}</div>
+        <div className="mt-2 flex flex-col">
+          <AjRow label={t('aj.reset')} detail={t('aj.resetHint')} danger>
+            <AjOutlineButton danger onClick={() => navigate('/ajustes/restablecer')}>
+              {t('aj.resetBtn')}
+            </AjOutlineButton>
           </AjRow>
           <AjRow label={t('aj.deleteAccount')} detail={t('aj.deleteAccountHint')} danger last>
             <AjOutlineButton danger onClick={() => navigate('/ajustes/eliminar')}>

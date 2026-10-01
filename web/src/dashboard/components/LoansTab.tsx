@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { RowSkeletons } from '@/components/v2/Rows'
 import { createPortal } from 'react-dom'
 import { CategoryMark } from '@/components/v2/CategoryMark'
 import { Money } from '@/components/v2/Money'
@@ -81,6 +82,7 @@ export function LoansTab({ side, onSide, adding, onAddingDone }: { side: LoanKin
       </div>
 
       <div className="grid grid-cols-1 gap-4 min-[1100px]:grid-cols-2">
+        {loans === null && <RowSkeletons count={3} box={40} />}
         {sideLoans.map((l) => {
           const out = outOf(l)
           const paid = paidOf(l)

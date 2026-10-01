@@ -125,6 +125,21 @@ async function buildQuery(filters?: TransactionFilters): Promise<string> {
 let cache: Transaction[] = []
 
 export const transactionService = {
+  // Titles already used, most recent first — pre-fills the "Título" field.
+  // Best-effort: with no history (or offline) the form shows its generic one.
+  async getTitles(opts: { type?: 'EXPENSE' | 'INCOME'; categoryId?: string; limit?: number } = {}): Promise<string[]> {
+    const params = new URLSearchParams()
+    if (opts.type) params.set('type', opts.type)
+    if (opts.categoryId) params.set('categoryId', opts.categoryId)
+    if (opts.limit) params.set('limit', String(opts.limit))
+    try {
+      const res = await apiClient.get<{ titles: string[] }>(`/transactions/titles?${params}`)
+      return res.titles
+    } catch {
+      return []
+    }
+  },
+
   async getTransactions(filters?: TransactionFilters): Promise<Transaction[]> {
     const query = await buildQuery(filters)
     const rows = await apiClient.get<BackendTransaction[]>(`/transactions?${query}`)

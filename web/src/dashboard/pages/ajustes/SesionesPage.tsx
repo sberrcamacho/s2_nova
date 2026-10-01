@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { RowSkeletons } from '@/components/v2/Rows'
 import { AjCard, AjOutlineButton, AjSubHeader } from '@/dashboard/components/ajustes/AjustesUi'
 import { timeAgo } from '@/lib/ajustes'
 import { userService, type Session } from '@/services/userService'
@@ -22,9 +23,10 @@ export default function SesionesPage() {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const [sessions, setSessions] = useState<Session[]>([])
+  const [loaded, setLoaded] = useState(false)
 
   const load = useCallback(() => {
-    userService.getSessions().then(setSessions, (err) => showToast(err instanceof Error ? err.message : t('api.generic'), 'error'))
+    userService.getSessions().then(setSessions, (err) => showToast(err instanceof Error ? err.message : t('api.generic'), 'error')).finally(() => setLoaded(true))
   }, [showToast])
 
   useEffect(load, [load])
@@ -48,7 +50,8 @@ export default function SesionesPage() {
           )
         }
       />
-      <AjCard className="px-5 py-1.5">
+      <AjCard className="px-5 py-1.5" >
+        {!loaded && <div className="py-2"><RowSkeletons count={2} box={42} /></div>}
         {sessions.map((session, i) => (
           <div key={session.id} className={cn('flex items-center gap-3.5 py-[15px]', i < sessions.length - 1 && 'border-b border-divider')}>
             <div className="flex h-[42px] w-[42px] flex-none items-center justify-center rounded-[11px] border border-border-input bg-surface-sunken text-ink-secondary">
