@@ -34,10 +34,10 @@ function GuestBanner() {
   return (
     <div className="mx-7 mt-[18px] flex items-center gap-3.5 rounded-[14px] border border-v2-accent-line/35 bg-v2-accent/12 px-4 py-3">
       <div className="min-w-0 flex-1">
-        <span className="text-[12.5px] font-extrabold">{tr('guest.title')}</span>{' '}
-        <span className="text-[12px] text-v2-muted">{tr('guest.body')}</span>
+        <span className="text-caption font-extrabold">{tr('guest.title')}</span>{' '}
+        <span className="text-caption text-v2-muted">{tr('guest.body')}</span>
       </div>
-      <button type="button" onClick={() => navigate('/register')} className="cursor-pointer rounded-[10px] bg-v2-accent px-3.5 py-2 text-[12px] font-extrabold text-white">
+      <button type="button" onClick={() => navigate('/register')} className="cursor-pointer rounded-[10px] bg-v2-accent px-3.5 py-2 text-caption font-extrabold text-white">
         {tr('guest.cta')}
       </button>
     </div>

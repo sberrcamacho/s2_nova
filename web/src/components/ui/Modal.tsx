@@ -51,11 +51,11 @@ export function Modal({ open, onClose, title, description, children, size = 'md'
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>
             {title && (
-              <h2 id="modal-title" className="text-lg font-bold text-ink">
+              <h2 id="modal-title" className="text-title font-bold text-ink">
                 {title}
               </h2>
             )}
-            {description && <p className="mt-1 text-sm text-ink-secondary">{description}</p>}
+            {description && <p className="mt-1 text-body-sm text-ink-secondary">{description}</p>}
           </div>
           <IconButton icon={<X className="h-4 w-4" />} label={t('common.close')} variant="ghost" size="sm" onClick={onClose} />
         </div>

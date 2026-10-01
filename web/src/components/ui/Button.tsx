@@ -24,9 +24,9 @@ const VARIANT_CLASSES: Record<Variant, string> = {
 }
 
 const SIZE_CLASSES: Record<Size, string> = {
-  sm: 'h-9 px-3.5 text-[13px] gap-1.5 rounded-[var(--radius-sm)]',
-  md: 'h-11 px-5 text-sm gap-2 rounded-[var(--radius-md)]',
-  lg: 'h-13 px-6 text-[15px] gap-2 rounded-[var(--radius-md)]',
+  sm: 'h-9 px-3.5 text-label gap-1.5 rounded-[var(--radius-sm)]',
+  md: 'h-11 px-5 text-body-sm gap-2 rounded-[var(--radius-md)]',
+  lg: 'h-13 px-6 text-body-sm gap-2 rounded-[var(--radius-md)]',
   icon: 'h-10 w-10 rounded-[var(--radius-md)]',
 }
 

@@ -59,7 +59,7 @@ export function Header({ title, onMenuClick, onNewTransaction }: HeaderProps) {
         >
           <StrokeIcon paths={ICON_PATHS.menu} size={18} />
         </button>
-        <div className="truncate text-[12px] text-v2-dim">
+        <div className="truncate text-caption text-v2-dim">
           S2 Nova <span className="opacity-50">/</span> <span className="text-v2-muted">{title}</span>
         </div>
       </div>
@@ -71,7 +71,7 @@ export function Header({ title, onMenuClick, onNewTransaction }: HeaderProps) {
             onChange={(e) => onQuery(e.target.value)}
             placeholder={t('v2.header.search')}
             aria-label={t('v2.header.search')}
-            className="min-w-0 flex-1 border-none bg-transparent text-[12px] text-v2-text outline-none placeholder:text-v2-dim"
+            className="min-w-0 flex-1 border-none bg-transparent text-caption text-v2-text outline-none placeholder:text-v2-dim"
           />
         </label>
         {onMovimientos && <PeriodSelector />}
@@ -81,7 +81,7 @@ export function Header({ title, onMenuClick, onNewTransaction }: HeaderProps) {
           aria-keyshortcuts="N"
           title={t('v2.header.newTx')}
           // Icon-only on phones, where the label would push the button off-screen next to the period selector.
-          className="flex h-[34px] flex-none cursor-pointer items-center gap-[7px] rounded-[10px] bg-v2-accent px-3.5 text-[12.5px] font-bold text-white shadow-[var(--shadow-primary)] max-[519px]:w-[34px] max-[519px]:justify-center max-[519px]:px-0"
+          className="flex h-[34px] flex-none cursor-pointer items-center gap-[7px] rounded-[10px] bg-v2-accent px-3.5 text-caption font-bold text-white shadow-[var(--shadow-primary)] max-[519px]:w-[34px] max-[519px]:justify-center max-[519px]:px-0"
         >
           <StrokeIcon paths={ICON_PATHS.plus} size={14} strokeWidth={2.6} />
           <span className="whitespace-nowrap max-[519px]:sr-only">{t('v2.header.newTx')}</span>
@@ -105,7 +105,7 @@ function PeriodSelector() {
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={`${t('mov.period')}: ${monthYear(period, language)}`}
-        className="flex h-[34px] cursor-pointer items-center gap-[7px] whitespace-nowrap rounded-[10px] border border-v2-line bg-v2-surface px-3 text-[12px] font-bold text-v2-muted hover:border-v2-line2 hover:text-v2-text"
+        className="flex h-[34px] cursor-pointer items-center gap-[7px] whitespace-nowrap rounded-[10px] border border-v2-line bg-v2-surface px-3 text-caption font-bold text-v2-muted hover:border-v2-line2 hover:text-v2-text"
       >
         {monthYear(period, language)}
         <StrokeIcon paths={['M6 9l6 6 6-6']} size={12} strokeWidth={2.4} />
@@ -123,7 +123,7 @@ function PeriodSelector() {
                 setOpen(false)
               }}
               className={cn(
-                'cursor-pointer rounded-[8px] px-2.5 py-[9px] text-left text-[12.5px] hover:bg-v2-subtle',
+                'cursor-pointer rounded-[8px] px-2.5 py-[9px] text-left text-caption hover:bg-v2-subtle',
                 period === m ? 'bg-v2-subtle font-extrabold text-v2-text' : 'font-semibold text-v2-muted',
               )}
             >

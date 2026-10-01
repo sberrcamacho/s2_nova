@@ -92,8 +92,8 @@ const textInput =
 function SectionHead({ title, action, onAction }: { title: string; action: string; onAction: () => void }) {
   return (
     <div className="flex items-center">
-      <div className="flex-1 text-[13px] font-extrabold">{title}</div>
-      <button type="button" onClick={onAction} className="cursor-pointer text-[12px] font-bold text-v2-accent2">
+      <div className="flex-1 text-label font-extrabold">{title}</div>
+      <button type="button" onClick={onAction} className="cursor-pointer text-caption font-bold text-v2-accent2">
         {action}
       </button>
     </div>
@@ -103,7 +103,7 @@ function SectionHead({ title, action, onAction }: { title: string; action: strin
 function RowText({ label, detail }: { label: string; detail: string }) {
   return (
     <>
-      <div className="text-[12.5px] font-bold">{label}</div>
+      <div className="text-caption font-bold">{label}</div>
       <div className="font-numeric mt-0.5 text-caption leading-[1.4] text-v2-dim">{detail}</div>
     </>
   )
@@ -501,11 +501,11 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
                     </PillRow>
                     {rp.endMode === 'count' && (
                       <div className="flex items-center gap-2.5">
-                        <button type="button" aria-label={t('nm.less')} onClick={() => rpSet({ count: Math.max(2, rp.count - 1) })} className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded-[10px] border border-v2-line2 text-[16px] font-bold">
+                        <button type="button" aria-label={t('nm.less')} onClick={() => rpSet({ count: Math.max(2, rp.count - 1) })} className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded-[10px] border border-v2-line2 text-body font-bold">
                           −
                         </button>
-                        <div className="font-numeric flex-1 text-center text-[14px] font-extrabold">{fill(t(rp.count === 1 ? 'nm.time1' : 'nm.timesN'), rp.count)}</div>
-                        <button type="button" aria-label={t('nm.moreCount')} onClick={() => rpSet({ count: Math.min(99, rp.count + 1) })} className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded-[10px] border border-v2-line2 text-[16px] font-bold">
+                        <div className="font-numeric flex-1 text-center text-body-sm font-extrabold">{fill(t(rp.count === 1 ? 'nm.time1' : 'nm.timesN'), rp.count)}</div>
+                        <button type="button" aria-label={t('nm.moreCount')} onClick={() => rpSet({ count: Math.min(99, rp.count + 1) })} className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded-[10px] border border-v2-line2 text-body font-bold">
                           +
                         </button>
                       </div>
@@ -521,7 +521,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
                         ] as const
                       ).map(([k, label, detail]) => (
                         <RadioRow key={k} on={rp.confirm === k} onClick={() => rpSet({ confirm: k })}>
-                          <div className="text-[12.5px] font-bold">{label}</div>
+                          <div className="text-caption font-bold">{label}</div>
                           <div className="mt-0.5 text-caption leading-[1.4] text-v2-dim">{detail}</div>
                         </RadioRow>
                       ))}
@@ -535,7 +535,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
                     setRpDraft(null)
                     setSection(null)
                   })}
-                  className="cursor-pointer rounded-[10px] bg-v2-accent px-3.5 py-[9px] text-center text-[12.5px] font-bold text-white"
+                  className="cursor-pointer rounded-[10px] bg-v2-accent px-3.5 py-[9px] text-center text-caption font-bold text-white"
                 >
                   {t('nm.apply')}
                 </button>
@@ -567,7 +567,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
 
             {section === 'attach' && (
               <>
-                <div onDragOver={(e) => e.preventDefault()} onDrop={onDrop} className="rounded-[12px] border-[1.5px] border-dashed border-v2-line2 p-4 text-center text-[12px] text-v2-dim">
+                <div onDragOver={(e) => e.preventDefault()} onDrop={onDrop} className="rounded-[12px] border-[1.5px] border-dashed border-v2-line2 p-4 text-center text-caption text-v2-dim">
                   {t('nm.attach.drop')}
                 </div>
                 {(
@@ -581,7 +581,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
                       <Icon paths={icon} size={18} color="var(--v2-accent2)" />
                     </span>
                     <div>
-                      <div className="text-[12.5px] font-bold">{label}</div>
+                      <div className="text-caption font-bold">{label}</div>
                       <div className="text-caption text-v2-dim">{detail}</div>
                     </div>
                   </button>
@@ -641,7 +641,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
               <>
                 <div className="flex items-center gap-3">
                   <div className="min-w-0 flex-1">
-                    <div className="text-[12.5px] font-bold">{t(isInc ? 'nm.loan.borrowed' : 'nm.loan.lent')}</div>
+                    <div className="text-caption font-bold">{t(isInc ? 'nm.loan.borrowed' : 'nm.loan.lent')}</div>
                     <div className="mt-0.5 text-caption text-v2-dim">{t('nm.loan.detail')}</div>
                   </div>
                   <AjSwitch on={loan} label={t(isInc ? 'nm.loan.borrowed' : 'nm.loan.lent')} onToggle={() => !editing && setLoan(!loan)} />
@@ -677,7 +677,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
             type="button"
             onClick={save}
             disabled={saving}
-            className="whitespace-nowrap rounded-[10px] px-[18px] py-2.5 text-[12.5px] font-bold"
+            className="whitespace-nowrap rounded-[10px] px-[18px] py-2.5 text-caption font-bold"
             style={{ cursor: valid ? 'pointer' : 'not-allowed', color: valid ? '#fff' : 'var(--v2-dim)', background: valid ? 'var(--v2-accent)' : 'var(--v2-surface2)' }}
           >
             {saveLabel}
@@ -734,7 +734,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
           <button
             type="button"
             onClick={() => toggleSection('currency')}
-            className="flex h-[34px] flex-none cursor-pointer items-center gap-[5px] whitespace-nowrap rounded-full bg-[rgba(255,255,255,.14)] px-3 text-[12px] font-extrabold text-white"
+            className="flex h-[34px] flex-none cursor-pointer items-center gap-[5px] whitespace-nowrap rounded-full bg-[rgba(255,255,255,.14)] px-3 text-caption font-extrabold text-white"
           >
             {code}
             <Icon paths={['M6 9l6 6 6-6']} size={13} color="rgba(255,255,255,.7)" />
@@ -747,9 +747,9 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
           onChange={(e) => edit(setExpr)(typedExpr(e.target.value))}
           placeholder="0"
           inputMode="decimal"
-          className="w-full border-none bg-transparent px-0.5 py-px font-[inherit] text-[30px] [font-variant-numeric:tabular-nums] font-extrabold tracking-[-.02em] text-white outline-none placeholder:text-white/85"
+          className="w-full border-none bg-transparent px-0.5 py-px font-[inherit] text-display-sm [font-variant-numeric:tabular-nums] font-extrabold tracking-[-.02em] text-white outline-none placeholder:text-white/85"
         />
-        {hasOps(expr) && <div className="font-numeric text-[15px] font-extrabold text-white">{'= ' + formatIn(val, code)}</div>}
+        {hasOps(expr) && <div className="font-numeric text-body-sm font-extrabold text-white">{'= ' + formatIn(val, code)}</div>}
         <div className="text-caption text-white/85">{t('nm.opsHint')}</div>
         {code !== wcur && (
           <div className="font-numeric text-caption text-[rgba(255,255,255,.8)]">
@@ -778,12 +778,12 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
                 className={cn(
                   'flex h-11 cursor-pointer select-none items-center justify-center rounded-[11px] border font-bold',
                   op
-                    ? 'border-transparent bg-v2-accent/16 text-[18px] text-v2-accent2'
+                    ? 'border-transparent bg-v2-accent/16 text-title text-v2-accent2'
                     : k === '='
-                      ? 'row-span-2 h-auto border-transparent bg-v2-accent/32 text-[20px] text-white'
+                      ? 'row-span-2 h-auto border-transparent bg-v2-accent/32 text-title text-white'
                       : k === 'C' || k === '⌫'
-                        ? 'border-v2-line bg-v2-surface2 text-[13px] font-extrabold text-v2-muted'
-                        : 'border-v2-line bg-v2-surface2 text-[16px] text-v2-text',
+                        ? 'border-v2-line bg-v2-surface2 text-label font-extrabold text-v2-muted'
+                        : 'border-v2-line bg-v2-surface2 text-body text-v2-text',
                 )}
               >
                 {k}
@@ -796,8 +796,8 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
       {!isTr && section === 'cat' && (
         <div className="flex flex-col gap-2.5">
           <div className="flex items-center">
-            <div className="flex-1 text-[15px] font-extrabold">{t(ctypeIncome ? 'nm.cat.income' : 'nm.cat.expense')}</div>
-            <button type="button" onClick={() => setSection(null)} className="cursor-pointer text-[12px] font-bold text-v2-accent2">
+            <div className="flex-1 text-body-sm font-extrabold">{t(ctypeIncome ? 'nm.cat.income' : 'nm.cat.expense')}</div>
+            <button type="button" onClick={() => setSection(null)} className="cursor-pointer text-caption font-bold text-v2-accent2">
               {t('common.close')}
             </button>
           </div>

@@ -98,7 +98,7 @@ fun NovaTextField(
                     singleLine = true,
                     textStyle = TextStyle(
                         color = textColor,
-                        fontSize = 14.5.sp,
+                        fontSize = 14.sp,
                         letterSpacing = if (isPassword && !passwordVisible) 0.24.em else 0.em,
                     ),
                     cursorBrush = SolidColor(colors.loginBorderFocus),

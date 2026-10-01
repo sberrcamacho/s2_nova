@@ -203,7 +203,7 @@ fun TransactionDetailScreen(
                 Text(
                     (if (income) "+" else if (transfer) "" else "−") + formatMoney(abs(tx.amount), tx.currency),
                     style = NovaType.displaySm, maxLines = 1, softWrap = false,
-                    autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 20.sp, maxFontSize = 32.sp, stepSize = 1.sp),
+                    autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 20.sp, maxFontSize = 28.sp, stepSize = 1.sp),
                     color = if (scheduled || transfer) MaterialTheme.colorScheme.onSurface else if (income) colors.positive else colors.negative,
                 )
                 val wcur = wallet?.currency ?: principal

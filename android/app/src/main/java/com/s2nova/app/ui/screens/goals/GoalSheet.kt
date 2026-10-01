@@ -157,7 +157,7 @@ fun GoalDraftSheet(draft: GoalDraft, onDraftChange: (GoalDraft) -> Unit, onDismi
                         V2Icon(V2Icons.repeat, colors.accentText, 17.dp)
                     }
                     Column(Modifier.weight(1f)) {
-                        Text(tr(StringKey.GOAL_PLAN), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                        Text(tr(StringKey.GOAL_PLAN), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                         val wallet = plan?.let { p -> wallets.firstOrNull { it.id == p.walletId }?.name?.let(::shortWallet) }.orEmpty()
                         Text(
                             plan?.let { planText(it, wallet, principal) } ?: tr(StringKey.GOAL_PLAN_EMPTY),

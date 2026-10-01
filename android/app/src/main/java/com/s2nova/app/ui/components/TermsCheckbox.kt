@@ -80,7 +80,7 @@ fun TermsCheckbox(
                     append(tr(StringKey.TERMS_PRIVACY))
                 }
             },
-            fontSize = 13.sp,
+            fontSize = 14.sp,
             lineHeight = 18.8.sp,
             color = colors.loginTextMuted,
             modifier = Modifier.padding(start = 11.dp),

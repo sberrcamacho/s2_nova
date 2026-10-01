@@ -54,7 +54,7 @@ export function Dropdown({ trigger, items, align = 'right', width = 190 }: Dropd
                 setOpen(false)
               }}
               className={cn(
-                'flex w-full items-center gap-2.5 rounded-[var(--radius-sm)] px-3 py-2 text-left text-sm font-medium transition-colors',
+                'flex w-full items-center gap-2.5 rounded-[var(--radius-sm)] px-3 py-2 text-left text-body-sm font-medium transition-colors',
                 item.destructive ? 'text-negative hover:bg-negative-soft' : 'text-ink hover:bg-bg-secondary',
               )}
             >

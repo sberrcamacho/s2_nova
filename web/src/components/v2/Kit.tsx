@@ -174,9 +174,9 @@ export function AmountField({
                 className={cn(
                   'flex h-10 cursor-pointer select-none items-center justify-center rounded-[10px] border font-semibold',
                   op
-                    ? 'border-transparent bg-v2-accent/16 text-[17px] text-link'
+                    ? 'border-transparent bg-v2-accent/16 text-title-sm text-link'
                     : k === '='
-                      ? 'row-span-2 h-auto border-transparent bg-v2-accent/32 text-[19px] text-white'
+                      ? 'row-span-2 h-auto border-transparent bg-v2-accent/32 text-title text-white'
                       : k === 'C' || k === '⌫'
                         ? 'border-border bg-surface-sunken text-body-sm font-semibold text-ink-secondary'
                         : 'border-border bg-surface-sunken text-title-sm text-ink',

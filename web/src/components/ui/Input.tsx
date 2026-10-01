@@ -18,7 +18,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={inputId} className="mb-1.5 block text-[13px] font-semibold text-ink-secondary">
+          <label htmlFor={inputId} className="mb-1.5 block text-label font-semibold text-ink-secondary">
             {label}
           </label>
         )}
@@ -34,7 +34,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             aria-invalid={!!error}
             aria-describedby={errorId}
             className={cn(
-              'h-11 w-full rounded-[var(--radius-md)] border bg-surface px-3.5 text-sm font-medium text-ink placeholder:text-ink-tertiary',
+              'h-11 w-full rounded-[var(--radius-md)] border bg-surface px-3.5 text-body-sm font-medium text-ink placeholder:text-ink-tertiary',
               'transition-colors duration-150 focus:border-v2-accent-line focus:outline-none focus:ring-2 focus:ring-focus/20',
               'disabled:cursor-not-allowed disabled:opacity-50',
               error ? 'border-negative focus:border-negative focus:ring-negative/15' : 'border-border-input',
@@ -49,11 +49,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           )}
         </div>
         {error ? (
-          <p id={errorId} role="alert" className="mt-1.5 text-xs font-medium text-negative">
+          <p id={errorId} role="alert" className="mt-1.5 text-caption font-medium text-negative">
             {error}
           </p>
         ) : hint ? (
-          <p className="mt-1.5 text-xs text-ink-tertiary">{hint}</p>
+          <p className="mt-1.5 text-caption text-ink-tertiary">{hint}</p>
         ) : null}
       </div>
     )

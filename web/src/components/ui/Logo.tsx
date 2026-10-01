@@ -13,8 +13,8 @@ interface LogoProps {
 }
 
 const MARK_SIZES = { sm: 32, md: 40, lg: 56 }
-const S2_SIZES = { sm: 'text-sm', md: 'text-base', lg: 'text-xl' }
-const NOVA_SIZES = { sm: 'text-caption', md: 'text-caption', lg: 'text-xs' }
+const S2_SIZES = { sm: 'text-body-sm', md: 'text-body', lg: 'text-title' }
+const NOVA_SIZES = { sm: 'text-caption', md: 'text-caption', lg: 'text-caption' }
 
 // The S2 Nova mark: a rounded hexagon glyph with a rising bar chart, shipped
 // as two theme-specific renders (a dark card for dark surfaces, a light card

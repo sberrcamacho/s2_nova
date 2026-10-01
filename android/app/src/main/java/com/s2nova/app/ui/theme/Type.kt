@@ -31,20 +31,26 @@ private fun role(size: Int, weight: FontWeight, lineHeight: Float, tracking: Flo
     lineHeight = lineHeight.em,
     letterSpacing = (size * tracking).sp,
     fontFeatureSettings = if (tnum) "tnum" else null,
+    // Keeps the descenders of Plus Jakarta Sans ("p", "g") inside the line
+    // box: the default trim clipped them under `maxLines` + ellipsis.
+    lineHeightStyle = androidx.compose.ui.text.style.LineHeightStyle(
+        alignment = androidx.compose.ui.text.style.LineHeightStyle.Alignment.Center,
+        trim = androidx.compose.ui.text.style.LineHeightStyle.Trim.None,
+    ),
 )
 
 object NovaType {
-    val display = role(40, FontWeight.Bold, 1.1f, -0.01f, tnum = true)
-    val displaySm = role(32, FontWeight.Bold, 1.15f, -0.01f, tnum = true)
-    val headline = role(28, FontWeight.Bold, 1.2f, -0.005f)
-    val title = role(20, FontWeight.SemiBold, 1.3f)
+    val display = role(36, FontWeight.Bold, 1.1f, -0.01f, tnum = true)
+    val displaySm = role(28, FontWeight.Bold, 1.15f, -0.01f, tnum = true)
+    val headline = role(24, FontWeight.Bold, 1.2f, -0.005f)
+    val title = role(18, FontWeight.SemiBold, 1.3f)
     val titleSm = role(16, FontWeight.SemiBold, 1.35f)
     val amount = role(16, FontWeight.SemiBold, 1.3f, tnum = true)
     val body = role(16, FontWeight.Normal, 1.5f)
     val bodySm = role(14, FontWeight.Medium, 1.45f)
     val label = role(14, FontWeight.SemiBold, 1.3f)
     val overline = role(12, FontWeight.SemiBold, 1.3f, 0.04f)
-    val caption = role(12, FontWeight.Medium, 1.35f)
+    val caption = role(12, FontWeight.Medium, 1.45f)
 }
 
 // The style a bare Text() inherits. Screens still size much of their text

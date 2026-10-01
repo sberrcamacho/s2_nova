@@ -317,7 +317,7 @@ function IncomeTab({ report }: { report: Report | null }) {
           ) : (
             sources.map((s) => (
               <div key={`${s.category}|${s.merchant ?? ''}`}>
-                <div className="mb-[7px] flex justify-between gap-2.5 text-[13px] font-bold">
+                <div className="mb-[7px] flex justify-between gap-2.5 text-label font-bold">
                   <span>{s.merchant ? `${categoryName(s.category)} — ${s.merchant}` : categoryName(s.category)}</span>
                   <span className="font-numeric whitespace-nowrap">
                     <Money hidden={hidden} inline>
@@ -398,7 +398,7 @@ function CashFlowTab({ report, wallets, series }: { report: Report | null; walle
       <div className="grid grid-cols-1 gap-3.5 min-[760px]:grid-cols-3">
         <Kpi label={t('rep.inflows')} className="px-5 py-[18px]">
           {report ? (
-            <Money hidden={hidden} className="mt-1.5 block text-[24px] font-extrabold tracking-[-.025em] text-positive">
+            <Money hidden={hidden} className="mt-1.5 block text-headline font-extrabold tracking-[-.025em] text-positive">
               {format(month?.income ?? 0)}
             </Money>
           ) : (
@@ -407,7 +407,7 @@ function CashFlowTab({ report, wallets, series }: { report: Report | null; walle
         </Kpi>
         <Kpi label={t('rep.outflows')} className="px-5 py-[18px]">
           {report ? (
-            <Money hidden={hidden} className="mt-1.5 block text-[24px] font-extrabold tracking-[-.025em] text-negative">
+            <Money hidden={hidden} className="mt-1.5 block text-headline font-extrabold tracking-[-.025em] text-negative">
               {format(month?.expenses ?? 0)}
             </Money>
           ) : (
@@ -421,7 +421,7 @@ function CashFlowTab({ report, wallets, series }: { report: Report | null; walle
           style={{ borderColor: 'var(--v2-hero-line)', background: 'linear-gradient(160deg,color-mix(in srgb, var(--v2-accent) 16%, transparent),var(--v2-surface) 70%)' }}
         >
           {report ? (
-            <Money hidden={hidden} className="mt-1.5 block text-[24px] font-extrabold tracking-[-.025em]">
+            <Money hidden={hidden} className="mt-1.5 block text-headline font-extrabold tracking-[-.025em]">
               {`${net < 0 ? '−' : '+'}${format(Math.abs(net))}`}
             </Money>
           ) : (
@@ -445,14 +445,14 @@ function CashFlowTab({ report, wallets, series }: { report: Report | null; walle
                   <span className="w-16 flex-none text-caption font-bold tracking-[.08em] text-ink-tertiary">
                     {e.dueToday ? t('rep.today') : `${String(d).padStart(2, '0')} ${MONTHS_SHORT[language][m! - 1]!.toUpperCase()}`}
                   </span>
-                  <span className="min-w-0 flex-1 truncate text-[13px] font-bold" title={e.series.name}>
+                  <span className="min-w-0 flex-1 truncate text-label font-bold" title={e.series.name}>
                     {e.series.name}
                   </span>
                   {/* The amount in the Programado's own currency (with the "≈" line when it
                       isn't the principal), as in Inicio's Próximos 14 días. Below 520px the
                       balance moves under it instead of taking its own column. */}
                   <div className="min-w-[110px] flex-none text-right">
-                    <Money hidden={hidden} className={cn('block whitespace-nowrap text-[13px] font-extrabold', e.signed < 0 ? 'text-negative' : 'text-positive')}>
+                    <Money hidden={hidden} className={cn('block whitespace-nowrap text-label font-extrabold', e.signed < 0 ? 'text-negative' : 'text-positive')}>
                       {`${e.signed < 0 ? '−' : '+'}${formatIn(Math.abs(e.signed), e.series.currency)}`}
                     </Money>
                     {e.series.currency !== principal && (
@@ -464,7 +464,7 @@ function CashFlowTab({ report, wallets, series }: { report: Report | null; walle
                       {fill(t('inicio.upcoming.balance'), format(e.running))}
                     </Money>
                   </div>
-                  <Money hidden={hidden} className="w-[120px] flex-none whitespace-nowrap text-right text-[12.5px] text-ink-secondary max-[519px]:hidden">
+                  <Money hidden={hidden} className="w-[120px] flex-none whitespace-nowrap text-right text-caption text-ink-secondary max-[519px]:hidden">
                     {format(e.running)}
                   </Money>
                 </div>

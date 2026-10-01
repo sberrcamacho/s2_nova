@@ -27,13 +27,13 @@ export function TransactionRow({ transaction, onClick, showDate = true, classNam
     >
       <CategoryIcon category={transaction.category} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[13.5px] font-semibold text-ink">{transaction.description}</p>
-        <p className="truncate text-xs text-ink-tertiary">
+        <p className="truncate text-label font-semibold text-ink">{transaction.description}</p>
+        <p className="truncate text-caption text-ink-tertiary">
           {transaction.merchant ?? tCategory(transaction.category)}
           {showDate && ` · ${formatShortDate(transaction.date, language)}`}
         </p>
       </div>
-      <AmountText amount={transaction.amount} type={transaction.type} className="shrink-0 text-[13.5px]" />
+      <AmountText amount={transaction.amount} type={transaction.type} className="shrink-0 text-label" />
     </Comp>
   )
 }

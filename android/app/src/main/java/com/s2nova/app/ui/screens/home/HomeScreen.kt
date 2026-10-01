@@ -607,7 +607,7 @@ private fun BalanceHero(
             softWrap = false,
             // The balance never wraps: it steps down to fit narrow screens
             // and large font scales.
-            autoSize = TextAutoSize.StepBased(minFontSize = 24.sp, maxFontSize = 40.sp),
+            autoSize = TextAutoSize.StepBased(minFontSize = 24.sp, maxFontSize = 36.sp),
             modifier = Modifier
                 .padding(top = 4.dp, end = 8.dp)
                 // Unbounded, so the blur fades past the text box instead of

@@ -54,14 +54,14 @@ export function GuideCard() {
       className="fixed right-6 bottom-6 z-[45] w-[354px] rounded-[16px] border border-v2-accent-line/45 bg-v2-surface p-4 text-v2-text shadow-[0_18px_44px_rgba(0,0,0,.35)] [line-height:normal]"
     >
       <div className="text-caption font-extrabold tracking-[.12em] text-v2-accent2">{`${t('guide.label').toUpperCase()} · ${copy('label').toUpperCase()}`}</div>
-      <div className="mt-[7px] text-[14.5px] font-extrabold">{copy('title')}</div>
-      <div className="mt-[5px] text-[12.5px] leading-[1.5] text-v2-muted [text-wrap:pretty]">{copy('body')}</div>
+      <div className="mt-[7px] text-title-sm font-extrabold">{copy('title')}</div>
+      <div className="mt-[5px] text-caption leading-[1.5] text-v2-muted [text-wrap:pretty]">{copy('body')}</div>
       <div className="mt-3 flex items-center gap-2.5">
-        <button type="button" onClick={() => save({ guidesOff: true })} className="cursor-pointer text-[12px] font-bold text-v2-muted">
+        <button type="button" onClick={() => save({ guidesOff: true })} className="cursor-pointer text-caption font-bold text-v2-muted">
           {t('guide.skip')}
         </button>
         <div className="flex-1" />
-        <button type="button" onClick={() => save({ guidesSeen: [...user.guidesSeen, key] })} className="cursor-pointer rounded-[10px] bg-v2-accent px-3.5 py-2 text-[12px] font-extrabold text-white">
+        <button type="button" onClick={() => save({ guidesSeen: [...user.guidesSeen, key] })} className="cursor-pointer rounded-[10px] bg-v2-accent px-3.5 py-2 text-caption font-extrabold text-white">
           {t('guide.ok')}
         </button>
       </div>

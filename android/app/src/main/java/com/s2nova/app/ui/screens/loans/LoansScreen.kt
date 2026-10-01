@@ -370,7 +370,7 @@ private fun LoanDraftSheet(
                         value = draft.counterparty,
                         onValueChange = { onDraftChange(draft.copy(counterparty = it)) },
                         placeholder = t(StringKey.LOANS_FORM_COUNTERPARTY_PLACEHOLDER),
-                        style = TextStyle(fontSize = 13.5.sp, fontWeight = FontWeight.Bold),
+                        style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold),
                     )
                 }
             }

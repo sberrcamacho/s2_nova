@@ -107,7 +107,7 @@ fun NmSheets(
                 currencies.forEach { code ->
                     RadioRow(cur == code, { s.currency = if (code == wcur) null else code }, leading = { SymbolBadge(Currencies.symbol(code)) }) {
                         Column(Modifier.weight(1f)) {
-                            Text(Currencies.name(code) + " · " + code, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                            Text(Currencies.name(code) + " · " + code, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                             Text(
                                 if (code == wcur) tr(StringKey.NM_CURRENCY_OF, walletName) else "1 $code = " + formatMoney(rateTo(code, wcur), wcur) + " " + wcur,
                                 fontSize = 12.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 2.dp), style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM),
@@ -148,7 +148,7 @@ fun NmSheets(
             Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                     Column(Modifier.weight(1f)) {
-                        Text(tr(if (s.isIncome) StringKey.NM_LOAN_BORROWED else StringKey.NM_LOAN_LENT), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                        Text(tr(if (s.isIncome) StringKey.NM_LOAN_BORROWED else StringKey.NM_LOAN_LENT), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                         Text(tr(StringKey.NM_LOAN_DETAIL), fontSize = 12.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 2.dp))
                     }
                     V2Switch(s.loan) { if (!s.editing) s.loan = !s.loan }
@@ -170,7 +170,7 @@ fun NmSheets(
 @Composable
 private fun androidx.compose.foundation.layout.RowScope.BudgetPickText(label: String, detail: String) {
     Column(Modifier.weight(1f)) {
-        Text(label, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+        Text(label, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
         Text(detail, fontSize = 12.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 2.dp), style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM))
     }
 }
@@ -228,7 +228,7 @@ private fun CategorySheet(s: NmState, onOpenCategories: () -> Unit) {
     val repo = AppContainer.categoryRepository
     NovaDraftSheet(onDismiss = { s.sheet = null }) {
         Column(Modifier.padding(start = 4.dp, end = 4.dp, bottom = 18.dp)) {
-            Text(tr(if (s.isIncome) StringKey.NM_CAT_INCOME else StringKey.NM_CAT_EXPENSE), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
+            Text(tr(if (s.isIncome) StringKey.NM_CAT_INCOME else StringKey.NM_CAT_EXPENSE), fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
             Text(tr(StringKey.NM_CAT_STEP), fontSize = 12.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 4.dp))
         }
         Column(Modifier.heightIn(max = 520.dp).verticalScroll(rememberScrollState())) {
@@ -262,7 +262,7 @@ private fun SubSheet(s: NmState) {
     val color = Color(repo.color(parent))
     NovaDraftSheet(onDismiss = { s.sheet = null }) {
         Row(Modifier.padding(start = 4.dp, end = 4.dp, bottom = 18.dp), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(tr(StringKey.NM_SUBCATEGORY), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
+            Text(tr(StringKey.NM_SUBCATEGORY), fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
             Text(repo.name(parent), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = NovaColors.current.textDim, modifier = Modifier.padding(bottom = 1.dp))
         }
         val items = listOf<Pair<String?, String>>(null to tr(StringKey.NM_NONE_F)) + repo.children(parent).map { it.id to repo.name(it.id) }
@@ -331,7 +331,7 @@ private fun WhenSheet(s: NmState) {
                 NavCircle("←") { s.cal = s.cal.minusMonths(1) }
                 Text(
                     monthYearLabel(s.cal),
-                    fontSize = 13.5.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, textAlign = TextAlign.Center, modifier = Modifier.weight(1f),
+                    fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, textAlign = TextAlign.Center, modifier = Modifier.weight(1f),
                 )
                 NavCircle("→") { s.cal = s.cal.plusMonths(1) }
             }
@@ -347,7 +347,7 @@ private fun WhenSheet(s: NmState) {
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 V2Icon(V2Icons.clock, MaterialTheme.colorScheme.onSurfaceVariant, 16.dp)
-                Text(tr(StringKey.NM_TIME), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
+                Text(tr(StringKey.NM_TIME), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f))
                 Text(s.time, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM))
             }
             val future = s.future
@@ -371,7 +371,7 @@ fun NavCircle(label: String, onClick: () -> Unit) {
     Box(
         Modifier.size(34.dp).clip(CircleShape).border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape).noRippleClick(onClick),
         contentAlignment = Alignment.Center,
-    ) { Text(label, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+    ) { Text(label, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) }
 }
 
 // buildCells: Monday-first month grid, 38 dp cells.
@@ -401,7 +401,7 @@ fun MonthGrid(month: LocalDate, selected: LocalDate?, today: LocalDate, onPick: 
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
-                                d.dayOfMonth.toString(), fontSize = 13.sp, fontWeight = if (on || isToday) FontWeight.ExtraBold else FontWeight.SemiBold,
+                                d.dayOfMonth.toString(), fontSize = 14.sp, fontWeight = if (on || isToday) FontWeight.ExtraBold else FontWeight.SemiBold,
                                 color = if (on) Color.White else if (isToday) colors.accentText else MaterialTheme.colorScheme.onBackground,
                             )
                         }
@@ -449,7 +449,7 @@ private fun RepeatSheet(s: NmState) {
                         V2Icon(V2Icons.cal, MaterialTheme.colorScheme.onSurfaceVariant, 16.dp)
                         Text(
                             (if (s.date == s.today) tr(StringKey.NM_STARTS_TODAY) else tr(StringKey.NM_STARTS_ON, fmtDateLong(s.date.toString()))) + (if (s.seriesMode) "" else " · " + s.time),
-                            fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f), style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM),
+                            fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.weight(1f), style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM),
                         )
                         Text(tr(StringKey.NM_CHANGE), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = NovaColors.current.accentText)
                     }
@@ -471,7 +471,7 @@ private fun RepeatSheet(s: NmState) {
 fun ConfirmModeRow(label: String, detail: String, selected: Boolean, onClick: () -> Unit) {
     RadioRow(selected, onClick) {
         Column(Modifier.weight(1f)) {
-            Text(label, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+            Text(label, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
             Text(detail, fontSize = 12.sp, lineHeight = 15.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 2.dp))
         }
     }
@@ -481,7 +481,7 @@ fun ConfirmModeRow(label: String, detail: String, selected: Boolean, onClick: ()
 fun Stepper(label: String, onMinus: () -> Unit, onPlus: () -> Unit) {
     Row(Modifier.padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         StepBtn("−", onMinus)
-        Text(label, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, textAlign = TextAlign.Center, modifier = Modifier.weight(1f), style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM))
+        Text(label, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, textAlign = TextAlign.Center, modifier = Modifier.weight(1f), style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM))
         StepBtn("+", onPlus)
     }
 }
@@ -507,7 +507,7 @@ fun DateBox(value: String, modifier: Modifier = Modifier, placeholder: String = 
     ) {
         val shown = runCatching { LocalDate.parse(value) }.getOrNull()?.let { "%02d/%02d/%04d".format(it.dayOfMonth, it.monthValue, it.year) }
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(shown ?: placeholder, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = if (shown != null) MaterialTheme.colorScheme.onBackground else NovaColors.current.textDim, style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM), modifier = Modifier.weight(1f))
+            Text(shown ?: placeholder, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = if (shown != null) MaterialTheme.colorScheme.onBackground else NovaColors.current.textDim, style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM), modifier = Modifier.weight(1f))
             V2Icon(V2Icons.cal, MaterialTheme.colorScheme.onBackground, 15.dp)
         }
     }

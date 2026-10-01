@@ -28,7 +28,7 @@ export function Tabs({ options, value, onChange, className }: TabsProps) {
             aria-selected={active}
             onClick={() => onChange(opt.value)}
             className={cn(
-              'flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-all duration-150',
+              'flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-label font-semibold transition-all duration-150',
               active ? 'bg-primary text-on-primary shadow-[var(--shadow-primary)]' : 'text-ink-secondary hover:text-ink',
             )}
           >

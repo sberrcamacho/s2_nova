@@ -23,7 +23,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={selectId} className="mb-1.5 block text-[13px] font-semibold text-ink-secondary">
+          <label htmlFor={selectId} className="mb-1.5 block text-label font-semibold text-ink-secondary">
             {label}
           </label>
         )}
@@ -38,7 +38,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             id={selectId}
             aria-invalid={!!error}
             className={cn(
-              'h-11 w-full appearance-none rounded-[var(--radius-md)] border bg-surface px-3.5 pr-10 text-sm font-medium text-ink',
+              'h-11 w-full appearance-none rounded-[var(--radius-md)] border bg-surface px-3.5 pr-10 text-body-sm font-medium text-ink',
               'transition-colors duration-150 focus:border-v2-accent-line focus:outline-none focus:ring-2 focus:ring-focus/20',
               'disabled:cursor-not-allowed disabled:opacity-50',
               error ? 'border-negative' : 'border-border',
@@ -61,7 +61,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-tertiary" />
         </div>
         {error && (
-          <p role="alert" className="mt-1.5 text-xs font-medium text-negative">
+          <p role="alert" className="mt-1.5 text-caption font-medium text-negative">
             {error}
           </p>
         )}

@@ -196,25 +196,32 @@ figures:**
 - Compose: `fontFeatureSettings = "tnum"`
 - CSS: `font-variant-numeric: tabular-nums`
 
-| Role | Size (sp = px) | Weight | Line height | Tracking | Use |
-|---|---|---|---|---|---|
-| `display` | 40 | 700 | 1.1 (44) | −1 % | Hero balance |
-| `display-sm` | 32 | 700 | 1.15 (37) | −1 % | Amount in Nuevo movimiento, detail amount |
-| `headline` | 28 | 700 | 1.2 (34) | −0.5 % | Screen title |
-| `title` | 20 | 600 | 1.3 (26) | 0 | Card/section title, dialog title |
-| `title-sm` | 16 | 600 | 1.35 (22) | 0 | Row title, stat value on mobile |
-| `amount` | 16 | 600 | 1.3 (21) | 0 | Row amounts (tnum) |
-| `body` | 16 | 400 | 1.5 (24) | 0 | Paragraphs, inputs |
-| `body-sm` | 14 | 500 | 1.45 (20) | 0 | Secondary text, metadata, buttons on Web |
-| `label` | 14 | 600 | 1.3 (18) | 0 | Buttons, chips, tabs |
-| `overline` | 12 | 600 | 1.3 (16) | +4 %, uppercase | Section headers ("HOY · −$189.500"), stat labels |
-| `caption` | 12 | 500 | 1.35 (16) | 0 | Axis labels, helper text |
+| Role | Android (sp) | Web (px) | Weight | Line height | Tracking | Use |
+|---|---|---|---|---|---|---|
+| `display` | 36 | 40 | 700 | 1.1 | −1 % | Hero balance |
+| `display-sm` | 28 | 32 | 700 | 1.15 | −1 % | Amount in Nuevo movimiento, detail amount |
+| `headline` | 24 | 28 | 700 | 1.2 | −0.5 % | Screen title |
+| `title` | 18 | 20 | 600 | 1.3 | 0 | Card/section title, dialog title |
+| `title-sm` | 16 | 16 | 600 | 1.35 | 0 | Row title, stat value on mobile |
+| `amount` | 16 | 16 | 600 | 1.3 | 0 | Row amounts (tnum) |
+| `body` | 16 | 16 | 400 | 1.5 | 0 | Paragraphs, inputs |
+| `body-sm` | 14 | 15 | 500 | 1.45 | 0 | Secondary text, metadata, buttons on Web |
+| `label` | 14 | 14 | 600 | 1.3 | 0 | Buttons, chips, tabs |
+| `overline` | 12 | 13 | 600 | 1.3 | +4 %, uppercase | Section headers ("HOY · −$189.500"), stat labels |
+| `caption` | 12 | 13 | 500 | 1.45 | 0 | Axis labels, helper text |
+
+The scale is per platform on purpose: a phone held at reading distance takes
+smaller headings (a 28 sp screen title crowds a 360 dp screen), while a desktop
+viewed from further away needs larger secondary text (12 px captions and 14 px
+secondary lines read as small on a monitor). Body, titles of rows and labels
+stay equal on both so the clients still feel like one product.
 
 Rules:
 
 - 12 is the absolute minimum. Nothing below it.
 - Text styles come from the theme (`MaterialTheme.typography` / the CSS
-  classes), never from ad-hoc `fontSize`.
+  classes), never from ad-hoc `fontSize` or `text-[Npx]`. Sizes such as
+  12.5, 13, 13.5, 15 or 17 are not part of the scale.
 - Layouts must survive Android font scale 200 % and Web zoom 200 % without
   clipping or overlap.
 - Line height is always explicit in the style, never `normal`, so wrapping

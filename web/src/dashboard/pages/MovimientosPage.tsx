@@ -505,7 +505,7 @@ function MovementDetail({
         <div>
           <Money
             hidden={hidden}
-            className="block text-[28px] font-semibold tracking-[-.025em]"
+            className="block text-headline font-semibold tracking-[-.025em]"
             style={{ color: sched || transfer ? 'var(--v2-text)' : txn.type === 'income' ? 'var(--v2-pos)' : 'var(--v2-neg)' }}
           >
             {`${sign(txn)}${formatMoney(txn.amount, txn.currency)}`}

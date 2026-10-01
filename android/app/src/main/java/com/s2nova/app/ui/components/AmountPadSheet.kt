@@ -97,7 +97,7 @@ fun AmountPadSheet(
             horizontalAlignment = Alignment.End,
         ) {
             Text(
-                if (hasOps) AmountPad.format(expr) + " =" else "", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = colors.textDim,
+                if (hasOps) AmountPad.format(expr) + " =" else "", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = colors.textDim,
                 maxLines = 1, modifier = Modifier.heightIn(min = 18.dp), style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM),
             )
             Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {

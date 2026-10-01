@@ -98,15 +98,15 @@ fun RegisterScreen(
         Column {
             Text(
                 text = tr(StringKey.AUTH_CREATE),
-                fontSize = 30.sp,
+                fontSize = 28.sp,
                 fontWeight = FontWeight.ExtraBold,
                 letterSpacing = (-0.03).em,
-                lineHeight = 33.6.sp,
+                lineHeight = 34.sp,
                 color = MaterialTheme.colorScheme.onBackground,
             )
             Text(
                 text = tr(StringKey.AUTH_REGISTER_SUB),
-                fontSize = 13.5.sp,
+                fontSize = 14.sp,
                 color = colors.loginTextMuted,
                 modifier = Modifier.padding(top = 7.dp),
             )

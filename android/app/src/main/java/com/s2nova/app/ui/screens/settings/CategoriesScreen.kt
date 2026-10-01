@@ -186,7 +186,7 @@ fun CategoriesScreen(initialIncome: Boolean, onBack: () -> Unit) {
                 if (editing != null && !editing.custom && editing.parentId == null) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                         Column(Modifier.weight(1f)) {
-                            Text(tr(StringKey.CAT_SHOW), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                            Text(tr(StringKey.CAT_SHOW), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                             Text(tr(StringKey.CAT_SHOW_HINT), fontSize = 12.sp, lineHeight = 15.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
                         }
                         V2Switch(!d.hidden) { draft = d.copy(hidden = !d.hidden) }

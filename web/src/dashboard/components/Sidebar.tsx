@@ -49,7 +49,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         <div className="flex items-center gap-2.5 px-[18px] pb-[22px] pt-[18px]">
           <img src={logoMarkDark} alt="S2 Nova" className="h-[30px] w-[30px] flex-none rounded-[9px] object-cover" />
           <div>
-            <div className="text-[14px] font-extrabold tracking-[-.01em]">S2 Nova</div>
+            <div className="text-body-sm font-extrabold tracking-[-.01em]">S2 Nova</div>
             <div className="whitespace-nowrap text-caption font-semibold tracking-[.04em] text-v2-dim">{t('v2.sidebar.tagline')}</div>
           </div>
         </div>
@@ -80,7 +80,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               <button
                 type="button"
                 onClick={() => navigate('/ajustes/perfil')}
-                className="block w-full cursor-pointer truncate text-left text-[12.5px] font-bold text-v2-text"
+                className="block w-full cursor-pointer truncate text-left text-caption font-bold text-v2-text"
               >
                 {user?.name ?? t('sidebar.fallbackUserName')}
               </button>
@@ -103,7 +103,7 @@ function SidebarLink({ item, onClick }: { item: { to: string; labelKey: Translat
       onClick={onClick}
       className={({ isActive }) =>
         cn(
-          'flex items-center gap-[11px] rounded-[11px] px-3 py-[9px] text-[13px]',
+          'flex items-center gap-[11px] rounded-[11px] px-3 py-[9px] text-label',
           isActive ? 'bg-v2-accent font-bold text-white shadow-[var(--shadow-primary)]' : 'font-semibold text-v2-muted hover:text-v2-text',
         )
       }

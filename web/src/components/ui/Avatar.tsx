@@ -6,7 +6,7 @@ interface AvatarProps {
   className?: string
 }
 
-const SIZE_CLASSES = { sm: 'h-8 w-8 text-xs', md: 'h-10 w-10 text-sm', lg: 'h-16 w-16 text-xl' }
+const SIZE_CLASSES = { sm: 'h-8 w-8 text-caption', md: 'h-10 w-10 text-body-sm', lg: 'h-16 w-16 text-title' }
 
 export function Avatar({ initials, size = 'md', className }: AvatarProps) {
   return (

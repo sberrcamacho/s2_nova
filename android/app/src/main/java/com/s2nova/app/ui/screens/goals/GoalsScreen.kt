@@ -416,13 +416,13 @@ private fun GoalDeleteSheet(
                 if (hasBalance) String.format(t(StringKey.GOALS_DELETE_AND_RETURN), format(goal.currentAmount)) else t(StringKey.GOALS_DELETE),
                 color = colors.negative,
                 fontWeight = FontWeight.ExtraBold,
-                fontSize = 13.sp,
+                fontSize = 14.sp,
             )
         }
         Text(
             t(StringKey.COMMON_CANCEL),
             textAlign = TextAlign.Center,
-            fontSize = 12.5.sp,
+            fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.fillMaxWidth().clickable(onClick = onDismiss).padding(top = 12.dp, bottom = 4.dp),
@@ -459,7 +459,7 @@ private fun DestinationRow(label: String, detail: String, selected: Boolean, onC
             }
         }
         Column(modifier = Modifier.padding(start = 12.dp)) {
-            Text(label, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+            Text(label, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
             Text(detail, fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
         }
     }

@@ -16,7 +16,7 @@ function Shell({ title, subtitle, children }: { title: string; subtitle: string;
       <div className="flex w-full max-w-[360px] flex-col gap-[18px]">
         <Logo variant="mark" size="sm" />
         <div>
-          <h1 className="text-[26px] font-extrabold tracking-[-0.025em] text-ink">{title}</h1>
+          <h1 className="text-headline font-extrabold tracking-[-0.025em] text-ink">{title}</h1>
           <p className="mt-[5px] text-body-sm text-ink-secondary">{subtitle}</p>
         </div>
         {children}

@@ -40,13 +40,13 @@ function SignupBrandPanel() {
       <div className="relative flex items-center gap-2.5">
         <Logo variant="mark" tone="inverted" size="sm" />
         <div>
-          <div className="text-[15px] font-extrabold tracking-[-0.01em]">S2 Nova</div>
+          <div className="text-body-sm font-extrabold tracking-[-0.01em]">S2 Nova</div>
           <div className="whitespace-nowrap text-caption font-semibold tracking-[.04em] text-white/70">PERSONAL FINANCE</div>
         </div>
       </div>
 
       <div className="relative flex flex-col gap-[26px]">
-        <div className="text-[34px] font-extrabold leading-[1.14] tracking-[-0.03em] text-pretty">
+        <div className="text-display-sm font-extrabold leading-[1.14] tracking-[-0.03em] text-pretty">
           {t('auth.hero.register1')}
           <br />
           {t('auth.hero.register2')}
@@ -73,15 +73,15 @@ function SignupBrandPanel() {
           <div className="flex items-center gap-[18px]">
             <div className="flex items-center gap-2.5">
               <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#d485fb]" />
-              <span className="text-[12.5px] text-white/72">{t('nm.type.income')}</span>
+              <span className="text-caption text-white/72">{t('nm.type.income')}</span>
             </div>
             <div className="flex items-center gap-2.5">
               <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-white/20" />
-              <span className="text-[12.5px] text-white/72">{t('auth.hero.expenses')}</span>
+              <span className="text-caption text-white/72">{t('auth.hero.expenses')}</span>
             </div>
           </div>
 
-          <div className="text-[13px] leading-[1.5] text-white/60 text-pretty">
+          <div className="text-label leading-[1.5] text-white/60 text-pretty">
             {t('auth.hero.stat')}
           </div>
         </div>
@@ -115,7 +115,7 @@ function SignupTermsCheckbox({ checked, onChange }: { checked: boolean; onChange
           </svg>
         )}
       </span>
-      <span className="text-xs leading-[1.45]" style={{ color: 'var(--color-login-checkbox-text)' }}>
+      <span className="text-caption leading-[1.45]" style={{ color: 'var(--color-login-checkbox-text)' }}>
         {t('auth.termsPrefix')}
         <span className="font-bold text-highlight">{t('auth.termsLink')}</span>
         {t('auth.termsMiddle')}
@@ -234,8 +234,8 @@ export default function RegisterPage() {
       <div className="flex min-w-0 flex-1 items-center justify-center overflow-y-auto p-6 min-[900px]:p-[38px]">
         <div className="flex w-full max-w-[340px] flex-col gap-[18px]">
           <div>
-            <div className="text-[26px] font-extrabold tracking-[-0.025em] text-ink">{t('auth.registerTitle')}</div>
-            <div className="mt-[5px] text-[12.5px]" style={{ color: 'var(--color-login-text-muted)' }}>
+            <div className="text-headline font-extrabold tracking-[-0.025em] text-ink">{t('auth.registerTitle')}</div>
+            <div className="mt-[5px] text-caption" style={{ color: 'var(--color-login-text-muted)' }}>
               {t('auth.registerSubtitle')}
             </div>
           </div>
@@ -277,7 +277,7 @@ export default function RegisterPage() {
                   }}
                   error={nameError ?? undefined}
                   autoComplete="name"
-                  className="h-[46px] rounded-[12px] text-[13px]"
+                  className="h-[46px] rounded-[12px] text-label"
                   style={{
                     background: 'var(--color-login-surface)',
                     color: 'var(--color-login-input-text)',
@@ -308,7 +308,7 @@ export default function RegisterPage() {
                   onBlur={() => setEmailFocused(false)}
                   error={emailError ?? undefined}
                   autoComplete="email"
-                  className="h-[46px] rounded-[12px] text-[13px]"
+                  className="h-[46px] rounded-[12px] text-label"
                   style={{
                     background: 'var(--color-login-surface)',
                     color: 'var(--color-login-input-text)',
@@ -351,7 +351,7 @@ export default function RegisterPage() {
                   onBlur={() => setPasswordFocused(false)}
                   error={passwordError ?? undefined}
                   autoComplete="new-password"
-                  className="h-[46px] rounded-[12px] text-[13px]"
+                  className="h-[46px] rounded-[12px] text-label"
                   style={{
                     background: 'var(--color-login-surface)',
                     color: 'var(--color-login-input-text)',
@@ -369,13 +369,13 @@ export default function RegisterPage() {
 
             <SignupTermsCheckbox checked={agreedToTerms} onChange={setAgreedToTerms} />
             {termsError && (
-              <p role="alert" className="-mt-[10px] text-xs font-medium text-negative">
+              <p role="alert" className="-mt-[10px] text-caption font-medium text-negative">
                 {termsError}
               </p>
             )}
 
             {error && (
-              <p role="alert" className="text-xs font-medium text-negative">
+              <p role="alert" className="text-caption font-medium text-negative">
                 {error}
               </p>
             )}
@@ -390,7 +390,7 @@ export default function RegisterPage() {
             </Button>
           </form>
 
-          <div className="text-center text-xs" style={{ color: 'var(--color-login-text-muted)' }}>
+          <div className="text-center text-caption" style={{ color: 'var(--color-login-text-muted)' }}>
             {t('auth.hasAccount')}{' '}
             <Link to="/login" className="font-bold text-highlight">
               {t('auth.signInLink')}

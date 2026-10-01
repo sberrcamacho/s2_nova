@@ -16,8 +16,8 @@ export function ChartCard({ title, subtitle, action, children, className, bodyCl
     <Card className={cn('p-5 sm:p-6', className)}>
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
-          <h3 className="text-[15px] font-bold text-ink">{title}</h3>
-          {subtitle && <p className="mt-0.5 text-xs font-medium text-ink-tertiary">{subtitle}</p>}
+          <h3 className="text-body-sm font-bold text-ink">{title}</h3>
+          {subtitle && <p className="mt-0.5 text-caption font-medium text-ink-tertiary">{subtitle}</p>}
         </div>
         {action}
       </div>

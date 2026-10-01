@@ -678,7 +678,7 @@ private fun AmountHero(s: NmState, cur: String, wcur: String, rate: Double, valu
         }
         Text(
             formatMoney(value, cur), style = NovaType.displaySm, color = white, maxLines = 1, softWrap = false,
-            autoSize = TextAutoSize.StepBased(minFontSize = 20.sp, maxFontSize = 32.sp),
+            autoSize = TextAutoSize.StepBased(minFontSize = 20.sp, maxFontSize = 28.sp),
             modifier = Modifier.padding(end = 8.dp),
         )
         if (cur != wcur) {
@@ -839,10 +839,10 @@ private fun MoreOptions(s: NmState, open: Boolean, onToggle: () -> Unit, pickedB
 private fun NoWalletState(onAddWallet: () -> Unit, onBack: () -> Unit) {
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(32.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
         GlyphMark(V2Icons.wallet, NovaColors.current.link, 56.dp)
-        Text(tr(StringKey.NM_NO_WALLET_TITLE), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 16.dp))
-        Text(tr(StringKey.NM_NO_WALLET_BODY), fontSize = 12.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
+        Text(tr(StringKey.NM_NO_WALLET_TITLE), fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 16.dp))
+        Text(tr(StringKey.NM_NO_WALLET_BODY), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
         V2Button(tr(StringKey.NM_NO_WALLET_CTA), onClick = onAddWallet, modifier = Modifier.padding(top = 20.dp))
-        Text(tr(StringKey.COMMON_BACK), fontSize = 12.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 14.dp).noRippleClick(onBack))
+        Text(tr(StringKey.COMMON_BACK), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 14.dp).noRippleClick(onBack))
     }
 }
 

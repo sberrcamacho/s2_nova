@@ -113,7 +113,7 @@ fun SheetDateBox(value: String?, placeholder: String, allowClear: Boolean, onVal
             )
             Text(
                 value?.let { com.s2nova.app.ui.longDateLabel(it, language) } ?: placeholder,
-                fontSize = 13.5.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = if (value != null) MaterialTheme.colorScheme.onBackground else NovaColors.current.textDim,
                 modifier = Modifier.padding(start = 10.dp),

@@ -30,13 +30,13 @@ function BrandPanel() {
       <div className="relative flex items-center gap-2.5">
         <Logo variant="mark" tone="inverted" size="sm" />
         <div>
-          <div className="text-[15px] font-extrabold tracking-[-0.01em]">S2 Nova</div>
+          <div className="text-body-sm font-extrabold tracking-[-0.01em]">S2 Nova</div>
           <div className="whitespace-nowrap text-caption font-semibold tracking-[.04em] text-white/70">PERSONAL FINANCE</div>
         </div>
       </div>
 
       <div className="relative flex flex-col gap-[22px]">
-        <div className="text-[34px] font-extrabold leading-[1.14] tracking-[-0.03em] text-pretty">
+        <div className="text-display-sm font-extrabold leading-[1.14] tracking-[-0.03em] text-pretty">
           {t('auth.hero.login1')}
           <br />
           {t('auth.hero.login2')}
@@ -103,15 +103,15 @@ function BrandPanel() {
             <div className="flex flex-1 flex-col gap-2">
               <div className="flex items-center gap-2.5">
                 <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#d485fb]" />
-                <span className="text-[12.5px] text-white/72">{t('auth.hero.byCategory')}</span>
+                <span className="text-caption text-white/72">{t('auth.hero.byCategory')}</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#7cf0bb]" />
-                <span className="text-[12.5px] text-white/72">{t('auth.hero.saving')}</span>
+                <span className="text-caption text-white/72">{t('auth.hero.saving')}</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-white/22" />
-                <span className="text-[12.5px] text-white/72">{t('auth.hero.projection')}</span>
+                <span className="text-caption text-white/72">{t('auth.hero.projection')}</span>
               </div>
             </div>
           </div>
@@ -146,7 +146,7 @@ function RememberMeCheckbox({ checked, onChange }: { checked: boolean; onChange:
           </svg>
         )}
       </span>
-      <span className="text-xs" style={{ color: 'var(--color-login-checkbox-text)' }}>
+      <span className="text-caption" style={{ color: 'var(--color-login-checkbox-text)' }}>
         {t('auth.rememberMe')}
       </span>
     </label>
@@ -228,8 +228,8 @@ export default function LoginPage() {
       <div className="flex min-w-0 flex-1 items-center justify-center overflow-y-auto p-6 min-[900px]:p-[38px]">
         <div className="flex w-full max-w-[340px] flex-col gap-[18px]">
           <div>
-            <div className="text-[26px] font-extrabold tracking-[-0.025em] text-ink">{t('auth.loginTitle')}</div>
-            <div className="mt-[5px] text-[12.5px]" style={{ color: 'var(--color-login-text-muted)' }}>
+            <div className="text-headline font-extrabold tracking-[-0.025em] text-ink">{t('auth.loginTitle')}</div>
+            <div className="mt-[5px] text-caption" style={{ color: 'var(--color-login-text-muted)' }}>
               {t('auth.loginSubtitle')}
             </div>
           </div>
@@ -274,7 +274,7 @@ export default function LoginPage() {
                   onBlur={() => setEmailFocused(false)}
                   error={emailError ?? undefined}
                   autoComplete="email"
-                  className="h-[46px] rounded-[12px] text-[13px]"
+                  className="h-[46px] rounded-[12px] text-label"
                   style={{
                     background: 'var(--color-login-surface)',
                     color: 'var(--color-login-input-text)',
@@ -322,7 +322,7 @@ export default function LoginPage() {
                   onBlur={() => setPasswordFocused(false)}
                   error={passwordError ?? undefined}
                   autoComplete="current-password"
-                  className="h-[46px] rounded-[12px] text-[13px]"
+                  className="h-[46px] rounded-[12px] text-label"
                   style={{
                     background: 'var(--color-login-surface)',
                     color: 'var(--color-login-input-text)',
@@ -340,7 +340,7 @@ export default function LoginPage() {
             <RememberMeCheckbox checked={rememberMe} onChange={setRememberMe} />
 
             {error && (
-              <p role="alert" className="text-xs font-medium text-negative">
+              <p role="alert" className="text-caption font-medium text-negative">
                 {error}
               </p>
             )}
@@ -365,7 +365,7 @@ export default function LoginPage() {
           </button>
           <div className="-mt-2 text-center text-caption text-v2-dim [line-height:normal]">{t('auth.guestHint')}</div>
 
-          <div className="text-center text-xs" style={{ color: 'var(--color-login-text-muted)' }}>
+          <div className="text-center text-caption" style={{ color: 'var(--color-login-text-muted)' }}>
             {t('auth.noAccount')}{' '}
             <Link to="/register" className="font-bold text-highlight">
               {t('auth.signUpLink')}

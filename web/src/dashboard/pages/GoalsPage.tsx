@@ -92,7 +92,7 @@ export default function GoalsPage({ adding, onAddingDone }: { adding: boolean; o
                       </span>
                     </div>
                     <div className="text-body-sm text-ink-secondary">{g.targetDate ? fill(tr('goal.targetOn'), longDate(g.targetDate)) : tr('goal.noTarget')}</div>
-                    <div className="mt-1.5 text-[18px] font-semibold leading-[1.3] tabular-nums">
+                    <div className="mt-1.5 text-title font-semibold leading-[1.3] tabular-nums">
                       <Money hidden={hidden} inline>
                         {format(g.currentAmount)}
                       </Money>{' '}

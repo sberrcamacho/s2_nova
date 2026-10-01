@@ -269,7 +269,7 @@ fun V2Button(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     verticalPadding: Dp = 14.dp,
-    fontSize: TextUnit = 13.sp,
+    fontSize: TextUnit = 14.sp,
     glow: Boolean = false,
 ) {
     val primary = MaterialTheme.colorScheme.primary
@@ -449,7 +449,7 @@ fun TextLink(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
 fun SheetTextAction(text: String, color: Color, onClick: () -> Unit, weight: FontWeight = FontWeight.Bold, modifier: Modifier = Modifier) {
     Text(
         text,
-        fontSize = 12.5.sp,
+        fontSize = 14.sp,
         fontWeight = weight,
         color = color,
         textAlign = TextAlign.Center,

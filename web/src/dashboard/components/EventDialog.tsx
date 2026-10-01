@@ -66,7 +66,7 @@ export function EventDialog({ series, walletName, today, hidden, onClose, onChan
       sub={fill(t('event.sub'), t(`event.interval.${series.interval}` as TranslationKey))}
       chip={<CategoryMark category={series.category} box={40} />}
       amount={
-        <Money hidden={hidden} className="text-[30px] font-semibold tracking-[-.02em]" style={{ color: income ? 'var(--v2-pos)' : 'var(--v2-neg)' }}>
+        <Money hidden={hidden} className="text-display-sm font-semibold tracking-[-.02em]" style={{ color: income ? 'var(--v2-pos)' : 'var(--v2-neg)' }}>
           {`${income ? '+' : '−'}${format(series.amount)}`}
         </Money>
       }
