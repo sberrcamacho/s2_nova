@@ -1,3 +1,5 @@
+import { StrokeIcon } from '@/components/v2/icons'
+import { walletGlyph } from '@/dashboard/components/WalletModal'
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { BarChart, ChartLegend } from '@/components/v2/BarChart'
@@ -27,17 +29,6 @@ const TABS: { id: 'gastos' | 'ingresos' | 'flujo' | 'patrimonio'; labelKey: Tran
   { id: 'patrimonio', labelKey: 'rep.tab.netWorth' },
 ]
 const RANGES: ReportRange[] = [3, 6, 12]
-
-// Patrimonio's wallet squares: each wallet type's mockup color at 0x29
-// alpha. The mockup's savings color is `var(--accent)29`, which is invalid
-// CSS and never paints, so those squares stay empty as drawn.
-function walletSquare(type: AccountType): string | undefined {
-  const kind = walletKind(type)
-  if (kind === 'digital') return '#D95DB229'
-  if (kind === 'cash') return '#E8A23D29'
-  if (kind === 'savings' || kind === 'debit') return undefined
-  return '#9C9CAA29'
-}
 
 // Reportes (Web v2 mockup `isAnalytics`): Gastos · Ingresos · Flujo de caja ·
 // Patrimonio over its own 3M/6M/12M range. Every figure comes from
@@ -94,7 +85,8 @@ export default function ReportesPage() {
         </div>
       </div>
 
-      <div role="tablist" className="flex gap-1 overflow-x-auto border-b border-border">
+      {/* Scrolls on a narrow screen: the right edge fades while a tab is out of view. */}
+      <div role="tablist" className="scrollbar-none flex gap-1 overflow-x-auto border-b border-border [mask-image:linear-gradient(to_right,#000_calc(100%-32px),transparent)] min-[640px]:[mask-image:none]">
         {TABS.map((x) => {
           const on = x.id === tab
           return (
@@ -103,6 +95,7 @@ export default function ReportesPage() {
               type="button"
               role="tab"
               aria-selected={on}
+              ref={on ? (el) => el?.scrollIntoView?.({ block: 'nearest', inline: 'center' }) : undefined}
               onClick={() => setParams({ tab: x.id }, { replace: true })}
               className={cn(
                 'mb-[-1px] min-h-11 flex-none cursor-pointer whitespace-nowrap border-b-2 px-3.5 text-label',
@@ -487,13 +480,13 @@ function NetWorthTab({ report, wallets }: { report: Report | null; wallets: Wall
   const history = report?.netWorth.history ?? []
 
   const side = (label: string, data: Report['netWorth']['lent'] | undefined, tone: string, emptyKey: TranslationKey) => (
-    <div className="rounded-[14px] border border-border bg-v2-surface2 p-4">
-      <div className="text-caption font-bold uppercase tracking-[.1em] text-ink-tertiary">{label}</div>
+    <div className="rounded-[14px] border border-border bg-surface-sunken p-4">
+      <div className="text-overline font-semibold uppercase text-ink-tertiary">{label}</div>
       {!data ? (
         <SkeletonBar className="mt-2.5 h-5 w-3/5" />
       ) : data.outstanding > 0 ? (
         <>
-          <Money hidden={hidden} className="mt-1.5 block text-[20px] font-extrabold" style={{ color: tone }}>
+          <Money hidden={hidden} className="mt-1.5 block text-title font-semibold tabular-nums" style={{ color: tone }}>
             {format(data.outstanding)}
           </Money>
           <div className="mt-1 text-caption text-ink-tertiary">
@@ -507,7 +500,7 @@ function NetWorthTab({ report, wallets }: { report: Report | null; wallets: Wall
         </>
       ) : (
         <>
-          <div className="font-numeric mt-1.5 text-[20px] font-extrabold text-ink-tertiary">—</div>
+          <div className="mt-1.5 text-title font-semibold tabular-nums text-ink-tertiary">—</div>
           <div className="mt-1 text-caption text-ink-tertiary">{t(emptyKey)}</div>
         </>
       )}
@@ -523,13 +516,16 @@ function NetWorthTab({ report, wallets }: { report: Report | null; wallets: Wall
             <RowSkeletons count={3} box={30} />
           ) : (
             wallets.map((w) => (
-              <div key={w.id} className="flex items-center gap-3.5 border-b border-divider py-[13px]">
-                <span className="h-[30px] w-[30px] flex-none rounded-[10px]" style={{ background: walletSquare(w.accountType) }} />
+              <div key={w.id} className="flex min-h-14 items-center gap-3 border-b border-divider py-2">
+                {/* The same wallet mark as Billeteras: a brand gradient with its glyph. */}
+                <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full text-white" style={{ background: 'linear-gradient(150deg,var(--color-primary-pressed),var(--color-primary-secondary))' }}>
+                  <StrokeIcon paths={walletGlyph(w.accountType)} size={18} />
+                </span>
                 <div className="min-w-0 flex-1">
-                  <div className="text-[13px] font-bold">{w.name}</div>
-                  <div className="text-caption text-ink-tertiary">{t(`inicio.walletKind.${walletKind(w.accountType)}` as TranslationKey)}</div>
+                  <div className="truncate text-title-sm font-semibold" title={w.name}>{w.name}</div>
+                  <div className="text-body-sm text-ink-secondary">{t(`inicio.walletKind.${walletKind(w.accountType)}` as TranslationKey)}</div>
                 </div>
-                <Money hidden={hidden} className="text-[14px] font-extrabold">
+                <Money hidden={hidden} className="flex-none whitespace-nowrap text-amount font-semibold tabular-nums">
                   {formatIn(w.currentBalance, w.currency)}
                 </Money>
               </div>
@@ -537,9 +533,9 @@ function NetWorthTab({ report, wallets }: { report: Report | null; wallets: Wall
           )}
         </div>
         <div className="mt-4 flex items-baseline justify-between border-t border-border pt-3.5">
-          <span className="text-[12.5px] font-bold text-ink-secondary">{t('rep.netWorth')}</span>
+          <span className="text-label font-semibold text-ink-secondary">{t('rep.netWorth')}</span>
           {report ? (
-            <Money hidden={hidden} className="text-[22px] font-extrabold tracking-[-.025em]">
+            <Money hidden={hidden} className="text-title font-bold tabular-nums">
               {format(report.netWorth.wallets)}
             </Money>
           ) : (
@@ -554,7 +550,7 @@ function NetWorthTab({ report, wallets }: { report: Report | null; wallets: Wall
           {side(t('rep.lent'), report?.netWorth.lent, 'var(--color-positive)', 'rep.noLent')}
           {side(t('rep.borrowed'), report?.netWorth.borrowed, 'var(--color-negative)', 'rep.noBorrowed')}
         </div>
-        <div className="mt-6 text-caption font-bold uppercase tracking-[.1em] text-ink-tertiary">{t('rep.lastSixMonths')}</div>
+        <div className="mt-6 text-overline font-semibold uppercase text-ink-tertiary">{t('rep.lastSixMonths')}</div>
         <div className="mt-3.5">
           {report === null ? (
             <SkeletonBar className="h-[140px] w-full" />
