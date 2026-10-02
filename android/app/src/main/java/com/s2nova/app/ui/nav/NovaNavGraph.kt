@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -150,7 +151,12 @@ fun NovaApp() {
         NavHost(
             navController = navController,
             startDestination = NovaDestinations.SPLASH,
-            modifier = Modifier.padding(padding),
+            // The bar reserves a transparent strip for the FAB's top half;
+            // content runs under that strip instead of leaving a blank band.
+            modifier = Modifier.padding(
+                top = padding.calculateTopPadding(),
+                bottom = (padding.calculateBottomPadding() - FabTouchTop).coerceAtLeast(0.dp),
+            ),
         ) {
             composable(NovaDestinations.SPLASH) {
                 SplashScreen()

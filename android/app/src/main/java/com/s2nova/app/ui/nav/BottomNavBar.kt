@@ -75,7 +75,8 @@ private val PlusIcon = strokeIcon("+", "M12 5v14", "M5 12h14", strokeWidth = 2.6
 // On narrow screens (< 340 dp) the FAB and its notch shrink and a label that
 // still does not fit is ellipsized, so the bar never distorts or overlaps.
 private val FabClearance = 6.dp
-private val FabTouchTop = 28.dp
+// Transparent strip above the bar that holds the top half of the FAB.
+internal val FabTouchTop = 28.dp
 
 // Top edge of the bar, left to right, with the notch centred on `size.width`.
 // The notch circle (radius `r`) is centred on the bar's top edge; shoulders
