@@ -5,9 +5,7 @@ import path from 'node:path'
 
 // Vite config — https://vitejs.dev/config/
 export default defineConfig({
-  // Served from the site root (Cloudflare Pages). The GitHub Pages workflow
-  // sets VITE_BASE=/s2_nova/ because that site lives under a subpath.
-  base: process.env.VITE_BASE || '/',
+  base: '/s2_nova/',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {

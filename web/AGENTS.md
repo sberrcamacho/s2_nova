@@ -43,17 +43,6 @@ start the Vite development server on `$PORT` (default 8443).
 - Preview URL: http://localhost:8443 (or the configured `$PORT`)
 - Hot reload: Changes to source files are reflected immediately
 
-## Deployment
-
-The web is built for the site root (`base: '/'`) and deployed on Cloudflare
-Pages (project root `web/`, build `pnpm build`, output `dist`). There
-`functions/api/[[path]].ts` proxies `/api/*` to the backend, so the browser
-talks to a single origin and the httpOnly refresh cookie stays first-party
-(required for the iPhone PWA: Safari blocks cross-site cookies). The Pages
-build uses `VITE_API_URL=/api/v1`. `public/_redirects` is the SPA fallback.
-The GitHub Pages workflow still works as a fallback: it sets
-`VITE_BASE=/s2_nova/` and an absolute `VITE_API_URL`.
-
 ## Information Architecture
 
 Web v2: the sidebar
