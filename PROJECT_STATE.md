@@ -1,7 +1,7 @@
 # S2 Nova — Project State
 
 Snapshot of what exists, what works, and what's outstanding as of
-**2026-09-26** (`main`, everything committed and pushed at `21a2d78`).
+**2026-10-02** (`main` at `e451267`).
 This is a point-in-time record, not living documentation — for how to
 build/run/structure each app, see the `AGENTS.md` files. Replace this file
 at the next major milestone rather than keeping it in sync with every
@@ -9,16 +9,42 @@ commit.
 
 ## Where things stand
 
-The product moved to the **v2 design**: `design_handoff_s2_nova_v2/`
-(interactive mockups `S2 Nova Android v2.dc.html` and
-`S2 Nova Dashboard v2.dc.html`, specs in `docs/`) replaced the Stage 2
-handoff. The rule is functional parity (root `AGENTS.md`): every write
-available on Android must exist on Web; `docs/WEB_PARITY.md` lists how
-each capability looks on each platform.
+Backend, Android and Web are all feature-complete for the v2 product and
+at functional parity (root `AGENTS.md`): every write available on Android
+exists on Web.
 
-- **Backend** — v2 complete (`947ff92`, `39e1962`, `978d23e`).
-- **Android** — v2 complete (`8751c40`): the reference implementation.
-- **Web** — partially migrated; see the table below.
+The `design_handoff_s2_nova_v2/` mockups were removed from the repo
+(`b11931b`) and are no longer the visual source of truth. The UI now
+follows `DESIGN-SYSTEM.md` (reasoning in `DESIGN_AUDIT.md`); the only fixed
+visual constraint is the palette of the brand mark (`CLAUDE.md`). The
+redesign landed on both clients in phases:
+
+- **F0** accessibility and text-layout fixes, **F1** brand tokens and type
+  scale, **F2** bento Inicio, **F3** Nuevo movimiento with progressive
+  disclosure.
+- **F4** Reportes, Movimientos, Planes, Billeteras, Ajustes and its
+  sub-screens, Login / Registro / Recuperar contraseña, first run, Perfil,
+  Programados, movement detail, Alertas and the sheets.
+- Afterwards: a per-platform type scale for all ad-hoc sizes, shared nav
+  icons, and the Android bottom bar — now a flat bar with a concave notch
+  that cradles a round "+" FAB (`e451267`), which shrinks below 340 dp.
+
+Added since the previous snapshot (2026-09-26):
+
+- Reset data ("danger zone"), change password and password recovery by
+  email (`/auth/forgot-password`, branded HTML email) on both clients.
+- CSV import (`dataImport` route) next to CSV export, on Web.
+- Suggested movement titles per category and subcategory; a budget name is
+  required.
+- Product catalog (`/products`) for scanned codes; the scan action itself
+  is parked as "coming soon" in the app.
+- Secure auto-logout, full movement edit, ES/EN copy throughout.
+- Public privacy policy and terms pages (`web/public/privacy.html`,
+  `terms.html`, ES/EN) and the Google Search Console verification file.
+- Tried and reverted: an installable iPhone PWA and a Cloudflare
+  (Pages, then Worker) deploy with a same-origin `/api` proxy
+  (`5f57ac4`, `73716ea`, `f636ff1`, reverted in `a4c7a20`, `3fd2b80`,
+  `eb75054`). Web still deploys to GitHub Pages.
 
 ## Architecture
 
@@ -30,15 +56,20 @@ identity — no shared UI code (never revert to a single responsive app):
   tokens).
 - **`backend/`** — Node.js + TypeScript + Fastify + Prisma/PostgreSQL. Full
   design in `ARCHITECTURE.md`.
-- **`scripts/gen-taxonomy.mjs`** — generates the category taxonomy JSON
-  for all three from `design_handoff_s2_nova_v2/s2-categories.js`.
+- **`scripts/gen-taxonomy.mjs`** — generated the category taxonomy JSON
+  for all three from `design_handoff_s2_nova_v2/s2-categories.js`. That
+  source is gone, so the script cannot run; the generated files are
+  committed.
 
 ## Backend — implemented
 
 Routes (`backend/src/routes/`): `auth` (email/password + Google Sign-In,
-rotating refresh tokens), `me` (profile, preferences, password),
-`security` (sessions, account footprint, `DELETE /me`), `dataExport`
-(CSV), `accounts` (wallets with their own currency), `currencies` (user
+rotating refresh tokens, password recovery by email), `me` (profile, preferences, password),
+`security` (sessions, account footprint, `DELETE /me`, reset data),
+`dataExport` and `dataImport` (CSV), `products` (scanned-code catalog:
+local table, then Open Food/Beauty/Products/Pet Food Facts and UPCitemdb,
+with an optional AI fallback when `GEMINI_API_KEY` / `ANTHROPIC_API_KEY`
+are set), `accounts` (wallets with their own currency), `currencies` (user
 currencies, principal currency, rates), `categories` (global taxonomy +
 per-user overrides and custom nodes), `transactions` (date + time, future =
 PLANNED, title/note, income "De", receipts, loans with server-computed
@@ -52,36 +83,40 @@ rules incl. TX_PLANNED and goal-plan alerts), `health`.
 Money is stored in minor units per currency; movements freeze their rate
 and wallet amount; totals convert to the principal currency.
 
-## Android — implemented (v2)
+## Android — implemented
 
-Inicio, Movimientos, category-first Nuevo movimiento (category/subcategory
-sheets, keypad and calculator, fecha y hora, Repetir, moneda + tasa,
-adjuntos, De, custom-budget assignment), Planes (category and custom
-budgets, goals with periodic contributions, Préstamos), Reportes,
-Billeteras with currency, Ajustes (Perfil, Seguridad, Monedas,
-Categorías), notifications with "Confirmar aporte" / "Omitir esta vez",
-two-step destructive confirmation + undo snackbar, guest mode, 2-step first
-run, mini-guides, barcode and QR scanning (backend `/products` resolves codes against the local table, then Open Food/Beauty/Products/Pet Food Facts and UPCitemdb, caching hits; Web shows the linked product in the movement detail).
+Inicio (bento), Movimientos, category-first Nuevo movimiento
+(category/subcategory sheets, keypad and calculator, fecha y hora, Repetir,
+moneda + tasa, adjuntos, De, custom-budget assignment, title suggestions),
+Planes (category and custom budgets, goals with periodic contributions,
+Préstamos), Reportes, Billeteras with currency, Ajustes (Perfil, Seguridad,
+Monedas, Categorías, change/reset password, danger zone), notifications
+with "Confirmar aporte" / "Omitir esta vez", two-step destructive
+confirmation + undo snackbar, guest mode, 2-step first run, mini-guides,
+loading skeletons. Barcode/QR scanning is wired to `/products` but the scan
+action is parked as "coming soon".
 
-## Web — v2 migration status
+## Web — implemented
 
-| Area | Status |
-|---|---|
-| v2 data layer (taxonomy registry, multi-currency formatting, `categoryService`, `currencyService`) | Done (`21a2d78`) |
-| Inicio | Done, visually verified against the mockup |
-| Movimientos (Programados, days with totals, filters, detail with comprobante, two-step delete / Deshacer) | Done, visually verified against the mockup |
-| Planes › Presupuestos, Metas, Préstamos (mockup modals, two-step delete, abonos) | Done, visually verified against the mockup |
-| Reportes (Categorías/Subcategorías toggle, sources by subcategory and payer) | Done, visually verified against the mockup. Android has no Subcategorías toggle yet (the backend report now carries `subcategories`) |
-| Ajustes (Perfil, Contraseña, Sesiones, Eliminar cuenta) | Done, visually verified against the mockup |
-| Nuevo movimiento (category-first flow per `NEW_MOVEMENT.md`) | Done, visually verified against the mockup |
-| Billeteras page (sidebar entry + modal, wallet currency) | Done, visually verified against the mockup |
-| Ajustes › Monedas (principal, add/remove with two-step confirmation) | Done, visually verified against the mockup |
-| Ajustes › Categorías (rename, icon, hide, custom nodes, two-step delete) | Done, visually verified against the mockup |
-| Mini-guides (`ONBOARDING.md` §3, `guidesSeen` shared with Android) | Done, visually verified against the mockup |
-| First run (`ONBOARDING.md` §2: moneda principal › primera billetera) | Done, visually verified against the mockup |
-| Guest mode (`ONBOARDING.md` §1: in-memory example account, "Modo invitado" banner) | Done, visually verified against the mockup |
+Every v2 area is migrated and on the design system: Inicio, Movimientos
+(Programados, day totals, filters, detail with comprobante, two-step
+delete / Deshacer), Planes (Presupuestos, Metas, Préstamos), Reportes,
+Nuevo movimiento, Billeteras, Ajustes (Perfil, Contraseña, Sesiones,
+Monedas, Categorías, Eliminar cuenta, danger zone, CSV import/export),
+password recovery, mini-guides, first run and guest mode. Web shows the
+product linked to a scanned movement in its detail.
 
-Web test suite: 150 tests in 30 files, all passing (details in `TESTING.md`).
+## Tests
+
+Counts taken on 2026-10-02 (details in `TESTING.md`):
+
+- **Backend**: 213 tests in 17 files, all passing.
+- **Android** (unit): 49 tests in 14 classes, all passing.
+- **Web**: 167 tests in 34 files. The suite is **flaky under load**: of
+  three consecutive local runs, one passed clean and two failed (4 and 25
+  tests) on 5 s timeouts, mostly in `NewTransactionPanel.spec.tsx` and
+  `PlanesPage.spec.tsx`. An Android emulator was running on the machine
+  during those runs.
 
 ## Deployment
 
@@ -108,41 +143,41 @@ Web test suite: 150 tests in 30 files, all passing (details in `TESTING.md`).
 - An Oracle Cloud Always Free VM (self-hosted Postgres + backend together)
   was evaluated first and dropped after repeated "out of host capacity"
   errors provisioning the free ARM shape (see `ARCHITECTURE.md` §16).
-- Android reads `API_BASE_URL` from `local.properties` (gitignored); during
-  local development it points at the dev machine's LAN IP.
-- `android/` still has no CI/release pipeline — build/install is local-only
-  (`./gradlew assembleDebug` / `installDebug`).
+- Android reads `API_BASE_URL` from `local.properties` (gitignored); it
+  falls back to `http://10.0.2.2:3000/api/v1` (the emulator's host).
+- CI: `.github/workflows/backend-ci.yml`, `web-ci.yml` and
+  `android-ci.yml`. Android has no release pipeline — build/install is
+  local-only (`./gradlew assembleDebug` / `installDebug`).
 
 ## Known gaps / explicitly out of scope
 
-- The Web v2 items marked **Pending** above.
-- Stale Web test fixtures (13 failures, `TESTING.md` › Current status).
-- Loan category: Web files a new "Recibido" loan (an income) under
-  `inc.other`; Android uses `exp.other` for both directions. The backend
-  doesn't validate category kind against transaction type.
-- On Web, loan cards keep an "Editar" button (edit + delete) that the
-  mockup doesn't show, so loans stay editable as on Android.
+- The Web test suite times out intermittently (see Tests).
+- `scripts/gen-taxonomy.mjs` has no source to read until the taxonomy
+  source is moved back into the repo.
+- Barcode/QR scan action is parked as "coming soon" on Android.
+- Android has no Subcategorías toggle in Reportes (Web has it).
 - Android's refresh token lives in plain DataStore, not an encrypted store.
 - Biometric login is not wired (auto-lock re-entry is password-only).
-- The Aiven database password was pasted in plaintext during setup and
-  hasn't been rotated — rotate before storing real data.
-- Android has no CI; the backend suite has no CI either.
 - No OpenAPI docs generated from the Zod schemas.
-- Web's `authService.requestPasswordReset` has no backend endpoint.
+- No Android release pipeline.
+- Carried over from the previous snapshot and not re-checked: the loan
+  category mismatch (Web files a "Recibido" loan under `inc.other`, Android
+  uses `exp.other`), and the Aiven database password that was pasted in
+  plaintext during setup and should be rotated before storing real data.
 - Out of scope: business finance, the physical IoT piggy bank,
   multi-user/team administration.
 
 ## Recent history (at this snapshot)
 
 ```
-21a2d78 feat(web): v2 data layer (taxonomy, multi-currency) and Planes per the mockup
-978d23e fix(backend): range budgets that haven't started yet
-8751c40 feat(android): v2 — category-first Nuevo movimiento, multi-currency, Planes, taxonomy, guest mode
-39e1962 feat(backend): TX_PLANNED alerts and mockup alert order
-947ff92 feat(backend): v2 taxonomy, multi-currency, scheduled/repeating movements, receipts, custom budgets and goal plans
-c0cd558 feat(android): Perfil and Ajustes v2 per the mockup
-d7bbef0 feat: Ajustes v2 on Web with sessions, password, profile and account deletion
-52a9b27 feat(web): Reportes v2 — Gastos, Ingresos, Flujo de caja and Patrimonio per the mockup
-46bbbda feat: Reportes v2 on Android from a shared GET /summary/report
-5a75342 feat(web): Planes v2 — budgets and goals per the mockup, create/edit/delete panels for budgets, goals and loans
+e451267 feat(android): notched bottom bar with round centre FAB
+a4c7a20 Revert "feat(web): installable PWA for iPhone (manifest, icons, safe areas, dvh)"
+3fd2b80 Revert "feat(web): Cloudflare Pages deploy with same-origin /api proxy"
+eb75054 Revert "feat(web): serve as Cloudflare Worker with static assets and /api proxy"
+eb40f40 fix(android): sheet navigation bar follows the app theme
+776df39 chore: Google Search Console site verification file
+86783e4 docs: public privacy policy and terms of service pages (ES/EN)
+b798bab feat: suggested movement titles per category and subcategory; budget name required
+1049972 feat: product catalog backend (/products) with public databases and AI fallback; scanner wired to it; scan action parked as coming soon
+5c40291 feat: branded HTML password recovery email with the S2 Nova logo
 ```

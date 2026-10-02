@@ -12,8 +12,9 @@ backend/sync design.
   management and deeper analysis. See `web/AGENTS.md`.
 - **`backend/`** — shared API (Node.js + TypeScript + Fastify +
   Prisma/PostgreSQL) both apps talk to. See `backend/AGENTS.md`.
-- **`design_handoff_s2_nova_v2/`** — the v2 interactive mockups (visual
-  source of truth) and the product specs in `docs/`.
+- **`DESIGN-SYSTEM.md`** — the visual source of truth for both clients
+  (reasoning in `DESIGN_AUDIT.md`). `PROJECT_STATE.md` has the current
+  snapshot of what is built.
 
 Both apps are wired to the real backend (auth incl. Google Sign-In,
 accounts, transactions, budgets, goals, loans, recurring series, the v2

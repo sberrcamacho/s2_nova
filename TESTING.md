@@ -9,25 +9,22 @@ audit → test-infra → test → fix → regress cycle before moving to the nex
 Status key: **PASS** (implemented and green), **NOT RUN** (not started —
 never claim NOT RUN work as passing).
 
-## Current status (2026-09-26, after the v2 taxonomy/multi-currency work)
+## Current status (2026-10-02)
 
 The phase write-ups below describe the original QA pass; their per-file
-counts predate v2. Since then:
+counts predate v2 and were not re-taken. Current totals:
 
-- **Web**: `cd web && pnpm test` — 150 tests in 30 files, all passing.
-  Every v2 screen has its spec (`pages/*`, taxonomy ids and
-  `lib/currency.ts`'s `fmtCur` format throughout). `pages/PlanesPage` covers
-  the v2 Planes modals (budgets, goals, loans, abonos) and
-  `forms/NewTransactionPanel` + `unit/nuevoMovimiento` the v2 Nuevo
-  movimiento, `pages/BilleterasPage`, `pages/MonedasPage` and
-  `pages/CategoriasPage` the Billeteras page and Ajustes › Monedas and
-  Categorías, `components/GuideCard` the mini-guides, `pages/GuestMode`
-  + `unit/guestApi` guest mode; all pass.
-- **Backend**: v2 added `tests/routes/v2.spec.ts` (taxonomy, currencies,
-  scheduled/repeating movements, custom budgets, goal plans); the whole
-  backend suite is 186 tests in 14 files, all passing. The per-file
-  counts in Phase 1 were not re-taken.
-- **Android**: unchanged since Phase 3.
+- **Backend**: `cd backend && pnpm test` — 213 tests in 17 files, all
+  passing.
+- **Android**: `cd android && ./gradlew :app:testDebugUnitTest` — 49 tests
+  in 14 classes, all passing.
+- **Web**: `cd web && pnpm test` — 167 tests in 34 files. Flaky under
+  load: of three consecutive local runs on 2026-10-02 (an Android emulator
+  was running), one passed clean and two failed with 4 and 25 tests timing
+  out at 5 s, mostly in `forms/NewTransactionPanel.spec.tsx` and
+  `pages/PlanesPage.spec.tsx`. Re-run before treating a failure as real.
+- **CI**: `backend-ci.yml`, `web-ci.yml` and `android-ci.yml` in
+  `.github/workflows/`.
 
 ## Phase 1 — Backend: PASS
 

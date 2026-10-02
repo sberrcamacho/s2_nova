@@ -164,7 +164,8 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   paid-so-far is always the live sum of every transaction linked to it that
   way (`TransactionRepository.paidSoFar`/`outstandingFor`), never a stored
   running total that could drift. The bottom bar is **Inicio · Movimientos ·
-  [+] · Planes · Reportes** (architecture v2); Perfil is a stacked screen
+  [+] · Planes · Reportes** (`ui/nav/BottomNavBar.kt`: a flat bar with a
+  concave notch cradling a round "+" FAB, which shrinks below 340 dp); Perfil is a stacked screen
   opened from Inicio's avatar. Inicio is a bento (DESIGN-SYSTEM.md §5.3):
   hero, Ingresos / Gastos stat tiles, the top alert with its action,
   Presupuestos beside Próximo pago, and the recent list; its eye button
