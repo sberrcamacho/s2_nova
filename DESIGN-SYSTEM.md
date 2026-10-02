@@ -304,10 +304,13 @@ Rules:
   with 16 dp padding and `divider` between rows.
 - **Bottom bar:**
   - Inicio · Movimientos · [+] · Planes · Reportes.
-  - 80 dp tall, on `surface-raised` with elevation 1.
-  - Icon (24) + label (12, `label` weight); the active item uses `primary`
-    for the icon and label plus a `primary-soft` pill behind the icon.
-  - The central + is a 56 dp FAB in `primary` with the FAB glow.
+  - On `surface` with a hairline `outline` on top and a smooth concave notch
+    in the middle that cradles the FAB.
+  - Icon (26) + label (12, `label` weight), no pill; the active item uses the
+    accent ink on the icon and `on-surface` bold on the label.
+  - The central + is a 56 dp round FAB in `primary` with the FAB glow, its
+    centre on the bar's top edge. Below 340 dp wide the FAB shrinks to 48 dp
+    and the notch with it; a label that still does not fit is ellipsized.
 
 ### 5.2 Web
 
