@@ -49,7 +49,7 @@ export function Header({ title, onMenuClick, onNewTransaction }: HeaderProps) {
   }, [onMovimientos, params])
 
   return (
-    <header className="sticky top-0 z-[5] flex items-center justify-between gap-4 border-b border-v2-line bg-v2-bg px-4 py-3.5 pt-[max(.875rem,env(safe-area-inset-top))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] min-[760px]:px-7">
+    <header className="sticky top-0 z-[5] flex items-center justify-between gap-4 border-b border-v2-line bg-v2-bg px-4 py-3.5 min-[760px]:px-7">
       <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"

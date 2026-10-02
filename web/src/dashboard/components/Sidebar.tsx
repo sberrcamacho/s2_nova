@@ -42,7 +42,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       {open && <div className="fixed inset-0 z-40 bg-[rgba(6,6,12,.5)] min-[760px]:hidden" onClick={onClose} aria-hidden="true" />}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex h-dvh w-[213px] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] flex-none flex-col border-r border-v2-line bg-v2-sidebar text-v2-text transition-transform duration-200 min-[760px]:sticky min-[760px]:top-0 min-[760px]:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 flex h-screen w-[213px] flex-none flex-col border-r border-v2-line bg-v2-sidebar text-v2-text transition-transform duration-200 min-[760px]:sticky min-[760px]:top-0 min-[760px]:translate-x-0',
           open ? 'translate-x-0' : '-translate-x-full',
         )}
       >

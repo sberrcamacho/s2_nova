@@ -76,12 +76,12 @@ export function DashboardLayout() {
 
   return (
     <NewMovementContext.Provider value={openNewTx}>
-      <div className="flex h-dvh overflow-hidden bg-v2-bg text-v2-text [line-height:normal]">
+      <div className="flex h-screen overflow-hidden bg-v2-bg text-v2-text [line-height:normal]">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
           <Header title={title} onMenuClick={() => setSidebarOpen(true)} onNewTransaction={() => setNewTxOpen(true)} />
           {user?.isGuest && <GuestBanner />}
-          <main className="flex-1 pb-[env(safe-area-inset-bottom)]">
+          <main className="flex-1">
             <Outlet />
           </main>
         </div>
