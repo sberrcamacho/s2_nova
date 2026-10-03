@@ -1,5 +1,6 @@
-import { useId, useState } from 'react'
+import { useId, useState, type CSSProperties, type ReactNode } from 'react'
 import { Money } from '@/components/v2/Money'
+import { NAV_ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
 import { cn } from '@/lib/cn'
 import { useTranslation } from '@/state/useTranslation'
 
@@ -42,6 +43,7 @@ export function BarChart({
   height = 220,
   highlightLast = false,
   tableCaption,
+  empty,
 }: {
   labels: string[]
   series: BarSeries[]
@@ -51,10 +53,15 @@ export function BarChart({
   height?: number
   highlightLast?: boolean
   tableCaption: string
+  // Shown instead of an all-zero plot (a new account, an empty range).
+  empty?: { title: string; description: string }
 }) {
   const { t, language } = useTranslation()
   const [active, setActive] = useState<number | null>(null)
   const tableId = useId()
+  if (empty && series.every((s) => s.values.every((v) => v === 0))) {
+    return <EmptyChart title={empty.title} description={empty.description} style={{ minHeight: height + 24 }} />
+  }
   const top = niceCeiling(Math.max(0, ...series.flatMap((s) => s.values)))
   const ticks = [top, top / 2, 0]
   return (
@@ -163,6 +170,21 @@ export function BarChart({
         </table>
       </details>
     </figure>
+  )
+}
+
+// A card with nothing to show yet (DESIGN-SYSTEM.md §6.12): a glyph (the
+// Reportes one by default), what is missing and how to fill it, centered in the space the
+// content would take so the card keeps its size.
+export function EmptyChart({ title, description, icon, style }: { title: string; description: string; icon?: ReactNode; style?: CSSProperties }) {
+  return (
+    <div className="flex flex-col items-center justify-center px-4 py-2 text-center" style={style}>
+      <span aria-hidden="true" className="flex h-11 w-11 items-center justify-center rounded-full bg-v2-surface2 text-ink-secondary">
+        {icon ?? <StrokeIcon paths={NAV_ICON_PATHS.reportes} size={22} />}
+      </span>
+      <p className="mt-3 text-title-sm font-semibold text-ink">{title}</p>
+      <p className="mx-auto mt-1 max-w-sm text-body-sm text-ink-tertiary">{description}</p>
+    </div>
   )
 }
 

@@ -28,6 +28,7 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -62,6 +63,7 @@ import com.s2nova.app.data.model.Report
 import com.s2nova.app.data.model.ReportTotals
 import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.components.CatMark
+import com.s2nova.app.ui.components.MockupIcons
 import com.s2nova.app.ui.components.categoryName
 import com.s2nova.app.ui.rememberAppLanguage
 import com.s2nova.app.ui.rememberCurrencyFormatter
@@ -219,6 +221,25 @@ private fun CardTitle(text: String, subtitle: String? = null) {
     }
 }
 
+// A card with nothing to show yet (DESIGN-SYSTEM.md §6.12): the Reportes
+// glyph, what is missing and how to fill it, centered in the space the
+// content would take so the card keeps its size.
+@Composable
+private fun EmptyCardState(title: String, body: String, modifier: Modifier = Modifier) {
+    val colors = NovaColors.current
+    Column(
+        modifier = modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Box(Modifier.size(44.dp).clip(CircleShape).background(colors.surfaceSunken), contentAlignment = Alignment.Center) {
+            Icon(MockupIcons.Reportes, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
+        }
+        Text(title, style = NovaType.titleSm, color = MaterialTheme.colorScheme.onBackground, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 12.dp))
+        Text(body, style = NovaType.bodySm, color = colors.textDim, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 4.dp, start = 8.dp, end = 8.dp))
+    }
+}
+
 @Composable
 private fun Placeholder(widthFraction: Float, height: Int) {
     Box(
@@ -348,6 +369,10 @@ private fun BarsCard(report: Report?, subtitle: String) {
             Box(Modifier.padding(top = 16.dp)) { Placeholder(1f, 180) }
             return@ReportCard
         }
+        if (months.all { it.income == 0.0 && it.expenses == 0.0 }) {
+            EmptyCardState(t(StringKey.REPORTS_EMPTY_FLOW_TITLE), t(StringKey.REPORTS_EMPTY_FLOW_BODY), Modifier.padding(top = 16.dp).height(180.dp))
+            return@ReportCard
+        }
         // Readout of the selected month.
         months.getOrNull(selected)?.let { m ->
             Row(
@@ -459,6 +484,8 @@ private fun CategoryCard(report: Report?) {
         Column(modifier = Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             if (top == null) {
                 repeat(4) { Placeholder(1f, 28) }
+            } else if (top.isEmpty()) {
+                EmptyCardState(t(StringKey.REPORTS_EMPTY_CATEGORY_TITLE), t(StringKey.REPORTS_EMPTY_CATEGORY_BODY), Modifier.padding(vertical = 8.dp))
             }
             top?.forEach { c ->
                 val color = com.s2nova.app.ui.components.categoryColor(c.category)

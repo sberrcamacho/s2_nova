@@ -1,8 +1,8 @@
-import { StrokeIcon } from '@/components/v2/icons'
+import { NAV_ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
 import { walletGlyph } from '@/dashboard/components/WalletModal'
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { BarChart, ChartLegend } from '@/components/v2/BarChart'
+import { BarChart, ChartLegend, EmptyChart } from '@/components/v2/BarChart'
 import { CategoryMark } from '@/components/v2/CategoryMark'
 import { Money, MoneyText } from '@/components/v2/Money'
 import { RowSkeletons, SkeletonBar, SyncBanner } from '@/components/v2/Rows'
@@ -214,6 +214,7 @@ function SpendingTab({ report }: { report: Report | null }) {
                 hidden={hidden}
                 summary={flowSummary}
                 tableCaption={t('rep.incomeVsExpenses')}
+                empty={{ title: t('rep.empty.flowTitle'), description: t('rep.empty.flowBody') }}
               />
             )}
           </div>
@@ -241,7 +242,7 @@ function SpendingTab({ report }: { report: Report | null }) {
             {top === null ? (
               <RowSkeletons count={4} />
             ) : top.length === 0 ? (
-              <div className="text-body-sm text-ink-tertiary">{t('rep.noSpending')}</div>
+              <EmptyChart title={t('rep.empty.categoryTitle')} description={t('rep.empty.categoryBody')} />
             ) : (
               top.map((c) => (
                 <div key={c.category} className="flex items-center gap-2.5">
@@ -313,7 +314,7 @@ function IncomeTab({ report }: { report: Report | null }) {
           {sources === null ? (
             <RowSkeletons count={3} />
           ) : sources.length === 0 ? (
-            <div className="text-body-sm text-ink-tertiary">{t('rep.noIncome')}</div>
+            <EmptyChart title={t('rep.empty.incomeTitle')} description={t('rep.empty.sourcesBody')} />
           ) : (
             sources.map((s) => (
               <div key={`${s.category}|${s.merchant ?? ''}`}>
@@ -368,6 +369,7 @@ function IncomeTab({ report }: { report: Report | null }) {
               highlightLast
               summary={incomeSummary}
               tableCaption={t('rep.incomeByMonth')}
+                empty={{ title: t('rep.empty.incomeTitle'), description: t('rep.empty.incomeBody') }}
             />
           )}
         </div>
@@ -536,6 +538,8 @@ function NetWorthTab({ report, wallets }: { report: Report | null; wallets: Wall
         <div className="mt-4 flex flex-col">
           {wallets === null ? (
             <RowSkeletons count={3} box={30} />
+          ) : wallets.length === 0 ? (
+            <EmptyChart title={t('rep.empty.walletsTitle')} description={t('rep.empty.walletsBody')} icon={<StrokeIcon paths={NAV_ICON_PATHS.billeteras} size={22} />} />
           ) : (
             wallets.map((w) => (
               <div key={w.id} className="flex min-h-14 items-center gap-3 border-b border-divider py-2">
@@ -586,6 +590,7 @@ function NetWorthTab({ report, wallets }: { report: Report | null; wallets: Wall
               highlightLast
               summary={fill(t('rep.summary.netWorth'), hidden ? t('inicio.amountHidden') : format(report.netWorth.wallets))}
               tableCaption={t('rep.lastSixMonths')}
+                empty={{ title: t('rep.empty.netWorthTitle'), description: t('rep.empty.netWorthBody') }}
             />
           )}
         </div>
