@@ -6,7 +6,6 @@ import android.security.keystore.KeyProperties
 import android.util.Base64
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -17,7 +16,7 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
-private val Context.sessionDataStore by preferencesDataStore(name = "s2nova_session")
+private val Context.sessionDataStore by novaPreferencesDataStore(name = "s2nova_session")
 
 // Why the session ended without the user signing out.
 enum class SessionEndReason { EXPIRED, IDLE }

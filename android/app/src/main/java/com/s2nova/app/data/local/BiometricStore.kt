@@ -6,7 +6,6 @@ import android.security.keystore.KeyProperties
 import android.util.Base64
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -16,7 +15,7 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
-private val Context.biometricDataStore by preferencesDataStore(name = "s2nova_biometric")
+private val Context.biometricDataStore by novaPreferencesDataStore(name = "s2nova_biometric")
 
 // "Ingreso biométrico": the credential the backend issued to this device
 // (POST /auth/biometric), with its secret sealed by an Android Keystore key

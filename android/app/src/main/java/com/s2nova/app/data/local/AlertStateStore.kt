@@ -3,10 +3,9 @@ package com.s2nova.app.data.local
 import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringSetPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.first
 
-private val Context.alertStateDataStore by preferencesDataStore(name = "s2nova_alert_state")
+private val Context.alertStateDataStore by novaPreferencesDataStore(name = "s2nova_alert_state")
 
 // Which shared alerts (backend GET /alerts ids) this device has read in the
 // bell or dismissed from Inicio's alert card. Kept per device on purpose —

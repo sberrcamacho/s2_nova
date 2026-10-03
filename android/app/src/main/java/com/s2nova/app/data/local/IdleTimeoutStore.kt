@@ -3,10 +3,9 @@ package com.s2nova.app.data.local
 import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.first
 
-private val Context.idleTimeoutDataStore by preferencesDataStore(name = "s2nova_idle_timeout")
+private val Context.idleTimeoutDataStore by novaPreferencesDataStore(name = "s2nova_idle_timeout")
 
 // "Cierre automático": when the user last touched the app. Kept in memory
 // for the running process (MainActivity.onUserInteraction updates it) and

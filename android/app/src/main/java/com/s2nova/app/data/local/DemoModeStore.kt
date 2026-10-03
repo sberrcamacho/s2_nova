@@ -3,11 +3,10 @@ package com.s2nova.app.data.local
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-private val Context.demoModeDataStore by preferencesDataStore(name = "s2nova_demo_mode")
+private val Context.demoModeDataStore by novaPreferencesDataStore(name = "s2nova_demo_mode")
 
 // Whether the device is currently browsing fictitious sample data instead
 // of the signed-in user's real wallets/transactions/budgets — see

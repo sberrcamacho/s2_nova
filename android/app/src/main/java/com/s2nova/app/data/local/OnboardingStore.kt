@@ -3,11 +3,10 @@ package com.s2nova.app.data.local
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-private val Context.onboardingDataStore by preferencesDataStore(name = "s2nova_onboarding")
+private val Context.onboardingDataStore by novaPreferencesDataStore(name = "s2nova_onboarding")
 
 // First-launch onboarding/tutorial completion, persisted locally via
 // DataStore per android/AGENTS.md's stated intended mechanism for this

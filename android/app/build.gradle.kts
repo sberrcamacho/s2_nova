@@ -47,6 +47,18 @@ android {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
+        // Optimized build for trying the app on a real phone: not
+        // debuggable, shrunk by R8 and signed with the debug key so it
+        // installs over the debug APK (same package, so Google Sign-In keeps
+        // working). Motion and scrolling on low-end devices must be judged
+        // on this build, never on debug.
+        create("staging") {
+            initWith(getByName("release"))
+            isMinifyEnabled = true
+            isShrinkResources = true
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+        }
     }
 
     compileOptions {
