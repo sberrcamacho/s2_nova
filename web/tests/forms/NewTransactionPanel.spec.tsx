@@ -123,8 +123,11 @@ describe('NewTransactionPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Guardar movimiento' }))
     // It's more than the wallet has: a heads-up first, saving anyway is allowed.
     const warn = await screen.findByRole('alertdialog', { name: 'Saldo insuficiente' })
-    expect(warn).toHaveTextContent('Bancolombia quedará en −$168.400. ¿Guardar de todos modos?')
-    await user.click(within(warn).getByRole('button', { name: 'Guardar igual' }))
+    expect(warn).toHaveTextContent('Con este movimiento, Bancolombia queda en negativo.')
+    expect(warn).toHaveTextContent('Saldo actual$100')
+    expect(warn).toHaveTextContent('Este movimiento−$168.500')
+    expect(warn).toHaveTextContent('Saldo después−$168.400')
+    await user.click(within(warn).getByRole('button', { name: 'Guardar de todos modos' }))
 
     await waitFor(() => expect(onClose).toHaveBeenCalled())
     expect(sent()).toMatchObject({
@@ -148,7 +151,7 @@ describe('NewTransactionPanel', () => {
     await pickCategory(user, 'Alimentación', 'Mercado')
     await user.type(screen.getByLabelText('MONTO'), '500')
     await user.click(screen.getByRole('button', { name: 'Guardar movimiento' }))
-    await user.click(await screen.findByRole('button', { name: 'Revisar' }))
+    await user.click(await screen.findByRole('button', { name: 'Revisar monto' }))
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
     expect(sent()).toBeUndefined()
     await user.clear(screen.getByLabelText('MONTO'))

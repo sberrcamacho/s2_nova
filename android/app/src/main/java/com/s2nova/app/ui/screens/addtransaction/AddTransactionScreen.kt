@@ -80,6 +80,7 @@ import com.s2nova.app.ui.components.DraftSheetDeleteRow
 import com.s2nova.app.ui.components.FieldLabel
 import com.s2nova.app.ui.components.GlyphMark
 import com.s2nova.app.ui.components.InputBox
+import com.s2nova.app.ui.components.OverdraftDialog
 import com.s2nova.app.ui.components.OptionTile
 import com.s2nova.app.ui.components.PillRow
 import com.s2nova.app.ui.components.PlanMark
@@ -452,7 +453,11 @@ fun AddTransactionScreen(
                     AppContainer.transactionRepository.edit(editTransactionId, input); AppContainer.transactionRepository.getById(editTransactionId)
                 } else AppContainer.transactionRepository.add(input)
                 val a = s.attach
-                if (saved != null && a != null && !a.existing) AppContainer.transactionRepository.attach(saved.id, a.name, a.mime, a.bytes)
+                // A failed receipt doesn't undo the saved movement (retrying would duplicate it).
+                if (saved != null && a != null && !a.existing) {
+                    runCatching { AppContainer.transactionRepository.attach(saved.id, a.name, a.mime, a.bytes) }
+                        .onFailure { Snack.show(tr(StringKey.NM_ERR_RECEIPT_UPLOAD)) }
+                }
                 // Its receipt was removed while editing.
                 if (saved != null && a == null && saved.attachment != null) AppContainer.transactionRepository.removeAttachment(saved.id)
                 if (!guest) {
@@ -611,14 +616,22 @@ fun AddTransactionScreen(
     }
 
     overdraftAsk?.let { left ->
-        AlertDialog(
-            onDismissRequest = { overdraftAsk = null },
-            icon = { V2Icon(V2Icons.warn, colors.warning, size = 24.dp) },
-            title = { Text(t(StringKey.NM_OVERDRAFT_TITLE)) },
-            // The sign and the figure never wrap apart.
-            text = { Text(tr(StringKey.NM_OVERDRAFT_BODY, shortWallet(wallet.name), formatMoney(left, wallet.currency).replace("−", "−\u2060"))) },
-            confirmButton = { TextButton(onClick = { save(confirmed = true) }) { Text(t(StringKey.NM_OVERDRAFT_CONFIRM)) } },
-            dismissButton = { TextButton(onClick = { overdraftAsk = null }) { Text(t(StringKey.NM_OVERDRAFT_REVIEW)) } },
+        // What the wallet has to spend (including what an edited movement
+        // gives back), what this movement takes, and where it leaves it.
+        val available = wallet.currentBalance + refund
+        OverdraftDialog(
+            title = t(StringKey.NM_OVERDRAFT_TITLE),
+            body = tr(StringKey.NM_OVERDRAFT_BODY, shortWallet(wallet.name)),
+            availableLabel = t(StringKey.NM_OVERDRAFT_AVAILABLE),
+            available = formatMoney(available, wallet.currency),
+            spendLabel = t(StringKey.NM_OVERDRAFT_SPEND),
+            spend = formatMoney(left - available, wallet.currency),
+            leftLabel = t(StringKey.NM_OVERDRAFT_LEFT),
+            left = formatMoney(left, wallet.currency),
+            review = t(StringKey.NM_OVERDRAFT_REVIEW),
+            confirm = t(StringKey.NM_OVERDRAFT_CONFIRM),
+            onReview = { overdraftAsk = null },
+            onConfirm = { save(confirmed = true) },
         )
     }
 

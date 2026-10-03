@@ -6,6 +6,7 @@ import LoginPage from '@/auth/LoginPage'
 import RegisterPage from '@/auth/RegisterPage'
 import { RecuperarPage, NuevaContrasenaPage } from '@/auth/RecoveryPages'
 import FirstRunPage from '@/auth/FirstRunPage'
+import { HomeRoute } from '@/landing/HomeRoute'
 import InicioPage from '@/dashboard/pages/InicioPage'
 import MovimientosPage from '@/dashboard/pages/MovimientosPage'
 import PlanesPage from '@/dashboard/pages/PlanesPage'
@@ -29,6 +30,8 @@ import SesionesPage from '@/dashboard/pages/ajustes/SesionesPage'
 // /login and /register sit outside DashboardLayout/ProtectedRoute — they
 // must render for a signed-out visitor, which every other route can't.
 export const dashboardRoutes: RouteObject[] = [
+  // `/`: the public front page signed out, Inicio signed in.
+  { index: true, element: <HomeRoute /> },
   { path: 'login', element: <LoginPage /> },
   { path: 'register', element: <RegisterPage /> },
   { path: 'recuperar', element: <RecuperarPage /> },
@@ -39,7 +42,6 @@ export const dashboardRoutes: RouteObject[] = [
       {
         element: <DashboardLayout />,
         children: [
-          { index: true, element: <Navigate to="/inicio" replace /> },
           { path: 'inicio', element: <InicioPage /> },
           { path: 'movimientos', element: <MovimientosPage /> },
           { path: 'planes', element: <PlanesPage /> },

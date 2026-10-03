@@ -965,10 +965,26 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
       {overdraftAsk !== null && (
         <WarnDialog
           title={t('nm.overdraft.title')}
-          body={(() => {
-            const [pre, post] = t('nm.overdraft.body').split('{1}')
-            // The sign and the figure never wrap apart.
-            return <>{fill(pre, walletName)}<span className="font-numeric whitespace-nowrap font-semibold text-negative">{formatMoney(overdraftAsk, wcur)}</span>{post}</>
+          body={fill(t('nm.overdraft.body'), walletName)}
+          details={(() => {
+            // What the wallet has to spend (including what an edited
+            // movement gives back), what this one takes, and where it lands.
+            const available = (wallet?.currentBalance ?? 0) + refund
+            // The sign and the figure never wrap apart; the amount keeps its width.
+            const line = (label: string, value: number, strong = false) => (
+              <div className="flex items-center gap-3">
+                <span className={`min-w-0 flex-1 truncate ${strong ? 'text-body-sm font-semibold text-ink' : 'text-body-sm text-ink-secondary'}`}>{label}</span>
+                <span className={`font-numeric shrink-0 whitespace-nowrap text-amount tabular-nums ${strong ? 'font-semibold text-negative' : 'font-medium text-ink'}`}>{formatMoney(value, wcur)}</span>
+              </div>
+            )
+            return (
+              <div className="flex flex-col gap-2.5">
+                {line(t('nm.overdraft.available'), available)}
+                {line(t('nm.overdraft.spend'), overdraftAsk - available)}
+                <hr className="border-0 border-t border-border" />
+                {line(t('nm.overdraft.left'), overdraftAsk, true)}
+              </div>
+            )
           })()}
           cancel={t('nm.overdraft.review')}
           cta={t('nm.overdraft.confirm')}

@@ -476,10 +476,13 @@ export function ConfirmDialog({ title, lines, ack, cta, onCancel, onConfirm }: {
 }
 
 // One-step heads-up before an action that's allowed but probably not
-// intended (Guardar that leaves a wallet below zero). Sits above the modal
-// that opened it; Esc or the cancel button go back to it, and focus returns
-// to whatever opened the dialog.
-export function WarnDialog({ title, body, cancel, cta, onCancel, onConfirm }: { title: string; body: ReactNode; cancel: string; cta: string; onCancel: () => void; onConfirm: () => void }) {
+// intended (Guardar that leaves a wallet below zero), DESIGN-SYSTEM.md §6.11:
+// the warning tile, a short message, optional `details` (the balance
+// breakdown) and two buttons. Going back (`cancel`) is the primary, safe
+// path and takes focus; the action stays one click away as the secondary.
+// Sits above the modal that opened it; Esc or the cancel button go back to
+// it, and focus returns to whatever opened the dialog.
+export function WarnDialog({ title, body, details, cancel, cta, onCancel, onConfirm }: { title: string; body: ReactNode; details?: ReactNode; cancel: string; cta: string; onCancel: () => void; onConfirm: () => void }) {
   useEffect(() => {
     const opener = document.activeElement as HTMLElement | null
     const onKey = (e: KeyboardEvent) => {
@@ -502,18 +505,19 @@ export function WarnDialog({ title, body, cancel, cta, onCancel, onConfirm }: { 
         aria-labelledby="warn-dialog-title"
         aria-describedby="warn-dialog-body"
         onClick={(e) => e.stopPropagation()}
-        className="animate-dialog-in flex w-[480px] max-w-full flex-col gap-3.5 rounded-[18px] border border-border-input bg-surface p-[22px] text-ink shadow-[0_24px_60px_rgba(0,0,0,.45)]"
+        className="animate-dialog-in flex w-[400px] max-w-full flex-col items-center rounded-[28px] border border-border bg-surface-elevated p-6 text-center text-ink shadow-[0_8px_24px_rgba(0,0,0,.5)]"
       >
-        <span aria-hidden="true" className="flex h-[42px] w-[42px] items-center justify-center rounded-full bg-warning-soft">
-          <Icon paths={IC.warn} size={20} color="var(--color-warning)" />
+        <span aria-hidden="true" className="flex h-14 w-14 items-center justify-center rounded-full bg-warning-soft">
+          <Icon paths={IC.warn} size={26} color="var(--color-warning)" />
         </span>
-        <div id="warn-dialog-title" className="text-title-sm font-semibold">{title}</div>
-        <div id="warn-dialog-body" className="text-body-sm leading-[1.45] text-ink-secondary">{body}</div>
-        <div className="mt-1 flex justify-end gap-2">
-          <button type="button" autoFocus onClick={onCancel} className="cursor-pointer whitespace-nowrap rounded-[10px] border border-border-input px-4 py-2.5 text-body-sm font-semibold text-ink-secondary">
+        <div id="warn-dialog-title" className="mt-4 text-title font-semibold">{title}</div>
+        <div id="warn-dialog-body" className="mt-2 text-body-sm leading-[1.45] text-ink-secondary">{body}</div>
+        {details && <div className="mt-5 w-full rounded-2xl bg-surface-sunken px-4 py-3.5 text-left">{details}</div>}
+        <div className="mt-6 flex w-full flex-col gap-2.5">
+          <button type="button" autoFocus onClick={onCancel} className="h-11 cursor-pointer whitespace-nowrap rounded-xl bg-primary px-4 text-body-sm font-semibold text-white hover:bg-primary-pressed">
             {cancel}
           </button>
-          <button type="button" onClick={onConfirm} className="cursor-pointer whitespace-nowrap rounded-[10px] px-4 py-2.5 text-body-sm font-semibold text-white" style={{ background: 'var(--v2-accent)' }}>
+          <button type="button" onClick={onConfirm} className="h-11 cursor-pointer whitespace-nowrap rounded-xl border border-border-input bg-surface px-4 text-body-sm font-semibold text-ink hover:bg-surface-sunken">
             {cta}
           </button>
         </div>

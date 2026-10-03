@@ -109,6 +109,7 @@ dependencies {
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.googleid)
     implementation(libs.androidx.biometric)
+    implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.retrofit.core)
     implementation(libs.retrofit.converter.kotlinx.serialization)
     implementation(libs.okhttp.logging.interceptor)

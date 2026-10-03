@@ -416,3 +416,15 @@ typealias, and every name, color and glyph resolves through
 `CategoryRepository` (user overrides, hidden nodes and custom categories
 come from `GET /categories`). To change the taxonomy, edit
 `s2-categories.js`, regenerate, and add a migration that remaps rows.
+
+## System notifications
+
+`data/notifications/AlertNotifier.kt` posts the shared alerts as Android
+notifications (channel "Alertas") while Ajustes › Notificaciones is on and
+the system allows them (`POST_NOTIFICATIONS` on Android 13+, requested from
+the toggle). A WorkManager job (`AlertNotificationWorker`, every 3 h) posts
+each alert once: from the live `GET /alerts` when the session is still
+usable, otherwise from the Programados' next dates that `syncFromApp()`
+saves after every foreground refresh (`AppContainer.refreshUserData`),
+because "Cierre automático" ends the server session minutes after the app
+closes. Signing out clears the saved state.

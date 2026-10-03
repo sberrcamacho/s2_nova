@@ -95,12 +95,13 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
     var phone by remember { mutableStateOf(user?.phone ?: "") }
     var city by remember { mutableStateOf(user?.city ?: "") }
     val preferences = user?.preferences
-    val notifications = preferences?.notifications ?: true
+    val context = androidx.compose.ui.platform.LocalContext.current
+    // On only when Android lets them through too.
+    val notifications = (preferences?.notifications ?: true) && com.s2nova.app.data.notifications.AlertNotifier.canPost(context)
     // On only where this phone holds the credential: the preference is the
     // account's, the credential is the device's.
     val biometricEnrolled by AppContainer.authRepository.biometricEnrolled.collectAsStateWithLifecycle(initialValue = false)
     val biometric = (preferences?.biometricLogin ?: false) && biometricEnrolled
-    val context = androidx.compose.ui.platform.LocalContext.current
     val blurBalance = preferences?.blurBalance ?: false
     val autoLockMinutes = preferences?.autoLockMinutes ?: 5
     val currency = preferences?.currency ?: Currency.COP
@@ -111,6 +112,15 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
         AppContainer.authRepository.updateUser { u -> u.copy(preferences = local(u.preferences)) }
         scope.launch { AppContainer.authRepository.persistPreferences(request) }
     }
+
+    fun setNotifications(on: Boolean) {
+        persist({ p -> p.copy(notifications = on) }, UpdatePreferencesRequest(notifications = on))
+        com.s2nova.app.data.notifications.AlertNotifier.setEnabled(on)
+    }
+    val notifDenied = t(StringKey.SETTINGS_NOTIFICATIONS_DENIED)
+    val notificationPermission = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission(),
+    ) { granted -> if (granted) setNotifications(true) else com.s2nova.app.ui.Snack.show(notifDenied) }
 
     fun lockName(minutes: Int): String = when (minutes) {
         0 -> t(StringKey.SETTINGS_AUTO_LOCK_NEVER)
@@ -159,8 +169,18 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
                 NovaCard(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         SwitchRow(t(StringKey.SETTINGS_DARK_MODE), isDark) { ThemeController.setDark(it) }
-                        SwitchRow(t(StringKey.SETTINGS_NOTIFICATIONS), notifications) {
-                            persist({ p -> p.copy(notifications = it) }, UpdatePreferencesRequest(notifications = it))
+                        SwitchRow(t(StringKey.SETTINGS_NOTIFICATIONS), notifications) { on ->
+                            // Android 13+ needs the runtime permission before turning them on.
+                            val needsPermission = on && android.os.Build.VERSION.SDK_INT >= 33 &&
+                                androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
+                            if (needsPermission) {
+                                runCatching { notificationPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS) }
+                                    .onFailure { com.s2nova.app.ui.Snack.show(notifDenied) }
+                            } else {
+                                setNotifications(on)
+                                // Allowed, but switched off for the app in the system settings.
+                                if (on && !com.s2nova.app.data.notifications.AlertNotifier.canPost(context)) com.s2nova.app.ui.Snack.show(notifDenied)
+                            }
                         }
                         SwitchRow(t(StringKey.SETTINGS_BIOMETRIC), biometric) { on ->
                             scope.launch {

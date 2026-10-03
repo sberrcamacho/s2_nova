@@ -282,6 +282,7 @@ class AuthRepository(
         // A stale per-device demo flag must never silently apply to
         // whichever account signs in next on this device.
         val wasGuest = DemoModeFlag.active
+        com.s2nova.app.data.notifications.AlertNotifier.clear()
         DemoModeFlag.set(false)
         val refreshToken = sessionStore.refreshTokenOnce()
         sessionStore.clear()

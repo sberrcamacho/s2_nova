@@ -57,6 +57,8 @@ data class NovaExtraColors(
     val accentText: Color,
     val dividerSubtle: Color,
     val surfaceSunken: Color,
+    // `surface-raised` (§2.1): dialogs and menus.
+    val surfaceRaised: Color,
     // Unselected filter pill (mockup pill(): --surface2, --chip-text,
     // 1px rgba(111,111,130,.4) border).
     val pillSurface: Color,
@@ -109,6 +111,7 @@ private val LightExtraColors = NovaExtraColors(
     accentText = LightAccentText,
     dividerSubtle = LightDividerSubtle,
     surfaceSunken = LightSurfaceSunken,
+    surfaceRaised = LightSurface,
     pillSurface = LightBgSecondary,
     pillText = Color(0xFF23232C),
     bgDeep = Color(0xFFECECF3),
@@ -160,6 +163,7 @@ private val DarkExtraColors = NovaExtraColors(
     accentText = DarkAccentText,
     dividerSubtle = DarkDividerSubtle,
     surfaceSunken = DarkSurfaceSunken,
+    surfaceRaised = DarkSurfaceElevated,
     pillSurface = DarkSurfaceElevated,
     pillText = Color(0xFFE6E6EE),
     bgDeep = Color(0xFF09090E),

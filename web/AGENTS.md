@@ -8,7 +8,9 @@ relates to `android/`. This app has its own login/register screens
 backend over `VITE_API_URL` (`src/lib/apiClient.ts`) — `src/services/*.ts`
 are thin wrappers around `fetch()` calls, not mock data (see
 `ARCHITECTURE.md` §9). `ProtectedRoute` gates every dashboard route behind
-a real session; a signed-out visitor lands on `/login`.
+a real session; a signed-out visitor at `/` sees the public front page
+(`src/landing/LandingPage.tsx`, via `HomeRoute`), and any other route sends
+them to `/login`.
 
 **Visual source of truth**: `design_handoff_s2_nova_v2/S2 Nova Dashboard v2.dc.html`
 (specs in `design_handoff_s2_nova_v2/docs/` — `WEB_PARITY.md` lists what

@@ -107,6 +107,7 @@ object AppContainer {
         biometricStore = com.s2nova.app.data.local.BiometricStore.getInstance(context)
         authRepository = AuthRepository(sessionStore, onboardingStore, credentialManager, idleTimeoutStore, biometricStore)
         com.s2nova.app.ui.AppLang.init(context)
+        com.s2nova.app.data.notifications.AlertNotifier.init(context)
         appScope.launch {
             authRepository.currentUser.collect { user -> user?.let { com.s2nova.app.ui.AppLang.set(it.preferences.language) } }
         }
@@ -173,5 +174,6 @@ object AppContainer {
         runCatching { recurringSeriesRepository.refresh() }
         runCatching { summaryRepository.refresh() }
         runCatching { alertRepository.refresh() }
+        com.s2nova.app.data.notifications.AlertNotifier.syncFromApp()
     }
 }

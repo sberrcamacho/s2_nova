@@ -1,5 +1,7 @@
 package com.s2nova.app.ui.screens.addtransaction
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
 import android.provider.OpenableColumns
@@ -26,6 +28,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,6 +42,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.s2nova.app.data.AppContainer
 import com.s2nova.app.data.Currencies
 import com.s2nova.app.data.fmtDate
@@ -513,37 +518,75 @@ fun DateBox(value: String, modifier: Modifier = Modifier, placeholder: String = 
     }
 }
 
+// Camera, gallery and document pickers for a receipt, shared by the new/edit
+// movement form and the movement detail. The manifest declares CAMERA (for
+// the scanner), so ACTION_IMAGE_CAPTURE throws a SecurityException unless the
+// permission is granted first; reading the picked file can fail too. Both
+// end in a snackbar instead of a crash.
+private val RECEIPT_MIMES = setOf("image/jpeg", "image/png", "image/webp", "application/pdf")
+
+class ReceiptPicker(val camera: () -> Unit, val gallery: () -> Unit, val document: () -> Unit)
+
 @Composable
-private fun AttachSheet(s: NmState) {
+fun rememberReceiptPicker(onPicked: (AttachDraft) -> Unit): ReceiptPicker {
     val context = LocalContext.current
+    val currentOnPicked by rememberUpdatedState(onPicked)
+    val photoName = tr(StringKey.NM_RECEIPT_PHOTO_FILE)
+    val fileName = tr(StringKey.NM_RECEIPT_FILE)
+    val errRead = tr(StringKey.NM_ERR_FILE_READ)
+    val errSize = tr(StringKey.NM_ERR_FILE_SIZE)
+    val errPermission = tr(StringKey.NM_ERR_CAMERA_PERMISSION)
     fun fromUri(uri: Uri?) {
         uri ?: return
-        val resolver = context.contentResolver
-        val mime = resolver.getType(uri) ?: "image/jpeg"
-        var name = tr(StringKey.NM_RECEIPT_FILE)
-        resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c -> if (c.moveToFirst()) name = c.getString(0) ?: name }
-        val bytes = resolver.openInputStream(uri)?.use { it.readBytes() } ?: return
-        if (bytes.size > 10 * 1024 * 1024) { Snack.show(tr(StringKey.NM_ERR_FILE_SIZE)); return }
-        s.attach = AttachDraft(name, mime, bytes)
-        s.sheet = null
+        val draft = runCatching {
+            val resolver = context.contentResolver
+            val mime = resolver.getType(uri) ?: "image/jpeg"
+            var name = fileName
+            resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c -> if (c.moveToFirst()) name = c.getString(0) ?: name }
+            val bytes = resolver.openInputStream(uri)?.use { it.readBytes() } ?: error("unreadable")
+            if (mime in RECEIPT_MIMES) AttachDraft(name, mime, bytes)
+            else {
+                // HEIC, GIF, "image/jpg"… go up as JPEG, the formats the server takes.
+                val bmp = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size) ?: error("unsupported")
+                val out = ByteArrayOutputStream()
+                bmp.compress(Bitmap.CompressFormat.JPEG, 90, out)
+                AttachDraft(name.substringBeforeLast('.') + ".jpg", "image/jpeg", out.toByteArray())
+            }
+        }.getOrElse { Snack.show(errRead); return }
+        if (draft.bytes.size > 10 * 1024 * 1024) { Snack.show(errSize); return }
+        currentOnPicked(draft)
     }
     val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { bmp: Bitmap? ->
         if (bmp != null) {
             val out = ByteArrayOutputStream()
             bmp.compress(Bitmap.CompressFormat.JPEG, 90, out)
-            s.attach = AttachDraft(tr(StringKey.NM_RECEIPT_PHOTO_FILE), "image/jpeg", out.toByteArray())
-            s.sheet = null
+            currentOnPicked(AttachDraft(photoName, "image/jpeg", out.toByteArray()))
         }
+    }
+    fun launchCamera() {
+        runCatching { camera.launch(null) }.onFailure { Snack.show(errPermission) }
+    }
+    val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) launchCamera() else Snack.show(errPermission)
     }
     val gallery = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { fromUri(it) }
     val document = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { fromUri(it) }
+    return ReceiptPicker(
+        camera = {
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) launchCamera()
+            else permission.launch(Manifest.permission.CAMERA)
+        },
+        gallery = { runCatching { gallery.launch("image/*") }.onFailure { Snack.show(errRead) } },
+        document = { runCatching { document.launch(arrayOf("application/pdf", "image/jpeg", "image/png")) }.onFailure { Snack.show(errRead) } },
+    )
+}
+
+@Composable
+private fun AttachSheet(s: NmState) {
+    val picker = rememberReceiptPicker { s.attach = it; s.sheet = null }
     NovaDraftSheet(onDismiss = { s.sheet = null }) {
         SheetHeader(tr(StringKey.NM_SECTION_ATTACH), tr(StringKey.NM_ATTACH_HINT), bottom = 10.dp)
-        AttachOptions(
-            onCamera = { camera.launch(null) },
-            onGallery = { gallery.launch("image/*") },
-            onDocument = { document.launch(arrayOf("application/pdf", "image/jpeg", "image/png")) },
-        )
+        AttachOptions(onCamera = picker.camera, onGallery = picker.gallery, onDocument = picker.document)
     }
 }
 

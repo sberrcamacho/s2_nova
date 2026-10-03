@@ -2,8 +2,6 @@ package com.s2nova.app.ui.screens.transactions
 
 import android.content.Intent
 import android.graphics.BitmapFactory
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -74,6 +72,7 @@ import com.s2nova.app.ui.components.V2Icon
 import com.s2nova.app.ui.components.V2Icons
 import com.s2nova.app.ui.components.noRippleClick
 import com.s2nova.app.ui.screens.addtransaction.AttachOptions
+import com.s2nova.app.ui.screens.addtransaction.rememberReceiptPicker
 import com.s2nova.app.ui.screens.addtransaction.shortWallet
 import com.s2nova.app.ui.screens.addtransaction.sizeLabel
 import com.s2nova.app.ui.theme.NovaColors
@@ -88,7 +87,6 @@ import androidx.compose.ui.semantics.semantics
 import com.s2nova.app.ui.components.BackHeader
 import com.s2nova.app.ui.theme.NovaType
 import kotlinx.coroutines.launch
-import java.io.ByteArrayOutputStream
 import java.io.File
 import kotlin.math.abs
 import com.s2nova.app.ui.tr
@@ -168,6 +166,18 @@ fun TransactionDetailScreen(
     var bytes by remember(tx?.attachment?.id) { mutableStateOf<ByteArray?>(null) }
     val principal = AppContainer.currencyRepository.principal
     val repo = AppContainer.categoryRepository
+
+    val savedMsg = tr(StringKey.MV_RECEIPT_SAVED)
+    val uploadErr = tr(StringKey.NM_ERR_RECEIPT_UPLOAD)
+    // Registered outside the sheet so a result arriving after it closes still lands.
+    val picker = rememberReceiptPicker { a ->
+        attachSheet = false
+        scope.launch {
+            runCatching { AppContainer.transactionRepository.attach(transactionId, a.name, a.mime, a.bytes) }
+                .onSuccess { Snack.show(savedMsg) }
+                .onFailure { Snack.show(uploadErr) }
+        }
+    }
 
     LaunchedEffect(tx?.attachment?.id) {
         if (tx?.attachment != null) bytes = AppContainer.transactionRepository.attachmentBytes(tx.id)
@@ -346,32 +356,9 @@ fun TransactionDetailScreen(
         }
 
         if (attachSheet) {
-            val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { bmp ->
-                if (bmp != null) {
-                    val out = ByteArrayOutputStream()
-                    bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, out)
-                    attachSheet = false
-                    scope.launch { runCatching { AppContainer.transactionRepository.attach(tx.id, tr(StringKey.NM_RECEIPT_PHOTO_FILE), "image/jpeg", out.toByteArray()) }.onSuccess { Snack.show(tr(StringKey.MV_RECEIPT_SAVED)) } }
-                }
-            }
-            val pick = { uri: android.net.Uri? ->
-                if (uri != null) {
-                    val resolver = context.contentResolver
-                    val mime = resolver.getType(uri) ?: "image/jpeg"
-                    var name = tr(StringKey.NM_RECEIPT_FILE)
-                    resolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c -> if (c.moveToFirst()) name = c.getString(0) ?: name }
-                    val data = resolver.openInputStream(uri)?.use { it.readBytes() }
-                    attachSheet = false
-                    if (data != null && data.size <= 10 * 1024 * 1024) {
-                        scope.launch { runCatching { AppContainer.transactionRepository.attach(tx.id, name, mime, data) }.onSuccess { Snack.show(tr(StringKey.MV_RECEIPT_SAVED)) } }
-                    } else if (data != null) Snack.show(tr(StringKey.NM_ERR_FILE_SIZE))
-                }
-            }
-            val gallery = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { pick(it) }
-            val document = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { pick(it) }
             NovaDraftSheet(onDismiss = { attachSheet = false }) {
                 SheetHeader(tr(StringKey.NM_SECTION_ATTACH), tr(StringKey.NM_ATTACH_HINT), bottom = 10.dp)
-                AttachOptions({ camera.launch(null) }, { gallery.launch("image/*") }, { document.launch(arrayOf("application/pdf", "image/jpeg", "image/png")) })
+                AttachOptions(picker.camera, picker.gallery, picker.document)
             }
         }
     }

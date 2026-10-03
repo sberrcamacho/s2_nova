@@ -94,5 +94,7 @@ export async function sendPasswordResetMail(mail: PasswordResetMail): Promise<vo
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({ from: env.MAIL_FROM, to: [mail.to], subject, html, text }),
   });
-  if (!response.ok) throw new Error(`Mail provider responded ${response.status}`);
+  // Resend explains rejections in the body (e.g. an unverified sender domain,
+  // which limits delivery to the account owner's own address).
+  if (!response.ok) throw new Error(`Mail provider responded ${response.status}: ${await response.text().catch(() => "")}`);
 }
