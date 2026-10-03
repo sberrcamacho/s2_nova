@@ -239,13 +239,13 @@ function PayDialog({ loan, wallets, onClose, onSaved }: { loan: Transaction; wal
   }
 
   return createPortal(
-    <div onClick={onClose} className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(6,6,12,.62)] p-6 [line-height:normal]">
+    <div onClick={onClose} className="fixed inset-0 z-50 flex animate-overlay-in items-center justify-center bg-[rgba(6,6,12,.62)] p-6 [line-height:normal]">
       <div
         role="dialog"
         aria-modal="true"
         aria-label={t('loans.pay')}
         onClick={(e) => e.stopPropagation()}
-        className="flex w-[466px] max-w-full flex-col gap-4 rounded-[18px] border border-border-input bg-surface p-[22px] text-ink shadow-[0_24px_60px_rgba(0,0,0,.45)]"
+        className="animate-dialog-in flex w-[466px] max-w-full flex-col gap-4 rounded-[18px] border border-border-input bg-surface p-[22px] text-ink shadow-[0_24px_60px_rgba(0,0,0,.45)]"
       >
         <div>
           <div className="text-title-sm font-semibold">{t('loans.pay')}</div>

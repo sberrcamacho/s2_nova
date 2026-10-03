@@ -31,13 +31,13 @@ export function SidePanel({ title, onClose, footer, children }: SidePanelProps) 
 
   return createPortal(
     <>
-      <div onClick={onClose} className="fixed inset-0 z-40 bg-[rgba(6,6,12,.5)]" aria-hidden="true" />
+      <div onClick={onClose} className="fixed inset-0 z-40 animate-overlay-in bg-[rgba(6,6,12,.5)]" aria-hidden="true" />
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="fixed bottom-0 right-0 top-0 z-[41] flex [line-height:normal] w-[461px] max-w-full flex-col border-l border-border-input bg-surface text-ink shadow-[-24px_0_60px_rgba(0,0,0,.4)]"
+        className="fixed bottom-0 right-0 top-0 z-[41] flex animate-panel-in [line-height:normal] w-[461px] max-w-full flex-col border-l border-border-input bg-surface text-ink shadow-[-24px_0_60px_rgba(0,0,0,.4)]"
       >
         <div className="flex items-center gap-3 border-b border-border px-[22px] py-[18px]">
           <div className="flex-1 text-title-sm font-semibold tracking-[-.015em]">{title}</div>
@@ -65,6 +65,8 @@ export function chipClass(on: boolean): string {
   return flatClass(on)
 }
 
-export const secondaryButtonClass = 'cursor-pointer rounded-[10px] border border-border-input px-4 py-2.5 text-body-sm font-semibold text-ink-secondary'
-export const primaryButtonClass = 'cursor-pointer rounded-[10px] bg-primary px-4 py-2.5 text-body-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60'
+// Button labels never wrap (DESIGN-SYSTEM.md): a row that runs out of room
+// moves whole buttons to the next line instead.
+export const secondaryButtonClass = 'cursor-pointer whitespace-nowrap rounded-[10px] border border-border-input px-4 py-2.5 text-body-sm font-semibold text-ink-secondary'
+export const primaryButtonClass = 'cursor-pointer whitespace-nowrap rounded-[10px] bg-primary px-4 py-2.5 text-body-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60'
 export const errorBoxClass = 'rounded-[10px] bg-[rgba(255,98,98,.1)] px-3 py-2.5 text-body-sm font-semibold text-negative'

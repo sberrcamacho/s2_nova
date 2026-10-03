@@ -270,9 +270,22 @@ Rules:
 | `motion-fast` | 150 ms, standard decelerate | press, toggle, chip select, hover |
 | `motion-base` | 250 ms, emphasized decelerate | sheets, dialogs, panel slide, route change |
 | `motion-exit` | ≈ 65 % of the enter duration | dismissals |
+| `motion-value` | 450 ms, emphasized decelerate | a total counting to its new value, a progress bar filling |
 
 Rules:
 
+- Motion explains a change; nothing loops or bounces for decoration, and a
+  view animates at most one or two things at once.
+- Route change: tabs cross-fade; deeper screens fade through (the old one
+  is gone in 90 ms) while sliding a tenth of the width in from the right,
+  back reverses it. Web pages rise 6 px and fade; dialogs grow from 0.97,
+  the side panel slides 32 px in from its edge.
+- Press: cards, primary buttons and the FAB scale to 0.97–0.98 (FAB 0.92)
+  while held.
+- Lists: a row added or removed fades and the others glide into place; the
+  first load shows at once.
+- The balance total counts from the value last shown to the new one; the
+  first value of a session just appears.
 - Animate transform and opacity only.
 - Animations are interruptible.
 - Honour `prefers-reduced-motion` and Android's animator scale: under reduced
@@ -302,10 +315,17 @@ Rules:
   (full width) and 1×1. Tiles in a row share their height.
 - **Flat (Movimientos, Planes, Ajustes, forms):** full-width `surface` cards
   with 16 dp padding and `divider` between rows.
+- **Movimientos search and filters:** under the title, a 48 dp search field
+  (leading search icon, clear button once there is text) next to a 48 dp
+  Filtros button. With filters on, the button fills with `primary` and shows
+  their count. Filtros opens a sheet: Tipo as single-choice chips, and
+  Categoría as a field that opens a list of check rows (category mark + name,
+  grouped under Gastos / Ingresos) where several can be selected.
 - **Bottom bar:**
   - Inicio · Movimientos · [+] · Planes · Reportes.
-  - On `surface` with a hairline `outline` on top and a smooth concave notch
-    in the middle that cradles the FAB.
+  - Flat, on `surface` with a hairline `outline` on top and a smooth concave
+    notch in the middle that cradles the FAB with a 10 dp gap around it. The
+    bar does not rise towards the FAB.
   - Icon (26) + label (12, `label` weight), no pill; the active item uses the
     accent ink on the icon and `on-surface` bold on the label.
   - The central + is a 56 dp round FAB in `primary` with the FAB glow, its
@@ -459,7 +479,7 @@ padding or a pseudo-element on Web.
   - The collection wraps or scrolls horizontally with a visible edge fade.
   - Unselected: `surface` + 1 px `border-input` + `text`.
   - Selected: `primary` fill + `on-primary` + a leading check icon, so selection is not color alone.
-  - As built (F4): Android `V2Pill` (also behind `SheetPill`, the auto-lock options and the Movimientos filters) and Web `flatClass` / `chipClass` / `Flat` / `Pills` (the check is the `.chip-on` mask in `index.css`). Single-choice collections expose radio semantics; multi-select ones checkbox (Android) or `aria-pressed` (Web).
+  - As built (F4): Android `V2Pill` (also behind `SheetPill`, the auto-lock options and the type filter in the Movimientos filters sheet) and Web `flatClass` / `chipClass` / `Flat` / `Pills` (the check is the `.chip-on` mask in `index.css`). Single-choice collections expose radio semantics; multi-select ones checkbox (Android) or `aria-pressed` (Web).
 - **Segmented** (Gasto | Ingreso | Transferencia, 3M/6M/12M, theme):
   - `surface-sunken` track; the selected segment is `surface` with elevation 1 and weight 600.
   - Height 44 dp / 36 px. It exposes tab or radio semantics.

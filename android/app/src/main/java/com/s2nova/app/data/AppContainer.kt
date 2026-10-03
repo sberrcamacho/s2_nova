@@ -42,6 +42,7 @@ object AppContainer {
     lateinit var demoModeStore: DemoModeStore
         private set
     lateinit var idleTimeoutStore: IdleTimeoutStore
+    lateinit var biometricStore: com.s2nova.app.data.local.BiometricStore
         private set
     lateinit var alertStateStore: AlertStateStore
         private set
@@ -103,7 +104,8 @@ object AppContainer {
         idleTimeoutStore = IdleTimeoutStore.getInstance(context)
         alertStateStore = AlertStateStore.getInstance(context)
         val credentialManager = androidx.credentials.CredentialManager.create(context.applicationContext)
-        authRepository = AuthRepository(sessionStore, onboardingStore, credentialManager, idleTimeoutStore)
+        biometricStore = com.s2nova.app.data.local.BiometricStore.getInstance(context)
+        authRepository = AuthRepository(sessionStore, onboardingStore, credentialManager, idleTimeoutStore, biometricStore)
         com.s2nova.app.ui.AppLang.init(context)
         appScope.launch {
             authRepository.currentUser.collect { user -> user?.let { com.s2nova.app.ui.AppLang.set(it.preferences.language) } }

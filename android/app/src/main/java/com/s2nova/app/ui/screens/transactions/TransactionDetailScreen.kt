@@ -126,7 +126,10 @@ fun requestDelete(tx: Transaction, walletName: String, scope: kotlinx.coroutines
         onDeleted()
         Snack.show(tr(StringKey.MV_DELETED), onUndo = {
             if (AppContainer.isGuest) repo.restoreLocal(tx) else repo.restoreLocal(tx)
-        }, onTimeout = { if (!AppContainer.isGuest) finish() })
+        }, onTimeout = {
+            if (!AppContainer.isGuest) finish()
+            else tx.recurringSeriesId?.let { id -> AppContainer.appScope.launch { AppContainer.recurringSeriesRepository.delete(id) } }
+        })
         return
     }
     val sign = if (tx.type == TransactionType.INCOME) "+" else "−"

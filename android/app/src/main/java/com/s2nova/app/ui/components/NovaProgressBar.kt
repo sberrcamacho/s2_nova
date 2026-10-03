@@ -27,7 +27,7 @@ fun NovaProgressBar(
 ) {
     val fraction by animateFloatAsState(
         targetValue = (percentage / 100f).coerceIn(0f, 1f),
-        animationSpec = tween(500),
+        animationSpec = tween(com.s2nova.app.ui.theme.NovaMotion.VALUE, easing = com.s2nova.app.ui.theme.NovaMotion.EmphasizedDecelerate),
         label = "progress",
     )
     Box(

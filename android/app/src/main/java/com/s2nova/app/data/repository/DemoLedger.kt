@@ -49,7 +49,6 @@ object DemoLedger {
             loanKind = input.loanKind,
             counterpartyName = input.counterpartyName,
             dueDate = input.dueDate,
-            recurringSeriesId = input.repeat?.let { "demo-series" },
         )
     }
 
@@ -66,5 +65,30 @@ object DemoLedger {
                 tx.transferToWalletId?.let { repo.adjustLocal(it, walletMoves * direction) }
             }
         }
+    }
+
+    // "Repetir" on a new movement starts a Programado whose first
+    // occurrence is that movement (backend seriesFromMovement).
+    fun seriesFor(tx: Transaction, input: NewTransactionInput): com.s2nova.app.data.model.RecurringSeries? {
+        val repeat = input.repeat ?: return null
+        if (tx.type == TransactionType.TRANSFER) return null
+        return com.s2nova.app.data.model.RecurringSeries(
+            id = UUID.randomUUID().toString(),
+            name = tx.description,
+            type = tx.type,
+            amount = tx.amount,
+            walletId = tx.walletId,
+            category = tx.category,
+            subcategoryId = tx.subcategoryId,
+            paymentMethod = tx.paymentMethod,
+            interval = repeat.interval,
+            nextOccurrenceDate = tx.date,
+            isDue = false,
+            active = true,
+            currency = tx.currency,
+            occurrences = repeat.occurrences,
+            endDate = repeat.endDate,
+            autoConfirm = repeat.autoConfirm,
+        ).advanced()
     }
 }

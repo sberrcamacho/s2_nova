@@ -157,7 +157,9 @@ Counts taken on 2026-10-02 (details in `TESTING.md`):
 - Barcode/QR scan action is parked as "coming soon" on Android.
 - Android has no Subcategorías toggle in Reportes (Web has it).
 - Android's refresh token lives in plain DataStore, not an encrypted store.
-- Biometric login is not wired (auto-lock re-entry is password-only).
+- Biometric login (Android) is implemented but not yet deployed or tried on a
+  device: it needs the `biometric_credentials` migration and the
+  `/auth/biometric` routes on the deployed backend.
 - No OpenAPI docs generated from the Zod schemas.
 - No Android release pipeline.
 - Carried over from the previous snapshot and not re-checked: the loan

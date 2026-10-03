@@ -41,6 +41,14 @@ interface ApiService {
     @POST("auth/google")
     suspend fun loginWithGoogle(@Body body: GoogleLoginRequest): SessionResponse
 
+    // "Ingreso biométrico": a signed-in device gets a credential, and later
+    // trades it for a session.
+    @POST("auth/biometric")
+    suspend fun enrolBiometric(): BiometricCredentialResponse
+
+    @POST("auth/biometric/login")
+    suspend fun biometricLogin(@Body body: BiometricLoginRequest): SessionResponse
+
     @GET("me")
     suspend fun me(): MeResponse
 

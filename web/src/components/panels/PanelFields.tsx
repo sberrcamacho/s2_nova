@@ -72,4 +72,4 @@ export function ColorChip({ label, color, selected, onClick }: { label: string; 
 }
 
 export const dangerButtonClass =
-  'mr-auto cursor-pointer rounded-[10px] border border-[rgba(255,98,98,.35)] px-4 py-2.5 text-body-sm font-semibold text-negative disabled:cursor-not-allowed disabled:opacity-60'
+  'mr-auto cursor-pointer whitespace-nowrap rounded-[10px] border border-[rgba(255,98,98,.35)] px-4 py-2.5 text-body-sm font-semibold text-negative disabled:cursor-not-allowed disabled:opacity-60'

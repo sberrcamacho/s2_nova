@@ -2,7 +2,7 @@ package com.s2nova.app
 
 import android.os.Bundle
 import android.view.WindowManager
-import androidx.activity.ComponentActivity
+import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -16,7 +16,8 @@ import com.s2nova.app.ui.nav.NovaApp
 import com.s2nova.app.ui.theme.S2NovaTheme
 import kotlinx.coroutines.launch
 
-class MainActivity : ComponentActivity() {
+// A FragmentActivity because the biometric prompt ("Ingreso biométrico") needs one.
+class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         AppContainer.init(applicationContext)
         installSplashScreen()

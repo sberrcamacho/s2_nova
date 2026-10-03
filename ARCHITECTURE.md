@@ -257,6 +257,8 @@ POST   /api/v1/auth/google
 POST   /api/v1/auth/refresh
 POST   /api/v1/auth/logout                -- ends the whole session
 POST   /api/v1/auth/activity              -- "Cierre automático" heartbeat
+POST   /api/v1/auth/biometric             -- issues a device credential ("Ingreso biométrico")
+POST   /api/v1/auth/biometric/login       -- trades that credential for a session
 
 GET    /api/v1/me
 PATCH  /api/v1/me/preferences

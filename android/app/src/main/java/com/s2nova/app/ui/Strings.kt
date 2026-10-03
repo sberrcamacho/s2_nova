@@ -152,6 +152,8 @@ enum class StringKey {
     AUTH_OR,
     MV_SCHEDULED,
     AUTH_HAVE_CODE, AUTH_RESET_TITLE, AUTH_RESET_HINT, AUTH_RESET_CODE, AUTH_RESET_NEW, AUTH_RESET_CONFIRM, AUTH_RESET_SUBMIT, AUTH_RESET_INVALID, AUTH_RESET_DONE, AUTH_PW_RULES, SET_PW_TITLE, SET_PW_DETAIL, SET_PW_CURRENT, SET_PW_WRONG, SET_PW_SAME, SET_PW_DONE, SET_RISK_TITLE, SET_RISK_HINT, SET_RESET_TITLE, SET_RESET_DETAIL, SET_RESET_WORD, SET_RESET_SUBMIT, SET_RESET_DONE, SET_DELETE_TITLE, SET_DELETE_DETAIL, SET_DELETE_WORD, SET_DELETE_SUBMIT, SET_RISK_TYPE, SET_RISK_ACK, SET_RISK_NO_PASSWORD, NM_TITLE_GENERIC_EXPENSE, NM_TITLE_GENERIC_INCOME, NM_TITLE_GENERIC_TRANSFER, NM_TITLE_SUGGESTED, COMMON_LOADING,
+    MV_SEARCH, MV_SEARCH_CLEAR, MV_FILTERS, MV_FILTERS_ACTIVE, MV_TYPE, MV_ALL_CATEGORIES, MV_NO_RESULTS, MV_CLEAR_FILTERS, MV_SHOW_RESULTS,
+    AUTH_BIOMETRIC_ENTER, BIO_PROMPT_TITLE, BIO_PROMPT_LOGIN, BIO_PROMPT_ENABLE, BIO_PROMPT_CANCEL, BIO_UNAVAILABLE, BIO_ENABLE_ERR, BIO_LOGIN_ERR,
 }
 
 private val ES: Map<StringKey, String> = mapOf(
@@ -904,6 +906,23 @@ private val ES: Map<StringKey, String> = mapOf(
     StringKey.NM_TITLE_GENERIC_TRANSFER to "Transferencia",
     StringKey.NM_TITLE_SUGGESTED to "Sugerido",
     StringKey.COMMON_LOADING to "Cargando",
+    StringKey.MV_SEARCH to "Buscar movimientos",
+    StringKey.MV_SEARCH_CLEAR to "Borrar búsqueda",
+    StringKey.MV_FILTERS to "Filtros",
+    StringKey.MV_FILTERS_ACTIVE to "Filtros, %1\$s activos",
+    StringKey.MV_TYPE to "Tipo",
+    StringKey.MV_ALL_CATEGORIES to "Todas las categorías",
+    StringKey.MV_NO_RESULTS to "Sin movimientos para esta búsqueda o estos filtros.",
+    StringKey.MV_CLEAR_FILTERS to "Limpiar filtros",
+    StringKey.MV_SHOW_RESULTS to "Ver resultados (%1\$s)",
+    StringKey.AUTH_BIOMETRIC_ENTER to "Entrar con huella o rostro",
+    StringKey.BIO_PROMPT_TITLE to "Ingreso biométrico",
+    StringKey.BIO_PROMPT_LOGIN to "Confirma tu identidad para entrar a S2 Nova.",
+    StringKey.BIO_PROMPT_ENABLE to "Confirma tu identidad para activarlo en este teléfono.",
+    StringKey.BIO_PROMPT_CANCEL to "Cancelar",
+    StringKey.BIO_UNAVAILABLE to "Configura una huella o tu rostro en los ajustes del teléfono para usar esta opción.",
+    StringKey.BIO_ENABLE_ERR to "No se pudo activar el ingreso biométrico. Inténtalo de nuevo.",
+    StringKey.BIO_LOGIN_ERR to "No se pudo entrar con tu huella o rostro. Entra con tu contraseña y actívalo de nuevo en Ajustes.",
 )
 
 private val EN: Map<StringKey, String> = mapOf(
@@ -1656,6 +1675,23 @@ private val EN: Map<StringKey, String> = mapOf(
     StringKey.NM_TITLE_GENERIC_TRANSFER to "Transfer",
     StringKey.NM_TITLE_SUGGESTED to "Suggested",
     StringKey.COMMON_LOADING to "Loading",
+    StringKey.MV_SEARCH to "Search transactions",
+    StringKey.MV_SEARCH_CLEAR to "Clear search",
+    StringKey.MV_FILTERS to "Filters",
+    StringKey.MV_FILTERS_ACTIVE to "Filters, %1\$s active",
+    StringKey.MV_TYPE to "Type",
+    StringKey.MV_ALL_CATEGORIES to "All categories",
+    StringKey.MV_NO_RESULTS to "No transactions for this search or these filters.",
+    StringKey.MV_CLEAR_FILTERS to "Clear filters",
+    StringKey.MV_SHOW_RESULTS to "Show results (%1\$s)",
+    StringKey.AUTH_BIOMETRIC_ENTER to "Sign in with fingerprint or face",
+    StringKey.BIO_PROMPT_TITLE to "Biometric sign-in",
+    StringKey.BIO_PROMPT_LOGIN to "Confirm it's you to sign in to S2 Nova.",
+    StringKey.BIO_PROMPT_ENABLE to "Confirm it's you to turn it on for this phone.",
+    StringKey.BIO_PROMPT_CANCEL to "Cancel",
+    StringKey.BIO_UNAVAILABLE to "Set up a fingerprint or your face in the phone's settings to use this option.",
+    StringKey.BIO_ENABLE_ERR to "Couldn't turn on biometric sign-in. Try again.",
+    StringKey.BIO_LOGIN_ERR to "Couldn't sign in with your fingerprint or face. Sign in with your password and turn it on again in Settings.",
 )
 
 fun stringFor(key: StringKey, language: AppLanguage): String =

@@ -49,13 +49,13 @@ export function V2Modal({ width = 500, onClose, children, label }: { width?: num
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
   return createPortal(
-    <div onClick={onClose} className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(6,6,12,.62)] p-6 [line-height:normal]">
+    <div onClick={onClose} className="fixed inset-0 z-50 flex animate-overlay-in items-center justify-center bg-[rgba(6,6,12,.62)] p-6 [line-height:normal]">
       <div
         role="dialog"
         aria-modal="true"
         aria-label={label}
         onClick={(e) => e.stopPropagation()}
-        className="box-border flex max-h-[calc(100vh-48px)] max-w-full flex-col gap-5 overflow-y-auto overflow-x-hidden rounded-[18px] border border-border-input bg-surface px-[26px] py-6 text-ink shadow-[0_24px_60px_rgba(0,0,0,.45)]"
+        className="box-border flex max-h-[calc(100vh-48px)] max-w-full animate-dialog-in flex-col gap-5 overflow-y-auto overflow-x-hidden rounded-[18px] border border-border-input bg-surface px-[26px] py-6 text-ink shadow-[0_24px_60px_rgba(0,0,0,.45)]"
         style={{ width }}
       >
         {children}
@@ -351,7 +351,7 @@ export function ErrorBox({ children }: { children: ReactNode }) {
 
 export function CancelButton({ onClick, children = tr('common.cancel') }: { onClick: () => void; children?: ReactNode }) {
   return (
-    <button type="button" onClick={onClick} className="cursor-pointer whitespace-nowrap rounded-[10px] border border-border-input px-4 py-2.5 text-body-sm font-semibold text-ink-secondary">
+    <button type="button" onClick={onClick} className="cursor-pointer whitespace-nowrap rounded-[10px] border border-border-input px-4 py-2.5 text-body-sm font-semibold text-ink-secondary transition-transform duration-150 ease-out active:scale-[0.98]">
       {children}
     </button>
   )
@@ -365,7 +365,7 @@ export function SaveButton({ valid, onClick, children = tr('common.save'), busy 
       type="button"
       onClick={onClick}
       disabled={busy}
-      className="whitespace-nowrap rounded-[10px] px-4 py-2.5 text-body-sm font-semibold"
+      className="whitespace-nowrap rounded-[10px] px-4 py-2.5 text-body-sm font-semibold transition-transform duration-150 ease-out active:scale-[0.98]"
       style={{ cursor: valid ? 'pointer' : 'not-allowed', color: valid ? '#fff' : 'var(--v2-dim)', background: valid ? 'var(--v2-accent)' : 'var(--v2-surface2)' }}
     >
       {children}
@@ -409,14 +409,14 @@ export function ConfirmDialog({ title, lines, ack, cta, onCancel, onConfirm }: {
   }, [onCancel])
   const secondary = 'cursor-pointer whitespace-nowrap rounded-[10px] border border-border-input px-4 py-2.5 text-body-sm font-semibold text-ink-secondary'
   return createPortal(
-    <div onClick={onCancel} className="fixed inset-0 z-[58] flex items-center justify-center bg-[rgba(6,6,12,.7)] p-6 [line-height:normal]">
+    <div onClick={onCancel} className="fixed inset-0 z-[58] flex animate-overlay-in items-center justify-center bg-[rgba(6,6,12,.7)] p-6 [line-height:normal]">
       <div
         // The mockup's 440px is content-box: 486px with its 22px padding and border.
         role="alertdialog"
         aria-modal="true"
         aria-label={step === 1 ? title : tr('kit.cantUndo')}
         onClick={(e) => e.stopPropagation()}
-        className="flex w-[486px] max-w-full flex-col gap-3.5 rounded-[18px] border border-border-input bg-surface p-[22px] text-ink shadow-[0_24px_60px_rgba(0,0,0,.45)]"
+        className="animate-dialog-in flex w-[486px] max-w-full flex-col gap-3.5 rounded-[18px] border border-border-input bg-surface p-[22px] text-ink shadow-[0_24px_60px_rgba(0,0,0,.45)]"
       >
         <span className="flex h-[42px] w-[42px] items-center justify-center rounded-full bg-v2-neg-soft">
           <Icon paths={step === 1 ? IC.trash : IC.warn} size={20} color="var(--v2-neg)" />

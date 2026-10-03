@@ -15,3 +15,19 @@ export function recentMonths(today: string, n = PERIOD_MONTHS): string[] {
 export function shortWallet(name: string): string {
   return name.split('—')[0].trim()
 }
+
+// Text as the search compares it: lower case and without accents, so "cafe"
+// finds "Café" and "ALIMENTACION" finds "Alimentación".
+export function searchKey(text: string): string {
+  return text.normalize('NFD').replace(/\p{Mn}+/gu, '').toLowerCase()
+}
+
+// True when every word of the query appears somewhere in the text, in any
+// order. A blank query matches everything.
+export function matchesSearch(text: string, query: string): boolean {
+  const haystack = searchKey(text)
+  return searchKey(query)
+    .split(/\s+/)
+    .filter(Boolean)
+    .every((word) => haystack.includes(word))
+}

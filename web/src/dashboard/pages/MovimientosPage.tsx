@@ -21,10 +21,11 @@ import { useToast } from '@/state/ToastContext'
 import { TRANSFER, allCategories, categoryLabel, categoryName, categoryNode, useCategories } from '@/lib/backendCategories'
 import { currencyInfo, formatApprox, formatMoney, referenceRate } from '@/lib/currency'
 import { addDays } from '@/lib/inicio'
-import { shortWallet } from '@/lib/movimientos'
+import { matchesSearch, shortWallet } from '@/lib/movimientos'
 import { longDate, shortDayMonth } from '@/lib/planCopy'
 import { todayISO } from '@/lib/date'
 import { usePeriod } from '@/dashboard/usePeriod'
+import { useFreshIds } from '@/lib/useFreshIds'
 import { cn } from '@/lib/cn'
 import type { NewTransactionInput, RecurringSeries, Transaction, Wallet } from '@/types'
 
@@ -140,21 +141,22 @@ export default function MovimientosPage() {
   const [openId, setOpenId] = useState<string | null>(params.get('tx'))
   const { txns, wallets, syncFailed, retry } = useMovements(period, version)
   const today = todayISO()
+  const txIds = useMemo(() => txns?.map((x) => x.id) ?? [], [txns])
+  const isFresh = useFreshIds(txIds, txns !== null, period)
 
   const walletOf = useCallback((id?: string) => wallets?.find((w) => w.id === id), [wallets])
   const walletShort = useCallback((id?: string) => shortWallet(walletOf(id)?.name ?? ''), [walletOf])
 
   const filtered = useMemo(() => {
     if (!txns) return null
-    const q = query.toLowerCase()
     return txns.filter((x) => {
       if (filter === 'expenses' && x.type !== 'expense') return false
       if (filter === 'income' && x.type !== 'income') return false
       if (filter === 'scheduled' && !isSched(x)) return false
       if (cat && !inCategory(x, cat)) return false
-      if (!q) return true
+      if (!query) return true
       const label = categoryLabel(x.type === 'transfer' ? TRANSFER : x.category)
-      return `${x.description} ${x.merchant ?? ''} ${x.counterpartyName ?? ''} ${label} ${walletOf(x.accountId)?.name ?? ''}`.toLowerCase().includes(q)
+      return matchesSearch(`${x.description} ${x.merchant ?? ''} ${x.counterpartyName ?? ''} ${label} ${walletOf(x.accountId)?.name ?? ''}`, query)
     })
   }, [txns, filter, cat, query, walletOf])
 
@@ -277,6 +279,7 @@ export default function MovimientosPage() {
                       principal={principal}
                       hidden={hidden}
                       onOpen={() => setOpenId(x.id)}
+                      fresh={isFresh(x.id)}
                     />
                   ))}
                 </div>
@@ -305,7 +308,7 @@ export default function MovimientosPage() {
 // ListRow (DESIGN-SYSTEM.md §6.2): icon 40, a one-line title and meta line,
 // and an intrinsic-width amount column; at least 56 px tall. The attachment
 // and repeat badges and a Programado's `warning` clock sit in the meta line.
-function MovementRow({ x, last, wallet, principal, hidden, onOpen }: { x: Transaction; last: boolean; wallet: string; principal: string; hidden: boolean; onOpen: () => void }) {
+function MovementRow({ x, last, wallet, principal, hidden, onOpen, fresh }: { x: Transaction; last: boolean; wallet: string; principal: string; hidden: boolean; onOpen: () => void; fresh: boolean }) {
   const sched = isSched(x)
   const label = categoryLabel(x.type === 'transfer' ? TRANSFER : x.category)
   const sub = `${label} · ${[x.merchant || x.counterpartyName, wallet].filter(Boolean).join(' · ')} · ${sched ? `${shortDayMonth(x.date)} ` : ''}${x.time}`
@@ -315,7 +318,7 @@ function MovementRow({ x, last, wallet, principal, hidden, onOpen }: { x: Transa
     <button
       type="button"
       onClick={onOpen}
-      className={cn('flex min-h-14 w-full cursor-pointer items-center gap-3 px-4 py-3 text-left text-ink hover:bg-surface-sunken', !last && 'border-b border-divider')}
+      className={cn('flex min-h-14 w-full cursor-pointer items-center gap-3 px-4 py-3 text-left text-ink hover:bg-surface-sunken', !last && 'border-b border-divider', fresh && 'animate-row-in')}
     >
       <CategoryMark category={x.type === 'transfer' ? TRANSFER : x.category} box={40} />
       <div className="min-w-0 flex-1">

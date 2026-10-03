@@ -1,5 +1,6 @@
 package com.s2nova.app.ui.screens.budgets
 
+import com.s2nova.app.ui.theme.novaItem
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -266,7 +267,7 @@ private fun BudgetsTab() {
         }
 
         items(progressList, key = { it.budget.id }) { progress ->
-            BudgetCard(progress) { draft = BudgetEditDraft.from(progress) }
+            androidx.compose.foundation.layout.Box(novaItem()) { BudgetCard(progress) { draft = BudgetEditDraft.from(progress) } }
         }
 
         if (progressList.isEmpty() && !dataLoaded) {

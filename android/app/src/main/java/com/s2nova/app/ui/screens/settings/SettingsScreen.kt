@@ -1,5 +1,9 @@
 package com.s2nova.app.ui.screens.settings
 
+import com.s2nova.app.ui.components.biometricsAvailable
+import com.s2nova.app.ui.components.confirmBiometric
+import com.s2nova.app.ui.components.findFragmentActivity
+import com.s2nova.app.data.remote.toUserMessage
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -92,7 +96,11 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
     var city by remember { mutableStateOf(user?.city ?: "") }
     val preferences = user?.preferences
     val notifications = preferences?.notifications ?: true
-    val biometric = preferences?.biometricLogin ?: false
+    // On only where this phone holds the credential: the preference is the
+    // account's, the credential is the device's.
+    val biometricEnrolled by AppContainer.authRepository.biometricEnrolled.collectAsStateWithLifecycle(initialValue = false)
+    val biometric = (preferences?.biometricLogin ?: false) && biometricEnrolled
+    val context = androidx.compose.ui.platform.LocalContext.current
     val blurBalance = preferences?.blurBalance ?: false
     val autoLockMinutes = preferences?.autoLockMinutes ?: 5
     val currency = preferences?.currency ?: Currency.COP
@@ -154,8 +162,25 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
                         SwitchRow(t(StringKey.SETTINGS_NOTIFICATIONS), notifications) {
                             persist({ p -> p.copy(notifications = it) }, UpdatePreferencesRequest(notifications = it))
                         }
-                        SwitchRow(t(StringKey.SETTINGS_BIOMETRIC), biometric) {
-                            persist({ p -> p.copy(biometricLogin = it) }, UpdatePreferencesRequest(biometricLogin = it))
+                        SwitchRow(t(StringKey.SETTINGS_BIOMETRIC), biometric) { on ->
+                            scope.launch {
+                                if (!on) {
+                                    AppContainer.authRepository.disableBiometric()
+                                    return@launch
+                                }
+                                // Turning it on asks for the biometric check that seals the credential.
+                                val activity = context.findFragmentActivity()
+                                val cipher = if (activity != null && biometricsAvailable(context)) runCatching { AppContainer.biometricStore.newEncryptCipher() }.getOrNull() else null
+                                if (activity == null || cipher == null) {
+                                    com.s2nova.app.ui.Snack.show(tr(StringKey.BIO_UNAVAILABLE))
+                                    return@launch
+                                }
+                                val unlocked = activity.confirmBiometric(
+                                    tr(StringKey.BIO_PROMPT_TITLE), tr(StringKey.BIO_PROMPT_ENABLE), tr(StringKey.BIO_PROMPT_CANCEL), cipher,
+                                ) ?: return@launch
+                                AppContainer.authRepository.enableBiometric(unlocked)
+                                    .onFailure { com.s2nova.app.ui.Snack.show(it.toUserMessage(tr(StringKey.BIO_ENABLE_ERR))) }
+                            }
                         }
                         SegmentedRow(t(StringKey.SETTINGS_LANGUAGE), listOf(AppLanguage.ES to "Español", AppLanguage.EN to "English"), language) {
                             persist({ p -> p.copy(language = it) }, UpdatePreferencesRequest(language = it.name.lowercase()))

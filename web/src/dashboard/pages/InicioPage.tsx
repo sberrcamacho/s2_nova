@@ -42,6 +42,7 @@ import {
 import type { Goal, RecurringSeries, Transaction, Wallet } from '@/types'
 import { cn } from '@/lib/cn'
 import { formatApprox, formatMoney, referenceRate } from '@/lib/currency'
+import { useCountUp } from '@/lib/useCountUp'
 
 const TONE_VAR: Record<Tone, string> = { neg: 'var(--color-negative)', warn: 'var(--color-warning)', pos: 'var(--color-positive)' }
 const TONE_ICON: Record<Tone, string> = { neg: ICON_PATHS.alertCircle, warn: ICON_PATHS.warn, pos: ICON_PATHS.check }
@@ -123,6 +124,7 @@ export default function InicioPage() {
   }
 
   const walletTotal = data.wallets?.reduce((s, w) => s + w.principalBalance, 0) ?? null
+  const shownTotal = useCountUp(walletTotal)
   const walletName = (id: string) => shortWallet(data.wallets?.find((w) => w.id === id)?.name ?? '')
   const thisMonth = data.months?.[data.months.length - 1]
   const lastMonth = data.months?.[data.months.length - 2]
@@ -214,7 +216,7 @@ export default function InicioPage() {
               <SkeletonBar className="mt-3 h-[44px] w-[60%]" dark />
             ) : (
               <Money hidden={hidden} className="mt-1 block whitespace-nowrap text-[clamp(28px,11cqi,40px)] font-bold leading-[1.1] tracking-[-.01em]">
-                {format(walletTotal)}
+                {format(shownTotal ?? walletTotal)}
               </Money>
             )}
             {data.wallets && data.wallets.length > 0 && (

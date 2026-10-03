@@ -79,7 +79,7 @@ export function EventDialog({ series, walletName, today, hidden, onClose, onChan
             type="button"
             disabled={busy}
             onClick={() => (confirmDelete ? run(() => recurringService.deleteSeries(series.id), 'event.deleted') : setConfirmDelete(true))}
-            className={`${dangerButtonClass} whitespace-nowrap`}
+            className={dangerButtonClass}
           >
             {confirmDelete ? t('event.deleteConfirm') : t('event.delete')}
           </button>

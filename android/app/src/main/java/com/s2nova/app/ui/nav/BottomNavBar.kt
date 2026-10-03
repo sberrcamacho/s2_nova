@@ -2,6 +2,7 @@ package com.s2nova.app.ui.nav
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import com.s2nova.app.ui.theme.pressScale
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,6 +37,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,16 +73,17 @@ private val PlusIcon = strokeIcon("+", "M12 5v14", "M5 12h14", strokeWidth = 2.6
 
 // Bottom bar: a flat `surface` bar with a hairline on top and a smooth
 // concave notch in the middle that cradles the round "+" FAB (half above the
-// bar). Four tabs (icon + label); the active one takes the accent ink on both.
-// On narrow screens (< 340 dp) the FAB and its notch shrink and a label that
-// still does not fit is ellipsized, so the bar never distorts or overlaps.
-private val FabClearance = 6.dp
+// bar) with a generous gap around it. Four tabs (icon + label); the active one
+// takes the accent ink on both. On narrow screens (< 340 dp) the FAB and its
+// notch shrink and a label that still does not fit is ellipsized, so the bar
+// never distorts or overlaps.
+private val FabClearance = 10.dp
 // Transparent strip above the bar that holds the top half of the FAB.
 internal val FabTouchTop = 28.dp
 
 // Top edge of the bar, left to right, with the notch centred on `size.width`.
 // The notch circle (radius `r`) is centred on the bar's top edge; shoulders
-// ease into it so the cut-out reads as one continuous curve.
+// ease down into it so the cut-out reads as one continuous curve.
 private fun barTopEdge(width: Float, r: Float, shoulder: Float): Path = Path().apply {
     val cx = width / 2f
     val ex = 0.8f * r
@@ -140,7 +143,7 @@ fun NovaBottomBar(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 TABS.forEachIndexed { index, tab ->
-                    // Only the icons sit beside the notch; labels sit below it, so the gap can be narrower than the notch.
+                    // Only the icons sit beside the FAB; labels sit below it, so the gap can be narrower than the FAB.
                     if (index == 2) Spacer(Modifier.width(notchRadius * 1.2f))
                     BottomTabItem(
                         label = t(tab.labelKey),
@@ -153,16 +156,18 @@ fun NovaBottomBar(
             }
         }
         val addLabel = t(StringKey.NAV_ADD)
+        val fabInteraction = remember { MutableInteractionSource() }
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 // Centre of the FAB sits on the bar's top edge.
                 .padding(top = FabTouchTop - fabSize / 2)
                 .size(fabSize)
+                .pressScale(fabInteraction, pressedScale = 0.92f)
                 .shadow(elevation = 10.dp, shape = CircleShape, ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.55f), spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.55f))
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.primary)
-                .clickable(role = Role.Button, onClick = onFabClick)
+                .clickable(interactionSource = fabInteraction, indication = androidx.compose.material3.ripple(color = Color.White), role = Role.Button, onClick = onFabClick)
                 .semantics { contentDescription = addLabel },
             contentAlignment = Alignment.Center,
         ) {
@@ -181,14 +186,18 @@ private fun BottomTabItem(
 ) {
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
     val ink = NovaColors.current.accentText
+    val colorSpec = androidx.compose.animation.core.tween<Color>(com.s2nova.app.ui.theme.NovaMotion.FAST)
+    val tint by androidx.compose.animation.animateColorAsState(if (selected) ink else muted, colorSpec, label = "tabTint")
+    val labelColor by androidx.compose.animation.animateColorAsState(if (selected) MaterialTheme.colorScheme.onSurface else muted, colorSpec, label = "tabLabel")
+    val interaction = remember { MutableInteractionSource() }
     Column(
         modifier = modifier
             .heightIn(min = 48.dp)
-            .selectable(selected = selected, role = Role.Tab, interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onClick),
+            .selectable(selected = selected, role = Role.Tab, interactionSource = interaction, indication = null, onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Icon(icon, contentDescription = null, tint = if (selected) ink else muted, modifier = Modifier.padding(top = 4.dp).size(26.dp))
+        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.padding(top = 4.dp).size(26.dp).pressScale(interaction, pressedScale = 0.9f))
         // Labels keep one size on every tab: the bar caps the system font
         // scale at 1.0 (icon + 12 sp label is a fixed-height control).
         val density = androidx.compose.ui.platform.LocalDensity.current
@@ -197,7 +206,7 @@ private fun BottomTabItem(
         ) {
             Text(
                 label,
-                color = if (selected) MaterialTheme.colorScheme.onSurface else muted,
+                color = labelColor,
                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                 fontSize = 12.sp,
                 maxLines = 1,

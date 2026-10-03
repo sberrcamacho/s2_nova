@@ -352,6 +352,13 @@
   --animate-scan-line: scan-line 2.2s ease-in-out infinite;
   --animate-shimmer: shimmer 1.6s ease-in-out infinite;
   --animate-fade-in: fade-in 0.35s ease;
+  /* Motion tokens (DESIGN-SYSTEM.md §4.4): fast 150 ms, base 250 ms, exit
+     ≈ 65 %. Decelerating curves; transform and opacity only. */
+  --animate-route-in: route-in 250ms cubic-bezier(0, 0, 0, 1);
+  --animate-panel-in: panel-in 250ms cubic-bezier(0.05, 0.7, 0.1, 1);
+  --animate-dialog-in: dialog-in 250ms cubic-bezier(0.05, 0.7, 0.1, 1);
+  --animate-overlay-in: overlay-in 250ms cubic-bezier(0, 0, 0, 1);
+  --animate-row-in: row-in 250ms cubic-bezier(0, 0, 0, 1);
   --animate-shake: shake 0.4s ease-in-out;
 }
 
@@ -447,6 +454,44 @@ button {
   }
 }
 
+/* A new page arrives: a short rise and fade, never a long slide. */
+@keyframes route-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* The side panel comes in from the edge it is attached to. */
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateX(32px);
+  }
+}
+
+/* A dialog grows slightly from the centre. */
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* A row that was just added (a movement saved, a Programado created). */
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
 @keyframes sparkle-pulse {
   0%,
   100% {
@@ -516,7 +561,20 @@ button {
   .animate-shake,
   .animate-fade-in,
   .animate-scan-line,
-  .animate-sparkle {
+  .animate-sparkle,
+  .animate-row-in {
     animation: none;
+  }
+  /* Moving surfaces cross-fade instead of sliding or growing. */
+  .animate-route-in,
+  .animate-panel-in,
+  .animate-dialog-in {
+    animation: overlay-in 150ms linear;
+  }
+  /* Press feedback keeps its color change but drops the scale. */
+  button:active,
+  [role='button']:active {
+    scale: none !important;
+    transform: none !important;
   }
 }

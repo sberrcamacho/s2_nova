@@ -1,5 +1,13 @@
 package com.s2nova.app.ui.nav
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import com.s2nova.app.ui.theme.NovaMotion
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -148,9 +156,14 @@ fun NovaApp() {
             }
         },
     ) { padding ->
+        val reducedMotion = com.s2nova.app.ui.theme.rememberReducedMotion()
         NavHost(
             navController = navController,
             startDestination = NovaDestinations.SPLASH,
+            enterTransition = { routeEnter(initialState.destination.route, targetState.destination.route, forward = true, reducedMotion) },
+            exitTransition = { routeExit(initialState.destination.route, targetState.destination.route, forward = true, reducedMotion) },
+            popEnterTransition = { routeEnter(initialState.destination.route, targetState.destination.route, forward = false, reducedMotion) },
+            popExitTransition = { routeExit(initialState.destination.route, targetState.destination.route, forward = false, reducedMotion) },
             // The bar reserves a transparent strip for the FAB's top half;
             // content runs under that strip instead of leaving a blank band.
             modifier = Modifier.padding(
@@ -390,6 +403,34 @@ internal fun splashDestinationFor(loggedIn: Boolean, onboardingDone: Boolean): S
     !onboardingDone -> NovaDestinations.FIRST_RUN
     else -> NovaDestinations.HOME
 }
+
+// Route changes (DESIGN-SYSTEM.md §4.4): switching between the bottom-bar
+// tabs is a quick cross-fade (they are siblings); going deeper slides the
+// new screen in a short way (a tenth of the width) from the right, and back
+// reverses it. Under reduced motion everything cross-fades.
+private const val ROUTE_FADE_OUT = 90
+
+private fun isTab(route: String?) = bottomBarVisibleFor(route)
+
+private fun siblings(from: String?, to: String?, reducedMotion: Boolean) = reducedMotion || (isTab(from) && isTab(to))
+
+private fun routeEnter(from: String?, to: String?, forward: Boolean, reducedMotion: Boolean): EnterTransition =
+    if (siblings(from, to, reducedMotion)) {
+        fadeIn(tween(NovaMotion.FAST, delayMillis = NovaMotion.FAST / 2, easing = NovaMotion.StandardDecelerate))
+    } else {
+        // Fade-through: the old screen is gone before the new one shows, so
+        // the two never read on top of each other.
+        fadeIn(tween(NovaMotion.BASE - ROUTE_FADE_OUT, delayMillis = ROUTE_FADE_OUT, easing = NovaMotion.StandardDecelerate)) +
+            slideInHorizontally(tween(NovaMotion.BASE - ROUTE_FADE_OUT, delayMillis = ROUTE_FADE_OUT, easing = NovaMotion.Standard)) { width -> if (forward) width / 10 else -width / 10 }
+    }
+
+private fun routeExit(from: String?, to: String?, forward: Boolean, reducedMotion: Boolean): ExitTransition =
+    if (siblings(from, to, reducedMotion)) {
+        fadeOut(tween(NovaMotion.FAST / 2))
+    } else {
+        fadeOut(tween(ROUTE_FADE_OUT, easing = NovaMotion.EmphasizedAccelerate)) +
+            slideOutHorizontally(tween(NovaMotion.EXIT, easing = NovaMotion.EmphasizedAccelerate)) { width -> if (forward) -width / 20 else width / 20 }
+    }
 
 private fun NavHostController.navigateAsRoot(route: String) {
     navigate(route) {

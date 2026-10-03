@@ -126,7 +126,12 @@ class TransactionRepository(
 
     suspend fun add(input: NewTransactionInput): Transaction? {
         if (DemoModeFlag.active) {
-            val tx = DemoLedger.movementFrom(input)
+            val tx = DemoLedger.movementFrom(input).let { tx ->
+                DemoLedger.seriesFor(tx, input)?.let { series ->
+                    com.s2nova.app.data.AppContainer.recurringSeriesRepository.addDemo(series)
+                    tx.copy(recurringSeriesId = series.id)
+                } ?: tx
+            }
             _transactions.value = listOf(tx) + _transactions.value
             DemoLedger.applyToWallets(tx, 1)
             return tx
@@ -315,6 +320,8 @@ class TransactionRepository(
         if (DemoModeFlag.active) {
             _transactions.value = _transactions.value.filterNot { it.id == id }
             existing?.let { DemoLedger.applyToWallets(it, -1) }
+            // "Eliminar" on a repeating movement also stops its repetitions.
+            if (stopSeries) existing?.recurringSeriesId?.let { com.s2nova.app.data.AppContainer.recurringSeriesRepository.delete(it) }
             return
         }
         val response = api.deleteTransaction(id, if (stopSeries) "delete" else null)

@@ -1,5 +1,6 @@
 package com.s2nova.app.ui.screens.home
 
+import com.s2nova.app.ui.theme.NovaMotion
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -158,6 +159,7 @@ fun HomeScreen(
     // Σ wallet balance converted to the principal currency. The backend
     // already leaves PLANNED movements out of each wallet's balance.
     val balance = wallets.sumOf { it.principalBalance }
+    val dataLoaded by AppContainer.dataLoaded.collectAsStateWithLifecycle()
     val thisMonth = months.lastOrNull()
     val lastMonth = months.getOrNull(months.size - 2)
     // The shared "hide amounts" preference (Web's eye button flips the same
@@ -298,7 +300,9 @@ fun HomeScreen(
                 // 2×1 hero.
                 item {
                     BalanceHero(
-                        balance = format(balance),
+                        balance = balance,
+                        countUp = dataLoaded,
+                        format = { format(it) },
                         walletCount = wallets.size,
                         hidden = hidden,
                         canPeek = hidePref,
@@ -559,7 +563,9 @@ private fun TileHeader(text: String, showChevron: Boolean = false) {
 
 @Composable
 private fun BalanceHero(
-    balance: String,
+    balance: Double,
+    countUp: Boolean,
+    format: (Double) -> String,
     walletCount: Int,
     hidden: Boolean,
     canPeek: Boolean,
@@ -570,6 +576,20 @@ private fun BalanceHero(
     val colors = NovaColors.current
     val t = rememberStrings()
     val shape = TileShape
+    // A new total counts from the one last shown, so the change (a movement
+    // saved, an occurrence confirmed) reads as cause and effect when the
+    // user comes back to Inicio. The first value shows as is: opening the
+    // app never replays it. The last shown total survives the back stack.
+    var lastShown by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableDoubleStateOf(balance) }
+    val counter = remember { androidx.compose.animation.core.Animatable(lastShown.toFloat()) }
+    LaunchedEffect(balance, countUp) {
+        lastShown = balance
+        // While the session's data is still loading the total just appears.
+        if (!countUp) return@LaunchedEffect counter.snapTo(balance.toFloat())
+        counter.animateTo(balance.toFloat(), androidx.compose.animation.core.tween(NovaMotion.VALUE, easing = NovaMotion.EmphasizedDecelerate))
+    }
+    val settled = !counter.isRunning && counter.targetValue == balance.toFloat()
+    val shownBalance = format(if (settled) balance else counter.value.toDouble())
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -598,12 +618,14 @@ private fun BalanceHero(
                     .semantics { contentDescription = t(StringKey.HOME_HIDE_AMOUNTS) },
             ) {
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.size(40.dp).background(colors.heroTile, CircleShape)) {
-                    V2Icon(if (hidden) V2Icons.eyeOff else V2Icons.eye, Color.White, 20.dp)
+                    androidx.compose.animation.Crossfade(hidden, animationSpec = androidx.compose.animation.core.tween(NovaMotion.FAST), label = "eye") { off ->
+                        V2Icon(if (off) V2Icons.eyeOff else V2Icons.eye, Color.White, 20.dp)
+                    }
                 }
             }
         }
         Text(
-            balance,
+            shownBalance,
             style = NovaType.display,
             color = Color.White,
             maxLines = 1,

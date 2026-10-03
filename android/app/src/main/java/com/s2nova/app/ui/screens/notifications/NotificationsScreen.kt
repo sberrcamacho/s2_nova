@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -97,7 +99,12 @@ fun NotificationsSheet(onDismiss: () -> Unit, onOpenAlertTarget: (AlertTarget) -
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 28.dp),
             )
         } else {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            // The list scrolls inside the sheet: with more alerts than fit, the
+            // last ones were cut off and could not be reached.
+            Column(
+                modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 alerts.forEach { alert ->
                     val copy = presentAlert(alert, t, format)
                     NotificationRow(

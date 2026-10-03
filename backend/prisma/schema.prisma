@@ -179,6 +179,7 @@ model User {
   categoryOverrides     CategoryOverride[]
   goalPlans             GoalPlan[]
   passwordResetTokens   PasswordResetToken[]
+  biometricCredentials  BiometricCredential[]
 
   @@map("users")
 }
@@ -219,6 +220,25 @@ model PasswordResetToken {
 
   @@index([userId])
   @@map("password_reset_tokens")
+}
+
+// "Ingreso biométrico": one credential per device that turned it on. The
+// device keeps the secret encrypted under a key only its biometrics unlock
+// and presents it to POST /auth/biometric/login; only the SHA-256 hash is
+// stored here (same pattern as refresh tokens).
+model BiometricCredential {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  secretHash  String    @unique @map("secret_hash")
+  deviceLabel String?   @map("device_label")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  lastUsedAt  DateTime? @map("last_used_at")
+  revokedAt   DateTime? @map("revoked_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("biometric_credentials")
 }
 
 model RefreshToken {

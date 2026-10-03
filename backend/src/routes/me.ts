@@ -211,6 +211,12 @@ export async function meRoutes(app: FastifyInstance) {
         },
         data: { revokedAt: new Date() },
       });
+      // A new password also retires every device's biometric credential;
+      // each device has to turn "Ingreso biométrico" on again.
+      await prisma.biometricCredential.updateMany({
+        where: { userId: request.userId!, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
 
       return reply.status(204).send();
     },
@@ -271,6 +277,14 @@ export async function meRoutes(app: FastifyInstance) {
         guidesOff: body.guidesOff,
       },
     });
+
+    // Turning "Ingreso biométrico" off retires the credentials it issued.
+    if (body.biometricLogin === false) {
+      await prisma.biometricCredential.updateMany({
+        where: { userId: request.userId!, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+    }
 
     const user = await prisma.user.findUniqueOrThrow({
       where: { id: request.userId },

@@ -1,5 +1,8 @@
 package com.s2nova.app.ui.components
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.runtime.remember
+import com.s2nova.app.ui.theme.pressScale
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -20,10 +23,12 @@ fun NovaCard(
     content: @Composable () -> Unit,
 ) {
     val shape = RoundedCornerShape(18.dp)
+    val interaction = remember { MutableInteractionSource() }
     val base = modifier
+        .then(if (onClick != null) Modifier.pressScale(interaction, pressedScale = 0.98f) else Modifier)
         .clip(shape)
         .background(MaterialTheme.colorScheme.surface)
         .border(1.dp, borderColor, shape)
-    val clickable = if (onClick != null) base.clickable(onClick = onClick) else base
+    val clickable = if (onClick != null) base.clickable(interactionSource = interaction, indication = androidx.compose.material3.ripple(), onClick = onClick) else base
     Box(modifier = clickable) { content() }
 }

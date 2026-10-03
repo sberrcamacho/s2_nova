@@ -1,5 +1,6 @@
 package com.s2nova.app.ui.screens.recurring
 
+import com.s2nova.app.ui.theme.novaItem
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -35,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
+import com.s2nova.app.data.remote.toUserMessage
 import com.s2nova.app.data.model.RecurrenceInterval
 import com.s2nova.app.data.model.TransactionType
 import com.s2nova.app.data.todayISO
@@ -82,7 +84,7 @@ fun RecurringScreen(onBack: () -> Unit, onNew: () -> Unit, onEdit: (String) -> U
     // and either one clears its "vence hoy" alert.
     fun afterOccurrence(block: suspend () -> Unit) {
         scope.launch {
-            runCatching { block() }
+            runCatching { block() }.onFailure { com.s2nova.app.ui.Snack.show(it.toUserMessage(com.s2nova.app.ui.tr(StringKey.COMMON_SAVE_ERROR))) }
             runCatching { AppContainer.walletRepository.refresh() }
             runCatching { AppContainer.transactionRepository.refresh() }
             runCatching { AppContainer.alertRepository.refresh() }
@@ -112,7 +114,7 @@ fun RecurringScreen(onBack: () -> Unit, onNew: () -> Unit, onEdit: (String) -> U
                 }
                 val income = item.type == TransactionType.INCOME
                 Column(
-                    modifier = Modifier
+                    modifier = novaItem()
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(20.dp))
                         .background(MaterialTheme.colorScheme.surface)
@@ -146,7 +148,7 @@ fun RecurringScreen(onBack: () -> Unit, onNew: () -> Unit, onEdit: (String) -> U
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         CardAction(if (item.active) t(StringKey.RECURRING_PAUSE) else t(StringKey.RECURRING_RESUME), colors.link) {
-                            scope.launch { runCatching { AppContainer.recurringSeriesRepository.setActive(item.id, !item.active) } }
+                            scope.launch { runCatching { AppContainer.recurringSeriesRepository.setActive(item.id, !item.active) }.onFailure { com.s2nova.app.ui.Snack.show(it.toUserMessage(com.s2nova.app.ui.tr(StringKey.COMMON_SAVE_ERROR))) } }
                         }
                         CardAction(t(StringKey.RECURRING_EDIT), colors.link) { onEdit(item.id) }
                         if (due) {

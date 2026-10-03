@@ -42,6 +42,13 @@ const resetPasswordSchema = z.object({
   newPassword: z.string().min(8).max(200).regex(/\d/, "Must include a number."),
 });
 
+const biometricLoginSchema = z.object({
+  credentialId: z.string().uuid(),
+  secret: z.string().min(16).max(200),
+});
+
+const INVALID_BIOMETRIC = { error: "Biometric credential is invalid.", code: "biometric_invalid" } as const;
+
 const PASSWORD_RESET_TTL_MS = 30 * 60 * 1000;
 
 const refreshBodySchema = z.object({
@@ -340,7 +347,8 @@ export async function authRoutes(app: FastifyInstance) {
   );
 
   // Consumes the emailed token, sets the new password (creating the password
-  // identity for a Google-only user) and closes every session.
+  // identity for a Google-only user), closes every session and retires
+  // every biometric credential.
   app.post(
     "/auth/reset-password",
     { config: { rateLimit: AUTH_RATE_LIMIT } },
@@ -361,10 +369,49 @@ export async function authRoutes(app: FastifyInstance) {
         }),
         prisma.passwordResetToken.update({ where: { id: record.id }, data: { usedAt: now } }),
         prisma.refreshToken.updateMany({ where: { userId: record.userId, revokedAt: null }, data: { revokedAt: now } }),
+        // A new password also retires every device's biometric credential.
+        prisma.biometricCredential.updateMany({ where: { userId: record.userId, revokedAt: null }, data: { revokedAt: now } }),
       ]);
       return reply.status(204).send();
     },
   );
+
+  // "Ingreso biométrico", step 1: a signed-in device asks for a credential
+  // it will keep behind its biometrics. The secret is returned once; only
+  // its hash is stored. Each call is a new credential; turning the preference
+  // off (PATCH /me/preferences) or changing the password retires them all.
+  app.post("/auth/biometric", { preHandler: app.authenticate, config: { rateLimit: AUTH_RATE_LIMIT } }, async (request, reply) => {
+    const { token: secret, tokenHash: secretHash } = generateRefreshToken();
+    const credential = await prisma.biometricCredential.create({
+      data: {
+        userId: request.userId!,
+        secretHash,
+        deviceLabel: request.headers["user-agent"]?.toString().slice(0, 255) ?? null,
+      },
+    });
+    return reply.status(201).send({ credentialId: credential.id, secret });
+  });
+
+  // Step 2: the device unlocked the secret with a biometric check and
+  // trades it for a new session, exactly as a password login would. It
+  // works only while the user's "Ingreso biométrico" preference is on.
+  app.post("/auth/biometric/login", { config: { rateLimit: AUTH_RATE_LIMIT } }, async (request, reply) => {
+    const body = biometricLoginSchema.parse(request.body);
+    const credential = await prisma.biometricCredential.findUnique({
+      where: { id: body.credentialId },
+      include: { user: { select: { preferences: { select: { biometricLogin: true } } } } },
+    });
+    if (
+      !credential ||
+      credential.revokedAt ||
+      credential.secretHash !== hashRefreshToken(body.secret) ||
+      !credential.user.preferences?.biometricLogin
+    ) {
+      return reply.status(401).send(INVALID_BIOMETRIC);
+    }
+    await prisma.biometricCredential.update({ where: { id: credential.id }, data: { lastUsedAt: new Date() } });
+    return issueSession(request, reply, credential.userId);
+  });
 
   app.post("/auth/logout", async (request, reply) => {
     const cookieToken = request.cookies[REFRESH_COOKIE];

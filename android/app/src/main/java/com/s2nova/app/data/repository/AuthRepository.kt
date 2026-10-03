@@ -27,6 +27,10 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
+// How long a sign-out waits on the server before giving up on telling it.
+private const val REMOTE_LOGOUT_TIMEOUT_MS = 5_000L
 
 private fun initialsFor(name: String): String =
     name.trim().split(Regex("\\s+")).filter { it.isNotBlank() }.take(2)
@@ -69,6 +73,7 @@ class AuthRepository(
     private val onboardingStore: OnboardingStore,
     private val credentialManager: androidx.credentials.CredentialManager,
     private val idleTimeoutStore: IdleTimeoutStore,
+    private val biometricStore: com.s2nova.app.data.local.BiometricStore,
 ) {
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
@@ -87,7 +92,57 @@ class AuthRepository(
         val response = ApiClient.api.me()
         if (response.preferences?.onboardingCompleted == true) onboardingStore.markOnboardingComplete()
         if (response.preferences?.tutorialCompleted == true) onboardingStore.markTutorialComplete()
-        return response.toUser()
+        val user = response.toUser()
+        // This device's biometric credential belongs to one account and
+        // only works while that account's preference is on (it is retired
+        // server-side otherwise): forget one that can no longer be used.
+        if (biometricStore.userId().let { it != null && (it != user.id || !user.preferences.biometricLogin) }) biometricStore.clear()
+        return user
+    }
+
+    // Whether this device can offer "Ingreso biométrico" on Login.
+    val biometricEnrolled: kotlinx.coroutines.flow.Flow<Boolean> = biometricStore.enrolled
+
+    // Ajustes › Ingreso biométrico, on: the server issues this device a
+    // credential, its secret is sealed with the cipher the biometric prompt
+    // just unlocked, and only then does the preference go on. Any step
+    // failing leaves both the device and the account with it off.
+    suspend fun enableBiometric(unlocked: javax.crypto.Cipher): Result<Unit> = runCatching {
+        if (DemoModeFlag.active) error(com.s2nova.app.ui.tr(com.s2nova.app.ui.StringKey.API_GUEST))
+        val user = _currentUser.value ?: error("Not signed in")
+        try {
+            val credential = ApiClient.api.enrolBiometric()
+            biometricStore.save(credential.credentialId, credential.secret, user.id, unlocked)
+            ApiClient.api.updatePreferences(UpdatePreferencesRequest(biometricLogin = true))
+        } catch (error: Exception) {
+            android.util.Log.w("AuthRepository", "Enabling biometric login failed", error)
+            biometricStore.clear()
+            throw error
+        }
+        updateUser { it.copy(preferences = it.preferences.copy(biometricLogin = true)) }
+    }
+
+    // Off: the device forgets its credential and the server retires every
+    // credential of the account (PATCH /me/preferences).
+    suspend fun disableBiometric() {
+        biometricStore.clear()
+        updateUser { it.copy(preferences = it.preferences.copy(biometricLogin = false)) }
+        persistPreferences(UpdatePreferencesRequest(biometricLogin = false))
+    }
+
+    // Login with the credential the biometric prompt just unlocked. A
+    // credential the server no longer accepts is forgotten.
+    suspend fun loginWithBiometric(unlocked: javax.crypto.Cipher): Result<Unit> = runCatching {
+        val (credentialId, secret) = biometricStore.open(unlocked) ?: error("No biometric credential")
+        val session = try {
+            ApiClient.authApi.biometricLogin(com.s2nova.app.data.remote.BiometricLoginRequest(credentialId, secret))
+        } catch (error: HttpException) {
+            if (error.code() == 401) biometricStore.clear()
+            throw error
+        }
+        sessionStore.saveSession(session.accessToken, session.refreshToken)
+        idleTimeoutStore.touch()
+        _currentUser.value = fetchAndSyncMe()
     }
 
     // Called once at cold start (splash): if a refresh token is already
@@ -199,6 +254,7 @@ class AuthRepository(
     suspend fun deleteAccount(password: String): Result<Unit> = runCatching {
         if (DemoModeFlag.active) error(com.s2nova.app.ui.tr(com.s2nova.app.ui.StringKey.API_GUEST))
         ApiClient.api.deleteMe(PasswordConfirmRequest(password)).requireOk()
+        biometricStore.clear()
         logout()
     }
 
@@ -219,16 +275,29 @@ class AuthRepository(
         runCatching { ApiClient.api.updatePreferences(request) }
     }
 
+    // Signing out is immediate on the device; telling the server (which can
+    // be slow or unreachable) happens afterwards on a scope of its own, so
+    // neither a timeout nor the screen leaving can hold the user back.
     suspend fun logout() {
         // A stale per-device demo flag must never silently apply to
         // whichever account signs in next on this device.
+        val wasGuest = DemoModeFlag.active
         DemoModeFlag.set(false)
         val refreshToken = sessionStore.refreshTokenOnce()
-        runCatching { ApiClient.authApi.logout(RefreshRequest(refreshToken)) }
-        runCatching { credentialManager.clearCredentialState(androidx.credentials.ClearCredentialStateRequest()) }
         sessionStore.clear()
         _currentUser.value = null
+        if (wasGuest) return
+        backgroundScope.launch {
+            kotlinx.coroutines.withTimeoutOrNull(REMOTE_LOGOUT_TIMEOUT_MS) {
+                runCatching { ApiClient.authApi.logout(RefreshRequest(refreshToken)) }
+            }
+            kotlinx.coroutines.withTimeoutOrNull(REMOTE_LOGOUT_TIMEOUT_MS) {
+                runCatching { credentialManager.clearCredentialState(androidx.credentials.ClearCredentialStateRequest()) }
+            }
+        }
     }
+
+    private val backgroundScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO)
 
     // "Cierre automático": a real sign-out (the server revokes the session,
     // this device forgets its tokens), then Login explains why.

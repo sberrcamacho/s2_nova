@@ -1,5 +1,6 @@
 package com.s2nova.app.ui.components
 
+import com.s2nova.app.ui.theme.pressScale
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -41,6 +42,7 @@ fun NovaPrimaryButton(
         modifier = modifier
             .fillMaxWidth()
             .height(56.dp)
+            .then(if (clickable) Modifier.pressScale(interactionSource, pressedScale = 0.98f) else Modifier)
             .clip(RoundedCornerShape(16.dp))
             // Disabled dims the whole button (38 %), not only its label.
             .alpha(if (!clickable) 0.38f else if (pressed) 0.9f else 1f)

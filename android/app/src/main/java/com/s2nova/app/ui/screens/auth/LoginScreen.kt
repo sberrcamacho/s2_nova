@@ -1,5 +1,9 @@
 package com.s2nova.app.ui.screens.auth
 
+import com.s2nova.app.ui.components.biometricsAvailable
+import com.s2nova.app.ui.components.confirmBiometric
+import com.s2nova.app.ui.components.findFragmentActivity
+import androidx.compose.ui.draw.alpha
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -66,6 +70,44 @@ fun LoginScreen(
     val colors = NovaColors.current
     val darkOverride by ThemeController.darkOverride.collectAsStateWithLifecycle()
     val isDark = darkOverride ?: isSystemInDarkTheme()
+
+    // "Ingreso biométrico": offered when this phone holds a credential. The
+    // prompt opens by itself once on arriving here; the button repeats it.
+    val biometricEnrolled by AppContainer.authRepository.biometricEnrolled.collectAsStateWithLifecycle(initialValue = false)
+    val canUseBiometric = biometricEnrolled && biometricsAvailable(context)
+    var biometricLoading by remember { mutableStateOf(false) }
+    val biometricLogin: () -> Unit = {
+        scope.launch {
+            val activity = context.findFragmentActivity() ?: return@launch
+            val cipher = AppContainer.biometricStore.decryptCipher()
+            if (cipher == null) {
+                error = tr(StringKey.BIO_LOGIN_ERR)
+                return@launch
+            }
+            val unlocked = activity.confirmBiometric(
+                tr(StringKey.BIO_PROMPT_TITLE), tr(StringKey.BIO_PROMPT_LOGIN), tr(StringKey.BIO_PROMPT_CANCEL), cipher,
+            ) ?: return@launch
+            biometricLoading = true
+            error = null
+            AppContainer.authRepository.loginWithBiometric(unlocked)
+                .onSuccess {
+                    AppContainer.refreshUserData()
+                    biometricLoading = false
+                    onLoginSuccess()
+                }
+                .onFailure {
+                    biometricLoading = false
+                    error = it.toUserMessage(tr(StringKey.BIO_LOGIN_ERR))
+                }
+        }
+    }
+    var autoPrompted by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    androidx.compose.runtime.LaunchedEffect(canUseBiometric) {
+        if (canUseBiometric && !autoPrompted) {
+            autoPrompted = true
+            biometricLogin()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -161,6 +203,25 @@ fun LoginScreen(
                     enabled = !loading,
                     loading = loading,
                 )
+
+                if (canUseBiometric) {
+                    // Secondary button (§6.3).
+                    val shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                            .alpha(if (biometricLoading) 0.38f else 1f)
+                            .clip(shape)
+                            .border(1.dp, colors.borderInput, shape)
+                            .clickable(enabled = !biometricLoading, role = androidx.compose.ui.semantics.Role.Button, onClick = biometricLogin),
+                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        com.s2nova.app.ui.components.V2Icon(com.s2nova.app.ui.components.V2Icons.fingerprint, MaterialTheme.colorScheme.onBackground, 20.dp)
+                        Text(tr(StringKey.AUTH_BIOMETRIC_ENTER), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, softWrap = false)
+                    }
+                }
 
                 if (BuildConfig.GOOGLE_WEB_CLIENT_ID.isNotBlank()) {
                     Row(

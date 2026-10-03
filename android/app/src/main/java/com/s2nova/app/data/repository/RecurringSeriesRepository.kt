@@ -60,6 +60,10 @@ class RecurringSeriesRepository(
         _series.value = series
     }
 
+    fun addDemo(series: RecurringSeries) {
+        _series.value = _series.value + series
+    }
+
     // Editar in Programados opens "Nuevo movimiento" on the series; this
     // saves it. Occurrences/end date are sent even when null so "Termina:
     // nunca" clears them. Changing the wallet re-derives paymentMethod
@@ -106,7 +110,10 @@ class RecurringSeriesRepository(
     }
 
     suspend fun setActive(id: String, active: Boolean) {
-        if (DemoModeFlag.active) return
+        if (DemoModeFlag.active) {
+            demoUpdate(id) { it.copy(active = active).withDue() }
+            return
+        }
         val dto = api.updateRecurringSeries(id, UpdateRecurringSeriesRequest(active = active))
         val model = dto.toModel(categoryRepository) ?: return
         _series.value = _series.value.map { if (it.id == id) model else it }
@@ -126,7 +133,23 @@ class RecurringSeriesRepository(
     // ApiService. Callers should also refresh WalletRepository/
     // TransactionRepository afterward since this changes both.
     suspend fun confirmOccurrence(id: String) {
-        if (DemoModeFlag.active) return
+        if (DemoModeFlag.active) {
+            val series = _series.value.firstOrNull { it.id == id } ?: return
+            val input = com.s2nova.app.data.model.NewTransactionInput(
+                walletId = series.walletId,
+                description = series.name,
+                amount = series.amount,
+                type = series.type,
+                category = series.category,
+                subcategoryId = series.subcategoryId,
+                date = series.nextOccurrenceDate,
+                currency = series.currency,
+            )
+            val tx = DemoLedger.movementFrom(input).copy(recurringSeriesId = series.id, paymentMethod = series.paymentMethod)
+            com.s2nova.app.data.AppContainer.transactionRepository.restoreLocal(tx)
+            demoUpdate(id) { it.advanced() }
+            return
+        }
         val response = api.confirmRecurringOccurrence(id, ConfirmRecurringOccurrenceRequest())
         val model = response.series.toModel(categoryRepository) ?: return
         _series.value = _series.value.map { if (it.id == id) model else it }
@@ -135,8 +158,37 @@ class RecurringSeriesRepository(
     // Skips the due occurrence: the series moves to its next date and no
     // Transaction is created, so balances don't change.
     suspend fun skipOccurrence(id: String) {
-        if (DemoModeFlag.active) return
+        if (DemoModeFlag.active) {
+            demoUpdate(id) { it.advanced() }
+            return
+        }
         val model = api.skipRecurringOccurrence(id).toModel(categoryRepository) ?: return
         _series.value = _series.value.map { if (it.id == id) model else it }
     }
+
+    private fun demoUpdate(id: String, change: (RecurringSeries) -> RecurringSeries) {
+        _series.value = _series.value.map { if (it.id == id) change(it) else it }
+        // The guest's alerts are a fixed list: a series that is no longer
+        // due drops its "vence" alert, as the backend's rule would.
+        if (_series.value.none { it.id == id && it.isDue }) com.s2nova.app.data.AppContainer.alertRepository.removeLocal("series:$id")
+    }
 }
+
+// Guest mode mirrors the backend's date rule (recurringSeries.ts): the
+// series moves one interval on, and ends once its count or end date is
+// reached.
+internal fun RecurringSeries.advanced(today: String = com.s2nova.app.data.todayISO()): RecurringSeries {
+    val current = java.time.LocalDate.parse(nextOccurrenceDate)
+    val next = when (interval) {
+        RecurrenceInterval.DAILY -> current.plusDays(1)
+        RecurrenceInterval.WEEKLY -> current.plusWeeks(1)
+        RecurrenceInterval.MONTHLY -> current.plusMonths(1)
+        RecurrenceInterval.YEARLY -> current.plusYears(1)
+    }.toString()
+    val done = occurrencesDone + 1
+    val ended = (occurrences != null && done >= occurrences) || (endDate != null && next > endDate)
+    return copy(nextOccurrenceDate = next, occurrencesDone = done, active = active && !ended).withDue(today)
+}
+
+internal fun RecurringSeries.withDue(today: String = com.s2nova.app.data.todayISO()): RecurringSeries =
+    copy(isDue = active && nextOccurrenceDate <= today)

@@ -111,6 +111,15 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   Android Keystore key (`SessionStore`); the Activity sets `FLAG_SECURE`;
   `ApiClient`'s Authenticator refreshes one request at a time and only on
   the auth layer's `token_invalid` 401s (see backend `plugins/auth.ts`).
+  "Ingreso biométrico" is a real sign-in: turning it on in Ajustes asks for
+  a biometric check, the backend issues this device a credential (`POST
+  /auth/biometric`) and `BiometricStore` seals its secret with a Keystore
+  key that only a strong biometric unlocks (invalidated when the phone's
+  biometrics change). Login then offers "Entrar con huella o rostro"
+  (`ui/components/BiometricAuth.kt`, prompted once on arrival) and trades
+  the credential for a session (`POST /auth/biometric/login`). Turning the
+  option off or changing the password retires the credential server-side.
+  `MainActivity` is a `FragmentActivity` because the prompt needs one.
   Both preferences persist through the same `PATCH /me/preferences` call as
   every other toggle on that screen — see the next bullet, this was also
   the fix for a real bug where Settings' notification/biometric/currency/

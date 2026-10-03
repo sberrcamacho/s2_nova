@@ -33,6 +33,13 @@ data class RefreshRequest(val refreshToken: String? = null)
 @Serializable
 data class GoogleLoginRequest(val idToken: String)
 
+// "Ingreso biométrico": the credential this device keeps behind its biometrics.
+@Serializable
+data class BiometricCredentialResponse(val credentialId: String, val secret: String)
+
+@Serializable
+data class BiometricLoginRequest(val credentialId: String, val secret: String)
+
 @Serializable
 data class UserDto(val id: String, val name: String, val email: String)
 

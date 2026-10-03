@@ -81,7 +81,9 @@ export function DashboardLayout() {
         <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
           <Header title={title} onMenuClick={() => setSidebarOpen(true)} onNewTransaction={() => setNewTxOpen(true)} />
           {user?.isGuest && <GuestBanner />}
-          <main className="flex-1">
+          {/* Each page arrives with a short rise and fade (route-in); keyed by
+              path so query changes (filters, tabs, period) don't replay it. */}
+          <main key={location.pathname} className="flex-1 animate-route-in">
             <Outlet />
           </main>
         </div>
