@@ -221,6 +221,10 @@ private fun BottomTabItem(
 // (e.g. "budgets?tab={tab}&side={side}" -> "budgets").
 fun baseRoute(route: String?): String? = route?.substringBefore('?')
 
+// A tab's position in the bar (-1 for any other route); route changes
+// between tabs slide in the bar's direction.
+fun bottomTabIndex(route: String?): Int = TABS.indexOfFirst { it.route == baseRoute(route) }
+
 fun bottomBarVisibleFor(route: String?): Boolean = baseRoute(route) in setOf(
     NovaDestinations.HOME,
     NovaDestinations.TRANSACTIONS,

@@ -404,33 +404,37 @@ internal fun splashDestinationFor(loggedIn: Boolean, onboardingDone: Boolean): S
     else -> NovaDestinations.HOME
 }
 
-// Route changes (DESIGN-SYSTEM.md §4.4): switching between the bottom-bar
-// tabs is a quick cross-fade (they are siblings); going deeper slides the
-// new screen in a short way (a tenth of the width) from the right, and back
-// reverses it. Under reduced motion everything cross-fades.
+// Route changes (DESIGN-SYSTEM.md §4.4), a fade-through on a horizontal
+// axis: the old screen fades out in 90 ms while the new one slides a tenth of
+// the width in. Between bottom-bar tabs the direction follows the bar's
+// order (Inicio → Movimientos comes from the right, back to Inicio from the
+// left); going deeper comes from the right and back reverses it. Under
+// reduced motion everything cross-fades.
 private const val ROUTE_FADE_OUT = 90
 
-private fun isTab(route: String?) = bottomBarVisibleFor(route)
+// Whether the new screen comes from the right.
+private fun fromRight(from: String?, to: String?, forward: Boolean): Boolean {
+    val a = bottomTabIndex(from)
+    val b = bottomTabIndex(to)
+    return if (a >= 0 && b >= 0) b > a else forward
+}
 
-private fun siblings(from: String?, to: String?, reducedMotion: Boolean) = reducedMotion || (isTab(from) && isTab(to))
+private fun routeEnter(from: String?, to: String?, forward: Boolean, reducedMotion: Boolean): EnterTransition {
+    if (reducedMotion) return fadeIn(tween(NovaMotion.FAST, easing = NovaMotion.StandardDecelerate))
+    val right = fromRight(from, to, forward)
+    // Fade-through: the old screen is gone before the new one shows, so the
+    // two never read on top of each other.
+    val spec = tween<Float>(NovaMotion.BASE - ROUTE_FADE_OUT, delayMillis = ROUTE_FADE_OUT, easing = NovaMotion.StandardDecelerate)
+    return fadeIn(spec) +
+        slideInHorizontally(tween(NovaMotion.BASE - ROUTE_FADE_OUT, delayMillis = ROUTE_FADE_OUT, easing = NovaMotion.Standard)) { width -> if (right) width / 10 else -width / 10 }
+}
 
-private fun routeEnter(from: String?, to: String?, forward: Boolean, reducedMotion: Boolean): EnterTransition =
-    if (siblings(from, to, reducedMotion)) {
-        fadeIn(tween(NovaMotion.FAST, delayMillis = NovaMotion.FAST / 2, easing = NovaMotion.StandardDecelerate))
-    } else {
-        // Fade-through: the old screen is gone before the new one shows, so
-        // the two never read on top of each other.
-        fadeIn(tween(NovaMotion.BASE - ROUTE_FADE_OUT, delayMillis = ROUTE_FADE_OUT, easing = NovaMotion.StandardDecelerate)) +
-            slideInHorizontally(tween(NovaMotion.BASE - ROUTE_FADE_OUT, delayMillis = ROUTE_FADE_OUT, easing = NovaMotion.Standard)) { width -> if (forward) width / 10 else -width / 10 }
-    }
-
-private fun routeExit(from: String?, to: String?, forward: Boolean, reducedMotion: Boolean): ExitTransition =
-    if (siblings(from, to, reducedMotion)) {
-        fadeOut(tween(NovaMotion.FAST / 2))
-    } else {
-        fadeOut(tween(ROUTE_FADE_OUT, easing = NovaMotion.EmphasizedAccelerate)) +
-            slideOutHorizontally(tween(NovaMotion.EXIT, easing = NovaMotion.EmphasizedAccelerate)) { width -> if (forward) -width / 20 else width / 20 }
-    }
+private fun routeExit(from: String?, to: String?, forward: Boolean, reducedMotion: Boolean): ExitTransition {
+    if (reducedMotion) return fadeOut(tween(NovaMotion.FAST / 2))
+    val right = fromRight(from, to, forward)
+    return fadeOut(tween(ROUTE_FADE_OUT, easing = NovaMotion.EmphasizedAccelerate)) +
+        slideOutHorizontally(tween(NovaMotion.EXIT, easing = NovaMotion.EmphasizedAccelerate)) { width -> if (right) -width / 20 else width / 20 }
+}
 
 private fun NavHostController.navigateAsRoot(route: String) {
     navigate(route) {

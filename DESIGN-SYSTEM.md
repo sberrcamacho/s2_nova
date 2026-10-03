@@ -276,9 +276,10 @@ Rules:
 
 - Motion explains a change; nothing loops or bounces for decoration, and a
   view animates at most one or two things at once.
-- Route change: tabs cross-fade; deeper screens fade through (the old one
-  is gone in 90 ms) while sliding a tenth of the width in from the right,
-  back reverses it. Web pages rise 6 px and fade; dialogs grow from 0.97,
+- Route change (Android): a fade-through (the old screen is gone in 90 ms)
+  while the new one slides a tenth of the width in. Between bottom-bar tabs
+  it comes from the side of the tab's position in the bar; deeper screens
+  come from the right and back reverses it. Web pages rise 6 px and fade; dialogs grow from 0.97,
   the side panel slides 32 px in from its edge.
 - Press: cards, primary buttons and the FAB scale to 0.97–0.98 (FAB 0.92)
   while held.
