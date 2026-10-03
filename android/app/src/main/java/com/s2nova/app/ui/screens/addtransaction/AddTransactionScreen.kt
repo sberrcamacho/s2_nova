@@ -63,6 +63,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
 import com.s2nova.app.data.fmtDate
 import com.s2nova.app.data.formatMoney
+import com.s2nova.app.data.model.WalletType
 import com.s2nova.app.data.model.BudgetKind
 import com.s2nova.app.data.model.CounterpartyKind
 import com.s2nova.app.data.model.LoanKind
@@ -164,6 +165,17 @@ fun repeatOf(rs: RecurringSeries) = RepeatDraft(
 fun repeatShort(r: RepeatDraft?): String = r?.freq?.let { it.label + if (r.end == RepeatEnd.COUNT) " ×${r.count}" else "" } ?: tr(StringKey.NM_REPEAT)
 
 fun shortWallet(name: String): String = name.split('—').first().trim()
+
+// Where an expense or transfer leaves its source wallet, or null when it
+// doesn't push it below zero (or deeper) — Guardar's overdraft warning.
+// Credit-card wallets live below zero, and a scheduled movement doesn't move
+// the balance yet, so neither warns. `refund` is what the edited movement
+// had already taken from this same wallet, in the wallet's currency.
+fun overdraftAfter(balance: Double, spend: Double, refund: Double, credit: Boolean, future: Boolean): Double? {
+    if (credit || future || spend <= 0) return null
+    val after = Math.round((balance + refund - spend) * 100) / 100.0
+    return after.takeIf { it < 0 && it < balance }
+}
 
 // Local, per-device preferences: last pad mode and the last manually chosen
 // date/time ("Como el anterior").
@@ -354,6 +366,18 @@ fun AddTransactionScreen(
     }
     val valP = (if (s.future) 0.0 else value * rateTo(cur, principal)) - counted
 
+    // Expenses and transfers out that would leave the wallet below zero ask
+    // first; saving anyway is allowed. Editing gives back what the saved
+    // movement had already taken from this same wallet.
+    val refund = remember(editTransactionId, wallet.id) {
+        editTransactionId?.let { AppContainer.transactionRepository.getById(it) }
+            ?.takeIf { it.status == com.s2nova.app.data.model.TransactionStatus.COMPLETED && it.walletId == wallet.id }
+            ?.let { when (it.type) { TransactionType.EXPENSE -> it.walletAmount ?: it.amount; TransactionType.TRANSFER -> it.amount; else -> 0.0 } } ?: 0.0
+    }
+    val overdraft = if (s.seriesMode || s.isIncome) null
+        else overdraftAfter(wallet.currentBalance, if (s.isTransfer) value else value * rate, refund, wallet.type == WalletType.BANK_CREDIT, s.future)
+    var overdraftAsk by remember { mutableStateOf<Double?>(null) }
+
     val guest = AppContainer.isGuest
     var deleting by remember { mutableStateOf(false) }
     val t = rememberStrings()
@@ -385,8 +409,13 @@ fun AddTransactionScreen(
         }
     }
 
-    fun save() {
+    fun save(confirmed: Boolean = false) {
         if (!s.valid || s.saving) return
+        if (overdraft != null && !confirmed) {
+            overdraftAsk = overdraft
+            return
+        }
+        overdraftAsk = null
         s.saving = true
         if (editSeriesId != null) return saveSeries(editSeriesId)
         val r = s.repeat
@@ -573,12 +602,24 @@ fun AddTransactionScreen(
             V2Button(
                 label = tr(if (s.seriesMode) StringKey.NM_SAVE_SERIES else if (s.future) StringKey.NM_SAVE_SCHEDULED else if (s.repeat != null) StringKey.NM_SAVE_REPEAT else StringKey.NM_SAVE),
                 enabled = s.valid && !s.saving,
-                onClick = ::save,
+                onClick = { save() },
                 verticalPadding = 16.dp,
                 fontSize = 14.sp,
                 glow = true,
             )
         }
+    }
+
+    overdraftAsk?.let { left ->
+        AlertDialog(
+            onDismissRequest = { overdraftAsk = null },
+            icon = { V2Icon(V2Icons.warn, colors.warning, size = 24.dp) },
+            title = { Text(t(StringKey.NM_OVERDRAFT_TITLE)) },
+            // The sign and the figure never wrap apart.
+            text = { Text(tr(StringKey.NM_OVERDRAFT_BODY, shortWallet(wallet.name), formatMoney(left, wallet.currency).replace("−", "−\u2060"))) },
+            confirmButton = { TextButton(onClick = { save(confirmed = true) }) { Text(t(StringKey.NM_OVERDRAFT_CONFIRM)) } },
+            dismissButton = { TextButton(onClick = { overdraftAsk = null }) { Text(t(StringKey.NM_OVERDRAFT_REVIEW)) } },
+        )
     }
 
     if (deleting && editSeriesId != null) {

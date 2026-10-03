@@ -167,3 +167,14 @@ export function toneOf(pct: number): [string, string] {
 export function fileSize(bytes: number): string {
   return bytes >= 1024 * 1024 ? `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`
 }
+
+// Where an expense or transfer leaves its source wallet, or null when it
+// doesn't push it below zero (or deeper) — the Guardar overdraft warning.
+// Credit-card wallets live below zero, and a scheduled movement doesn't move
+// the balance yet, so neither warns. `refund` is what the edited movement
+// had already taken from this same wallet, in the wallet's currency.
+export function overdraftAfter(o: { balance: number; spend: number; refund: number; credit: boolean; future: boolean }): number | null {
+  if (o.credit || o.future || o.spend <= 0) return null
+  const after = Math.round((o.balance + o.refund - o.spend) * 100) / 100
+  return after < 0 && after < o.balance ? after : null
+}

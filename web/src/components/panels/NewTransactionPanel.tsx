@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type DragEvent, type ReactNode } from 'rea
 import { useNavigate } from 'react-router-dom'
 import { SidePanel } from '@/components/panels/SidePanel'
 import { CategoryMark, GlyphMark, PlanMark } from '@/components/v2/CategoryMark'
-import { CancelButton, ErrorBox, Flat, GridCell, IC, Icon, RadioRow } from '@/components/v2/Kit'
+import { CancelButton, ErrorBox, Flat, GridCell, IC, Icon, RadioRow, WarnDialog } from '@/components/v2/Kit'
 import { AjSwitch } from '@/dashboard/components/ajustes/AjustesUi'
 import { categoryColor, categoryIdFor, categoryGlyph, categoryLabel, categoryName, childCategories, isInCategory, parentCategories, parentOf, useCategories } from '@/lib/backendCategories'
 import { currencyInfo, formatMoney, referenceRate } from '@/lib/currency'
@@ -24,6 +24,7 @@ import {
   freqLabel,
   hasOps,
   nextFirst,
+  overdraftAfter,
   pressKey,
   repeatShort,
   repeatSummary,
@@ -184,6 +185,8 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
   const [calc, setCalc] = useState(() => readPref(PREFS.calc) === '1')
   const [err, setErr] = useState('')
   const [saving, setSaving] = useState(false)
+  // Where Guardar would leave the source wallet, while its warning is open.
+  const [overdraftAsk, setOverdraftAsk] = useState<number | null>(null)
   const photoInput = useRef<HTMLInputElement>(null)
   const docInput = useRef<HTMLInputElement>(null)
 
@@ -378,10 +381,21 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
 
   const recents = [...new Map(transactions.filter((t) => t.type === 'income' && !t.loanKind && t.counterpartyName).map((t) => [t.counterpartyName!, t.counterpartyKind ?? null])).entries()].slice(0, 3)
 
-  const save = async () => {
+  // Expenses and transfers out that would leave the wallet below zero ask
+  // first; saving anyway is allowed. Editing gives back what the saved
+  // movement had already taken from this same wallet.
+  const refund =
+    editing && (editing.status ?? 'completed') === 'completed' && editing.accountId === walletId
+      ? editing.type === 'expense' ? (editing.walletAmount ?? editing.amount) : editing.type === 'transfer' ? editing.amount : 0
+      : 0
+  const overdraft = wallet && !isInc ? overdraftAfter({ balance: wallet.currentBalance, spend: isTr ? val : val * rate, refund, credit: wallet.accountType === 'BANK_CREDIT', future }) : null
+
+  const save = async (confirmed = false) => {
     if (!valid) return setErr(t(!isTr && !catDone ? 'nm.err.category' : val <= 0 ? 'nm.err.amount' : 'nm.err.title'))
     if (!walletId) return setErr(t('nm.err.wallet'))
     if (isTr && !toId) return setErr(t('nm.err.walletTo'))
+    if (overdraft !== null && !confirmed) return setOverdraftAsk(overdraft)
+    setOverdraftAsk(null)
     setSaving(true)
     const rule = repeat?.freq
       ? {
@@ -690,7 +704,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
           <CancelButton onClick={onClose} />
           <button
             type="button"
-            onClick={save}
+            onClick={() => save()}
             disabled={saving}
             className="whitespace-nowrap rounded-[10px] px-[18px] py-2.5 text-caption font-bold"
             style={{ cursor: valid ? 'pointer' : 'not-allowed', color: valid ? '#fff' : 'var(--v2-dim)', background: valid ? 'var(--v2-accent)' : 'var(--v2-surface2)' }}
@@ -948,6 +962,20 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
       </MoreOptions>
 
       {err && <ErrorBox>{err}</ErrorBox>}
+      {overdraftAsk !== null && (
+        <WarnDialog
+          title={t('nm.overdraft.title')}
+          body={(() => {
+            const [pre, post] = t('nm.overdraft.body').split('{1}')
+            // The sign and the figure never wrap apart.
+            return <>{fill(pre, walletName)}<span className="font-numeric whitespace-nowrap font-semibold text-negative">{formatMoney(overdraftAsk, wcur)}</span>{post}</>
+          })()}
+          cancel={t('nm.overdraft.review')}
+          cta={t('nm.overdraft.confirm')}
+          onCancel={() => setOverdraftAsk(null)}
+          onConfirm={() => void save(true)}
+        />
+      )}
     </SidePanel>
   )
 }

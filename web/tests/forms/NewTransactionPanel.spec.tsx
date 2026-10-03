@@ -121,6 +121,10 @@ describe('NewTransactionPanel', () => {
     expect(screen.getByText('= $168.500')).toBeInTheDocument()
     await user.type(screen.getByLabelText('Título'), 'Mercado de la semana')
     await user.click(screen.getByRole('button', { name: 'Guardar movimiento' }))
+    // It's more than the wallet has: a heads-up first, saving anyway is allowed.
+    const warn = await screen.findByRole('alertdialog', { name: 'Saldo insuficiente' })
+    expect(warn).toHaveTextContent('Bancolombia quedará en −$168.400. ¿Guardar de todos modos?')
+    await user.click(within(warn).getByRole('button', { name: 'Guardar igual' }))
 
     await waitFor(() => expect(onClose).toHaveBeenCalled())
     expect(sent()).toMatchObject({
@@ -135,6 +139,23 @@ describe('NewTransactionPanel', () => {
     })
     // The backend decides COMPLETED vs PLANNED from the date and time.
     expect(sent()?.status).toBeUndefined()
+  })
+
+  it('saves within the balance without asking, and Revisar keeps an overdraft unsaved', async () => {
+    const sent = mockPanel()
+    const user = userEvent.setup()
+    const onClose = await open()
+    await pickCategory(user, 'Alimentación', 'Mercado')
+    await user.type(screen.getByLabelText('MONTO'), '500')
+    await user.click(screen.getByRole('button', { name: 'Guardar movimiento' }))
+    await user.click(await screen.findByRole('button', { name: 'Revisar' }))
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+    expect(sent()).toBeUndefined()
+    await user.clear(screen.getByLabelText('MONTO'))
+    await user.type(screen.getByLabelText('MONTO'), '100')
+    await user.click(screen.getByRole('button', { name: 'Guardar movimiento' }))
+    await waitFor(() => expect(onClose).toHaveBeenCalled())
+    expect(sent()).toMatchObject({ amount: 100 })
   })
 
   it('labels and sends a future, repeating movement', async () => {
