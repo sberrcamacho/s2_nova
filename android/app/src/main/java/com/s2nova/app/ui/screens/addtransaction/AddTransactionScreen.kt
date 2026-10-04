@@ -610,7 +610,7 @@ fun AddTransactionScreen(
                 enabled = s.valid && !s.saving,
                 onClick = { save() },
                 verticalPadding = 16.dp,
-                fontSize = 14.sp,
+                fontSize = 15.sp,
                 glow = true,
             )
         }
@@ -906,9 +906,9 @@ private fun NoWalletState(onAddWallet: () -> Unit, onBack: () -> Unit) {
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(32.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
         GlyphMark(V2Icons.wallet, NovaColors.current.link, 56.dp)
         Text(tr(StringKey.NM_NO_WALLET_TITLE), fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 16.dp))
-        Text(tr(StringKey.NM_NO_WALLET_BODY), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
+        Text(tr(StringKey.NM_NO_WALLET_BODY), fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
         V2Button(tr(StringKey.NM_NO_WALLET_CTA), onClick = onAddWallet, modifier = Modifier.padding(top = 20.dp))
-        Text(tr(StringKey.COMMON_BACK), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 14.dp).noRippleClick(onBack))
+        Text(tr(StringKey.COMMON_BACK), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 14.dp).noRippleClick(onBack))
     }
 }
 

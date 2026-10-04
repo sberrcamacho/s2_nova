@@ -157,7 +157,7 @@ fun FirstRunScreen(onBackToSignup: () -> Unit, onDone: () -> Unit) {
             }
         }
         Box(Modifier.padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 26.dp)) {
-            V2Button(tr(if (step == 1) StringKey.FIRST_CREATE else StringKey.CONFIRM_CONTINUE), enabled = valid && !busy, verticalPadding = 16.dp, fontSize = 14.sp, onClick = {
+            V2Button(tr(if (step == 1) StringKey.FIRST_CREATE else StringKey.CONFIRM_CONTINUE), enabled = valid && !busy, verticalPadding = 16.dp, fontSize = 15.sp, onClick = {
                 if (step == 0) { step = 1; return@V2Button }
                 busy = true
                 scope.launch {

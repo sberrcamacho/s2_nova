@@ -233,7 +233,7 @@ private fun BottomTabItem(
                 label,
                 color = labelColor,
                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                fontSize = 12.sp,
+                fontSize = 13.sp,
                 maxLines = 1,
                 softWrap = false,
                 overflow = TextOverflow.Ellipsis,

@@ -71,7 +71,7 @@ fun GoogleSignInButton(
                 Text(
                     text = text,
                     color = GoogleButtonTextColor,
-                    fontSize = 14.sp,
+                    fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(start = 12.dp),
                 )

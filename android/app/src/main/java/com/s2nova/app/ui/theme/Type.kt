@@ -50,6 +50,8 @@ private fun role(size: Int, weight: FontWeight, lineHeight: Float, tracking: Flo
     ),
 )
 
+// Outfit's x-height is 0.46 em (Roboto ~0.53), so it reads about one size
+// smaller than its nominal size: the floor is 13 sp and secondary text 15 sp.
 object NovaType {
     val display = role(36, FontWeight.Normal, 1.1f, -0.03f, tnum = true)
     val displaySm = role(28, FontWeight.Medium, 1.15f, -0.02f, tnum = true)
@@ -58,10 +60,10 @@ object NovaType {
     val titleSm = role(16, FontWeight.SemiBold, 1.35f)
     val amount = role(16, FontWeight.SemiBold, 1.3f, tnum = true)
     val body = role(16, FontWeight.Normal, 1.5f)
-    val bodySm = role(14, FontWeight.Medium, 1.45f)
-    val label = role(14, FontWeight.SemiBold, 1.3f)
-    val overline = role(12, FontWeight.SemiBold, 1.3f, 0.04f)
-    val caption = role(12, FontWeight.Medium, 1.45f)
+    val bodySm = role(15, FontWeight.Medium, 1.45f)
+    val label = role(15, FontWeight.SemiBold, 1.3f)
+    val overline = role(13, FontWeight.SemiBold, 1.3f, 0.04f)
+    val caption = role(13, FontWeight.Medium, 1.45f)
 }
 
 // The style a bare Text() inherits. Screens still size much of their text
@@ -83,6 +85,6 @@ val NovaTypography = Typography(
     bodyMedium = NovaType.bodySm,
     bodySmall = NovaType.caption,
     labelLarge = NovaType.label,
-    labelMedium = role(12, FontWeight.SemiBold, 1.3f),
+    labelMedium = role(13, FontWeight.SemiBold, 1.3f),
     labelSmall = NovaType.overline,
 )

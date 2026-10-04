@@ -68,7 +68,7 @@ fun NovaTextField(
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
             text = label,
-            fontSize = 12.sp,
+            fontSize = 13.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.06.em,
             color = colors.loginLabel,
@@ -99,7 +99,7 @@ fun NovaTextField(
                     textStyle = TextStyle(
                         fontFamily = com.s2nova.app.ui.theme.NovaFontFamily,
                         color = textColor,
-                        fontSize = 14.sp,
+                        fontSize = 15.sp,
                         letterSpacing = if (isPassword && !passwordVisible) 0.24.em else 0.em,
                     ),
                     cursorBrush = SolidColor(colors.loginBorderFocus),
@@ -130,7 +130,7 @@ fun NovaTextField(
         if (isError && errorMessage != null) {
             Text(
                 text = errorMessage,
-                fontSize = 12.sp,
+                fontSize = 13.sp,
                 color = colors.negative,
                 modifier = Modifier.padding(top = 6.dp),
             )

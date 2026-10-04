@@ -54,7 +54,7 @@ fun PasswordStrengthMeter(password: String, modifier: Modifier = Modifier) {
             if (score >= 3) {
                 Text(
                     text = tr(StringKey.PW_STRONG),
-                    fontSize = 12.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = colors.loginPositive,
                 )
@@ -62,7 +62,7 @@ fun PasswordStrengthMeter(password: String, modifier: Modifier = Modifier) {
         }
         Text(
             text = tr(StringKey.PW_RULES),
-            fontSize = 12.sp,
+            fontSize = 13.sp,
             color = colors.loginTextMuted,
             lineHeight = 16.8.sp,
             modifier = Modifier.padding(top = 3.dp),

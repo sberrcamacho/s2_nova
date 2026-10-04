@@ -206,7 +206,7 @@ fun SuggestedTag(text: String, modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         V2Icon(V2Icons.sparkle, accent, 12.dp)
-        Text(text, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, modifier = Modifier.padding(start = 4.dp))
+        Text(text, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, modifier = Modifier.padding(start = 4.dp))
     }
 }
 
@@ -214,7 +214,7 @@ fun SuggestedTag(text: String, modifier: Modifier = Modifier) {
 fun FieldLabel(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text,
-        fontSize = 12.sp,
+        fontSize = 13.sp,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier.padding(bottom = 8.dp),
@@ -354,13 +354,13 @@ fun OptionTile(paths: List<String>, label: String, on: Boolean, onClick: () -> U
         }
         Text(
             text = label,
-            fontSize = 12.sp,
+            fontSize = 13.sp,
             fontWeight = if (on) FontWeight.ExtraBold else FontWeight.SemiBold,
             color = if (on) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            lineHeight = 13.sp,
+            lineHeight = 15.sp,
         )
     }
 }
@@ -391,7 +391,7 @@ fun RowScope.BareField(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
-    fontSize: TextUnit = 13.5.sp,
+    fontSize: TextUnit = 15.sp,
     fontWeight: FontWeight = FontWeight.Bold,
     numeric: Boolean = false,
     visualTransformation: VisualTransformation = VisualTransformation.None,
@@ -450,7 +450,7 @@ fun SheetHeader(title: String, subtitle: String? = null, bottom: Dp = 14.dp, sub
         if (subtitle != null) {
             Text(
                 subtitle,
-                fontSize = 12.sp,
+                fontSize = 13.sp,
                 lineHeight = 16.sp,
                 color = NovaColors.current.textDim,
                 modifier = Modifier.padding(top = subtitleTop),
@@ -465,7 +465,7 @@ fun SheetHeader(title: String, subtitle: String? = null, bottom: Dp = 14.dp, sub
 fun TextLink(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Text(
         text,
-        fontSize = 12.sp,
+        fontSize = 13.sp,
         fontWeight = FontWeight.Bold,
         color = NovaColors.current.accentText,
         modifier = modifier.noRippleClick(onClick),
@@ -477,7 +477,7 @@ fun TextLink(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
 fun SheetTextAction(text: String, color: Color, onClick: () -> Unit, weight: FontWeight = FontWeight.Bold, modifier: Modifier = Modifier) {
     Text(
         text,
-        fontSize = 14.sp,
+        fontSize = 15.sp,
         fontWeight = weight,
         color = color,
         textAlign = TextAlign.Center,

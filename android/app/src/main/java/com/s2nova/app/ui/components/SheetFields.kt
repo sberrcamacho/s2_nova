@@ -38,7 +38,7 @@ import com.s2nova.app.ui.theme.NovaColors
 fun SheetLabel(text: String) {
     Text(
         text,
-        fontSize = 12.sp,
+        fontSize = 13.sp,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(bottom = 8.dp),
@@ -113,7 +113,7 @@ fun SheetDateBox(value: String?, placeholder: String, allowClear: Boolean, onVal
             )
             Text(
                 value?.let { com.s2nova.app.ui.longDateLabel(it, language) } ?: placeholder,
-                fontSize = 14.sp,
+                fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = if (value != null) MaterialTheme.colorScheme.onBackground else NovaColors.current.textDim,
                 modifier = Modifier.padding(start = 10.dp),

@@ -337,7 +337,7 @@ fun TransactionDetailScreen(
                                 verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
                             ) {
                                 V2Icon(if (att.isPdf) V2Icons.file else V2Icons.image, if (att.isPdf) colors.negative else Color(0xFFA8A8B8), 22.dp)
-                                Text(tr(StringKey.MV_RECEIPT_PREVIEW), fontSize = 12.sp, color = Color(0xFFA8A8B8))
+                                Text(tr(StringKey.MV_RECEIPT_PREVIEW), fontSize = 13.sp, color = Color(0xFFA8A8B8))
                             }
                         }
                     }

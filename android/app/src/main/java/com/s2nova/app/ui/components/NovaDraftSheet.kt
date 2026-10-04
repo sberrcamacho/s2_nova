@@ -134,7 +134,7 @@ fun DraftSheetDeleteRow(label: String, onClick: () -> Unit, modifier: Modifier =
     val colors = NovaColors.current
     Text(
         text = label,
-        fontSize = 14.sp,
+        fontSize = 15.sp,
         fontWeight = FontWeight.ExtraBold,
         color = colors.negative,
         textAlign = TextAlign.Center,
@@ -208,7 +208,7 @@ fun ColorPill(
     ) {
         Text(
             text = label,
-            fontSize = 12.sp,
+            fontSize = 13.sp,
             fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.SemiBold,
             color = textColor,
         )

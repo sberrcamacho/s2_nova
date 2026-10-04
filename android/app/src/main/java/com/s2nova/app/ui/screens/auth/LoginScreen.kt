@@ -132,7 +132,7 @@ fun LoginScreen(
                 )
                 Text(
                     text = tr(StringKey.AUTH_LOGIN_SUB),
-                    fontSize = 14.sp,
+                    fontSize = 15.sp,
                     color = colors.loginTextMuted,
                     modifier = Modifier.padding(top = 7.dp),
                 )
@@ -220,7 +220,7 @@ fun LoginScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         com.s2nova.app.ui.components.V2Icon(com.s2nova.app.ui.components.V2Icons.fingerprint, MaterialTheme.colorScheme.onBackground, 20.dp)
-                        Text(tr(StringKey.AUTH_BIOMETRIC_ENTER), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, softWrap = false)
+                        Text(tr(StringKey.AUTH_BIOMETRIC_ENTER), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, softWrap = false)
                     }
                 }
 
@@ -232,7 +232,7 @@ fun LoginScreen(
                         HorizontalDivider(modifier = Modifier.weight(1f))
                         Text(
                             text = tr(StringKey.AUTH_OR),
-                            fontSize = 12.sp,
+                            fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.08.em,
                             color = colors.loginTextMuted,
@@ -280,11 +280,11 @@ fun LoginScreen(
                     verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
                 ) {
                     com.s2nova.app.ui.components.V2Icon(com.s2nova.app.ui.components.V2Icons.enter, MaterialTheme.colorScheme.onSurfaceVariant, 18.dp)
-                    Text(tr(StringKey.AUTH_GUEST), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                    Text(tr(StringKey.AUTH_GUEST), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                 }
                 Text(
                     tr(StringKey.AUTH_GUEST_HINT),
-                    fontSize = 12.sp,
+                    fontSize = 13.sp,
                     color = colors.textDim,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     // margin-top: -6px under the button.

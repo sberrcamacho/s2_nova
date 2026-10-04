@@ -82,8 +82,8 @@ private fun ActionRow(
             Icon(icon, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(20.dp))
         }
         Column(modifier = Modifier.padding(start = 14.dp)) {
-            Text(title, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-            Text(subtitle, fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
+            Text(title, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+            Text(subtitle, fontSize = 13.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
         }
     }
 }
