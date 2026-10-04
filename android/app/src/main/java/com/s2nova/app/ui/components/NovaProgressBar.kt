@@ -25,6 +25,9 @@ fun NovaProgressBar(
     height: androidx.compose.ui.unit.Dp = 6.dp,
     cornerRadius: androidx.compose.ui.unit.Dp = 3.dp,
 ) {
+    // Fills from the left on first show (web .nova-fill), then animates
+    // later changes in place.
+    val intro = com.s2nova.app.ui.theme.rememberIntroProgress()
     val fraction by animateFloatAsState(
         targetValue = (percentage / 100f).coerceIn(0f, 1f),
         animationSpec = tween(com.s2nova.app.ui.theme.NovaMotion.VALUE, easing = com.s2nova.app.ui.theme.NovaMotion.EmphasizedDecelerate),
@@ -40,7 +43,7 @@ fun NovaProgressBar(
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth(fraction)
+                .fillMaxWidth(fraction * intro)
                 .fillMaxHeight()
                 .clip(RoundedCornerShape(cornerRadius))
                 .background(color),

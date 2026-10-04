@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.s2nova.app.ui.theme.NovaColors
+import com.s2nova.app.ui.theme.ctaBrush
 
 @Composable
 fun NovaPrimaryButton(
@@ -33,7 +34,6 @@ fun NovaPrimaryButton(
     enabled: Boolean = true,
     loading: Boolean = false,
 ) {
-    val colors = NovaColors.current
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     val clickable = enabled && !loading
@@ -43,10 +43,11 @@ fun NovaPrimaryButton(
             .fillMaxWidth()
             .height(56.dp)
             .then(if (clickable) Modifier.pressScale(interactionSource, pressedScale = 0.98f) else Modifier)
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(50))
             // Disabled dims the whole button (38 %), not only its label.
             .alpha(if (!clickable) 0.38f else if (pressed) 0.9f else 1f)
-            .background(colors.loginPrimary)
+            // The brand gradient of web's .btn-cta.
+            .background(ctaBrush())
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,

@@ -107,6 +107,7 @@ object V2Icons {
     val search = listOf("M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z", "M21 21l-4.3-4.3")
     val sliders = listOf("M21 4h-7", "M10 4H3", "M21 12h-9", "M8 12H3", "M21 20h-5", "M12 20H3", "M14 2v4", "M8 10v4", "M16 18v4")
     val alertCircle = listOf("M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z", "M12 8v5", "M12 16h.01")
+    val info = listOf("M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z", "M12 11v5", "M12 8h.01")
 }
 
 @Composable
@@ -163,16 +164,17 @@ fun V2Pill(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modi
             .minimumInteractiveComponentSize()
             .heightIn(min = 40.dp)
             .clip(shape)
-            .background(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface)
+            // Selected fills with the brand gradient (web's selected chip).
+            .then(if (selected) Modifier.background(com.s2nova.app.ui.theme.ctaBrush()) else Modifier.background(MaterialTheme.colorScheme.surface))
             .border(1.dp, if (selected) Color.Transparent else colors.borderInput, shape)
             .selectable(selected = selected, role = role, onClick = onClick)
             .padding(start = if (selected) 12.dp else 16.dp, end = 16.dp),
     ) {
-        if (selected) V2Icon(V2Icons.check, MaterialTheme.colorScheme.onPrimary, 18.dp, strokeWidth = 2.4f)
+        if (selected) V2Icon(V2Icons.check, Color.White, 18.dp, strokeWidth = 2.4f)
         Text(
             text = label,
             style = com.s2nova.app.ui.theme.NovaType.label,
-            color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+            color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             softWrap = false,
             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
@@ -306,14 +308,15 @@ fun V2Button(
             // Primary button (§6.3): at least 52 dp; disabled is the same
             // button at 38 %.
             .alpha(if (enabled) 1f else 0.38f)
-            .clip(RoundedCornerShape(12.dp))
-            .background(primary)
+            // Pill in the brand gradient, as web's primary button.
+            .clip(RoundedCornerShape(50))
+            .background(com.s2nova.app.ui.theme.ctaBrush())
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .heightIn(min = 52.dp)
             .padding(horizontal = 16.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(label, style = com.s2nova.app.ui.theme.NovaType.label, color = MaterialTheme.colorScheme.onPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(label, style = com.s2nova.app.ui.theme.NovaType.label, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 

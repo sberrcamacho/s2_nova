@@ -1,5 +1,12 @@
 package com.s2nova.app.ui.screens.budgets
 
+import com.s2nova.app.ui.theme.appCanvas
+import com.s2nova.app.ui.theme.cardAurora
+import com.s2nova.app.ui.theme.ctaBrush
+import com.s2nova.app.ui.theme.novaRise
+import com.s2nova.app.ui.theme.rememberIntroProgress
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.lazy.itemsIndexed
 import com.s2nova.app.ui.theme.novaItem
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -115,7 +122,8 @@ fun PlanesScreen(initialTab: Int = 0, initialLoanSide: LoanKind = LoanKind.LENT)
     val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = Color.Transparent,
+        modifier = Modifier.appCanvas(MaterialTheme.colorScheme.background),
         // The app shell already pads for the status bar.
         contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0),
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -149,7 +157,7 @@ fun PlanesScreen(initialTab: Int = 0, initialLoanSide: LoanKind = LoanKind.LENT)
 @Composable
 private fun PlanesTabs(labels: List<String>, selected: Int, onSelect: (Int) -> Unit) {
     val line = MaterialTheme.colorScheme.outline
-    val accent = NovaColors.current.primaryBorder
+    val accent = ctaBrush()
     val scroll = rememberScrollState()
     val fadeColor = MaterialTheme.colorScheme.background
     Row(
@@ -172,15 +180,23 @@ private fun PlanesTabs(labels: List<String>, selected: Int, onSelect: (Int) -> U
     ) {
         labels.forEachIndexed { index, label ->
             val on = index == selected
+            // The brand underline grows out from the center when a tab is
+            // chosen (web's [role=tab] underline).
+            val grow by androidx.compose.animation.core.animateFloatAsState(
+                if (on) 1f else 0f,
+                androidx.compose.animation.core.tween(if (on) 260 else 160, easing = com.s2nova.app.ui.theme.NovaMotion.EmphasizedDecelerate),
+                label = "tabLine",
+            )
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .heightIn(min = 48.dp)
                     .selectable(selected = on, role = Role.Tab, onClick = { onSelect(index) })
                     .drawBehind {
-                        if (on) {
-                            val h = 2.dp.toPx()
-                            drawRect(accent, topLeft = Offset(0f, size.height - h), size = Size(size.width, h))
+                        if (grow > 0f) {
+                            val h = 3.dp.toPx()
+                            val w = size.width * grow
+                            drawRoundRect(accent, topLeft = Offset((size.width - w) / 2f, size.height - h), size = Size(w, h), cornerRadius = androidx.compose.ui.geometry.CornerRadius(h / 2f))
                         }
                     }
                     .padding(horizontal = 14.dp),
@@ -227,8 +243,11 @@ private fun BudgetsTab() {
             val shape = RoundedCornerShape(20.dp)
             Column(
                 modifier = Modifier
+                    .novaRise(0)
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surface, shape)
+                    .clip(shape)
+                    .background(MaterialTheme.colorScheme.surface)
+                    .cardAurora()
                     .border(1.dp, MaterialTheme.colorScheme.outline, shape)
                     .padding(16.dp),
             ) {
@@ -266,8 +285,8 @@ private fun BudgetsTab() {
             DashedNewRow(label = t(StringKey.BUDGETS_NEW), onClick = { draft = BudgetEditDraft() })
         }
 
-        items(progressList, key = { it.budget.id }) { progress ->
-            androidx.compose.foundation.layout.Box(novaItem()) { BudgetCard(progress) { draft = BudgetEditDraft.from(progress) } }
+        itemsIndexed(progressList, key = { _, it -> it.budget.id }) { i, progress ->
+            androidx.compose.foundation.layout.Box(novaItem().novaRise(i + 1)) { BudgetCard(progress) { draft = BudgetEditDraft.from(progress) } }
         }
 
         if (progressList.isEmpty() && !dataLoaded) {
@@ -358,6 +377,7 @@ private fun BudgetCard(progress: BudgetProgress, onEdit: () -> Unit) {
             .fillMaxWidth()
             .clip(shape)
             .background(MaterialTheme.colorScheme.surface)
+            .cardAurora()
             .border(1.dp, if (progress.percentage >= 90) colors.negativeBorder else MaterialTheme.colorScheme.outline, shape)
             .clickable(onClickLabel = editLabel, role = Role.Button, onClick = onEdit)
             .clearAndSetSemantics {
@@ -412,10 +432,13 @@ private fun BudgetPercent(percentage: Int) {
 @Composable
 private fun BudgetBar(percentage: Int, modifier: Modifier = Modifier) {
     val colors = NovaColors.current
+    // Fills from the left on first show (web .nova-fill).
+    val fill = rememberIntroProgress()
     Box(modifier = modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(999.dp)).background(colors.surfaceSunken)) {
         Box(
             modifier = Modifier
                 .fillMaxWidth(percentage.coerceIn(0, 100) / 100f)
+                .graphicsLayer { scaleX = fill; transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0f, 0.5f) }
                 .height(8.dp)
                 .clip(RoundedCornerShape(999.dp))
                 .background(toneColor(budgetTone(percentage), colors)),

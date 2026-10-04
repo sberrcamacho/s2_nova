@@ -76,8 +76,6 @@ fun NovaDraftSheet(
     val colors = NovaColors.current
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        // Taps in a sheet's own window still count for "Cierre automático".
-        modifier = Modifier.countsAsActivity(),
         sheetState = sheetState,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         containerColor = colors.sheetSurface,
@@ -98,7 +96,12 @@ fun NovaDraftSheet(
     ) {
         SheetSystemBars()
         Column(
+            // Taps in a sheet's own window still count for "Cierre automático".
+            // On the content, not the sheet: ModalBottomSheet applies its
+            // modifier before the sheet's offset, so a pointer modifier there
+            // hit-tests at the top of the screen and swallowed scrim taps.
             modifier = modifier
+                .countsAsActivity()
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp)
                 .padding(bottom = bottomPadding),
@@ -158,12 +161,12 @@ fun DraftSheetPrimaryButton(
             .fillMaxWidth()
             .height(52.dp)
             .alpha(if (enabled) 1f else 0.38f)
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.primary)
+            .clip(RoundedCornerShape(50))
+            .background(com.s2nova.app.ui.theme.ctaBrush())
             .clickable(enabled = enabled, role = androidx.compose.ui.semantics.Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = label, color = MaterialTheme.colorScheme.onPrimary, style = com.s2nova.app.ui.theme.NovaType.label, maxLines = 1, softWrap = false)
+        Text(text = label, color = Color.White, style = com.s2nova.app.ui.theme.NovaType.label, maxLines = 1, softWrap = false)
     }
 }
 

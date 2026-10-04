@@ -50,10 +50,10 @@ fun GoogleSignInButton(
         modifier = modifier
             .fillMaxWidth()
             .height(56.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(50))
             .background(Color.White)
             .then(
-                if (!isDark) Modifier.border(1.dp, GoogleButtonBorderLight, RoundedCornerShape(16.dp)) else Modifier,
+                if (!isDark) Modifier.border(1.dp, GoogleButtonBorderLight, RoundedCornerShape(50)) else Modifier,
             )
             .alpha(if (!clickable) 0.6f else 1f)
             .clickable(enabled = clickable, onClick = onClick),

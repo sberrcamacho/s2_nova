@@ -190,7 +190,9 @@ fun GridLabel(label: String, on: Boolean) {
         fontWeight = if (on) FontWeight.ExtraBold else FontWeight.SemiBold,
         color = if (on) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,
-        style = TextStyle(hyphens = androidx.compose.ui.text.style.Hyphens.Auto, lineBreak = androidx.compose.ui.text.style.LineBreak.Paragraph),
+        // Words never split: categoryGridColumns() picks a column count where
+        // the longest word fits whole.
+        style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(hyphens = androidx.compose.ui.text.style.Hyphens.None, lineBreak = androidx.compose.ui.text.style.LineBreak.Paragraph),
     )
 }
 
@@ -206,13 +208,24 @@ fun GridChip(paths: List<String>, color: Color, on: Boolean, box: Dp = 52.dp, in
     }
 }
 
-// Category grids drop to 3 columns when the text is large for the screen
-// (e.g. 360 dp at 130 %): at 4, "Alimentación" no longer fit and broke
-// mid-word.
+// Category grids use 4 columns unless the longest word of a label would
+// not fit whole in a cell (at the bold "on" weight, with the user's font
+// scale), then 3: a word like "Entretenimiento" never breaks mid-word.
+// The cell is the sheet width (screen minus its 20 dp sides) over 4 with
+// the 8 dp gaps.
 @Composable
-fun categoryGridColumns(): Int {
+fun categoryGridColumns(labels: List<String>): Int {
     val config = androidx.compose.ui.platform.LocalConfiguration.current
-    return if (config.screenWidthDp / config.fontScale < 330f) 3 else 4
+    val measurer = androidx.compose.ui.text.rememberTextMeasurer()
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
+    val longest = androidx.compose.runtime.remember(labels, config.fontScale, config.screenWidthDp) {
+        labels.flatMap { it.split(' ', '/') }.maxOfOrNull { word ->
+            with(density) { measurer.measure(word, style, softWrap = false, maxLines = 1).size.width.toDp().value }
+        } ?: 0f
+    }
+    val cell = (config.screenWidthDp - 40 - 3 * 8) / 4f
+    return if (longest > cell) 3 else 4
 }
 
 // n-column grid with the mockup's gaps.
@@ -237,7 +250,7 @@ private fun CategorySheet(s: NmState, onOpenCategories: () -> Unit) {
             Text(tr(StringKey.NM_CAT_STEP), fontSize = 12.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 4.dp))
         }
         Column(Modifier.heightIn(max = 520.dp).verticalScroll(rememberScrollState())) {
-            GridOf(repo.parents(s.isIncome, includeHidden = false), categoryGridColumns(), 18.dp, 8.dp) { p ->
+            GridOf(repo.parents(s.isIncome, includeHidden = false), categoryGridColumns(repo.parents(s.isIncome, includeHidden = false).map { repo.name(it.id) }), 18.dp, 8.dp) { p ->
                 val on = s.category == p.id
                 Column(
                     Modifier.noRippleClick {
@@ -271,7 +284,7 @@ private fun SubSheet(s: NmState) {
             Text(repo.name(parent), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = NovaColors.current.textDim, modifier = Modifier.padding(bottom = 1.dp))
         }
         val items = listOf<Pair<String?, String>>(null to tr(StringKey.NM_NONE_F)) + repo.children(parent).map { it.id to repo.name(it.id) }
-        GridOf(items, categoryGridColumns(), 18.dp, 8.dp) { (id, name) ->
+        GridOf(items, categoryGridColumns(items.map { it.second }), 18.dp, 8.dp) { (id, name) ->
             val on = s.sub == id
             Column(
                 Modifier.noRippleClick {

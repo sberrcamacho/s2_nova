@@ -89,6 +89,15 @@ import com.s2nova.app.ui.theme.NovaColors
 import com.s2nova.app.ui.theme.NovaExtraColors
 import com.s2nova.app.ui.theme.NovaType
 import com.s2nova.app.ui.theme.heroSurface
+import com.s2nova.app.ui.theme.appCanvas
+import com.s2nova.app.ui.theme.cardAurora
+import com.s2nova.app.ui.theme.ctaBrush
+import com.s2nova.app.ui.theme.novaRise
+import com.s2nova.app.ui.theme.rememberIntroProgress
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.text.font.FontWeight
 import com.s2nova.app.ui.tr
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -145,7 +154,8 @@ fun HomeScreen(
     suspend fun refreshHome() {
         val results = listOf(
             runCatching { AppContainer.walletRepository.refresh() },
-            runCatching { AppContainer.summaryRepository.refresh() },
+            // Six months: the hero's net bars, as on Web.
+            runCatching { AppContainer.summaryRepository.refresh(count = 6) },
             runCatching { AppContainer.alertRepository.refresh() },
             runCatching { AppContainer.budgetRepository.refresh() },
             runCatching { AppContainer.recurringSeriesRepository.refresh() },
@@ -155,6 +165,13 @@ fun HomeScreen(
     }
 
     LaunchedEffect(Unit) { refreshHome() }
+
+    // Tiles rise in once when Inicio opens; scrolling back never replays it.
+    var introPlayed by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(900)
+        introPlayed = true
+    }
 
     // Σ wallet balance converted to the principal currency. The backend
     // already leaves PLANNED movements out of each wallet's balance.
@@ -188,7 +205,8 @@ fun HomeScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+            // The theme background with the brand auroras (web .nova-canvas).
+            .appCanvas(MaterialTheme.colorScheme.background),
     ) {
         // Header stays fixed above the scrollable content. The two round
         // buttons are 40 dp visuals inside 48 dp touch targets.
@@ -299,9 +317,12 @@ fun HomeScreen(
 
                 // 2×1 hero.
                 item {
+                    Box(Modifier.novaRise(0, enabled = !introPlayed)) {
                     BalanceHero(
                         balance = balance,
                         countUp = dataLoaded,
+                        months = months,
+                        language = language,
                         format = { format(it) },
                         walletCount = wallets.size,
                         hidden = hidden,
@@ -310,13 +331,14 @@ fun HomeScreen(
                         onToggleHidden = ::toggleHidden,
                         onOpenWallets = onOpenWallets,
                     )
+                    }
                 }
 
                 // Ingresos / Gastos, 1×1 + 1×1.
                 item {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min).novaRise(1, enabled = !introPlayed),
                     ) {
                         StatTile(
                             label = t(StringKey.HOME_INCOME),
@@ -348,6 +370,7 @@ fun HomeScreen(
                 // 2×1 alert with its action.
                 if (homeAlert != null) {
                     item(key = homeAlert.id) {
+                        Box(Modifier.novaRise(2, enabled = !introPlayed)) {
                         HomeAlertCard(
                             alert = homeAlert,
                             format = format,
@@ -357,6 +380,7 @@ fun HomeScreen(
                             },
                             onDismiss = { AppContainer.alertRepository.dismissFromHome(homeAlert.id) },
                         )
+                        }
                     }
                 }
 
@@ -364,7 +388,7 @@ fun HomeScreen(
                 item {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min).novaRise(3, enabled = !introPlayed),
                     ) {
                         BudgetsTile(
                             budgets = homeBudgets(budgetProgress),
@@ -387,14 +411,14 @@ fun HomeScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(TileShape)
-                            .background(MaterialTheme.colorScheme.surface)
-                            .border(1.dp, MaterialTheme.colorScheme.outline, TileShape),
+                            .novaRise(4, enabled = !introPlayed)
+                            .tile(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.outline),
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = 4.dp),
                         ) {
+                            BrandDot()
                             Text(
                                 t(StringKey.HOME_RECENT_TXNS),
                                 style = NovaType.title,
@@ -404,7 +428,7 @@ fun HomeScreen(
                                 // or with a larger system font instead of cutting the title.
                                 autoSize = TextAutoSize.StepBased(minFontSize = 14.sp, maxFontSize = 18.sp),
                                 overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.weight(1f),
+                                modifier = Modifier.weight(1f).padding(start = 10.dp),
                             )
                             LinkButton(t(StringKey.HOME_SEE_ALL), onOpenTransactions)
                         }
@@ -542,20 +566,28 @@ private fun TonalButton(text: String, onClick: () -> Unit) {
 }
 
 // A bento tile: `surface`, 1 dp `border`, 20 dp radius, 16 dp padding.
+@Composable
 private fun Modifier.tile(surface: Color, border: Color): Modifier =
-    this.clip(TileShape).background(surface).border(1.dp, border, TileShape)
+    this.clip(TileShape).background(surface).cardAurora().border(1.dp, border, TileShape)
+
+// The brand-gradient dot that leads every card title (web CardHead).
+@Composable
+private fun BrandDot() {
+    Box(Modifier.size(10.dp).clip(CircleShape).background(ctaBrush()))
+}
 
 @Composable
 private fun TileHeader(text: String, showChevron: Boolean = false) {
     val colors = NovaColors.current
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+        BrandDot()
         Text(
-            text.uppercase(),
-            style = NovaType.overline,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            text,
+            style = NovaType.titleSm.copy(fontWeight = FontWeight.Medium),
+            color = MaterialTheme.colorScheme.onBackground,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).padding(start = 8.dp),
         )
         if (showChevron) V2Icon(V2Icons.chevronRight, colors.textDim, 16.dp, modifier = Modifier.padding(start = 4.dp))
     }
@@ -565,6 +597,8 @@ private fun TileHeader(text: String, showChevron: Boolean = false) {
 private fun BalanceHero(
     balance: Double,
     countUp: Boolean,
+    months: List<MonthlySummary>,
+    language: AppLanguage,
     format: (Double) -> String,
     walletCount: Int,
     hidden: Boolean,
@@ -580,22 +614,26 @@ private fun BalanceHero(
     // saved, an occurrence confirmed) reads as cause and effect when the
     // user comes back to Inicio. The first value shows as is: opening the
     // app never replays it. The last shown total survives the back stack.
-    var lastShown by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableDoubleStateOf(balance) }
+    // The first open counts up from zero once (web's intro count, 800 ms);
+    // under "Quitar animaciones" the total just appears.
+    val reducedMotion = com.s2nova.app.ui.theme.rememberReducedMotion()
+    var lastShown by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableDoubleStateOf(if (reducedMotion) balance else 0.0) }
     val counter = remember { androidx.compose.animation.core.Animatable(lastShown.toFloat()) }
     LaunchedEffect(balance, countUp) {
         lastShown = balance
         // While the session's data is still loading the total just appears.
-        if (!countUp) return@LaunchedEffect counter.snapTo(balance.toFloat())
-        counter.animateTo(balance.toFloat(), androidx.compose.animation.core.tween(NovaMotion.VALUE, easing = NovaMotion.EmphasizedDecelerate))
+        if (!countUp) return@LaunchedEffect
+        val intro = counter.value == 0f
+        counter.animateTo(balance.toFloat(), androidx.compose.animation.core.tween(if (intro) 800 else NovaMotion.VALUE, easing = NovaMotion.EmphasizedDecelerate))
     }
     val settled = !counter.isRunning && counter.targetValue == balance.toFloat()
     val shownBalance = format(if (settled) balance else counter.value.toDouble())
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(8.dp, shape, ambientColor = Color.Black.copy(alpha = 0.08f), spotColor = Color.Black.copy(alpha = 0.16f))
+            .shadow(16.dp, shape, ambientColor = colors.cta.last().copy(alpha = 0.25f), spotColor = colors.cta.last().copy(alpha = 0.45f))
             .heroSurface(shape)
-            .padding(start = 20.dp, end = 12.dp, top = 8.dp, bottom = 12.dp),
+            .padding(start = 20.dp, end = 12.dp, top = 8.dp, bottom = 16.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Text(
@@ -632,7 +670,7 @@ private fun BalanceHero(
             softWrap = false,
             // The balance never wraps: it steps down to fit narrow screens
             // and large font scales.
-            autoSize = TextAutoSize.StepBased(minFontSize = 24.sp, maxFontSize = 36.sp),
+            autoSize = TextAutoSize.StepBased(minFontSize = 24.sp, maxFontSize = 44.sp),
             modifier = Modifier
                 .padding(top = 4.dp, end = 8.dp)
                 // Unbounded, so the blur fades past the text box instead of
@@ -680,6 +718,50 @@ private fun BalanceHero(
                     .padding(top = 8.dp)
                     .clickable(role = Role.Button, onClick = onOpenWallets),
             )
+        }
+        if (months.size >= 2) HeroMonthBars(months.takeLast(6), language)
+    }
+}
+
+// Six months of net savings (income − expenses), oldest first; the current
+// month is the brand-gradient bar (web MonthBars). Bars grow from the base
+// one after another the first time they show.
+@Composable
+private fun HeroMonthBars(months: List<MonthlySummary>, language: AppLanguage) {
+    val colors = NovaColors.current
+    val max = (months.maxOfOrNull { abs(it.savings) } ?: 0.0).coerceAtLeast(1.0)
+    val grow = rememberIntroProgress(delayMillis = 100, durationMillis = 600)
+    val barBrush = Brush.verticalGradient(if (colors.ring.last() == com.s2nova.app.ui.theme.BrandColors.cyan) colors.ring.reversed() else listOf(Color.White, Color(0xFFF1DCFF)))
+    Column(Modifier.fillMaxWidth().padding(top = 20.dp, end = 8.dp).clearAndSetSemantics { }) {
+        Row(Modifier.fillMaxWidth().height(72.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.Bottom) {
+            months.forEachIndexed { i, m ->
+                val last = i == months.lastIndex
+                val h = (abs(m.savings) / max * 0.9).toFloat().coerceAtLeast(0.05f)
+                // Each bar starts a little after the one before it.
+                val local = ((grow * (months.size + 2) - i) / 3f).coerceIn(0f, 1f)
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .fillMaxHeight(h)
+                        .graphicsLayer { scaleY = local; transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 1f) }
+                        .clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp, bottomStart = 2.dp, bottomEnd = 2.dp))
+                        .then(if (last) Modifier.background(barBrush) else Modifier.background(Color.White.copy(alpha = 0.18f))),
+                )
+            }
+        }
+        Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            months.forEachIndexed { i, m ->
+                val ym = runCatching { YearMonth.parse(m.month) }.getOrNull()
+                Text(
+                    (ym?.let { monthAbbr(it.monthValue, language) } ?: m.label).uppercase(),
+                    style = NovaType.caption.copy(letterSpacing = 0.08.em),
+                    color = if (i == months.lastIndex) Color.White else colors.heroLabel,
+                    fontWeight = if (i == months.lastIndex) FontWeight.SemiBold else FontWeight.Medium,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    maxLines = 1,
+                    modifier = Modifier.weight(1f),
+                )
+            }
         }
     }
 }
@@ -737,17 +819,36 @@ private fun StatTile(
             .clearAndSetSemantics { contentDescription = description }
             .padding(16.dp),
     ) {
-        Text(label.uppercase(), style = NovaType.overline, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        if (figure != null) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            // Icon chip in the semantic tone (web StatTile): ↙ income, ↗ expense.
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(if (income) colors.positiveSoft else colors.negativeSoft),
+            ) {
+                androidx.compose.material3.Icon(
+                    com.s2nova.app.ui.components.strokeIcon(if (income) "in" else "out", if (income) "M17 7 7 17" else "M7 17 17 7", if (income) "M16 17H7V8" else "M8 7h9v9", strokeWidth = 2.2f),
+                    contentDescription = null,
+                    tint = if (income) colors.positive else colors.negative,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+            Text(label, style = NovaType.label.copy(fontWeight = FontWeight.Medium), color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 10.dp))
+        }
+        // A fixed-height slot: the auto-sized figure reports a smaller
+        // intrinsic height, which made the tiles' shared height clip the
+        // change line below it.
+        if (figure != null) Box(Modifier.padding(top = 12.dp).height(32.dp), contentAlignment = Alignment.CenterStart) {
             Text(
                 figure,
-                style = NovaType.title.copy(fontFeatureSettings = "tnum"),
+                style = NovaType.title.copy(fontFeatureSettings = "tnum", fontWeight = FontWeight.Medium),
                 color = if (income) colors.positive else colors.negative,
                 maxLines = 1,
                 softWrap = false,
-                autoSize = TextAutoSize.StepBased(minFontSize = 14.sp, maxFontSize = 20.sp),
+                autoSize = TextAutoSize.StepBased(minFontSize = 14.sp, maxFontSize = 24.sp),
                 modifier = Modifier
-                    .padding(top = 4.dp)
                     .then(if (hidden) Modifier.blur(8.dp, BlurredEdgeTreatment.Unbounded) else Modifier),
             )
         } else {
@@ -890,10 +991,13 @@ private fun CompactBudgetBar(progress: BudgetProgress, language: AppLanguage) {
                     .clip(CircleShape)
                     .background(colors.surfaceSunken),
             ) {
+                val fill = rememberIntroProgress()
                 Box(
                     modifier = Modifier
                         .fillMaxWidth(progress.percentage.coerceIn(0, 100) / 100f)
                         .fillMaxHeight()
+                        // Fills from the left on first show (web .nova-fill).
+                        .graphicsLayer { scaleX = fill; transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0f, 0.5f) }
                         .clip(CircleShape)
                         .background(color),
                 )
@@ -995,13 +1099,13 @@ private fun RecentRow(
 // "Modo invitado" banner.
 @Composable
 private fun GuestBanner(onCreateAccount: () -> Unit) {
-    val primary = MaterialTheme.colorScheme.primary
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(20.dp))
             .background(MaterialTheme.colorScheme.primaryContainer)
-            .border(1.dp, NovaColors.current.primaryBorder.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
+            .cardAurora()
+            .border(1.dp, NovaColors.current.navActiveLine, RoundedCornerShape(20.dp))
             .padding(start = 16.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -1014,8 +1118,8 @@ private fun GuestBanner(onCreateAccount: () -> Unit) {
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .heightIn(min = 48.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(primary)
+                .clip(RoundedCornerShape(50))
+                .background(ctaBrush())
                 .clickable(role = Role.Button, onClick = onCreateAccount)
                 .padding(horizontal = 16.dp),
         ) {

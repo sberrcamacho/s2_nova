@@ -1,5 +1,6 @@
 package com.s2nova.app.ui.screens.auth
 
+import com.s2nova.app.ui.theme.appCanvas
 import com.s2nova.app.ui.components.biometricsAvailable
 import com.s2nova.app.ui.components.confirmBiometric
 import com.s2nova.app.ui.components.findFragmentActivity
@@ -112,7 +113,7 @@ fun LoginScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .appCanvas(MaterialTheme.colorScheme.background)
             .padding(horizontal = 24.dp),
     ) {
         Spacer(modifier = Modifier.height(28.dp))
@@ -206,7 +207,7 @@ fun LoginScreen(
 
                 if (canUseBiometric) {
                     // Secondary button (§6.3).
-                    val shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+                    val shape = androidx.compose.foundation.shape.RoundedCornerShape(50)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -272,8 +273,8 @@ fun LoginScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp)
-                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
-                        .border(1.dp, com.s2nova.app.ui.theme.NovaColors.current.borderInput, androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(50))
+                        .border(1.dp, com.s2nova.app.ui.theme.NovaColors.current.borderInput, androidx.compose.foundation.shape.RoundedCornerShape(50))
                         .clickable(onClick = onGuest),
                     horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp, androidx.compose.ui.Alignment.CenterHorizontally),
                     verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,

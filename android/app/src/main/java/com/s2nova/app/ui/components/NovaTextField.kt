@@ -97,6 +97,7 @@ fun NovaTextField(
                         .onFocusChanged { focused = it.isFocused },
                     singleLine = true,
                     textStyle = TextStyle(
+                        fontFamily = com.s2nova.app.ui.theme.NovaFontFamily,
                         color = textColor,
                         fontSize = 14.sp,
                         letterSpacing = if (isPassword && !passwordVisible) 0.24.em else 0.em,

@@ -1,5 +1,10 @@
 package com.s2nova.app.ui
 
+import com.s2nova.app.ui.theme.cardAurora
+import com.s2nova.app.ui.theme.ctaBrush
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -210,18 +215,24 @@ fun BoxScope.GuideCard(key: String, bottom: Dp, onOk: () -> Unit, onSkipAll: () 
             .shadow(22.dp, RoundedCornerShape(20.dp))
             .clip(RoundedCornerShape(20.dp))
             .background(colors.sheetSurface)
-            .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.45f), RoundedCornerShape(20.dp))
-            .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 14.dp),
+            .cardAurora()
+            // The brand hairline on top, as web's guide card.
+            .drawBehind { drawRect(Brush.horizontalGradient(colors.cta), size = androidx.compose.ui.geometry.Size(size.width, 3.dp.toPx())) }
+            .border(1.dp, colors.navActiveLine, RoundedCornerShape(20.dp))
+            .padding(start = 16.dp, end = 16.dp, top = 18.dp, bottom = 12.dp),
     ) {
-        Text(tr(StringKey.GUIDE_LABEL).uppercase() + " · " + screen.uppercase(), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 1.2.sp, color = colors.accentText)
-        Text(copy.first, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.15).sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 8.dp))
+        Text(tr(StringKey.GUIDE_LABEL).uppercase() + " · " + screen.uppercase(), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.2.sp, color = colors.accentText)
+        Text(copy.first, fontSize = 18.sp, fontWeight = FontWeight.Medium, letterSpacing = (-0.2).sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 8.dp))
         Text(copy.second, fontSize = 14.sp, lineHeight = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
         Row(Modifier.padding(top = 14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(tr(StringKey.GUIDE_SKIP), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.noRippleClick(onSkipAll))
+            Box(Modifier.heightIn(min = 48.dp).noRippleClick(onSkipAll), contentAlignment = Alignment.CenterStart) {
+                Text(tr(StringKey.GUIDE_SKIP), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
             Spacer(Modifier.weight(1f))
             Box(
-                Modifier.clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary).noRippleClick(onOk).padding(horizontal = 18.dp, vertical = 10.dp),
-            ) { Text(tr(StringKey.GUIDE_OK), fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, color = Color.White) }
+                Modifier.heightIn(min = 48.dp).clip(RoundedCornerShape(50)).background(ctaBrush()).noRippleClick(onOk).padding(horizontal = 22.dp),
+                contentAlignment = Alignment.Center,
+            ) { Text(tr(StringKey.GUIDE_OK), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.White) }
         }
     }
 }

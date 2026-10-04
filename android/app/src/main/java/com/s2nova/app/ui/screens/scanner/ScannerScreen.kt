@@ -219,7 +219,7 @@ fun ScannerScreen(
                     onValueChange = { manualCode = it },
                     placeholder = { Text(t(StringKey.SCANNER_MANUAL_PLACEHOLDER), color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.4f)) },
                     singleLine = true,
-                    textStyle = androidx.compose.ui.text.TextStyle(color = androidx.compose.ui.graphics.Color.White),
+                    textStyle = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(color = androidx.compose.ui.graphics.Color.White),
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier.weight(1f),
                 )

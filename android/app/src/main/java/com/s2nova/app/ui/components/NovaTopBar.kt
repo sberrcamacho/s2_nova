@@ -104,10 +104,11 @@ fun HeaderAddButton(label: String, onClick: () -> Unit) {
         contentAlignment = androidx.compose.ui.Alignment.Center,
     ) {
         androidx.compose.foundation.layout.Box(
-            modifier = Modifier.size(40.dp).clip(androidx.compose.foundation.shape.CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+            // The brand gradient, as web's "+ Nuevo" buttons.
+            modifier = Modifier.size(40.dp).clip(androidx.compose.foundation.shape.CircleShape).background(com.s2nova.app.ui.theme.ctaBrush()),
             contentAlignment = androidx.compose.ui.Alignment.Center,
         ) {
-            V2Icon(V2Icons.plus, MaterialTheme.colorScheme.onPrimaryContainer, 20.dp, strokeWidth = 2.2f)
+            V2Icon(V2Icons.plus, Color.White, 20.dp, strokeWidth = 2.2f)
         }
     }
 }

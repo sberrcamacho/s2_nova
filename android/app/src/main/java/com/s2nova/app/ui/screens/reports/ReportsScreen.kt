@@ -1,5 +1,10 @@
 package com.s2nova.app.ui.screens.reports
 
+import com.s2nova.app.ui.theme.appCanvas
+import com.s2nova.app.ui.theme.cardAurora
+import com.s2nova.app.ui.theme.novaRise
+import com.s2nova.app.ui.theme.rememberIntroProgress
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -140,7 +145,8 @@ fun ReportsScreen() {
     LaunchedEffect(range) { load() }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = Color.Transparent,
+        modifier = Modifier.appCanvas(MaterialTheme.colorScheme.background),
         // The app shell already pads for the status bar.
         contentWindowInsets = WindowInsets(0),
     ) { padding ->
@@ -160,9 +166,9 @@ fun ReportsScreen() {
                         SyncErrorBanner(message = t(StringKey.HOME_SYNC_ERROR), action = t(StringKey.COMMON_RETRY), onRetry = { scope.launch { load() } })
                     }
                 }
-                item { TotalsBento(report) }
-                item { BarsCard(report, t(RANGES.first { it.first == range }.third)) }
-                item { CategoryCard(report) }
+                item { Box(Modifier.novaRise(0)) { TotalsBento(report) } }
+                item { Box(Modifier.novaRise(2)) { BarsCard(report, t(RANGES.first { it.first == range }.third)) } }
+                item { Box(Modifier.novaRise(3)) { CategoryCard(report) } }
                 item { Spacer(Modifier.height(58.dp)) }
             }
         }
@@ -208,6 +214,7 @@ private fun ReportCard(modifier: Modifier = Modifier, padding: Dp = 16.dp, conte
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(MaterialTheme.colorScheme.surface)
+            .cardAurora()
             .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))
             .padding(padding),
     ) { content() }
@@ -426,8 +433,8 @@ private fun BarsCard(report: Report?, subtitle: String) {
                                 .selectable(selected = on, role = Role.Tab) { selected = i }
                                 .semantics { contentDescription = "${chartMonth(m.month, language)}: $income ${format(m.income)}, $expenses ${format(m.expenses)}" },
                         ) {
-                            Bar((m.income / top).toFloat(), colors.positive)
-                            Bar((m.expenses / top).toFloat(), colors.negative)
+                            Bar((m.income / top).toFloat(), colors.positive, delayMillis = 60 * i)
+                            Bar((m.expenses / top).toFloat(), colors.negative, delayMillis = 60 * i + 30)
                         }
                     }
                 }
@@ -460,13 +467,16 @@ private fun LegendItem(label: String, color: Color) {
 }
 
 @Composable
-private fun Bar(fraction: Float, color: Color) {
+private fun Bar(fraction: Float, color: Color, delayMillis: Int = 0) {
     val height by animateFloatAsState(fraction.coerceIn(0f, 1f), tween(300), label = "bar")
+    // Grows up from the baseline on first show, staggered per month (web .nova-grow).
+    val grow = rememberIntroProgress(delayMillis = 100 + delayMillis, durationMillis = 600)
     Box(
         Modifier
             .widthIn(max = 14.dp)
             .fillMaxWidth(0.42f)
             .fillMaxHeight(height)
+            .graphicsLayer { scaleY = grow; transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 1f) }
             .background(color, RoundedCornerShape(topStart = 3.dp, topEnd = 3.dp)),
     )
 }
@@ -496,8 +506,13 @@ private fun CategoryCard(report: Report?) {
                             Text(categoryName(c.category), style = NovaType.label, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
                             Text(format(c.amount), style = NovaType.label.copy(fontFeatureSettings = "tnum"), color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 12.dp))
                         }
+                        val fill = rememberIntroProgress()
                         Box(Modifier.fillMaxWidth().height(8.dp).clip(CircleShape).background(colors.surfaceSunken)) {
-                            Box(Modifier.fillMaxWidth((c.amount / top.first().amount).toFloat().coerceIn(0f, 1f)).fillMaxHeight().clip(CircleShape).background(color))
+                            Box(
+                                Modifier.fillMaxWidth((c.amount / top.first().amount).toFloat().coerceIn(0f, 1f)).fillMaxHeight()
+                                    .graphicsLayer { scaleX = fill; transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0f, 0.5f) }
+                                    .clip(CircleShape).background(color),
+                            )
                         }
                     }
                 }

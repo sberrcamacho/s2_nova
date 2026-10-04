@@ -1,5 +1,11 @@
 package com.s2nova.app.ui.screens.goals
 
+import com.s2nova.app.ui.theme.cardAurora
+import com.s2nova.app.ui.theme.ringBrushColors
+import com.s2nova.app.ui.theme.rememberIntroProgress
+import com.s2nova.app.ui.theme.novaRise
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -122,8 +128,8 @@ fun GoalsTab(snackbarHostState: SnackbarHostState) {
             )
         }
 
-        items(goals, key = { it.id }) { goal ->
-            GoalCard(goal = goal, onEdit = { draft = GoalDraft.from(goal) }, onPay = { paying = goal })
+        itemsIndexed(goals, key = { _, it -> it.id }) { i, goal ->
+            Box(Modifier.novaRise(i)) { GoalCard(goal = goal, onEdit = { draft = GoalDraft.from(goal) }, onPay = { paying = goal }) }
         }
 
         if (goals.isEmpty()) {
@@ -148,7 +154,8 @@ fun GoalsTab(snackbarHostState: SnackbarHostState) {
             draft = d,
             onDraftChange = { draft = it },
             onDismiss = { draft = null },
-            onSave = {
+            onSave = { saved ->
+                val d = saved
                 val target = com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(d.target).takeIf { it > 0 }
                 if (d.name.isNotBlank() && target != null && target > 0) {
                     val initial = com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(d.initial)
@@ -245,6 +252,7 @@ private fun GoalCard(goal: Goal, onEdit: () -> Unit, onPay: () -> Unit) {
             .fillMaxWidth()
             .clip(shape)
             .background(MaterialTheme.colorScheme.surface)
+            .cardAurora()
             .border(1.dp, MaterialTheme.colorScheme.outline, shape)
             .padding(start = 16.dp, end = 4.dp, top = 4.dp, bottom = 16.dp),
     ) {
@@ -324,18 +332,24 @@ fun planText(plan: GoalPlan, wallet: String, principal: String): String =
         formatMoney(plan.amount, principal), wallet,
     ) + " · " + tr(if (plan.autoConfirm) StringKey.NM_AUTOMATIC else StringKey.NM_WITH_CONFIRMATION)
 
-// Mockup ringStyle: a 62 dp conic fill in the icon color over --line, with
-// a 48 dp --surface disc holding the 22 dp glyph.
+// The brand ring (web .nova-ring): a 62 dp conic fill in the logo's
+// gradient over the track, sweeping in on first show, with a 48 dp surface
+// disc holding the goal's 22 dp glyph in its own color.
 @Composable
 private fun GoalRing(percentage: Int, icon: String) {
     val p = Taxonomy.planIcon(icon)
     val color = hexColor(p.color)
-    val track = MaterialTheme.colorScheme.outline
+    val track = NovaColors.current.surfaceSunken
     val surface = MaterialTheme.colorScheme.surface
+    val ring = ringBrushColors()
+    val sweep = rememberIntroProgress(delayMillis = 120, durationMillis = 800)
     Box(modifier = Modifier.size(62.dp), contentAlignment = Alignment.Center) {
         Canvas(modifier = Modifier.size(62.dp)) {
             drawCircle(track)
-            drawArc(color, startAngle = -90f, sweepAngle = 3.6f * percentage.coerceIn(0, 100), useCenter = true, topLeft = Offset.Zero, size = Size(size.width, size.height))
+            val brush = androidx.compose.ui.graphics.Brush.sweepGradient(ring + ring.first(), center)
+            rotate(-90f) {
+                drawArc(brush, startAngle = 0f, sweepAngle = 3.6f * percentage.coerceIn(0, 100) * sweep, useCenter = true, topLeft = Offset.Zero, size = Size(size.width, size.height))
+            }
             drawCircle(surface, radius = 24.dp.toPx())
         }
         V2Icon(p.glyph, color, 22.dp)
@@ -493,10 +507,7 @@ private fun GoalPaySheet(
         subtitle = buildAnnotatedString { append(String.format(t(StringKey.GOAL_PAY_NOTE), format(goal.currentAmount), format(goal.targetAmount))) },
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-            Column {
-                SheetLabel(t(StringKey.GOAL_CONTRIBUTION_AMOUNT))
-                com.s2nova.app.ui.components.AmountField(amountText, { amountText = it; error = null }, AppContainer.currencyRepository.principal, title = tr(StringKey.GOAL_PAY_AMOUNT), style = com.s2nova.app.ui.components.AmountBoxStyle.SHEET)
-            }
+            com.s2nova.app.ui.components.AmountHeroField(t(StringKey.GOAL_CONTRIBUTION_AMOUNT), amountText, { amountText = it; error = null }, AppContainer.currencyRepository.principal, padTitle = tr(StringKey.GOAL_PAY_AMOUNT))
 
             if (wallets.isEmpty()) {
                 Text(t(StringKey.ADD_TXN_NO_WALLET_SUBTITLE), fontSize = 12.sp, color = colors.textDim)

@@ -1,5 +1,8 @@
 package com.s2nova.app.ui.screens.loans
 
+import com.s2nova.app.ui.theme.cardAurora
+import com.s2nova.app.ui.theme.novaRise
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -33,7 +36,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -50,14 +52,19 @@ import com.s2nova.app.data.model.Wallet
 import com.s2nova.app.data.todayISO
 import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.components.DashedNewRow
-import com.s2nova.app.ui.components.DraftSheetDeleteRow
 import com.s2nova.app.ui.components.DraftSheetPrimaryButton
 import com.s2nova.app.ui.components.NovaDraftSheet
+import com.s2nova.app.ui.components.V2Icons
+import com.s2nova.app.ui.components.V2Icon
+import com.s2nova.app.ui.components.StepDeleteButton
+import com.s2nova.app.ui.components.SegmentedChoice
+import com.s2nova.app.ui.components.SegmentOption
+import com.s2nova.app.ui.components.NameField
+import com.s2nova.app.ui.components.GlyphMark
+import com.s2nova.app.ui.components.FieldLabel
+import com.s2nova.app.ui.components.AmountHeroField
 import com.s2nova.app.ui.components.NovaProgressBar
-import com.s2nova.app.ui.components.SheetBox
 import com.s2nova.app.ui.components.SheetDateBox
-import com.s2nova.app.ui.components.SheetInput
-import com.s2nova.app.ui.components.SheetLabel
 import com.s2nova.app.ui.components.SheetPill
 import com.s2nova.app.ui.components.shortWalletName
 import com.s2nova.app.ui.rememberAppLanguage
@@ -109,8 +116,11 @@ fun LoansTab(initialSide: LoanKind = LoanKind.LENT) {
         item {
             Column(
                 modifier = Modifier
+                    .novaRise(0)
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(MaterialTheme.colorScheme.surface)
+                    .cardAurora()
                     .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))
                     .padding(16.dp),
             ) {
@@ -141,8 +151,9 @@ fun LoansTab(initialSide: LoanKind = LoanKind.LENT) {
             )
         }
 
-        items(items, key = { it.id }) { txn ->
+        itemsIndexed(items, key = { _, it -> it.id }) { i, txn ->
             LoanCard(
+                modifier = Modifier.novaRise(i + 1),
                 txn = txn,
                 outstanding = AppContainer.transactionRepository.outstandingFor(txn),
                 onPay = { payingFor = txn },
@@ -262,7 +273,7 @@ fun LoansTab(initialSide: LoanKind = LoanKind.LENT) {
 // Loan card: person and due line, the outstanding amount (the principal,
 // dimmed, once settled), an 8 dp paid bar, then the actions.
 @Composable
-private fun LoanCard(txn: Transaction, outstanding: Double, onPay: () -> Unit, onEdit: () -> Unit) {
+private fun LoanCard(txn: Transaction, outstanding: Double, onPay: () -> Unit, onEdit: () -> Unit, modifier: Modifier = Modifier) {
     val colors = NovaColors.current
     val format = rememberCurrencyFormatter()
     val t = rememberStrings()
@@ -276,10 +287,11 @@ private fun LoanCard(txn: Transaction, outstanding: Double, onPay: () -> Unit, o
     }
     val shape = RoundedCornerShape(20.dp)
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(shape)
             .background(MaterialTheme.colorScheme.surface)
+            .cardAurora()
             .border(1.dp, MaterialTheme.colorScheme.outline, shape)
             // The actions row is 48 dp tall, so the bottom padding is smaller.
             .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 2.dp),
@@ -334,8 +346,9 @@ private data class LoanDraft(
     val dueDate: String?,
 )
 
-// Mockup loanSheet: Dirección, the counterparty, Monto, the wallet the
-// money left or entered, and an optional due date.
+// The loan form, one sheet: the direction, the amount on the hero surface,
+// the counterparty, the wallet the money left or entered, and an optional
+// due date.
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun LoanDraftSheet(
@@ -347,40 +360,34 @@ private fun LoanDraftSheet(
     onRequestDelete: () -> Unit,
 ) {
     val t = rememberStrings()
+    val colors = NovaColors.current
     val isEdit = draft.id != null
     val isLent = draft.side == LoanKind.LENT
+    val principal = AppContainer.currencyRepository.principal
 
     NovaDraftSheet(
         onDismiss = onDismiss,
         title = t(if (isEdit) StringKey.LOANS_EDIT_TITLE else if (isLent) StringKey.LOANS_NEW_LENT else StringKey.LOANS_NEW_BORROWED),
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-            Column {
-                SheetLabel(t(StringKey.LOANS_DIRECTION))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf(LoanKind.LENT to t(StringKey.LOANS_LENT_TAB), LoanKind.BORROWED to t(StringKey.LOANS_BORROWED_TAB)).forEach { (value, label) ->
-                        SheetPill(label, selected = draft.side == value) { onDraftChange(draft.copy(side = value)) }
-                    }
-                }
-            }
-            Column {
-                SheetLabel(t(if (isLent) StringKey.LOANS_FORM_PERSON_LENT else StringKey.LOANS_FORM_PERSON_BORROWED))
-                SheetBox(padding = PaddingValues(horizontal = 14.dp, vertical = 15.dp)) {
-                    SheetInput(
-                        value = draft.counterparty,
-                        onValueChange = { onDraftChange(draft.copy(counterparty = it)) },
-                        placeholder = t(StringKey.LOANS_FORM_COUNTERPARTY_PLACEHOLDER),
-                        style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold),
-                    )
-                }
-            }
-            Column {
-                SheetLabel(t(StringKey.LOANS_FORM_AMOUNT))
-                com.s2nova.app.ui.components.AmountField(draft.amountText, { onDraftChange(draft.copy(amountText = it)) }, AppContainer.currencyRepository.principal, style = com.s2nova.app.ui.components.AmountBoxStyle.SHEET)
-            }
+        Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            SegmentedChoice(
+                listOf(
+                    SegmentOption(LoanKind.LENT, t(StringKey.LOANS_DIR_LENT), LOAN_OUT_ICON),
+                    SegmentOption(LoanKind.BORROWED, t(StringKey.LOANS_DIR_BORROWED), LOAN_IN_ICON),
+                ),
+                draft.side,
+            ) { onDraftChange(draft.copy(side = it)) }
+            AmountHeroField(t(StringKey.LOANS_FORM_AMOUNT), draft.amountText, { onDraftChange(draft.copy(amountText = it)) }, principal)
+            NameField(
+                t(if (isLent) StringKey.LOANS_FORM_PERSON_LENT else StringKey.LOANS_FORM_PERSON_BORROWED),
+                draft.counterparty,
+                { onDraftChange(draft.copy(counterparty = it)) },
+                t(StringKey.LOANS_FORM_COUNTERPARTY_PLACEHOLDER),
+                leading = { GlyphMark(V2Icons.person, colors.accentText, 44.dp) },
+            )
             if (wallets.isNotEmpty()) {
                 Column {
-                    SheetLabel(t(if (isLent) StringKey.LOANS_FORM_WALLET_LENT else StringKey.LOANS_FORM_WALLET_BORROWED))
+                    FieldLabel(t(if (isLent) StringKey.LOANS_FORM_WALLET_LENT else StringKey.LOANS_FORM_WALLET_BORROWED))
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         wallets.forEach { wallet ->
                             SheetPill(shortWalletName(wallet.name), selected = draft.walletId == wallet.id) { onDraftChange(draft.copy(walletId = wallet.id)) }
@@ -389,26 +396,29 @@ private fun LoanDraftSheet(
                 }
             }
             Column {
-                SheetLabel(t(StringKey.LOANS_DUE_OPTIONAL))
+                FieldLabel(t(StringKey.LOANS_DUE_OPTIONAL))
                 SheetDateBox(value = draft.dueDate, placeholder = t(StringKey.LOANS_NO_DATE), allowClear = true) { onDraftChange(draft.copy(dueDate = it)) }
             }
 
             val amount = com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(draft.amountText).takeIf { it > 0 }
-            DraftSheetPrimaryButton(
-                label = t(StringKey.COMMON_SAVE),
-                enabled = draft.counterparty.isNotBlank() && amount != null && amount > 0 && draft.walletId != null,
-                onClick = onSave,
-            )
-
-            if (isEdit) {
-                DraftSheetDeleteRow(label = t(StringKey.LOANS_DELETE), onClick = onRequestDelete)
+            Column {
+                DraftSheetPrimaryButton(
+                    label = t(StringKey.COMMON_SAVE),
+                    enabled = draft.counterparty.isNotBlank() && amount != null && amount > 0 && draft.walletId != null,
+                    onClick = onSave,
+                )
+                if (isEdit) StepDeleteButton(t(StringKey.LOANS_DELETE), onRequestDelete)
             }
         }
     }
 }
 
-// Mockup loanPay: the amount starts at the outstanding balance ("Saldar
-// todo" restores it) and can't exceed it; the wallet receives or pays.
+// Arrows for the direction: money going out (lent) or coming in (borrowed).
+private val LOAN_OUT_ICON = listOf("M7 17 17 7", "M8 7h9v9")
+private val LOAN_IN_ICON = listOf("M17 7 7 17", "M16 17H7V8")
+
+// The abono starts at the outstanding balance ("Saldar todo" restores it)
+// and can't exceed it; the wallet receives or pays.
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun LoanPaySheet(
@@ -425,45 +435,39 @@ private fun LoanPaySheet(
     val person = loan.counterpartyName ?: loan.description
     var amountText by remember { mutableStateOf(com.s2nova.app.ui.screens.addtransaction.AmountPad.numStr(outstanding)) }
     var walletId by remember { mutableStateOf(loan.walletId.takeIf { wallets.any { w -> w.id == it } } ?: wallets.firstOrNull()?.id) }
+    val amount = com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(amountText)
+    val over = amount > outstanding
 
     NovaDraftSheet(
         onDismiss = onDismiss,
         title = String.format(t(if (isLent) StringKey.LOANS_PAY_TITLE_LENT else StringKey.LOANS_PAY_TITLE_BORROWED), person),
         subtitle = buildAnnotatedString { append(String.format(t(StringKey.LOANS_PAY_NOTE), format(outstanding), format(loan.amount))) },
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-            Column {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 8.dp)) {
-                    Text(
-                        t(StringKey.GOAL_CONTRIBUTION_AMOUNT),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Text(
-                        t(StringKey.LOANS_SETTLE_ALL_SHORTCUT),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = colors.accentText,
-                        modifier = Modifier.clickable { amountText = com.s2nova.app.ui.screens.addtransaction.AmountPad.numStr(outstanding) },
-                    )
+        Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                AmountHeroField(t(StringKey.GOAL_CONTRIBUTION_AMOUNT), amountText, { amountText = it }, AppContainer.currencyRepository.principal)
+                if (over) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        V2Icon(V2Icons.alertCircle, colors.negative, 16.dp)
+                        Text(String.format(t(StringKey.LOANS_PAY_OVER), format(outstanding)), style = NovaType.bodySm, color = colors.negative)
+                    }
                 }
-                com.s2nova.app.ui.components.AmountField(amountText, { amountText = it }, AppContainer.currencyRepository.principal, style = com.s2nova.app.ui.components.AmountBoxStyle.SHEET)
+                SheetPill("${t(StringKey.LOANS_SETTLE_ALL_SHORTCUT)} · ${format(outstanding)}", selected = amount == outstanding) {
+                    amountText = com.s2nova.app.ui.screens.addtransaction.AmountPad.numStr(outstanding)
+                }
             }
             Column {
-                SheetLabel(t(if (isLent) StringKey.LOANS_PAYMENT_WALLET_LENT else StringKey.LOANS_PAYMENT_WALLET_BORROWED))
+                FieldLabel(t(if (isLent) StringKey.LOANS_PAYMENT_WALLET_LENT else StringKey.LOANS_PAYMENT_WALLET_BORROWED))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     wallets.forEach { wallet ->
                         SheetPill(shortWalletName(wallet.name), selected = walletId == wallet.id) { walletId = wallet.id }
                     }
                 }
             }
-            val amount = com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(amountText).takeIf { it > 0 }
             DraftSheetPrimaryButton(
                 label = t(StringKey.LOANS_REGISTER_PAYMENT),
-                enabled = amount != null && amount > 0 && amount <= outstanding && walletId != null,
-                onClick = { onConfirm(amount!!, walletId!!) },
+                enabled = amount > 0 && !over && walletId != null,
+                onClick = { onConfirm(amount, walletId!!) },
             )
         }
     }

@@ -1,5 +1,7 @@
 package com.s2nova.app.ui.screens.settings
 
+import com.s2nova.app.ui.theme.cardAurora
+import com.s2nova.app.ui.theme.appCanvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -75,12 +77,12 @@ fun CurrenciesScreen(onBack: () -> Unit) {
     val principal = repo.principal
     val used = { code: String -> wallets.count { it.currency == code } }
 
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    Column(Modifier.fillMaxSize().appCanvas(MaterialTheme.colorScheme.background)) {
         BackHeader(title = tr(StringKey.CUR_TITLE), onBack = onBack, action = { HeaderAddButton(tr(StringKey.CUR_ADD)) { adding = true } })
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(tr(StringKey.CUR_PRINCIPAL), style = NovaType.label, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Column(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp)).padding(16.dp),
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surface).cardAurora().border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp)).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -98,7 +100,7 @@ fun CurrenciesScreen(onBack: () -> Unit) {
             }
             Text(tr(StringKey.CUR_OTHERS), style = NovaType.label, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 10.dp))
             val others = currencies.filter { it.code != principal }
-            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))) {
+            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surface).cardAurora().border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))) {
                 if (others.isEmpty()) Text(tr(StringKey.CUR_ONLY_PRINCIPAL), style = NovaType.bodySm, color = colors.textDim, modifier = Modifier.padding(16.dp))
                 others.forEachIndexed { i, c ->
                     val n = used(c.code)

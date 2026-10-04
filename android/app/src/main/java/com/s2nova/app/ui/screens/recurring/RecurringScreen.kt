@@ -1,5 +1,7 @@
 package com.s2nova.app.ui.screens.recurring
 
+import com.s2nova.app.ui.theme.cardAurora
+import com.s2nova.app.ui.theme.appCanvas
 import com.s2nova.app.ui.theme.novaItem
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -91,7 +93,7 @@ fun RecurringScreen(onBack: () -> Unit, onNew: () -> Unit, onEdit: (String) -> U
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    Column(modifier = Modifier.fillMaxSize().appCanvas(MaterialTheme.colorScheme.background)) {
         BackHeader(
             title = t(StringKey.RECURRING_TITLE),
             onBack = onBack,
@@ -118,6 +120,7 @@ fun RecurringScreen(onBack: () -> Unit, onNew: () -> Unit, onEdit: (String) -> U
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(20.dp))
                         .background(MaterialTheme.colorScheme.surface)
+                        .cardAurora()
                         // A due series carries the `warning` border, plus its text and clock.
                         .border(1.dp, if (due) colors.warning else MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))
                         // The actions row is 48 dp tall, so the bottom padding is smaller.

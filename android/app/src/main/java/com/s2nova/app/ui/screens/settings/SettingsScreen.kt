@@ -1,5 +1,6 @@
 package com.s2nova.app.ui.screens.settings
 
+import com.s2nova.app.ui.theme.appCanvas
 import com.s2nova.app.ui.components.biometricsAvailable
 import com.s2nova.app.ui.components.confirmBiometric
 import com.s2nova.app.ui.components.findFragmentActivity
@@ -130,7 +131,8 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
     }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        modifier = Modifier.appCanvas(MaterialTheme.colorScheme.background),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
@@ -154,15 +156,15 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
                         .padding(top = 4.dp)
                         .fillMaxWidth()
                         .height(52.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(MaterialTheme.colorScheme.primary)
+                        .clip(RoundedCornerShape(50))
+                        .background(com.s2nova.app.ui.theme.ctaBrush())
                         .clickable(role = Role.Button) {
                             scope.launch {
                                 AppContainer.authRepository.updateProfile(name = name, phone = phone.trim().ifBlank { null }, city = city.trim().ifBlank { null })
                             }
                         },
                 ) {
-                    Text(t(StringKey.SETTINGS_SAVE_CHANGES), style = NovaType.label, color = MaterialTheme.colorScheme.onPrimary, maxLines = 1, softWrap = false)
+                    Text(t(StringKey.SETTINGS_SAVE_CHANGES), style = NovaType.label, color = androidx.compose.ui.graphics.Color.White, maxLines = 1, softWrap = false)
                 }
 
                 SectionTitle(t(StringKey.SETTINGS_PREFERENCES), modifier = Modifier.padding(top = 16.dp))
@@ -317,7 +319,7 @@ private fun LinkCard(title: String, detail: String, modifier: Modifier, onClick:
 @Composable
 private fun DangerLinkCard(title: String, detail: String, onClick: () -> Unit) {
     val colors = NovaColors.current
-    NovaCard(modifier = Modifier.fillMaxWidth().border(1.dp, colors.negative, RoundedCornerShape(16.dp)), onClick = onClick) {
+    NovaCard(modifier = Modifier.fillMaxWidth(), borderColor = colors.negative, onClick = onClick) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(title, style = NovaType.titleSm, color = colors.negative)

@@ -1,5 +1,7 @@
 package com.s2nova.app.ui.screens.settings
 
+import com.s2nova.app.ui.theme.cardAurora
+import com.s2nova.app.ui.theme.appCanvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -32,31 +34,32 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
 import com.s2nova.app.data.Taxonomy
 import com.s2nova.app.data.model.CategoryNode
 import com.s2nova.app.ui.Confirm
 import com.s2nova.app.ui.ConfirmRequest
-import com.s2nova.app.ui.components.BareField
 import com.s2nova.app.ui.components.CatMark
 import com.s2nova.app.ui.components.FieldLabel
 import com.s2nova.app.ui.components.GlyphMark
-import com.s2nova.app.ui.components.InputBox
 import com.s2nova.app.ui.components.MockupIcons
 import com.s2nova.app.ui.components.NovaDraftSheet
-import com.s2nova.app.ui.components.PillRow
-import com.s2nova.app.ui.components.SheetHeader
-import com.s2nova.app.ui.components.SheetTextAction
-import com.s2nova.app.ui.components.V2Button
-import com.s2nova.app.ui.components.V2Pill
+import com.s2nova.app.ui.components.V2Icons
+import com.s2nova.app.ui.components.V2Icon
+import com.s2nova.app.ui.components.StepSpacer
+import com.s2nova.app.ui.components.StepSheet
+import com.s2nova.app.ui.components.StepQuestion
+import com.s2nova.app.ui.components.StepDeleteButton
+import com.s2nova.app.ui.components.RadioDot
+import com.s2nova.app.ui.components.NameField
+import com.s2nova.app.ui.components.FieldNote
+import com.s2nova.app.ui.components.DraftSheetPrimaryButton
+import com.s2nova.app.ui.components.ChoiceCard
 import com.s2nova.app.ui.components.V2Switch
 import com.s2nova.app.ui.components.hexColor
-import com.s2nova.app.ui.components.noRippleClick
 import com.s2nova.app.ui.screens.addtransaction.GridOf
 import com.s2nova.app.ui.theme.NovaColors
 import androidx.compose.foundation.clickable
@@ -89,7 +92,7 @@ fun CategoriesScreen(initialIncome: Boolean, onBack: () -> Unit) {
     LaunchedEffect(Unit) { runCatching { repo.refresh() } }
     nodes.size
 
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    Column(Modifier.fillMaxSize().appCanvas(MaterialTheme.colorScheme.background)) {
         BackHeader(title = tr(StringKey.CAT_TITLE), onBack = onBack, action = { HeaderAddButton(tr(StringKey.CAT_NEW)) { draft = CatDraft(null, "", null, "other") } })
         UnderlineTabs(listOf(tr(StringKey.CAT_TAB_EXPENSES), tr(StringKey.CAT_TAB_INCOME)), if (income) 1 else 0) { income = it == 1 }
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -97,7 +100,7 @@ fun CategoriesScreen(initialIncome: Boolean, onBack: () -> Unit) {
             repo.parents(income).forEach { p ->
                 val kids = repo.children(p.id)
                 Column(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surface)
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surface).cardAurora()
                         .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp)).padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
@@ -114,16 +117,17 @@ fun CategoriesScreen(initialIncome: Boolean, onBack: () -> Unit) {
                     val color = Color(p.color)
                     androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         kids.forEach { c ->
-                            // A tappable chip: 40 dp tall, `label` text.
+                            // A tappable chip: 40 dp tall, `label` text. Your own subcategories get the
+                            // parent's full-color border (text stays on-surface, so it reads on any hue).
                             Box(
                                 contentAlignment = Alignment.Center,
-                                modifier = Modifier.heightIn(min = 40.dp).clip(RoundedCornerShape(999.dp)).background(if (c.custom) color else color.copy(alpha = 0.12f))
-                                    .border(1.dp, color.copy(alpha = 0.35f), RoundedCornerShape(999.dp))
+                                modifier = Modifier.heightIn(min = 40.dp).clip(RoundedCornerShape(999.dp)).background(color.copy(alpha = if (c.custom) 0.16f else 0.12f))
+                                    .border(if (c.custom) 1.5.dp else 1.dp, if (c.custom) color else color.copy(alpha = 0.35f), RoundedCornerShape(999.dp))
                                     .clickable(role = Role.Button, onClickLabel = tr(StringKey.CAT_EDIT_SUB)) { draft = CatDraft(c.id, repo.displayName(c), p.id, p.vis) }.padding(horizontal = 14.dp),
                             ) {
                                 Text(
                                     repo.displayName(c), style = NovaType.label, maxLines = 1, softWrap = false,
-                                    color = if (c.custom) (if (color.luminance() > 0.5f) Color(0xFF111118) else Color.White) else MaterialTheme.colorScheme.onSurface,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                 )
                             }
                         }
@@ -144,73 +148,135 @@ fun CategoriesScreen(initialIncome: Boolean, onBack: () -> Unit) {
 
     val d = draft ?: return
     val editing = d.id?.let(repo::node)
-    val parent = d.parentId?.let(repo::node)
-    NovaDraftSheet(onDismiss = { draft = null }) {
-        Column(Modifier.verticalScroll(rememberScrollState())) {
-            SheetHeader(
-                if (editing != null) tr(if (editing.parentId != null) StringKey.CAT_EDIT_SUB else StringKey.CAT_EDIT) else if (parent != null) tr(StringKey.CAT_NEW_SUB_IN, repo.displayName(parent)) else tr(StringKey.CAT_NEW),
-                if (editing != null) tr(if (editing.custom) StringKey.CAT_SUB_CUSTOM else StringKey.CAT_SUB_BUILTIN)
-                else tr(if (income) StringKey.CAT_SUB_NEW_INCOME else StringKey.CAT_SUB_NEW_EXPENSE),
-                bottom = 18.dp, subtitleTop = 5.dp,
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                Column {
-                    FieldLabel(tr(StringKey.PLAN_NAME))
-                    InputBox { BareField(d.name, { draft = d.copy(name = it.take(40), err = "") }, tr(StringKey.CAT_NAME_PH)) }
-                }
-                if (editing == null) {
-                    Column {
-                        FieldLabel(tr(StringKey.CAT_INSIDE))
-                        PillRow {
-                            V2Pill(tr(StringKey.CAT_NEW_MAIN), d.parentId == null, { draft = d.copy(parentId = null, err = "") })
-                            repo.parents(income).forEach { p -> V2Pill(repo.displayName(p), d.parentId == p.id, { draft = d.copy(parentId = p.id, vis = p.vis, err = "") }) }
-                        }
+    val save: (CatDraft) -> Unit = save@{ cur ->
+        val name = cur.name.trim()
+        if (name.isEmpty()) { draft = cur.copy(err = tr(StringKey.CAT_ERR_NAME)); return@save }
+        val siblings = if (cur.parentId != null) repo.children(cur.parentId) else repo.parents(income)
+        if (siblings.any { repo.displayName(it).equals(name, ignoreCase = true) && it.id != editing?.id }) { draft = cur.copy(err = tr(StringKey.CAT_ERR_TAKEN)); return@save }
+        scope.launch {
+            runCatching {
+                // A built-in shown in English keeps its stored name unless it was changed.
+                if (editing != null) repo.update(editing.id, if (name == repo.displayName(editing)) editing.name else name, if (editing.parentId == null) cur.vis else null, if (!editing.custom && editing.parentId == null) cur.hidden else null)
+                else repo.create(income, cur.parentId, name, cur.vis)
+            }.onSuccess { draft = null }.onFailure { draft = cur.copy(err = tr(StringKey.LOAN_ERR_SAVE)) }
+        }
+    }
+    if (editing == null) {
+        CategoryCreateSheet(d, income, onChange = { draft = it }, onDismiss = { draft = null }, onSave = save)
+        return
+    }
+    // Editing: one sheet with the name, the icon (parents) and, for a
+    // built-in parent, whether it shows when recording.
+    NovaDraftSheet(
+        onDismiss = { draft = null },
+        title = tr(if (editing.parentId != null) StringKey.CAT_EDIT_SUB else StringKey.CAT_EDIT),
+        subtitle = androidx.compose.ui.text.AnnotatedString(tr(if (editing.custom) StringKey.CAT_SUB_CUSTOM else StringKey.CAT_SUB_BUILTIN)),
+    ) {
+        Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            CategoryFields(d, d.parentId?.let(repo::node)) { draft = it }
+            if (!editing.custom && editing.parentId == null) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Column(Modifier.weight(1f)) {
+                        Text(tr(StringKey.CAT_SHOW), style = NovaType.label, color = MaterialTheme.colorScheme.onBackground)
+                        Text(tr(StringKey.CAT_SHOW_HINT), style = NovaType.caption, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
                     }
-                }
-                if (parent == null) {
-                    Column {
-                        FieldLabel(tr(StringKey.CAT_ICON_COLOR))
-                        GridOf(Taxonomy.vis.keys.filter { it != "transfer" }, 6, 6.dp, 6.dp) { k ->
-                            val v = Taxonomy.vis.getValue(k)
-                            val c = hexColor(v.color)
-                            Box(
-                                Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).border(1.5.dp, if (d.vis == k) c else Color.Transparent, RoundedCornerShape(12.dp))
-                                    .noRippleClick { draft = d.copy(vis = k) }.padding(vertical = 4.dp),
-                                contentAlignment = Alignment.Center,
-                            ) { GlyphMark(v.glyph, c, 34.dp) }
-                        }
-                    }
-                } else {
-                    Text(tr(StringKey.CAT_PARENT_COLOR, repo.displayName(parent)), fontSize = 12.sp, color = colors.textDim)
-                }
-                if (editing != null && !editing.custom && editing.parentId == null) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                        Column(Modifier.weight(1f)) {
-                            Text(tr(StringKey.CAT_SHOW), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                            Text(tr(StringKey.CAT_SHOW_HINT), fontSize = 12.sp, lineHeight = 15.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
-                        }
-                        V2Switch(!d.hidden) { draft = d.copy(hidden = !d.hidden) }
-                    }
-                }
-                if (d.err.isNotBlank()) Text(d.err, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = colors.negative)
-                V2Button(tr(if (editing != null) StringKey.CAT_SAVE else StringKey.CAT_CREATE), onClick = {
-                    val name = d.name.trim()
-                    if (name.isEmpty()) { draft = d.copy(err = tr(StringKey.CAT_ERR_NAME)); return@V2Button }
-                    val siblings = if (d.parentId != null) repo.children(d.parentId) else repo.parents(income)
-                    if (siblings.any { repo.displayName(it).equals(name, ignoreCase = true) && it.id != editing?.id }) { draft = d.copy(err = tr(StringKey.CAT_ERR_TAKEN)); return@V2Button }
-                    scope.launch {
-                        runCatching {
-                            // A built-in shown in English keeps its stored name unless it was changed.
-                            if (editing != null) repo.update(editing.id, if (name == repo.displayName(editing)) editing.name else name, if (editing.parentId == null) d.vis else null, if (!editing.custom && editing.parentId == null) d.hidden else null)
-                            else repo.create(income, d.parentId, name, d.vis)
-                        }.onSuccess { draft = null }.onFailure { draft = d.copy(err = tr(StringKey.LOAN_ERR_SAVE)) }
-                    }
-                })
-                if (editing != null && editing.custom) {
-                    SheetTextAction(tr(if (editing.parentId != null) StringKey.CAT_DELETE_SUB else StringKey.CAT_DELETE), colors.negative, { askDelete(editing, income) { draft = null } }, weight = FontWeight.ExtraBold)
+                    V2Switch(!d.hidden) { draft = d.copy(hidden = !d.hidden) }
                 }
             }
+            Column {
+                DraftSheetPrimaryButton(tr(StringKey.CAT_SAVE), enabled = d.name.isNotBlank(), onClick = { save(d) })
+                if (editing.custom) StepDeleteButton(tr(if (editing.parentId != null) StringKey.CAT_DELETE_SUB else StringKey.CAT_DELETE)) { askDelete(editing, income) { draft = null } }
+            }
         }
+    }
+}
+
+// Creating: two steps, since a parent list and the icon grid don't fit one
+// sheet. Where it goes (a new parent, or inside one), then its name and
+// icon. "+ Subcategoría" already knows the parent, so it opens on step 2.
+@Composable
+private fun CategoryCreateSheet(d: CatDraft, income: Boolean, onChange: (CatDraft) -> Unit, onDismiss: () -> Unit, onSave: (CatDraft) -> Unit) {
+    val repo = AppContainer.categoryRepository
+    val colors = NovaColors.current
+    var step by remember { mutableStateOf(if (d.parentId != null) 1 else 0) }
+    val parent = d.parentId?.let(repo::node)
+    StepSheet(
+        title = tr(if (parent != null) StringKey.CAT_NEW_SUB else StringKey.CAT_NEW),
+        context = parent?.let(repo::displayName),
+        step = step,
+        stepCount = 2,
+        onBack = { step-- },
+        onDismiss = onDismiss,
+        primaryLabel = tr(if (step == 0) StringKey.STEP_CONTINUE else StringKey.CAT_CREATE),
+        primaryEnabled = step == 0 || d.name.isNotBlank(),
+        onPrimary = { if (step == 0) step = 1 else onSave(d) },
+    ) { shown ->
+        if (shown == 0) {
+            StepQuestion(tr(StringKey.CAT_Q_WHERE), tr(if (income) StringKey.CAT_SUB_NEW_INCOME else StringKey.CAT_SUB_NEW_EXPENSE))
+            ChoiceCard(V2Icons.plus, colors.accentText, tr(StringKey.CAT_NEW_MAIN), tr(StringKey.CAT_CHOICE_MAIN_DETAIL), d.parentId == null, { onChange(d.copy(parentId = null, err = "")) })
+            StepSpacer()
+            FieldLabel(tr(StringKey.CAT_INSIDE))
+            Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                repo.parents(income).forEach { p ->
+                    val on = d.parentId == p.id
+                    val shape = RoundedCornerShape(14.dp)
+                    Row(
+                        Modifier.fillMaxWidth().heightIn(min = 56.dp).clip(shape)
+                            .background(if (on) MaterialTheme.colorScheme.primary.copy(alpha = 0.10f) else MaterialTheme.colorScheme.surface)
+                            .border(if (on) 2.dp else 1.dp, if (on) colors.primaryBorder else MaterialTheme.colorScheme.outlineVariant, shape)
+                            .selectable(selected = on, role = Role.RadioButton) { onChange(d.copy(parentId = p.id, vis = p.vis, err = "")) }
+                            .padding(horizontal = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        CatMark(p.id, 36.dp)
+                        Text(repo.displayName(p), style = NovaType.body, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                        RadioDot(on)
+                    }
+                }
+            }
+        } else {
+            StepQuestion(tr(StringKey.CAT_Q_NAME))
+            CategoryFields(d, parent, onChange)
+        }
+    }
+}
+
+// The name (its mark shows the chosen icon) and, for a parent, the icon and
+// color grid; a subcategory takes its parent's.
+@Composable
+private fun CategoryFields(d: CatDraft, parent: com.s2nova.app.data.model.CategoryNode?, onChange: (CatDraft) -> Unit) {
+    val repo = AppContainer.categoryRepository
+    val colors = NovaColors.current
+    val vis = Taxonomy.vis[parent?.vis ?: d.vis] ?: Taxonomy.vis.getValue("other")
+    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        NameField(tr(StringKey.PLAN_NAME), d.name, { onChange(d.copy(name = it.take(40), err = "")) }, tr(StringKey.CAT_NAME_PH), leading = { GlyphMark(vis.glyph, hexColor(vis.color), 44.dp) })
+        if (parent == null) {
+            Column {
+                FieldLabel(tr(StringKey.CAT_ICON_COLOR))
+                GridOf(Taxonomy.vis.keys.filter { it != "transfer" }, 6, 8.dp, 8.dp) { k ->
+                    val v = Taxonomy.vis.getValue(k)
+                    val on = d.vis == k
+                    Box(
+                        Modifier.fillMaxWidth().heightIn(min = 52.dp).clip(RoundedCornerShape(14.dp))
+                            .border(2.dp, if (on) colors.primaryBorder else Color.Transparent, RoundedCornerShape(14.dp))
+                            .selectable(selected = on, role = Role.RadioButton) { onChange(d.copy(vis = k)) },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        GlyphMark(v.glyph, hexColor(v.color), 40.dp)
+                        if (on) {
+                            Box(
+                                Modifier.align(Alignment.TopEnd).padding(3.dp).size(18.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary),
+                                contentAlignment = Alignment.Center,
+                            ) { V2Icon(V2Icons.check, MaterialTheme.colorScheme.onPrimary, 12.dp, strokeWidth = 3f) }
+                        }
+                    }
+                }
+            }
+        } else {
+            FieldNote(tr(StringKey.CAT_PARENT_COLOR, repo.displayName(parent)))
+        }
+        if (d.err.isNotBlank()) Text(d.err, style = NovaType.bodySm, color = colors.negative)
     }
 }
 
@@ -250,16 +316,26 @@ private fun Tag(label: String, color: Color, border: Color) {
 @Composable
 fun UnderlineTabs(labels: List<String>, selected: Int, onSelect: (Int) -> Unit) {
     val line = MaterialTheme.colorScheme.outline
-    val accent = NovaColors.current.primaryBorder
+    val accent = com.s2nova.app.ui.theme.ctaBrush()
     Row(
         Modifier.fillMaxWidth().drawBehind { drawRect(line, topLeft = Offset(0f, size.height - 1.dp.toPx()), size = androidx.compose.ui.geometry.Size(size.width, 1.dp.toPx())) }.padding(horizontal = 16.dp).selectableGroup(),
     ) {
         labels.forEachIndexed { i, label ->
             val on = i == selected
+            // The brand underline grows out from the center (as Planes' tabs).
+            val grow by androidx.compose.animation.core.animateFloatAsState(
+                if (on) 1f else 0f,
+                androidx.compose.animation.core.tween(if (on) 260 else 160, easing = com.s2nova.app.ui.theme.NovaMotion.EmphasizedDecelerate),
+                label = "tabLine",
+            )
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.heightIn(min = 48.dp).selectable(selected = on, role = Role.Tab) { onSelect(i) }.drawBehind {
-                    if (on) drawRect(accent, topLeft = Offset(0f, size.height - 2.dp.toPx()), size = androidx.compose.ui.geometry.Size(size.width, 2.dp.toPx()))
+                    if (grow > 0f) {
+                        val h = 3.dp.toPx()
+                        val w = size.width * grow
+                        drawRoundRect(accent, topLeft = Offset((size.width - w) / 2f, size.height - h), size = androidx.compose.ui.geometry.Size(w, h), cornerRadius = androidx.compose.ui.geometry.CornerRadius(h / 2f))
+                    }
                 }.padding(horizontal = 14.dp),
             ) {
                 Text(

@@ -1,5 +1,8 @@
 package com.s2nova.app.ui.screens.profile
 
+import com.s2nova.app.ui.theme.cardAurora
+import com.s2nova.app.ui.theme.novaRise
+import com.s2nova.app.ui.theme.appCanvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -92,7 +95,8 @@ fun ProfileScreen(
 
     // The app shell's Scaffold already applies the status-bar inset.
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        modifier = Modifier.appCanvas(MaterialTheme.colorScheme.background),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
@@ -104,7 +108,7 @@ fun ProfileScreen(
                     .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                ProfileCard {
+                ProfileCard(0) {
                     Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier.size(56.dp).background(MaterialTheme.colorScheme.primary, CircleShape),
@@ -120,7 +124,7 @@ fun ProfileScreen(
                     }
                 }
 
-                ProfileCard {
+                ProfileCard(1) {
                     Column {
                         ProfileRow(MockupIcons.Billeteras, NovaColors.current.link, chipFill = false, t(StringKey.WALLETS_TITLE), walletsDetail, onOpenWallets)
                         ProfileRow(MockupIcons.Programados, subscriptionsColor, chipFill = true, t(StringKey.RECURRING_TITLE), recurringDetail, onOpenRecurring)
@@ -135,8 +139,8 @@ fun ProfileScreen(
                         .padding(top = 4.dp)
                         .fillMaxWidth()
                         .height(52.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .border(1.dp, colors.negative, RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(50))
+                        .border(1.dp, colors.negative, RoundedCornerShape(50))
                         .clickable(role = Role.Button, onClick = onLogout),
                 ) {
                     Text(t(StringKey.PROFILE_LOGOUT), style = NovaType.label, color = colors.negative, maxLines = 1, softWrap = false)
@@ -147,13 +151,15 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun ProfileCard(content: @Composable () -> Unit) {
+private fun ProfileCard(index: Int, content: @Composable () -> Unit) {
     val shape = RoundedCornerShape(20.dp)
     Box(
         modifier = Modifier
+            .novaRise(index)
             .fillMaxWidth()
             .clip(shape)
             .background(MaterialTheme.colorScheme.surface)
+            .cardAurora()
             .border(1.dp, MaterialTheme.colorScheme.outline, shape),
     ) { content() }
 }

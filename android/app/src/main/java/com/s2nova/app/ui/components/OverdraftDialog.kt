@@ -147,9 +147,9 @@ private fun DialogButton(label: String, primary: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(shape)
+            .clip(if (primary) RoundedCornerShape(50) else shape)
             .then(
-                if (primary) Modifier.background(MaterialTheme.colorScheme.primary)
+                if (primary) Modifier.background(com.s2nova.app.ui.theme.ctaBrush())
                 else Modifier.background(MaterialTheme.colorScheme.surface).border(1.dp, colors.borderInput, shape),
             )
             .clickable(role = Role.Button, onClick = onClick)
@@ -160,7 +160,7 @@ private fun DialogButton(label: String, primary: Boolean, onClick: () -> Unit) {
         Text(
             label,
             style = NovaType.label,
-            color = if (primary) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+            color = if (primary) androidx.compose.ui.graphics.Color.White else MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )

@@ -1,5 +1,6 @@
 package com.s2nova.app.ui.screens.addtransaction
 
+import com.s2nova.app.ui.theme.appCanvas
 import android.content.Context
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.heightIn
@@ -482,7 +483,7 @@ fun AddTransactionScreen(
     // already set (editing). Guardar stays fixed at the bottom.
     var moreOpen by remember { mutableStateOf(s.whenOn || s.repeat != null || s.attach != null || s.note.isNotBlank() || s.from.isNotBlank() || s.customBudgetId != null || s.loan || s.goalId != null) }
 
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).imePadding()) {
+    Column(Modifier.fillMaxSize().appCanvas(MaterialTheme.colorScheme.background).imePadding()) {
         Row(
             // 48 dp back target.
             Modifier.padding(start = 4.dp, end = 16.dp, top = 4.dp, bottom = 4.dp),

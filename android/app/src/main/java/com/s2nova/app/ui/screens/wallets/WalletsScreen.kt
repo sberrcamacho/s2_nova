@@ -1,5 +1,9 @@
 package com.s2nova.app.ui.screens.wallets
 
+import com.s2nova.app.ui.theme.cardAurora
+import com.s2nova.app.ui.theme.novaRise
+import com.s2nova.app.ui.theme.ctaBrush
+import com.s2nova.app.ui.theme.appCanvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -30,7 +34,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -43,18 +46,20 @@ import com.s2nova.app.ui.Confirm
 import com.s2nova.app.ui.ConfirmRequest
 import com.s2nova.app.ui.Snack
 import com.s2nova.app.ui.WalletKind
-import com.s2nova.app.ui.components.BareField
 import com.s2nova.app.ui.components.FieldLabel
 import com.s2nova.app.ui.components.FieldNote
-import com.s2nova.app.ui.components.InputBox
 import com.s2nova.app.ui.components.MockupIcons
 import com.s2nova.app.ui.components.MoneyInput
 import com.s2nova.app.ui.components.NovaDraftSheet
+import com.s2nova.app.ui.components.StepNote
+import com.s2nova.app.ui.components.StepDeleteButton
+import com.s2nova.app.ui.components.SegmentedChoice
+import com.s2nova.app.ui.components.SegmentOption
+import com.s2nova.app.ui.components.NameField
+import com.s2nova.app.ui.components.DraftSheetPrimaryButton
+import com.s2nova.app.ui.components.AmountHeroField
 import com.s2nova.app.ui.components.PillRow
-import com.s2nova.app.ui.components.SheetHeader
-import com.s2nova.app.ui.components.SheetTextAction
 import com.s2nova.app.ui.components.TNUM
-import com.s2nova.app.ui.components.V2Button
 import com.s2nova.app.ui.components.V2Icon
 import com.s2nova.app.ui.components.V2Pill
 import com.s2nova.app.ui.components.noRippleClick
@@ -103,7 +108,7 @@ fun WalletsScreen(onBack: () -> Unit) {
     LaunchedEffect(Unit) { runCatching { AppContainer.walletRepository.refresh() } }
 
     val total = wallets.sumOf { it.principalBalance }
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    Column(Modifier.fillMaxSize().appCanvas(MaterialTheme.colorScheme.background)) {
         // Back and "Nueva billetera" are icon buttons on 48 dp targets.
         Row(Modifier.padding(start = 4.dp, end = 12.dp, top = 4.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(
@@ -125,8 +130,8 @@ fun WalletsScreen(onBack: () -> Unit) {
                     .semantics { contentDescription = newLabel },
                 contentAlignment = Alignment.Center,
             ) {
-                Box(Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
-                    V2Icon(V2Icons.plus, MaterialTheme.colorScheme.onPrimaryContainer, 20.dp, strokeWidth = 2.2f)
+                Box(Modifier.size(40.dp).clip(CircleShape).background(ctaBrush()), contentAlignment = Alignment.Center) {
+                    V2Icon(V2Icons.plus, androidx.compose.ui.graphics.Color.White, 20.dp, strokeWidth = 2.2f)
                 }
             }
         }
@@ -138,16 +143,25 @@ fun WalletsScreen(onBack: () -> Unit) {
             // The total in the principal currency, with the conversion note.
             if (wallets.isNotEmpty()) {
                 Column(
-                    Modifier.fillMaxWidth().clip(shape).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.outline, shape).padding(16.dp),
+                    Modifier.novaRise(0).fillMaxWidth().clip(shape).background(MaterialTheme.colorScheme.surface).cardAurora().border(1.dp, MaterialTheme.colorScheme.outline, shape).padding(16.dp),
                 ) {
                     Text(tr(StringKey.WALLET_TOTAL_LABEL, principal).uppercase(), style = NovaType.overline, color = colors.textDim, maxLines = 1, softWrap = false)
-                    Text(formatMoney(total, principal), style = NovaType.headline.copy(fontFeatureSettings = TNUM), color = MaterialTheme.colorScheme.onSurface, maxLines = 1, softWrap = false, modifier = Modifier.padding(top = 2.dp))
+                    // Large light figure, as web's Billeteras total.
+                    Text(
+                        formatMoney(total, principal),
+                        style = NovaType.display,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        softWrap = false,
+                        autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 22.sp, maxFontSize = 36.sp),
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
                     if (wallets.any { it.currency != principal }) {
                         Text(tr(StringKey.WALLET_TOTAL_NOTE), style = NovaType.bodySm, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
                     }
                 }
                 // Flat list: one `surface` card, a ListRow per wallet with `divider` between rows.
-                Column(Modifier.fillMaxWidth().clip(shape).background(MaterialTheme.colorScheme.surface).border(1.dp, MaterialTheme.colorScheme.outline, shape)) {
+                Column(Modifier.novaRise(1).fillMaxWidth().clip(shape).background(MaterialTheme.colorScheme.surface).cardAurora().border(1.dp, MaterialTheme.colorScheme.outline, shape)) {
                     wallets.forEachIndexed { index, w ->
                         val kind = WalletKind.of(w.type)
                         val share = if (total > 0) kotlin.math.round(w.principalBalance / total * 100).toInt() else 0
@@ -187,48 +201,60 @@ fun WalletsScreen(onBack: () -> Unit) {
 
     val d = draft ?: return
     val codes = currencies.map { it.code }.ifEmpty { listOf(principal) }
-    NovaDraftSheet(onDismiss = { draft = null }) {
-        SheetHeader(tr(if (d.id != null) StringKey.WALLET_EDIT else StringKey.WALLET_NEW), bottom = 18.dp)
-        Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
+    // One sheet: name (its mark follows the type), the type as a two-column
+    // grid, then the currency and the starting balance on the hero surface.
+    // Both are fixed once the wallet exists, so editing shows them as a note.
+    val editingWallet = d.id?.let { id -> wallets.firstOrNull { it.id == id } }
+    NovaDraftSheet(onDismiss = { draft = null }, title = tr(if (d.id != null) StringKey.WALLET_EDIT else StringKey.WALLET_NEW)) {
+        Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
             Column {
-                FieldLabel(tr(StringKey.PLAN_NAME))
-                InputBox(vertical = 11.dp) {
-                    WalletMark(d.kind, 40.dp)
-                    BareField(d.name, { name -> draft = d.copy(name = name, kind = if (d.auto) WalletKind.guess(name) ?: d.kind else d.kind) }, tr(StringKey.WALLET_NAME_PH))
-                }
+                NameField(
+                    tr(StringKey.PLAN_NAME),
+                    d.name,
+                    { name -> draft = d.copy(name = name, kind = if (d.auto) WalletKind.guess(name) ?: d.kind else d.kind) },
+                    tr(StringKey.WALLET_NAME_PH),
+                    leading = { WalletMark(d.kind, 44.dp) },
+                )
                 FieldNote(
                     tr(if (d.auto && WalletKind.guess(d.name) != null) StringKey.WALLET_TYPE_GUESS else StringKey.WALLET_TYPE_HINT),
-                    Modifier.padding(top = 9.dp),
+                    Modifier.padding(top = 8.dp),
                 )
             }
             Column {
                 FieldLabel(tr(StringKey.WALLET_TYPE))
-                PillRow { WalletKind.entries.forEach { k -> V2Pill(k.label, d.kind == k, { draft = d.copy(kind = k, auto = false) }) } }
-            }
-            Column {
-                FieldLabel(tr(StringKey.WALLET_CURRENCY))
-                PillRow { codes.forEach { c -> V2Pill(c, d.currency == c, { if (d.id == null) draft = d.copy(currency = c) }) } }
-                FieldNote(tr(StringKey.WALLET_CURRENCY_HINT, Currencies.name(d.currency).lowercase()), Modifier.padding(top = 8.dp))
-            }
-            Column {
-                FieldLabel(tr(StringKey.WALLET_BALANCE))
-                com.s2nova.app.ui.components.AmountField(d.amount, { draft = d.copy(amount = it) }, d.currency, title = tr(StringKey.WALLET_INITIAL), enabled = d.id == null)
-            }
-            V2Button(tr(StringKey.COMMON_SAVE), enabled = d.name.isNotBlank(), onClick = {
-                scope.launch {
-                    runCatching {
-                        if (d.id == null) AppContainer.walletRepository.create(d.name.trim(), d.kind.type, com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(d.amount), d.currency)
-                        else AppContainer.walletRepository.update(d.id, d.name.trim(), d.kind.type)
-                    }.onSuccess {
-                        draft = null
-                        if (!AppContainer.isGuest) runCatching { AppContainer.currencyRepository.refresh() }
-                    }.onFailure { Snack.show(tr(StringKey.WALLET_ERR_SAVE)) }
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    WalletKind.entries.chunked(2).forEach { row ->
+                        SegmentedChoice(row.map { SegmentOption(it, it.label, it.glyph) }, d.kind) { draft = d.copy(kind = it, auto = false) }
+                    }
                 }
-            })
-            if (d.id != null) SheetTextAction(tr(StringKey.WALLET_DELETE), colors.negative, {
-                val w = wallets.first { it.id == d.id }
-                askDeleteWallet(w, wallets.size) { draft = null }
-            }, weight = FontWeight.ExtraBold)
+            }
+            if (editingWallet != null) {
+                StepNote(tr(StringKey.WALLET_EDIT_NOTE, formatMoney(editingWallet.currentBalance, editingWallet.currency)))
+            } else {
+                Column {
+                    FieldLabel(tr(StringKey.WALLET_CURRENCY))
+                    PillRow { codes.forEach { c -> V2Pill(c, d.currency == c, { draft = d.copy(currency = c) }) } }
+                    FieldNote(tr(StringKey.WALLET_CURRENCY_HINT, Currencies.name(d.currency).lowercase()), Modifier.padding(top = 8.dp))
+                }
+                AmountHeroField(tr(StringKey.WALLET_BALANCE), d.amount, { draft = d.copy(amount = it) }, d.currency, padTitle = tr(StringKey.WALLET_INITIAL))
+            }
+            Column {
+                DraftSheetPrimaryButton(tr(StringKey.COMMON_SAVE), enabled = d.name.isNotBlank(), onClick = {
+                    scope.launch {
+                        runCatching {
+                            if (d.id == null) AppContainer.walletRepository.create(d.name.trim(), d.kind.type, com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(d.amount), d.currency)
+                            else AppContainer.walletRepository.update(d.id, d.name.trim(), d.kind.type)
+                        }.onSuccess {
+                            draft = null
+                            if (!AppContainer.isGuest) runCatching { AppContainer.currencyRepository.refresh() }
+                        }.onFailure { Snack.show(tr(StringKey.WALLET_ERR_SAVE)) }
+                    }
+                })
+                if (d.id != null) StepDeleteButton(tr(StringKey.WALLET_DELETE)) {
+                    val w = wallets.first { it.id == d.id }
+                    askDeleteWallet(w, wallets.size) { draft = null }
+                }
+            }
         }
     }
 }

@@ -1,5 +1,8 @@
 package com.s2nova.app.ui.screens.transactions
 
+import com.s2nova.app.ui.theme.appCanvas
+import com.s2nova.app.ui.theme.ctaBrush
+import com.s2nova.app.ui.theme.novaRise
 import com.s2nova.app.ui.theme.novaItem
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -85,6 +88,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
@@ -149,12 +153,17 @@ fun TransactionsScreen(
     }
     val activeFilters = (if (filter != TypeFilter.ALL) 1 else 0) + cats.size
     val clearAll = { filter = TypeFilter.ALL; cats = emptyList(); query = "" }
+    // The day cards rise in once per visit (web .nova-card); scrolling or
+    // filtering afterwards never replays it.
+    var introPlayed by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(Unit) { kotlinx.coroutines.delay(900); introPlayed = true }
 
     Scaffold(
         // Movimientos is a bottom-bar tab: headline title, no back arrow, and
         // the Programados screen on the right.
         topBar = { MovimientosHeader(title = t(StringKey.TITLE_TRANSACTIONS), programados = t(StringKey.HOME_UPCOMING_LINK), onOpenRecurring = onOpenRecurring) },
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = Color.Transparent,
+        modifier = Modifier.appCanvas(MaterialTheme.colorScheme.background),
     ) { padding ->
         // Top only: the app's bottom bar already covers the navigation-bar
         // inset, so applying it again here left an empty band above the bar.
@@ -198,7 +207,9 @@ fun TransactionsScreen(
                         filtered.filter { it.status != TransactionStatus.PLANNED }.sortedByDescending { it.date + it.time }
                             .groupBy { it.date }.forEach { (d, list) -> add(d to list) }
                     }
+                    var seq = 0
                     groups.forEachIndexed { index, (key, txns) ->
+                        val headSeq = seq++
                         item(key = "h-$key") {
                             // Transfers stay inside the user's wallets, so they don't move the day's net.
                             val netTotal = txns.sumOf {
@@ -221,6 +232,7 @@ fun TransactionsScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(start = 4.dp, end = 4.dp, top = if (index == 0) 8.dp else 20.dp, bottom = 8.dp)
+                                    .novaRise(headSeq, enabled = !introPlayed)
                                     .semantics(mergeDescendants = true) { heading() },
                             ) {
                                 Text(
@@ -241,6 +253,8 @@ fun TransactionsScreen(
                                 )
                             }
                         }
+                        val rowSeq = seq
+                        seq += txns.size
                         itemsIndexed(txns, key = { _, it -> it.id }) { i, txn: Transaction ->
                             val walletName = wallets.firstOrNull { it.id == txn.walletId }?.name?.let { shortWallet(it) }
                             val subtitle = if (txn.status == TransactionStatus.PLANNED) {
@@ -256,6 +270,7 @@ fun TransactionsScreen(
                             )
                             Column(
                                 modifier = novaItem()
+                                    .novaRise(rowSeq + i, enabled = !introPlayed)
                                     .fillMaxWidth()
                                     .clip(shape)
                                     .background(MaterialTheme.colorScheme.surface)
@@ -402,7 +417,7 @@ private fun CheckRow(label: String, checked: Boolean, onToggle: () -> Unit, lead
 @Composable
 private fun SearchBox(value: String, onValueChange: (String) -> Unit, modifier: Modifier = Modifier) {
     val colors = NovaColors.current
-    val shape = RoundedCornerShape(12.dp)
+    val shape = RoundedCornerShape(50)
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
     val focus = LocalFocusManager.current
@@ -416,7 +431,7 @@ private fun SearchBox(value: String, onValueChange: (String) -> Unit, modifier: 
             .clip(shape)
             .background(MaterialTheme.colorScheme.surface)
             .border(if (focused) 2.dp else 1.dp, if (focused) colors.primaryBorder else colors.borderInput, shape)
-            .padding(start = 14.dp),
+            .padding(start = 16.dp),
     ) {
         V2Icon(V2Icons.search, MaterialTheme.colorScheme.onSurfaceVariant, 20.dp)
         Box(Modifier.weight(1f).padding(start = 10.dp)) {
@@ -448,10 +463,11 @@ private fun SearchBox(value: String, onValueChange: (String) -> Unit, modifier: 
 // shows how many, so the state is not carried by color alone.
 @Composable
 private fun FiltersButton(count: Int, onClick: () -> Unit) {
-    val shape = RoundedCornerShape(12.dp)
+    val shape = RoundedCornerShape(50)
     val active = count > 0
     val label = if (active) tr(StringKey.MV_FILTERS_ACTIVE, count) else tr(StringKey.MV_FILTERS)
-    val ink = if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+    // Active fills with the brand gradient (web's selected chip), white ink.
+    val ink = if (active) Color.White else MaterialTheme.colorScheme.onSurface
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
@@ -459,7 +475,7 @@ private fun FiltersButton(count: Int, onClick: () -> Unit) {
             .height(48.dp)
             .widthIn(min = 48.dp)
             .clip(shape)
-            .background(if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface)
+            .then(if (active) Modifier.background(ctaBrush()) else Modifier.background(MaterialTheme.colorScheme.surface))
             .border(1.dp, if (active) Color.Transparent else NovaColors.current.borderInput, shape)
             .clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = 13.dp)
@@ -537,7 +553,7 @@ private fun MovimientosHeader(title: String, programados: String, onOpenRecurrin
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .height(48.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(50))
                     .clickable(role = Role.Button, onClick = onOpenRecurring)
                     .then(if (labeled) Modifier else Modifier.width(48.dp).semantics { contentDescription = programados }),
             ) {
@@ -546,9 +562,9 @@ private fun MovimientosHeader(title: String, programados: String, onOpenRecurrin
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier
                         .height(40.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(50))
                         .background(MaterialTheme.colorScheme.surface)
-                        .border(1.dp, NovaColors.current.borderInput, RoundedCornerShape(12.dp))
+                        .border(1.dp, NovaColors.current.borderInput, RoundedCornerShape(50))
                         .padding(horizontal = if (labeled) 14.dp else 10.dp),
                 ) {
                     V2Icon(V2Icons.repeat, MaterialTheme.colorScheme.onSurface, 18.dp)

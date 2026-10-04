@@ -31,8 +31,12 @@ fun Modifier.heroSurface(shape: Shape): Modifier {
         // Drawn behind the content so it never takes part in the layout.
         .drawBehind {
             val center = Offset(size.width, 0f)
-            val radius = max(size.width, size.height) * 1.1f
+            val radius = max(size.width, size.height) * 0.75f
             drawCircle(brush = Brush.radialGradient(colors.heroGlow, center = center, radius = radius), radius = radius, center = center)
+            // The second aurora, bottom-left (web --hero-bg's second layer).
+            val bl = Offset(0f, size.height)
+            val r2 = max(size.width, size.height) * 0.9f
+            drawCircle(brush = Brush.radialGradient(colors.heroGlow2, center = bl, radius = r2), radius = r2, center = bl)
         }
         .border(1.dp, colors.heroBorder, shape)
 }

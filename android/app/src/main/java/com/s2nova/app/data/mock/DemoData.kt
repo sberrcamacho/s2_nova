@@ -172,7 +172,8 @@ object DemoData {
         series("demo-s5", "Gimnasio", 89_000.0, false, "exp.health", null, "2026-09-05", active = false),
     )
 
-    val monthSummaries = AnalyticsHelpers.monthlyHistory(transactions, 2)
+    // Six months, like the web guest account, so Inicio's hero bars have a history.
+    val monthSummaries = AnalyticsHelpers.monthlyHistory(transactions, 6)
 
     val alerts: List<AppAlert> = listOf(
         AppAlert.SeriesDue("series:demo-s3", "demo-s3", "Administración", TransactionType.EXPENSE, 232_000.0, "exp.housing", d("2026-08-21"), false),

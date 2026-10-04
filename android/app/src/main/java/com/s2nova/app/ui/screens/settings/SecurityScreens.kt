@@ -1,5 +1,6 @@
 package com.s2nova.app.ui.screens.settings
 
+import com.s2nova.app.ui.theme.appCanvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -51,7 +52,7 @@ private fun passwordRulesOk(next: String, confirm: String) = next.length >= 8 &&
 // scrolling column of labeled fields.
 @Composable
 private fun SecurityFrame(title: String, onBack: () -> Unit, content: @Composable () -> Unit) {
-    Scaffold(containerColor = MaterialTheme.colorScheme.background, contentWindowInsets = WindowInsets(0, 0, 0, 0)) { padding ->
+    Scaffold(containerColor = androidx.compose.ui.graphics.Color.Transparent, modifier = Modifier.appCanvas(MaterialTheme.colorScheme.background), contentWindowInsets = WindowInsets(0, 0, 0, 0)) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             BackHeader(title = title, onBack = onBack)
             Column(

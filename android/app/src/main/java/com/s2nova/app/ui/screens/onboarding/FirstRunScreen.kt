@@ -1,5 +1,6 @@
 package com.s2nova.app.ui.screens.onboarding
 
+import com.s2nova.app.ui.theme.appCanvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -85,7 +86,7 @@ fun FirstRunScreen(onBackToSignup: () -> Unit, onDone: () -> Unit) {
     var busy by remember { mutableStateOf(false) }
     val valid = step == 0 || name.isNotBlank()
 
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    Column(Modifier.fillMaxSize().appCanvas(MaterialTheme.colorScheme.background)) {
         Row(Modifier.padding(start = 4.dp, end = 4.dp, top = 4.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             val backLabel = tr(StringKey.COMMON_BACK)
             Box(
@@ -98,7 +99,7 @@ fun FirstRunScreen(onBackToSignup: () -> Unit, onDone: () -> Unit) {
             }
             Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 repeat(2) { i ->
-                    Box(Modifier.weight(1f).height(4.dp).clip(RoundedCornerShape(2.dp)).background(if (i <= step) NovaColors.current.primaryBorder else MaterialTheme.colorScheme.outline))
+                    Box(Modifier.weight(1f).height(4.dp).clip(RoundedCornerShape(2.dp)).then(if (i <= step) Modifier.background(com.s2nova.app.ui.theme.ctaBrush()) else Modifier.background(MaterialTheme.colorScheme.outline)))
                 }
             }
             Spacer(Modifier.width(48.dp))

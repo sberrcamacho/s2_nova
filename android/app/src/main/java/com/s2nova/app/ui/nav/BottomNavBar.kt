@@ -45,6 +45,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.border
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -164,9 +167,10 @@ fun NovaBottomBar(
                 .padding(top = FabTouchTop - fabSize / 2)
                 .size(fabSize)
                 .pressScale(fabInteraction, pressedScale = 0.92f)
-                .shadow(elevation = 10.dp, shape = CircleShape, ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.55f), spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.55f))
+                .shadow(elevation = 12.dp, shape = CircleShape, ambientColor = NovaColors.current.cta.last().copy(alpha = 0.6f), spotColor = NovaColors.current.cta.last().copy(alpha = 0.6f))
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary)
+                // The brand gradient of web's primary action.
+                .background(com.s2nova.app.ui.theme.ctaBrush())
                 .clickable(interactionSource = fabInteraction, indication = androidx.compose.material3.ripple(color = Color.White), role = Role.Button, onClick = onFabClick)
                 .semantics { contentDescription = addLabel },
             contentAlignment = Alignment.Center,
@@ -185,7 +189,10 @@ private fun BottomTabItem(
     modifier: Modifier = Modifier,
 ) {
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
-    val ink = NovaColors.current.accentText
+    val brand = NovaColors.current
+    // Active icon: cyan in dark, indigo in light (the last stop of the
+    // logo's ramp), as web's --nav-active-icon.
+    val ink = brand.ring.last()
     val colorSpec = androidx.compose.animation.core.tween<Color>(com.s2nova.app.ui.theme.NovaMotion.FAST)
     val tint by androidx.compose.animation.animateColorAsState(if (selected) ink else muted, colorSpec, label = "tabTint")
     val labelColor by androidx.compose.animation.animateColorAsState(if (selected) MaterialTheme.colorScheme.onSurface else muted, colorSpec, label = "tabLabel")
@@ -195,9 +202,27 @@ private fun BottomTabItem(
             .heightIn(min = 48.dp)
             .selectable(selected = selected, role = Role.Tab, interactionSource = interaction, indication = null, onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.padding(top = 4.dp).size(26.dp).pressScale(interaction, pressedScale = 0.9f))
+        // The active tab sits on a brand-gradient pill with a violet hairline
+        // (web's active sidebar item), fading in as the tab is selected.
+        val pill by androidx.compose.animation.core.animateFloatAsState(
+            if (selected) 1f else 0f,
+            androidx.compose.animation.core.tween(com.s2nova.app.ui.theme.NovaMotion.FAST),
+            label = "tabPill",
+        )
+        val pillShape = RoundedCornerShape(50)
+        Box(Modifier.padding(top = 2.dp).size(width = 58.dp, height = 32.dp), contentAlignment = Alignment.Center) {
+            Box(
+                Modifier
+                    .matchParentSize()
+                    .graphicsLayer { alpha = pill; scaleX = 0.7f + 0.3f * pill }
+                    .clip(pillShape)
+                    .background(Brush.horizontalGradient(listOf(brand.cta.first().copy(alpha = 0.24f), brand.cta.last().copy(alpha = 0.10f))))
+                    .border(1.dp, brand.navActiveLine, pillShape),
+            )
+            Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(24.dp).pressScale(interaction, pressedScale = 0.9f))
+        }
         // Labels keep one size on every tab: the bar caps the system font
         // scale at 1.0 (icon + 12 sp label is a fixed-height control).
         val density = androidx.compose.ui.platform.LocalDensity.current

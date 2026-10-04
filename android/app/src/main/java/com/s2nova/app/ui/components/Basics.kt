@@ -53,13 +53,13 @@ fun AmountText(amount: Double, type: TransactionType, modifier: Modifier = Modif
 // (the row then owns the click and the semantics).
 @Composable
 fun NovaSwitch(checked: Boolean, onCheckedChange: ((Boolean) -> Unit)?, modifier: Modifier = Modifier) {
-    val trackColor = if (checked) MaterialTheme.colorScheme.primary else NovaColors.current.borderInput
+    // On: the brand gradient (web's switch); off: `border-input` (3:1).
     val offset by animateDpAsState(targetValue = if (checked) 21.dp else 3.dp, animationSpec = tween(150), label = "switchKnob")
     Box(
         modifier = modifier
             .size(width = 48.dp, height = 30.dp)
             .clip(RoundedCornerShape(50))
-            .background(trackColor)
+            .then(if (checked) Modifier.background(com.s2nova.app.ui.theme.ctaBrush()) else Modifier.background(NovaColors.current.borderInput))
             .then(
                 if (onCheckedChange != null) Modifier.toggleable(value = checked, role = androidx.compose.ui.semantics.Role.Switch, onValueChange = onCheckedChange)
                 else Modifier,

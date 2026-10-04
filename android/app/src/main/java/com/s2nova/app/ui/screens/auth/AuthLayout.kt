@@ -1,5 +1,6 @@
 package com.s2nova.app.ui.screens.auth
 
+import com.s2nova.app.ui.theme.appCanvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -31,7 +32,7 @@ fun AuthLayout(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .appCanvas(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 32.dp),
     ) {

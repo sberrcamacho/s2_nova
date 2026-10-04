@@ -1,5 +1,6 @@
 package com.s2nova.app.ui.screens.auth
 
+import com.s2nova.app.ui.theme.appCanvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -72,16 +73,16 @@ fun RegisterScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .appCanvas(MaterialTheme.colorScheme.background)
             .padding(horizontal = 24.dp),
     ) {
         Box(
             modifier = Modifier
                 .padding(top = 12.dp)
                 .size(40.dp)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(RoundedCornerShape(50))
                 .background(colors.loginSurface)
-                .border(1.dp, com.s2nova.app.ui.theme.NovaColors.current.borderInput, RoundedCornerShape(12.dp))
+                .border(1.dp, com.s2nova.app.ui.theme.NovaColors.current.borderInput, RoundedCornerShape(50))
                 .clickable(onClick = onGoToLogin),
             contentAlignment = Alignment.Center,
         ) {
