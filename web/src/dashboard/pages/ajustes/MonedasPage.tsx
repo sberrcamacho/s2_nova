@@ -15,7 +15,7 @@ const errorText = (err: unknown) => (err instanceof Error ? err.message : tr('ap
 
 // The mockup's currency mark: the symbol in a 36px violet circle.
 function CurrencyMark({ children }: { children: ReactNode }) {
-  return <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-accent-soft text-caption font-semibold text-link">{children}</span>
+  return <span className="flex h-9 w-9 flex-none items-center justify-center rounded-[10px] bg-accent-soft text-caption font-semibold text-link">{children}</span>
 }
 
 // Ajustes › Monedas (Dashboard v2 isSettingsCurrencies,
@@ -68,7 +68,7 @@ export default function MonedasPage() {
               <div className="flex items-center gap-3">
                 <CurrencyMark>{principal.symbol}</CurrencyMark>
                 <div className="flex-1 text-title-sm font-semibold">{`${currencyName(P, principal.name)} · ${P}`}</div>
-                <span className="rounded-full border border-link px-2 py-[3px] text-caption font-semibold text-link">{t('cur.principalBadge')}</span>
+                <span className="rounded-[6px] border border-link px-2 py-[3px] text-caption font-semibold text-link">{t('cur.principalBadge')}</span>
               </div>
             )}
             <div className="text-body-sm text-ink-secondary">

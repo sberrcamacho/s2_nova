@@ -72,15 +72,15 @@ fun TermsCheckbox(
         Text(
             text = buildAnnotatedString {
                 append(tr(StringKey.TERMS_ACCEPT) + " ")
-                withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = colors.loginHighlight)) {
+                withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = colors.loginHighlight)) {
                     append(tr(StringKey.TERMS_TERMS))
                 }
                 append(" " + tr(StringKey.TERMS_AND) + " ")
-                withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = colors.loginHighlight)) {
+                withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = colors.loginHighlight)) {
                     append(tr(StringKey.TERMS_PRIVACY))
                 }
             },
-            fontSize = 15.sp,
+            fontSize = 14.sp,
             lineHeight = 18.8.sp,
             color = colors.loginTextMuted,
             modifier = Modifier.padding(start = 11.dp),

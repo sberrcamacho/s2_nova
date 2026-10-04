@@ -12,7 +12,7 @@ Tracker", stack guidelines for `jetpack-compose` and `html-tailwind`, chart
 and UX rule sets. The skill's generic fintech palette (gold/amber) was **not**
 used: the brand palette is fixed by the S2 Nova logo.
 
-**Status:** v1.4 · 2026-09-30 · F0–F3 implemented on both clients (fixes, brand tokens, type roles and the 12 floor, bento Inicio, Nuevo movimiento); F4 implemented on the main screens (Reportes, Movimientos, the shared chip, Planes, Billeteras and Ajustes); the Ajustes sub-screens, Programados, the movement detail and the sheets inherit the shared components but have not had their own review.
+**Status:** v2.0 · 2026-10-04 · "Brand-signature minimalism": the brand is a restrained signature (one solid primary, the gradient only on the balance hero), neutral surfaces with an indigo undertone, tonal category marks, Inter, a calmer radius scale, and sheets that never scroll (§6.11). Implemented on both clients. Earlier F0–F4 work (tokens, type roles, bento Inicio, Nuevo movimiento, the main screens) still applies where this version doesn't change it.
 
 ---
 
@@ -21,15 +21,20 @@ used: the brand palette is fixed by the S2 Nova logo.
 1. **The number is the product.** Amounts are the most important thing on
    every screen. They never wrap, never lose their sign, always align, and
    always meet contrast.
-2. **The brand is for action, not data.** Violet, blue and cyan mean "tap
-   here", "selected" or "this is S2 Nova". Income, expense and status use
-   their own semantic colors.
+2. **The brand is a signature, not a wash.** One solid violet from the mark
+   means "tap here" or "selected"; the mark's gradient appears only on the
+   balance hero and the logo. Surfaces are neutral with a faint indigo
+   undertone: neither plain grey nor lilac. Income, expense and status use
+   their own semantic colors. The goal is a professional finance product:
+   not generic, and not a rainbow.
 3. **Summaries are bento, details are flat.** Inicio and Reportes use modular
    tiles; lists, forms and settings use plain surfaces with dividers.
 4. **One product, two clients.** Same tokens, same names, same component
    behavior on Android and Web. Differences are layout density, never
    meaning.
 5. **Accessible by default.** WCAG 2.2 AA is the floor, not a later pass.
+6. **Sheets and dialogs never scroll.** A choice never adds content under
+   itself; dependent options open on their own page (§6.11).
 
 ---
 
@@ -68,31 +73,32 @@ The same token name is used on both platforms (see §10 for the spelling in each
 
 | Token | Light | Dark | Notes |
 |---|---|---|---|
-| `bg` | `#F7F7FA` | `#050507` | Screen background |
-| `surface` | `#FFFFFF` | `#0E0E15` | Cards, rows, sheets |
-| `surface-raised` | `#FFFFFF` | `#13131D` | Menus, dialogs, bottom bar |
-| `surface-sunken` | `#EFEFF4` | `#09090E` | Input fill, track of progress bars |
-| `text` | `#111118` | `#FFFFFF` | Primary text and amounts |
-| `text-secondary` | `#666673` (5.66) | `#A8A8B8` (8.20) | Labels, supporting text |
-| `text-tertiary` | `#6B6B7A` (5.24; 4.90 on `bg`) | `#8E8EA0` (5.98; 5.73 on raised) | Metadata, timestamps. Must stay ≥ 4.5:1 |
+| `bg` | `#F6F6F9` | `#0C0B14` | Screen background (cool off-white / deep indigo ink) |
+| `surface` | `#FFFFFF` | `#15131F` | Cards, rows, sheets |
+| `surface-raised` | `#FFFFFF` | `#1C1A28` | Menus, dialogs |
+| `surface-sunken` | `#F0EFF5` | `#1F1D2C` | Input fill, mark tiles, track of progress bars |
+| `text` | `#15131F` | `#EEEDF5` | Primary text and amounts |
+| `text-secondary` | `#5C5870` (6.81) | `#A8A3BD` (7.55) | Labels, supporting text |
+| `text-tertiary` | `#686480` (5.6; 5.2 on `bg`) | `#928DA8` (5.7) | Metadata, timestamps. Must stay ≥ 4.5:1 |
 | `text-disabled` | `#A0A0AE` | `#5A5A6E` | Disabled text only; exempt from contrast, always paired with a disabled semantic |
-| `border` | `#EBEBF2` | `#2E2E40` | Decorative separation between surfaces |
-| `border-input` | `#8C8C9C` (3.31; 3.09 on `bg`) | `#6A6A82` (3.66) | Input, checkbox, radio and outline-button boundaries (≥ 3:1) |
-| `divider` | `#F0F0F5` | `#16161F` | Row dividers inside a card |
+| `border` | `#E4E2EC` | `#2A2738` | Decorative separation between surfaces |
+| `border-input` | `#8F8AA3` (3.32) | `#6C6785` (3.42) | Input, checkbox, radio and outline-button boundaries (≥ 3:1) |
+| `divider` | `#EFEEF4` | `#1F1D2B` | Row dividers inside a card |
 | `scrim` | `#111118` at 40 % | `#000000` at 60 % | Behind dialogs and sheets |
 
 #### Brand-derived (action and selection)
 
 | Token | Light | Dark | Ratios |
 |---|---|---|---|
-| `primary` | `#6622D6` | `#6622D6` | white on it 7.60 |
-| `primary-pressed` | `#5712C2` | `#5712C2` | white on it 9.25 |
+| `primary` | `#5712C2` | `#6622D6` | white on it 9.25 / 7.60 |
+| `primary-pressed` | `#460E9E` | `#5712C2` | — |
 | `on-primary` | `#FFFFFF` | `#FFFFFF` | — |
-| `primary-soft` | `#F0E9FB` | `#270E3A` | selected chip/row fill |
-| `on-primary-soft` | `#5712C2` (7.82) | `#D485FB` (7.06) | text on `primary-soft` |
-| `link` | `#5712C2` (9.25) | `#D485FB` (7.83) | "Ver todos", inline links |
-| `accent` | `#0047F5` (6.52) | `#00C4FB` (9.42) | secondary emphasis, chart series 2, info |
-| `focus-ring` | `#0047F5` | `#00C4FB` | 2 px ring + 2 px offset, ≥ 3:1 on every surface |
+| `primary-soft` | `#F1EAFC` | `#241A3D` | selected chip/row fill, active nav |
+| `on-primary-soft` | `#5712C2` (7.89) | `#C29BFF` (7.31) | text on `primary-soft` |
+| `link` | `#5712C2` (9.25) | `#C29BFF` (8.23) | "Ver todos", inline links |
+| `primary-border` | `#5712C2` | `#A77BFF` (6.0) | selected boundaries, radio dots, focus |
+| `accent` | `#0047F5` (6.52) | `#00C4FB` (9.42) | rare secondary emphasis; the cyan hairline on the hero's current bar |
+| `focus-ring` | `#5712C2` | `#A77BFF` | 2 px ring + 2 px offset, ≥ 3:1 on every surface |
 
 Brand usage rules:
 
@@ -109,8 +115,8 @@ Brand usage rules:
 
 | Token | Light | Dark | Soft fill (L / D) | Text on soft (L / D) |
 |---|---|---|---|---|
-| `positive` (income, on-track) | `#0F7A4A` (5.38) | `#32C98A` (9.02) | `#E7F2ED` / `#132825` | 4.69 / 7.26 |
-| `negative` (expense, over budget) | `#C0362F` (5.51) | `#FF6262` (6.57) | `#F9EBEA` / `#301A20` | 4.75 / 5.54 |
+| `positive` (income, on-track) | `#0E7A55` (5.34) | `#3FD08E` (9.28) | `#E7F2ED` / `#132825` | 4.69 / 7.26 |
+| `negative` (expense, over budget) | `#C02B45` (5.72) | `#FF7085` (6.91) | `#F9EBEA` / `#301A20` | 4.75 / 5.54 |
 | `warning` (near limit, due today) | `#8F5A00` (5.78) | `#F0B429` (10.31) | `#F4EEE6` / `#2E2518` | 5.02 / 8.08 |
 | `info` | = `accent` | = `accent` | `primary-soft` | — |
 
@@ -127,22 +133,25 @@ example, "−5 %" on Gastos is `positive`.
 
 | Token | Light | Dark |
 |---|---|---|
-| `hero-bg` | linear 135°: `#5712C2` 0 % → `#6622D6` 50 % → `#9A39F9` 150 % (past the far corner, so the visible end is `#802EE8`) | base `#1A0B3D` + radial glow top-right: `#A80FFA` 35 % → `#0047F5` 22 % → transparent |
-| `hero-text` | `#FFFFFF` (≥ 4.85 over the whole gradient) | `#FFFFFF` (18.1) |
-| `hero-text-secondary` | `#FFFFFF` at 90 % (≥ 5.1) | `#D485FB` (≥ 5.1 over the glow) |
-| `hero-positive` / `hero-negative` | `#FFFFFF` + sign and arrow (no green/red on violet) | `#32C98A` (≥ 6.0) / `#FF7A7A` (≥ 5.1) over the whole gradient |
-| `hero-tile` | `#FFFFFF` at 12 % (white on it ≥ 4.9) | `#FFFFFF` at 6 % |
+| `hero-bg` | linear 135°: `#2A0B66` → `#4512A3` 58 % → `#5712C2` | linear 135°: `#1B0E4A` → `#2B1A8F` 55 % → `#0B3FA8` |
+| `hero-text` | `#FFFFFF` (≥ 9) | `#FFFFFF` (≥ 8) |
+| `hero-text-secondary` | `#FFFFFF` at 82–88 % (≥ 6) | same (≥ 5.5) |
+| `hero-positive` / `hero-negative` | `#FFFFFF` + sign and arrow (no green/red on violet) | `#5FF0B0` / `#FFB4B4` |
+| `hero-tile` | `#FFFFFF` at 12 % | `#FFFFFF` at 10 % |
 
-The hero is the only element that uses a brand gradient.
-
-The hero's `#9A39F9` stop sits past the far corner because white text at
-80–90 % and white on a hero tile fall under 4.5:1 on `#9A39F9` itself.
-Everything on the hero (the amount card in Nuevo movimiento too) is white
-or `hero-*`; the light theme's text and semantic colors are never used on it.
+The hero is the only element that uses the brand gradient: no auroras, no
+glows, a 1 px white top highlight and a hairline border. Form amount fields
+(Nuevo movimiento, the plan sheets) are neutral `surface` fields with the
+`border-input` boundary, not hero surfaces.
 
 Primary as text: `#6622D6` is only 2.5:1 on the dark surfaces, so in dark
 theme text and icons use `link`, and selected boundaries, radio dots and tab
-indicators use `primary-border` (`#6622D6` light / `#A80FFA` dark, 3.6–3.9:1).
+indicators use `primary-border` (`#5712C2` light / `#A77BFF` dark).
+
+Category and plan marks are tonal: the glyph in its category color mixed
+28 % toward the ink (light) or 30 % toward white (dark), on a neutral
+`surface-sunken` tile with 28 % corner radius. The tile is never tinted per
+category; categories are told apart by glyph and label.
 On the inverted toast the action uses the opposite theme's `link`
 (`accent-inverse`).
 
@@ -184,11 +193,11 @@ On the inverted toast the action uses the opposite theme's `link`
 
 ## 3. Typography
 
-**One family: Plus Jakarta Sans** (already bundled in
-`android/app/src/main/res/font/plus_jakarta_sans_*.ttf` and loaded on Web). It
-ships the `tnum` OpenType feature, verified in the font's GSUB table, so no
-second numeric font is needed. Inter is dropped: remove it from
-`--font-numeric` and the Google Fonts import.
+**One family: Inter** (variable, OFL). Android bundles
+`android/app/src/main/res/font/inter_variable.ttf`; Web loads it from Google
+Fonts (400–700). Inter's large x-height reads well at these sizes, and it
+ships the `tnum` feature, so no second numeric font is needed. It replaced
+Outfit (2026-10) for legibility and a more professional tone.
 
 **Every amount, percentage, date number and table figure uses tabular
 figures:**
@@ -198,17 +207,17 @@ figures:**
 
 | Role | Android (sp) | Web (px) | Weight | Line height | Tracking | Use |
 |---|---|---|---|---|---|---|
-| `display` | 36 | 40 | 700 | 1.1 | −1 % | Hero balance |
-| `display-sm` | 28 | 32 | 700 | 1.15 | −1 % | Amount in Nuevo movimiento, detail amount |
-| `headline` | 24 | 28 | 700 | 1.2 | −0.5 % | Screen title |
+| `display` | 36 | 40 | 600 | 1.1 | −2.5 % | Hero balance |
+| `display-sm` | 28 | 32 | 600 | 1.15 | −2 % | Amount in Nuevo movimiento, detail amount |
+| `headline` | 24 | 28 | 600 | 1.2 | −1.5 % | Screen title |
 | `title` | 18 | 20 | 600 | 1.3 | 0 | Card/section title, dialog title |
 | `title-sm` | 16 | 16 | 600 | 1.35 | 0 | Row title, stat value on mobile |
 | `amount` | 16 | 16 | 600 | 1.3 | 0 | Row amounts (tnum) |
 | `body` | 16 | 16 | 400 | 1.5 | 0 | Paragraphs, inputs |
-| `body-sm` | 14 | 15 | 500 | 1.45 | 0 | Secondary text, metadata, buttons on Web |
+| `body-sm` | 14 | 15 | 400 | 1.45 | 0 | Secondary text, metadata, buttons on Web |
 | `label` | 14 | 14 | 600 | 1.3 | 0 | Buttons, chips, tabs |
-| `overline` | 12 | 13 | 600 | 1.3 | +4 %, uppercase | Section headers ("HOY · −$189.500"), stat labels |
-| `caption` | 12 | 13 | 500 | 1.45 | 0 | Axis labels, helper text |
+| `overline` | 12 | 13 | 600 | 1.3 | +5 %, uppercase | Section headers ("HOY · −$189.500"), stat labels |
+| `caption` | 12 | 13 | 400 | 1.45 | 0 | Axis labels, helper text |
 
 The scale is per platform on purpose: a phone held at reading distance takes
 smaller headings (a 28 sp screen title crowds a 360 dp screen), while a desktop
@@ -219,6 +228,8 @@ stay equal on both so the clients still feel like one product.
 Rules:
 
 - 12 is the absolute minimum. Nothing below it.
+- Weights stop at 600 (SemiBold); 700+ reads heavy in Inter and is not used
+  in the UI.
 - Text styles come from the theme (`MaterialTheme.typography` / the CSS
   classes), never from ad-hoc `fontSize` or `text-[Npx]`. Sizes such as
   12.5, 13, 13.5, 15 or 17 are not part of the scale.
@@ -248,12 +259,14 @@ Rules:
 
 | Token | Value | Use |
 |---|---|---|
-| `radius-sm` | 8 | chips, inputs, small tags |
-| `radius-md` | 12 | buttons, icon tiles |
-| `radius-lg` | 16 | web cards |
-| `radius-xl` | 20 | mobile cards, hero |
-| `radius-sheet` | 28 | bottom sheets (top corners), dialogs |
-| `radius-full` | 999 | FAB, avatar, pills, progress bars |
+| `radius-xs` | 6 | badges, small tags |
+| `radius-sm` | 8–10 | chips (10), currency pills (8) |
+| `radius-md` | 12 | buttons, inputs, option groups, icon tiles |
+| `radius-lg` | 16 | cards, hero, amount fields |
+| `radius-sheet` | 24 | bottom sheets (top corners); dialogs 18–20 |
+| `radius-full` | 999 | FAB, avatar, switches, dots, progress bars |
+
+Buttons and chips are rounded rectangles, not pills.
 
 ### 4.3 Elevation (two levels only)
 
@@ -261,7 +274,7 @@ Rules:
 |---|---|---|---|
 | 0 | none, 1 px `border` | none, 1 px `border` | all cards, rows, tiles |
 | 1 | `0 8px 24px rgba(17,17,24,0.08)` | `0 8px 24px rgba(0,0,0,0.5)` | hero, sheets, dialogs, menus, bottom bar |
-| FAB glow | `0 8px 24px` `primary` at 30 % | same | the central "+" only |
+| FAB | a soft 6 dp shadow tinted `primary` | none | the central "+" only |
 
 ### 4.4 Motion
 
@@ -476,7 +489,7 @@ padding or a pseudo-element on Web.
 
 - **Chip** (filters, wallet picker):
   - 40 dp tall (48 dp hit area) / 32 px on Web.
-  - Padding 16 horizontal, `radius-full`, `label` text, one line, never wraps.
+  - Padding 16 horizontal, 10 radius, `label` text, one line, never wraps.
   - The collection wraps or scrolls horizontally with a visible edge fade.
   - Unselected: `surface` + 1 px `border-input` + `text`.
   - Selected: `primary` fill + `on-primary` + a leading check icon, so selection is not color alone.
@@ -527,7 +540,7 @@ padding or a pseudo-element on Web.
 
 ### 6.9 HeroCard
 
-- `hero-bg`, `radius-xl`, elevation 1, padding 20.
+- `hero-bg`, `radius-lg`, elevation 1, padding 20.
 - Content:
   - Label "Saldo total" (`overline`, `hero-text-secondary`).
   - The eye button on the label's row (40 visual / 48 hit on Android, 32 px on Web, on `hero-tile`).
@@ -545,12 +558,30 @@ padding or a pseudo-element on Web.
 
 ### 6.11 Sheets, dialogs, toasts
 
+- **Sheets and dialogs never scroll** (both clients; the user's rule,
+  2026-10). At 100 % font scale on a 360×740 dp phone (and in a desktop
+  dialog) the whole content and the primary button are visible at once:
+  - A choice never adds content under itself. Options that depend on a
+    choice open on their own page in the same sheet: a step
+    (`StepSheet` / `StepModal`) or a drill-in sub-page with a back arrow
+    (`StepSubPage`, `SheetPageHeader`; Web `subPage`).
+  - Pickers fit one screen: the category grid, wrapping chips, or radio
+    rows (`StepChoiceRow`). A single-choice tap advances or closes, with no
+    "Continuar".
+  - Secondary options with their own sub-choices are 56 dp option rows
+    (`StepOptionRow` in a `StepOptionGroup`: icon, label, current value,
+    chevron) that open their sub-page: Periodo, Billeteras, Termina, Tipo,
+    Moneda. A date is a `DateOptionRow` that opens the date picker.
+  - The content keeps a scroll container only as the fallback for a 200 %
+    font scale or the open keyboard. An unbounded feed (Notificaciones)
+    keeps its list scroll.
 - **Bottom sheet (Android):**
-  - `surface-raised`, `radius-sheet` top corners, grab handle 32×4.
-  - Max 90 % height, `scrim`, swipe-down to dismiss.
+  - `surface`, `radius-sheet` top corners, grab handle 32×4.
+  - Max 92 % height, `scrim`, swipe-down to dismiss.
   - Primary action fixed at the bottom above the insets.
 - **Dialog / side panel (Web):**
-  - Dialog: centered, max width 480, `radius-sheet`.
+  - Dialog: centered, max width 520, radius 18. Step dialogs use the same
+    steps and sub-pages as Android.
   - Side panel: 460 px (§5.2).
   - Focus is trapped, Esc closes, and focus returns to the trigger.
 - **Destructive confirmation:**
@@ -661,7 +692,7 @@ padding or a pseudo-element on Web.
 
 - **Web:**
   - Declare the tokens under `:root` / `[data-theme="dark"]` and register them in `@theme inline` (Tailwind v4 CSS-first theming), so components use `bg-primary`, never `bg-[#6622D6]` or `bg-[var(--…)]`.
-  - Set `--font-sans` to Plus Jakarta Sans only; `.tabular` / the `amount` role adds `font-variant-numeric: tabular-nums`.
+  - Set `--font-sans` to Inter only; `.tabular` / the `amount` role adds `font-variant-numeric: tabular-nums`.
 - **Web (as of F1):** the screens still use the `v2-*` utilities; their values are
   now the semantic tokens (`v2-accent` = primary, `v2-accent2` = link,
   `v2-accent-line` = primary-border), and `--color-login-*` are aliases of the
@@ -690,7 +721,7 @@ padding or a pseudo-element on Web.
 | `--color-text-tertiary` / `TextTertiary` / `TextDim` | `text-tertiary` (new values) |
 | `--color-positive` / `negative` / `warning` light | new light values in §2.2 |
 | `--color-login-*`, `--v2-*` | removed; the login and v2 screens use the semantic tokens |
-| `--font-numeric: Inter…` | removed; Plus Jakarta Sans + `tnum` |
+| `--font-numeric` | Inter + `tnum` (one family) |
 
 ### 10.3 Rollout
 

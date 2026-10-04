@@ -529,7 +529,7 @@ function MovementDetail({
         </div>
         <span
           className={cn(
-            'flex items-center gap-1 self-start rounded-full px-2.5 py-1 text-caption font-semibold',
+            'flex items-center gap-1 self-start rounded-[6px] px-2.5 py-1 text-caption font-semibold',
             sched ? 'bg-warning-soft text-warning' : 'bg-positive-soft text-positive',
           )}
         >

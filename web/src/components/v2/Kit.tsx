@@ -213,7 +213,7 @@ function writeCalcPref(on: boolean) {
 // plus a leading check (`.chip-on`), so selection is not color alone.
 export function flatClass(on: boolean): string {
   return cn(
-    'inline-flex h-8 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border text-label font-semibold transition-colors duration-150 motion-reduce:transition-none',
+    'inline-flex h-8 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-[10px] border text-label font-semibold transition-colors duration-150 motion-reduce:transition-none',
     on ? 'chip-on border-transparent pl-3 pr-4 text-white shadow-[var(--cta-glow)] [background:var(--cta-bg)]' : 'border-border-input bg-surface px-4 text-ink hover:bg-surface-sunken',
   )
 }
@@ -276,16 +276,24 @@ export function SectionBox({ children, className, style }: { children: ReactNode
 }
 
 // A category/subcategory grid cell (the mockup's gridCell + gridLab).
-export function GridCell({ on, color, chip, label, onClick }: { on: boolean; color: string; chip: ReactNode; label: string; onClick: () => void }) {
+export function GridCell({ on, chip, label, onClick }: { on: boolean; color?: string; chip: ReactNode; label: string; onClick: () => void }) {
+  // Selected: primary-soft fill, a 2 px primary ring and a check badge, so
+  // selection never rests on color alone (same as Android's GridChip).
   return (
     <button
       type="button"
+      role="radio"
+      aria-checked={on}
       onClick={onClick}
-      className="flex min-w-0 cursor-pointer flex-col items-center gap-1.5 rounded-[12px] px-0.5 py-2.5"
-      style={{ background: on ? `color-mix(in oklab, ${color} 14%, transparent)` : 'transparent', border: `1.5px solid ${on ? color : 'transparent'}` }}
+      className={cn('relative flex min-w-0 cursor-pointer flex-col items-center gap-1.5 rounded-[12px] px-0.5 py-2.5', on ? 'border-2 border-primary-border bg-accent-soft' : 'border-2 border-transparent hover:bg-surface-sunken')}
     >
+      {on && (
+        <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary">
+          <Icon paths={IC.check} size={10} color="var(--on-primary)" />
+        </span>
+      )}
       {chip}
-      <span lang="es" className="w-full text-center text-caption font-medium leading-[1.25] text-ink [overflow-wrap:break-word] [hyphens:auto]">
+      <span lang="es" className={cn('w-full text-center text-caption leading-[1.25] text-ink [overflow-wrap:break-word] [hyphens:auto]', on ? 'font-semibold' : 'font-medium')}>
         {label}
       </span>
     </button>
@@ -351,7 +359,7 @@ export function ErrorBox({ children }: { children: ReactNode }) {
 
 export function CancelButton({ onClick, children = tr('common.cancel') }: { onClick: () => void; children?: ReactNode }) {
   return (
-    <button type="button" onClick={onClick} className="h-11 cursor-pointer whitespace-nowrap rounded-full border border-border-input px-5 text-body-sm font-semibold text-ink-secondary transition-[transform,color] duration-150 ease-out hover:text-ink active:scale-[0.98]">
+    <button type="button" onClick={onClick} className="h-11 cursor-pointer whitespace-nowrap rounded-[12px] border border-border-input px-5 text-body-sm font-semibold text-ink-secondary transition-[transform,color] duration-150 ease-out hover:text-ink active:scale-[0.98]">
       {children}
     </button>
   )
@@ -365,7 +373,7 @@ export function SaveButton({ valid, onClick, children = tr('common.save'), busy 
       type="button"
       onClick={onClick}
       disabled={busy}
-      className="h-11 whitespace-nowrap rounded-full px-5 text-body-sm font-semibold transition-[transform,filter] duration-150 ease-out hover:brightness-110 active:scale-[0.98]"
+      className="h-11 whitespace-nowrap rounded-[12px] px-5 text-body-sm font-semibold transition-[transform,filter] duration-150 ease-out hover:brightness-110 active:scale-[0.98]"
       style={{ cursor: valid ? 'pointer' : 'not-allowed', color: valid ? '#fff' : 'var(--v2-dim)', background: valid ? 'var(--cta-bg)' : 'var(--v2-surface2)', boxShadow: valid ? 'var(--cta-glow)' : 'none' }}
     >
       {children}
@@ -437,7 +445,7 @@ export function ConfirmDialog({ title, lines, ack, cta, onCancel, onConfirm }: {
               <button type="button" onClick={onCancel} className={secondary}>
                 {tr('common.cancel')}
               </button>
-              <button type="button" onClick={() => setStep(2)} className="cursor-pointer rounded-full border border-v2-neg px-4 py-2.5 text-body-sm font-semibold text-negative">
+              <button type="button" onClick={() => setStep(2)} className="cursor-pointer rounded-[12px] border border-v2-neg px-4 py-2.5 text-body-sm font-semibold text-negative">
                 {tr('kit.continue')}
               </button>
             </div>

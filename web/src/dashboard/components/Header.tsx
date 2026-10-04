@@ -69,7 +69,7 @@ export function Header({ title, onMenuClick, onNewTransaction }: HeaderProps) {
         </div>
       </div>
       <div className="flex flex-none items-center gap-2.5">
-        <label className="hidden h-10 w-[min(300px,24vw)] min-w-0 items-center gap-2.5 rounded-full border border-v2-line bg-v2-surface px-4 text-v2-dim transition-colors focus-within:border-[var(--color-border-input)] min-[900px]:flex">
+        <label className="hidden h-10 w-[min(300px,24vw)] min-w-0 items-center gap-2.5 rounded-[12px] border border-v2-line bg-v2-surface px-4 text-v2-dim transition-colors focus-within:border-[var(--color-border-input)] min-[900px]:flex">
           <StrokeIcon paths={ICON_PATHS.search} size={16} />
           <input
             value={query}
@@ -88,7 +88,7 @@ export function Header({ title, onMenuClick, onNewTransaction }: HeaderProps) {
           // Icon-only on phones, and below 1100 px next to Movimientos' period
           // selector, where the label would squeeze the page title away.
           className={cn(
-            'btn-cta flex h-10 flex-none cursor-pointer items-center gap-2 rounded-full px-5 text-label font-semibold max-[519px]:w-10 max-[519px]:justify-center max-[519px]:px-0',
+            'btn-cta flex h-10 flex-none cursor-pointer items-center gap-2 rounded-[12px] px-5 text-label font-semibold max-[519px]:w-10 max-[519px]:justify-center max-[519px]:px-0',
             onMovimientos && 'max-[1099px]:w-10 max-[1099px]:justify-center max-[1099px]:px-0',
           )}
         >
@@ -114,7 +114,7 @@ function PeriodSelector() {
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={`${t('mov.period')}: ${monthYear(period, language)}`}
-        className="flex h-10 cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border border-v2-line bg-v2-surface px-4 text-label font-semibold text-v2-muted hover:border-v2-line2 hover:text-v2-text"
+        className="flex h-10 cursor-pointer items-center gap-2 whitespace-nowrap rounded-[12px] border border-v2-line bg-v2-surface px-4 text-label font-semibold text-v2-muted hover:border-v2-line2 hover:text-v2-text"
       >
         {monthYear(period, language)}
         <StrokeIcon paths={['M6 9l6 6 6-6']} size={12} strokeWidth={2.4} />
@@ -133,7 +133,7 @@ function PeriodSelector() {
               }}
               className={cn(
                 'cursor-pointer rounded-[10px] px-3 py-2.5 text-left text-label hover:bg-v2-subtle',
-                period === m ? 'bg-v2-subtle font-extrabold text-v2-text' : 'font-semibold text-v2-muted',
+                period === m ? 'bg-v2-subtle font-semibold text-v2-text' : 'font-semibold text-v2-muted',
               )}
             >
               {monthYear(m, language)}

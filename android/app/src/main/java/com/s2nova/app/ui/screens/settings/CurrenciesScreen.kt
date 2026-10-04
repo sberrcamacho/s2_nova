@@ -82,7 +82,7 @@ fun CurrenciesScreen(onBack: () -> Unit) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(tr(StringKey.CUR_PRINCIPAL), style = NovaType.label, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Column(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surface).cardAurora().border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp)).padding(16.dp),
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surface).cardAurora().border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp)).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -91,7 +91,7 @@ fun CurrenciesScreen(onBack: () -> Unit) {
                         Text(Currencies.name(principal), style = NovaType.titleSm, color = MaterialTheme.colorScheme.onSurface)
                         Text(principal, style = NovaType.bodySm, color = colors.textDim)
                     }
-                    Text(tr(StringKey.CUR_PRINCIPAL_BADGE), style = NovaType.caption.copy(fontWeight = FontWeight.SemiBold), color = colors.link, maxLines = 1, softWrap = false, modifier = Modifier.clip(RoundedCornerShape(999.dp)).border(1.dp, colors.link, RoundedCornerShape(999.dp)).padding(horizontal = 8.dp, vertical = 3.dp))
+                    Text(tr(StringKey.CUR_PRINCIPAL_BADGE), style = NovaType.caption.copy(fontWeight = FontWeight.SemiBold), color = colors.link, maxLines = 1, softWrap = false, modifier = Modifier.clip(RoundedCornerShape(6.dp)).border(1.dp, colors.link, RoundedCornerShape(6.dp)).padding(horizontal = 8.dp, vertical = 3.dp))
                 }
                 Text(
                     tr(StringKey.CUR_DETECTED, Currencies.deviceCountry(), principal),
@@ -100,7 +100,7 @@ fun CurrenciesScreen(onBack: () -> Unit) {
             }
             Text(tr(StringKey.CUR_OTHERS), style = NovaType.label, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 10.dp))
             val others = currencies.filter { it.code != principal }
-            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surface).cardAurora().border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))) {
+            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surface).cardAurora().border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp))) {
                 if (others.isEmpty()) Text(tr(StringKey.CUR_ONLY_PRINCIPAL), style = NovaType.bodySm, color = colors.textDim, modifier = Modifier.padding(16.dp))
                 others.forEachIndexed { i, c ->
                     val n = used(c.code)

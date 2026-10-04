@@ -125,14 +125,14 @@ fun LoginScreen(
                 Text(
                     text = tr(StringKey.AUTH_LOGIN_TITLE),
                     fontSize = 28.sp,
-                    fontWeight = FontWeight.ExtraBold,
+                    fontWeight = FontWeight.SemiBold,
                     letterSpacing = (-0.03).em,
                     lineHeight = 34.sp,
                     color = MaterialTheme.colorScheme.onBackground,
                 )
                 Text(
                     text = tr(StringKey.AUTH_LOGIN_SUB),
-                    fontSize = 15.sp,
+                    fontSize = 14.sp,
                     color = colors.loginTextMuted,
                     modifier = Modifier.padding(top = 7.dp),
                 )
@@ -207,7 +207,7 @@ fun LoginScreen(
 
                 if (canUseBiometric) {
                     // Secondary button (§6.3).
-                    val shape = androidx.compose.foundation.shape.RoundedCornerShape(50)
+                    val shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -220,7 +220,7 @@ fun LoginScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         com.s2nova.app.ui.components.V2Icon(com.s2nova.app.ui.components.V2Icons.fingerprint, MaterialTheme.colorScheme.onBackground, 20.dp)
-                        Text(tr(StringKey.AUTH_BIOMETRIC_ENTER), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, softWrap = false)
+                        Text(tr(StringKey.AUTH_BIOMETRIC_ENTER), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, softWrap = false)
                     }
                 }
 
@@ -232,8 +232,8 @@ fun LoginScreen(
                         HorizontalDivider(modifier = Modifier.weight(1f))
                         Text(
                             text = tr(StringKey.AUTH_OR),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
                             letterSpacing = 0.08.em,
                             color = colors.loginTextMuted,
                             modifier = Modifier.padding(horizontal = 12.dp),
@@ -273,18 +273,18 @@ fun LoginScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp)
-                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(50))
-                        .border(1.dp, com.s2nova.app.ui.theme.NovaColors.current.borderInput, androidx.compose.foundation.shape.RoundedCornerShape(50))
+                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                        .border(1.dp, com.s2nova.app.ui.theme.NovaColors.current.borderInput, androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
                         .clickable(onClick = onGuest),
                     horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp, androidx.compose.ui.Alignment.CenterHorizontally),
                     verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
                 ) {
                     com.s2nova.app.ui.components.V2Icon(com.s2nova.app.ui.components.V2Icons.enter, MaterialTheme.colorScheme.onSurfaceVariant, 18.dp)
-                    Text(tr(StringKey.AUTH_GUEST), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                    Text(tr(StringKey.AUTH_GUEST), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
                 }
                 Text(
                     tr(StringKey.AUTH_GUEST_HINT),
-                    fontSize = 13.sp,
+                    fontSize = 12.sp,
                     color = colors.textDim,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     // margin-top: -6px under the button.

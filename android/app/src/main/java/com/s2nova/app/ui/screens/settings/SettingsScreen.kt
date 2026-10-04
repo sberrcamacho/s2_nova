@@ -156,7 +156,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
                         .padding(top = 4.dp)
                         .fillMaxWidth()
                         .height(52.dp)
-                        .clip(RoundedCornerShape(50))
+                        .clip(RoundedCornerShape(12.dp))
                         .background(com.s2nova.app.ui.theme.ctaBrush())
                         .clickable(role = Role.Button) {
                             scope.launch {

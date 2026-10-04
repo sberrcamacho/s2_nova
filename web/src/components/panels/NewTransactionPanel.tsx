@@ -93,8 +93,8 @@ const textInput =
 function SectionHead({ title, action, onAction }: { title: string; action: string; onAction: () => void }) {
   return (
     <div className="flex items-center">
-      <div className="flex-1 text-label font-extrabold">{title}</div>
-      <button type="button" onClick={onAction} className="cursor-pointer text-caption font-bold text-v2-accent2">
+      <div className="flex-1 text-label font-semibold">{title}</div>
+      <button type="button" onClick={onAction} className="cursor-pointer text-caption font-semibold text-v2-accent2">
         {action}
       </button>
     </div>
@@ -104,7 +104,7 @@ function SectionHead({ title, action, onAction }: { title: string; action: strin
 function RowText({ label, detail }: { label: string; detail: string }) {
   return (
     <>
-      <div className="text-caption font-bold">{label}</div>
+      <div className="text-caption font-semibold">{label}</div>
       <div className="font-numeric mt-0.5 text-caption leading-[1.4] text-v2-dim">{detail}</div>
     </>
   )
@@ -305,7 +305,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
               (future ? t('nm.budget.whenRecorded') : val > 0 ? t('nm.budget.withThis') : '')}
           </div>
         </div>
-        <span className="font-numeric flex flex-none items-center gap-1 whitespace-nowrap rounded-full px-2 py-1 text-label font-semibold" style={{ color: tone, background: bg }}>
+        <span className="font-numeric flex flex-none items-center gap-1 whitespace-nowrap rounded-[6px] px-2 py-1 text-label font-semibold" style={{ color: tone, background: bg }}>
           {/* The state icon, so the tone isn't carried by color alone. */}
           <Icon paths={pct >= 90 ? ['M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z', 'M12 8v5', 'M12 16h.01'] : pct >= 65 ? ['M12 3 2 21h20z', 'M12 10v5', 'M12 18h.01'] : ['M5 12.5l4.5 4.5L19 7']} size={14} color={tone} />
           {pct}%
@@ -530,11 +530,11 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
                     </PillRow>
                     {rp.endMode === 'count' && (
                       <div className="flex items-center gap-2.5">
-                        <button type="button" aria-label={t('nm.less')} onClick={() => rpSet({ count: Math.max(2, rp.count - 1) })} className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded-[10px] border border-v2-line2 text-body font-bold">
+                        <button type="button" aria-label={t('nm.less')} onClick={() => rpSet({ count: Math.max(2, rp.count - 1) })} className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded-[10px] border border-v2-line2 text-body font-semibold">
                           −
                         </button>
-                        <div className="font-numeric flex-1 text-center text-body-sm font-extrabold">{fill(t(rp.count === 1 ? 'nm.time1' : 'nm.timesN'), rp.count)}</div>
-                        <button type="button" aria-label={t('nm.moreCount')} onClick={() => rpSet({ count: Math.min(99, rp.count + 1) })} className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded-[10px] border border-v2-line2 text-body font-bold">
+                        <div className="font-numeric flex-1 text-center text-body-sm font-semibold">{fill(t(rp.count === 1 ? 'nm.time1' : 'nm.timesN'), rp.count)}</div>
+                        <button type="button" aria-label={t('nm.moreCount')} onClick={() => rpSet({ count: Math.min(99, rp.count + 1) })} className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded-[10px] border border-v2-line2 text-body font-semibold">
                           +
                         </button>
                       </div>
@@ -550,7 +550,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
                         ] as const
                       ).map(([k, label, detail]) => (
                         <RadioRow key={k} on={rp.confirm === k} onClick={() => rpSet({ confirm: k })}>
-                          <div className="text-caption font-bold">{label}</div>
+                          <div className="text-caption font-semibold">{label}</div>
                           <div className="mt-0.5 text-caption leading-[1.4] text-v2-dim">{detail}</div>
                         </RadioRow>
                       ))}
@@ -564,7 +564,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
                     setRpDraft(null)
                     setSection(null)
                   })}
-                  className="cursor-pointer rounded-[10px] bg-v2-accent px-3.5 py-[9px] text-center text-caption font-bold text-white"
+                  className="cursor-pointer rounded-[10px] bg-v2-accent px-3.5 py-[9px] text-center text-caption font-semibold text-white"
                 >
                   {t('nm.apply')}
                 </button>
@@ -584,7 +584,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
                         setSection(null)
                       })}
                       leading={
-                        <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-v2-accent/16 text-caption font-extrabold text-v2-accent2">{currencyInfo(c).symbol}</span>
+                        <span className="flex h-9 w-9 flex-none items-center justify-center rounded-[10px] bg-v2-accent/16 text-caption font-semibold text-v2-accent2">{currencyInfo(c).symbol}</span>
                       }
                     >
                       <RowText label={`${currencyInfo(c).name} · ${c}`} detail={c === wcur ? fill(t('nm.currency.of'), walletName) : `1 ${c} = ${formatMoney(rateOf(c) / rateOf(wcur), wcur)} ${wcur}`} />
@@ -606,11 +606,11 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
                   ] as const
                 ).map(([icon, label, detail, ref]) => (
                   <button key={label} type="button" onClick={() => ref.current?.click()} className="flex cursor-pointer items-center gap-3 py-1 text-left">
-                    <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-v2-accent/20">
+                    <span className="flex h-9 w-9 flex-none items-center justify-center rounded-[10px] bg-v2-accent/20">
                       <Icon paths={icon} size={18} color="var(--v2-accent2)" />
                     </span>
                     <div>
-                      <div className="text-caption font-bold">{label}</div>
+                      <div className="text-caption font-semibold">{label}</div>
                       <div className="text-caption text-v2-dim">{detail}</div>
                     </div>
                   </button>
@@ -670,7 +670,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
               <>
                 <div className="flex items-center gap-3">
                   <div className="min-w-0 flex-1">
-                    <div className="text-caption font-bold">{t(isInc ? 'nm.loan.borrowed' : 'nm.loan.lent')}</div>
+                    <div className="text-caption font-semibold">{t(isInc ? 'nm.loan.borrowed' : 'nm.loan.lent')}</div>
                     <div className="mt-0.5 text-caption text-v2-dim">{t('nm.loan.detail')}</div>
                   </div>
                   <AjSwitch on={loan} label={t(isInc ? 'nm.loan.borrowed' : 'nm.loan.lent')} onToggle={() => !editing && setLoan(!loan)} />
@@ -706,7 +706,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
             type="button"
             onClick={() => save()}
             disabled={saving}
-            className="whitespace-nowrap rounded-[10px] px-[18px] py-2.5 text-caption font-bold"
+            className="whitespace-nowrap rounded-[10px] px-[18px] py-2.5 text-caption font-semibold"
             style={{ cursor: valid ? 'pointer' : 'not-allowed', color: valid ? '#fff' : 'var(--v2-dim)', background: valid ? 'var(--v2-accent)' : 'var(--v2-surface2)' }}
           >
             {saveLabel}
@@ -743,7 +743,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
         style={{ background: 'var(--hero-bg)' }}
       >
         <div className="flex items-center gap-2">
-          <label htmlFor="nt-amount" className="flex-1 text-overline font-bold uppercase text-[var(--hero-overline)]">
+          <label htmlFor="nt-amount" className="flex-1 text-overline font-semibold uppercase text-[var(--hero-overline)]">
             {t('nm.amount')}
           </label>
           <button
@@ -754,7 +754,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
               writePref(PREFS.calc, calc ? '0' : '1')
               setCalc(!calc)
             }}
-            className="box-border flex h-9 flex-none cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border px-[11px] text-caption font-extrabold text-white"
+            className="box-border flex h-9 flex-none cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-[10px] border px-[11px] text-caption font-semibold text-white"
             style={{ background: calc ? 'rgba(255,255,255,.28)' : 'rgba(255,255,255,.1)', borderColor: calc ? '#fff' : 'transparent' }}
           >
             <Icon paths={IC.calc} size={14} color="#fff" />
@@ -763,7 +763,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
           <button
             type="button"
             onClick={() => toggleSection('currency')}
-            className="flex h-[34px] flex-none cursor-pointer items-center gap-[5px] whitespace-nowrap rounded-full bg-[rgba(255,255,255,.14)] px-3 text-caption font-extrabold text-white"
+            className="flex h-[34px] flex-none cursor-pointer items-center gap-[5px] whitespace-nowrap rounded-[8px] bg-[rgba(255,255,255,.14)] px-3 text-caption font-semibold text-white"
           >
             {code}
             <Icon paths={['M6 9l6 6 6-6']} size={13} color="rgba(255,255,255,.7)" />
@@ -776,9 +776,9 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
           onChange={(e) => edit(setExpr)(typedExpr(e.target.value))}
           placeholder="0"
           inputMode="decimal"
-          className="w-full border-none bg-transparent px-0.5 py-px font-[inherit] text-display-sm [font-variant-numeric:tabular-nums] font-extrabold tracking-[-.02em] text-white outline-none placeholder:text-white/85"
+          className="w-full border-none bg-transparent px-0.5 py-px font-[inherit] text-display-sm [font-variant-numeric:tabular-nums] font-semibold tracking-[-.02em] text-white outline-none placeholder:text-white/85"
         />
-        {hasOps(expr) && <div className="font-numeric text-body-sm font-extrabold text-white">{'= ' + formatIn(val, code)}</div>}
+        {hasOps(expr) && <div className="font-numeric text-body-sm font-semibold text-white">{'= ' + formatIn(val, code)}</div>}
         <div className="text-caption text-white/85">{t('nm.opsHint')}</div>
         {code !== wcur && (
           <div className="font-numeric text-caption text-[rgba(255,255,255,.8)]">
@@ -786,7 +786,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
           </div>
         )}
         {future && (
-          <div className="flex items-center gap-[7px] self-start whitespace-nowrap rounded-full bg-[var(--hero-tile)] px-[11px] py-[5px] text-caption font-extrabold text-white">
+          <div className="flex items-center gap-[7px] self-start whitespace-nowrap rounded-[8px] bg-[var(--hero-tile)] px-[11px] py-[5px] text-caption font-semibold text-white">
             <Icon paths={IC.cal} size={13} color="#fff" />
             {`${t('nm.scheduledChip')} · ${fmtDate(date)} · ${time}`}
           </div>
@@ -805,13 +805,13 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
                 type="button"
                 onClick={() => edit(setExpr)(pressKey(expr, k))}
                 className={cn(
-                  'flex h-11 cursor-pointer select-none items-center justify-center rounded-[11px] border font-bold',
+                  'flex h-11 cursor-pointer select-none items-center justify-center rounded-[11px] border font-semibold',
                   op
                     ? 'border-transparent bg-v2-accent/16 text-title text-v2-accent2'
                     : k === '='
                       ? 'row-span-2 h-auto border-transparent bg-v2-accent/32 text-title text-white'
                       : k === 'C' || k === '⌫'
-                        ? 'border-v2-line bg-v2-surface2 text-label font-extrabold text-v2-muted'
+                        ? 'border-v2-line bg-v2-surface2 text-label font-semibold text-v2-muted'
                         : 'border-v2-line bg-v2-surface2 text-body text-v2-text',
                 )}
               >
@@ -825,8 +825,8 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
       {!isTr && section === 'cat' && (
         <div className="flex flex-col gap-2.5">
           <div className="flex items-center">
-            <div className="flex-1 text-body-sm font-extrabold">{t(ctypeIncome ? 'nm.cat.income' : 'nm.cat.expense')}</div>
-            <button type="button" onClick={() => setSection(null)} className="cursor-pointer text-caption font-bold text-v2-accent2">
+            <div className="flex-1 text-body-sm font-semibold">{t(ctypeIncome ? 'nm.cat.income' : 'nm.cat.expense')}</div>
+            <button type="button" onClick={() => setSection(null)} className="cursor-pointer text-caption font-semibold text-v2-accent2">
               {t('common.close')}
             </button>
           </div>
@@ -851,7 +851,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
           </div>
           {cat && subs.length > 0 && (
             <>
-              <div className="mt-1.5 text-caption font-bold tracking-[.06em] text-v2-muted">{fill(t('nm.subOf'), categoryName(cat))}</div>
+              <div className="mt-1.5 text-caption font-semibold tracking-[.06em] text-v2-muted">{fill(t('nm.subOf'), categoryName(cat))}</div>
               <div className="grid grid-cols-4 gap-1">
                 {[{ id: null as CategoryId | null, name: t('nm.none.f') }, ...subs.map((s) => ({ id: s.id as CategoryId | null, name: categoryName(s.id) }))].map((x) => (
                   <GridCell
@@ -876,7 +876,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
               onClose()
               navigate(ctypeIncome ? '/ajustes/categorias?tab=ingresos' : '/ajustes/categorias')
             }}
-            className="cursor-pointer self-start text-caption font-bold text-v2-accent2"
+            className="cursor-pointer self-start text-caption font-semibold text-v2-accent2"
           >
             {t('nm.manageCategories')}
           </button>
@@ -930,7 +930,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
         <div className="flex items-center justify-between gap-2">
           <label htmlFor="nt-title" className={fieldLabel}>{t('nm.titlePh')}</label>
           {titleSuggested && title && (
-            <span className="inline-flex h-6 items-center gap-1 whitespace-nowrap rounded-full border border-primary-border px-2 text-caption font-bold text-ink">
+            <span className="inline-flex h-6 items-center gap-1 whitespace-nowrap rounded-[6px] border border-primary-border px-2 text-caption font-semibold text-ink">
               <Icon paths={['M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z']} size={12} color="var(--color-primary-border)" />
               {t('nm.titleSuggested')}
             </span>
@@ -940,7 +940,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
         {titleHints.filter((h) => h !== title).length > 0 && (
           <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('nm.titleHints')}>
             {titleHints.filter((h) => h !== title).map((h) => (
-              <button key={h} type="button" onClick={() => { titleTouched.current = true; setTitleSuggested(false); edit(setTitle)(h) }} className="inline-flex h-8 max-w-full cursor-pointer items-center whitespace-nowrap rounded-full border border-border-input px-3 text-body-sm text-ink-secondary hover:bg-surface-sunken">
+              <button key={h} type="button" onClick={() => { titleTouched.current = true; setTitleSuggested(false); edit(setTitle)(h) }} className="inline-flex h-8 max-w-full cursor-pointer items-center whitespace-nowrap rounded-[10px] border border-border-input px-3 text-body-sm text-ink-secondary hover:bg-surface-sunken">
                 <span className="truncate">{h}</span>
               </button>
             ))}

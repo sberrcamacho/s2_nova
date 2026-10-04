@@ -59,10 +59,10 @@ export function ColorChip({ label, color, selected, onClick }: { label: string; 
       role="radio"
       aria-checked={selected}
       onClick={onClick}
-      className="cursor-pointer whitespace-nowrap rounded-full border px-[13px] py-2 text-body-sm"
+      className="cursor-pointer whitespace-nowrap rounded-[10px] border px-[13px] py-2 text-body-sm"
       style={
         selected
-          ? { background: color, borderColor: 'transparent', color: inkOn(color), fontWeight: 800 }
+          ? { background: color, borderColor: 'transparent', color: inkOn(color), fontWeight: 600 }
           : { background: `${color}1f`, borderColor: `${color}59`, color: 'var(--v2-text)', fontWeight: 600 }
       }
     >

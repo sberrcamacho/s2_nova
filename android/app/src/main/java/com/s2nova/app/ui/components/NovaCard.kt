@@ -23,7 +23,7 @@ fun NovaCard(
     borderColor: Color = MaterialTheme.colorScheme.outline,
     content: @Composable () -> Unit,
 ) {
-    val shape = RoundedCornerShape(20.dp)
+    val shape = RoundedCornerShape(16.dp)
     val interaction = remember { MutableInteractionSource() }
     val base = modifier
         .then(if (onClick != null) Modifier.pressScale(interaction, pressedScale = 0.98f) else Modifier)

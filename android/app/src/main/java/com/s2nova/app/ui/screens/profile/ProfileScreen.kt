@@ -139,8 +139,8 @@ fun ProfileScreen(
                         .padding(top = 4.dp)
                         .fillMaxWidth()
                         .height(52.dp)
-                        .clip(RoundedCornerShape(50))
-                        .border(1.dp, colors.negative, RoundedCornerShape(50))
+                        .clip(RoundedCornerShape(12.dp))
+                        .border(1.dp, colors.negative, RoundedCornerShape(12.dp))
                         .clickable(role = Role.Button, onClick = onLogout),
                 ) {
                     Text(t(StringKey.PROFILE_LOGOUT), style = NovaType.label, color = colors.negative, maxLines = 1, softWrap = false)
@@ -152,7 +152,7 @@ fun ProfileScreen(
 
 @Composable
 private fun ProfileCard(index: Int, content: @Composable () -> Unit) {
-    val shape = RoundedCornerShape(20.dp)
+    val shape = RoundedCornerShape(16.dp)
     Box(
         modifier = Modifier
             .novaRise(index)

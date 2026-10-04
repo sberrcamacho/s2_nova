@@ -68,15 +68,15 @@ fun AmountPadSheet(
     }
     NovaDraftSheet(onDismiss = done, scrimAlpha = 0.45f, bottomPadding = 18.dp) {
         Row(Modifier.fillMaxWidth().padding(start = 2.dp, end = 2.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(title, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+            Text(title, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
             Row(
-                Modifier.clip(RoundedCornerShape(999.dp)).background(colors.bgDeep).border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(999.dp)).padding(3.dp),
+                Modifier.clip(RoundedCornerShape(10.dp)).background(colors.bgDeep).border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(10.dp)).padding(3.dp),
                 horizontalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 listOf(false to tr(StringKey.NM_KEYPAD), true to tr(StringKey.NM_CALCULATOR)).forEach { (mode, label) ->
                     val on = isCalc == mode
                     Row(
-                        Modifier.clip(RoundedCornerShape(999.dp)).background(if (on) MaterialTheme.colorScheme.primary else Color.Transparent)
+                        Modifier.clip(RoundedCornerShape(8.dp)).background(if (on) MaterialTheme.colorScheme.primary else Color.Transparent)
                             .noRippleClick {
                                 ownCalc = mode
                                 onCalc?.invoke(mode)
@@ -86,7 +86,7 @@ fun AmountPadSheet(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
                         V2Icon(if (mode) V2Icons.calc else V2Icons.keypad, if (on) Color.White else MaterialTheme.colorScheme.onSurfaceVariant, 14.dp)
-                        Text(label, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = if (on) Color.White else MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(label, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = if (on) Color.White else MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -97,13 +97,13 @@ fun AmountPadSheet(
             horizontalAlignment = Alignment.End,
         ) {
             Text(
-                if (hasOps) AmountPad.format(expr) + " =" else "", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = colors.textDim,
+                if (hasOps) AmountPad.format(expr) + " =" else "", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = colors.textDim,
                 maxLines = 1, modifier = Modifier.heightIn(min = 18.dp), style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM),
             )
             Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(currency, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = colors.accentText, modifier = Modifier.padding(bottom = 7.dp))
+                Text(currency, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = colors.accentText, modifier = Modifier.padding(bottom = 7.dp))
                 Text(
-                    AmountPad.display(expr), fontSize = 34.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-1).sp,
+                    AmountPad.display(expr), fontSize = 34.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-1).sp,
                     color = if (value > 0) MaterialTheme.colorScheme.onBackground else colors.textDim, style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM), maxLines = 1,
                 )
             }
@@ -130,7 +130,7 @@ fun AmountPadSheet(
                 }
             }
         }
-        V2Button(if (value > 0) tr(StringKey.NM_DONE) + " · " + formatMoney(value, currency) else tr(StringKey.COMMON_CLOSE), enabled = value > 0, onClick = { done() }, modifier = Modifier.padding(top = 12.dp), verticalPadding = 15.dp, fontSize = 15.sp)
+        V2Button(if (value > 0) tr(StringKey.NM_DONE) + " · " + formatMoney(value, currency) else tr(StringKey.COMMON_CLOSE), enabled = value > 0, onClick = { done() }, modifier = Modifier.padding(top = 12.dp), verticalPadding = 15.dp, fontSize = 14.sp)
     }
 }
 
@@ -155,7 +155,7 @@ private fun PadKey(k: String, height: Dp, modifier: Modifier, onClick: () -> Uni
         modifier.height(height).clip(RoundedCornerShape(14.dp)).background(bg).border(1.dp, border, RoundedCornerShape(14.dp)).noRippleClick(onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text(k, fontSize = size, fontWeight = if (k == "C" || k == "⌫") FontWeight.ExtraBold else FontWeight.Bold, color = color)
+        Text(k, fontSize = size, fontWeight = if (k == "C" || k == "⌫") FontWeight.SemiBold else FontWeight.SemiBold, color = color)
     }
 }
 
@@ -182,8 +182,8 @@ fun AmountField(
     val onClick = { if (enabled) open = true }
     val content: @Composable () -> Unit = {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(if (style == AmountBoxStyle.SHEET) 8.dp else 10.dp)) {
-            Text(symbol, fontSize = fontSize, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurfaceVariant, style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM))
-            Text(shown, fontSize = fontSize, fontWeight = FontWeight.ExtraBold, color = textColor, maxLines = 1, style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM))
+            Text(symbol, fontSize = fontSize, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM))
+            Text(shown, fontSize = fontSize, fontWeight = FontWeight.SemiBold, color = textColor, maxLines = 1, style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM))
         }
     }
     when (style) {

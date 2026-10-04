@@ -115,7 +115,7 @@ export function WalletModal({ wallet, wallets, onClose, onSaved }: { wallet: Wal
       <div className="flex flex-col gap-1.5">
         <Label>{tr('bud.name')}</Label>
         <div className="flex h-14 items-center gap-2.5 rounded-[10px] border border-border-input bg-surface pr-3 pl-2 focus-within:border-primary-border">
-          <span aria-hidden="true" className="flex h-10 w-10 flex-none items-center justify-center rounded-full" style={{ background: 'linear-gradient(150deg,var(--color-primary-pressed),var(--color-primary-secondary))' }}>
+          <span aria-hidden="true" className="flex h-10 w-10 flex-none items-center justify-center rounded-[12px]" style={{ background: 'linear-gradient(150deg,var(--color-primary-pressed),var(--color-primary-secondary))' }}>
             <Icon paths={walletGlyph(type)} size={18} color="#fff" />
           </span>
           <input

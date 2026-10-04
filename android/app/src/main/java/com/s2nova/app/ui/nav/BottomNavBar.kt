@@ -167,7 +167,7 @@ fun NovaBottomBar(
                 .padding(top = FabTouchTop - fabSize / 2)
                 .size(fabSize)
                 .pressScale(fabInteraction, pressedScale = 0.92f)
-                .shadow(elevation = 12.dp, shape = CircleShape, ambientColor = NovaColors.current.cta.last().copy(alpha = 0.6f), spotColor = NovaColors.current.cta.last().copy(alpha = 0.6f))
+                .shadow(elevation = 6.dp, shape = CircleShape, ambientColor = NovaColors.current.cta.last().copy(alpha = 0.35f), spotColor = NovaColors.current.cta.last().copy(alpha = 0.35f))
                 .clip(CircleShape)
                 // The brand gradient of web's primary action.
                 .background(com.s2nova.app.ui.theme.ctaBrush())
@@ -204,22 +204,21 @@ private fun BottomTabItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        // The active tab sits on a brand-gradient pill with a violet hairline
-        // (web's active sidebar item), fading in as the tab is selected.
+        // The active tab sits on a primary-soft pill (web's active sidebar
+        // item), fading in as the tab is selected.
         val pill by androidx.compose.animation.core.animateFloatAsState(
             if (selected) 1f else 0f,
             androidx.compose.animation.core.tween(com.s2nova.app.ui.theme.NovaMotion.FAST),
             label = "tabPill",
         )
-        val pillShape = RoundedCornerShape(50)
+        val pillShape = RoundedCornerShape(10.dp)
         Box(Modifier.padding(top = 2.dp).size(width = 58.dp, height = 32.dp), contentAlignment = Alignment.Center) {
             Box(
                 Modifier
                     .matchParentSize()
                     .graphicsLayer { alpha = pill; scaleX = 0.7f + 0.3f * pill }
                     .clip(pillShape)
-                    .background(Brush.horizontalGradient(listOf(brand.cta.first().copy(alpha = 0.24f), brand.cta.last().copy(alpha = 0.10f))))
-                    .border(1.dp, brand.navActiveLine, pillShape),
+                    .background(MaterialTheme.colorScheme.primaryContainer),
             )
             Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(24.dp).pressScale(interaction, pressedScale = 0.9f))
         }
@@ -232,8 +231,8 @@ private fun BottomTabItem(
             Text(
                 label,
                 color = labelColor,
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                fontSize = 13.sp,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                fontSize = 12.sp,
                 maxLines = 1,
                 softWrap = false,
                 overflow = TextOverflow.Ellipsis,

@@ -58,11 +58,11 @@ export function GuideCard() {
       <div className="mt-2 text-title font-medium tracking-[-.01em]">{copy('title')}</div>
       <div className="mt-1.5 text-body-sm leading-[1.5] text-v2-muted [text-wrap:pretty]">{copy('body')}</div>
       <div className="mt-4 flex items-center gap-2.5">
-        <button type="button" onClick={() => save({ guidesOff: true })} className="min-h-8 cursor-pointer rounded-full px-2 text-label font-medium text-v2-muted hover:text-v2-text">
+        <button type="button" onClick={() => save({ guidesOff: true })} className="min-h-8 cursor-pointer rounded-[8px] px-2 text-label font-medium text-v2-muted hover:text-v2-text">
           {t('guide.skip')}
         </button>
         <div className="flex-1" />
-        <button type="button" onClick={() => save({ guidesSeen: [...user.guidesSeen, key] })} className="btn-cta h-9 cursor-pointer rounded-full px-4 text-label font-semibold">
+        <button type="button" onClick={() => save({ guidesSeen: [...user.guidesSeen, key] })} className="btn-cta h-9 cursor-pointer rounded-[10px] px-4 text-label font-semibold">
           {t('guide.ok')}
         </button>
       </div>

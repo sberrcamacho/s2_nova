@@ -438,3 +438,47 @@ def ratio(a, b):
 - **Icono de marca:** `web/src/assets/logo-mark-light.png`, `logo-mark-dark.png`.
 
 El resto del inventario de `app-light/` y `app-dark/` (36 pantallas por tema) sigue los mismos patrones de componentes y se usó para confirmar que los hallazgos se repiten.
+
+---
+
+## Revision 2026-10: brand-signature minimalism
+
+**What prompted it.** After the brand-tinted rework, the user found the app
+looked "like a rainbow or a kids' app" for a finance product, while still
+rejecting the earlier neutral grey look as generic. The captures showed why:
+a lilac tint over every background, violet-tinted cards and borders, pastel
+multicolor category circles, the brand gradient on banners, buttons, chips,
+rings and the FAB, auroras behind cards, 28 dp radii and pill buttons, and
+Outfit, a rounded geometric face.
+
+**Method.** UI/UX Pro Max (`--design-system` "personal finance budgeting app
+professional trustworthy") recommended Minimalism & Swiss Style: one primary
+accent, hairline borders, minimal shadows, clear hierarchy, tabular data.
+Its generic "trust blue" palette was set aside because the brand palette is
+fixed. A local HTML mockup of Inicio and the budget sheet in both themes
+was approved by the user before implementation. (AIDesigner had no credits
+that month.)
+
+**Decisions.**
+
+- Neutrals carry the brand's temperature (≈2–4 % chroma toward indigo) so
+  the product is not generic grey, but never a lilac wash.
+- One solid primary from the mark (`#5712C2` light, `#6622D6` fill /
+  `#C29BFF` text in dark). Buttons, chips, the FAB, rings and the active nav
+  are solid; the gradient stays only on the balance hero and the logo, as
+  the signature.
+- Category marks are tonal glyphs on a neutral tile instead of pastel
+  circles: twenty hues side by side were the main "rainbow" source.
+- Radii come down (cards 16, controls 12, chips 10, sheets 24) and weights
+  stop at 600.
+- Inter replaces Outfit: larger x-height, so the 12/14 sizes of §3 apply
+  again without Outfit's +1 compensation, and a neutral, precise tone.
+
+Contrast was re-measured for every new pair (text 5.3–9.3:1, input
+boundaries ≥ 3.3:1); see the tables in `DESIGN-SYSTEM.md` §2.2.
+
+**Sheets.** The user also asked that sheets never scroll: in "Nuevo
+presupuesto", picking a category appended subcategories and the name under
+the grid. The rule and the patterns (steps, drill-in sub-pages, option rows,
+compact pickers) are in `DESIGN-SYSTEM.md` §6.11; every Android sheet was
+measured on a 360×740 dp emulator.

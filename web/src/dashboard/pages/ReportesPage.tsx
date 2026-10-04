@@ -223,7 +223,7 @@ function SpendingTab({ report }: { report: Report | null }) {
         <Card>
           <div className="flex flex-wrap items-start justify-between gap-2.5">
             <CardTitle title={t('rep.whereMoneyWent')} subtitle={fill(t('rep.sameCategories'), monthYear(report?.month ?? todayISO().slice(0, 7), language))} />
-            <div role="radiogroup" aria-label={t('rep.whereMoneyWent')} className="flex gap-0.5 rounded-full border border-border bg-v2-surface2 p-[3px]">
+            <div role="radiogroup" aria-label={t('rep.whereMoneyWent')} className="flex gap-0.5 rounded-[12px] border border-border bg-v2-surface2 p-[3px]">
               {(['parent', 'sub'] as const).map((k) => (
                 <button
                   key={k}
@@ -231,7 +231,7 @@ function SpendingTab({ report }: { report: Report | null }) {
                   role="radio"
                   aria-checked={level === k}
                   onClick={() => setLevel(k)}
-                  className={cn('cursor-pointer rounded-full px-[11px] py-[5px] text-caption font-bold', level === k ? 'text-white [background:var(--cta-bg)]' : 'text-ink-tertiary')}
+                  className={cn('cursor-pointer rounded-[9px] px-[11px] py-[5px] text-caption font-semibold', level === k ? 'text-white [background:var(--cta-bg)]' : 'text-ink-tertiary')}
                 >
                   {t(k === 'parent' ? 'rep.level.parent' : 'rep.level.sub')}
                 </button>
@@ -318,7 +318,7 @@ function IncomeTab({ report }: { report: Report | null }) {
           ) : (
             sources.map((s) => (
               <div key={`${s.category}|${s.merchant ?? ''}`}>
-                <div className="mb-[7px] flex justify-between gap-2.5 text-label font-bold">
+                <div className="mb-[7px] flex justify-between gap-2.5 text-label font-semibold">
                   <span>{s.merchant ? `${categoryName(s.category)} — ${s.merchant}` : categoryName(s.category)}</span>
                   <span className="font-numeric whitespace-nowrap">
                     <Money hidden={hidden} inline>
@@ -444,17 +444,17 @@ function CashFlowTab({ report, wallets, series }: { report: Report | null; walle
               const [, m, d] = e.date.split('-').map(Number)
               return (
                 <div key={e.series.id} className="flex items-center gap-4 border-b border-divider py-[13px]">
-                  <span className="w-16 flex-none text-caption font-bold tracking-[.08em] text-ink-tertiary">
+                  <span className="w-16 flex-none text-caption font-semibold tracking-[.08em] text-ink-tertiary">
                     {e.dueToday ? t('rep.today') : `${String(d).padStart(2, '0')} ${MONTHS_SHORT[language][m! - 1]!.toUpperCase()}`}
                   </span>
-                  <span className="min-w-0 flex-1 truncate text-label font-bold" title={e.series.name}>
+                  <span className="min-w-0 flex-1 truncate text-label font-semibold" title={e.series.name}>
                     {e.series.name}
                   </span>
                   {/* The amount in the Programado's own currency (with the "≈" line when it
                       isn't the principal), as in Inicio's Próximos 14 días. Below 520px the
                       balance moves under it instead of taking its own column. */}
                   <div className="min-w-[110px] flex-none text-right">
-                    <Money hidden={hidden} className={cn('block whitespace-nowrap text-label font-extrabold', e.signed < 0 ? 'text-negative' : 'text-positive')}>
+                    <Money hidden={hidden} className={cn('block whitespace-nowrap text-label font-semibold', e.signed < 0 ? 'text-negative' : 'text-positive')}>
                       {`${e.signed < 0 ? '−' : '+'}${formatIn(Math.abs(e.signed), e.series.currency)}`}
                     </Money>
                     {e.series.currency !== principal && (
@@ -481,7 +481,7 @@ function CashFlowTab({ report, wallets, series }: { report: Report | null; walle
               .split(/(\{\d\})/)
               .map((chunk, i) =>
                 chunk === '{0}' ? (
-                  <Money key={i} hidden={hidden} className="font-bold text-warning">
+                  <Money key={i} hidden={hidden} className="font-semibold text-warning">
                     {format(lowest.running)}
                   </Money>
                 ) : chunk === '{1}' ? (
@@ -544,7 +544,7 @@ function NetWorthTab({ report, wallets }: { report: Report | null; wallets: Wall
             wallets.map((w) => (
               <div key={w.id} className="flex min-h-14 items-center gap-3 border-b border-divider py-2">
                 {/* The same wallet mark as Billeteras: a brand gradient with its glyph. */}
-                <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full text-white" style={{ background: 'linear-gradient(150deg,var(--color-primary-pressed),var(--color-primary-secondary))' }}>
+                <span className="flex h-10 w-10 flex-none items-center justify-center rounded-[12px] text-white" style={{ background: 'linear-gradient(150deg,var(--color-primary-pressed),var(--color-primary-secondary))' }}>
                   <StrokeIcon paths={walletGlyph(w.accountType)} size={18} />
                 </span>
                 <div className="min-w-0 flex-1">
@@ -561,7 +561,7 @@ function NetWorthTab({ report, wallets }: { report: Report | null; wallets: Wall
         <div className="mt-4 flex items-baseline justify-between border-t border-border pt-3.5">
           <span className="text-label font-semibold text-ink-secondary">{t('rep.netWorth')}</span>
           {report ? (
-            <Money hidden={hidden} className="text-title font-bold tabular-nums">
+            <Money hidden={hidden} className="text-title font-semibold tabular-nums">
               {format(report.netWorth.wallets)}
             </Money>
           ) : (

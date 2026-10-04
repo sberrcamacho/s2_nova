@@ -19,7 +19,7 @@ export function AmountText({ amount, type, className, signed = true }: AmountTex
   return (
     <span
       className={cn(
-        'font-numeric font-bold',
+        'font-numeric font-semibold',
         isTransfer ? 'text-ink-secondary' : type === 'income' ? 'text-positive' : 'text-negative',
         className,
       )}

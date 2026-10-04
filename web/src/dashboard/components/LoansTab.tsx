@@ -102,7 +102,7 @@ export function LoansTab({ side, onSide, adding, onAddingDone }: { side: LoanKin
                   <div className="text-body-sm text-ink-secondary">{meta}</div>
                 </div>
                 {/* The state carries an icon, not just the tone. */}
-                <span className={cn('flex flex-none items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-caption font-semibold', done ? 'bg-positive-soft text-positive' : 'bg-warning-soft text-warning')}>
+                <span className={cn('flex flex-none items-center gap-1 whitespace-nowrap rounded-[6px] px-2.5 py-1 text-caption font-semibold', done ? 'bg-positive-soft text-positive' : 'bg-warning-soft text-warning')}>
                   <StrokeIcon paths={done ? ICON_PATHS.check : ICON_PATHS.clock} size={14} />
                   {done ? t('loans.settled') : t('loans.pending')}
                 </span>

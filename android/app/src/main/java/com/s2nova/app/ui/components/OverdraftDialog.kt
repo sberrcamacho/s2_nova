@@ -58,7 +58,7 @@ fun OverdraftDialog(
     onConfirm: () -> Unit,
 ) {
     val colors = NovaColors.current
-    val shape = RoundedCornerShape(28.dp)
+    val shape = RoundedCornerShape(20.dp)
     Dialog(onDismissRequest = onReview) {
         Column(
             modifier = Modifier
@@ -147,7 +147,7 @@ private fun DialogButton(label: String, primary: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(if (primary) RoundedCornerShape(50) else shape)
+            .clip(if (primary) RoundedCornerShape(12.dp) else shape)
             .then(
                 if (primary) Modifier.background(com.s2nova.app.ui.theme.ctaBrush())
                 else Modifier.background(MaterialTheme.colorScheme.surface).border(1.dp, colors.borderInput, shape),

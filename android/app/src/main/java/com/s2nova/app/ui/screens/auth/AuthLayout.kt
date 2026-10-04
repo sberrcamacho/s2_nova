@@ -38,7 +38,7 @@ fun AuthLayout(
     ) {
         AuthLogo()
         androidx.compose.foundation.layout.Spacer(modifier = Modifier.padding(top = 28.dp))
-        Text(title, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)
+        Text(title, fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
         androidx.compose.foundation.layout.Spacer(modifier = Modifier.padding(top = 6.dp))
         Text(subtitle, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         androidx.compose.foundation.layout.Spacer(modifier = Modifier.padding(top = 28.dp))

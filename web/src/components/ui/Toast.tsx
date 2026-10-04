@@ -12,7 +12,7 @@ export function ToastViewport() {
     <div
       key={toast.id}
       role={toast.variant === 'error' ? 'alert' : 'status'}
-      className="fixed bottom-7 left-1/2 z-[200] flex -translate-x-1/2 items-center gap-3.5 rounded-[12px] bg-v2-text px-4 py-[11px] text-caption font-bold text-v2-bg shadow-[0_12px_32px_rgba(0,0,0,.35)]"
+      className="fixed bottom-7 left-1/2 z-[200] flex -translate-x-1/2 items-center gap-3.5 rounded-[12px] bg-v2-text px-4 py-[11px] text-caption font-semibold text-v2-bg shadow-[0_12px_32px_rgba(0,0,0,.35)]"
     >
       {toast.message}
       {toast.action && (
@@ -22,7 +22,7 @@ export function ToastViewport() {
             dismissToast(toast.id)
             toast.action!.onClick()
           }}
-          className="cursor-pointer font-extrabold text-v2-accent-inverse"
+          className="cursor-pointer font-semibold text-v2-accent-inverse"
         >
           {toast.action.label}
         </button>

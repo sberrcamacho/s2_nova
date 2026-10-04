@@ -49,7 +49,7 @@ export default function BilleterasPage() {
         <button
           type="button"
           onClick={() => setEditing('new')}
-          className="btn-cta flex h-11 cursor-pointer items-center gap-2 whitespace-nowrap rounded-full px-5 text-label font-semibold"
+          className="btn-cta flex h-11 cursor-pointer items-center gap-2 whitespace-nowrap rounded-[12px] px-5 text-label font-semibold"
         >
           <StrokeIcon paths={ICON_PATHS.plus} size={16} strokeWidth={2.4} />
           {tr('wallet.new')}
@@ -83,7 +83,7 @@ export default function BilleterasPage() {
             className="flex cursor-pointer flex-col gap-3 nova-card p-5 text-ink hover:border-border-strong focus-visible:outline-2 focus-visible:outline-focus"
           >
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full" style={{ background: 'linear-gradient(150deg,var(--color-primary-pressed),var(--color-primary-secondary))' }}>
+              <span className="flex h-10 w-10 flex-none items-center justify-center rounded-[12px]" style={{ background: 'linear-gradient(150deg,var(--color-primary-pressed),var(--color-primary-secondary))' }}>
                 <Icon paths={walletGlyph(w.accountType)} size={18} color="#fff" />
               </span>
               <div className="min-w-0 flex-1">

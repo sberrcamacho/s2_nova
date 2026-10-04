@@ -6,16 +6,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
-import kotlin.math.max
 
-// The balance hero's surface (DESIGN-SYSTEM.md §2.2 "Hero card"), shared by
-// Inicio's hero and Nuevo movimiento's amount card, the same way Web uses
-// --hero-bg for both: the theme's diagonal gradient, a radial glow toward
-// the top-right corner and a hairline border.
+// The balance hero's surface (DESIGN-SYSTEM.md §2.2 "Hero card"): the
+// theme's diagonal brand gradient, a 1 px top highlight and a hairline
+// border. The hero is the one place the brand gradient appears.
 @Composable
 fun Modifier.heroSurface(shape: Shape): Modifier {
     val colors = NovaColors.current
@@ -28,15 +26,20 @@ fun Modifier.heroSurface(shape: Shape): Modifier {
                 1f to colors.heroTo,
             ),
         )
-        // Drawn behind the content so it never takes part in the layout.
         .drawBehind {
-            val center = Offset(size.width, 0f)
-            val radius = max(size.width, size.height) * 0.75f
-            drawCircle(brush = Brush.radialGradient(colors.heroGlow, center = center, radius = radius), radius = radius, center = center)
-            // The second aurora, bottom-left (web --hero-bg's second layer).
-            val bl = Offset(0f, size.height)
-            val r2 = max(size.width, size.height) * 0.9f
-            drawCircle(brush = Brush.radialGradient(colors.heroGlow2, center = bl, radius = r2), radius = r2, center = bl)
+            drawRect(Color.White.copy(alpha = 0.14f), size = androidx.compose.ui.geometry.Size(size.width, 1.dp.toPx()))
         }
         .border(1.dp, colors.heroBorder, shape)
+}
+
+// The amount field of forms (Nuevo movimiento, the plan sheets): a neutral
+// surface with the input boundary, 2 dp primary while its pad is open. The
+// figure itself carries the emphasis, so it needs no brand gradient.
+@Composable
+fun Modifier.amountSurface(shape: Shape, active: Boolean = false): Modifier {
+    val colors = NovaColors.current
+    return this
+        .clip(shape)
+        .background(androidx.compose.material3.MaterialTheme.colorScheme.surface)
+        .border(if (active) 2.dp else 1.dp, if (active) colors.primaryBorder else colors.borderInput, shape)
 }

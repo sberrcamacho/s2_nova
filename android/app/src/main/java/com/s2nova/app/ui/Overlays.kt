@@ -100,9 +100,9 @@ fun BoxScope.SnackHost(bottom: Dp) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Text(m.text, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.background, modifier = Modifier.weight(1f))
+        Text(m.text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.background, modifier = Modifier.weight(1f))
         if (m.onUndo != null) {
-            Text(tr(StringKey.COMMON_UNDO), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = NovaColors.current.accentText, modifier = Modifier.noRippleClick { Snack.undo() })
+            Text(tr(StringKey.COMMON_UNDO), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = NovaColors.current.accentText, modifier = Modifier.noRippleClick { Snack.undo() })
         }
     }
 }
@@ -145,13 +145,13 @@ fun ConfirmHost() {
                 V2Icon(if (step == 1) V2Icons.trash else V2Icons.warn, colors.negative, 22.dp)
             }
             if (step == 1) {
-                Text(r.title, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp, color = MaterialTheme.colorScheme.onBackground)
-                Text(tr(StringKey.CONFIRM_WILL_DELETE), fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.88.sp, color = colors.textDim)
+                Text(r.title, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-0.25).sp, color = MaterialTheme.colorScheme.onBackground)
+                Text(tr(StringKey.CONFIRM_WILL_DELETE), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.88.sp, color = colors.textDim)
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     r.lines.forEach { line ->
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             Box(Modifier.padding(top = 6.dp).size(6.dp).clip(CircleShape).background(colors.negative))
-                            Text(line, fontSize = 15.sp, lineHeight = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM))
+                            Text(line, fontSize = 14.sp, lineHeight = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM))
                         }
                     }
                 }
@@ -162,13 +162,13 @@ fun ConfirmHost() {
                             if (next != null) { Confirm.close(); next() } else step = 2
                         }.padding(14.dp),
                     contentAlignment = Alignment.Center,
-                ) { Text(tr(StringKey.CONFIRM_CONTINUE), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = colors.negative) }
+                ) { Text(tr(StringKey.CONFIRM_CONTINUE), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = colors.negative) }
                 Text(
-                    tr(StringKey.COMMON_CANCEL), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    tr(StringKey.COMMON_CANCEL), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().noRippleClick { Confirm.close() }.padding(vertical = 4.dp),
                 )
             } else {
-                Text(tr(StringKey.CONFIRM_CANT_UNDO), fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.25).sp, color = MaterialTheme.colorScheme.onBackground)
+                Text(tr(StringKey.CONFIRM_CANT_UNDO), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, letterSpacing = (-0.25).sp, color = MaterialTheme.colorScheme.onBackground)
                 Row(
                     Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(14.dp))
                         .noRippleClick { checked = !checked }.padding(horizontal = 14.dp, vertical = 13.dp),
@@ -180,15 +180,15 @@ fun ConfirmHost() {
                             .border(2.dp, if (checked) colors.negative else MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(7.dp)),
                         contentAlignment = Alignment.Center,
                     ) { if (checked) V2Icon(V2Icons.check, Color.White, 13.dp) }
-                    Text(r.ack, fontSize = 15.sp, lineHeight = 20.sp, color = MaterialTheme.colorScheme.onBackground)
+                    Text(r.ack, fontSize = 14.sp, lineHeight = 20.sp, color = MaterialTheme.colorScheme.onBackground)
                 }
                 Box(
                     Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(if (checked) colors.negative else colors.negativeBorder)
                         .noRippleClick { if (checked) { Confirm.close(); r.onConfirm() } }.padding(14.dp),
                     contentAlignment = Alignment.Center,
-                ) { Text(r.cta, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = if (checked) Color.White else colors.textDim) }
+                ) { Text(r.cta, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = if (checked) Color.White else colors.textDim) }
                 Text(
-                    tr(StringKey.COMMON_BACK_TO), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    tr(StringKey.COMMON_BACK_TO), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().noRippleClick { step = 1; checked = false }.padding(vertical = 4.dp),
                 )
             }
@@ -212,27 +212,27 @@ fun BoxScope.GuideCard(key: String, bottom: Dp, onOk: () -> Unit, onSkipAll: () 
             .align(Alignment.BottomCenter)
             .padding(start = 14.dp, end = 14.dp, bottom = bottom)
             .fillMaxWidth()
-            .shadow(22.dp, RoundedCornerShape(20.dp))
-            .clip(RoundedCornerShape(20.dp))
+            .shadow(22.dp, RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(16.dp))
             .background(colors.sheetSurface)
             .cardAurora()
             // The brand hairline on top, as web's guide card.
             .drawBehind { drawRect(Brush.horizontalGradient(colors.cta), size = androidx.compose.ui.geometry.Size(size.width, 3.dp.toPx())) }
-            .border(1.dp, colors.navActiveLine, RoundedCornerShape(20.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp))
             .padding(start = 16.dp, end = 16.dp, top = 18.dp, bottom = 12.dp),
     ) {
-        Text(tr(StringKey.GUIDE_LABEL).uppercase() + " · " + screen.uppercase(), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.2.sp, color = colors.accentText)
+        Text(tr(StringKey.GUIDE_LABEL).uppercase() + " · " + screen.uppercase(), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.2.sp, color = colors.accentText)
         Text(copy.first, fontSize = 18.sp, fontWeight = FontWeight.Medium, letterSpacing = (-0.2).sp, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 8.dp))
-        Text(copy.second, fontSize = 15.sp, lineHeight = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
+        Text(copy.second, fontSize = 14.sp, lineHeight = 20.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
         Row(Modifier.padding(top = 14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(Modifier.heightIn(min = 48.dp).noRippleClick(onSkipAll), contentAlignment = Alignment.CenterStart) {
-                Text(tr(StringKey.GUIDE_SKIP), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(tr(StringKey.GUIDE_SKIP), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, softWrap = false)
             }
             Spacer(Modifier.weight(1f))
             Box(
-                Modifier.heightIn(min = 48.dp).clip(RoundedCornerShape(50)).background(ctaBrush()).noRippleClick(onOk).padding(horizontal = 22.dp),
+                Modifier.heightIn(min = 48.dp).clip(RoundedCornerShape(12.dp)).background(ctaBrush()).noRippleClick(onOk).padding(horizontal = 22.dp),
                 contentAlignment = Alignment.Center,
-            ) { Text(tr(StringKey.GUIDE_OK), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color.White) }
+            ) { Text(tr(StringKey.GUIDE_OK), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.White, maxLines = 1, softWrap = false) }
         }
     }
 }

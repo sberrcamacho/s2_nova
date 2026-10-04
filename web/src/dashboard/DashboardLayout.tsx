@@ -32,12 +32,12 @@ function isTyping(target: EventTarget | null): boolean {
 function GuestBanner() {
   const navigate = useNavigate()
   return (
-    <div className="mx-4 mt-6 flex items-center gap-3.5 rounded-[16px] border border-v2-accent-line/30 bg-accent-soft/60 px-4 py-3 min-[760px]:mx-8">
+    <div className="mx-4 mt-6 flex items-center gap-3.5 rounded-[16px] border border-border bg-surface px-4 py-3 min-[760px]:mx-8">
       <div className="min-w-0 flex-1">
         <span className="text-label font-semibold">{tr('guest.title')}</span>{' '}
         <span className="text-label text-v2-muted">{tr('guest.body')}</span>
       </div>
-      <button type="button" onClick={() => navigate('/register')} className="btn-cta h-9 flex-none cursor-pointer whitespace-nowrap rounded-full px-4 text-label font-semibold">
+      <button type="button" onClick={() => navigate('/register')} className="btn-cta h-9 flex-none cursor-pointer whitespace-nowrap rounded-[10px] px-4 text-label font-semibold">
         {tr('guest.cta')}
       </button>
     </div>

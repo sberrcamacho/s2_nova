@@ -19,12 +19,19 @@ export function CategoryGlyph({ category, size, color }: { category: CategoryId;
   return <Glyph paths={categoryGlyph(category)} size={size} color={color ?? categoryColor(category)} />
 }
 
-// A circle filled with the color at 16% (hex alpha 0x29) and the glyph at
-// 46% of the box — the v2 mockups' `mark(cat, box)`.
+// A category color toned for glyphs: mixed 28 % toward the theme's ink
+// (dark ink in light, near-white in dark), so glyphs stay calm and ≥ 3:1.
+export function categoryTone(color: string): string {
+  return `color-mix(in oklab, ${color} 72%, var(--color-text))`
+}
+
+// A category or plan mark: the toned glyph on a neutral rounded tile (same
+// as Android's GlyphMark). Categories are told apart by glyph and label,
+// not by a wash of color.
 export function GlyphMark({ paths, color, box }: { paths: string[]; color: string; box: number }) {
   return (
-    <span aria-hidden="true" className="flex flex-none items-center justify-center rounded-full" style={{ width: box, height: box, background: `${color}29` }}>
-      <Glyph paths={paths} size={Math.round(box * 0.46)} color={color} />
+    <span aria-hidden="true" className="flex flex-none items-center justify-center rounded-[28%] bg-surface-sunken" style={{ width: box, height: box }}>
+      <Glyph paths={paths} size={Math.round(box * 0.5)} color={categoryTone(color)} strokeWidth={2} />
     </span>
   )
 }

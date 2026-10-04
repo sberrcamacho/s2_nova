@@ -203,7 +203,7 @@ private fun PlanesTabs(labels: List<String>, selected: Int, onSelect: (Int) -> U
             ) {
                 Text(
                     label,
-                    style = NovaType.label.copy(fontWeight = if (on) FontWeight.Bold else FontWeight.SemiBold),
+                    style = NovaType.label.copy(fontWeight = if (on) FontWeight.SemiBold else FontWeight.SemiBold),
                     color = if (on) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     softWrap = false,
@@ -240,7 +240,7 @@ private fun BudgetsTab() {
             val today = java.time.LocalDate.now()
             val daysLeft = today.lengthOfMonth() - today.dayOfMonth
             val available = (totalLimit - totalSpent).coerceAtLeast(0.0)
-            val shape = RoundedCornerShape(20.dp)
+            val shape = RoundedCornerShape(16.dp)
             Column(
                 modifier = Modifier
                     .novaRise(0)
@@ -360,7 +360,7 @@ private fun BudgetCard(progress: BudgetProgress, onEdit: () -> Unit) {
     val principal = AppContainer.currencyRepository.principal
     val b = progress.budget
     val tone = toneColor(budgetTone(progress.percentage), colors)
-    val shape = RoundedCornerShape(20.dp)
+    val shape = RoundedCornerShape(16.dp)
     val custom = b.kind == BudgetKind.CUSTOM
     val repo = AppContainer.categoryRepository
     val walletNames = AppContainer.walletRepository.wallets.value.filter { it.id in b.walletIds }.map { shortWallet(it.name) }

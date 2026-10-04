@@ -97,7 +97,7 @@ import com.s2nova.app.ui.components.noRippleClick
 import com.s2nova.app.ui.components.toneOf
 import com.s2nova.app.ui.theme.BrandColors
 import com.s2nova.app.ui.theme.NovaColors
-import com.s2nova.app.ui.theme.heroSurface
+import com.s2nova.app.ui.theme.amountSurface
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -556,7 +556,7 @@ fun AddTransactionScreen(
                                 modifier = Modifier.weight(1f).padding(top = 2.dp),
                             )
                             Row(
-                                Modifier.padding(start = 8.dp).clip(RoundedCornerShape(999.dp)).background(bg).padding(horizontal = 8.dp, vertical = 4.dp),
+                                Modifier.padding(start = 8.dp).clip(RoundedCornerShape(6.dp)).background(bg).padding(horizontal = 8.dp, vertical = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
@@ -610,7 +610,7 @@ fun AddTransactionScreen(
                 enabled = s.valid && !s.saving,
                 onClick = { save() },
                 verticalPadding = 16.dp,
-                fontSize = 15.sp,
+                fontSize = 14.sp,
                 glow = true,
             )
         }
@@ -710,40 +710,39 @@ private fun TypeSegmented(s: NmState, typeLocked: Boolean) {
     }
 }
 
-// The amount card on the hero surface: "MONTO", the figure in `display-sm`
-// and the currency pill; then the conversion line and the Programado chip.
+// The amount card: "MONTO", the figure in `display-sm` and the currency
+// pill; then the conversion line and the Programado chip.
 @Composable
 private fun AmountHero(s: NmState, cur: String, wcur: String, rate: Double, value: Double, walletName: String) {
     val colors = NovaColors.current
-    val white = Color.White
+    val ink = MaterialTheme.colorScheme.onBackground
     val padOpen = s.sheet == NmSheet.PAD
     Column(
         Modifier.fillMaxWidth()
-            .heroSurface(RoundedCornerShape(20.dp))
-            .then(if (padOpen) Modifier.border(2.dp, white, RoundedCornerShape(20.dp)) else Modifier)
+            .amountSurface(RoundedCornerShape(16.dp), active = padOpen)
             .clickable(role = Role.Button, onClickLabel = tr(StringKey.NM_AMOUNT)) { s.sheet = NmSheet.PAD }
             .padding(start = 20.dp, end = 12.dp, top = 12.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(tr(StringKey.NM_AMOUNT).uppercase(), style = NovaType.overline, color = colors.heroOverline, modifier = Modifier.weight(1f))
+            Text(tr(StringKey.NM_AMOUNT).uppercase(), style = NovaType.overline, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
             // Currency pill: 40 dp visual in a 48 dp target.
             Box(
-                Modifier.height(48.dp).clip(RoundedCornerShape(999.dp)).clickable(enabled = !s.isTransfer, role = Role.Button) { s.sheet = NmSheet.CURRENCY },
+                Modifier.height(48.dp).clip(RoundedCornerShape(10.dp)).clickable(enabled = !s.isTransfer, role = Role.Button) { s.sheet = NmSheet.CURRENCY },
                 contentAlignment = Alignment.Center,
             ) {
                 Row(
-                    Modifier.height(40.dp).clip(RoundedCornerShape(999.dp)).background(colors.heroTile).padding(horizontal = 12.dp),
+                    Modifier.height(36.dp).clip(RoundedCornerShape(8.dp)).background(colors.surfaceSunken).padding(horizontal = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    Text(cur, style = NovaType.label, color = white, maxLines = 1, softWrap = false)
-                    if (!s.isTransfer) V2Icon(V2Icons.chevronDown, white, 16.dp, 2.4f)
+                    Text(cur, style = NovaType.label, color = ink, maxLines = 1, softWrap = false)
+                    if (!s.isTransfer) V2Icon(V2Icons.chevronDown, ink, 16.dp, 2.4f)
                 }
             }
         }
         Text(
-            formatMoney(value, cur), style = NovaType.displaySm, color = white, maxLines = 1, softWrap = false,
+            formatMoney(value, cur), style = NovaType.displaySm, color = ink, maxLines = 1, softWrap = false,
             autoSize = TextAutoSize.StepBased(minFontSize = 20.sp, maxFontSize = 28.sp),
             modifier = Modifier.padding(end = 8.dp),
         )
@@ -751,17 +750,17 @@ private fun AmountHero(s: NmState, cur: String, wcur: String, rate: Double, valu
             Text(
                 if (value > 0) tr(StringKey.NM_FX_APPROX, formatMoney(value * rate, wcur), wcur, shortWallet(walletName), cur, formatMoney(rate, wcur))
                 else tr(StringKey.NM_FX_LATER, wcur, shortWallet(walletName)),
-                style = NovaType.caption.copy(fontFeatureSettings = TNUM), color = colors.heroLabel, modifier = Modifier.padding(end = 8.dp),
+                style = NovaType.caption.copy(fontFeatureSettings = TNUM), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(end = 8.dp),
             )
         }
         if (s.future) {
             Row(
-                Modifier.padding(top = 4.dp).clip(RoundedCornerShape(999.dp)).background(colors.heroTile).padding(horizontal = 12.dp, vertical = 6.dp),
+                Modifier.padding(top = 4.dp).clip(RoundedCornerShape(8.dp)).background(colors.surfaceSunken).padding(horizontal = 12.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                V2Icon(V2Icons.cal, white, 16.dp)
-                Text(tr(StringKey.NM_SCHEDULED_CHIP) + " · ${fmtDate(s.date.toString())}" + if (s.seriesMode) "" else " · ${s.time}", style = NovaType.label, color = white, maxLines = 1)
+                V2Icon(V2Icons.cal, ink, 16.dp)
+                Text(tr(StringKey.NM_SCHEDULED_CHIP) + " · ${fmtDate(s.date.toString())}" + if (s.seriesMode) "" else " · ${s.time}", style = NovaType.label, color = ink, maxLines = 1)
             }
         }
     }
@@ -905,10 +904,10 @@ private fun MoreOptions(s: NmState, open: Boolean, onToggle: () -> Unit, pickedB
 private fun NoWalletState(onAddWallet: () -> Unit, onBack: () -> Unit) {
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(32.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
         GlyphMark(V2Icons.wallet, NovaColors.current.link, 56.dp)
-        Text(tr(StringKey.NM_NO_WALLET_TITLE), fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 16.dp))
-        Text(tr(StringKey.NM_NO_WALLET_BODY), fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
+        Text(tr(StringKey.NM_NO_WALLET_TITLE), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 16.dp))
+        Text(tr(StringKey.NM_NO_WALLET_BODY), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
         V2Button(tr(StringKey.NM_NO_WALLET_CTA), onClick = onAddWallet, modifier = Modifier.padding(top = 20.dp))
-        Text(tr(StringKey.COMMON_BACK), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 14.dp).noRippleClick(onBack))
+        Text(tr(StringKey.COMMON_BACK), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 14.dp).noRippleClick(onBack))
     }
 }
 

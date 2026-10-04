@@ -24,15 +24,15 @@ export function KPICard({ label, value, icon, trend, tone = 'default', className
       )}
     >
       <div className="flex items-center justify-between">
-        <p className="text-caption font-bold uppercase tracking-[0.06em] text-ink-tertiary">{label}</p>
-        {icon && <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-link">{icon}</span>}
+        <p className="text-caption font-semibold uppercase tracking-[0.06em] text-ink-tertiary">{label}</p>
+        {icon && <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-accent-soft text-link">{icon}</span>}
       </div>
-      <p className="font-numeric text-headline font-extrabold leading-none tracking-tight text-ink">{value}</p>
+      <p className="font-numeric text-headline font-semibold leading-none tracking-tight text-ink">{value}</p>
       {trend && (
         <div className="flex items-center gap-1.5">
           <span
             className={cn(
-              'inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-caption font-bold',
+              'inline-flex items-center gap-0.5 rounded-[6px] px-1.5 py-0.5 text-caption font-semibold',
               trendPositive ? 'bg-positive-soft text-positive' : 'bg-negative-soft text-negative',
             )}
           >

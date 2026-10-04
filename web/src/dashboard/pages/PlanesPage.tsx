@@ -36,7 +36,7 @@ export default function PlanesPage() {
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="btn-cta flex h-11 cursor-pointer items-center gap-2 whitespace-nowrap rounded-full px-5 text-label font-semibold"
+            className="btn-cta flex h-11 cursor-pointer items-center gap-2 whitespace-nowrap rounded-[12px] px-5 text-label font-semibold"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" className="flex-none">
               <path d="M12 5v14 M5 12h14" />
@@ -59,7 +59,7 @@ export default function PlanesPage() {
                 }}
                 className={cn(
                   'mb-[-1px] h-10 flex-none cursor-pointer whitespace-nowrap border-b-2 px-4 text-label',
-                  on ? 'border-primary-border font-bold text-ink' : 'border-transparent font-semibold text-ink-secondary hover:text-ink',
+                  on ? 'border-primary-border font-semibold text-ink' : 'border-transparent font-semibold text-ink-secondary hover:text-ink',
                 )}
               >
                 {t(x.labelKey)}

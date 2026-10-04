@@ -208,8 +208,8 @@ fun TransactionDetailScreen(
         val transfer = tx.type == TransactionType.TRANSFER
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surface).cardAurora()
-                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp)).padding(horizontal = 16.dp, vertical = 20.dp),
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surface).cardAurora()
+                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp)).padding(horizontal = 16.dp, vertical = 20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -230,7 +230,7 @@ fun TransactionDetailScreen(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier.padding(top = 4.dp).clip(RoundedCornerShape(999.dp)).background(if (scheduled) colors.warningSoft else colors.positiveSoft).padding(horizontal = 10.dp, vertical = 4.dp),
+                    modifier = Modifier.padding(top = 4.dp).clip(RoundedCornerShape(6.dp)).background(if (scheduled) colors.warningSoft else colors.positiveSoft).padding(horizontal = 10.dp, vertical = 4.dp),
                 ) {
                     V2Icon(if (scheduled) V2Icons.clock else V2Icons.check, if (scheduled) colors.warning else colors.positive, 14.dp)
                     Text(tr(if (scheduled) StringKey.MV_STATE_SCHEDULED else StringKey.MV_STATE_RECORDED), style = NovaType.caption.copy(fontWeight = FontWeight.SemiBold), color = if (scheduled) colors.warning else colors.positive, maxLines = 1, softWrap = false)
@@ -250,8 +250,8 @@ fun TransactionDetailScreen(
                 series?.let { tr(StringKey.MV_REPEATS) to com.s2nova.app.ui.screens.addtransaction.repeatSummary(com.s2nova.app.ui.screens.addtransaction.repeatOf(it), java.time.LocalDate.parse(tx.date)) },
             )
             Column(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surface).cardAurora()
-                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp)).padding(horizontal = 16.dp, vertical = 2.dp),
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surface).cardAurora()
+                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp)).padding(horizontal = 16.dp, vertical = 2.dp),
             ) {
                 rows.forEachIndexed { i, (label, value) ->
                     Row(
@@ -271,8 +271,8 @@ fun TransactionDetailScreen(
             val a = tx.attachment
             if (a != null) {
                 Row(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surface).cardAurora()
-                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp)).padding(start = 12.dp, top = 12.dp, end = 4.dp, bottom = 4.dp),
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surface).cardAurora()
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp)).padding(start = 12.dp, top = 12.dp, end = 4.dp, bottom = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
@@ -308,7 +308,7 @@ fun TransactionDetailScreen(
                 }
             }
             Box(
-                Modifier.padding(top = 12.dp).fillMaxWidth().height(52.dp).clip(RoundedCornerShape(50)).border(1.dp, colors.negative, RoundedCornerShape(50))
+                Modifier.padding(top = 12.dp).fillMaxWidth().height(52.dp).clip(RoundedCornerShape(12.dp)).border(1.dp, colors.negative, RoundedCornerShape(12.dp))
                     .clickable(role = Role.Button) { requestDelete(tx, walletName, scope, onDeleted) },
                 contentAlignment = Alignment.Center,
             ) { Text(tr(StringKey.MV_DELETE), style = NovaType.label, color = colors.negative, maxLines = 1, softWrap = false) }
@@ -337,7 +337,7 @@ fun TransactionDetailScreen(
                                 verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
                             ) {
                                 V2Icon(if (att.isPdf) V2Icons.file else V2Icons.image, if (att.isPdf) colors.negative else Color(0xFFA8A8B8), 22.dp)
-                                Text(tr(StringKey.MV_RECEIPT_PREVIEW), fontSize = 13.sp, color = Color(0xFFA8A8B8))
+                                Text(tr(StringKey.MV_RECEIPT_PREVIEW), fontSize = 12.sp, color = Color(0xFFA8A8B8))
                             }
                         }
                     }
@@ -348,7 +348,7 @@ fun TransactionDetailScreen(
                             contentAlignment = Alignment.Center,
                         ) { Text(tr(StringKey.MV_SHARE), style = NovaType.label, color = Color.White) }
                         Box(
-                            Modifier.weight(1f).clip(RoundedCornerShape(50)).background(com.s2nova.app.ui.theme.ctaBrush())
+                            Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).background(com.s2nova.app.ui.theme.ctaBrush())
                                 .clickable(role = Role.Button) { shareFile(context, att.name, att.mime, bytes, send = false) }.heightIn(min = 52.dp),
                             contentAlignment = Alignment.Center,
                         ) { Text(tr(StringKey.MV_RECEIPT_DOWNLOAD), style = NovaType.label, color = Color.White) }

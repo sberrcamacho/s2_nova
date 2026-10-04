@@ -30,13 +30,13 @@ function BrandPanel() {
       <div className="relative flex items-center gap-2.5">
         <Logo variant="mark" tone="inverted" size="sm" />
         <div>
-          <div className="text-body-sm font-extrabold tracking-[-0.01em]">S2 Nova</div>
+          <div className="text-body-sm font-semibold tracking-[-0.01em]">S2 Nova</div>
           <div className="whitespace-nowrap text-caption font-semibold tracking-[.04em] text-white/70">PERSONAL FINANCE</div>
         </div>
       </div>
 
       <div className="relative flex flex-col gap-[22px]">
-        <div className="text-display-sm font-extrabold leading-[1.14] tracking-[-0.03em] text-pretty">
+        <div className="text-display-sm font-semibold leading-[1.14] tracking-[-0.03em] text-pretty">
           {t('auth.hero.login1')}
           <br />
           {t('auth.hero.login2')}
@@ -228,7 +228,7 @@ export default function LoginPage() {
       <div className="flex min-w-0 flex-1 items-center justify-center overflow-y-auto p-6 min-[900px]:p-[38px]">
         <div className="flex w-full max-w-[340px] flex-col gap-[18px]">
           <div>
-            <div className="text-headline font-extrabold tracking-[-0.025em] text-ink">{t('auth.loginTitle')}</div>
+            <div className="text-headline font-semibold tracking-[-0.025em] text-ink">{t('auth.loginTitle')}</div>
             <div className="mt-[5px] text-caption" style={{ color: 'var(--color-login-text-muted)' }}>
               {t('auth.loginSubtitle')}
             </div>
@@ -239,7 +239,7 @@ export default function LoginPage() {
           <div className="flex items-center gap-3">
             <div className="h-px flex-1 bg-border" />
             <span
-              className="text-caption font-bold tracking-[0.08em]"
+              className="text-caption font-semibold tracking-[0.08em]"
               style={{ color: 'var(--color-login-divider-label)' }}
             >
               {t('auth.orWithEmail')}
@@ -257,7 +257,7 @@ export default function LoginPage() {
               <div className="flex flex-col gap-1.5">
                 <label
                   htmlFor="login-email"
-                  className="text-caption font-bold tracking-[0.06em]"
+                  className="text-caption font-semibold tracking-[0.06em]"
                   style={{ color: 'var(--color-login-label)' }}
                 >
                   {t('auth.emailFieldLabel')}
@@ -291,12 +291,12 @@ export default function LoginPage() {
                 <div className="flex items-center justify-between">
                   <label
                     htmlFor="login-password"
-                    className="text-caption font-bold tracking-[0.06em]"
+                    className="text-caption font-semibold tracking-[0.06em]"
                     style={{ color: 'var(--color-login-label)' }}
                   >
                     {t('auth.passwordFieldLabel')}
                   </label>
-                  <Link to="/recuperar" className="inline-flex min-h-6 items-center text-caption font-bold text-highlight">
+                  <Link to="/recuperar" className="inline-flex min-h-6 items-center text-caption font-semibold text-highlight">
                     {t('auth.forgotPassword')}
                   </Link>
                 </div>
@@ -349,7 +349,7 @@ export default function LoginPage() {
               type="submit"
               loading={isSubmitting}
               fullWidth
-              className="h-12 rounded-full active:opacity-90"
+              className="h-12 rounded-[12px] active:opacity-90"
             >
               {t('auth.submitLogin')}
             </Button>
@@ -358,7 +358,7 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => void onGuest()}
-            className="flex h-12 cursor-pointer items-center justify-center gap-[9px] rounded-full border border-border-input text-label font-semibold text-ink hover:bg-surface-sunken"
+            className="flex h-12 cursor-pointer items-center justify-center gap-[9px] rounded-[12px] border border-border-input text-label font-semibold text-ink hover:bg-surface-sunken"
           >
             <EnterIcon />
             {t('auth.guest')}
@@ -367,7 +367,7 @@ export default function LoginPage() {
 
           <div className="text-center text-caption" style={{ color: 'var(--color-login-text-muted)' }}>
             {t('auth.noAccount')}{' '}
-            <Link to="/register" className="font-bold text-highlight">
+            <Link to="/register" className="font-semibold text-highlight">
               {t('auth.signUpLink')}
             </Link>
           </div>

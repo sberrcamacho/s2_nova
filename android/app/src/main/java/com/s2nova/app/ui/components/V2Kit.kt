@@ -32,6 +32,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
@@ -117,15 +118,27 @@ fun V2Icon(paths: List<String>, tint: Color, size: Dp = 20.dp, strokeWidth: Floa
 
 fun hexColor(hex: String): Color = Color(("FF" + hex.removePrefix("#")).toLong(16))
 
-// glyphMark(paths, color, box, alpha): a tinted circle with the glyph at 46 %.
+// A category or plan mark: the glyph in its color, toned toward the ink so
+// it stays calm and legible (≥ 3:1), on a neutral rounded tile. The tile
+// isn't tinted per category: categories are told apart by glyph and label,
+// not by a wash of color. `alpha` is kept for callers and no longer used.
 @Composable
 fun GlyphMark(paths: List<String>, color: Color, box: Dp, alpha: Float = 0.16f, modifier: Modifier = Modifier) {
     Box(
-        modifier = modifier.size(box).clip(CircleShape).background(color.copy(alpha = alpha)),
+        modifier = modifier.size(box).clip(RoundedCornerShape(box * 0.28f)).background(NovaColors.current.surfaceSunken),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(glyphIcon(paths), contentDescription = null, tint = color, modifier = Modifier.size(box * 0.46f))
+        Icon(glyphIcon(paths, 2f), contentDescription = null, tint = categoryTone(color), modifier = Modifier.size(box * 0.5f))
     }
+}
+
+// A category color toned for glyphs: mixed 28 % toward the ink in light,
+// 30 % toward white in dark.
+@Composable
+fun categoryTone(color: Color): Color {
+    val ink = MaterialTheme.colorScheme.onBackground
+    val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    return androidx.compose.ui.graphics.lerp(color, if (dark) Color.White else ink, if (dark) 0.30f else 0.28f)
 }
 
 // A category's mark (mark(id, catColor(id), box, '29')).
@@ -156,7 +169,7 @@ fun Modifier.noRippleClick(onClick: () -> Unit): Modifier = this.clickable(
 @Composable
 fun V2Pill(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, role: Role = Role.RadioButton) {
     val colors = NovaColors.current
-    val shape = RoundedCornerShape(999.dp)
+    val shape = RoundedCornerShape(10.dp)
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -201,12 +214,12 @@ fun SuggestedTag(text: String, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .padding(bottom = 8.dp)
-            .border(1.dp, accent, RoundedCornerShape(50))
+            .border(1.dp, accent, RoundedCornerShape(6.dp))
             .padding(horizontal = 8.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         V2Icon(V2Icons.sparkle, accent, 12.dp)
-        Text(text, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, modifier = Modifier.padding(start = 4.dp))
+        Text(text, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, modifier = Modifier.padding(start = 4.dp))
     }
 }
 
@@ -214,8 +227,8 @@ fun SuggestedTag(text: String, modifier: Modifier = Modifier) {
 fun FieldLabel(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text,
-        fontSize = 13.sp,
-        fontWeight = FontWeight.Bold,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.SemiBold,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier.padding(bottom = 8.dp),
     )
@@ -309,7 +322,7 @@ fun V2Button(
             // button at 38 %.
             .alpha(if (enabled) 1f else 0.38f)
             // Pill in the brand gradient, as web's primary button.
-            .clip(RoundedCornerShape(50))
+            .clip(RoundedCornerShape(12.dp))
             .background(com.s2nova.app.ui.theme.ctaBrush())
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .heightIn(min = 52.dp)
@@ -354,13 +367,13 @@ fun OptionTile(paths: List<String>, label: String, on: Boolean, onClick: () -> U
         }
         Text(
             text = label,
-            fontSize = 13.sp,
-            fontWeight = if (on) FontWeight.ExtraBold else FontWeight.SemiBold,
+            fontSize = 12.sp,
+            fontWeight = if (on) FontWeight.SemiBold else FontWeight.SemiBold,
             color = if (on) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            lineHeight = 15.sp,
+            lineHeight = 13.sp,
         )
     }
 }
@@ -391,8 +404,8 @@ fun RowScope.BareField(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
-    fontSize: TextUnit = 15.sp,
-    fontWeight: FontWeight = FontWeight.Bold,
+    fontSize: TextUnit = 13.5.sp,
+    fontWeight: FontWeight = FontWeight.SemiBold,
     numeric: Boolean = false,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     tabular: Boolean = false,
@@ -428,13 +441,13 @@ fun MoneyInput(
     fontSize: TextUnit = 18.sp,
 ) {
     InputBox(horizontal = 16.dp, vertical = 13.dp) {
-        Text(symbol, fontSize = fontSize, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurfaceVariant, style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM))
+        Text(symbol, fontSize = fontSize, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant, style = com.s2nova.app.ui.theme.NovaDefaultTextStyle.copy(fontFeatureSettings = TNUM))
         BareField(
             value = digits,
             onValueChange = { v -> onDigits(v.filter(Char::isDigit).take(12)) },
             placeholder = "0",
             fontSize = fontSize,
-            fontWeight = FontWeight.ExtraBold,
+            fontWeight = FontWeight.SemiBold,
             numeric = true,
             tabular = true,
             visualTransformation = com.s2nova.app.ui.ThousandsGroupingVisualTransformation(),
@@ -450,7 +463,7 @@ fun SheetHeader(title: String, subtitle: String? = null, bottom: Dp = 14.dp, sub
         if (subtitle != null) {
             Text(
                 subtitle,
-                fontSize = 13.sp,
+                fontSize = 12.sp,
                 lineHeight = 16.sp,
                 color = NovaColors.current.textDim,
                 modifier = Modifier.padding(top = subtitleTop),
@@ -465,8 +478,8 @@ fun SheetHeader(title: String, subtitle: String? = null, bottom: Dp = 14.dp, sub
 fun TextLink(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Text(
         text,
-        fontSize = 13.sp,
-        fontWeight = FontWeight.Bold,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.SemiBold,
         color = NovaColors.current.accentText,
         modifier = modifier.noRippleClick(onClick),
     )
@@ -474,10 +487,10 @@ fun TextLink(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
 
 // Centered muted/negative text action under a sheet's CTA.
 @Composable
-fun SheetTextAction(text: String, color: Color, onClick: () -> Unit, weight: FontWeight = FontWeight.Bold, modifier: Modifier = Modifier) {
+fun SheetTextAction(text: String, color: Color, onClick: () -> Unit, weight: FontWeight = FontWeight.SemiBold, modifier: Modifier = Modifier) {
     Text(
         text,
-        fontSize = 15.sp,
+        fontSize = 14.sp,
         fontWeight = weight,
         color = color,
         textAlign = TextAlign.Center,
@@ -492,7 +505,7 @@ fun SymbolBadge(symbol: String, box: Dp = 40.dp, fontSize: TextUnit = 12.sp) {
         Modifier.size(box).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)),
         contentAlignment = Alignment.Center,
     ) {
-        Text(symbol, fontSize = fontSize, fontWeight = FontWeight.ExtraBold, color = NovaColors.current.accentText)
+        Text(symbol, fontSize = fontSize, fontWeight = FontWeight.SemiBold, color = NovaColors.current.accentText)
     }
 }
 

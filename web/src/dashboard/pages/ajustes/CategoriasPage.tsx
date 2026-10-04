@@ -22,7 +22,7 @@ interface Draft {
 
 const EMPTY: Draft = { id: null, name: '', parentId: '', vis: 'other', hidden: false, err: '' }
 
-const fieldLabel = 'text-caption font-bold tracking-[.06em] text-ink-secondary'
+const fieldLabel = 'text-caption font-semibold tracking-[.06em] text-ink-secondary'
 const field = 'box-border h-11 w-full rounded-[8px] border border-border-input bg-surface px-3 font-[inherit] text-body-sm text-ink outline-none focus:border-primary-border'
 
 // Ajustes › Categorías (Dashboard v2 isSettingsCategories,
@@ -115,7 +115,7 @@ export default function CategoriasPage() {
                 role="tab"
                 aria-selected={on}
                 onClick={() => switchTab(inc)}
-                className={cn('-mb-px h-10 cursor-pointer whitespace-nowrap border-b-2 px-4 text-label', on ? 'border-primary-border font-bold text-ink' : 'border-transparent font-semibold text-ink-secondary hover:text-ink')}
+                className={cn('-mb-px h-10 cursor-pointer whitespace-nowrap border-b-2 px-4 text-label', on ? 'border-primary-border font-semibold text-ink' : 'border-transparent font-semibold text-ink-secondary hover:text-ink')}
               >
                 {`${tr(inc ? 'mv.filter.income' : 'mv.filter.expenses')} · ${parentCategories(inc).length}`}
               </button>
@@ -133,9 +133,9 @@ export default function CategoriasPage() {
                 <div role="button" tabIndex={0} onClick={() => openEdit(p)} onKeyDown={(e) => e.key === 'Enter' && openEdit(p)} className="flex cursor-pointer items-center gap-3">
                   <CategoryMark category={p.id} box={40} />
                   <div className="min-w-0 flex-1 truncate text-title-sm font-semibold" title={displayName(p)}>{displayName(p)}</div>
-                  {p.hidden && <span className="rounded-full border border-border-input px-2 py-0.5 text-caption font-semibold text-ink-secondary">{tr('cat.hidden')}</span>}
+                  {p.hidden && <span className="rounded-[6px] border border-border-input px-2 py-0.5 text-caption font-semibold text-ink-secondary">{tr('cat.hidden')}</span>}
                   {p.custom && (
-                    <span className="rounded-full px-2 py-[3px] text-caption font-semibold text-link" style={{ background: 'var(--color-accent-soft)' }}>
+                    <span className="rounded-[6px] px-2 py-[3px] text-caption font-semibold text-link" style={{ background: 'var(--color-accent-soft)' }}>
                       {tr('cat.custom')}
                     </span>
                   )}
@@ -149,7 +149,7 @@ export default function CategoriasPage() {
                         key={c.id}
                         type="button"
                         onClick={() => openEdit(c)}
-                        className={cn('flex h-8 cursor-pointer items-center whitespace-nowrap rounded-full border px-3 text-label font-medium', lit ? 'text-ink' : 'border-border bg-surface-sunken text-ink hover:border-border-input')}
+                        className={cn('flex h-8 cursor-pointer items-center whitespace-nowrap rounded-[10px] border px-3 text-label font-medium', lit ? 'text-ink' : 'border-border bg-surface-sunken text-ink hover:border-border-input')}
                         style={lit ? { background: `color-mix(in oklab, ${p.color} 16%, transparent)`, borderColor: p.color } : undefined}
                       >
                         {displayName(c)}
@@ -159,7 +159,7 @@ export default function CategoriasPage() {
                   <button
                     type="button"
                     onClick={() => setDraft({ ...EMPTY, parentId: p.id, vis: p.vis })}
-                    className="flex h-8 cursor-pointer items-center whitespace-nowrap rounded-full border border-dashed border-border-input px-3 text-label font-semibold text-link hover:bg-surface-sunken"
+                    className="flex h-8 cursor-pointer items-center whitespace-nowrap rounded-[10px] border border-dashed border-border-input px-3 text-label font-semibold text-link hover:bg-surface-sunken"
                   >
                     {tr('cat.addSub')}
                   </button>

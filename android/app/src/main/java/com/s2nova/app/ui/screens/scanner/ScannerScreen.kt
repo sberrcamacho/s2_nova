@@ -383,7 +383,7 @@ private fun ProductFoundSheet(
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1,
                     modifier = Modifier
-                        .background(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(50))
+                        .background(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(10.dp))
                         .clickable { walletId = w.id }
                         .heightIn(min = 48.dp)
                         .padding(horizontal = 16.dp, vertical = 12.dp),

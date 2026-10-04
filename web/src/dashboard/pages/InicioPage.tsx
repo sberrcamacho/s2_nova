@@ -223,7 +223,7 @@ export default function InicioPage() {
               <button
                 type="button"
                 onClick={() => navigate('/billeteras')}
-                className="mt-4 inline-flex h-9 cursor-pointer self-start items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--hero-line)] bg-[var(--hero-tile)] pl-3.5 pr-2.5 text-label font-medium text-[var(--hero-text)] backdrop-blur transition-colors hover:bg-white/20"
+                className="mt-4 inline-flex h-9 cursor-pointer self-start items-center gap-1.5 whitespace-nowrap rounded-[8px] border border-[var(--hero-line)] bg-[var(--hero-tile)] pl-3.5 pr-2.5 text-label font-medium text-[var(--hero-text)] backdrop-blur transition-colors hover:bg-white/20"
               >
                 {data.wallets.length === 1 ? t('inicio.walletsOne') : fill(t('inicio.walletsMany'), data.wallets.length)}
                 <StrokeIcon paths={ICON_PATHS.chevronRight} size={16} />
@@ -564,7 +564,7 @@ function StatTile({
           <span
             className={cn(
               'flex h-8 w-8 flex-none items-center justify-center rounded-[10px]',
-              kind === 'income' ? 'bg-positive-soft text-positive' : kind === 'expense' ? 'bg-negative-soft text-negative' : 'btn-cta',
+              kind === 'income' ? 'bg-positive-soft text-positive' : kind === 'expense' ? 'bg-negative-soft text-negative' : 'bg-accent-soft text-link',
             )}
           >
             <StrokeIcon paths={kind === 'income' ? 'M17 7 7 17 M16 17H7V8' : kind === 'expense' ? 'M7 17 17 7 M8 7h9v9' : 'M3 17l6-6 4 4 8-8 M15 7h6v6'} size={16} />
@@ -717,7 +717,7 @@ function AlertCard({
 }
 
 // Tonal button (DESIGN-SYSTEM.md §6.3): primary-soft fill, 40 px on Web.
-const TONAL = 'h-9 cursor-pointer whitespace-nowrap rounded-full bg-accent-soft px-4 text-label font-semibold text-on-primary-soft hover:brightness-95'
+const TONAL = 'h-9 cursor-pointer whitespace-nowrap rounded-[10px] bg-accent-soft px-4 text-label font-semibold text-on-primary-soft hover:brightness-95'
 
 // Movimientos recientes as a table: the movement (icon, title, meta), its
 // wallet and date on wide tiles, and the right-aligned amount. The title is

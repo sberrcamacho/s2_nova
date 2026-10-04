@@ -107,7 +107,7 @@ import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-private val TileShape = RoundedCornerShape(20.dp)
+private val TileShape = RoundedCornerShape(16.dp)
 
 // Inicio as a bento summary (DESIGN-SYSTEM.md §5.1 / §5.3): the balance
 // hero, this month's Ingresos / Gastos tiles, the top unread alert with its
@@ -687,13 +687,13 @@ private fun BalanceHero(
                 modifier = Modifier
                     .height(48.dp)
                     .offset(x = (-4).dp)
-                    .clip(RoundedCornerShape(50))
+                    .clip(RoundedCornerShape(8.dp))
                     .clickable(role = Role.Button, onClick = onOpenWallets),
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
-                        .background(colors.heroTile, RoundedCornerShape(50))
+                        .background(colors.heroTile, RoundedCornerShape(8.dp))
                         .padding(start = 12.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
                 ) {
                     Text(
@@ -1102,10 +1102,9 @@ private fun GuestBanner(onCreateAccount: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(MaterialTheme.colorScheme.primaryContainer)
-            .cardAurora()
-            .border(1.dp, NovaColors.current.navActiveLine, RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp))
             .padding(start = 16.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -1118,7 +1117,7 @@ private fun GuestBanner(onCreateAccount: () -> Unit) {
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .heightIn(min = 48.dp)
-                .clip(RoundedCornerShape(50))
+                .clip(RoundedCornerShape(12.dp))
                 .background(ctaBrush())
                 .clickable(role = Role.Button, onClick = onCreateAccount)
                 .padding(horizontal = 16.dp),

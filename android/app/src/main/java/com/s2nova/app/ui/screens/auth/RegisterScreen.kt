@@ -80,9 +80,9 @@ fun RegisterScreen(
             modifier = Modifier
                 .padding(top = 12.dp)
                 .size(40.dp)
-                .clip(RoundedCornerShape(50))
+                .clip(RoundedCornerShape(12.dp))
                 .background(colors.loginSurface)
-                .border(1.dp, com.s2nova.app.ui.theme.NovaColors.current.borderInput, RoundedCornerShape(50))
+                .border(1.dp, com.s2nova.app.ui.theme.NovaColors.current.borderInput, RoundedCornerShape(12.dp))
                 .clickable(onClick = onGoToLogin),
             contentAlignment = Alignment.Center,
         ) {
@@ -100,14 +100,14 @@ fun RegisterScreen(
             Text(
                 text = tr(StringKey.AUTH_CREATE),
                 fontSize = 28.sp,
-                fontWeight = FontWeight.ExtraBold,
+                fontWeight = FontWeight.SemiBold,
                 letterSpacing = (-0.03).em,
                 lineHeight = 34.sp,
                 color = MaterialTheme.colorScheme.onBackground,
             )
             Text(
                 text = tr(StringKey.AUTH_REGISTER_SUB),
-                fontSize = 15.sp,
+                fontSize = 14.sp,
                 color = colors.loginTextMuted,
                 modifier = Modifier.padding(top = 7.dp),
             )
@@ -188,8 +188,8 @@ fun RegisterScreen(
                         HorizontalDivider(modifier = Modifier.weight(1f))
                         Text(
                             text = tr(StringKey.AUTH_OR),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
                             letterSpacing = 0.08.em,
                             color = colors.loginTextMuted,
                             modifier = Modifier.padding(horizontal = 12.dp),

@@ -51,7 +51,7 @@ export function Modal({ open, onClose, title, description, children, size = 'md'
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>
             {title && (
-              <h2 id="modal-title" className="text-title font-bold text-ink">
+              <h2 id="modal-title" className="text-title font-semibold text-ink">
                 {title}
               </h2>
             )}

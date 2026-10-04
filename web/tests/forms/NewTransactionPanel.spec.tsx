@@ -46,8 +46,8 @@ async function open() {
 
 async function pickCategory(user: ReturnType<typeof userEvent.setup>, parent: string, leaf: string) {
   await user.click(screen.getByRole('button', { name: /Elige una categoría/ }))
-  await user.click(screen.getByRole('button', { name: parent }))
-  await user.click(screen.getByRole('button', { name: leaf }))
+  await user.click(screen.getByRole('radio', { name: parent }))
+  await user.click(screen.getByRole('radio', { name: leaf }))
 }
 
 describe('NewTransactionPanel', () => {
@@ -90,10 +90,10 @@ describe('NewTransactionPanel', () => {
     expect(screen.getByLabelText('Título')).toHaveValue('Gasto')
     expect(screen.getByText('Sugerido')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /Elige una categoría/ }))
-    await user.click(screen.getByRole('button', { name: 'Alimentación' }))
+    await user.click(screen.getByRole('radio', { name: 'Alimentación' }))
     await waitFor(() => expect(screen.getByLabelText('Título')).toHaveValue('Alimentación'))
     expect(screen.getByText('Sugerido')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Mercado' }))
+    await user.click(screen.getByRole('radio', { name: 'Mercado' }))
     await waitFor(() => expect(screen.getByLabelText('Título')).toHaveValue('Mercado de la semana'))
     expect(screen.getByText('Sugerido')).toBeInTheDocument()
   })
@@ -108,7 +108,7 @@ describe('NewTransactionPanel', () => {
     await user.type(screen.getByLabelText('Título'), 'Cena con Ana')
     expect(screen.queryByText('Sugerido')).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /Alimentación · Mercado/ }))
-    await user.click(screen.getByRole('button', { name: 'Alimentación' }))
+    await user.click(screen.getByRole('radio', { name: 'Alimentación' }))
     expect(screen.getByLabelText('Título')).toHaveValue('Cena con Ana')
   })
 

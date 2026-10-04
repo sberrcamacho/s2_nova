@@ -136,7 +136,7 @@ fun GoalsTab(snackbarHostState: SnackbarHostState) {
             item {
                 Text(
                     t(StringKey.GOALS_EMPTY),
-                    fontSize = 13.sp,
+                    fontSize = 12.sp,
                     lineHeight = 18.sp,
                     color = colors.textDim,
                     textAlign = TextAlign.Center,
@@ -245,7 +245,7 @@ private fun GoalCard(goal: Goal, onEdit: () -> Unit, onPay: () -> Unit) {
     val principal = AppContainer.currencyRepository.principal
     val format = { v: Double -> formatMoney(v, principal) }
     val t = rememberStrings()
-    val shape = RoundedCornerShape(20.dp)
+    val shape = RoundedCornerShape(16.dp)
     val pct = goal.percentage.coerceAtMost(100)
     Column(
         modifier = Modifier
@@ -280,7 +280,7 @@ private fun GoalCard(goal: Goal, onEdit: () -> Unit, onPay: () -> Unit) {
             Text(
                 buildAnnotatedString {
                     append(format(goal.currentAmount))
-                    withStyle(SpanStyle(fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.textDim)) { append(" " + tr(StringKey.GOAL_OF, format(goal.targetAmount))) }
+                    withStyle(SpanStyle(fontSize = 14.sp, fontWeight = FontWeight.Medium, color = colors.textDim)) { append(" " + tr(StringKey.GOAL_OF, format(goal.targetAmount))) }
                 },
                 style = NovaType.amount.copy(fontSize = 18.sp), color = MaterialTheme.colorScheme.onSurface,
             )
@@ -384,7 +384,7 @@ private fun GoalDeleteSheet(
         val at = body.indexOf(amount)
         buildAnnotatedString {
             append(body.substring(0, at))
-            withStyle(SpanStyle(fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onBackground)) { append(amount) }
+            withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)) { append(amount) }
             append(body.substring(at + amount.length))
         }
     } else {
@@ -429,15 +429,15 @@ private fun GoalDeleteSheet(
             Text(
                 if (hasBalance) String.format(t(StringKey.GOALS_DELETE_AND_RETURN), format(goal.currentAmount)) else t(StringKey.GOALS_DELETE),
                 color = colors.negative,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 14.sp,
             )
         }
         Text(
             t(StringKey.COMMON_CANCEL),
             textAlign = TextAlign.Center,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.fillMaxWidth().clickable(onClick = onDismiss).padding(top = 12.dp, bottom = 4.dp),
         )
@@ -473,8 +473,8 @@ private fun DestinationRow(label: String, detail: String, selected: Boolean, onC
             }
         }
         Column(modifier = Modifier.padding(start = 12.dp)) {
-            Text(label, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-            Text(detail, fontSize = 13.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
+            Text(label, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+            Text(detail, fontSize = 12.sp, color = colors.textDim, modifier = Modifier.padding(top = 2.dp))
         }
     }
 }
@@ -510,7 +510,7 @@ private fun GoalPaySheet(
             com.s2nova.app.ui.components.AmountHeroField(t(StringKey.GOAL_CONTRIBUTION_AMOUNT), amountText, { amountText = it; error = null }, AppContainer.currencyRepository.principal, padTitle = tr(StringKey.GOAL_PAY_AMOUNT))
 
             if (wallets.isEmpty()) {
-                Text(t(StringKey.ADD_TXN_NO_WALLET_SUBTITLE), fontSize = 13.sp, color = colors.textDim)
+                Text(t(StringKey.ADD_TXN_NO_WALLET_SUBTITLE), fontSize = 12.sp, color = colors.textDim)
             } else {
                 Column {
                     SheetLabel(t(StringKey.GOAL_CONTRIBUTION_WALLET))
@@ -522,7 +522,7 @@ private fun GoalPaySheet(
                 }
             }
 
-            error?.let { Text(it, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = colors.negative) }
+            error?.let { Text(it, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = colors.negative) }
 
             DraftSheetPrimaryButton(
                 label = t(StringKey.GOAL_CONTRIBUTION_SAVE),

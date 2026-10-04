@@ -40,13 +40,13 @@ function SignupBrandPanel() {
       <div className="relative flex items-center gap-2.5">
         <Logo variant="mark" tone="inverted" size="sm" />
         <div>
-          <div className="text-body-sm font-extrabold tracking-[-0.01em]">S2 Nova</div>
+          <div className="text-body-sm font-semibold tracking-[-0.01em]">S2 Nova</div>
           <div className="whitespace-nowrap text-caption font-semibold tracking-[.04em] text-white/70">PERSONAL FINANCE</div>
         </div>
       </div>
 
       <div className="relative flex flex-col gap-[26px]">
-        <div className="text-display-sm font-extrabold leading-[1.14] tracking-[-0.03em] text-pretty">
+        <div className="text-display-sm font-semibold leading-[1.14] tracking-[-0.03em] text-pretty">
           {t('auth.hero.register1')}
           <br />
           {t('auth.hero.register2')}
@@ -54,7 +54,7 @@ function SignupBrandPanel() {
 
         <div className="flex flex-col gap-4">
           <div className="flex items-baseline justify-between">
-            <div className="text-caption font-bold tracking-[0.11em] text-[#d485fb]">{t('auth.hero.incomeVsExpenses')}</div>
+            <div className="text-caption font-semibold tracking-[0.11em] text-[#d485fb]">{t('auth.hero.incomeVsExpenses')}</div>
             <div className="text-caption text-white/45">{t('common.last6Months')}</div>
           </div>
 
@@ -117,9 +117,9 @@ function SignupTermsCheckbox({ checked, onChange }: { checked: boolean; onChange
       </span>
       <span className="text-caption leading-[1.45]" style={{ color: 'var(--color-login-checkbox-text)' }}>
         {t('auth.termsPrefix')}
-        <span className="font-bold text-highlight">{t('auth.termsLink')}</span>
+        <span className="font-semibold text-highlight">{t('auth.termsLink')}</span>
         {t('auth.termsMiddle')}
-        <span className="font-bold text-highlight">{t('auth.privacyLink')}</span>
+        <span className="font-semibold text-highlight">{t('auth.privacyLink')}</span>
       </span>
     </label>
   )
@@ -154,7 +154,7 @@ function PasswordStrengthMeter({ password }: { password: string }) {
           ))}
         </div>
         {score >= 3 && (
-          <span className="text-caption font-bold" style={{ color: 'var(--color-login-positive)' }}>
+          <span className="text-caption font-semibold" style={{ color: 'var(--color-login-positive)' }}>
             {t('auth.passwordStrengthSecure')}
           </span>
         )}
@@ -234,7 +234,7 @@ export default function RegisterPage() {
       <div className="flex min-w-0 flex-1 items-center justify-center overflow-y-auto p-6 min-[900px]:p-[38px]">
         <div className="flex w-full max-w-[340px] flex-col gap-[18px]">
           <div>
-            <div className="text-headline font-extrabold tracking-[-0.025em] text-ink">{t('auth.registerTitle')}</div>
+            <div className="text-headline font-semibold tracking-[-0.025em] text-ink">{t('auth.registerTitle')}</div>
             <div className="mt-[5px] text-caption" style={{ color: 'var(--color-login-text-muted)' }}>
               {t('auth.registerSubtitle')}
             </div>
@@ -245,7 +245,7 @@ export default function RegisterPage() {
           <div className="flex items-center gap-3">
             <div className="h-px flex-1 bg-border" />
             <span
-              className="text-caption font-bold tracking-[0.08em]"
+              className="text-caption font-semibold tracking-[0.08em]"
               style={{ color: 'var(--color-login-divider-label)' }}
             >
               {t('auth.orWithEmail')}
@@ -263,7 +263,7 @@ export default function RegisterPage() {
               <div className="flex flex-col gap-1.5">
                 <label
                   htmlFor="register-name"
-                  className="text-caption font-bold tracking-[0.06em]"
+                  className="text-caption font-semibold tracking-[0.06em]"
                   style={{ color: 'var(--color-login-label)' }}
                 >
                   {t('auth.nameFieldLabel')}
@@ -291,7 +291,7 @@ export default function RegisterPage() {
               <div className="flex flex-col gap-1.5">
                 <label
                   htmlFor="register-email"
-                  className="text-caption font-bold tracking-[0.06em]"
+                  className="text-caption font-semibold tracking-[0.06em]"
                   style={{ color: 'var(--color-login-label)' }}
                 >
                   {t('auth.emailFieldLabel')}
@@ -324,7 +324,7 @@ export default function RegisterPage() {
               <div className="flex flex-col gap-1.5">
                 <label
                   htmlFor="register-password"
-                  className="text-caption font-bold tracking-[0.06em]"
+                  className="text-caption font-semibold tracking-[0.06em]"
                   style={{ color: 'var(--color-login-label)' }}
                 >
                   {t('auth.passwordFieldLabel')}
@@ -384,7 +384,7 @@ export default function RegisterPage() {
               type="submit"
               loading={isSubmitting}
               fullWidth
-              className="h-12 rounded-full active:opacity-90"
+              className="h-12 rounded-[12px] active:opacity-90"
             >
               {t('auth.submitRegister')}
             </Button>
@@ -392,7 +392,7 @@ export default function RegisterPage() {
 
           <div className="text-center text-caption" style={{ color: 'var(--color-login-text-muted)' }}>
             {t('auth.hasAccount')}{' '}
-            <Link to="/login" className="font-bold text-highlight">
+            <Link to="/login" className="font-semibold text-highlight">
               {t('auth.signInLink')}
             </Link>
           </div>

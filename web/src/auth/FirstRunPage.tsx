@@ -90,7 +90,7 @@ export default function FirstRunPage() {
 
         <div>
           <div className="text-overline font-semibold uppercase text-link">{fill(tr('first.step'), step + 1)}</div>
-          <h1 className="mt-2 text-headline font-bold">{tr(step === 1 ? 'first.wallet.title' : 'first.currency.title')}</h1>
+          <h1 className="mt-2 text-headline font-semibold">{tr(step === 1 ? 'first.wallet.title' : 'first.currency.title')}</h1>
           <div className="mt-2 text-body-sm text-ink-secondary [text-wrap:pretty]">
             {tr(step === 1 ? 'first.wallet.body' : 'first.currency.body')}
           </div>
@@ -111,7 +111,7 @@ export default function FirstRunPage() {
                   onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setPrincipal(code)}
                   className={cn('flex min-h-14 cursor-pointer items-center gap-3 rounded-[14px] border px-3.5 py-2.5', on ? 'border-primary-border bg-accent-soft' : 'border-border-input bg-transparent hover:bg-surface-sunken')}
                 >
-                  <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-accent-soft text-caption font-bold text-on-primary-soft">{c.symbol}</span>
+                  <span className="flex h-9 w-9 flex-none items-center justify-center rounded-[10px] bg-accent-soft text-caption font-semibold text-on-primary-soft">{c.symbol}</span>
                   <div className="min-w-0 flex-1">
                     <div className="text-title-sm font-semibold">{`${currencyName(code, c.name)} · ${code}`}</div>
                     {code === region.currency && <div className="text-body-sm text-link">{fill(tr('first.detected'), region.country)}</div>}
@@ -156,7 +156,7 @@ export default function FirstRunPage() {
           type="button"
           onClick={() => void next()}
           disabled={!valid || busy}
-          className={cn('btn-cta flex h-11 items-center justify-center rounded-full text-label font-semibold', valid ? 'cursor-pointer' : 'cursor-not-allowed opacity-40')}
+          className={cn('btn-cta flex h-11 items-center justify-center rounded-[12px] text-label font-semibold', valid ? 'cursor-pointer' : 'cursor-not-allowed opacity-40')}
         >
           {tr(step === 1 ? 'first.create' : 'kit.continue')}
         </button>

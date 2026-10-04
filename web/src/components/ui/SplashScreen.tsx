@@ -15,7 +15,7 @@ export function SplashScreen() {
     <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-bg px-4" aria-busy="true">
       <LogoMark size="lg" className="animate-fade-in" />
       <div>
-        <p className="text-center text-body font-extrabold tracking-tight text-ink">
+        <p className="text-center text-body font-semibold tracking-tight text-ink">
           S2 <span className="text-ink-secondary">Nova</span>
         </p>
         <p className="text-center text-caption font-semibold uppercase tracking-[.04em] text-ink-tertiary">

@@ -43,7 +43,7 @@ fun NovaPrimaryButton(
             .fillMaxWidth()
             .height(56.dp)
             .then(if (clickable) Modifier.pressScale(interactionSource, pressedScale = 0.98f) else Modifier)
-            .clip(RoundedCornerShape(50))
+            .clip(RoundedCornerShape(12.dp))
             // Disabled dims the whole button (38 %), not only its label.
             .alpha(if (!clickable) 0.38f else if (pressed) 0.9f else 1f)
             // The brand gradient of web's .btn-cta.

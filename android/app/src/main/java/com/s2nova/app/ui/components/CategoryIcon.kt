@@ -51,13 +51,15 @@ fun IconCircle(
     contentDescription: String? = null,
     modifier: Modifier = Modifier,
 ) {
+    // The same tonal mark as GlyphMark: the toned glyph on a neutral rounded
+    // tile (`fillAlpha` is kept for callers and no longer used).
     Box(
         modifier = modifier
             .size(size.box.dp)
-            .background(color.copy(alpha = fillAlpha), CircleShape),
+            .background(com.s2nova.app.ui.theme.NovaColors.current.surfaceSunken, androidx.compose.foundation.shape.RoundedCornerShape((size.box * 0.28f).dp)),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(imageVector = icon, contentDescription = contentDescription, tint = color, modifier = Modifier.size(size.icon.dp))
+        Icon(imageVector = icon, contentDescription = contentDescription, tint = categoryTone(color), modifier = Modifier.size((size.icon + 2).dp))
     }
 }
 

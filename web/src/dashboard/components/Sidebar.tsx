@@ -72,7 +72,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               onClick={() => navigate('/ajustes/perfil')}
               title={t('v2.sidebar.editProfile')}
               aria-label={t('v2.sidebar.editProfile')}
-              className="btn-cta flex h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-full text-caption font-bold"
+              className="btn-cta flex h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-full text-caption font-semibold"
             >
               {user?.avatarInitials ?? 'US'}
             </button>

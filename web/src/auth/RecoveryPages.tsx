@@ -16,7 +16,7 @@ function Shell({ title, subtitle, children }: { title: string; subtitle: string;
       <div className="flex w-full max-w-[360px] flex-col gap-[18px]">
         <Logo variant="mark" size="sm" />
         <div>
-          <h1 className="text-headline font-extrabold tracking-[-0.025em] text-ink">{title}</h1>
+          <h1 className="text-headline font-semibold tracking-[-0.025em] text-ink">{title}</h1>
           <p className="mt-[5px] text-body-sm text-ink-secondary">{subtitle}</p>
         </div>
         {children}
@@ -59,7 +59,7 @@ export function RecuperarPage() {
       ) : (
         <form onSubmit={submit} noValidate className="flex flex-col gap-4">
           <Input label={t('auth.emailFieldLabel')} type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} error={error || undefined} />
-          <Button type="submit" loading={busy} fullWidth className="h-12 rounded-full">
+          <Button type="submit" loading={busy} fullWidth className="h-12 rounded-[12px]">
             {t('auth.rec.send')}
           </Button>
         </form>
@@ -105,7 +105,7 @@ export function NuevaContrasenaPage() {
   if (invalidLink) {
     return (
       <Shell title={t('auth.rec.newTitle')} subtitle={t('auth.rec.invalid')}>
-        <Button type="button" fullWidth className="h-12 rounded-full" onClick={() => navigate('/recuperar')}>
+        <Button type="button" fullWidth className="h-12 rounded-[12px]" onClick={() => navigate('/recuperar')}>
           {t('auth.rec.again')}
         </Button>
       </Shell>
@@ -115,7 +115,7 @@ export function NuevaContrasenaPage() {
   if (done) {
     return (
       <Shell title={t('auth.rec.newTitle')} subtitle={t('auth.rec.done')}>
-        <Button type="button" fullWidth className="h-12 rounded-full" onClick={() => navigate('/login', { replace: true })}>
+        <Button type="button" fullWidth className="h-12 rounded-[12px]" onClick={() => navigate('/login', { replace: true })}>
           {t('auth.rec.back')}
         </Button>
       </Shell>
@@ -135,7 +135,7 @@ export function NuevaContrasenaPage() {
             </li>
           ))}
         </ul>
-        <Button type="submit" loading={busy} fullWidth className="h-12 rounded-full">
+        <Button type="submit" loading={busy} fullWidth className="h-12 rounded-[12px]">
           {t('auth.rec.submit')}
         </Button>
       </form>

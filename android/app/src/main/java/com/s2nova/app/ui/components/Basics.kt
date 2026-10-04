@@ -91,7 +91,7 @@ fun StatusBadge(text: String, tone: BadgeTone, modifier: Modifier = Modifier) {
         color = fg,
         style = MaterialTheme.typography.labelSmall,
         modifier = modifier
-            .background(bg, RoundedCornerShape(50))
+            .background(bg, RoundedCornerShape(6.dp))
             .padding(horizontal = 10.dp, vertical = 4.dp),
     )
 }

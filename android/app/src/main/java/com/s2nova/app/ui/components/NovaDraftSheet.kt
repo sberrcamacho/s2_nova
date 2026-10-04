@@ -77,7 +77,7 @@ fun NovaDraftSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
         containerColor = colors.sheetSurface,
         scrimColor = Color.Black.copy(alpha = scrimAlpha),
         dragHandle = {
@@ -134,8 +134,8 @@ fun DraftSheetDeleteRow(label: String, onClick: () -> Unit, modifier: Modifier =
     val colors = NovaColors.current
     Text(
         text = label,
-        fontSize = 15.sp,
-        fontWeight = FontWeight.ExtraBold,
+        fontSize = 14.sp,
+        fontWeight = FontWeight.SemiBold,
         color = colors.negative,
         textAlign = TextAlign.Center,
         modifier = modifier
@@ -161,7 +161,7 @@ fun DraftSheetPrimaryButton(
             .fillMaxWidth()
             .height(52.dp)
             .alpha(if (enabled) 1f else 0.38f)
-            .clip(RoundedCornerShape(50))
+            .clip(RoundedCornerShape(12.dp))
             .background(com.s2nova.app.ui.theme.ctaBrush())
             .clickable(enabled = enabled, role = androidx.compose.ui.semantics.Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
@@ -200,16 +200,16 @@ fun ColorPill(
     val textColor = if (selected) inkOn(color) else NovaColors.current.pillText
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(50))
+            .clip(RoundedCornerShape(10.dp))
             .background(background)
-            .border(1.dp, borderColor, RoundedCornerShape(50))
+            .border(1.dp, borderColor, RoundedCornerShape(10.dp))
             .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(horizontal = 13.dp, vertical = 9.dp),
     ) {
         Text(
             text = label,
-            fontSize = 13.sp,
-            fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.SemiBold,
+            fontSize = 12.sp,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.SemiBold,
             color = textColor,
         )
     }

@@ -102,7 +102,7 @@ export function LoanModal({ loan, side, wallets, onClose, onSaved }: { loan: Tra
       <div className="flex flex-col gap-1.5">
         <Label>{tr(lent ? 'loan.person.lent' : 'loan.person.borrowed')}</Label>
         <div className="flex h-14 items-center gap-2.5 rounded-[10px] border border-border-input bg-surface pr-3 pl-2 focus-within:border-primary-border">
-          <span aria-hidden="true" className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-v2-accent/16">
+          <span aria-hidden="true" className="flex h-10 w-10 flex-none items-center justify-center rounded-[12px] bg-v2-accent/16">
             <Icon paths={IC.person} size={18} color="var(--color-link)" />
           </span>
           <input
