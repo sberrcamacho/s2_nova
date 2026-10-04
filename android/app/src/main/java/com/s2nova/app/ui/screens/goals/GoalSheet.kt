@@ -29,6 +29,14 @@ import com.s2nova.app.ui.components.StepDeleteButton
 import com.s2nova.app.ui.components.StepNote
 import com.s2nova.app.ui.components.StepQuestion
 import com.s2nova.app.ui.components.StepSheet
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Spacer
+import com.s2nova.app.ui.components.StepOptionGroup
+import com.s2nova.app.ui.components.StepOptionRow
+import com.s2nova.app.ui.components.StepChoiceRow
+import com.s2nova.app.ui.components.StepSubPage
+import com.s2nova.app.ui.components.SegmentOption
+import com.s2nova.app.ui.components.SegmentedChoice
 import com.s2nova.app.ui.components.StepSpacer
 import com.s2nova.app.ui.screens.addtransaction.AmountPad
 import com.s2nova.app.ui.components.FieldLabel
@@ -93,9 +101,10 @@ fun GoalDraftSheet(draft: GoalDraft, onDraftChange: (GoalDraft) -> Unit, onDismi
     val principal = AppContainer.currencyRepository.principal
     val wallets = AppContainer.walletRepository.wallets.value
     val editing = d.id != null
-    // Name and icon · amounts and date · how to save (the recurring
-    // contribution that used to open its own sheet). Editing opens on the
-    // last step, like budgets.
+    // Name and icon · amounts and date · how to save. A recurring
+    // contribution adds two steps (amount and wallet · schedule) instead of
+    // unfolding under the choice, so no step needs scrolling. Editing opens
+    // on "how to save", like budgets open on their limit.
     var step by remember { mutableStateOf(if (editing) 2 else 0) }
     var planOn by remember { mutableStateOf(d.plan != null) }
     var p by remember {
@@ -108,10 +117,15 @@ fun GoalDraftSheet(draft: GoalDraft, onDraftChange: (GoalDraft) -> Unit, onDismi
     val current = if (editing) d.current else AmountPad.eval(d.initial)
     val amt = AmountPad.eval(p.amount)
     val planValid = !planOn || (amt > 0 && p.walletId != null)
+    val stepCount = if (planOn) 5 else 3
+    var endPage by remember { mutableStateOf(false) }
+    val last = step == stepCount - 1
     val stepValid = when (step) {
         0 -> d.name.isNotBlank()
         1 -> d.name.isNotBlank() && target > 0
-        else -> d.name.isNotBlank() && target > 0 && planValid
+        2 -> d.name.isNotBlank() && target > 0
+        3 -> amt > 0 && p.walletId != null
+        else -> d.name.isNotBlank() && target > 0 && planValid && (p.end != GoalPlanEnd.DATE || p.until.isNotBlank())
     }
 
     fun finalDraft(): GoalDraft {
@@ -129,14 +143,29 @@ fun GoalDraftSheet(draft: GoalDraft, onDraftChange: (GoalDraft) -> Unit, onDismi
     StepSheet(
         title = tr(if (editing) StringKey.GOAL_EDIT else StringKey.GOAL_NEW),
         step = step,
-        stepCount = 3,
+        stepCount = stepCount,
         onBack = { step-- },
         onDismiss = onDismiss,
-        primaryLabel = tr(if (step < 2) StringKey.STEP_CONTINUE else if (editing) StringKey.STEP_SAVE_CHANGES else StringKey.GOAL_SAVE),
+        primaryLabel = tr(if (!last) StringKey.STEP_CONTINUE else if (editing) StringKey.STEP_SAVE_CHANGES else StringKey.GOAL_SAVE),
         primaryEnabled = stepValid,
-        onPrimary = { if (step < 2) step++ else onSave(finalDraft()) },
-        footer = if (editing) ({ StepDeleteButton(tr(StringKey.GOAL_DELETE), onRequestDelete) }) else null,
+        onPrimary = { if (!last) step++ else onSave(finalDraft()) },
+        footer = if (editing && step == 2) ({ StepDeleteButton(tr(StringKey.GOAL_DELETE), onRequestDelete) }) else null,
         context = if (editing) d.name else null,
+        // The end of the plan has its own options (a count, a date), so it
+        // opens as a sub-page instead of unfolding under the choice.
+        subPage = if (endPage) StepSubPage("end", tr(StringKey.GOAL_Q_END)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(GoalPlanEnd.GOAL to tr(StringKey.GOAL_ENDS_GOAL), GoalPlanEnd.COUNT to tr(StringKey.NM_ENDS_COUNT), GoalPlanEnd.DATE to tr(StringKey.NM_ENDS_UNTIL)).forEach { (k, label) ->
+                    StepChoiceRow(label, p.end == k, { p = p.copy(end = k) })
+                }
+            }
+            when (p.end) {
+                GoalPlanEnd.COUNT -> Stepper(tr(StringKey.GOAL_N_CONTRIBUTIONS, p.count), { p = p.copy(count = (p.count - 1).coerceAtLeast(1)) }, { p = p.copy(count = (p.count + 1).coerceAtMost(120)) })
+                GoalPlanEnd.DATE -> DateBox(p.until, Modifier.padding(top = 12.dp)) { p = p.copy(until = it) }
+                else -> {}
+            }
+        } else null,
+        onSubDone = { endPage = false },
     ) { shown ->
         when (shown) {
             0 -> {
@@ -162,43 +191,48 @@ fun GoalDraftSheet(draft: GoalDraft, onDraftChange: (GoalDraft) -> Unit, onDismi
                 FieldLabel(tr(StringKey.GOAL_DATE))
                 DateBox(d.due) { onDraftChange(d.copy(due = it)) }
             }
-            else -> {
+            2 -> {
                 StepQuestion(tr(StringKey.GOAL_Q_PLAN), tr(StringKey.GOAL_Q_PLAN_HINT))
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     ChoiceCard(V2Icons.wallet, colors.link, tr(StringKey.GOAL_CHOICE_MANUAL), tr(StringKey.GOAL_CHOICE_MANUAL_DETAIL), !planOn, { planOn = false })
                     ChoiceCard(V2Icons.repeat, colors.link, tr(StringKey.GOAL_PLAN), tr(StringKey.GOAL_CHOICE_PLAN_DETAIL), planOn, { planOn = true })
                 }
-                if (planOn) {
+            }
+            3 -> {
+                StepQuestion(tr(StringKey.GOAL_Q_CONTRIB))
+                AmountHeroField(tr(StringKey.GOAL_PLAN_AMOUNT), p.amount, { p = p.copy(amount = it) }, principal)
+                StepSpacer()
+                FieldLabel(tr(StringKey.GOAL_FREQ))
+                PillRow { listOf(Freq.DAILY, Freq.WEEKLY, Freq.MONTHLY).forEach { f -> V2Pill(f.label, p.freq == f, { p = p.copy(freq = f) }) } }
+                StepSpacer()
+                FieldLabel(tr(StringKey.GOAL_FROM_WALLET))
+                PillRow { wallets.forEach { w -> V2Pill(shortWallet(w.name), p.walletId == w.id, { p = p.copy(walletId = w.id) }) } }
+            }
+            else -> {
+                StepQuestion(tr(StringKey.GOAL_Q_SCHEDULE))
+                FieldLabel(tr(StringKey.GOAL_STARTS))
+                DateBox(p.start) { p = p.copy(start = it) }
+                Spacer(Modifier.height(12.dp))
+                StepOptionGroup {
+                    StepOptionRow(
+                        V2Icons.cal, tr(StringKey.NM_ENDS),
+                        when (p.end) {
+                            GoalPlanEnd.GOAL -> tr(StringKey.GOAL_ENDS_GOAL)
+                            GoalPlanEnd.COUNT -> tr(StringKey.GOAL_N_CONTRIBUTIONS, p.count)
+                            GoalPlanEnd.DATE -> if (p.until.isNotBlank()) fmtDate(p.until) else tr(StringKey.NM_ENDS_UNTIL)
+                        },
+                    ) { endPage = true }
+                }
+                StepSpacer()
+                FieldLabel(tr(StringKey.NM_EACH_DATE))
+                SegmentedChoice(
+                    listOf(SegmentOption(false, tr(StringKey.NM_ASK_SHORT), V2Icons.alertCircle), SegmentOption(true, tr(StringKey.GOAL_AUTO), V2Icons.repeat)),
+                    p.auto,
+                ) { p = p.copy(auto = it) }
+                FieldNote(tr(if (p.auto) StringKey.GOAL_AUTO_DETAIL else StringKey.GOAL_ASK_DETAIL), Modifier.padding(top = 8.dp, start = 4.dp))
+                planSummary(p, amt, target, current, principal)?.let {
                     StepSpacer()
-                    AmountHeroField(tr(StringKey.GOAL_PLAN_AMOUNT), p.amount, { p = p.copy(amount = it) }, principal)
-                    StepSpacer()
-                    FieldLabel(tr(StringKey.GOAL_FREQ))
-                    PillRow { listOf(Freq.DAILY, Freq.WEEKLY, Freq.MONTHLY).forEach { f -> V2Pill(f.label, p.freq == f, { p = p.copy(freq = f) }) } }
-                    StepSpacer()
-                    FieldLabel(tr(StringKey.GOAL_FROM_WALLET))
-                    PillRow { wallets.forEach { w -> V2Pill(shortWallet(w.name), p.walletId == w.id, { p = p.copy(walletId = w.id) }) } }
-                    StepSpacer()
-                    FieldLabel(tr(StringKey.GOAL_STARTS))
-                    DateBox(p.start) { p = p.copy(start = it) }
-                    StepSpacer()
-                    FieldLabel(tr(StringKey.NM_ENDS))
-                    PillRow {
-                        listOf(GoalPlanEnd.GOAL to tr(StringKey.GOAL_ENDS_GOAL), GoalPlanEnd.COUNT to tr(StringKey.NM_ENDS_COUNT), GoalPlanEnd.DATE to tr(StringKey.NM_ENDS_UNTIL)).forEach { (k, label) ->
-                            V2Pill(label, p.end == k, { p = p.copy(end = k) })
-                        }
-                    }
-                    if (p.end == GoalPlanEnd.COUNT) Stepper(tr(StringKey.GOAL_N_CONTRIBUTIONS, p.count), { p = p.copy(count = (p.count - 1).coerceAtLeast(1)) }, { p = p.copy(count = (p.count + 1).coerceAtMost(120)) })
-                    if (p.end == GoalPlanEnd.DATE) DateBox(p.until, Modifier.padding(top = 10.dp)) { p = p.copy(until = it) }
-                    StepSpacer()
-                    FieldLabel(tr(StringKey.NM_EACH_DATE))
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        ConfirmModeRow(tr(StringKey.NM_ASK), tr(StringKey.GOAL_ASK_DETAIL), !p.auto) { p = p.copy(auto = false) }
-                        ConfirmModeRow(tr(StringKey.GOAL_AUTO), tr(StringKey.GOAL_AUTO_DETAIL), p.auto) { p = p.copy(auto = true) }
-                    }
-                    planSummary(p, amt, target, current, principal)?.let {
-                        StepSpacer()
-                        StepNote(it)
-                    }
+                    StepNote(it)
                 }
             }
         }

@@ -27,6 +27,8 @@ export function StepModal({
   showBack = step > 0,
   footer,
   direction,
+  subPage,
+  onSubDone,
   children,
 }: {
   title: string
@@ -43,6 +45,11 @@ export function StepModal({
   showBack?: boolean
   footer?: ReactNode
   direction: 'next' | 'back'
+  // A drill-in page over the current step (Periodo, Billeteras…): it
+  // replaces the step's content instead of growing it, so the modal never
+  // needs scrolling. Its back arrow and "Listo" call `onSubDone`.
+  subPage?: { key: string; title: string; content: ReactNode } | null
+  onSubDone?: () => void
   children: ReactNode
 }) {
   const headingRef = useRef<HTMLDivElement>(null)
@@ -56,7 +63,7 @@ export function StepModal({
   // Each new step moves focus to its question so screen readers announce it.
   useEffect(() => {
     headingRef.current?.querySelector<HTMLElement>('[data-step-heading]')?.focus()
-  }, [step])
+  }, [step, subPage?.key])
   const caption = [context, fill(tr('step.of'), step + 1, stepCount)].filter(Boolean).join(' · ')
   return createPortal(
     <div onClick={onClose} className="fixed inset-0 z-50 flex animate-overlay-in items-center justify-center bg-[rgba(6,6,12,.62)] p-6 [line-height:normal]">
@@ -68,8 +75,8 @@ export function StepModal({
         className="box-border flex max-h-[calc(100vh-48px)] w-[520px] max-w-full animate-dialog-in flex-col overflow-hidden rounded-[18px] border border-border-input bg-surface text-ink shadow-[0_24px_60px_rgba(0,0,0,.45)]"
       >
         <div className="flex items-center gap-1 px-4 pt-4">
-          {showBack && <StepIconButton paths={['M19 12H5', 'M12 19l-7-7 7-7']} label={tr('step.back')} onClick={onBack} />}
-          <div className={cn('min-w-0 flex-1', showBack ? 'pl-1' : 'pl-2.5')}>
+          {(showBack || subPage) && <StepIconButton paths={['M19 12H5', 'M12 19l-7-7 7-7']} label={tr('step.back')} onClick={subPage ? () => onSubDone?.() : onBack} />}
+          <div className={cn('min-w-0 flex-1', showBack || subPage ? 'pl-1' : 'pl-2.5')}>
             <div className="truncate text-title-sm font-semibold">{title}</div>
             <div className="truncate text-caption text-ink-secondary" aria-live="polite">
               {caption}
@@ -79,20 +86,35 @@ export function StepModal({
         </div>
         <div className="flex gap-1.5 px-[26px] pt-3 pb-5" aria-hidden="true">
           {Array.from({ length: stepCount }, (_, i) => (
-            <span key={i} className={cn('h-1 flex-1 rounded-full', i <= step ? '[background:var(--cta-bg)]' : 'bg-surface-sunken')} />
+            <span key={i} className={cn('h-[3px] flex-1 rounded-full', i <= step ? 'bg-primary' : 'bg-surface-sunken')} />
           ))}
         </div>
-        <div ref={headingRef} key={step} className={cn('min-h-0 flex-1 overflow-y-auto px-[26px] pb-4', direction === 'next' ? 'animate-step-next' : 'animate-step-back')}>
-          {children}
+        {/* Each step is designed to fit; the scroll is only the fallback for
+            a short window or a large zoom. */}
+        <div ref={headingRef} key={subPage ? `${step}:${subPage.key}` : step} className={cn('min-h-0 flex-1 overflow-y-auto px-[26px] pb-4', direction === 'next' || subPage ? 'animate-step-next' : 'animate-step-back')}>
+          {subPage ? (
+            <>
+              <StepQuestion text={subPage.title} />
+              {subPage.content}
+            </>
+          ) : (
+            children
+          )}
         </div>
-        {(showPrimary || footer) && (
+        {subPage ? (
+          <div className="flex flex-col gap-4 border-t border-border px-[26px] py-4">
+            <button type="button" onClick={() => onSubDone?.()} className="btn-cta h-11 w-full cursor-pointer whitespace-nowrap rounded-[12px] text-label font-semibold">
+              {tr('step.done')}
+            </button>
+          </div>
+        ) : (showPrimary || footer) && (
         <div className="flex flex-col gap-4 border-t border-border px-[26px] py-4">
           {showPrimary && (
             <button
               type="button"
               onClick={onPrimary}
               disabled={!primaryEnabled || busy}
-              className="btn-cta h-11 w-full cursor-pointer whitespace-nowrap rounded-full text-label font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+              className="btn-cta h-11 w-full cursor-pointer whitespace-nowrap rounded-[12px] text-label font-semibold disabled:cursor-not-allowed disabled:opacity-40"
             >
               {primaryLabel}
             </button>
@@ -118,7 +140,7 @@ function StepIconButton({ paths, label, onClick }: { paths: string[]; label: str
 export function StepQuestion({ text, hint }: { text: string; hint?: string }) {
   return (
     <div className="mb-5">
-      <h2 data-step-heading tabIndex={-1} className="text-title font-bold outline-none">
+      <h2 data-step-heading tabIndex={-1} className="text-title font-semibold outline-none">
         {text}
       </h2>
       {hint && <p className="mt-1.5 text-body-sm text-ink-secondary">{hint}</p>}
@@ -141,7 +163,7 @@ export function ChoiceCard({ icon, title, detail, on, onClick }: { icon: string[
       )}
     >
       {/* The brand tint (`link`), drawn here because GlyphMark takes a hex. */}
-      <span aria-hidden="true" className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-v2-accent/16">
+      <span aria-hidden="true" className="flex h-11 w-11 flex-none items-center justify-center rounded-[12px] bg-v2-accent/16">
         <Icon paths={icon} size={20} color="var(--color-link)" />
       </span>
       <span className="min-w-0 flex-1">
@@ -161,25 +183,24 @@ export function AmountHero({ label, expr, onExpr, code = 'COP', symbol = '$' }: 
   const id = `amount-${label.replace(/\W+/g, '-')}`
   return (
     <div className="flex flex-col gap-2">
-      <div className="relative flex flex-col gap-1 overflow-hidden rounded-[18px] border border-[var(--hero-line)] px-[18px] py-4 text-white" style={{ background: 'var(--hero-bg)' }}>
+      <div className="relative flex flex-col gap-1 overflow-hidden rounded-[16px] border border-border-input bg-surface px-[18px] py-4 text-ink focus-within:border-2 focus-within:border-primary-border">
         <div className="flex items-center gap-2">
-          <label htmlFor={id} className="flex-1 truncate text-overline font-bold uppercase text-[var(--hero-overline)]">
+          <label htmlFor={id} className="flex-1 truncate text-overline font-semibold uppercase text-ink-secondary">
             {label}
           </label>
           <button
             type="button"
             aria-pressed={calc}
             onClick={() => setCalc(!calc)}
-            className="box-border flex h-8 flex-none cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border px-[11px] text-caption font-extrabold text-white"
-            style={{ background: calc ? 'rgba(255,255,255,.28)' : 'rgba(255,255,255,.1)', borderColor: calc ? '#fff' : 'transparent' }}
+            className={cn('box-border flex h-8 flex-none cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-[10px] border px-[11px] text-caption font-semibold text-ink', calc ? 'border-primary-border bg-accent-soft' : 'border-transparent bg-surface-sunken')}
           >
-            <Icon paths={IC.calc} size={14} color="#fff" />
+            <Icon paths={IC.calc} size={14} color="var(--color-text-secondary)" />
             {tr(calc ? 'nm.calculator' : 'nm.keypad')}
           </button>
-          <span className="flex h-8 flex-none items-center rounded-full bg-[var(--hero-tile)] px-3 text-caption font-extrabold text-white">{code}</span>
+          <span className="flex h-8 flex-none items-center rounded-[8px] bg-surface-sunken px-3 text-caption font-semibold text-ink">{code}</span>
         </div>
         <div className="flex items-baseline">
-          <span className="font-numeric text-display-sm font-extrabold text-white">{symbol}</span>
+          <span className="font-numeric text-display-sm font-semibold text-ink">{symbol}</span>
           <input
             id={id}
             value={fmtExpr(expr)}
@@ -187,11 +208,11 @@ export function AmountHero({ label, expr, onExpr, code = 'COP', symbol = '$' }: 
             placeholder="0"
             inputMode="decimal"
             autoFocus
-            className="min-w-0 flex-1 border-none bg-transparent px-0.5 py-px font-[inherit] text-display-sm font-extrabold tracking-[-.02em] text-white outline-none [font-variant-numeric:tabular-nums] placeholder:text-white/85"
+            className="min-w-0 flex-1 border-none bg-transparent px-0.5 py-px font-[inherit] text-display-sm font-semibold tracking-[-.02em] text-ink outline-none [font-variant-numeric:tabular-nums] placeholder:text-ink-tertiary"
           />
         </div>
-        {hasOps(expr) && <div className="font-numeric text-body-sm font-extrabold text-white">{'= ' + symbol + total.toLocaleString(currentLanguage() === 'en' ? 'en-US' : 'es-CO', { maximumFractionDigits: 2 })}</div>}
-        <div className="text-caption text-white/85">{tr('nm.opsHint')}</div>
+        {hasOps(expr) && <div className="font-numeric text-body-sm font-semibold text-ink">{'= ' + symbol + total.toLocaleString(currentLanguage() === 'en' ? 'en-US' : 'es-CO', { maximumFractionDigits: 2 })}</div>}
+        <div className="text-caption text-ink-secondary">{tr('nm.opsHint')}</div>
       </div>
       {calc && (
         <div className="grid grid-cols-4 gap-1.5">
@@ -268,7 +289,7 @@ export function StepNote({ children }: { children: ReactNode }) {
 // The edit form's delete action: a full-width destructive outline button.
 export function StepDeleteButton({ onClick, children }: { onClick: () => void; children: ReactNode }) {
   return (
-    <button type="button" onClick={onClick} className="h-10 w-full cursor-pointer whitespace-nowrap rounded-full border border-negative text-label font-semibold text-negative hover:bg-negative/10">
+    <button type="button" onClick={onClick} className="h-10 w-full cursor-pointer whitespace-nowrap rounded-[12px] border border-negative text-label font-semibold text-negative hover:bg-negative/10">
       {children}
     </button>
   )
@@ -300,5 +321,51 @@ export function SegmentedChoice<T extends string>({ options, value, onChange, la
         )
       })}
     </div>
+  )
+}
+
+// A row that shows an option's current value and opens its sub-page: 56 px,
+// icon, label, value and a chevron. Group rows with StepOptionGroup.
+export function StepOptionRow({ icon, label, value, onClick }: { icon: string[]; label: string; value: string; onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className="flex min-h-14 w-full cursor-pointer items-center gap-2.5 px-3.5 text-left hover:bg-surface-sunken">
+      <Icon paths={icon} size={20} color="var(--color-text-secondary)" />
+      <span className="flex-none whitespace-nowrap text-body font-medium text-ink">{label}</span>
+      <span className="font-numeric min-w-0 flex-1 truncate text-right text-body-sm text-ink-secondary">{value}</span>
+      <Icon paths={['M9 6l6 6-6 6']} size={18} color="var(--color-text-secondary)" />
+    </button>
+  )
+}
+
+// Option rows in one bordered group with hairline dividers.
+export function StepOptionGroup({ children }: { children: ReactNode }) {
+  return <div className="flex flex-col divide-y divide-border overflow-hidden rounded-[12px] border border-border">{children}</div>
+}
+
+// A single- or multi-choice row (subcategories, wallets): 52 px, optional
+// leading mark, label and a radio or check, so the selected row isn't
+// marked by color alone.
+export function StepChoiceRow({ label, on, onClick, multi = false, leading }: { label: string; on: boolean; onClick: () => void; multi?: boolean; leading?: ReactNode }) {
+  return (
+    <button
+      type="button"
+      role={multi ? 'checkbox' : 'radio'}
+      aria-checked={on}
+      onClick={onClick}
+      className={cn(
+        'flex min-h-[52px] w-full cursor-pointer items-center gap-3 rounded-[12px] px-3 text-left transition-colors duration-150',
+        on ? 'border-2 border-primary-border bg-accent-soft' : 'border border-border bg-surface hover:bg-surface-sunken',
+      )}
+    >
+      {leading}
+      <span className="min-w-0 flex-1 truncate text-body text-ink">{label}</span>
+      {multi ? (
+        <span className={cn('flex h-[22px] w-[22px] flex-none items-center justify-center rounded-[6px]', on ? 'bg-primary' : 'border-[1.5px] border-border-input')}>
+          {on && <Icon paths={IC.check} size={14} color="var(--on-primary)" />}
+        </span>
+      ) : (
+        <RadioDot on={on} />
+      )}
+    </button>
   )
 }

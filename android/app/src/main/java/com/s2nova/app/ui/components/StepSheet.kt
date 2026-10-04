@@ -52,16 +52,23 @@ import com.s2nova.app.ui.screens.addtransaction.AmountPad
 import com.s2nova.app.ui.theme.NovaColors
 import com.s2nova.app.ui.theme.NovaMotion
 import com.s2nova.app.ui.theme.NovaType
-import com.s2nova.app.ui.theme.heroSurface
+import com.s2nova.app.ui.theme.amountSurface
 import com.s2nova.app.ui.theme.rememberReducedMotion
 import com.s2nova.app.ui.tr
 
-// Guided steps for the create/edit forms that were too crowded for one
-// sheet (budgets, goals). One question per step: a header with back and
-// close, "Paso n de N" plus a segmented progress bar (the text carries the
-// step, so it isn't color alone), the step content in its own scroll, and
-// the primary action fixed at the bottom. The sheet takes
-// each step's height (up to 90 %) and animates between them.
+// Guided steps for the create/edit forms (budgets, goals, categories). One
+// question per step: a header with back and close, "Paso n de N" plus a
+// segmented progress bar (the text carries the step, so it isn't color
+// alone), the step content, and the primary action fixed at the bottom.
+//
+// Sheets never need scrolling (DESIGN-SYSTEM.md §6.9): a choice never adds
+// content under itself. Options that depend on a choice open as a sub-page
+// (`subPage`) inside the same sheet, with the same header and a "Listo"
+// button; each step is designed to fit a 360×740 dp phone. The step content
+// still sits in a scroll container, but only as the fallback for a large
+// font scale or the open keyboard.
+class StepSubPage(val key: String, val title: String, val content: @Composable ColumnScope.() -> Unit)
+
 @Composable
 fun StepSheet(
     title: String,
@@ -79,15 +86,22 @@ fun StepSheet(
     showBack: Boolean = step > 0,
     // What is being edited ("Streaming"), before "Paso n de N".
     context: String? = null,
+    // A drill-in page over the current step (Periodo, Billeteras…); its back
+    // arrow and "Listo" call `onSubDone`.
+    subPage: StepSubPage? = null,
+    onSubDone: () -> Unit = {},
     content: @Composable ColumnScope.(step: Int) -> Unit,
 ) {
     val colors = NovaColors.current
     val reduced = rememberReducedMotion()
+    val sub = subPage
     NovaDraftSheet(onDismiss = onDismiss, bottomPadding = 16.dp) {
-        val maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.9f).dp
+        val maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp * 0.92f).dp
         Column(Modifier.heightIn(max = maxHeight).animateContentSize(tween(if (reduced) 0 else NovaMotion.BASE, easing = NovaMotion.EmphasizedDecelerate))) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                if (showBack) {
+                if (sub != null) {
+                    StepIconButton(V2Icons.back, tr(StringKey.STEP_BACK), onSubDone)
+                } else if (showBack) {
                     StepIconButton(V2Icons.back, tr(StringKey.STEP_BACK), onBack)
                 }
                 Column(Modifier.weight(1f).padding(start = 4.dp)) {
@@ -102,16 +116,18 @@ fun StepSheet(
             ) {
                 repeat(stepCount) { i ->
                     Box(
-                        Modifier.weight(1f).height(4.dp).clip(RoundedCornerShape(999.dp))
-                            .then(if (i <= step) Modifier.background(com.s2nova.app.ui.theme.ctaBrush()) else Modifier.background(colors.surfaceSunken)),
+                        Modifier.weight(1f).height(3.dp).clip(RoundedCornerShape(999.dp))
+                            .background(if (i <= step) MaterialTheme.colorScheme.primary else colors.surfaceSunken),
                     )
                 }
             }
-            var last by remember { mutableStateOf(step) }
-            val forward = step >= last
-            last = step
+            // Steps are numbered 0…; a sub-page sits "after" its step.
+            val target = step * 2 + if (sub != null) 1 else 0
+            var last by remember { mutableStateOf(target) }
+            val forward = target >= last
+            last = target
             AnimatedContent(
-                targetState = step,
+                targetState = target,
                 transitionSpec = {
                     if (reduced) {
                         fadeIn(tween(NovaMotion.FAST)) togetherWith fadeOut(tween(NovaMotion.FAST))
@@ -123,15 +139,87 @@ fun StepSheet(
                 },
                 modifier = Modifier.weight(1f, fill = false),
                 label = "step",
-            ) { s ->
+            ) { t ->
                 Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(bottom = 16.dp)) {
-                    content(s)
+                    if (t % 2 == 1 && sub != null) {
+                        StepQuestion(sub.title)
+                        sub.content(this)
+                    } else {
+                        content(t / 2)
+                    }
                 }
             }
-            if (showPrimary) {
-                V2Button(primaryLabel, enabled = primaryEnabled, onClick = onPrimary, modifier = Modifier.padding(top = 8.dp))
+            if (sub != null) {
+                V2Button(tr(StringKey.STEP_DONE), onClick = onSubDone, modifier = Modifier.padding(top = 8.dp))
+            } else {
+                if (showPrimary) {
+                    V2Button(primaryLabel, enabled = primaryEnabled, onClick = onPrimary, modifier = Modifier.padding(top = 8.dp))
+                }
+                footer?.invoke(this)
             }
-            footer?.invoke(this)
+        }
+    }
+}
+
+// A row that shows an option's current value and opens its sub-page:
+// 56 dp, leading icon, label, value and a chevron. Group rows with
+// StepOptionGroup.
+@Composable
+fun StepOptionRow(icon: List<String>, label: String, value: String, onClick: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 56.dp)
+            .clickable(role = Role.Button, onClickLabel = label, onClick = onClick)
+            .padding(start = 14.dp, end = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        V2Icon(icon, MaterialTheme.colorScheme.onSurfaceVariant, 20.dp)
+        Text(label, style = NovaType.body.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Medium), color = MaterialTheme.colorScheme.onBackground, maxLines = 1, softWrap = false)
+        Text(value, style = NovaType.bodySm.copy(fontFeatureSettings = TNUM), color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = androidx.compose.ui.text.style.TextAlign.End, modifier = Modifier.weight(1f))
+        V2Icon(V2Icons.chevronRight, MaterialTheme.colorScheme.onSurfaceVariant, 18.dp)
+    }
+}
+
+// Option rows in one bordered group with hairline dividers.
+@Composable
+fun StepOptionGroup(content: @Composable ColumnScope.() -> Unit) {
+    val shape = RoundedCornerShape(12.dp)
+    Column(
+        Modifier.fillMaxWidth().clip(shape).border(1.dp, MaterialTheme.colorScheme.outline, shape),
+        content = content,
+    )
+}
+
+@Composable
+fun StepDivider() = Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outline))
+
+// A single- or multi-choice row (subcategories, wallets): 52 dp, optional
+// leading mark, label, and a radio or check indicator, so the selected row
+// isn't marked by color alone.
+@Composable
+fun StepChoiceRow(label: String, selected: Boolean, onClick: () -> Unit, multi: Boolean = false, leading: (@Composable () -> Unit)? = null) {
+    val colors = NovaColors.current
+    val shape = RoundedCornerShape(12.dp)
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 52.dp).clip(shape)
+            .background(if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface)
+            .border(if (selected) 2.dp else 1.dp, if (selected) colors.primaryBorder else MaterialTheme.colorScheme.outline, shape)
+            .selectable(selected = selected, role = if (multi) Role.Checkbox else Role.RadioButton, onClick = onClick)
+            .padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        leading?.invoke()
+        Text(label, style = NovaType.body, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+        if (multi) {
+            Box(
+                Modifier.size(22.dp).clip(RoundedCornerShape(6.dp))
+                    .background(if (selected) MaterialTheme.colorScheme.primary else Color.Transparent)
+                    .border(if (selected) 0.dp else 1.5.dp, colors.borderInput, RoundedCornerShape(6.dp)),
+                contentAlignment = Alignment.Center,
+            ) { if (selected) V2Icon(V2Icons.check, MaterialTheme.colorScheme.onPrimary, 14.dp, strokeWidth = 3f) }
+        } else {
+            RadioDot(selected)
         }
     }
 }
@@ -180,8 +268,8 @@ fun ChoiceCard(icon: List<String>, tint: Color, title: String, detail: String, s
     }
 }
 
-// The amount on the hero surface, as in "Nuevo movimiento": overline label,
-// the figure in `display-sm`, a hint; tapping it opens the amount pad.
+// The amount field, as in "Nuevo movimiento": overline label, the figure
+// in `display-sm`, a hint; tapping it opens the amount pad.
 @Composable
 fun AmountHeroField(label: String, expr: String, onExpr: (String) -> Unit, currency: String, padTitle: String = label, hint: String? = null) {
     val colors = NovaColors.current
@@ -189,23 +277,23 @@ fun AmountHeroField(label: String, expr: String, onExpr: (String) -> Unit, curre
     val value = AmountPad.eval(expr)
     Column(
         Modifier.fillMaxWidth()
-            .heroSurface(RoundedCornerShape(20.dp))
+            .amountSurface(RoundedCornerShape(16.dp), active = open)
             .clickable(role = Role.Button, onClickLabel = padTitle) { open = true }
             .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(label.uppercase(), style = NovaType.overline, color = colors.heroOverline, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(currency, style = NovaType.label, color = Color.White, maxLines = 1, softWrap = false,
-                modifier = Modifier.clip(RoundedCornerShape(999.dp)).background(colors.heroTile).padding(horizontal = 12.dp, vertical = 6.dp))
+            Text(label.uppercase(), style = NovaType.overline, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(currency, style = NovaType.label, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, softWrap = false,
+                modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(colors.surfaceSunken).padding(horizontal = 12.dp, vertical = 6.dp))
         }
         Text(
-            com.s2nova.app.data.formatMoney(value, currency), style = NovaType.displaySm, color = Color.White, maxLines = 1, softWrap = false,
+            com.s2nova.app.data.formatMoney(value, currency), style = NovaType.displaySm, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, softWrap = false,
             autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 20.sp, maxFontSize = 28.sp),
         )
         // The hint only while there's nothing to show yet.
         val note = hint ?: if (value <= 0) tr(StringKey.STEP_TAP_AMOUNT) else null
-        if (note != null) Text(note, style = NovaType.caption, color = colors.heroLabel)
+        if (note != null) Text(note, style = NovaType.caption, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
     if (open) AmountPadSheet(expr = expr, onExpr = onExpr, currency = currency, title = padTitle, onDone = { open = false })
 }
@@ -267,8 +355,8 @@ fun StepNote(text: String, modifier: Modifier = Modifier) {
 @Composable
 fun StepDeleteButton(label: String, onClick: () -> Unit) {
     Box(
-        Modifier.padding(top = 16.dp).fillMaxWidth().height(48.dp).clip(RoundedCornerShape(50))
-            .border(1.dp, NovaColors.current.negative, RoundedCornerShape(50))
+        Modifier.padding(top = 16.dp).fillMaxWidth().height(48.dp).clip(RoundedCornerShape(12.dp))
+            .border(1.dp, NovaColors.current.negative, RoundedCornerShape(12.dp))
             .clickable(role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) { Text(label, style = NovaType.label, color = NovaColors.current.negative, maxLines = 1, softWrap = false) }
@@ -305,5 +393,16 @@ fun <T> SegmentedChoice(options: List<SegmentOption<T>>, selected: T, onSelect: 
                 Text(option.label, style = NovaType.label, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
+    }
+}
+
+// The header of a sub-page inside a single (non-step) sheet: a 48 dp back
+// button and the page title. The page replaces the sheet's content instead
+// of growing it, so the sheet still fits without scrolling.
+@Composable
+fun SheetPageHeader(title: String, onBack: () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
+        StepIconButton(V2Icons.back, tr(StringKey.STEP_BACK), onBack)
+        Text(title, style = NovaType.title, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 4.dp).semantics { heading() })
     }
 }

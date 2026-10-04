@@ -56,17 +56,21 @@ describe('Planes', () => {
 
     await user.click(screen.getByRole('button', { name: /Nuevo presupuesto/ }))
     const dialog = screen.getByRole('dialog', { name: 'Nuevo presupuesto' })
-    // Step 1: the kind; step 2: Alimentación · Mercado, named after it.
+    // The kind, then the category and the subcategory: each choice advances
+    // on its own, and nothing unfolds under it.
     expect(dialog).toHaveTextContent('Paso 1 de 3')
     await user.click(within(dialog).getByRole('radio', { name: /Una categoría/ }))
-    expect(within(dialog).getByRole('button', { name: 'Continuar' })).toBeDisabled()
-    await user.click(within(dialog).getByRole('button', { name: 'Alimentación' }))
+    expect(within(dialog).queryByRole('button', { name: 'Continuar' })).toBeNull()
+    await user.click(within(dialog).getByRole('radio', { name: 'Alimentación' }))
+    expect(dialog).toHaveTextContent('Paso 3 de 4')
     await user.click(within(dialog).getByRole('radio', { name: 'Mercado' }))
+    // The limit step: amount, the name after the subcategory, and the
+    // wallets on their own page.
     expect(within(dialog).getByPlaceholderText(/Mercado, salidas/)).toHaveValue('Mercado')
-    await user.click(within(dialog).getByRole('button', { name: 'Continuar' }))
-    // Step 3: limit, wallets and the summary of what counts.
     await user.type(within(dialog).getByPlaceholderText('0'), '600000')
+    await user.click(within(dialog).getByRole('button', { name: /Billeteras/ }))
     await user.click(within(dialog).getByRole('checkbox', { name: 'Nequi' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Listo' }))
     expect(dialog).toHaveTextContent('Solo Alimentación · Mercado, pagados desde Nequi · se reinicia cada mes.')
     await user.click(within(dialog).getByRole('button', { name: 'Guardar presupuesto' }))
     await vi.waitFor(() =>
@@ -115,11 +119,13 @@ describe('Planes', () => {
 
     await user.click((await screen.findByText('Servicios públicos · Todas · Mensual · se reinicia el 1')).closest('button')!)
     const dialog = screen.getByRole('dialog', { name: 'Editar presupuesto' })
-    // Editing opens on the last step; Atrás leads to the category.
-    expect(dialog).toHaveTextContent('Paso 2 de 2')
+    // Editing opens on the last step; Atrás leads to the subcategory, then
+    // the category.
+    expect(dialog).toHaveTextContent('Paso 3 de 3')
     await user.click(within(dialog).getByRole('button', { name: 'Atrás' }))
-    await user.click(within(dialog).getByRole('button', { name: 'Alimentación' }))
-    await user.click(within(dialog).getByRole('button', { name: 'Continuar' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Atrás' }))
+    await user.click(within(dialog).getByRole('radio', { name: 'Alimentación' }))
+    await user.click(within(dialog).getByRole('radio', { name: 'Toda la categoría' }))
     await user.click(within(dialog).getByRole('button', { name: 'Guardar cambios' }))
     expect(await within(dialog).findByRole('alert')).toHaveTextContent('Ya tienes un presupuesto para esa categoría en ese periodo.')
   })
@@ -181,11 +187,15 @@ describe('Planes', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Continuar' }))
     expect(within(dialog).getByRole('radio', { name: /Cuando yo quiera/ })).toBeChecked()
     await user.click(within(dialog).getByRole('radio', { name: /Aporte periódico/ }))
-    expect(within(dialog).getByRole('button', { name: 'Guardar meta' })).toBeDisabled()
+    // The plan adds its own steps instead of unfolding under the choice.
+    expect(dialog).toHaveTextContent('Paso 3 de 5')
+    await user.click(within(dialog).getByRole('button', { name: 'Continuar' }))
+    expect(within(dialog).getByRole('button', { name: 'Continuar' })).toBeDisabled()
     await user.type(within(dialog).getByPlaceholderText('0'), '350000')
-    expect(dialog).toHaveTextContent('Con 8 aportes de $350.000 cumples la meta hacia abril de 2027.')
     await user.click(within(dialog).getByRole('radio', { name: 'Nequi' }))
-    await user.click(within(dialog).getByRole('button', { name: /Automático/ }))
+    await user.click(within(dialog).getByRole('button', { name: 'Continuar' }))
+    expect(dialog).toHaveTextContent('Con 8 aportes de $350.000 cumples la meta hacia abril de 2027.')
+    await user.click(within(dialog).getByRole('radio', { name: /Automático/ }))
     await user.click(within(dialog).getByRole('button', { name: 'Guardar meta' }))
     await vi.waitFor(() => expect(plan).not.toBeNull())
     expect(created).toEqual({ name: 'Vacaciones en Cartagena', icon: 'travel', targetAmount: 3_000_000, initialAmount: 200_000 })

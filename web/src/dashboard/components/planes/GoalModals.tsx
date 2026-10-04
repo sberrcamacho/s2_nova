@@ -2,7 +2,7 @@ import { fill, tr } from '@/lib/i18n/translations'
 import { useState } from 'react'
 import { PlanMark } from '@/components/v2/CategoryMark'
 import { AmountField, CancelButton, ConfirmDialog, DateInput, ErrorBox, Field, Flat, IC, Label, Pills, RadioRow, V2Modal } from '@/components/v2/Kit'
-import { AmountHero, ChoiceCard, PlanIconPicker, StepDeleteButton, StepModal, StepNote, StepQuestion } from '@/components/v2/Steps'
+import { AmountHero, ChoiceCard, PlanIconPicker, SegmentedChoice, StepChoiceRow, StepDeleteButton, StepModal, StepNote, StepOptionGroup, StepOptionRow, StepQuestion } from '@/components/v2/Steps'
 import { evalExpr, numStr } from '@/lib/nuevoMovimiento'
 import { todayISO } from '@/lib/date'
 import { shortWallet } from '@/lib/movimientos'
@@ -103,7 +103,13 @@ export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | nu
   const amt = evalExpr(pl.amount)
   const current = goal ? goal.currentAmount : evalExpr(initial)
   const planValid = !planOn || (amt > 0 && !!pl.accountId)
-  const stepValid = step === 0 ? !!name.trim() : step === 1 ? !!name.trim() && evalExpr(target) > 0 : !!name.trim() && evalExpr(target) > 0 && planValid
+  // A recurring contribution adds two steps (amount and wallet · schedule)
+  // instead of unfolding under the choice, so no step needs scrolling.
+  const stepCount = planOn ? 5 : 3
+  const last = step === stepCount - 1
+  const [endPage, setEndPage] = useState(false)
+  const stepValid =
+    step === 0 ? !!name.trim() : step === 1 || step === 2 ? !!name.trim() && evalExpr(target) > 0 : step === 3 ? amt > 0 && !!pl.accountId : !!name.trim() && evalExpr(target) > 0 && planValid && (pl.endMode !== 'date' || !!pl.endDate)
   let summary = ''
   if (planOn && amt > 0) {
     const start = pl.startDate || todayISO()
@@ -157,15 +163,47 @@ export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | nu
         title={title}
         context={goal?.name}
         step={step}
-        stepCount={3}
+        stepCount={stepCount}
         direction={direction}
         onBack={() => go(-1)}
         onClose={onClose}
-        primaryLabel={tr(step < 2 ? 'step.continue' : goal ? 'step.saveChanges' : 'goal.save')}
+        primaryLabel={tr(!last ? 'step.continue' : goal ? 'step.saveChanges' : 'goal.save')}
         primaryEnabled={stepValid}
         busy={busy}
-        onPrimary={() => (step < 2 ? go(1) : void save())}
-        footer={goal && <StepDeleteButton onClick={() => setConfirming(true)}>{tr('goal.delete')}</StepDeleteButton>}
+        onPrimary={() => (!last ? go(1) : void save())}
+        footer={goal && step === 2 && <StepDeleteButton onClick={() => setConfirming(true)}>{tr('goal.delete')}</StepDeleteButton>}
+        subPage={
+          endPage
+            ? {
+                key: 'end',
+                title: tr('goal.q.end'),
+                content: (
+                  <div className="flex flex-col gap-2" role="radiogroup">
+                    {ends().map((e) => (
+                      <StepChoiceRow key={e.value} label={e.label} on={pl.endMode === e.value} onClick={() => plSet({ endMode: e.value })} />
+                    ))}
+                    {pl.endMode === 'count' && (
+                      <div className="mt-2 flex items-center gap-2.5">
+                        <button type="button" aria-label="−1" onClick={() => plSet({ count: Math.max(1, pl.count - 1) })} className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-[10px] border border-border-input text-title-sm font-semibold">
+                          −
+                        </button>
+                        <div className="font-numeric flex-1 text-center text-title-sm font-semibold">{fill(tr('goal.nContributions'), pl.count)}</div>
+                        <button type="button" aria-label="+1" onClick={() => plSet({ count: Math.min(120, pl.count + 1) })} className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-[10px] border border-border-input text-title-sm font-semibold">
+                          +
+                        </button>
+                      </div>
+                    )}
+                    {pl.endMode === 'date' && (
+                      <div className="mt-2">
+                        <DateInput value={pl.endDate} onChange={(v) => plSet({ endDate: v })} />
+                      </div>
+                    )}
+                  </div>
+                ),
+              }
+            : null
+        }
+        onSubDone={() => setEndPage(false)}
       >
         {step === 0 && (
           <>
@@ -218,84 +256,71 @@ export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | nu
               <ChoiceCard icon={[...IC.wallet]} title={tr('goal.choice.manual')} detail={tr('goal.choice.manualDetail')} on={!planOn} onClick={() => setPlanOn(false)} />
               <ChoiceCard icon={[...IC.repeat]} title={tr('goal.plan')} detail={tr('goal.choice.planDetail')} on={planOn} onClick={() => setPlanOn(true)} />
             </div>
-            {planOn && (
-              <>
-                <div className="mt-5">
-                  <AmountHero label={tr('goal.plan.amount')} expr={pl.amount} onExpr={(v) => plSet({ amount: v })} />
+            {err && (
+              <div className="mt-3">
+                <ErrorBox>{err}</ErrorBox>
+              </div>
+            )}
+          </>
+        )}
+        {step === 3 && (
+          <>
+            <StepQuestion text={tr('goal.q.contrib')} />
+            <AmountHero label={tr('goal.plan.amount')} expr={pl.amount} onExpr={(v) => plSet({ amount: v })} />
+            <div className="mt-5">
+              <Field label={tr('goal.plan.freq')}>
+                <div className="flex flex-wrap gap-2" role="radiogroup">
+                  {freqs().map((f) => (
+                    <Flat key={f.value} role="radio" on={pl.frequency === f.value} onClick={() => plSet({ frequency: f.value })}>
+                      {f.label}
+                    </Flat>
+                  ))}
                 </div>
-                <div className="mt-5">
-                  <Field label={tr('goal.plan.freq')}>
-                    <div className="flex flex-wrap gap-2" role="radiogroup">
-                      {freqs().map((f) => (
-                        <Flat key={f.value} role="radio" on={pl.frequency === f.value} onClick={() => plSet({ frequency: f.value })}>
-                          {f.label}
-                        </Flat>
-                      ))}
-                    </div>
-                  </Field>
+              </Field>
+            </div>
+            <div className="mt-5">
+              <Field label={tr('goal.fromWallet')}>
+                <div className="flex flex-wrap gap-2" role="radiogroup">
+                  {wallets.map((w) => (
+                    <Flat key={w.id} role="radio" on={pl.accountId === w.id} onClick={() => plSet({ accountId: w.id })}>
+                      {shortWallet(w.name)}
+                    </Flat>
+                  ))}
                 </div>
-                <div className="mt-5 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2.5">
-                  <Field label={tr('goal.plan.starts')}>
-                    <DateInput value={pl.startDate} onChange={(v) => plSet({ startDate: v })} />
-                  </Field>
-                </div>
-                <div className="mt-5">
-                  <Field label={tr('goal.fromWallet')}>
-                    <div className="flex flex-wrap gap-2" role="radiogroup">
-                      {wallets.map((w) => (
-                        <Flat key={w.id} role="radio" on={pl.accountId === w.id} onClick={() => plSet({ accountId: w.id })}>
-                          {shortWallet(w.name)}
-                        </Flat>
-                      ))}
-                    </div>
-                  </Field>
-                </div>
-                <div className="mt-5">
-                  <Field label={tr('nm.ends')}>
-                    <div className="flex flex-wrap gap-2" role="radiogroup">
-                      {ends().map((e) => (
-                        <Flat key={e.value} role="radio" on={pl.endMode === e.value} onClick={() => plSet({ endMode: e.value })}>
-                          {e.label}
-                        </Flat>
-                      ))}
-                    </div>
-                    {pl.endMode === 'count' && (
-                      <div className="flex items-center gap-2.5">
-                        <button type="button" aria-label="−1" onClick={() => plSet({ count: Math.max(1, pl.count - 1) })} className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-[10px] border border-border-input text-title-sm font-semibold">
-                          −
-                        </button>
-                        <div className="font-numeric flex-1 text-center text-title-sm font-semibold">{fill(tr('goal.nContributions'), pl.count)}</div>
-                        <button type="button" aria-label="+1" onClick={() => plSet({ count: Math.min(120, pl.count + 1) })} className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-[10px] border border-border-input text-title-sm font-semibold">
-                          +
-                        </button>
-                      </div>
-                    )}
-                    {pl.endMode === 'date' && <DateInput value={pl.endDate} onChange={(v) => plSet({ endDate: v })} />}
-                  </Field>
-                </div>
-                <div className="mt-5">
-                  <Field label={tr('nm.eachDate')}>
-                    <div className="flex flex-col gap-2">
-                      {(
-                        [
-                          [false, tr('nm.ask'), tr('goal.ask.detail')],
-                          [true, tr('goal.auto'), tr('goal.auto.detail')],
-                        ] as const
-                      ).map(([auto, text, detail]) => (
-                        <RadioRow key={text} on={pl.autoConfirm === auto} onClick={() => plSet({ autoConfirm: auto })}>
-                          <div className="text-body-sm font-semibold">{text}</div>
-                          <div className="mt-0.5 text-caption leading-[1.4] text-ink-secondary">{detail}</div>
-                        </RadioRow>
-                      ))}
-                    </div>
-                  </Field>
-                </div>
-                {summary && (
-                  <div className="mt-5">
-                    <StepNote>{summary}</StepNote>
-                  </div>
-                )}
-              </>
+              </Field>
+            </div>
+          </>
+        )}
+
+        {step === 4 && (
+          <>
+            <StepQuestion text={tr('goal.q.schedule')} />
+            <Field label={tr('goal.plan.starts')}>
+              <DateInput value={pl.startDate} onChange={(v) => plSet({ startDate: v })} />
+            </Field>
+            <div className="mt-4">
+              <StepOptionGroup>
+                <StepOptionRow icon={[...IC.cal]} label={tr('step.row.ends')} value={pl.endMode === 'goal' ? tr('goal.ends.goal') : pl.endMode === 'count' ? fill(tr('goal.nContributions'), pl.count) : pl.endDate ? shortDayMonth(pl.endDate) : tr('nm.ends.until')} onClick={() => setEndPage(true)} />
+              </StepOptionGroup>
+            </div>
+            <div className="mt-5">
+              <Field label={tr('nm.eachDate')}>
+                <SegmentedChoice
+                  label={tr('nm.eachDate')}
+                  value={pl.autoConfirm ? 'auto' : 'ask'}
+                  onChange={(v) => plSet({ autoConfirm: v === 'auto' })}
+                  options={[
+                    { value: 'ask', label: tr('nm.askShort'), icon: ['M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z', 'M12 8v5', 'M12 16h.01'] },
+                    { value: 'auto', label: tr('goal.auto'), icon: [...IC.repeat] },
+                  ]}
+                />
+                <div className="mt-1 text-caption text-ink-secondary">{tr(pl.autoConfirm ? 'goal.auto.detail' : 'goal.ask.detail')}</div>
+              </Field>
+            </div>
+            {summary && (
+              <div className="mt-5">
+                <StepNote>{summary}</StepNote>
+              </div>
             )}
             {err && (
               <div className="mt-3">

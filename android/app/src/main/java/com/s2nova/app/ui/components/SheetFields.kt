@@ -38,8 +38,8 @@ import com.s2nova.app.ui.theme.NovaColors
 fun SheetLabel(text: String) {
     Text(
         text,
-        fontSize = 13.sp,
-        fontWeight = FontWeight.Bold,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.SemiBold,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(bottom = 8.dp),
     )
@@ -113,34 +113,50 @@ fun SheetDateBox(value: String?, placeholder: String, allowClear: Boolean, onVal
             )
             Text(
                 value?.let { com.s2nova.app.ui.longDateLabel(it, language) } ?: placeholder,
-                fontSize = 15.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = if (value != null) MaterialTheme.colorScheme.onBackground else NovaColors.current.textDim,
                 modifier = Modifier.padding(start = 10.dp),
             )
         }
     }
-    if (picking) {
-        val initial = (value ?: java.time.LocalDate.now().toString())
-        val state = androidx.compose.material3.rememberDatePickerState(
-            initialSelectedDateMillis = java.time.LocalDate.parse(initial).atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli(),
-        )
-        androidx.compose.material3.DatePickerDialog(
-            onDismissRequest = { picking = false },
-            confirmButton = {
-                androidx.compose.material3.TextButton(onClick = {
-                    state.selectedDateMillis?.let {
-                        onValueChange(java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneOffset.UTC).toLocalDate().toString())
-                    }
-                    picking = false
-                }) { Text(t(com.s2nova.app.ui.StringKey.DATE_PICKER_USE_DATE)) }
-            },
-            dismissButton = {
-                androidx.compose.material3.TextButton(onClick = {
-                    onValueChange(if (allowClear) null else java.time.LocalDate.now().toString())
-                    picking = false
-                }) { Text(t(if (allowClear) com.s2nova.app.ui.StringKey.DATE_PICKER_NO_DATE else com.s2nova.app.ui.StringKey.DATE_PICKER_TODAY)) }
-            },
-        ) { androidx.compose.material3.DatePicker(state = state) }
-    }
+    if (picking) SheetDatePicker(value, allowClear, onValueChange) { picking = false }
+}
+
+
+// The date picker dialog behind SheetDateBox and DateOptionRow.
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+fun SheetDatePicker(value: String?, allowClear: Boolean, onValueChange: (String?) -> Unit, onDismiss: () -> Unit) {
+    val t = com.s2nova.app.ui.rememberStrings()
+    val initial = (value ?: java.time.LocalDate.now().toString())
+    val state = androidx.compose.material3.rememberDatePickerState(
+        initialSelectedDateMillis = java.time.LocalDate.parse(initial).atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli(),
+    )
+    androidx.compose.material3.DatePickerDialog(
+        onDismissRequest = { onDismiss() },
+        confirmButton = {
+            androidx.compose.material3.TextButton(onClick = {
+                state.selectedDateMillis?.let {
+                    onValueChange(java.time.Instant.ofEpochMilli(it).atZone(java.time.ZoneOffset.UTC).toLocalDate().toString())
+                }
+                onDismiss()
+            }) { Text(t(com.s2nova.app.ui.StringKey.DATE_PICKER_USE_DATE)) }
+        },
+        dismissButton = {
+            androidx.compose.material3.TextButton(onClick = {
+                onValueChange(if (allowClear) null else java.time.LocalDate.now().toString())
+                onDismiss()
+            }) { Text(t(if (allowClear) com.s2nova.app.ui.StringKey.DATE_PICKER_NO_DATE else com.s2nova.app.ui.StringKey.DATE_PICKER_TODAY)) }
+        },
+    ) { androidx.compose.material3.DatePicker(state = state) }
+}
+
+// A date as an option row (label, the date or a placeholder, chevron) that
+// opens the date picker; for compact sheets.
+@Composable
+fun DateOptionRow(label: String, value: String?, placeholder: String, allowClear: Boolean, onValueChange: (String?) -> Unit) {
+    var picking by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    StepOptionRow(V2Icons.cal, label, value?.let { com.s2nova.app.data.fmtDate(it) } ?: placeholder) { picking = true }
+    if (picking) SheetDatePicker(value, allowClear, onValueChange) { picking = false }
 }

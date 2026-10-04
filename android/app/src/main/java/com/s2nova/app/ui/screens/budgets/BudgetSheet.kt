@@ -45,6 +45,13 @@ import com.s2nova.app.ui.components.StepDeleteButton
 import com.s2nova.app.ui.components.StepNote
 import com.s2nova.app.ui.components.StepQuestion
 import com.s2nova.app.ui.components.StepSheet
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Spacer
+import com.s2nova.app.ui.components.StepDivider
+import com.s2nova.app.ui.components.StepOptionGroup
+import com.s2nova.app.ui.components.StepOptionRow
+import com.s2nova.app.ui.components.StepChoiceRow
+import com.s2nova.app.ui.components.StepSubPage
 import com.s2nova.app.ui.components.StepSpacer
 import com.s2nova.app.ui.components.V2Icon
 import com.s2nova.app.ui.screens.addtransaction.categoryGridColumns
@@ -135,11 +142,17 @@ data class BudgetEditDraft(
     }
 }
 
-// Budget create/edit as guided steps (the single sheet was too crowded):
-// 1 the kind, 2 the category (or the custom budget's name and icon), 3 the
-// limit, period and wallets with a summary of what counts. Editing starts at
-// step 3 and never shows step 1, because the kind is fixed once saved.
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+// Budget create/edit as guided steps that never scroll (DESIGN-SYSTEM.md
+// §6.9). Category kind: Tipo → Categoría (tap advances) → Subcategoría
+// (only when the category has some; tap advances) → Límite (amount, name,
+// and Periodo / Billeteras rows that open their own sub-pages). Custom kind:
+// Tipo → Nombre e icono → Límite. Editing starts at Límite and never shows
+// Tipo, because the kind is fixed once saved.
+private const val KIND = 0
+private const val CATEGORY = 1
+private const val SUB = 2
+private const val LIMIT = 3
+
 @Composable
 fun BudgetSheet(draft: BudgetEditDraft, onChange: (BudgetEditDraft) -> Unit, onDismiss: () -> Unit, onSave: (BudgetRepository.Draft) -> Unit, onDelete: () -> Unit) {
     val d = draft
@@ -147,46 +160,85 @@ fun BudgetSheet(draft: BudgetEditDraft, onChange: (BudgetEditDraft) -> Unit, onD
     val repo = AppContainer.categoryRepository
     val wallets = AppContainer.walletRepository.wallets.value
     val editing = d.id != null
-    val steps = if (editing) listOf(1, 2) else listOf(0, 1, 2)
-    var index by remember { mutableStateOf(steps.lastIndex.takeIf { editing } ?: 0) }
-    val step = steps[index]
+    val hasSubs = !d.custom && d.category?.let { repo.children(it).isNotEmpty() } == true
+    val steps = buildList {
+        if (!editing) add(KIND)
+        add(CATEGORY)
+        if (hasSubs) add(SUB)
+        add(LIMIT)
+    }
+    var index by remember { mutableStateOf(if (editing) Int.MAX_VALUE else 0) }
+    val at = index.coerceAtMost(steps.lastIndex)
+    val step = steps[at]
     // A new budget's kind isn't preselected: the user picks it.
     var kindChosen by remember { mutableStateOf(editing) }
+    var sub by remember { mutableStateOf<String?>(null) }
     val stepValid = when (step) {
-        1 -> d.name.isNotBlank() && (d.custom || d.category != null)
+        CATEGORY -> if (d.custom) d.name.isNotBlank() else d.category != null
         else -> d.valid
+    }
+    val next = { index = at + 1 }
+
+    val subPage = when (sub) {
+        "period" -> StepSubPage("period", tr(StringKey.BUD_Q_PERIOD)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                StepChoiceRow(tr(StringKey.NM_FREQ_MONTHLY), d.period == BudgetPeriod.MONTHLY, { onChange(d.copy(period = BudgetPeriod.MONTHLY)) })
+                StepChoiceRow(tr(StringKey.BUD_CUSTOM_RANGE), d.period == BudgetPeriod.CUSTOM, { onChange(d.copy(period = BudgetPeriod.CUSTOM)) })
+            }
+            if (d.period == BudgetPeriod.CUSTOM) {
+                Row(Modifier.padding(top = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Column(Modifier.weight(1f)) { FieldLabel(tr(StringKey.NM_WALLET_FROM)); DateBox(d.start) { onChange(d.copy(start = it)) } }
+                    Column(Modifier.weight(1f)) { FieldLabel(tr(StringKey.BUD_UNTIL)); DateBox(d.end) { onChange(d.copy(end = it)) } }
+                }
+            }
+        }
+        "wallets" -> StepSubPage("wallets", tr(StringKey.BUD_Q_WALLETS)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                StepChoiceRow(tr(StringKey.BUD_ALL), d.walletIds.isEmpty(), { onChange(d.copy(walletIds = emptyList())) })
+                wallets.forEach { w ->
+                    StepChoiceRow(shortWallet(w.name), w.id in d.walletIds, {
+                        onChange(d.copy(walletIds = if (w.id in d.walletIds) d.walletIds - w.id else d.walletIds + w.id))
+                    }, multi = true)
+                }
+            }
+        }
+        else -> null
     }
 
     StepSheet(
         title = tr(if (editing) StringKey.BUD_EDIT else StringKey.BUD_NEW),
-        step = index,
+        step = at,
         stepCount = steps.size,
-        onBack = { index-- },
+        onBack = { index = at - 1 },
         onDismiss = onDismiss,
-        primaryLabel = tr(if (step < 2) StringKey.STEP_CONTINUE else if (editing) StringKey.STEP_SAVE_CHANGES else StringKey.BUD_SAVE),
+        primaryLabel = tr(if (step != LIMIT) StringKey.STEP_CONTINUE else if (editing) StringKey.STEP_SAVE_CHANGES else StringKey.BUD_SAVE),
         primaryEnabled = stepValid,
-        onPrimary = { if (step < 2) index++ else onSave(d.toSave()) },
-        showPrimary = step != 0,
-        footer = if (editing) ({ StepDeleteButton(tr(StringKey.BUD_DELETE), onDelete) }) else null,
-        context = if (editing) d.name else null,
+        onPrimary = { if (step != LIMIT) next() else onSave(d.toSave()) },
+        // Choice steps advance on tap.
+        showPrimary = step == LIMIT || (step == CATEGORY && d.custom),
+        showBack = at > 0,
+        footer = if (editing && step == LIMIT) ({ StepDeleteButton(tr(StringKey.BUD_DELETE), onDelete) }) else null,
+        context = if (step == KIND) null else if (editing) d.name else (d.sub ?: d.category)?.takeIf { !d.custom }?.let { repo.name(it) },
+        subPage = subPage,
+        onSubDone = { sub = null },
     ) { shown ->
-        when (steps[shown]) {
-            0 -> {
+        when (steps[shown.coerceAtMost(steps.lastIndex)]) {
+            KIND -> {
                 StepQuestion(tr(StringKey.BUD_Q_KIND))
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     ChoiceCard(V2Icons.target, colors.link, tr(StringKey.BUD_CHOICE_CATEGORY), tr(StringKey.BUD_CHOICE_CATEGORY_DETAIL), kindChosen && !d.custom, {
                         kindChosen = true
                         onChange(d.copy(kind = BudgetKind.CATEGORY, name = if (d.nameTouched) d.name else (d.sub ?: d.category)?.let { repo.name(it) }.orEmpty()))
-                        index++
+                        next()
                     })
                     ChoiceCard(V2Icons.sparkle, colors.link, tr(StringKey.BUD_CHOICE_CUSTOM), tr(StringKey.BUD_CHOICE_CUSTOM_DETAIL), kindChosen && d.custom, {
                         kindChosen = true
                         onChange(d.copy(kind = BudgetKind.CUSTOM, name = if (d.nameTouched) d.name else ""))
-                        index++
+                        next()
                     })
                 }
             }
-            1 -> if (d.custom) {
+            CATEGORY -> if (d.custom) {
                 StepQuestion(tr(StringKey.BUD_Q_CUSTOM), tr(StringKey.BUD_KIND_CUSTOM_HINT))
                 NameField(tr(StringKey.PLAN_NAME), d.name, { name ->
                     onChange(d.copy(name = name, nameTouched = true, icon = if (d.iconAuto) Taxonomy.guessPlanIcon(name) ?: "other" else d.icon))
@@ -200,63 +252,55 @@ fun BudgetSheet(draft: BudgetEditDraft, onChange: (BudgetEditDraft) -> Unit, onD
                 PlanIconPicker(d.icon) { onChange(d.copy(icon = it, iconAuto = false)) }
             } else {
                 StepQuestion(tr(StringKey.BUD_Q_CATEGORY), tr(StringKey.BUD_CAT_HINT))
-                GridOf(repo.parents(false, includeHidden = false), categoryGridColumns(repo.parents(false, includeHidden = false).map { repo.name(it.id) }), 18.dp, 8.dp) { p ->
+                val parents = repo.parents(false, includeHidden = false)
+                GridOf(parents, categoryGridColumns(parents.map { repo.name(it.id) }), 14.dp, 6.dp) { p ->
                     val on = d.category == p.id
                     Column(
                         Modifier.selectable(selected = on, role = Role.RadioButton) {
-                            onChange(d.copy(category = p.id, sub = null, auto = false, name = if (d.nameTouched) d.name else repo.name(p.id)))
+                            val keepSub = d.category == p.id
+                            onChange(d.copy(category = p.id, sub = if (keepSub) d.sub else null, auto = false, name = if (d.nameTouched) d.name else repo.name(if (keepSub) d.sub ?: p.id else p.id)))
+                            next()
                         },
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(7.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         GridChip(repo.glyph(p.id), Color(p.color), on)
                         GridLabel(repo.name(p.id), on)
                     }
                 }
-                val parent = d.category
-                if (parent != null && repo.children(parent).isNotEmpty()) {
-                    StepSpacer()
-                    FieldLabel(tr(StringKey.NM_SUBCATEGORY))
-                    PillRow {
-                        V2Pill(tr(StringKey.BUD_ALL_SUBS), d.sub == null, { onChange(d.copy(sub = null, name = if (d.nameTouched) d.name else repo.name(parent))) })
-                        repo.children(parent).forEach { c ->
-                            V2Pill(repo.name(c.id), d.sub == c.id, { onChange(d.copy(sub = c.id, name = if (d.nameTouched) d.name else repo.name(c.id))) })
-                        }
+            }
+            SUB -> {
+                val parent = d.category ?: return@StepSheet
+                StepQuestion(tr(StringKey.BUD_Q_SUB, repo.name(parent)), tr(StringKey.BUD_Q_SUB_HINT))
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    StepChoiceRow(tr(StringKey.BUD_ALL_SUBS), d.sub == null, {
+                        onChange(d.copy(sub = null, name = if (d.nameTouched) d.name else repo.name(parent)))
+                        next()
+                    }, leading = { CatMark(parent, 32.dp) })
+                    repo.children(parent).forEach { c ->
+                        StepChoiceRow(repo.name(c.id), d.sub == c.id, {
+                            onChange(d.copy(sub = c.id, name = if (d.nameTouched) d.name else repo.name(c.id)))
+                            next()
+                        }, leading = { CatMark(c.id, 32.dp) })
                     }
-                }
-                if (parent != null) {
-                    StepSpacer()
-                    NameField(tr(StringKey.PLAN_NAME), d.name, { onChange(d.copy(name = it, nameTouched = it.isNotBlank())) }, tr(StringKey.BUD_PH_CATEGORY))
                 }
             }
             else -> {
                 StepQuestion(tr(StringKey.BUD_Q_LIMIT))
                 AmountHeroField(tr(StringKey.BUD_LIMIT), d.limit, { onChange(d.copy(limit = it)) }, AppContainer.currencyRepository.principal)
-                StepSpacer()
-                FieldLabel(tr(StringKey.BUD_PERIOD))
-                PillRow {
-                    V2Pill(tr(StringKey.NM_FREQ_MONTHLY), d.period == BudgetPeriod.MONTHLY, { onChange(d.copy(period = BudgetPeriod.MONTHLY)) })
-                    V2Pill(tr(StringKey.BUD_CUSTOM_RANGE), d.period == BudgetPeriod.CUSTOM, { onChange(d.copy(period = BudgetPeriod.CUSTOM)) })
-                }
-                if (d.period == BudgetPeriod.CUSTOM) {
-                    Row(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Column(Modifier.weight(1f)) { FieldLabel(tr(StringKey.NM_WALLET_FROM)); DateBox(d.start) { onChange(d.copy(start = it)) } }
-                        Column(Modifier.weight(1f)) { FieldLabel(tr(StringKey.BUD_UNTIL)); DateBox(d.end) { onChange(d.copy(end = it)) } }
+                Spacer(Modifier.height(12.dp))
+                NameField(tr(StringKey.PLAN_NAME), d.name, { onChange(d.copy(name = it, nameTouched = it.isNotBlank())) }, tr(if (d.custom) StringKey.BUD_PH_CUSTOM else StringKey.BUD_PH_CATEGORY), leading = {
+                    if (d.custom) PlanMark(d.icon, 40.dp) else CatMark(d.sub ?: d.category, 40.dp)
+                })
+                Spacer(Modifier.height(12.dp))
+                StepOptionGroup {
+                    StepOptionRow(V2Icons.cal, tr(StringKey.BUD_PERIOD), if (d.period == BudgetPeriod.CUSTOM) periodRange(d) else tr(StringKey.NM_FREQ_MONTHLY)) { sub = "period" }
+                    if (!d.custom && wallets.size > 1) {
+                        StepDivider()
+                        StepOptionRow(V2Icons.wallet, tr(StringKey.BUD_WALLETS), if (d.walletIds.isEmpty()) tr(StringKey.BUD_ALL) else wallets.filter { it.id in d.walletIds }.joinToString(", ") { shortWallet(it.name) }) { sub = "wallets" }
                     }
                 }
-                if (!d.custom && wallets.size > 1) {
-                    StepSpacer()
-                    FieldLabel(tr(StringKey.BUD_WALLETS))
-                    PillRow {
-                        V2Pill(tr(StringKey.BUD_ALL), d.walletIds.isEmpty(), { onChange(d.copy(walletIds = emptyList())) })
-                        wallets.forEach { w ->
-                            V2Pill(shortWallet(w.name), w.id in d.walletIds, {
-                                onChange(d.copy(walletIds = if (w.id in d.walletIds) d.walletIds - w.id else d.walletIds + w.id))
-                            }, role = Role.Checkbox)
-                        }
-                    }
-                }
-                StepSpacer()
+                Spacer(Modifier.height(12.dp))
                 StepNote(budgetScopeNote(d, wallets.filter { it.id in d.walletIds }.map { shortWallet(it.name) }))
                 d.error?.let {
                     Row(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -268,6 +312,10 @@ fun BudgetSheet(draft: BudgetEditDraft, onChange: (BudgetEditDraft) -> Unit, onD
         }
     }
 }
+
+// "1 oct – 31 oct", or "…" while a date is missing.
+private fun periodRange(d: BudgetEditDraft): String =
+    if (d.start.isBlank() || d.end.isBlank()) tr(StringKey.BUD_CUSTOM_RANGE) else fmtDate(d.start) + " – " + fmtDate(d.end)
 
 // What the budget counts, in one sentence ("Todos los gastos de Alimentación,
 // de todas tus billeteras · se reinicia cada mes.").

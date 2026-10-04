@@ -1,5 +1,11 @@
 package com.s2nova.app.ui.screens.loans
 
+import com.s2nova.app.ui.components.DateOptionRow
+import com.s2nova.app.ui.components.StepDivider
+import com.s2nova.app.ui.components.StepOptionGroup
+import com.s2nova.app.ui.components.StepOptionRow
+import com.s2nova.app.ui.components.StepChoiceRow
+import com.s2nova.app.ui.components.SheetPageHeader
 import com.s2nova.app.ui.theme.cardAurora
 import com.s2nova.app.ui.theme.novaRise
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -118,10 +124,10 @@ fun LoansTab(initialSide: LoanKind = LoanKind.LENT) {
                 modifier = Modifier
                     .novaRise(0)
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(16.dp))
                     .background(MaterialTheme.colorScheme.surface)
                     .cardAurora()
-                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))
+                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp))
                     .padding(16.dp),
             ) {
                 Text(t(if (side == LoanKind.LENT) StringKey.LOANS_SUMMARY_LENT else StringKey.LOANS_SUMMARY_BORROWED).uppercase(), style = NovaType.overline, color = colors.textDim, maxLines = 1, softWrap = false)
@@ -285,7 +291,7 @@ private fun LoanCard(txn: Transaction, outstanding: Double, onPay: () -> Unit, o
         val base = txn.dueDate?.let { "${t(StringKey.LOANS_DUE)} ${shortDateLabel(it, language)}" } ?: t(StringKey.LOANS_NO_DUE_DATE)
         base + if (paid > 0) String.format(t(StringKey.LOANS_PAID_NOTE), format(paid), format(txn.amount)) else ""
     }
-    val shape = RoundedCornerShape(20.dp)
+    val shape = RoundedCornerShape(16.dp)
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -365,11 +371,26 @@ private fun LoanDraftSheet(
     val isLent = draft.side == LoanKind.LENT
     val principal = AppContainer.currencyRepository.principal
 
+    // The wallet list opens as its own page, so the form fits without
+    // scrolling; the due date is a row that opens the date picker.
+    var pickingWallet by remember { mutableStateOf(false) }
     NovaDraftSheet(
         onDismiss = onDismiss,
-        title = t(if (isEdit) StringKey.LOANS_EDIT_TITLE else if (isLent) StringKey.LOANS_NEW_LENT else StringKey.LOANS_NEW_BORROWED),
+        title = if (pickingWallet) null else t(if (isEdit) StringKey.LOANS_EDIT_TITLE else if (isLent) StringKey.LOANS_NEW_LENT else StringKey.LOANS_NEW_BORROWED),
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        if (pickingWallet) {
+            SheetPageHeader(t(if (isLent) StringKey.LOANS_FORM_WALLET_LENT else StringKey.LOANS_FORM_WALLET_BORROWED)) { pickingWallet = false }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                wallets.forEach { wallet ->
+                    StepChoiceRow(shortWalletName(wallet.name), draft.walletId == wallet.id, {
+                        onDraftChange(draft.copy(walletId = wallet.id))
+                        pickingWallet = false
+                    })
+                }
+            }
+            return@NovaDraftSheet
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             SegmentedChoice(
                 listOf(
                     SegmentOption(LoanKind.LENT, t(StringKey.LOANS_DIR_LENT), LOAN_OUT_ICON),
@@ -385,19 +406,16 @@ private fun LoanDraftSheet(
                 t(StringKey.LOANS_FORM_COUNTERPARTY_PLACEHOLDER),
                 leading = { GlyphMark(V2Icons.person, colors.accentText, 44.dp) },
             )
-            if (wallets.isNotEmpty()) {
-                Column {
-                    FieldLabel(t(if (isLent) StringKey.LOANS_FORM_WALLET_LENT else StringKey.LOANS_FORM_WALLET_BORROWED))
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        wallets.forEach { wallet ->
-                            SheetPill(shortWalletName(wallet.name), selected = draft.walletId == wallet.id) { onDraftChange(draft.copy(walletId = wallet.id)) }
-                        }
-                    }
+            StepOptionGroup {
+                if (wallets.isNotEmpty()) {
+                    StepOptionRow(
+                        V2Icons.wallet,
+                        t(StringKey.NM_WALLET),
+                        wallets.firstOrNull { it.id == draft.walletId }?.let { shortWalletName(it.name) } ?: "—",
+                    ) { pickingWallet = true }
+                    StepDivider()
                 }
-            }
-            Column {
-                FieldLabel(t(StringKey.LOANS_DUE_OPTIONAL))
-                SheetDateBox(value = draft.dueDate, placeholder = t(StringKey.LOANS_NO_DATE), allowClear = true) { onDraftChange(draft.copy(dueDate = it)) }
+                DateOptionRow(t(StringKey.LOANS_DUE_ROW), draft.dueDate, t(StringKey.LOANS_NO_DATE), allowClear = true) { onDraftChange(draft.copy(dueDate = it)) }
             }
 
             val amount = com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(draft.amountText).takeIf { it > 0 }

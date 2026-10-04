@@ -100,8 +100,8 @@ fun CategoriesScreen(initialIncome: Boolean, onBack: () -> Unit) {
             repo.parents(income).forEach { p ->
                 val kids = repo.children(p.id)
                 Column(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surface).cardAurora()
-                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp)).padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp),
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surface).cardAurora()
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp)).padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).clip(RoundedCornerShape(12.dp)).clickable(role = Role.Button, onClickLabel = tr(StringKey.CAT_EDIT)) { draft = CatDraft(p.id, repo.displayName(p), null, p.vis, p.hidden) }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -121,8 +121,8 @@ fun CategoriesScreen(initialIncome: Boolean, onBack: () -> Unit) {
                             // parent's full-color border (text stays on-surface, so it reads on any hue).
                             Box(
                                 contentAlignment = Alignment.Center,
-                                modifier = Modifier.heightIn(min = 40.dp).clip(RoundedCornerShape(999.dp)).background(color.copy(alpha = if (c.custom) 0.16f else 0.12f))
-                                    .border(if (c.custom) 1.5.dp else 1.dp, if (c.custom) color else color.copy(alpha = 0.35f), RoundedCornerShape(999.dp))
+                                modifier = Modifier.heightIn(min = 40.dp).clip(RoundedCornerShape(10.dp)).background(color.copy(alpha = if (c.custom) 0.16f else 0.12f))
+                                    .border(if (c.custom) 1.5.dp else 1.dp, if (c.custom) color else color.copy(alpha = 0.35f), RoundedCornerShape(10.dp))
                                     .clickable(role = Role.Button, onClickLabel = tr(StringKey.CAT_EDIT_SUB)) { draft = CatDraft(c.id, repo.displayName(c), p.id, p.vis) }.padding(horizontal = 14.dp),
                             ) {
                                 Text(
@@ -134,7 +134,7 @@ fun CategoriesScreen(initialIncome: Boolean, onBack: () -> Unit) {
                         val line2 = MaterialTheme.colorScheme.outlineVariant
                         Box(
                             contentAlignment = Alignment.Center,
-                            modifier = Modifier.heightIn(min = 40.dp).clip(RoundedCornerShape(999.dp)).drawBehind {
+                            modifier = Modifier.heightIn(min = 40.dp).clip(RoundedCornerShape(10.dp)).drawBehind {
                                 drawRoundRect(line2, style = Stroke(1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(3.dp.toPx(), 2.dp.toPx()))), cornerRadius = androidx.compose.ui.geometry.CornerRadius(size.height / 2))
                             }.clickable(role = Role.Button) { draft = CatDraft(null, "", p.id, p.vis) }.padding(horizontal = 14.dp),
                         ) {
@@ -172,7 +172,7 @@ fun CategoriesScreen(initialIncome: Boolean, onBack: () -> Unit) {
         title = tr(if (editing.parentId != null) StringKey.CAT_EDIT_SUB else StringKey.CAT_EDIT),
         subtitle = androidx.compose.ui.text.AnnotatedString(tr(if (editing.custom) StringKey.CAT_SUB_CUSTOM else StringKey.CAT_SUB_BUILTIN)),
     ) {
-        Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
             CategoryFields(d, d.parentId?.let(repo::node)) { draft = it }
             if (!editing.custom && editing.parentId == null) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -191,53 +191,69 @@ fun CategoriesScreen(initialIncome: Boolean, onBack: () -> Unit) {
     }
 }
 
-// Creating: two steps, since a parent list and the icon grid don't fit one
-// sheet. Where it goes (a new parent, or inside one), then its name and
-// icon. "+ Subcategoría" already knows the parent, so it opens on step 2.
+// Creating, in steps that fit the screen: where it goes (a new main
+// category, or a subcategory; tap advances), which parent (the category
+// grid, only for a subcategory; tap advances), then its name and icon.
+// "+ Subcategoría" already knows the parent, so it opens on the last step.
 @Composable
 private fun CategoryCreateSheet(d: CatDraft, income: Boolean, onChange: (CatDraft) -> Unit, onDismiss: () -> Unit, onSave: (CatDraft) -> Unit) {
     val repo = AppContainer.categoryRepository
     val colors = NovaColors.current
-    var step by remember { mutableStateOf(if (d.parentId != null) 1 else 0) }
+    val known = remember { d.parentId != null }
+    var asSub by remember { mutableStateOf(d.parentId != null) }
+    val steps = if (known) listOf(2) else if (asSub) listOf(0, 1, 2) else listOf(0, 2)
+    var index by remember { mutableStateOf(0) }
+    val at = index.coerceAtMost(steps.lastIndex)
     val parent = d.parentId?.let(repo::node)
     StepSheet(
         title = tr(if (parent != null) StringKey.CAT_NEW_SUB else StringKey.CAT_NEW),
         context = parent?.let(repo::displayName),
-        step = step,
-        stepCount = 2,
-        onBack = { step-- },
+        step = at,
+        stepCount = steps.size,
+        onBack = { index = at - 1 },
         onDismiss = onDismiss,
-        primaryLabel = tr(if (step == 0) StringKey.STEP_CONTINUE else StringKey.CAT_CREATE),
-        primaryEnabled = step == 0 || d.name.isNotBlank(),
-        onPrimary = { if (step == 0) step = 1 else onSave(d) },
+        primaryLabel = tr(StringKey.CAT_CREATE),
+        primaryEnabled = d.name.isNotBlank(),
+        onPrimary = { onSave(d) },
+        showPrimary = steps[at] == 2,
     ) { shown ->
-        if (shown == 0) {
-            StepQuestion(tr(StringKey.CAT_Q_WHERE), tr(if (income) StringKey.CAT_SUB_NEW_INCOME else StringKey.CAT_SUB_NEW_EXPENSE))
-            ChoiceCard(V2Icons.plus, colors.accentText, tr(StringKey.CAT_NEW_MAIN), tr(StringKey.CAT_CHOICE_MAIN_DETAIL), d.parentId == null, { onChange(d.copy(parentId = null, err = "")) })
-            StepSpacer()
-            FieldLabel(tr(StringKey.CAT_INSIDE))
-            Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                repo.parents(income).forEach { p ->
+        when (steps[shown.coerceAtMost(steps.lastIndex)]) {
+            0 -> {
+                StepQuestion(tr(StringKey.CAT_Q_WHERE), tr(if (income) StringKey.CAT_SUB_NEW_INCOME else StringKey.CAT_SUB_NEW_EXPENSE))
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    ChoiceCard(V2Icons.plus, colors.accentText, tr(StringKey.CAT_NEW_MAIN), tr(StringKey.CAT_CHOICE_MAIN_DETAIL), !asSub && index > 0, {
+                        asSub = false
+                        onChange(d.copy(parentId = null, err = ""))
+                        index = 1
+                    })
+                    ChoiceCard(V2Icons.more, colors.accentText, tr(StringKey.CAT_CHOICE_SUB), tr(StringKey.CAT_CHOICE_SUB_DETAIL), asSub, {
+                        asSub = true
+                        index = 1
+                    })
+                }
+            }
+            1 -> {
+                StepQuestion(tr(StringKey.CAT_Q_PARENT))
+                val parents = repo.parents(income)
+                com.s2nova.app.ui.screens.addtransaction.GridOf(parents, com.s2nova.app.ui.screens.addtransaction.categoryGridColumns(parents.map { repo.displayName(it) }), 14.dp, 6.dp) { p ->
                     val on = d.parentId == p.id
-                    val shape = RoundedCornerShape(14.dp)
-                    Row(
-                        Modifier.fillMaxWidth().heightIn(min = 56.dp).clip(shape)
-                            .background(if (on) MaterialTheme.colorScheme.primary.copy(alpha = 0.10f) else MaterialTheme.colorScheme.surface)
-                            .border(if (on) 2.dp else 1.dp, if (on) colors.primaryBorder else MaterialTheme.colorScheme.outlineVariant, shape)
-                            .selectable(selected = on, role = Role.RadioButton) { onChange(d.copy(parentId = p.id, vis = p.vis, err = "")) }
-                            .padding(horizontal = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    Column(
+                        Modifier.selectable(selected = on, role = Role.RadioButton) {
+                            onChange(d.copy(parentId = p.id, vis = p.vis, err = ""))
+                            index = 2
+                        },
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
-                        CatMark(p.id, 36.dp)
-                        Text(repo.displayName(p), style = NovaType.body, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                        RadioDot(on)
+                        com.s2nova.app.ui.screens.addtransaction.GridChip(repo.glyph(p.id), Color(p.color), on)
+                        com.s2nova.app.ui.screens.addtransaction.GridLabel(repo.displayName(p), on)
                     }
                 }
             }
-        } else {
-            StepQuestion(tr(StringKey.CAT_Q_NAME))
-            CategoryFields(d, parent, onChange)
+            else -> {
+                StepQuestion(tr(StringKey.CAT_Q_NAME))
+                CategoryFields(d, parent, onChange)
+            }
         }
     }
 }
@@ -308,7 +324,7 @@ private fun askDelete(n: CategoryNode, income: Boolean, onDone: () -> Unit) {
 
 @Composable
 private fun Tag(label: String, color: Color, border: Color) {
-    Text(label, style = NovaType.caption.copy(fontWeight = FontWeight.SemiBold), color = color, maxLines = 1, softWrap = false, modifier = Modifier.clip(RoundedCornerShape(999.dp)).border(1.dp, border, RoundedCornerShape(999.dp)).padding(horizontal = 7.dp, vertical = 2.dp))
+    Text(label, style = NovaType.caption.copy(fontWeight = FontWeight.SemiBold), color = color, maxLines = 1, softWrap = false, modifier = Modifier.clip(RoundedCornerShape(6.dp)).border(1.dp, border, RoundedCornerShape(6.dp)).padding(horizontal = 7.dp, vertical = 2.dp))
 }
 
 // Text tabs over a 1 dp `border` rule with a 2 dp `primary-border`
@@ -339,7 +355,7 @@ fun UnderlineTabs(labels: List<String>, selected: Int, onSelect: (Int) -> Unit) 
                 }.padding(horizontal = 14.dp),
             ) {
                 Text(
-                    label, style = NovaType.label.copy(fontWeight = if (on) FontWeight.Bold else FontWeight.SemiBold),
+                    label, style = NovaType.label.copy(fontWeight = if (on) FontWeight.SemiBold else FontWeight.SemiBold),
                     color = if (on) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1, softWrap = false,
                 )

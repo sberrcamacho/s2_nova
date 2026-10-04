@@ -37,6 +37,7 @@ import com.s2nova.app.ui.theme.NovaType
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -349,27 +350,38 @@ fun TransactionsScreen(
                     else -> listOf(false, true)
                 }
                 // Several categories can be on at once; "Todas" clears them.
+                // Wrapping chips keep both kinds on one screen with no scroll
+                // (the scroll is only the large-font fallback).
                 Column(
                     Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    CheckRow(t(StringKey.MV_ALL_CATEGORIES), checked = cats.isEmpty(), onToggle = { cats = emptyList() })
-                    kinds.forEach { income ->
-                        // With both kinds listed, a caption says which block is which.
-                        if (kinds.size > 1) {
-                            Text(
-                                t(if (income) StringKey.HOME_INCOME else StringKey.HOME_EXPENSES).uppercase(),
-                                style = NovaType.overline, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(start = 4.dp, top = 8.dp).semantics { heading() },
-                            )
-                        }
-                        categories.parents(income, includeHidden = false).forEach { n ->
-                            CheckRow(
-                                categories.displayName(n),
-                                checked = n.id in cats,
-                                onToggle = { cats = if (n.id in cats) cats - n.id else cats + n.id },
-                                leading = { CatMark(n.id, 32.dp) },
-                            )
+                    com.s2nova.app.ui.components.PillRow {
+                        CheckChip(t(StringKey.MV_ALL_CATEGORIES), checked = cats.isEmpty(), onToggle = { cats = emptyList() })
+                    }
+                    // With both kinds, a Gastos | Ingresos switch shows one
+                    // group at a time so the page fits; picks in both stay.
+                    var showIncome by remember { mutableStateOf(false) }
+                    if (kinds.size > 1) {
+                        com.s2nova.app.ui.components.SegmentedChoice(
+                            listOf(
+                                com.s2nova.app.ui.components.SegmentOption(false, t(StringKey.HOME_EXPENSES), listOf("M7 17 17 7", "M8 7h9v9")),
+                                com.s2nova.app.ui.components.SegmentOption(true, t(StringKey.HOME_INCOME), listOf("M17 7 7 17", "M16 17H7V8")),
+                            ),
+                            showIncome,
+                        ) { showIncome = it }
+                    }
+                    kinds.filter { kinds.size == 1 || it == showIncome }.forEach { income ->
+                        com.s2nova.app.ui.components.PillRow {
+                            categories.parents(income, includeHidden = false).forEach { n ->
+                                CheckChip(
+                                    categories.displayName(n),
+                                    checked = n.id in cats,
+                                    onToggle = { cats = if (n.id in cats) cats - n.id else cats + n.id },
+                                    glyph = categories.glyph(n.id),
+                                    color = Color(n.color),
+                                )
+                            }
                         }
                     }
                 }
@@ -379,36 +391,30 @@ fun TransactionsScreen(
     }
 }
 
-// A row of the category list: bordered, with the category mark and a trailing
-// check box, so being selected is not carried by color alone.
+// A checkable chip of the category filter: 40 dp on a 48 dp target, the
+// toned glyph (or a check when on) and the name, so being selected is not
+// carried by color alone.
 @Composable
-private fun CheckRow(label: String, checked: Boolean, onToggle: () -> Unit, leading: (@Composable () -> Unit)? = null) {
+private fun CheckChip(label: String, checked: Boolean, onToggle: () -> Unit, glyph: List<String>? = null, color: Color = Color.Unspecified) {
     val colors = NovaColors.current
-    val shape = RoundedCornerShape(14.dp)
-    val boxShape = RoundedCornerShape(6.dp)
-    val line = MaterialTheme.colorScheme.outlineVariant
+    val shape = RoundedCornerShape(10.dp)
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 52.dp)
+            .minimumInteractiveComponentSize()
+            .heightIn(min = 40.dp)
             .clip(shape)
-            .background(if (checked) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else Color.Transparent)
-            .border(1.dp, if (checked) colors.primaryBorder else line, shape)
+            .background(if (checked) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface)
+            .border(if (checked) 2.dp else 1.dp, if (checked) colors.primaryBorder else colors.borderInput, shape)
             .toggleable(value = checked, role = Role.Checkbox, onValueChange = { onToggle() })
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+            .padding(start = 10.dp, end = 14.dp),
     ) {
-        leading?.invoke()
-        Text(label, style = NovaType.bodySm, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.size(20.dp).clip(boxShape)
-                .background(if (checked) colors.primaryBorder else Color.Transparent)
-                .border(2.dp, if (checked) colors.primaryBorder else line, boxShape),
-        ) {
-            if (checked) V2Icon(V2Icons.check, colors.sheetSurface, 14.dp, strokeWidth = 2.6f)
+        when {
+            checked -> V2Icon(V2Icons.check, colors.accentText, 18.dp, strokeWidth = 2.6f)
+            glyph != null -> V2Icon(glyph, com.s2nova.app.ui.components.categoryTone(color), 18.dp, strokeWidth = 2f)
         }
+        Text(label, style = NovaType.label, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -417,7 +423,7 @@ private fun CheckRow(label: String, checked: Boolean, onToggle: () -> Unit, lead
 @Composable
 private fun SearchBox(value: String, onValueChange: (String) -> Unit, modifier: Modifier = Modifier) {
     val colors = NovaColors.current
-    val shape = RoundedCornerShape(50)
+    val shape = RoundedCornerShape(12.dp)
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
     val focus = LocalFocusManager.current
@@ -463,7 +469,7 @@ private fun SearchBox(value: String, onValueChange: (String) -> Unit, modifier: 
 // shows how many, so the state is not carried by color alone.
 @Composable
 private fun FiltersButton(count: Int, onClick: () -> Unit) {
-    val shape = RoundedCornerShape(50)
+    val shape = RoundedCornerShape(10.dp)
     val active = count > 0
     val label = if (active) tr(StringKey.MV_FILTERS_ACTIVE, count) else tr(StringKey.MV_FILTERS)
     // Active fills with the brand gradient (web's selected chip), white ink.
@@ -491,7 +497,7 @@ private fun FiltersButton(count: Int, onClick: () -> Unit) {
 // on the first row and the rounded bottom edge on the last. A one-row card
 // uses a plain border.
 private fun Modifier.cardBorder(color: Color, first: Boolean, last: Boolean): Modifier =
-    if (first && last) this.border(1.dp, color, RoundedCornerShape(20.dp)) else this.drawWithContent {
+    if (first && last) this.border(1.dp, color, RoundedCornerShape(16.dp)) else this.drawWithContent {
         drawContent()
         val w = 1.dp.toPx()
         val r = 20.dp.toPx()
@@ -553,7 +559,7 @@ private fun MovimientosHeader(title: String, programados: String, onOpenRecurrin
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .height(48.dp)
-                    .clip(RoundedCornerShape(50))
+                    .clip(RoundedCornerShape(12.dp))
                     .clickable(role = Role.Button, onClick = onOpenRecurring)
                     .then(if (labeled) Modifier else Modifier.width(48.dp).semantics { contentDescription = programados }),
             ) {
@@ -562,9 +568,9 @@ private fun MovimientosHeader(title: String, programados: String, onOpenRecurrin
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier
                         .height(40.dp)
-                        .clip(RoundedCornerShape(50))
+                        .clip(RoundedCornerShape(10.dp))
                         .background(MaterialTheme.colorScheme.surface)
-                        .border(1.dp, NovaColors.current.borderInput, RoundedCornerShape(50))
+                        .border(1.dp, NovaColors.current.borderInput, RoundedCornerShape(10.dp))
                         .padding(horizontal = if (labeled) 14.dp else 10.dp),
                 ) {
                     V2Icon(V2Icons.repeat, MaterialTheme.colorScheme.onSurface, 18.dp)

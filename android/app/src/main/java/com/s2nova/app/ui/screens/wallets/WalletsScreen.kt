@@ -1,5 +1,10 @@
 package com.s2nova.app.ui.screens.wallets
 
+import com.s2nova.app.ui.components.StepDivider
+import com.s2nova.app.ui.components.StepOptionGroup
+import com.s2nova.app.ui.components.StepOptionRow
+import com.s2nova.app.ui.components.StepChoiceRow
+import com.s2nova.app.ui.components.SheetPageHeader
 import com.s2nova.app.ui.theme.cardAurora
 import com.s2nova.app.ui.theme.novaRise
 import com.s2nova.app.ui.theme.ctaBrush
@@ -90,10 +95,12 @@ private data class WalletDraft(val id: String?, val name: String, val kind: Wall
 @Composable
 fun WalletMark(kind: WalletKind, box: androidx.compose.ui.unit.Dp) {
     val colors = NovaColors.current
+    // The same tonal tile as category marks: the glyph in the brand's ink
+    // on a primary-soft rounded tile.
     Box(
-        Modifier.size(box).clip(CircleShape).background(Brush.linearGradient(listOf(colors.primaryPressed, MaterialTheme.colorScheme.secondary))),
+        Modifier.size(box).clip(androidx.compose.foundation.shape.RoundedCornerShape(box * 0.28f)).background(MaterialTheme.colorScheme.primaryContainer),
         contentAlignment = Alignment.Center,
-    ) { V2Icon(kind.glyph, Color.White, 20.dp) }
+    ) { V2Icon(kind.glyph, colors.accentText, box * 0.48f) }
 }
 
 @Composable
@@ -103,6 +110,8 @@ fun WalletsScreen(onBack: () -> Unit) {
     val colors = NovaColors.current
     val scope = rememberCoroutineScope()
     var draft by remember { mutableStateOf<WalletDraft?>(null) }
+    // A page of the wallet sheet ("type", "currency"), or null for the form.
+    var walletPage by remember { mutableStateOf<String?>(null) }
     val principal = AppContainer.currencyRepository.principal
 
     LaunchedEffect(Unit) { runCatching { AppContainer.walletRepository.refresh() } }
@@ -136,7 +145,7 @@ fun WalletsScreen(onBack: () -> Unit) {
             }
         }
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            val shape = RoundedCornerShape(20.dp)
+            val shape = RoundedCornerShape(16.dp)
             if (wallets.isEmpty() && !AppContainer.dataLoaded.collectAsStateWithLifecycle().value) {
                 com.s2nova.app.ui.components.NovaSkeletonRows(count = 3)
             }
@@ -201,12 +210,32 @@ fun WalletsScreen(onBack: () -> Unit) {
 
     val d = draft ?: return
     val codes = currencies.map { it.code }.ifEmpty { listOf(principal) }
-    // One sheet: name (its mark follows the type), the type as a two-column
-    // grid, then the currency and the starting balance on the hero surface.
-    // Both are fixed once the wallet exists, so editing shows them as a note.
+    // One sheet that fits without scrolling: the name (its mark follows the
+    // type), then Tipo and Moneda as option rows that open their own page,
+    // and the starting balance. Currency and balance are fixed once the
+    // wallet exists, so editing shows them as a note.
     val editingWallet = d.id?.let { id -> wallets.firstOrNull { it.id == id } }
-    NovaDraftSheet(onDismiss = { draft = null }, title = tr(if (d.id != null) StringKey.WALLET_EDIT else StringKey.WALLET_NEW)) {
-        Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+    NovaDraftSheet(onDismiss = { draft = null; walletPage = null }, title = if (walletPage != null) null else tr(if (d.id != null) StringKey.WALLET_EDIT else StringKey.WALLET_NEW)) {
+        when (walletPage) {
+            "type" -> {
+                SheetPageHeader(tr(StringKey.WALLET_TYPE)) { walletPage = null }
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    WalletKind.entries.forEach { k ->
+                        StepChoiceRow(k.label, d.kind == k, { draft = d.copy(kind = k, auto = false); walletPage = null }, leading = { WalletMark(k, 32.dp) })
+                    }
+                }
+                return@NovaDraftSheet
+            }
+            "currency" -> {
+                SheetPageHeader(tr(StringKey.WALLET_CURRENCY)) { walletPage = null }
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    codes.forEach { c -> StepChoiceRow(c + " · " + Currencies.name(c), d.currency == c, { draft = d.copy(currency = c); walletPage = null }) }
+                }
+                FieldNote(tr(StringKey.WALLET_CURRENCY_HINT, Currencies.name(d.currency).lowercase()), Modifier.padding(top = 12.dp))
+                return@NovaDraftSheet
+            }
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Column {
                 NameField(
                     tr(StringKey.PLAN_NAME),
@@ -220,22 +249,16 @@ fun WalletsScreen(onBack: () -> Unit) {
                     Modifier.padding(top = 8.dp),
                 )
             }
-            Column {
-                FieldLabel(tr(StringKey.WALLET_TYPE))
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    WalletKind.entries.chunked(2).forEach { row ->
-                        SegmentedChoice(row.map { SegmentOption(it, it.label, it.glyph) }, d.kind) { draft = d.copy(kind = it, auto = false) }
-                    }
+            StepOptionGroup {
+                StepOptionRow(d.kind.glyph, tr(StringKey.WALLET_TYPE), d.kind.label) { walletPage = "type" }
+                if (editingWallet == null) {
+                    StepDivider()
+                    StepOptionRow(V2Icons.wallet, tr(StringKey.WALLET_CURRENCY), d.currency) { walletPage = "currency" }
                 }
             }
             if (editingWallet != null) {
                 StepNote(tr(StringKey.WALLET_EDIT_NOTE, formatMoney(editingWallet.currentBalance, editingWallet.currency)))
             } else {
-                Column {
-                    FieldLabel(tr(StringKey.WALLET_CURRENCY))
-                    PillRow { codes.forEach { c -> V2Pill(c, d.currency == c, { draft = d.copy(currency = c) }) } }
-                    FieldNote(tr(StringKey.WALLET_CURRENCY_HINT, Currencies.name(d.currency).lowercase()), Modifier.padding(top = 8.dp))
-                }
                 AmountHeroField(tr(StringKey.WALLET_BALANCE), d.amount, { draft = d.copy(amount = it) }, d.currency, padTitle = tr(StringKey.WALLET_INITIAL))
             }
             Column {
