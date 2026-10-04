@@ -23,3 +23,5 @@ android/app/release/
 android/kls_database.db
 *.apk
 *.aab
+.aidesigner/*
+!.aidesigner/.gitkeep
