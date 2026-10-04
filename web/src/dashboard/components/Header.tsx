@@ -55,16 +55,21 @@ export function Header({ title, onMenuClick, onNewTransaction }: HeaderProps) {
           type="button"
           onClick={onMenuClick}
           aria-label={t('header.openMenu')}
-          className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-v2-line bg-v2-surface text-v2-muted hover:text-v2-text min-[760px]:hidden"
+          className="flex h-10 w-10 flex-none cursor-pointer items-center justify-center rounded-full border border-v2-line bg-v2-surface text-v2-muted hover:text-v2-text min-[760px]:hidden"
         >
           <StrokeIcon paths={ICON_PATHS.menu} size={18} />
         </button>
         <div className="truncate text-body-sm text-v2-dim">
-          S2 Nova <span aria-hidden="true" className="px-0.5 opacity-60">/</span> <span className="font-semibold text-v2-text">{title}</span>
+          {/* On a phone the actions keep their width and the title gets the
+              rest, so the "S2 Nova /" prefix gives way first. */}
+          <span className={cn('max-[519px]:hidden', onMovimientos && 'max-[1099px]:hidden')}>
+            S2 Nova <span aria-hidden="true" className="px-0.5 opacity-60">/</span>{' '}
+          </span>
+          <span className="font-semibold text-v2-text">{title}</span>
         </div>
       </div>
-      <div className="flex min-w-0 items-center gap-2.5">
-        <label className="hidden h-10 w-[300px] min-w-0 shrink items-center gap-2.5 rounded-full border border-v2-line bg-v2-surface px-4 text-v2-dim transition-colors focus-within:border-[var(--color-border-input)] min-[900px]:flex">
+      <div className="flex flex-none items-center gap-2.5">
+        <label className="hidden h-10 w-[min(300px,24vw)] min-w-0 items-center gap-2.5 rounded-full border border-v2-line bg-v2-surface px-4 text-v2-dim transition-colors focus-within:border-[var(--color-border-input)] min-[900px]:flex">
           <StrokeIcon paths={ICON_PATHS.search} size={16} />
           <input
             value={query}
@@ -80,11 +85,15 @@ export function Header({ title, onMenuClick, onNewTransaction }: HeaderProps) {
           onClick={onNewTransaction}
           aria-keyshortcuts="N"
           title={t('v2.header.newTx')}
-          // Icon-only on phones, where the label would push the button off-screen next to the period selector.
-          className="btn-cta flex h-10 flex-none cursor-pointer items-center gap-2 rounded-full px-5 text-label font-semibold max-[519px]:w-10 max-[519px]:justify-center max-[519px]:px-0"
+          // Icon-only on phones, and below 1100 px next to Movimientos' period
+          // selector, where the label would squeeze the page title away.
+          className={cn(
+            'btn-cta flex h-10 flex-none cursor-pointer items-center gap-2 rounded-full px-5 text-label font-semibold max-[519px]:w-10 max-[519px]:justify-center max-[519px]:px-0',
+            onMovimientos && 'max-[1099px]:w-10 max-[1099px]:justify-center max-[1099px]:px-0',
+          )}
         >
           <StrokeIcon paths={ICON_PATHS.plus} size={16} strokeWidth={2.4} />
-          <span className="whitespace-nowrap max-[519px]:sr-only">{t('v2.header.newTx')}</span>
+          <span className={cn('whitespace-nowrap max-[519px]:sr-only', onMovimientos && 'max-[1099px]:sr-only')}>{t('v2.header.newTx')}</span>
         </button>
       </div>
     </header>
