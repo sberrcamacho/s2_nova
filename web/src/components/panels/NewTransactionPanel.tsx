@@ -48,7 +48,7 @@ import type { CategoryId, CounterpartyKind, Goal, NewTransactionInput, Recurring
 
 // "Nuevo movimiento" — the Web v2 mockup's side panel (NEW_MOVEMENT.md,
 // WEB_PARITY.md): type, "Elige una categoría" (inline category grid), the
-// amount hero with typed arithmetic and the Teclado/Calculadora switch,
+// amount field with typed arithmetic and the Teclado/Calculadora switch,
 // wallet, the automatic budget line, Título/Nota, and the five option
 // tiles whose sections open inline. Saves through POST /transactions; the
 // backend applies balances, PLANNED status, currency and Repetir. With
@@ -739,11 +739,10 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
       </div>
 
       <div
-        className="relative flex flex-col gap-2 overflow-hidden rounded-[18px] border border-[var(--hero-line)] px-[18px] py-4 text-white"
-        style={{ background: 'var(--hero-bg)' }}
+        className="relative flex flex-col gap-2 overflow-hidden rounded-[16px] border border-border-input bg-surface px-[18px] py-4 text-ink focus-within:border-2 focus-within:border-primary-border"
       >
         <div className="flex items-center gap-2">
-          <label htmlFor="nt-amount" className="flex-1 text-overline font-semibold uppercase text-[var(--hero-overline)]">
+          <label htmlFor="nt-amount" className="flex-1 text-overline font-semibold uppercase text-ink-secondary">
             {t('nm.amount')}
           </label>
           <button
@@ -754,19 +753,18 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
               writePref(PREFS.calc, calc ? '0' : '1')
               setCalc(!calc)
             }}
-            className="box-border flex h-9 flex-none cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-[10px] border px-[11px] text-caption font-semibold text-white"
-            style={{ background: calc ? 'rgba(255,255,255,.28)' : 'rgba(255,255,255,.1)', borderColor: calc ? '#fff' : 'transparent' }}
+            className={cn('box-border flex h-9 flex-none cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-[10px] border px-[11px] text-caption font-semibold text-ink', calc ? 'border-primary-border bg-accent-soft' : 'border-transparent bg-surface-sunken')}
           >
-            <Icon paths={IC.calc} size={14} color="#fff" />
+            <Icon paths={IC.calc} size={14} color="var(--color-text-secondary)" />
             {t(calc ? 'nm.calculator' : 'nm.keypad')}
           </button>
           <button
             type="button"
             onClick={() => toggleSection('currency')}
-            className="flex h-[34px] flex-none cursor-pointer items-center gap-[5px] whitespace-nowrap rounded-[8px] bg-[rgba(255,255,255,.14)] px-3 text-caption font-semibold text-white"
+            className="flex h-[34px] flex-none cursor-pointer items-center gap-[5px] whitespace-nowrap rounded-[8px] bg-surface-sunken px-3 text-caption font-semibold text-ink"
           >
             {code}
-            <Icon paths={['M6 9l6 6 6-6']} size={13} color="rgba(255,255,255,.7)" />
+            <Icon paths={['M6 9l6 6 6-6']} size={13} color="var(--color-text-secondary)" />
           </button>
         </div>
         <input
@@ -776,18 +774,18 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
           onChange={(e) => edit(setExpr)(typedExpr(e.target.value))}
           placeholder="0"
           inputMode="decimal"
-          className="w-full border-none bg-transparent px-0.5 py-px font-[inherit] text-display-sm [font-variant-numeric:tabular-nums] font-semibold tracking-[-.02em] text-white outline-none placeholder:text-white/85"
+          className="w-full border-none bg-transparent px-0.5 py-px font-[inherit] text-display-sm [font-variant-numeric:tabular-nums] font-semibold tracking-[-.02em] text-ink outline-none placeholder:text-ink-tertiary"
         />
-        {hasOps(expr) && <div className="font-numeric text-body-sm font-semibold text-white">{'= ' + formatIn(val, code)}</div>}
-        <div className="text-caption text-white/85">{t('nm.opsHint')}</div>
+        {hasOps(expr) && <div className="font-numeric text-body-sm font-semibold text-ink">{'= ' + formatIn(val, code)}</div>}
+        <div className="text-caption text-ink-secondary">{t('nm.opsHint')}</div>
         {code !== wcur && (
-          <div className="font-numeric text-caption text-[rgba(255,255,255,.8)]">
+          <div className="font-numeric text-caption text-ink-secondary">
             {val > 0 ? fill(t('nm.fx.approx'), formatIn(val * rate, wcur), wcur, walletName, code, formatIn(rate, wcur)) : fill(t('nm.fx.later'), wcur, walletName)}
           </div>
         )}
         {future && (
-          <div className="flex items-center gap-[7px] self-start whitespace-nowrap rounded-[8px] bg-[var(--hero-tile)] px-[11px] py-[5px] text-caption font-semibold text-white">
-            <Icon paths={IC.cal} size={13} color="#fff" />
+          <div className="flex items-center gap-[7px] self-start whitespace-nowrap rounded-[8px] bg-surface-sunken px-[11px] py-[5px] text-caption font-semibold text-ink">
+            <Icon paths={IC.cal} size={13} color="var(--color-text-secondary)" />
             {`${t('nm.scheduledChip')} · ${fmtDate(date)} · ${time}`}
           </div>
         )}

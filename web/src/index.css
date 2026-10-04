@@ -621,6 +621,11 @@ a:hover > .nova-nav-icon {
   outline-offset: 2px;
   border-radius: 4px;
 }
+/* Programmatic focus targets (a step's question, focused so screen readers
+   announce it) aren't controls, so they take no ring. */
+[tabindex='-1']:focus-visible {
+  outline: none;
+}
 
 button {
   font-family: inherit;
