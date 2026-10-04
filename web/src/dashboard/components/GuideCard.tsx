@@ -51,17 +51,18 @@ export function GuideCard() {
     <div
       role="region"
       aria-label={t('guide.label')}
-      className="fixed right-6 bottom-6 z-[45] w-[354px] rounded-[16px] border border-v2-accent-line/45 bg-v2-surface p-4 text-v2-text shadow-[0_18px_44px_rgba(0,0,0,.35)] [line-height:normal]"
+      className="fixed right-6 bottom-6 z-[45] w-[354px] overflow-hidden rounded-[20px] border border-v2-line2 bg-v2-surface p-5 text-v2-text shadow-[var(--shadow-lg)] [line-height:normal]"
     >
-      <div className="text-caption font-extrabold tracking-[.12em] text-v2-accent2">{`${t('guide.label').toUpperCase()} · ${copy('label').toUpperCase()}`}</div>
-      <div className="mt-[7px] text-title-sm font-extrabold">{copy('title')}</div>
-      <div className="mt-[5px] text-caption leading-[1.5] text-v2-muted [text-wrap:pretty]">{copy('body')}</div>
-      <div className="mt-3 flex items-center gap-2.5">
-        <button type="button" onClick={() => save({ guidesOff: true })} className="cursor-pointer text-caption font-bold text-v2-muted">
+      <span aria-hidden="true" className="absolute inset-x-0 top-0 h-[3px]" style={{ background: 'var(--cta-bg)' }} />
+      <div className="text-caption font-semibold tracking-[.1em] text-v2-accent2">{`${t('guide.label').toUpperCase()} · ${copy('label').toUpperCase()}`}</div>
+      <div className="mt-2 text-title font-medium tracking-[-.01em]">{copy('title')}</div>
+      <div className="mt-1.5 text-body-sm leading-[1.5] text-v2-muted [text-wrap:pretty]">{copy('body')}</div>
+      <div className="mt-4 flex items-center gap-2.5">
+        <button type="button" onClick={() => save({ guidesOff: true })} className="min-h-8 cursor-pointer rounded-full px-2 text-label font-medium text-v2-muted hover:text-v2-text">
           {t('guide.skip')}
         </button>
         <div className="flex-1" />
-        <button type="button" onClick={() => save({ guidesSeen: [...user.guidesSeen, key] })} className="cursor-pointer rounded-[10px] bg-v2-accent px-3.5 py-2 text-caption font-extrabold text-white">
+        <button type="button" onClick={() => save({ guidesSeen: [...user.guidesSeen, key] })} className="btn-cta h-9 cursor-pointer rounded-full px-4 text-label font-semibold">
           {t('guide.ok')}
         </button>
       </div>

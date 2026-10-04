@@ -76,10 +76,10 @@ export default function ReportesPage() {
   }, [load, version])
 
   return (
-    <div className="flex flex-col gap-[18px] px-4 pb-10 pt-[26px] min-[760px]:px-7">
+    <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-5 px-4 pb-12 pt-6 min-[760px]:px-8 min-[760px]:pt-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-headline font-bold">{t('rep.title')}</h1>
+          <h1 className="text-display-sm font-medium tracking-[-.025em]">{t('rep.title')}</h1>
           <div className="mt-0.5 text-body-sm text-ink-tertiary">{monthYear(report?.month ?? today.slice(0, 7), language)}</div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -141,7 +141,7 @@ export default function ReportesPage() {
 
 function Card({ children, className, style }: { children: ReactNode; className?: string; style?: CSSProperties }) {
   return (
-    <div className={cn('min-w-0 rounded-[16px] border border-border bg-surface p-5', className)} style={style}>
+    <div className={cn('min-w-0 nova-card p-5', className)} style={style}>
       {children}
     </div>
   )
@@ -158,7 +158,7 @@ function CardTitle({ title, subtitle }: { title: string; subtitle?: string }) {
 
 function Kpi({ label, children, className, labelClass, style }: { label: string; children: ReactNode; className?: string; labelClass?: string; style?: CSSProperties }) {
   return (
-    <div className={cn('min-w-0 rounded-[16px] border border-border bg-surface', className)} style={style}>
+    <div className={cn('min-w-0 nova-card', className)} style={style}>
       <div className={cn('truncate text-overline uppercase', labelClass ?? 'text-ink-secondary')}>{label}</div>
       {children}
     </div>
@@ -231,7 +231,7 @@ function SpendingTab({ report }: { report: Report | null }) {
                   role="radio"
                   aria-checked={level === k}
                   onClick={() => setLevel(k)}
-                  className={cn('cursor-pointer rounded-full px-[11px] py-[5px] text-caption font-bold', level === k ? 'bg-v2-accent text-white' : 'text-ink-tertiary')}
+                  className={cn('cursor-pointer rounded-full px-[11px] py-[5px] text-caption font-bold', level === k ? 'text-white [background:var(--cta-bg)]' : 'text-ink-tertiary')}
                 >
                   {t(k === 'parent' ? 'rep.level.parent' : 'rep.level.sub')}
                 </button>
@@ -258,7 +258,7 @@ function SpendingTab({ report }: { report: Report | null }) {
                       </span>
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-surface-sunken">
-                      <div className="h-full rounded-full" style={{ width: `${Math.round((c.amount / top[0]!.amount) * 100)}%`, background: categoryColor(c.category) }} />
+                      <div className="nova-fill h-full rounded-full" style={{ width: `${Math.round((c.amount / top[0]!.amount) * 100)}%`, background: categoryColor(c.category) }} />
                     </div>
                   </div>
                 </div>
@@ -400,7 +400,7 @@ function CashFlowTab({ report, wallets, series }: { report: Report | null; walle
       <div className="grid grid-cols-1 gap-3.5 min-[760px]:grid-cols-3">
         <Kpi label={t('rep.inflows')} className="px-5 py-[18px]">
           {report ? (
-            <Money hidden={hidden} className="mt-1.5 block text-headline font-extrabold tracking-[-.025em] text-positive">
+            <Money hidden={hidden} className="mt-1.5 block whitespace-nowrap text-headline font-medium tracking-[-.025em] tabular-nums text-positive">
               {format(month?.income ?? 0)}
             </Money>
           ) : (
@@ -409,7 +409,7 @@ function CashFlowTab({ report, wallets, series }: { report: Report | null; walle
         </Kpi>
         <Kpi label={t('rep.outflows')} className="px-5 py-[18px]">
           {report ? (
-            <Money hidden={hidden} className="mt-1.5 block text-headline font-extrabold tracking-[-.025em] text-negative">
+            <Money hidden={hidden} className="mt-1.5 block whitespace-nowrap text-headline font-medium tracking-[-.025em] tabular-nums text-negative">
               {format(month?.expenses ?? 0)}
             </Money>
           ) : (
@@ -423,7 +423,7 @@ function CashFlowTab({ report, wallets, series }: { report: Report | null; walle
           style={{ borderColor: 'var(--v2-hero-line)', background: 'linear-gradient(160deg,color-mix(in srgb, var(--v2-accent) 16%, transparent),var(--v2-surface) 70%)' }}
         >
           {report ? (
-            <Money hidden={hidden} className="mt-1.5 block text-headline font-extrabold tracking-[-.025em]">
+            <Money hidden={hidden} className="mt-1.5 block whitespace-nowrap text-headline font-medium tracking-[-.025em] tabular-nums">
               {`${net < 0 ? '−' : '+'}${format(Math.abs(net))}`}
             </Money>
           ) : (
@@ -504,7 +504,7 @@ function NetWorthTab({ report, wallets }: { report: Report | null; wallets: Wall
   const history = report?.netWorth.history ?? []
 
   const side = (label: string, data: Report['netWorth']['lent'] | undefined, tone: string, emptyKey: TranslationKey) => (
-    <div className="rounded-[14px] border border-border bg-surface-sunken p-4">
+    <div className="nova-card-sunken p-4">
       <div className="text-overline font-semibold uppercase text-ink-tertiary">{label}</div>
       {!data ? (
         <SkeletonBar className="mt-2.5 h-5 w-3/5" />

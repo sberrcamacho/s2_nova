@@ -1,30 +1,12 @@
 import { fill, tr } from '@/lib/i18n/translations'
 import { useState } from 'react'
 import { PlanMark } from '@/components/v2/CategoryMark'
-import {
-  CancelButton,
-  ConfirmDialog,
-  DangerLink,
-  DateInput,
-  ErrorBox,
-  Field,
-  IC,
-  Icon,
-  Label,
-  ModalFooter,
-  ModalTitle,
-  AmountField,
-  PlanIconGrid,
-  Pills,
-  RadioRow,
-  SaveButton,
-  V2Modal,
-  inputClass,
-} from '@/components/v2/Kit'
+import { AmountField, CancelButton, ConfirmDialog, DateInput, ErrorBox, Field, Flat, IC, Label, Pills, RadioRow, V2Modal } from '@/components/v2/Kit'
+import { AmountHero, ChoiceCard, PlanIconPicker, StepDeleteButton, StepModal, StepNote, StepQuestion } from '@/components/v2/Steps'
 import { evalExpr, numStr } from '@/lib/nuevoMovimiento'
 import { todayISO } from '@/lib/date'
 import { shortWallet } from '@/lib/movimientos'
-import { addSteps, longDate, monthYearLong, planText, shortDayMonth } from '@/lib/planCopy'
+import { addSteps, longDate, monthYearLong, shortDayMonth } from '@/lib/planCopy'
 import { guessPlanIcon } from '@/lib/taxonomy'
 import { goalService, type GoalPlanInput } from '@/services/goalService'
 import { useCurrency } from '@/state/useCurrency'
@@ -84,9 +66,9 @@ function samePlan(a: GoalPlan, b: GoalPlanInput): boolean {
   )
 }
 
-// Nueva / Editar meta — the Web v2 mockup's goal modal (gOpen): Nombre with
-// the suggested icon, Icono, Monto objetivo · Monto inicial · Fecha
-// objetivo, and the inline "Aporte periódico" section. PLANS.md §2–3.
+// Nueva / Editar meta in guided steps, like Android: name and icon, the
+// amounts and target date, then how to save (by hand or with a recurring
+// contribution). Editing opens on the last step. PLANS.md §2–3.
 export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | null; wallets: Wallet[]; onClose: () => void; onSaved: () => void }) {
   const { format } = useCurrency()
   const { showToast } = useToast()
@@ -96,27 +78,34 @@ export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | nu
   const [target, setTarget] = useState(goal ? numStr(goal.targetAmount) : '')
   const [initial, setInitial] = useState(goal?.initialAmount ? numStr(goal.initialAmount) : '')
   const [due, setDue] = useState(goal?.targetDate ?? '')
-  const [plan, setPlanState] = useState<PlanDraft | null>(goal?.plan ? planDraftOf(goal.plan) : null)
-  const [planOpen, setPlanOpen] = useState(false)
+  const [planOn, setPlanOn] = useState(!!goal?.plan)
+  const [pl, setPl] = useState<PlanDraft>(() =>
+    goal?.plan ? planDraftOf(goal.plan) : { amount: '', frequency: 'monthly', accountId: wallets[0]?.id ?? '', startDate: todayISO(), endMode: 'goal', count: 12, endDate: '', autoConfirm: false },
+  )
+  const [step, setStep] = useState(goal ? 2 : 0)
+  const [direction, setDirection] = useState<'next' | 'back'>('next')
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
   const [confirming, setConfirming] = useState(false)
-  const valid = !!name.trim() && evalExpr(target) > 0
-  const walletName = (id: string) => shortWallet(wallets.find((w) => w.id === id)?.name ?? '')
   const clear = <T,>(fn: (v: T) => void) => (v: T) => {
     fn(v)
     setErr('')
   }
-
-  const pl: PlanDraft = plan ?? { amount: '', frequency: 'monthly', accountId: wallets[0]?.id ?? '', startDate: todayISO(), endMode: 'goal', count: 12, endDate: '', autoConfirm: false }
   const plSet = (p: Partial<PlanDraft>) => {
-    setPlanState({ ...pl, ...p })
+    setPl({ ...pl, ...p })
     setErr('')
   }
+  const go = (delta: number) => {
+    setDirection(delta > 0 ? 'next' : 'back')
+    setStep(step + delta)
+  }
+
   const amt = evalExpr(pl.amount)
   const current = goal ? goal.currentAmount : evalExpr(initial)
+  const planValid = !planOn || (amt > 0 && !!pl.accountId)
+  const stepValid = step === 0 ? !!name.trim() : step === 1 ? !!name.trim() && evalExpr(target) > 0 : !!name.trim() && evalExpr(target) > 0 && planValid
   let summary = ''
-  if (planOpen && amt > 0) {
+  if (planOn && amt > 0) {
     const start = pl.startDate || todayISO()
     if (pl.endMode === 'goal') {
       const k = Math.max(1, Math.ceil(Math.max(0, evalExpr(target) - current) / amt))
@@ -126,8 +115,6 @@ export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | nu
     else summary = fill(tr('goal.sum.date'), format(amt), pl.endDate ? longDate(pl.endDate) : '…')
   }
 
-  const planRow = plan && evalExpr(plan.amount) > 0 ? planText({ ...planInput(plan), nextDate: '', doneCount: 0, active: true, due: false }, walletName(plan.accountId), format) : tr('goal.plan.empty')
-
   const onName = (v: string) => {
     setName(v)
     setErr('')
@@ -135,9 +122,9 @@ export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | nu
   }
 
   const save = async () => {
-    if (!valid) return setErr(tr(!name.trim() ? 'goal.err.name' : 'goal.err.target'))
+    if (!stepValid || busy) return
     const input = { name: name.trim(), icon, targetAmount: evalExpr(target), initialAmount: evalExpr(initial), targetDate: due || null }
-    const nextPlan = plan && evalExpr(plan.amount) > 0 && plan.accountId ? planInput(plan) : null
+    const nextPlan = planOn ? planInput(pl) : null
     setBusy(true)
     try {
       const saved = goal ? await goalService.updateGoal(goal.id, input) : await goalService.createGoal(input)
@@ -165,124 +152,159 @@ export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | nu
 
   const title = tr(goal ? 'goal.edit' : 'goal.new')
   return (
-    <V2Modal width={520} onClose={onClose} label={title}>
-      <ModalTitle>{title}</ModalTitle>
-
-      <Field label={tr('bud.name')} note={tr(iconAuto && guessPlanIcon(name) ? 'bud.note.iconGuess' : 'goal.note.iconPick')}>
-        <div className="flex items-center gap-2.5">
-          <PlanMark icon={icon} box={38} />
-          <input value={name} onChange={(e) => onName(e.target.value)} placeholder={tr('goal.namePh')} className={`${inputClass} flex-1`} />
-        </div>
-      </Field>
-
-      <div className="flex flex-col gap-2">
-        <Label>{tr('bud.icon')}</Label>
-        <PlanIconGrid
-          value={icon}
-          onPick={(k) => {
-            setIcon(k)
-            setIconAuto(false)
-            setErr('')
-          }}
-        />
-      </div>
-
-      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] gap-2.5">
-        <Field label={tr('goal.target')}>
-          <AmountField expr={target} onExpr={clear(setTarget)} label={tr('goal.targetLabel')} />
-        </Field>
-        <Field label={tr('goal.initial')}>
-          <AmountField expr={initial} onExpr={clear(setInitial)} label={tr('goal.initialLabel')} />
-        </Field>
-        <Field label={tr('goal.date')}>
-          <DateInput value={due} onChange={clear(setDue)} />
-        </Field>
-      </div>
-
-      <button
-        type="button"
-        onClick={() => {
-          if (!planOpen && !plan) setPlanState(pl)
-          setPlanOpen(!planOpen)
-        }}
-        className="flex cursor-pointer items-center gap-3 rounded-[12px] border px-3 py-2.5 text-left"
-        style={{ borderColor: plan ? 'var(--v2-accent-line)' : 'var(--v2-line2)', background: plan ? 'color-mix(in srgb, var(--v2-accent) 8%, transparent)' : 'transparent' }}
+    <>
+      <StepModal
+        title={title}
+        context={goal?.name}
+        step={step}
+        stepCount={3}
+        direction={direction}
+        onBack={() => go(-1)}
+        onClose={onClose}
+        primaryLabel={tr(step < 2 ? 'step.continue' : goal ? 'step.saveChanges' : 'goal.save')}
+        primaryEnabled={stepValid}
+        busy={busy}
+        onPrimary={() => (step < 2 ? go(1) : void save())}
+        footer={goal && <StepDeleteButton onClick={() => setConfirming(true)}>{tr('goal.delete')}</StepDeleteButton>}
       >
-        <span className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-[10px] bg-v2-accent/16">
-          <Icon paths={IC.repeat} size={16} color="var(--v2-accent2)" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="text-body-sm font-semibold">{tr('goal.plan')}</div>
-          <div className="font-numeric mt-0.5 text-caption text-ink-secondary">{planRow}</div>
-        </div>
-      </button>
+        {step === 0 && (
+          <>
+            <StepQuestion text={tr('goal.q.name')} />
+            <Field label={tr('bud.name')} note={tr(iconAuto && guessPlanIcon(name) ? 'bud.note.iconGuess' : 'goal.note.iconPick')}>
+              <div className="flex h-14 items-center gap-2.5 rounded-[10px] border border-border-input bg-surface pr-3 pl-2 focus-within:border-primary-border">
+                <PlanMark icon={icon} box={40} />
+                <input
+                  autoFocus
+                  value={name}
+                  aria-label={tr('bud.name')}
+                  onChange={(e) => onName(e.target.value)}
+                  placeholder={tr('goal.namePh')}
+                  className="min-w-0 flex-1 border-none bg-transparent text-body font-semibold text-ink outline-none placeholder:text-ink-tertiary"
+                />
+              </div>
+            </Field>
+            <div className="mt-5 flex flex-col gap-2">
+              <Label>{tr('bud.icon')}</Label>
+              <PlanIconPicker
+                value={icon}
+                onPick={(k) => {
+                  setIcon(k)
+                  setIconAuto(false)
+                }}
+              />
+            </div>
+          </>
+        )}
 
-      {planOpen && (
-        <div className="flex flex-col gap-3 rounded-[14px] border border-border-input bg-surface-sunken p-3.5">
-          <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2.5">
-            <Field label={tr('goal.plan.amount')}>
-              <AmountField expr={pl.amount} onExpr={(v) => plSet({ amount: v })} label={tr('goal.plan.amountLabel')} />
-            </Field>
-            <Field label={tr('goal.plan.starts')}>
-              <DateInput value={pl.startDate} onChange={(v) => plSet({ startDate: v })} />
-            </Field>
-          </div>
-          <Field label={tr('goal.plan.freq')}>
-            <Pills options={freqs()} value={pl.frequency} onChange={(v) => plSet({ frequency: v })} />
-          </Field>
-          <Field label={tr('goal.fromWallet')}>
-            <Pills options={wallets.map((w) => ({ value: w.id, label: shortWallet(w.name) }))} value={pl.accountId} onChange={(v) => plSet({ accountId: v })} />
-          </Field>
-          <Field label={tr('nm.ends')}>
-            <Pills options={ends()} value={pl.endMode} onChange={(v) => plSet({ endMode: v })} />
-            {pl.endMode === 'count' && (
-              <div className="flex items-center gap-2.5">
-                <button type="button" onClick={() => plSet({ count: Math.max(1, pl.count - 1) })} className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-[10px] border border-border-input text-title-sm font-semibold">
-                  −
-                </button>
-                <div className="font-numeric flex-1 text-center text-title-sm font-semibold">{fill(tr('goal.nContributions'), pl.count)}</div>
-                <button type="button" onClick={() => plSet({ count: Math.min(120, pl.count + 1) })} className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-[10px] border border-border-input text-title-sm font-semibold">
-                  +
-                </button>
+        {step === 1 && (
+          <>
+            <StepQuestion text={tr('goal.q.amount')} hint={tr('goal.q.amountHint')} />
+            <AmountHero label={tr('goal.target')} expr={target} onExpr={clear(setTarget)} />
+            <div className="mt-5 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2.5">
+              <Field label={tr('goal.initial')}>
+                <AmountField expr={initial} onExpr={clear(setInitial)} label={tr('goal.initialLabel')} height={48} fontSize={16} />
+              </Field>
+              <Field label={tr('goal.dateOptional')}>
+                <DateInput value={due} onChange={clear(setDue)} />
+              </Field>
+            </div>
+          </>
+        )}
+
+        {step === 2 && (
+          <>
+            <StepQuestion text={tr('goal.q.plan')} hint={tr('goal.q.planHint')} />
+            <div className="flex flex-col gap-3" role="radiogroup">
+              <ChoiceCard icon={[...IC.wallet]} title={tr('goal.choice.manual')} detail={tr('goal.choice.manualDetail')} on={!planOn} onClick={() => setPlanOn(false)} />
+              <ChoiceCard icon={[...IC.repeat]} title={tr('goal.plan')} detail={tr('goal.choice.planDetail')} on={planOn} onClick={() => setPlanOn(true)} />
+            </div>
+            {planOn && (
+              <>
+                <div className="mt-5">
+                  <AmountHero label={tr('goal.plan.amount')} expr={pl.amount} onExpr={(v) => plSet({ amount: v })} />
+                </div>
+                <div className="mt-5">
+                  <Field label={tr('goal.plan.freq')}>
+                    <div className="flex flex-wrap gap-2" role="radiogroup">
+                      {freqs().map((f) => (
+                        <Flat key={f.value} role="radio" on={pl.frequency === f.value} onClick={() => plSet({ frequency: f.value })}>
+                          {f.label}
+                        </Flat>
+                      ))}
+                    </div>
+                  </Field>
+                </div>
+                <div className="mt-5 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2.5">
+                  <Field label={tr('goal.plan.starts')}>
+                    <DateInput value={pl.startDate} onChange={(v) => plSet({ startDate: v })} />
+                  </Field>
+                </div>
+                <div className="mt-5">
+                  <Field label={tr('goal.fromWallet')}>
+                    <div className="flex flex-wrap gap-2" role="radiogroup">
+                      {wallets.map((w) => (
+                        <Flat key={w.id} role="radio" on={pl.accountId === w.id} onClick={() => plSet({ accountId: w.id })}>
+                          {shortWallet(w.name)}
+                        </Flat>
+                      ))}
+                    </div>
+                  </Field>
+                </div>
+                <div className="mt-5">
+                  <Field label={tr('nm.ends')}>
+                    <div className="flex flex-wrap gap-2" role="radiogroup">
+                      {ends().map((e) => (
+                        <Flat key={e.value} role="radio" on={pl.endMode === e.value} onClick={() => plSet({ endMode: e.value })}>
+                          {e.label}
+                        </Flat>
+                      ))}
+                    </div>
+                    {pl.endMode === 'count' && (
+                      <div className="flex items-center gap-2.5">
+                        <button type="button" aria-label="−1" onClick={() => plSet({ count: Math.max(1, pl.count - 1) })} className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-[10px] border border-border-input text-title-sm font-semibold">
+                          −
+                        </button>
+                        <div className="font-numeric flex-1 text-center text-title-sm font-semibold">{fill(tr('goal.nContributions'), pl.count)}</div>
+                        <button type="button" aria-label="+1" onClick={() => plSet({ count: Math.min(120, pl.count + 1) })} className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-[10px] border border-border-input text-title-sm font-semibold">
+                          +
+                        </button>
+                      </div>
+                    )}
+                    {pl.endMode === 'date' && <DateInput value={pl.endDate} onChange={(v) => plSet({ endDate: v })} />}
+                  </Field>
+                </div>
+                <div className="mt-5">
+                  <Field label={tr('nm.eachDate')}>
+                    <div className="flex flex-col gap-2">
+                      {(
+                        [
+                          [false, tr('nm.ask'), tr('goal.ask.detail')],
+                          [true, tr('goal.auto'), tr('goal.auto.detail')],
+                        ] as const
+                      ).map(([auto, text, detail]) => (
+                        <RadioRow key={text} on={pl.autoConfirm === auto} onClick={() => plSet({ autoConfirm: auto })}>
+                          <div className="text-body-sm font-semibold">{text}</div>
+                          <div className="mt-0.5 text-caption leading-[1.4] text-ink-secondary">{detail}</div>
+                        </RadioRow>
+                      ))}
+                    </div>
+                  </Field>
+                </div>
+                {summary && (
+                  <div className="mt-5">
+                    <StepNote>{summary}</StepNote>
+                  </div>
+                )}
+              </>
+            )}
+            {err && (
+              <div className="mt-3">
+                <ErrorBox>{err}</ErrorBox>
               </div>
             )}
-            {pl.endMode === 'date' && <DateInput value={pl.endDate} onChange={(v) => plSet({ endDate: v })} />}
-          </Field>
-          <Field label={tr('nm.eachDate')}>
-            <div className="flex flex-col gap-2">
-              {(
-                [
-                  [false, tr('nm.ask'), tr('goal.ask.detail')],
-                  [true, tr('goal.auto'), tr('goal.auto.detail')],
-                ] as const
-              ).map(([auto, text, detail]) => (
-                <RadioRow key={text} on={pl.autoConfirm === auto} onClick={() => plSet({ autoConfirm: auto })}>
-                  <div className="text-body-sm font-semibold">{text}</div>
-                  <div className="mt-0.5 text-caption leading-[1.4] text-ink-secondary">{detail}</div>
-                </RadioRow>
-              ))}
-            </div>
-          </Field>
-          {summary && <div className="font-numeric rounded-[12px] bg-v2-accent/12 px-3 py-2.5 text-body-sm font-semibold leading-[1.45]">{summary}</div>}
-          <button
-            type="button"
-            onClick={() => {
-              setPlanState(null)
-              setPlanOpen(false)
-            }}
-            className="cursor-pointer self-start text-body-sm font-semibold text-negative"
-          >
-            {tr('goal.plan.remove')}
-          </button>
-        </div>
-      )}
-
-      {err && <ErrorBox>{err}</ErrorBox>}
-
-      <ModalFooter left={goal && <DangerLink onClick={() => setConfirming(true)}>{tr('goal.delete')}</DangerLink>}>
-        <CancelButton onClick={onClose} />
-        <SaveButton valid={valid} busy={busy} onClick={() => void save()} />
-      </ModalFooter>
+          </>
+        )}
+      </StepModal>
 
       {confirming && goal && (
         <ConfirmDialog
@@ -294,7 +316,7 @@ export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | nu
           onConfirm={() => void remove()}
         />
       )}
-    </V2Modal>
+    </>
   )
 }
 
@@ -332,20 +354,14 @@ export function GoalPayModal({ goal, wallets, onClose, onSaved }: { goal: Goal; 
           </div>
         </div>
       </div>
-      <div className="flex flex-col gap-1.5">
-        <Label>{tr('goal.pay.amount')}</Label>
-        <AmountField
-          expr={amount}
-          onExpr={(v) => {
-            setAmount(v)
-            setErr('')
-          }}
-          height={46}
-          fontSize={16}
-          label={tr('goal.pay.amountLabel')}
-          autoFocus
-        />
-      </div>
+      <AmountHero
+        label={tr('goal.pay.amount')}
+        expr={amount}
+        onExpr={(v) => {
+          setAmount(v)
+          setErr('')
+        }}
+      />
       <div className="flex flex-col gap-2">
         <Label>{tr('goal.fromWallet')}</Label>
         <Pills options={wallets.map((w) => ({ value: w.id, label: shortWallet(w.name) }))} value={accountId} onChange={setAccountId} />

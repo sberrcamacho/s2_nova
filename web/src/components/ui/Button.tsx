@@ -16,7 +16,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const VARIANT_CLASSES: Record<Variant, string> = {
   primary:
-    'bg-primary text-on-primary hover:brightness-110 active:brightness-95 shadow-[var(--shadow-primary)] disabled:shadow-none',
+    'text-white [background:var(--cta-bg)] shadow-[var(--cta-glow)] hover:brightness-110 active:brightness-95 disabled:shadow-none',
   secondary: 'bg-surface text-ink border border-border hover:bg-bg-secondary active:bg-border/40',
   outline: 'bg-transparent text-link border border-primary/40 hover:bg-accent-soft active:bg-accent-soft/70',
   ghost: 'bg-transparent text-ink-secondary hover:bg-bg-secondary hover:text-ink',
@@ -24,10 +24,10 @@ const VARIANT_CLASSES: Record<Variant, string> = {
 }
 
 const SIZE_CLASSES: Record<Size, string> = {
-  sm: 'h-9 px-3.5 text-label gap-1.5 rounded-[var(--radius-sm)]',
-  md: 'h-11 px-5 text-body-sm gap-2 rounded-[var(--radius-md)]',
-  lg: 'h-13 px-6 text-body-sm gap-2 rounded-[var(--radius-md)]',
-  icon: 'h-10 w-10 rounded-[var(--radius-md)]',
+  sm: 'h-9 px-4 text-label gap-1.5 rounded-full',
+  md: 'h-11 px-5 text-body-sm gap-2 rounded-full',
+  lg: 'h-13 px-7 text-body-sm gap-2 rounded-full',
+  icon: 'h-10 w-10 rounded-full',
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(

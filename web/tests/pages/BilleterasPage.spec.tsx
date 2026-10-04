@@ -53,7 +53,7 @@ describe('Billeteras', () => {
     await user.click(screen.getByRole('button', { name: 'Nueva billetera' }))
     const dialog = screen.getByRole('dialog', { name: 'Nueva billetera' })
     await user.type(within(dialog).getByPlaceholderText(/Nequi, Bancolombia/), 'Wise — Euros')
-    await user.click(within(dialog).getByRole('button', { name: 'Cuenta de ahorros' }))
+    await user.click(within(dialog).getByRole('radio', { name: 'Cuenta de ahorros' }))
     await user.click(await within(dialog).findByRole('button', { name: 'USD' }))
     expect(dialog).toHaveTextContent('El saldo se lleva en dólar estadounidense.')
     await user.type(within(dialog).getByPlaceholderText('0'), '150')

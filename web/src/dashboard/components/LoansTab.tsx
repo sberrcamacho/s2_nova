@@ -3,7 +3,8 @@ import { RowSkeletons } from '@/components/v2/Rows'
 import { createPortal } from 'react-dom'
 import { CategoryMark } from '@/components/v2/CategoryMark'
 import { Money } from '@/components/v2/Money'
-import { AmountField, CancelButton, ErrorBox, Label, flatClass } from '@/components/v2/Kit'
+import { CancelButton, ErrorBox, IC, Icon, Label, flatClass } from '@/components/v2/Kit'
+import { AmountHero } from '@/components/v2/Steps'
 import { ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
 import { cn } from '@/lib/cn'
 import { LoanModal } from '@/dashboard/components/planes/LoanModal'
@@ -222,9 +223,10 @@ function PayDialog({ loan, wallets, onClose, onSaved }: { loan: Transaction; wal
   const [walletId, setWalletId] = useState(loan.accountId)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const value = evalExpr(amount)
+  const over = value > out
 
   const save = async () => {
-    const value = evalExpr(amount)
     if (!value || value > out) return setError(fill(t('loans.payError'), format(out)))
     setBusy(true)
     try {
@@ -251,22 +253,26 @@ function PayDialog({ loan, wallets, onClose, onSaved }: { loan: Transaction; wal
           <div className="text-title-sm font-semibold">{t('loans.pay')}</div>
           <div className="mt-0.5 text-caption text-ink-secondary">{fill(t('loans.paySub'), loan.counterpartyName ?? t('loans.unknownPerson'), format(out))}</div>
         </div>
-        <div className="flex flex-col gap-1.5">
-          <label className="text-caption font-semibold tracking-[.06em] text-ink-secondary">
-            {t('loans.payAmount')}
-          </label>
-          <AmountField
+        <div className="flex flex-col gap-2.5">
+          <AmountHero
+            label={t('loans.payAmount')}
             expr={amount}
             onExpr={(v) => {
               setAmount(v)
               setError('')
             }}
-            height={44}
-            fontSize={13}
-            radius={12}
-            label={t('loans.payAmount')}
           />
-          <div className="text-caption text-ink-secondary">{t('loans.payHint')}</div>
+          {over && (
+            <div className="flex items-center gap-1.5 text-body-sm text-negative">
+              <Icon paths={IC.warn} size={16} color="var(--v2-neg)" />
+              {fill(t('loans.payOver'), format(out))}
+            </div>
+          )}
+          <div>
+            <button type="button" aria-pressed={value === out} onClick={() => setAmount(numStr(out))} className={flatClass(value === out)}>
+              {fill(t('loans.settleAll'), format(out))}
+            </button>
+          </div>
         </div>
         <div className="flex flex-col gap-2">
           <Label>{t(loan.loanKind === 'lent' ? 'loans.receiveIn' : 'loans.payFrom')}</Label>
@@ -281,7 +287,7 @@ function PayDialog({ loan, wallets, onClose, onSaved }: { loan: Transaction; wal
         {error && <ErrorBox>{error}</ErrorBox>}
         <div className="flex justify-end gap-2">
           <CancelButton onClick={onClose}>{t('common.cancel')}</CancelButton>
-          <button type="button" onClick={save} disabled={busy} className="cursor-pointer whitespace-nowrap rounded-[10px] bg-primary px-4 py-2.5 text-body-sm font-semibold text-white">
+          <button type="button" onClick={save} disabled={busy || over} className="cursor-pointer whitespace-nowrap rounded-[10px] bg-primary px-4 py-2.5 text-body-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40">
             {t('loans.paySave')}
           </button>
         </div>

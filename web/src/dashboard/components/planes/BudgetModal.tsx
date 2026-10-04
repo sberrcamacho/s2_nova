@@ -1,32 +1,12 @@
 import { useState } from 'react'
-import { CategoryMark, GlyphMark, PlanMark } from '@/components/v2/CategoryMark'
-import {
-  CancelButton,
-  ConfirmDialog,
-  DangerLink,
-  DateInput,
-  ErrorBox,
-  Field,
-  Flat,
-  GridCell,
-  IC,
-  Icon,
-  Label,
-  ModalFooter,
-  ModalTitle,
-  AmountField,
-  OptionTile,
-  PlanIconGrid,
-  SaveButton,
-  SectionBox,
-  V2Modal,
-  inputClass,
-} from '@/components/v2/Kit'
+import { CategoryMark, PlanMark } from '@/components/v2/CategoryMark'
+import { ConfirmDialog, DateInput, ErrorBox, Field, Flat, GridCell, IC, Label, inputClass } from '@/components/v2/Kit'
+import { AmountHero, ChoiceCard, PlanIconPicker, StepDeleteButton, StepModal, StepNote, StepQuestion } from '@/components/v2/Steps'
 import { ApiError } from '@/lib/apiClient'
-import { categoryColor, categoryGlyph, categoryLabel, categoryName, categoryNode, childCategories, parentCategories, parentOf, useCategories } from '@/lib/backendCategories'
+import { categoryLabel, categoryName, categoryNode, childCategories, parentCategories, parentOf, useCategories } from '@/lib/backendCategories'
 import { shortWallet } from '@/lib/movimientos'
-import { budgetPeriodLabel, shortDayMonth } from '@/lib/planCopy'
-import { guessCategory, guessPlanIcon } from '@/lib/taxonomy'
+import { budgetPeriodLabel } from '@/lib/planCopy'
+import { guessPlanIcon } from '@/lib/taxonomy'
 import { budgetService, type BudgetDraft, type BudgetProgress } from '@/services/budgetService'
 import { useCurrency } from '@/state/useCurrency'
 import { useToast } from '@/state/ToastContext'
@@ -34,8 +14,6 @@ import { useTranslation } from '@/state/useTranslation'
 import { fill } from '@/lib/i18n/translations'
 import type { BudgetKind, Wallet } from '@/types'
 import { evalExpr, numStr } from '@/lib/nuevoMovimiento'
-
-type Section = 'cat' | 'wallets' | 'period' | null
 
 interface Draft {
   kind: BudgetKind
@@ -74,17 +52,21 @@ function draftOf(b: BudgetProgress | null): Draft {
   }
 }
 
-// Nuevo / Editar presupuesto — the Web v2 mockup's budget modal (bOpen):
-// Por categoría / Personalizado, Nombre with the mark (category picker or
-// suggested icon), Monto, and the Categoría · Billeteras · Periodo tiles
-// that open inline sections. PLANS.md §4.
+// Nuevo / Editar presupuesto as guided steps (the single modal was too
+// crowded), same as Android's BudgetSheet: 1 the kind, 2 the category (or
+// the custom budget's name and icon), 3 the limit, period and wallets with a
+// summary of what counts. Editing starts at step 3 and never shows step 1:
+// the kind is fixed once saved.
 export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: BudgetProgress | null; wallets: Wallet[]; onClose: () => void; onSaved: () => void }) {
   useCategories()
   const { t } = useTranslation()
   const { format } = useCurrency()
   const { showToast } = useToast()
   const [d, setD] = useState<Draft>(() => draftOf(budget))
-  const [section, setSection] = useState<Section>(budget ? null : 'cat')
+  const steps = budget ? [1, 2] : [0, 1, 2]
+  const [index, setIndex] = useState(budget ? steps.length - 1 : 0)
+  const [direction, setDirection] = useState<'next' | 'back'>('next')
+  const [kindChosen, setKindChosen] = useState(!!budget)
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
   const [confirming, setConfirming] = useState(false)
@@ -92,40 +74,20 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
     setD((prev) => ({ ...prev, ...p }))
     setErr('')
   }
-
-  const custom = d.kind === 'custom'
-  const valid = evalExpr(d.limit) > 0 && (d.period !== 'custom' || (!!d.start && !!d.end && d.end >= d.start)) && (custom ? !!d.name.trim() : !!d.cat && !!d.name.trim())
-  const leaf = d.sub ?? d.cat
-  const wl = d.walletIds.length ? d.walletIds.map((id) => shortWallet(wallets.find((w) => w.id === id)?.name ?? '')) : null
-  const nameGuess = custom ? null : d.auto ? guessCategory(d.name, false) : null
-
-  const onName = (v: string) => {
-    if (custom) return set({ name: v, nameTouched: true, icon: d.iconAuto ? (guessPlanIcon(v) ?? 'other') : d.icon })
-    const lf = d.auto ? guessCategory(v, false) : null
-    const p = lf ? parentOf(lf) : undefined
-    set({ name: v, nameTouched: v.trim().length > 0, ...(lf && p ? { cat: p.id, sub: lf !== p.id ? lf : null } : {}) })
+  const go = (delta: 1 | -1) => {
+    setDirection(delta > 0 ? 'next' : 'back')
+    setIndex((i) => i + delta)
   }
 
-  const tiles: { k: Exclude<Section, null>; label: string; on: boolean; icon: React.ReactNode }[] = custom
-    ? []
-    : [
-        {
-          k: 'cat',
-          label: d.cat ? categoryName(leaf) : t('bud.category'),
-          on: !!d.cat,
-          icon: d.cat ? <Icon paths={categoryGlyph(leaf)} size={18} color={categoryColor(d.cat)} /> : <Icon paths={IC.target} size={18} color="var(--v2-muted)" />,
-        },
-        { k: 'wallets', label: wl ? (wl.length === 1 ? wl[0] : fill(t('bud.nWallets'), wl.length)) : t('bud.wallets'), on: !!wl, icon: <Icon paths={IC.wallet} size={18} color={wl ? 'var(--v2-accent2)' : 'var(--v2-muted)'} /> },
-      ]
-  tiles.push({
-    k: 'period',
-    label: d.period === 'custom' ? (d.start && d.end ? `${shortDayMonth(d.start)} – ${shortDayMonth(d.end)}` : t('bud.range')) : t('bud.monthly'),
-    on: d.period === 'custom',
-    icon: <Icon paths={IC.cal} size={18} color={d.period === 'custom' ? 'var(--v2-accent2)' : 'var(--v2-muted)'} />,
-  })
+  const step = steps[index]
+  const custom = d.kind === 'custom'
+  const valid = evalExpr(d.limit) > 0 && (d.period !== 'custom' || (!!d.start && !!d.end && d.end >= d.start)) && (custom ? !!d.name.trim() : !!d.cat && !!d.name.trim())
+  const stepValid = step === 1 ? !!d.name.trim() && (custom || !!d.cat) : valid
+  const leaf = d.sub ?? d.cat
+  const wl = d.walletIds.length ? d.walletIds.map((id) => shortWallet(wallets.find((w) => w.id === id)?.name ?? '')) : null
 
   const scopeNote = custom
-    ? ''
+    ? `${t('bud.kind.customHint')} ${capitalize(t(d.period === 'custom' ? 'bud.scope.noReset' : 'bud.scope.reset'))}.`
     : !d.cat
       ? t('bud.scope.pick')
       : (d.sub ? fill(t('bud.scope.only'), categoryLabel(d.sub)) : fill(t('bud.scope.all'), categoryName(d.cat))) +
@@ -133,7 +95,7 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
         ` · ${t(d.period === 'custom' ? 'bud.scope.noReset' : 'bud.scope.reset')}.`
 
   const save = async () => {
-    if (!valid) return setErr(t(!custom && !d.cat ? 'nm.err.category' : !d.name.trim() ? 'bud.err.name' : 'bud.err.amount'))
+    if (!valid) return
     const draft: BudgetDraft = {
       kind: d.kind,
       name: d.name.trim(),
@@ -148,12 +110,7 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
     setBusy(true)
     try {
       if (!budget) await budgetService.createBudget(draft)
-      else if (budget.kind === d.kind) await budgetService.updateBudget(budget.id, draft)
-      else {
-        // The backend fixes a budget's kind, so switching it replaces the budget.
-        await budgetService.createBudget(draft)
-        await budgetService.deleteBudget(budget.id)
-      }
+      else await budgetService.updateBudget(budget.id, draft)
       showToast(t(budget ? 'bud.toast.updated' : 'bud.toast.created'), 'success')
       onSaved()
     } catch (e) {
@@ -175,163 +132,155 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
 
   const title = t(budget ? 'bud.edit' : 'bud.new')
   const label = budget ? (budget.name ?? categoryName(budget.category)) : ''
+  const pickKind = (kind: BudgetKind) => {
+    setKindChosen(true)
+    set({ kind, ...(d.nameTouched ? {} : { name: kind === 'custom' || !d.cat ? '' : categoryName(d.sub ?? d.cat) }) })
+    go(1)
+  }
 
   return (
-    <V2Modal width={500} onClose={onClose} label={title}>
-      <ModalTitle>{title}</ModalTitle>
-
-      <div className="flex flex-col gap-1.5">
-        <div className="flex gap-1.5">
-          {(
-            [
-              ['category', t('bud.kind.category')],
-              ['custom', t('bud.kind.custom')],
-            ] as const
-          ).map(([k, text]) => (
-            <Flat
-              key={k}
-              on={d.kind === k}
-              onClick={() => {
-                set({ kind: k, ...(d.nameTouched ? {} : { name: k === 'custom' || !d.cat ? '' : categoryName(d.sub ?? d.cat) }) })
-                setSection(null)
-              }}
-              className="flex-1 text-center"
-            >
-              {text}
-            </Flat>
-          ))}
-        </div>
-        <div className="text-caption text-ink-secondary">
-          {t(custom ? 'bud.kind.customHint' : 'bud.kind.categoryHint')}
-        </div>
-      </div>
-
-      <Field
-        label={t('bud.name')}
-        note={t(
-          custom
-            ? d.iconAuto && guessPlanIcon(d.name)
-              ? 'bud.note.iconGuess'
-              : 'bud.note.iconPick'
-            : nameGuess
-              ? 'bud.note.catGuess'
-              : 'bud.note.catPick',
-        )}
+    <>
+      <StepModal
+        title={title}
+        context={budget ? label : undefined}
+        step={index}
+        stepCount={steps.length}
+        direction={direction}
+        onBack={() => go(-1)}
+        onClose={onClose}
+        primaryLabel={t(step < 2 ? 'step.continue' : budget ? 'step.saveChanges' : 'bud.save')}
+        primaryEnabled={stepValid}
+        busy={busy}
+        onPrimary={() => (step < 2 ? go(1) : void save())}
+        showPrimary={step !== 0}
+        footer={budget && <StepDeleteButton onClick={() => setConfirming(true)}>{t('bud.delete')}</StepDeleteButton>}
       >
-        <div className="flex items-center gap-2.5">
-          <button type="button" onClick={() => setSection(custom ? null : 'cat')} title={t('bud.pickCategory')} className="relative flex cursor-pointer">
-            {custom ? <PlanMark icon={d.icon} box={38} /> : <CategoryMark category={leaf ?? 'exp.other'} box={38} />}
-            {!custom && (
-              <span className="absolute -bottom-0.5 -right-0.5 box-border flex h-[15px] w-[15px] items-center justify-center rounded-full border-2 border-v2-surface bg-primary text-caption text-white">▾</span>
-            )}
-          </button>
-          <input value={d.name} onChange={(e) => onName(e.target.value)} placeholder={t(custom ? 'bud.ph.custom' : 'bud.ph.category')} className={`${inputClass} flex-1`} />
-        </div>
-      </Field>
-
-      <Field label={t('nm.amount')}>
-        <AmountField expr={d.limit} onExpr={(v) => set({ limit: v })} label={t('bud.limit')} />
-      </Field>
-
-      {custom && (
-        <div className="flex flex-col gap-2">
-          <Label>{t('bud.icon')}</Label>
-          <PlanIconGrid value={d.icon} onPick={(k) => set({ icon: k, iconAuto: false })} />
-        </div>
-      )}
-
-      <div className="grid grid-cols-[repeat(5,minmax(0,1fr))] gap-1.5">
-        {tiles.map((o) => (
-          <OptionTile key={o.k} icon={o.icon} label={o.label} on={o.on} open={section === o.k} onClick={() => setSection(section === o.k ? null : o.k)} />
-        ))}
-      </div>
-
-      {scopeNote && <div className="font-numeric text-caption leading-[1.45] text-ink-secondary">{scopeNote}</div>}
-
-      {section === 'cat' && !custom && (
-        <SectionBox>
-          <div className="grid grid-cols-[repeat(4,minmax(0,1fr))] gap-1">
-            {parentCategories(false, false).map((x) => (
-              <GridCell
-                key={x.id}
-                on={d.cat === x.id}
-                color={x.color}
-                chip={<CategoryMark category={x.id} box={36} />}
-                label={categoryName(x.id)}
-                onClick={() => {
-                  set({ cat: x.id, sub: null, auto: false, ...(d.nameTouched ? {} : { name: categoryName(x.id) }) })
-                  if (!childCategories(x.id, false).length) setSection(null)
-                }}
+        {step === 0 && (
+          <>
+            <StepQuestion text={t('bud.q.kind')} />
+            <div className="flex flex-col gap-3" role="radiogroup">
+              <ChoiceCard icon={[...IC.target]} title={t('bud.choice.category')} detail={t('bud.choice.categoryDetail')} on={kindChosen && !custom} onClick={() => pickKind('category')} />
+              <ChoiceCard
+                icon={['M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z']}
+                title={t('bud.choice.custom')}
+                detail={t('bud.choice.customDetail')}
+                on={kindChosen && custom}
+                onClick={() => pickKind('custom')}
               />
-            ))}
-          </div>
-          {d.cat && childCategories(d.cat, false).length > 0 && (
-            <>
-              <Label>{fill(t('nm.subOf'), categoryName(d.cat))}</Label>
-              <div className="grid grid-cols-[repeat(4,minmax(0,1fr))] gap-1">
-                {[{ id: null as string | null, name: t('bud.all') }, ...childCategories(d.cat, false).map((s) => ({ id: s.id as string | null, name: categoryName(s.id) }))].map((x) => (
-                  <GridCell
-                    key={x.id ?? 'all'}
-                    on={d.sub === x.id}
-                    color={categoryColor(d.cat)}
-                    chip={<GlyphMark paths={categoryGlyph(x.id ?? d.cat)} color={categoryColor(d.cat)} box={36} />}
-                    label={x.name}
-                    onClick={() => {
-                      set({ sub: x.id, auto: false, ...(d.nameTouched || !d.cat ? {} : { name: categoryName(x.id ?? d.cat) }) })
-                      setSection(null)
-                    }}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-        </SectionBox>
-      )}
-
-      {section === 'wallets' && !custom && (
-        <SectionBox className="gap-2">
-          <div className="text-caption text-ink-secondary">{t('bud.walletsHint')}</div>
-          <div className="flex flex-wrap gap-1.5">
-            <Flat on={!wl} onClick={() => set({ walletIds: [] })}>
-              {t('bud.all')}
-            </Flat>
-            {wallets.map((w) => {
-              const on = d.walletIds.includes(w.id)
-              return (
-                <Flat key={w.id} on={on} onClick={() => set({ walletIds: on ? d.walletIds.filter((x) => x !== w.id) : [...d.walletIds, w.id] })}>
-                  {shortWallet(w.name)}
-                </Flat>
-              )
-            })}
-          </div>
-        </SectionBox>
-      )}
-
-      {section === 'period' && (
-        <SectionBox>
-          <div className="flex flex-wrap gap-1.5">
-            <Flat on={d.period === 'monthly'} onClick={() => set({ period: 'monthly' })}>
-              {t('bud.monthly')}
-            </Flat>
-            <Flat on={d.period === 'custom'} onClick={() => set({ period: 'custom' })}>
-              {t('bud.customRange')}
-            </Flat>
-          </div>
-          {d.period === 'custom' && (
-            <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
-              <DateInput value={d.start} onChange={(v) => set({ start: v })} />
-              <DateInput value={d.end} onChange={(v) => set({ end: v })} />
             </div>
-          )}
-        </SectionBox>
-      )}
+          </>
+        )}
 
-      {err && <ErrorBox>{err}</ErrorBox>}
+        {step === 1 && custom && (
+          <>
+            <StepQuestion text={t('bud.q.custom')} hint={t('bud.kind.customHint')} />
+            <Field label={t('bud.name')} note={t(d.iconAuto && guessPlanIcon(d.name) ? 'bud.note.iconGuess' : 'bud.note.iconPick')}>
+              <div className="flex h-14 items-center gap-2.5 rounded-[10px] border border-border-input bg-surface pr-3 pl-2 focus-within:border-primary-border">
+                <PlanMark icon={d.icon} box={40} />
+                <input
+                  autoFocus
+                  value={d.name}
+                  aria-label={t('bud.name')}
+                  onChange={(e) => set({ name: e.target.value, nameTouched: true, icon: d.iconAuto ? (guessPlanIcon(e.target.value) ?? 'other') : d.icon })}
+                  placeholder={t('bud.ph.custom')}
+                  className="min-w-0 flex-1 border-none bg-transparent text-body font-semibold text-ink outline-none placeholder:text-ink-tertiary"
+                />
+              </div>
+            </Field>
+            <div className="mt-5 flex flex-col gap-2">
+              <Label>{t('bud.icon')}</Label>
+              <PlanIconPicker value={d.icon} onPick={(k) => set({ icon: k, iconAuto: false })} />
+            </div>
+          </>
+        )}
 
-      <ModalFooter left={budget && <DangerLink onClick={() => setConfirming(true)}>{t('bud.delete')}</DangerLink>}>
-        <CancelButton onClick={onClose} />
-        <SaveButton valid={valid} busy={busy} onClick={() => void save()} />
-      </ModalFooter>
+        {step === 1 && !custom && (
+          <>
+            <StepQuestion text={t('bud.q.category')} hint={t('bud.q.categoryHint')} />
+            <div className="grid grid-cols-[repeat(4,minmax(0,1fr))] gap-1" role="radiogroup">
+              {parentCategories(false, false).map((x) => (
+                <GridCell
+                  key={x.id}
+                  on={d.cat === x.id}
+                  color={x.color}
+                  chip={<CategoryMark category={x.id} box={40} />}
+                  label={categoryName(x.id)}
+                  onClick={() => set({ cat: x.id, sub: null, auto: false, ...(d.nameTouched ? {} : { name: categoryName(x.id) }) })}
+                />
+              ))}
+            </div>
+            {d.cat && childCategories(d.cat, false).length > 0 && (
+              <div className="mt-5 flex flex-col gap-2">
+                <Label>{t('bud.subcategory')}</Label>
+                <div className="flex flex-wrap gap-2" role="radiogroup">
+                  {[{ id: null as string | null, name: t('bud.allSubs') }, ...childCategories(d.cat, false).map((c) => ({ id: c.id as string | null, name: categoryName(c.id) }))].map((x) => (
+                    <Flat key={x.id ?? 'all'} role="radio" on={d.sub === x.id} onClick={() => set({ sub: x.id, ...(d.nameTouched || !d.cat ? {} : { name: categoryName(x.id ?? d.cat) }) })}>
+                      {x.name}
+                    </Flat>
+                  ))}
+                </div>
+              </div>
+            )}
+            {d.cat && (
+              <div className="mt-5">
+                <Field label={t('bud.name')}>
+                  <input value={d.name} onChange={(e) => set({ name: e.target.value, nameTouched: e.target.value.trim().length > 0 })} placeholder={t('bud.ph.category')} className={`${inputClass} h-12 text-body font-semibold`} />
+                </Field>
+              </div>
+            )}
+          </>
+        )}
+
+        {step === 2 && (
+          <>
+            <StepQuestion text={t('bud.q.limit')} />
+            <AmountHero label={t('bud.limitLabel')} expr={d.limit} onExpr={(v) => set({ limit: v })} />
+            <div className="mt-5 flex flex-col gap-2">
+              <Label>{t('bud.period')}</Label>
+              <div className="flex flex-wrap gap-2" role="radiogroup">
+                <Flat role="radio" on={d.period === 'monthly'} onClick={() => set({ period: 'monthly' })}>
+                  {t('bud.monthly')}
+                </Flat>
+                <Flat role="radio" on={d.period === 'custom'} onClick={() => set({ period: 'custom' })}>
+                  {t('bud.customRange')}
+                </Flat>
+              </div>
+              {d.period === 'custom' && (
+                <div className="mt-1 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
+                  <DateInput value={d.start} onChange={(v) => set({ start: v })} />
+                  <DateInput value={d.end} onChange={(v) => set({ end: v })} />
+                </div>
+              )}
+            </div>
+            {!custom && wallets.length > 1 && (
+              <div className="mt-5 flex flex-col gap-2">
+                <Label>{t('bud.walletsLabel')}</Label>
+                <div className="flex flex-wrap gap-2">
+                  <Flat on={!wl} onClick={() => set({ walletIds: [] })}>
+                    {t('bud.all')}
+                  </Flat>
+                  {wallets.map((w) => {
+                    const on = d.walletIds.includes(w.id)
+                    return (
+                      <Flat key={w.id} role="checkbox" on={on} onClick={() => set({ walletIds: on ? d.walletIds.filter((x) => x !== w.id) : [...d.walletIds, w.id] })}>
+                        {shortWallet(w.name)}
+                      </Flat>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+            <div className="mt-5">
+              <StepNote>{scopeNote}</StepNote>
+            </div>
+            {err && (
+              <div className="mt-3">
+                <ErrorBox>{err}</ErrorBox>
+              </div>
+            )}
+          </>
+        )}
+      </StepModal>
 
       {confirming && budget && (
         <ConfirmDialog
@@ -343,6 +292,10 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
           onConfirm={() => void remove()}
         />
       )}
-    </V2Modal>
+    </>
   )
+}
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1)
 }

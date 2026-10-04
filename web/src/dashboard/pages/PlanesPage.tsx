@@ -26,17 +26,17 @@ export default function PlanesPage() {
   const addLabel = t(tab === 'presupuestos' ? 'plans.newBudget' : tab === 'metas' ? 'plans.newGoal' : side === 'borrowed' ? 'loans.newBorrowed' : 'loans.newLent')
 
   return (
-    <div className="flex flex-col gap-[18px] px-4 pb-10 pt-[26px] min-[760px]:px-7">
+    <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-5 px-4 pb-12 pt-6 min-[760px]:px-8 min-[760px]:pt-8">
       <div className="flex flex-col gap-3.5">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-headline font-bold">{t('planes.title')}</h1>
+            <h1 className="text-display-sm font-medium tracking-[-.025em]">{t('planes.title')}</h1>
             <div className="mt-1 text-body-sm text-ink-secondary">{t('planes.subtitle')}</div>
           </div>
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="flex h-11 cursor-pointer items-center gap-2 whitespace-nowrap rounded-[12px] bg-primary px-4 text-label font-semibold text-on-primary hover:bg-primary-pressed"
+            className="btn-cta flex h-11 cursor-pointer items-center gap-2 whitespace-nowrap rounded-full px-5 text-label font-semibold"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" className="flex-none">
               <path d="M12 5v14 M5 12h14" />

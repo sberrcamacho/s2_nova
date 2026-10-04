@@ -49,29 +49,29 @@ export function Header({ title, onMenuClick, onNewTransaction }: HeaderProps) {
   }, [onMovimientos, params])
 
   return (
-    <header className="sticky top-0 z-[5] flex items-center justify-between gap-4 border-b border-v2-line bg-v2-bg px-4 py-3.5 min-[760px]:px-7">
+    <header className="sticky top-0 z-[5] flex h-16 flex-none items-center justify-between gap-4 border-b border-v2-line bg-v2-bg/80 px-4 backdrop-blur-xl min-[760px]:px-8">
       <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"
           onClick={onMenuClick}
           aria-label={t('header.openMenu')}
-          className="flex h-8 w-8 items-center justify-center rounded-[9px] text-v2-muted min-[760px]:hidden"
+          className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-v2-line bg-v2-surface text-v2-muted hover:text-v2-text min-[760px]:hidden"
         >
           <StrokeIcon paths={ICON_PATHS.menu} size={18} />
         </button>
-        <div className="truncate text-caption text-v2-dim">
-          S2 Nova <span className="opacity-50">/</span> <span className="text-v2-muted">{title}</span>
+        <div className="truncate text-body-sm text-v2-dim">
+          S2 Nova <span aria-hidden="true" className="px-0.5 opacity-60">/</span> <span className="font-semibold text-v2-text">{title}</span>
         </div>
       </div>
       <div className="flex min-w-0 items-center gap-2.5">
-        <label className="hidden h-[34px] w-[280px] min-w-0 shrink items-center gap-2 rounded-[10px] border border-v2-line bg-v2-surface px-3 text-v2-dim min-[900px]:flex">
-          <StrokeIcon paths={ICON_PATHS.search} size={14} />
+        <label className="hidden h-10 w-[300px] min-w-0 shrink items-center gap-2.5 rounded-full border border-v2-line bg-v2-surface px-4 text-v2-dim transition-colors focus-within:border-[var(--color-border-input)] min-[900px]:flex">
+          <StrokeIcon paths={ICON_PATHS.search} size={16} />
           <input
             value={query}
             onChange={(e) => onQuery(e.target.value)}
             placeholder={t('v2.header.search')}
             aria-label={t('v2.header.search')}
-            className="min-w-0 flex-1 border-none bg-transparent text-caption text-v2-text outline-none placeholder:text-v2-dim"
+            className="min-w-0 flex-1 border-none bg-transparent text-body-sm text-v2-text outline-none placeholder:text-v2-dim"
           />
         </label>
         {onMovimientos && <PeriodSelector />}
@@ -81,9 +81,9 @@ export function Header({ title, onMenuClick, onNewTransaction }: HeaderProps) {
           aria-keyshortcuts="N"
           title={t('v2.header.newTx')}
           // Icon-only on phones, where the label would push the button off-screen next to the period selector.
-          className="flex h-[34px] flex-none cursor-pointer items-center gap-[7px] rounded-[10px] bg-v2-accent px-3.5 text-caption font-bold text-white shadow-[var(--shadow-primary)] max-[519px]:w-[34px] max-[519px]:justify-center max-[519px]:px-0"
+          className="btn-cta flex h-10 flex-none cursor-pointer items-center gap-2 rounded-full px-5 text-label font-semibold max-[519px]:w-10 max-[519px]:justify-center max-[519px]:px-0"
         >
-          <StrokeIcon paths={ICON_PATHS.plus} size={14} strokeWidth={2.6} />
+          <StrokeIcon paths={ICON_PATHS.plus} size={16} strokeWidth={2.4} />
           <span className="whitespace-nowrap max-[519px]:sr-only">{t('v2.header.newTx')}</span>
         </button>
       </div>
@@ -105,13 +105,13 @@ function PeriodSelector() {
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={`${t('mov.period')}: ${monthYear(period, language)}`}
-        className="flex h-[34px] cursor-pointer items-center gap-[7px] whitespace-nowrap rounded-[10px] border border-v2-line bg-v2-surface px-3 text-caption font-bold text-v2-muted hover:border-v2-line2 hover:text-v2-text"
+        className="flex h-10 cursor-pointer items-center gap-2 whitespace-nowrap rounded-full border border-v2-line bg-v2-surface px-4 text-label font-semibold text-v2-muted hover:border-v2-line2 hover:text-v2-text"
       >
         {monthYear(period, language)}
         <StrokeIcon paths={['M6 9l6 6 6-6']} size={12} strokeWidth={2.4} />
       </button>
       {open && (
-        <div role="listbox" className="absolute right-0 top-10 z-20 flex w-[180px] flex-col gap-0.5 rounded-[12px] border border-v2-line2 bg-v2-surface p-1.5 shadow-[0_16px_40px_rgba(0,0,0,.35)]">
+        <div role="listbox" className="absolute right-0 top-12 z-20 flex w-[200px] flex-col gap-0.5 rounded-[16px] border border-v2-line2 bg-v2-surface p-1.5 shadow-[var(--shadow-lg)]">
           {recentMonths(todayISO()).map((m) => (
             <button
               key={m}
@@ -123,7 +123,7 @@ function PeriodSelector() {
                 setOpen(false)
               }}
               className={cn(
-                'cursor-pointer rounded-[8px] px-2.5 py-[9px] text-left text-caption hover:bg-v2-subtle',
+                'cursor-pointer rounded-[10px] px-3 py-2.5 text-left text-label hover:bg-v2-subtle',
                 period === m ? 'bg-v2-subtle font-extrabold text-v2-text' : 'font-semibold text-v2-muted',
               )}
             >

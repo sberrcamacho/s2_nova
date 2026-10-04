@@ -37,7 +37,7 @@ export function DetailDialog({ title, sub, chip, amount, rows, error, actions, o
         aria-modal="true"
         aria-label={title}
         onClick={(e) => e.stopPropagation()}
-        className="animate-dialog-in flex w-[466px] max-w-full flex-col gap-4 rounded-[18px] border border-border-input bg-surface p-[22px] text-ink shadow-[0_24px_60px_rgba(0,0,0,.45)]"
+        className="animate-dialog-in flex w-[466px] max-w-full flex-col gap-4 rounded-[24px] border border-border-input bg-surface p-[22px] text-ink shadow-[0_24px_60px_rgba(0,0,0,.45)]"
       >
         <div className="flex items-center gap-3">
           {chip}

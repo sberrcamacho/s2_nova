@@ -47,15 +47,43 @@ function lastLanguage(): LanguageCode {
   }
 }
 
+// Whether this browser last had a real session: '1' signed in, '0' signed
+// out. Not a credential — the refresh token stays in its httpOnly cookie —
+// just enough to skip asking the backend on load when nobody is signed in,
+// which can take a minute while the server wakes up. Unknown (never set)
+// asks, as before.
+const SESSION_HINT_KEY = 's2nova.session'
+
+function sessionHint(): '1' | '0' | null {
+  try {
+    const v = localStorage.getItem(SESSION_HINT_KEY)
+    return v === '1' || v === '0' ? v : null
+  } catch {
+    return null
+  }
+}
+
+function setSessionHint(signedIn: boolean) {
+  try {
+    localStorage.setItem(SESSION_HINT_KEY, signedIn ? '1' : '0')
+  } catch {
+    // Private mode: every load asks the backend, as before.
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [isInitializing, setIsInitializing] = useState(true)
+  const [isInitializing, setIsInitializing] = useState(() => sessionHint() !== '0')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Before the children render, so helpers outside React agree with them.
   const language = user?.preferences.language ?? lastLanguage()
   setCurrentLanguage(language)
+  // A real account signed in (guest mode keeps nothing across loads).
+  useEffect(() => {
+    if (user && !user.isGuest) setSessionHint(true)
+  }, [user])
   useEffect(() => {
     if (!user) return
     try {
@@ -70,6 +98,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // cookie (never in JS), so on a fresh page load the only way to know
     // whether a session still exists is to ask the backend for a new
     // access token with it.
+    if (sessionHint() === '0') {
+      // Nobody to restore, but whoever signs in next needs the backend:
+      // wake it now (it sleeps when idle) while they type, without waiting.
+      void fetch(`${import.meta.env.VITE_API_URL}/health`).catch(() => {})
+      return
+    }
     let cancelled = false
     ;(async () => {
       try {
@@ -78,7 +112,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const me = await userService.getCurrentUser()
         if (!cancelled) setUser(me)
       } catch {
-        if (!cancelled) setUser(null)
+        if (!cancelled) {
+          setUser(null)
+          setSessionHint(false)
+        }
       } finally {
         if (!cancelled) setIsInitializing(false)
       }
@@ -91,6 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Clears everything this tab holds about the session. `notice` is shown on
   // Login (why the user landed there, if it wasn't their own doing).
   const clearSession = useCallback((notice: string | null) => {
+    setSessionHint(false)
     setGuestHandler(null)
     apiClient.setAccessToken(null)
     resetCategoryCache()

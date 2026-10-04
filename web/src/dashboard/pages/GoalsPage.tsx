@@ -1,5 +1,5 @@
 import { fill, tr } from '@/lib/i18n/translations'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type CSSProperties } from 'react'
 import { IC, Icon } from '@/components/v2/Kit'
 import { Money } from '@/components/v2/Money'
 import { RowSkeletons, SyncBanner } from '@/components/v2/Rows'
@@ -59,7 +59,7 @@ export default function GoalsPage({ adding, onAddingDone }: { adding: boolean; o
     <>
       {failed && <SyncBanner onRetry={() => void load()} />}
       {goals === null ? (
-        <div className="rounded-[16px] border border-border bg-surface px-5 py-2">
+        <div className="nova-card px-5 py-2">
           <RowSkeletons count={3} box={56} />
         </div>
       ) : (
@@ -74,10 +74,10 @@ export default function GoalsPage({ adding, onAddingDone }: { adding: boolean; o
                 tabIndex={0}
                 onClick={() => setEditing(g)}
                 onKeyDown={(e) => e.key === 'Enter' && setEditing(g)}
-                className="cursor-pointer rounded-[16px] border border-border bg-surface p-5 text-ink hover:border-border-strong focus-visible:outline-2 focus-visible:outline-focus"
+                className="cursor-pointer nova-card p-5 text-ink hover:border-border-strong focus-visible:outline-2 focus-visible:outline-focus"
               >
                 <div className="flex items-center gap-4">
-                  <span className="flex h-[72px] w-[72px] flex-none items-center justify-center rounded-full" style={{ background: `conic-gradient(${ic.color} ${pct}%, var(--color-border) 0)` }}>
+                  <span className="nova-ring flex h-[72px] w-[72px] flex-none items-center justify-center rounded-full" style={{ '--p': pct } as CSSProperties}>
                     <span className="flex h-14 w-14 items-center justify-center rounded-full bg-surface">
                       <Icon paths={ic.glyph} size={24} color={ic.color} />
                     </span>

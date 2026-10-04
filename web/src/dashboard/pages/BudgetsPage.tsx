@@ -64,7 +64,7 @@ export default function BudgetsPage({ adding, onAddingDone }: { adding: boolean;
               onClick={() => setEditing(b)}
               aria-label={`${tr('bud.edit')}: ${name}`}
               className={cn(
-                'flex cursor-pointer flex-col rounded-[16px] border bg-surface p-5 text-left text-ink hover:border-border-strong',
+                'nova-rise nova-lift flex cursor-pointer flex-col rounded-[20px] border bg-surface p-5 text-left text-ink shadow-[var(--card-shadow)]',
                 b.percentage >= 90 ? 'border-negative-soft' : 'border-border',
               )}
             >
@@ -90,7 +90,7 @@ export default function BudgetsPage({ adding, onAddingDone }: { adding: boolean;
                 aria-valuetext={`${percentText(b.percentage, language)}, ${state}`}
                 className="mt-3 h-2 overflow-hidden rounded-full bg-surface-sunken"
               >
-                <div className="h-full rounded-full" style={{ width: `${Math.min(100, b.percentage)}%`, background: color }} />
+                <div className="nova-fill h-full rounded-full" style={{ width: `${Math.min(100, b.percentage)}%`, background: color }} />
               </div>
               <div className="mt-2 flex flex-wrap justify-between gap-x-3 gap-y-0.5 text-body-sm tabular-nums">
                 <span className="whitespace-nowrap">

@@ -106,7 +106,7 @@ export function GoogleSignInButton({
 
   return (
     <div
-      className="relative h-[46px] w-full overflow-hidden rounded-[12px]"
+      className="relative h-[46px] w-full overflow-hidden rounded-full"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => {
         setIsHovered(false)
@@ -117,7 +117,7 @@ export function GoogleSignInButton({
     >
       {/* Visible custom button — decorative only, clicks pass through to the real Google button beneath it. */}
       <div
-        className="pointer-events-none flex h-full w-full items-center justify-center gap-2.5 rounded-[12px] text-label font-bold text-[#1f1f28] transition-colors"
+        className="pointer-events-none flex h-full w-full items-center justify-center gap-2.5 rounded-full text-label font-bold text-[#1f1f28] transition-colors"
         style={{
           background,
           opacity: isPressed ? 0.9 : 1,

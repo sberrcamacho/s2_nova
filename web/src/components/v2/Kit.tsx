@@ -55,7 +55,7 @@ export function V2Modal({ width = 500, onClose, children, label }: { width?: num
         aria-modal="true"
         aria-label={label}
         onClick={(e) => e.stopPropagation()}
-        className="box-border flex max-h-[calc(100vh-48px)] max-w-full animate-dialog-in flex-col gap-5 overflow-y-auto overflow-x-hidden rounded-[18px] border border-border-input bg-surface px-[26px] py-6 text-ink shadow-[0_24px_60px_rgba(0,0,0,.45)]"
+        className="box-border flex max-h-[calc(100vh-48px)] max-w-full animate-dialog-in flex-col gap-5 overflow-y-auto overflow-x-hidden rounded-[24px] border border-border-input bg-surface px-[26px] py-6 text-ink shadow-[0_24px_60px_rgba(0,0,0,.45)]"
         style={{ width }}
       >
         {children}
@@ -66,7 +66,7 @@ export function V2Modal({ width = 500, onClose, children, label }: { width?: num
 }
 
 export function ModalTitle({ children }: { children: ReactNode }) {
-  return <div className="text-title-sm font-semibold">{children}</div>
+  return <div className="text-title font-medium tracking-[-.01em]">{children}</div>
 }
 
 export function Label({ children }: { children: ReactNode }) {
@@ -214,7 +214,7 @@ function writeCalcPref(on: boolean) {
 export function flatClass(on: boolean): string {
   return cn(
     'inline-flex h-8 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border text-label font-semibold transition-colors duration-150 motion-reduce:transition-none',
-    on ? 'chip-on border-transparent bg-primary pl-3 pr-4 text-on-primary' : 'border-border-input bg-surface px-4 text-ink hover:bg-surface-sunken',
+    on ? 'chip-on border-transparent pl-3 pr-4 text-white shadow-[var(--cta-glow)] [background:var(--cta-bg)]' : 'border-border-input bg-surface px-4 text-ink hover:bg-surface-sunken',
   )
 }
 
@@ -351,7 +351,7 @@ export function ErrorBox({ children }: { children: ReactNode }) {
 
 export function CancelButton({ onClick, children = tr('common.cancel') }: { onClick: () => void; children?: ReactNode }) {
   return (
-    <button type="button" onClick={onClick} className="cursor-pointer whitespace-nowrap rounded-[10px] border border-border-input px-4 py-2.5 text-body-sm font-semibold text-ink-secondary transition-transform duration-150 ease-out active:scale-[0.98]">
+    <button type="button" onClick={onClick} className="h-11 cursor-pointer whitespace-nowrap rounded-full border border-border-input px-5 text-body-sm font-semibold text-ink-secondary transition-[transform,color] duration-150 ease-out hover:text-ink active:scale-[0.98]">
       {children}
     </button>
   )
@@ -365,8 +365,8 @@ export function SaveButton({ valid, onClick, children = tr('common.save'), busy 
       type="button"
       onClick={onClick}
       disabled={busy}
-      className="whitespace-nowrap rounded-[10px] px-4 py-2.5 text-body-sm font-semibold transition-transform duration-150 ease-out active:scale-[0.98]"
-      style={{ cursor: valid ? 'pointer' : 'not-allowed', color: valid ? '#fff' : 'var(--v2-dim)', background: valid ? 'var(--v2-accent)' : 'var(--v2-surface2)' }}
+      className="h-11 whitespace-nowrap rounded-full px-5 text-body-sm font-semibold transition-[transform,filter] duration-150 ease-out hover:brightness-110 active:scale-[0.98]"
+      style={{ cursor: valid ? 'pointer' : 'not-allowed', color: valid ? '#fff' : 'var(--v2-dim)', background: valid ? 'var(--cta-bg)' : 'var(--v2-surface2)', boxShadow: valid ? 'var(--cta-glow)' : 'none' }}
     >
       {children}
     </button>
@@ -416,7 +416,7 @@ export function ConfirmDialog({ title, lines, ack, cta, onCancel, onConfirm }: {
         aria-modal="true"
         aria-label={step === 1 ? title : tr('kit.cantUndo')}
         onClick={(e) => e.stopPropagation()}
-        className="animate-dialog-in flex w-[486px] max-w-full flex-col gap-3.5 rounded-[18px] border border-border-input bg-surface p-[22px] text-ink shadow-[0_24px_60px_rgba(0,0,0,.45)]"
+        className="animate-dialog-in flex w-[486px] max-w-full flex-col gap-3.5 rounded-[24px] border border-border-input bg-surface p-[22px] text-ink shadow-[0_24px_60px_rgba(0,0,0,.45)]"
       >
         <span className="flex h-[42px] w-[42px] items-center justify-center rounded-full bg-v2-neg-soft">
           <Icon paths={step === 1 ? IC.trash : IC.warn} size={20} color="var(--v2-neg)" />
@@ -437,7 +437,7 @@ export function ConfirmDialog({ title, lines, ack, cta, onCancel, onConfirm }: {
               <button type="button" onClick={onCancel} className={secondary}>
                 {tr('common.cancel')}
               </button>
-              <button type="button" onClick={() => setStep(2)} className="cursor-pointer rounded-[10px] border border-v2-neg px-4 py-2.5 text-body-sm font-semibold text-negative">
+              <button type="button" onClick={() => setStep(2)} className="cursor-pointer rounded-full border border-v2-neg px-4 py-2.5 text-body-sm font-semibold text-negative">
                 {tr('kit.continue')}
               </button>
             </div>

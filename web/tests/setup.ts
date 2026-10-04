@@ -13,6 +13,7 @@ afterEach(() => {
   // truncating tables between tests.
   apiClient.setAccessToken(null)
   resetCategoryCache()
+  localStorage.removeItem('s2nova.session')
 })
 
 afterAll(() => server.close())

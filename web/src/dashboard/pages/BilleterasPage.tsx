@@ -43,13 +43,13 @@ export default function BilleterasPage() {
   }
 
   return (
-    <div className="flex flex-col gap-[18px] px-4 pb-10 pt-[26px] min-[760px]:px-7">
+    <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-5 px-4 pb-12 pt-6 min-[760px]:px-8 min-[760px]:pt-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-headline font-bold">{tr('guide.billeteras.label')}</h1>
+        <h1 className="text-display-sm font-medium tracking-[-.025em]">{tr('guide.billeteras.label')}</h1>
         <button
           type="button"
           onClick={() => setEditing('new')}
-          className="flex h-11 cursor-pointer items-center gap-2 whitespace-nowrap rounded-[12px] bg-primary px-4 text-label font-semibold text-on-primary hover:bg-primary-pressed"
+          className="btn-cta flex h-11 cursor-pointer items-center gap-2 whitespace-nowrap rounded-full px-5 text-label font-semibold"
         >
           <StrokeIcon paths={ICON_PATHS.plus} size={16} strokeWidth={2.4} />
           {tr('wallet.new')}
@@ -57,9 +57,9 @@ export default function BilleterasPage() {
       </div>
       {/* The total in the principal currency, with the conversion note. */}
       {wallets && wallets.length > 0 && (
-        <section className="rounded-[16px] border border-border bg-surface p-5 text-ink">
+        <section className="nova-card p-5 text-ink">
           <div className="text-overline font-semibold uppercase text-ink-tertiary">{fill(tr('wallet.totalLabel'), principal)}</div>
-          <Money hidden={hidden} className="mt-1 block text-headline font-bold tabular-nums">
+          <Money hidden={hidden} className="mt-1 block whitespace-nowrap text-[40px] font-normal leading-[1.1] tracking-[-.035em] tabular-nums">
             {format(total)}
           </Money>
           {wallets.some((w) => w.currency !== principal) && <div className="mt-1 text-body-sm text-ink-secondary">{tr('wallet.totalNote')}</div>}
@@ -68,7 +68,7 @@ export default function BilleterasPage() {
       <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4" aria-busy={wallets === null}>
         {wallets === null &&
           Array.from({ length: 3 }, (_, i) => (
-            <div key={i} aria-hidden="true" className="flex h-[132px] animate-pulse flex-col justify-between rounded-[16px] border border-border bg-surface p-4">
+            <div key={i} aria-hidden="true" className="flex h-[132px] animate-pulse flex-col justify-between nova-card p-4">
               <div className="h-4 w-1/2 rounded-[6px] bg-v2-line" />
               <div className="h-6 w-2/3 rounded-[6px] bg-v2-line" />
             </div>
@@ -80,7 +80,7 @@ export default function BilleterasPage() {
             tabIndex={0}
             onClick={() => setEditing(w)}
             onKeyDown={(e) => e.key === 'Enter' && setEditing(w)}
-            className="flex cursor-pointer flex-col gap-3 rounded-[16px] border border-border bg-surface p-5 text-ink hover:border-border-strong focus-visible:outline-2 focus-visible:outline-focus"
+            className="flex cursor-pointer flex-col gap-3 nova-card p-5 text-ink hover:border-border-strong focus-visible:outline-2 focus-visible:outline-focus"
           >
             <div className="flex items-center gap-3">
               <span className="flex h-10 w-10 flex-none items-center justify-center rounded-full" style={{ background: 'linear-gradient(150deg,var(--color-primary-pressed),var(--color-primary-secondary))' }}>

@@ -9,10 +9,10 @@ import { useAuth } from '@/state/AuthContext'
 import { useTranslation } from '@/state/useTranslation'
 import { cn } from '@/lib/cn'
 
-// Always dark in both themes: the dark hero's deep violet with the dark
-// mark's violet → blue glow (DESIGN-SYSTEM.md §2.2 hero-bg, dark).
+// Always dark in both themes: near-black with the dark mark's violet →
+// blue glow and a cyan glint, like the app shell's dark surfaces.
 const BRAND_PANEL_GRADIENT =
-  'radial-gradient(120% 90% at 100% 0%, rgba(168,15,250,.35) 0%, rgba(0,71,245,.22) 45%, rgba(0,196,251,0) 80%), #1a0b3d'
+  'radial-gradient(90% 70% at 100% 0%, rgba(168,15,250,.34) 0%, rgba(0,71,245,.18) 45%, rgba(0,196,251,0) 80%), radial-gradient(70% 50% at 0% 100%, rgba(0,196,251,.12) 0%, rgba(0,196,251,0) 70%), #0a0a0c'
 
 function BrandPanel() {
   const { t } = useTranslation()
@@ -274,7 +274,7 @@ export default function LoginPage() {
                   onBlur={() => setEmailFocused(false)}
                   error={emailError ?? undefined}
                   autoComplete="email"
-                  className="h-[46px] rounded-[12px] text-label"
+                  className="h-[46px] rounded-[14px] text-label"
                   style={{
                     background: 'var(--color-login-surface)',
                     color: 'var(--color-login-input-text)',
@@ -322,7 +322,7 @@ export default function LoginPage() {
                   onBlur={() => setPasswordFocused(false)}
                   error={passwordError ?? undefined}
                   autoComplete="current-password"
-                  className="h-[46px] rounded-[12px] text-label"
+                  className="h-[46px] rounded-[14px] text-label"
                   style={{
                     background: 'var(--color-login-surface)',
                     color: 'var(--color-login-input-text)',
@@ -349,7 +349,7 @@ export default function LoginPage() {
               type="submit"
               loading={isSubmitting}
               fullWidth
-              className="h-12 rounded-[12px] active:opacity-90"
+              className="h-12 rounded-full active:opacity-90"
             >
               {t('auth.submitLogin')}
             </Button>
@@ -358,7 +358,7 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => void onGuest()}
-            className="flex h-12 cursor-pointer items-center justify-center gap-[9px] rounded-[12px] border border-border-input text-label font-semibold text-ink hover:bg-surface-sunken"
+            className="flex h-12 cursor-pointer items-center justify-center gap-[9px] rounded-full border border-border-input text-label font-semibold text-ink hover:bg-surface-sunken"
           >
             <EnterIcon />
             {t('auth.guest')}

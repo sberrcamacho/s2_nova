@@ -1,5 +1,5 @@
 import { tr, type TranslationKey } from '@/lib/i18n/translations'
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CategoryMark, Glyph, GlyphMark } from '@/components/v2/CategoryMark'
 import { ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
@@ -20,7 +20,7 @@ import { alertCopy } from '@/lib/alertCopy'
 import { budgetScope, planText, shortDayMonth } from '@/lib/planCopy'
 import { shortWallet } from '@/lib/movimientos'
 import { useToast } from '@/state/ToastContext'
-import { goalMark, categoryColor } from '@/lib/categoryGlyphs'
+import { goalMark } from '@/lib/categoryGlyphs'
 import { TRANSFER, categoryLabel } from '@/lib/backendCategories'
 import { todayISO } from '@/lib/date'
 import {
@@ -124,7 +124,7 @@ export default function InicioPage() {
   }
 
   const walletTotal = data.wallets?.reduce((s, w) => s + w.principalBalance, 0) ?? null
-  const shownTotal = useCountUp(walletTotal)
+  const shownTotal = useCountUp(walletTotal, { intro: true })
   const walletName = (id: string) => shortWallet(data.wallets?.find((w) => w.id === id)?.name ?? '')
   const thisMonth = data.months?.[data.months.length - 1]
   const lastMonth = data.months?.[data.months.length - 2]
@@ -187,35 +187,35 @@ export default function InicioPage() {
   const topBudgets = homeBudgets(budgets)
 
   return (
-    <div className="@container flex flex-col gap-4 px-4 pb-10 pt-6 min-[760px]:px-7">
+    <div className="@container mx-auto flex w-full max-w-[1400px] flex-col gap-5 px-4 pb-12 pt-6 min-[760px]:px-8 min-[760px]:pt-8">
       {syncFailed && <SyncBanner onRetry={retry} />}
 
-      <div className="grid grid-cols-1 gap-3 @min-[640px]:grid-cols-2 @min-[640px]:gap-4 @min-[1024px]:grid-cols-12">
+      <div className="grid grid-cols-1 gap-4 @min-[640px]:grid-cols-2 @min-[640px]:gap-5 @min-[1024px]:grid-cols-12">
         {/* Balance hero, 8 */}
         <section
           aria-label={t('inicio.balance')}
-          className="relative col-span-full overflow-hidden rounded-[16px] border border-[var(--hero-line)] px-6 py-5 text-white shadow-[var(--shadow-md)] @min-[1024px]:col-span-8"
+          className="nova-rise relative col-span-full min-h-[300px] overflow-hidden rounded-[24px] border border-[var(--hero-line)] px-7 py-6 text-[var(--hero-text)] shadow-[var(--card-shadow)] @min-[1024px]:col-span-8"
           style={{ background: 'var(--hero-bg)' }}
         >
-          <div aria-hidden="true" className="pointer-events-none absolute right-[-40px] top-[-70px] h-[220px] w-[220px] rounded-full bg-[var(--hero-glow)] blur-[52px]" />
+          <div aria-hidden="true" className="pointer-events-none absolute bottom-[-120px] left-[20%] h-[240px] w-[360px] rounded-full bg-[var(--hero-glow)] blur-[70px]" />
           <div className="relative flex h-full flex-col [container-type:inline-size]">
             <div className="flex items-center justify-between gap-3">
-              <div className="truncate text-overline uppercase text-[var(--hero-overline)]">{t('inicio.balance')}</div>
+              <div className="truncate text-body font-medium text-[var(--hero-overline)]">{t('inicio.balance')}</div>
               <button
                 type="button"
                 onClick={toggle}
                 title={hidden ? t('inicio.showAmounts') : t('inicio.hideAmounts')}
                 aria-label={t('inicio.hideAmounts')}
                 aria-pressed={hidden}
-                className="flex h-8 w-8 flex-none cursor-pointer items-center justify-center rounded-full bg-[var(--hero-tile)] text-white hover:bg-white/[.2]"
+                className="flex h-10 w-10 flex-none cursor-pointer items-center justify-center rounded-full border border-[var(--hero-line)] bg-[var(--hero-tile)] text-[var(--hero-text)] backdrop-blur transition-colors hover:bg-white/20"
               >
                 <StrokeIcon paths={hidden ? ICON_PATHS.eyeOff : ICON_PATHS.eye} size={18} />
               </button>
             </div>
             {walletTotal === null ? (
-              <SkeletonBar className="mt-3 h-[44px] w-[60%]" dark />
+              <SkeletonBar className="mt-4 h-[56px] w-[60%]" dark />
             ) : (
-              <Money hidden={hidden} className="mt-1 block whitespace-nowrap text-[clamp(28px,11cqi,40px)] font-bold leading-[1.1] tracking-[-.01em]">
+              <Money hidden={hidden} className="mt-3 block whitespace-nowrap text-[clamp(32px,10cqi,64px)] font-normal leading-[1.05] tracking-[-.035em] tabular-nums">
                 {format(shownTotal ?? walletTotal)}
               </Money>
             )}
@@ -223,7 +223,7 @@ export default function InicioPage() {
               <button
                 type="button"
                 onClick={() => navigate('/billeteras')}
-                className="mt-3 inline-flex h-8 cursor-pointer self-start items-center gap-1 whitespace-nowrap rounded-full bg-[var(--hero-tile)] pl-3 pr-2 text-label font-semibold text-[var(--hero-label)] hover:bg-white/[.2]"
+                className="mt-4 inline-flex h-9 cursor-pointer self-start items-center gap-1.5 whitespace-nowrap rounded-full border border-[var(--hero-line)] bg-[var(--hero-tile)] pl-3.5 pr-2.5 text-label font-medium text-[var(--hero-text)] backdrop-blur transition-colors hover:bg-white/20"
               >
                 {data.wallets.length === 1 ? t('inicio.walletsOne') : fill(t('inicio.walletsMany'), data.wallets.length)}
                 <StrokeIcon paths={ICON_PATHS.chevronRight} size={16} />
@@ -239,7 +239,7 @@ export default function InicioPage() {
         </section>
 
         {/* Ingresos / Gastos / Ahorro, 4 (stacked on wide pages) */}
-        <div className="col-span-full grid grid-cols-2 gap-3 @min-[640px]:grid-cols-3 @min-[640px]:gap-4 @min-[1024px]:col-span-4 @min-[1024px]:grid-cols-1">
+        <div className="col-span-full grid grid-cols-2 gap-4 @min-[640px]:grid-cols-3 @min-[640px]:gap-5 @min-[1024px]:col-span-4 @min-[1024px]:grid-cols-1">
           <StatTile label={t('inicio.stat.income')} a11yLabel={t('inicio.monthIncome')} value={thisMonth?.income ?? null} previous={lastMonth?.income} previousMonth={lastMonth?.month} kind="income" hidden={hidden} />
           <StatTile label={t('inicio.stat.expenses')} a11yLabel={t('inicio.monthExpenses')} value={thisMonth?.expenses ?? null} previous={lastMonth?.expenses} previousMonth={lastMonth?.month} kind="expense" hidden={hidden} />
           <StatTile
@@ -337,7 +337,7 @@ export default function InicioPage() {
                         aria-valuetext={`${percentText(b.percentage, language)}, ${state}`}
                         className="h-2 overflow-hidden rounded-full bg-surface-sunken"
                       >
-                        <div className="h-full rounded-full" style={{ width: `${Math.min(100, b.percentage)}%`, background: color }} />
+                        <div className="nova-fill h-full rounded-full" style={{ width: `${Math.min(100, b.percentage)}%`, background: color }} />
                       </div>
                       <Money hidden={hidden} className="block truncate whitespace-nowrap text-body-sm text-ink-tertiary">
                         {fill(t('inicio.budgets.of'), format(b.spent), format(b.limit))}
@@ -366,8 +366,8 @@ export default function InicioPage() {
                   <RowButton key={g.id} last={i === arr.length - 1} gap={12} onClick={() => navigate('/planes?tab=metas')}>
                     <div
                       aria-hidden="true"
-                      className="flex h-12 w-12 flex-none items-center justify-center rounded-full"
-                      style={{ background: `conic-gradient(${categoryColor('exp.other')} ${pct}%, var(--color-surface-sunken) 0)` }}
+                      className="nova-ring flex h-12 w-12 flex-none items-center justify-center rounded-full"
+                      style={{ '--p': pct } as CSSProperties}
                     >
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface">
                         <Glyph paths={mark.glyph} size={18} color={mark.color} />
@@ -489,7 +489,7 @@ function budgetsSubtitle(today: string, language: 'es' | 'en', t: (k: Translatio
 // ── Pieces ──────────────────────────────────────────────────────────────
 
 function Card({ children, className }: { children: ReactNode; className?: string }) {
-  return <section className={cn('min-w-0 rounded-[16px] border border-border bg-surface p-5 text-ink', className)}>{children}</section>
+  return <section className={cn('nova-card min-w-0 p-6 text-ink', className)}>{children}</section>
 }
 
 // Card title row: `title` + an optional trailing link. On a narrow card the
@@ -498,7 +498,10 @@ function CardHead({ title, subtitle, link, onLink }: { title: string; subtitle?:
   return (
     <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
       <div className="min-w-0 flex-[1_1_11rem]">
-        <h2 className="truncate text-title font-semibold" title={title}>{title}</h2>
+        <h2 className="flex min-w-0 items-center gap-2.5 text-title font-medium tracking-[-.01em]" title={title}>
+          <span aria-hidden="true" className="h-2.5 w-2.5 flex-none rounded-full shadow-[0_0_10px_var(--card-aurora)]" style={{ background: 'var(--cta-bg)' }} />
+          <span className="truncate">{title}</span>
+        </h2>
         {subtitle && <div className="mt-0.5 line-clamp-2 text-body-sm text-ink-tertiary">{subtitle}</div>}
       </div>
       {link && (
@@ -536,7 +539,8 @@ function StatTile({
   const { t, language } = useTranslation()
   const { format } = useCurrency()
   const positive = kind === 'income' || (kind === 'net' && (value ?? 0) >= 0)
-  const figure = value === null ? null : `${positive ? '+' : '−'}${format(Math.abs(value))}`
+  const shown = useCountUp(value, { intro: true })
+  const figure = value === null ? null : `${positive ? '+' : '−'}${format(Math.abs(Math.round(shown ?? value)))}`
   const change = value !== null && previous !== undefined && previous !== 0 ? Math.round(((value - previous) / Math.abs(previous)) * 100) : null
   const favorable = change !== null && (kind === 'expense' ? change < 0 : change > 0)
   const prevIndex = previousMonth ? Number(previousMonth.split('-')[1]) - 1 : -1
@@ -553,23 +557,33 @@ function StatTile({
     .filter(Boolean)
     .join(', ')
   return (
-    <div className={cn('min-w-0 rounded-[16px] border border-border bg-surface px-4 py-3.5 [container-type:inline-size]', className)}>
+    <div className={cn('nova-card relative min-w-0 overflow-hidden px-5 py-4 [container-type:inline-size]', className)}>
       <span className="sr-only">{description}</span>
       <div aria-hidden="true">
-        <div className="truncate text-overline uppercase text-ink-secondary">{label}</div>
+        <div className="flex items-center gap-2.5">
+          <span
+            className={cn(
+              'flex h-8 w-8 flex-none items-center justify-center rounded-[10px]',
+              kind === 'income' ? 'bg-positive-soft text-positive' : kind === 'expense' ? 'bg-negative-soft text-negative' : 'btn-cta',
+            )}
+          >
+            <StrokeIcon paths={kind === 'income' ? 'M17 7 7 17 M16 17H7V8' : kind === 'expense' ? 'M7 17 17 7 M8 7h9v9' : 'M3 17l6-6 4 4 8-8 M15 7h6v6'} size={16} />
+          </span>
+          <span className="truncate text-label font-medium text-ink-secondary">{label}</span>
+        </div>
         {figure === null ? (
-          <SkeletonBar className="mt-1.5 h-5 w-[70%]" />
+          <SkeletonBar className="mt-3 h-7 w-[70%]" />
         ) : (
           <Money
             hidden={hidden}
-            className={cn('mt-1 block whitespace-nowrap text-[clamp(14px,11cqi,20px)] font-semibold leading-[1.3]', positive ? 'text-positive' : 'text-negative')}
+            className={cn('mt-3 block whitespace-nowrap text-[clamp(18px,12cqi,28px)] font-medium leading-[1.2] tracking-[-.01em] tabular-nums', positive ? 'text-positive' : 'text-negative')}
           >
             {figure}
           </Money>
         )}
         <div
           className={cn(
-            'mt-1 truncate text-caption tabular-nums',
+            'mt-1.5 truncate text-caption tabular-nums',
             change === null || change === 0 ? 'text-ink-tertiary' : favorable ? 'text-positive' : 'text-negative',
           )}
         >
@@ -583,17 +597,17 @@ function StatTile({
 // Six months of net savings (income − expenses), oldest first; the current
 // month is the solid bar.
 function MonthBars({ months, language }: { months: MonthTotals[] | null; language: 'es' | 'en' }) {
-  if (!months) return <SkeletonBar className="mt-auto h-14 w-full pt-5" dark />
+  if (!months) return <SkeletonBar className="mt-auto h-32 w-full" dark />
   const max = Math.max(1, ...months.map((m) => Math.abs(m.net)))
   return (
-    <div aria-hidden="true" className="mt-auto pt-5">
-      <div className="flex h-14 items-end gap-[5px]">
+    <div aria-hidden="true" className="mt-auto pt-8">
+      <div className="flex h-32 items-end gap-2">
         {months.map((m, i) => {
           const last = i === months.length - 1
           return (
             <div
               key={m.month}
-              className="flex-1 rounded-[3px]"
+              className="nova-grow flex-1 rounded-t-[6px] rounded-b-[2px]"
               style={{
                 height: `${Math.max(4, Math.round((Math.abs(m.net) / max) * 83))}%`,
                 background: last ? 'var(--hero-bar)' : 'var(--hero-bar-soft)',
@@ -602,9 +616,9 @@ function MonthBars({ months, language }: { months: MonthTotals[] | null; languag
           )
         })}
       </div>
-      <div className="mt-2 flex gap-[5px] text-caption text-[var(--hero-label)]">
-        {months.map((m) => (
-          <span key={m.month} className="flex-1 text-center">
+      <div className="mt-2.5 flex gap-2 text-caption uppercase tracking-[.08em] text-[var(--hero-label)]">
+        {months.map((m, i) => (
+          <span key={m.month} className={cn('flex-1 text-center', i === months.length - 1 && 'font-semibold text-[var(--hero-text)]')}>
             {monthAbbr(m.month, language)}
           </span>
         ))}
@@ -663,7 +677,7 @@ function AlertCard({
   return (
     <div
       onClick={onOpen}
-      className="relative flex cursor-pointer items-start gap-3 overflow-hidden rounded-[12px] border border-border bg-surface py-3 pl-4 pr-1.5 hover:border-border-strong"
+      className="nova-lift relative flex cursor-pointer items-start gap-3 overflow-hidden rounded-[16px] border border-border bg-bg-secondary py-3.5 pl-4 pr-1.5"
     >
       <span aria-hidden="true" className="absolute inset-y-0 left-0 w-1" style={{ background: alertTone(alert) }} />
       <GlyphMark paths={copy.glyph} color={copy.color} box={40} />
@@ -703,7 +717,7 @@ function AlertCard({
 }
 
 // Tonal button (DESIGN-SYSTEM.md §6.3): primary-soft fill, 40 px on Web.
-const TONAL = 'h-10 cursor-pointer whitespace-nowrap rounded-[12px] bg-accent-soft px-4 text-label font-semibold text-on-primary-soft hover:brightness-95'
+const TONAL = 'h-9 cursor-pointer whitespace-nowrap rounded-full bg-accent-soft px-4 text-label font-semibold text-on-primary-soft hover:brightness-95'
 
 // Movimientos recientes as a table: the movement (icon, title, meta), its
 // wallet and date on wide tiles, and the right-aligned amount. The title is
@@ -729,7 +743,7 @@ function RecentTable({
   return (
     <table className="mt-2 w-full table-fixed border-collapse text-left">
       <thead>
-        <tr className="text-overline uppercase text-ink-tertiary">
+        <tr className="text-overline uppercase tracking-[.06em] text-ink-tertiary">
           <th scope="col" className="w-full pb-2 font-semibold">{t('inicio.recent.colTx')}</th>
           <th scope="col" className="hidden w-[140px] pb-2 pl-4 font-semibold @min-[560px]:table-cell">{t('inicio.recent.colWallet')}</th>
           <th scope="col" className="hidden w-[88px] pb-2 pl-4 font-semibold @min-[560px]:table-cell">{t('inicio.recent.colDate')}</th>
@@ -744,7 +758,7 @@ function RecentTable({
           const sign = transfer ? '' : x.type === 'income' ? '+' : '−'
           const meta = [label, x.merchant || x.counterpartyName].filter(Boolean).join(' · ')
           return (
-            <tr key={x.id} onClick={() => onOpen(x.id)} className="cursor-pointer border-t border-divider hover:bg-v2-subtle">
+            <tr key={x.id} onClick={() => onOpen(x.id)} className="cursor-pointer border-t border-divider transition-colors hover:bg-v2-subtle">
               <td className="py-2.5 pr-2">
                 <div className="flex min-w-0 items-center gap-3">
                   <CategoryMark category={transfer ? TRANSFER : x.category} box={40} />

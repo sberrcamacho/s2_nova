@@ -207,12 +207,12 @@ export default function MovimientosPage() {
   }
 
   return (
-    <div className="flex flex-col gap-[18px] px-4 pb-10 pt-[26px] min-[760px]:px-7">
+    <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-5 px-4 pb-12 pt-6 min-[760px]:px-8 min-[760px]:pt-8">
       {syncFailed && <SyncBanner onRetry={() => void retry()} />}
 
       <div className="flex flex-col gap-3">
         <div>
-          <h1 className="text-headline font-semibold">{tr('guide.movimientos.label')}</h1>
+          <h1 className="text-display-sm font-medium tracking-[-.025em]">{tr('guide.movimientos.label')}</h1>
           <div className="mt-1 text-body-sm text-ink-secondary">{subtitle}</div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -249,11 +249,11 @@ export default function MovimientosPage() {
 
       {/* Flat layout: one `surface` card per day, its heading and net total above it. */}
       {!filtered ? (
-        <section className="rounded-[16px] border border-border bg-surface px-5 py-2">
+        <section className="nova-card px-5 py-2">
           <RowSkeletons count={6} box={40} />
         </section>
       ) : groups.length === 0 ? (
-        <section className="rounded-[16px] border border-border bg-surface px-5 py-[30px] text-center text-body-sm text-ink-secondary">{tr('mv.empty')}</section>
+        <section className="nova-card px-5 py-[30px] text-center text-body-sm text-ink-secondary">{tr('mv.empty')}</section>
       ) : (
         <div className="flex flex-col gap-5">
           {groups.map((g) => {
@@ -269,7 +269,7 @@ export default function MovimientosPage() {
                     {`${sum >= 0 ? '+' : '−'}${formatMoney(Math.abs(sum), principal)}`}
                   </Money>
                 </h2>
-                <div className="overflow-hidden rounded-[16px] border border-border bg-surface">
+                <div className="overflow-hidden nova-card">
                   {g.items.map((x, i) => (
                     <MovementRow
                       key={x.id}

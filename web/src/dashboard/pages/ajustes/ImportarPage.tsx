@@ -73,7 +73,7 @@ export default function ImportarPage() {
   }
 
   return (
-    <div className="flex max-w-[676px] flex-col gap-[18px] px-7 pt-[26px] pb-10">
+    <div className="flex max-w-[676px] flex-col gap-5 px-4 pt-6 pb-12 min-[760px]:px-8 min-[760px]:pt-8">
       <AjSubHeader title={t('aj.import')} subtitle={t('aj.imp.subtitle')} />
 
       <AjCard className="flex flex-col gap-3 p-[22px]">

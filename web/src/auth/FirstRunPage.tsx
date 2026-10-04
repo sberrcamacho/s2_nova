@@ -82,7 +82,7 @@ export default function FirstRunPage() {
           </button>
           <div className="flex flex-1 gap-1.5">
             {[0, 1].map((i) => (
-              <span key={i} className={cn('h-1 flex-1 rounded-full', i <= step ? 'bg-primary-border' : 'bg-border')} />
+              <span key={i} className={cn('h-1 flex-1 rounded-full', i <= step ? '[background:var(--cta-bg)]' : 'bg-border')} />
             ))}
           </div>
           <img src={logoMarkDark} alt="S2 Nova" className="h-[30px] w-[30px] rounded-[9px] object-cover" />
@@ -109,7 +109,7 @@ export default function FirstRunPage() {
                   tabIndex={0}
                   onClick={() => setPrincipal(code)}
                   onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setPrincipal(code)}
-                  className={cn('flex min-h-14 cursor-pointer items-center gap-3 rounded-[12px] border px-3.5 py-2.5', on ? 'border-primary-border bg-accent-soft' : 'border-border-input bg-transparent hover:bg-surface-sunken')}
+                  className={cn('flex min-h-14 cursor-pointer items-center gap-3 rounded-[14px] border px-3.5 py-2.5', on ? 'border-primary-border bg-accent-soft' : 'border-border-input bg-transparent hover:bg-surface-sunken')}
                 >
                   <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-accent-soft text-caption font-bold text-on-primary-soft">{c.symbol}</span>
                   <div className="min-w-0 flex-1">
@@ -156,7 +156,7 @@ export default function FirstRunPage() {
           type="button"
           onClick={() => void next()}
           disabled={!valid || busy}
-          className={cn('flex h-11 items-center justify-center rounded-[12px] bg-primary text-label font-semibold text-on-primary', valid ? 'cursor-pointer hover:bg-primary-pressed' : 'cursor-not-allowed opacity-40')}
+          className={cn('btn-cta flex h-11 items-center justify-center rounded-full text-label font-semibold', valid ? 'cursor-pointer' : 'cursor-not-allowed opacity-40')}
         >
           {tr(step === 1 ? 'first.create' : 'kit.continue')}
         </button>

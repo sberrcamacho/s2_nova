@@ -1,7 +1,7 @@
 import { fill, tr } from '@/lib/i18n/translations'
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ConfirmDialog } from '@/components/v2/Kit'
+import { ConfirmDialog, IC, Icon } from '@/components/v2/Kit'
 import { CategoryMark, GlyphMark } from '@/components/v2/CategoryMark'
 import { AjCard, AjSubHeader } from '@/dashboard/components/ajustes/AjustesUi'
 import { categoryLabel, categoryName, categoryNode, childCategories, displayName, ensureCategories, parentCategories, useCategories, type CategoryNode } from '@/lib/backendCategories'
@@ -180,10 +180,19 @@ export default function CategoriasPage() {
               </button>
             )}
           </div>
-          <label className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5">
             <span className={fieldLabel}>{tr('bud.name')}</span>
-            <input value={d.name} onChange={(e) => setD({ name: e.target.value })} placeholder={tr('cat.namePh')} className={field} />
-          </label>
+            <div className="flex h-14 items-center gap-2.5 rounded-[10px] border border-border-input bg-surface pr-3 pl-2 focus-within:border-primary-border">
+              <GlyphMark paths={(TAX_VIS[parent?.vis ?? d.vis] ?? TAX_VIS.other).glyph} color={(TAX_VIS[parent?.vis ?? d.vis] ?? TAX_VIS.other).color} box={40} />
+              <input
+                value={d.name}
+                aria-label={tr('bud.name')}
+                onChange={(e) => setD({ name: e.target.value })}
+                placeholder={tr('cat.namePh')}
+                className="min-w-0 flex-1 border-none bg-transparent text-body font-semibold text-ink outline-none placeholder:text-ink-tertiary"
+              />
+            </div>
+          </div>
           {!editing && (
             <label className="flex flex-col gap-1.5">
               <span className={fieldLabel}>{tr('cat.inside')}</span>
@@ -200,20 +209,28 @@ export default function CategoriasPage() {
           {!parent && (
             <div className="flex flex-col gap-2">
               <span className={fieldLabel}>{tr('cat.iconColor')}</span>
-              <div className="grid grid-cols-6 gap-1.5">
-                {Object.entries(TAX_VIS).map(([k, v]) => (
-                  <button
-                    key={k}
-                    type="button"
-                    aria-label={k}
-                    aria-pressed={d.vis === k}
-                    onClick={() => setD({ vis: k })}
-                    className={cn('flex cursor-pointer items-center justify-center rounded-[10px] border-[1.5px] py-[5px]', d.vis === k ? 'bg-surface-sunken' : 'border-transparent')}
-                    style={d.vis === k ? { borderColor: v.color } : undefined}
-                  >
-                    <GlyphMark paths={v.glyph} color={v.color} box={30} />
-                  </button>
-                ))}
+              <div className="grid grid-cols-6 gap-1.5" role="radiogroup" aria-label={tr('cat.iconColor')}>
+                {Object.entries(TAX_VIS).map(([k, v]) => {
+                  const on = d.vis === k
+                  return (
+                    <button
+                      key={k}
+                      type="button"
+                      role="radio"
+                      aria-label={k}
+                      aria-checked={on}
+                      onClick={() => setD({ vis: k })}
+                      className={cn('relative flex h-11 cursor-pointer items-center justify-center rounded-[12px] border-2', on ? 'border-primary-border' : 'border-transparent hover:bg-surface-sunken')}
+                    >
+                      <GlyphMark paths={v.glyph} color={v.color} box={32} />
+                      {on && (
+                        <span className="absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary">
+                          <Icon paths={IC.check} size={10} color="var(--on-primary)" />
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           )}

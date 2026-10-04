@@ -44,6 +44,44 @@ describe('AuthContext', () => {
     expect(result.current.error).toBeNull()
   })
 
+  it('skips the session check on load when this browser last signed out, but wakes the backend', async () => {
+    localStorage.setItem('s2nova.session', '0')
+    let asked = false
+    let woken = false
+    server.use(
+      http.get(`${BASE}/health`, () => {
+        woken = true
+        return HttpResponse.json({ status: 'ok' })
+      }),
+      http.post(`${BASE}/auth/refresh`, () => {
+        asked = true
+        return HttpResponse.json({ accessToken: 't' })
+      }),
+    )
+    const { result } = renderHook(() => useAuth(), { wrapper })
+    expect(result.current.isInitializing).toBe(false)
+    expect(result.current.isAuthenticated).toBe(false)
+    await waitFor(() => expect(woken).toBe(true))
+    expect(asked).toBe(false)
+  })
+
+  it('remembers a restored session and forgets it when it turns out to be over', async () => {
+    server.use(
+      http.post(`${BASE}/auth/refresh`, () => HttpResponse.json({ accessToken: 'restored-token' })),
+      http.get(`${BASE}/me`, () => HttpResponse.json(ME_RESPONSE)),
+    )
+    const first = renderHook(() => useAuth(), { wrapper })
+    await waitFor(() => expect(first.result.current.isAuthenticated).toBe(true))
+    expect(localStorage.getItem('s2nova.session')).toBe('1')
+    first.unmount()
+
+    server.use(http.post(`${BASE}/auth/refresh`, () => new HttpResponse(null, { status: 401 })))
+    const second = renderHook(() => useAuth(), { wrapper })
+    expect(second.result.current.isInitializing).toBe(true)
+    await waitFor(() => expect(second.result.current.isInitializing).toBe(false))
+    expect(localStorage.getItem('s2nova.session')).toBe('0')
+  })
+
   it('updateUser shallow-merges a partial patch onto the existing user rather than replacing it', async () => {
     server.use(
       http.post(`${BASE}/auth/refresh`, () => HttpResponse.json({ accessToken: 't' })),

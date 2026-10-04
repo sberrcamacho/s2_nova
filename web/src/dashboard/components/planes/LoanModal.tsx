@@ -1,6 +1,7 @@
 import { currentLanguage, fill, tr } from '@/lib/i18n/translations'
 import { useState } from 'react'
-import { AmountField, CancelButton, ConfirmDialog, DangerLink, ErrorBox, Flat, Label, ModalFooter, ModalTitle, V2Modal } from '@/components/v2/Kit'
+import { CancelButton, ConfirmDialog, DangerLink, ErrorBox, Flat, IC, Icon, Label, ModalFooter, ModalTitle, V2Modal } from '@/components/v2/Kit'
+import { AmountHero, SegmentedChoice } from '@/components/v2/Steps'
 import { todayISO } from '@/lib/date'
 import { evalExpr, numStr } from '@/lib/nuevoMovimiento'
 import { shortDate } from '@/lib/inicio'
@@ -11,12 +12,16 @@ import { useCurrency } from '@/state/useCurrency'
 import { useToast } from '@/state/ToastContext'
 import type { LoanKind, Transaction, Wallet } from '@/types'
 
-// The planDraft modal's loan variant: Dirección, the counterparty, Monto,
-// the wallet the money left or entered, and an optional due date. The
-// mockup only creates loans; editing reuses the same modal (Android's loan
-// sheet edits too), with "Eliminar registro" behind the askConfirm steps.
+// The loan form, one modal: the direction, the amount on the hero surface,
+// the counterparty, the wallet the money left or entered, and an optional
+// due date. Editing reuses it, with "Eliminar registro" behind the
+// two-step confirmation.
 const loanInput =
-  'box-border h-11 w-full min-w-0 rounded-[12px] border border-border bg-surface px-3.5 font-[inherit] text-body-sm text-ink outline-none [color-scheme:dark] placeholder:text-ink-secondary focus:border-primary-border'
+  'box-border h-11 w-full min-w-0 rounded-[12px] border border-border-input bg-surface px-3.5 font-[inherit] text-body-sm text-ink outline-none [color-scheme:dark] placeholder:text-ink-secondary focus:border-primary-border'
+
+// Arrows for the direction: money going out (lent) or coming in (borrowed).
+const LOAN_OUT_ICON = ['M7 17 17 7', 'M8 7h9v9']
+const LOAN_IN_ICON = ['M17 7 7 17', 'M16 17H7V8']
 
 export function LoanModal({ loan, side, wallets, onClose, onSaved }: { loan: Transaction | null; side: LoanKind; wallets: Wallet[]; onClose: () => void; onSaved: (side: LoanKind) => void }) {
   const { addTransaction } = useAppData()
@@ -84,23 +89,30 @@ export function LoanModal({ loan, side, wallets, onClose, onSaved }: { loan: Tra
         <ModalTitle>{title}</ModalTitle>
         <div className="mt-0.5 text-caption leading-[1.45] text-ink-secondary">{tr('loan.hint')}</div>
       </div>
-      <div className="flex flex-col gap-2">
-        <Label>{tr('loan.direction')}</Label>
-        <div className="flex gap-1.5">
-          {(['lent', 'borrowed'] as const).map((k) => (
-            <Flat key={k} on={kind === k} onClick={() => clear(setKind)(k)} className="flex-1 text-center">
-              {tr(k === 'lent' ? 'loan.dir.lent' : 'loan.dir.borrowed')}
-            </Flat>
-          ))}
-        </div>
-      </div>
+      <SegmentedChoice
+        label={tr('loan.dirLabel')}
+        value={kind}
+        onChange={clear(setKind)}
+        options={[
+          { value: 'lent', label: tr('loan.dir.lent'), icon: LOAN_OUT_ICON },
+          { value: 'borrowed', label: tr('loan.dir.borrowed'), icon: LOAN_IN_ICON },
+        ]}
+      />
+      <AmountHero label={tr('nm.amount')} expr={amount} onExpr={clear(setAmount)} />
       <div className="flex flex-col gap-1.5">
         <Label>{tr(lent ? 'loan.person.lent' : 'loan.person.borrowed')}</Label>
-        <input value={person} onChange={(e) => clear(setPerson)(e.target.value)} placeholder={tr('loan.personPh')} className={loanInput} />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <Label>{tr('nm.amount')}</Label>
-        <AmountField expr={amount} onExpr={clear(setAmount)} height={44} radius={12} />
+        <div className="flex h-14 items-center gap-2.5 rounded-[10px] border border-border-input bg-surface pr-3 pl-2 focus-within:border-primary-border">
+          <span aria-hidden="true" className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-v2-accent/16">
+            <Icon paths={IC.person} size={18} color="var(--color-link)" />
+          </span>
+          <input
+            value={person}
+            onChange={(e) => clear(setPerson)(e.target.value)}
+            placeholder={tr('loan.personPh')}
+            aria-label={tr(lent ? 'loan.person.lent' : 'loan.person.borrowed')}
+            className="min-w-0 flex-1 border-none bg-transparent text-body font-semibold text-ink outline-none placeholder:text-ink-tertiary"
+          />
+        </div>
       </div>
       <div className="flex flex-col gap-2">
         <Label>{tr(lent ? 'loan.walletOut' : 'loan.walletIn')}</Label>

@@ -9,7 +9,7 @@ import { flatClass } from '@/components/v2/Kit'
 
 export function AjCard({ className, style, children }: { className?: string; style?: CSSProperties; children: ReactNode }) {
   return (
-    <div className={cn('rounded-[16px] border border-border bg-surface text-ink', className)} style={style}>
+    <div className={cn('nova-card text-ink', className)} style={style}>
       {children}
     </div>
   )
@@ -107,7 +107,7 @@ export function AjSwitch({ on, label, onToggle }: { on: boolean; label: string; 
       className={cn(
         // A 48×30 track with a 24 px knob; the off track is `border-input` (3:1).
         'flex h-[30px] w-[48px] flex-none cursor-pointer rounded-full p-[3px] transition-[background] duration-150 motion-reduce:transition-none',
-        on ? 'justify-end bg-primary' : 'justify-start bg-border-input',
+        on ? 'justify-end [background:var(--cta-bg)]' : 'justify-start bg-border-input',
       )}
     >
       <span className="block h-6 w-6 rounded-full bg-white" />
@@ -126,7 +126,7 @@ export function AjSubHeader({ title, subtitle, danger, action, children }: { tit
       </Link>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className={cn('text-headline font-bold', danger && 'text-negative')}>{title}</h1>
+          <h1 className={cn('text-display-sm font-medium tracking-[-.025em]', danger && 'text-negative')}>{title}</h1>
           <div className="mt-1 text-body-sm text-ink-secondary">{subtitle}</div>
         </div>
         {action}

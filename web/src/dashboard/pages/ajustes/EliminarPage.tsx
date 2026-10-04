@@ -60,7 +60,7 @@ export default function EliminarPage() {
     : [t('aj.del.profile')]
 
   return (
-    <div className="flex max-w-[676px] flex-col gap-[18px] px-7 pt-[26px] pb-10">
+    <div className="flex max-w-[676px] flex-col gap-5 px-4 pt-6 pb-12 min-[760px]:px-8 min-[760px]:pt-8">
       <AjSubHeader title={t('aj.deleteAccount')} subtitle={t('aj.del.subtitle')} danger />
 
       <AjCard className="flex flex-col gap-3 p-[22px]" style={{ borderColor: 'rgba(255,98,98,.3)' }}>

@@ -93,9 +93,9 @@ export default function AjustesPage() {
   const sessionsSummary = (sessions ?? []).map((s) => (s.current ? t('aj.thisBrowser') : (s.device ?? t('aj.ses.unknown')))).join(' · ')
 
   return (
-    <div className="flex max-w-[976px] flex-col gap-[18px] px-7 pt-[26px] pb-10">
+    <div className="flex max-w-[976px] flex-col gap-5 px-4 pt-6 pb-12 min-[760px]:px-8 min-[760px]:pt-8">
       <div>
-        <h1 className="text-headline font-bold">{t('aj.title')}</h1>
+        <h1 className="text-display-sm font-medium tracking-[-.025em]">{t('aj.title')}</h1>
         <div className="mt-1 text-body-sm text-ink-secondary">{t('aj.subtitle')}</div>
       </div>
 

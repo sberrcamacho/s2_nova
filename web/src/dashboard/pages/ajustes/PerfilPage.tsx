@@ -58,7 +58,7 @@ export default function PerfilPage() {
   }
 
   return (
-    <div className="flex max-w-[736px] flex-col gap-[18px] px-7 pt-[26px] pb-10">
+    <div className="flex max-w-[736px] flex-col gap-5 px-4 pt-6 pb-12 min-[760px]:px-8 min-[760px]:pt-8">
       <AjSubHeader title={t('aj.editProfile')} subtitle={t('aj.pr.subtitle')} />
       <AjCard className="flex flex-col gap-[18px] p-[22px]">
         <div className="flex items-center gap-4">

@@ -296,7 +296,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
     const pct = lineBudget.limit > 0 ? Math.round(((lineBudget.spent + add) / lineBudget.limit) * 100) : 0
     const [tone, bg] = toneOf(pct)
     budgetLine = (
-      <div className="flex items-start gap-3 rounded-[16px] border border-border bg-surface px-4 py-3">
+      <div className="flex items-start gap-3 nova-card px-4 py-3">
         {lineBudget.kind === 'custom' ? <PlanMark icon={lineBudget.icon} box={40} /> : <CategoryMark category={lineBudget.category!} box={40} />}
         <div className="min-w-0 flex-1">
           <div className="text-label font-semibold">{autoBudget && picked ? fill(t('nm.budget.addsTwo'), budgetLabel(lineBudget), picked.name!) : fill(t('nm.budget.adds'), budgetLabel(lineBudget))}</div>
@@ -887,7 +887,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
         <button
           type="button"
           onClick={() => setSection('cat')}
-          className="flex min-h-16 cursor-pointer items-center gap-3 rounded-[16px] border border-border bg-surface px-4 py-3 text-left hover:border-border-strong"
+          className="flex min-h-16 cursor-pointer items-center gap-3 nova-card px-4 py-3 text-left hover:border-border-strong"
         >
           {catDone && leaf ? <CategoryMark category={leaf} box={40} /> : <GlyphMark paths={TAX_VIS.other.glyph} color="var(--color-text-tertiary)" box={40} />}
           <div className="min-w-0 flex-1">
@@ -1016,7 +1016,7 @@ function MoreOptions({
 }) {
   const { t } = useTranslation()
   return (
-    <section className="rounded-[16px] border border-border bg-surface">
+    <section className="nova-card">
       <button type="button" onClick={onToggle} aria-expanded={open} className="flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-[16px] px-4 py-3 text-left hover:bg-v2-subtle">
         <div className="min-w-0 flex-1">
           <div className="text-title-sm font-semibold text-ink">{t('nm.moreOptions')}</div>

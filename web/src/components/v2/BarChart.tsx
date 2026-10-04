@@ -102,8 +102,9 @@ export function BarChart({
                       <span
                         key={s.key}
                         aria-hidden="true"
-                        className="w-full max-w-[26px] rounded-t-[4px] transition-[height] duration-300 motion-reduce:transition-none"
+                        className="nova-grow w-full max-w-[26px] rounded-t-[4px] transition-[height] duration-300 motion-reduce:transition-none"
                         style={{
+                          animationDelay: `${i * 40 + k * 20}ms`,
                           height: `${Math.max(values[k]! > 0 ? 1 : 0, (values[k]! / top) * 100)}%`,
                           background: s.color,
                           opacity: highlightLast && !last && active !== i ? 0.35 : 1,

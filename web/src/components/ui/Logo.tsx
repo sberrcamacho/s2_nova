@@ -48,12 +48,12 @@ export function Logo({ variant = 'full', size = 'md', tone = 'default', classNam
       <LogoMark size={size} tone={tone} />
       <div className="flex flex-col leading-none">
         <span
-          className={cn('font-extrabold tracking-tight', inverted ? 'text-white' : 'text-ink', S2_SIZES[size])}
+          className={cn('font-semibold tracking-[-.01em]', inverted ? 'text-white' : 'text-ink', S2_SIZES[size])}
           style={{ fontSize: size === 'lg' ? 20 : size === 'md' ? 16 : 14 }}
         >
-          S2 <span className={cn('font-bold', inverted ? 'text-white/60' : 'text-ink-secondary')} style={{ fontWeight: 600 }}>Nova</span>
+          S2 Nova
         </span>
-        <span className={cn('whitespace-nowrap font-semibold uppercase tracking-[.04em]', inverted ? 'text-white/70' : 'text-ink-tertiary', NOVA_SIZES[size])}>
+        <span className={cn('mt-0.5 whitespace-nowrap font-medium', inverted ? 'text-white/70' : 'text-ink-tertiary', NOVA_SIZES[size])}>
           {tr('brand.tagline')}
         </span>
       </div>

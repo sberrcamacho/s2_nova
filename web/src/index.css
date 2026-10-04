@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 @import 'tailwindcss';
 
 /* ────────────────────────────────────────────────────────────────────────
@@ -21,17 +21,17 @@
 
   /* Surfaces */
   --color-bg: #ffffff;
-  --color-bg-secondary: #f7f7fa;
+  --color-bg-secondary: #f7f5fd;
   --color-surface: #ffffff;
   --color-surface-elevated: #ffffff;
   --color-overlay: rgba(17, 17, 24, 0.4);
 
   /* Borders */
-  --color-border: #ebebf2;
-  --color-border-strong: #dcdce6;
+  --color-border: #e8e2f6;
+  --color-border-strong: #d9d0f0;
   --color-border-input: #8c8c9c; /* 3.31:1 — inputs, checkboxes, outlines */
-  --color-divider: #f0f0f5;
-  --color-surface-sunken: #efeff4; /* progress tracks, input fills */
+  --color-divider: #f0ebfa;
+  --color-surface-sunken: #ece6f8; /* progress tracks, input fills */
 
   /* Brand-derived: action and selection */
   --color-primary: #6622d6; /* white on it 7.60 */
@@ -47,9 +47,9 @@
   --on-primary: #ffffff;
 
   /* Text */
-  --color-text: #111118;
-  --color-text-secondary: #666673;
-  --color-text-tertiary: #6b6b7a; /* 5.24:1 on surface */
+  --color-text: #120d24;
+  --color-text-secondary: #5d5873;
+  --color-text-tertiary: #6b6582; /* 5.24:1 on surface */
 
   /* Financial semantics */
   --color-positive: #0f7a4a;
@@ -64,23 +64,23 @@
      corner so the visible end (#802EE8) keeps white text ≥ 6:1 and white on
      a hero tile ≥ 4.9:1. Income and expense are white here: the tile label
      carries the meaning, never green/red on violet. */
-  --hero-bg: linear-gradient(135deg, #5712c2 0%, #6622d6 50%, #9a39f9 150%);
-  --hero-glow: rgba(212, 133, 251, 0.3);
-  --hero-line: rgba(255, 255, 255, 0.16);
-  --hero-tile: rgba(255, 255, 255, 0.12);
-  --hero-overline: rgba(255, 255, 255, 0.9);
-  --hero-label: #ffffff;
+  --hero-bg: radial-gradient(55% 75% at 100% 0%, rgba(212, 133, 251, 0.35) 0%, rgba(212, 133, 251, 0) 70%), radial-gradient(60% 90% at 0% 100%, rgba(87, 18, 194, 0.55) 0%, rgba(87, 18, 194, 0) 70%), linear-gradient(135deg, #5712c2 0%, #6622d6 45%, #8a2ff0 100%);
+  --hero-glow: rgba(212, 133, 251, 0.35);
+  --hero-line: rgba(255, 255, 255, 0.18);
+  --hero-tile: rgba(255, 255, 255, 0.14);
+  --hero-overline: rgba(255, 255, 255, 0.88);
+  --hero-label: rgba(255, 255, 255, 0.82);
   --hero-positive: #ffffff;
   --hero-negative: #ffffff;
-  --hero-bar: #ffffff;
-  --hero-bar-soft: rgba(255, 255, 255, 0.34);
+  --hero-bar: linear-gradient(180deg, #ffffff 0%, #f1dcff 100%);
+  --hero-bar-soft: rgba(255, 255, 255, 0.24);
 
   /* Shadows */
   --shadow-xs: 0 1px 2px rgba(17, 17, 24, 0.04);
-  --shadow-sm: 0 2px 8px rgba(17, 17, 24, 0.06);
-  --shadow-md: 0 8px 24px rgba(17, 17, 24, 0.08);
+  --shadow-sm: 0 1px 2px rgba(17, 17, 24, 0.04), 0 4px 14px -6px rgba(17, 17, 24, 0.08);
+  --shadow-md: 0 1px 2px rgba(17, 17, 24, 0.04), 0 12px 32px -14px rgba(17, 17, 24, 0.14);
   --shadow-lg: 0 16px 48px rgba(17, 17, 24, 0.12);
-  --shadow-primary: 0 8px 24px rgba(102, 34, 214, 0.3);
+  --shadow-primary: 0 8px 24px -8px rgba(102, 34, 214, 0.45);
 
   /* Chart bar soft fills (non-peak bars) */
   --chart-primary: #6622d6; /* series 1 */
@@ -111,16 +111,16 @@
   /* Screen tokens (the `v2-*` utilities). Same values as the semantic
      tokens above; accent = primary (fills), accent2 = link (text on
      surfaces), accent3 = primary-pressed / strongest brand fill. */
-  --v2-bg: #f7f7fa;
-  --v2-sidebar: #ffffff;
+  --v2-bg: #f7f5fd;
+  --v2-sidebar: #fcfbff;
   --v2-surface: #ffffff;
-  --v2-surface2: #f0f0f5;
-  --v2-subtle: #f7f7fa;
-  --v2-line: #ebebf2;
-  --v2-line2: #dcdce6;
-  --v2-text: #111118;
-  --v2-muted: #666673;
-  --v2-dim: #6b6b7a;
+  --v2-surface2: #f1edfb;
+  --v2-subtle: #f5f2fc;
+  --v2-line: #e8e2f6;
+  --v2-line2: #d9d0f0;
+  --v2-text: #120d24;
+  --v2-muted: #5d5873;
+  --v2-dim: #6b6582;
   --v2-accent: #6622d6;
   --v2-accent2: #5712c2;
   --v2-accent3: #5712c2;
@@ -131,22 +131,41 @@
   --v2-warn: #8f5a00;
   --v2-neg-soft: #f0d2d2;
   --v2-hero-line: var(--hero-line);
+
+  /* Nova shell (web rework, 2026-10): neutral surfaces, the brand only in
+     the primary action, the active nav marker and the hero glow. White on
+     every stop of --cta-bg is ≥ 4.85:1. */
+  --hero-text: #ffffff;
+  --cta-bg: linear-gradient(100deg, #9a39f9 0%, #5712c2 100%);
+  --cta-glow: 0 8px 24px -8px rgba(102, 34, 214, 0.55);
+  --brand-bar: linear-gradient(180deg, #d485fb 0%, #9a39f9 45%, #5712c2 100%);
+  --brand-text: linear-gradient(100deg, #9a39f9 0%, #6622d6 55%, #5712c2 100%);
+  --nav-active-bg: linear-gradient(90deg, rgba(154, 57, 249, 0.16) 0%, rgba(102, 34, 214, 0.05) 100%);
+  --nav-active-icon: #6622d6;
+  --card-aurora: rgba(212, 133, 251, 0.16);
+  --card-aurora-2: rgba(154, 57, 249, 0.06);
+  --ring-a: #d485fb;
+  --ring-b: #9a39f9;
+  --ring-c: #5712c2;
+  --nav-active-line: rgba(154, 57, 249, 0.35);
+  --app-aurora: radial-gradient(60% 50% at 15% -10%, rgba(212, 133, 251, 0.22) 0%, rgba(212, 133, 251, 0) 70%), radial-gradient(50% 45% at 100% 10%, rgba(154, 57, 249, 0.12) 0%, rgba(154, 57, 249, 0) 70%);
+  --card-shadow: 0 1px 2px rgba(87, 18, 194, 0.05), 0 10px 28px -18px rgba(87, 18, 194, 0.28);
 }
 
 [data-theme='dark'] {
   /* Surfaces — genuinely black, not gray */
-  --color-bg: #050507;
-  --color-bg-secondary: #09090e;
-  --color-surface: #0e0e15;
-  --color-surface-elevated: #13131d;
+  --color-bg: #060512;
+  --color-bg-secondary: #0a0919;
+  --color-surface: #0e0c20;
+  --color-surface-elevated: #13112d;
   --color-overlay: rgba(0, 0, 0, 0.6);
 
   /* Borders */
-  --color-border: #2e2e40;
-  --color-border-strong: #3a3a4e;
-  --color-border-input: #6a6a82; /* 3.66:1 */
-  --color-divider: #16161f;
-  --color-surface-sunken: #09090e;
+  --color-border: #221f44;
+  --color-border-strong: #2d2958;
+  --color-border-input: #7a72a8; /* 3.66:1 */
+  --color-divider: #181535;
+  --color-surface-sunken: #1d1a3d;
 
   /* Brand-derived. Primary stays #6622D6 as a fill (white on it 7.60) but
      is only 2.5:1 on the dark surfaces, so text and icons use link/accent
@@ -155,7 +174,7 @@
   --color-primary-pressed: #5712c2;
   --color-primary-secondary: #9a39f9;
   --color-primary-border: #a80ffa;
-  --color-accent-soft: #270e3a;
+  --color-accent-soft: #241046;
   --color-on-primary-soft: #d485fb; /* 7.06 */
   --color-highlight: #d485fb;
   --color-link: #d485fb; /* 7.83 */
@@ -164,9 +183,9 @@
   --on-primary: #ffffff;
 
   /* Text */
-  --color-text: #ffffff;
-  --color-text-secondary: #a8a8b8;
-  --color-text-tertiary: #8e8ea0; /* 5.98:1 on surface */
+  --color-text: #f5f3ff;
+  --color-text-secondary: #b1abd0;
+  --color-text-tertiary: #8f89b3; /* 5.98:1 on surface */
 
   /* Financial semantics */
   --color-positive: #32c98a;
@@ -179,16 +198,16 @@
   /* Balance hero — deep violet base with the dark mark's violet → blue
      glow in the top-right corner. Every text color is ≥ 5:1 over the
      brightest part of the glow. */
-  --hero-bg: radial-gradient(120% 110% at 100% 0%, rgba(168, 15, 250, 0.35) 0%, rgba(0, 71, 245, 0.22) 45%, rgba(0, 196, 251, 0) 80%), #1a0b3d;
-  --hero-glow: rgba(0, 196, 251, 0.14);
-  --hero-line: rgba(255, 255, 255, 0.1);
-  --hero-tile: rgba(255, 255, 255, 0.06);
-  --hero-overline: #d485fb;
-  --hero-label: rgba(255, 255, 255, 0.8);
-  --hero-positive: #32c98a;
-  --hero-negative: #ff7a7a;
-  --hero-bar: #00c4fb;
-  --hero-bar-soft: rgba(212, 133, 251, 0.3);
+  --hero-bg: radial-gradient(60% 85% at 100% 0%, rgba(0, 196, 251, 0.42) 0%, rgba(0, 196, 251, 0) 65%), radial-gradient(65% 95% at 0% 100%, rgba(168, 15, 250, 0.38) 0%, rgba(168, 15, 250, 0) 68%), linear-gradient(135deg, #230a5e 0%, #17167a 50%, #0a2476 100%);
+  --hero-glow: rgba(0, 196, 251, 0.25);
+  --hero-line: rgba(255, 255, 255, 0.14);
+  --hero-tile: rgba(255, 255, 255, 0.1);
+  --hero-overline: rgba(255, 255, 255, 0.85);
+  --hero-label: rgba(255, 255, 255, 0.78);
+  --hero-positive: #5ff0b0;
+  --hero-negative: #ffb4b4;
+  --hero-bar: linear-gradient(180deg, #00c4fb 0%, #4d86ff 50%, #a80ffa 100%);
+  --hero-bar-soft: rgba(255, 255, 255, 0.16);
 
   /* Shadows — soft, restrained, no excess glow */
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
@@ -211,16 +230,16 @@
   --color-login-positive-bg: rgba(255, 255, 255, 0.12);
 
   /* Screen tokens — dark */
-  --v2-bg: #050507;
-  --v2-sidebar: #0b0b14;
-  --v2-surface: #0e0e15;
-  --v2-surface2: #13131d;
-  --v2-subtle: #16161f;
-  --v2-line: #2e2e40;
-  --v2-line2: #3a3a4e;
-  --v2-text: #ffffff;
-  --v2-muted: #a8a8b8;
-  --v2-dim: #8e8ea0;
+  --v2-bg: #060512;
+  --v2-sidebar: #09081a;
+  --v2-surface: #0e0c20;
+  --v2-surface2: #13112d;
+  --v2-subtle: #141233;
+  --v2-line: #221f44;
+  --v2-line2: #2d2958;
+  --v2-text: #f5f3ff;
+  --v2-muted: #b1abd0;
+  --v2-dim: #8f89b3;
   --v2-accent: #6622d6;
   --v2-accent2: #d485fb;
   --v2-accent3: #b859fb;
@@ -230,15 +249,33 @@
   --v2-neg: #ff6262;
   --v2-warn: #f0b429;
   --v2-neg-soft: #3a2029;
+
+  /* Nova shell — dark. White on every stop of --cta-bg is ≥ 5.1:1; cyan
+     only appears where nothing sits on it. */
+  --hero-text: #ffffff;
+  --cta-bg: linear-gradient(100deg, #a80ffa 0%, #0047f5 100%);
+  --cta-glow: 0 8px 28px -8px rgba(0, 71, 245, 0.45);
+  --brand-bar: linear-gradient(180deg, #a80ffa 0%, #0047f5 55%, #00c4fb 100%);
+  --brand-text: linear-gradient(100deg, #c45bff 0%, #4d86ff 55%, #00c4fb 100%);
+  --nav-active-bg: linear-gradient(90deg, rgba(168, 15, 250, 0.22) 0%, rgba(0, 71, 245, 0.1) 100%);
+  --nav-active-icon: #00c4fb;
+  --card-aurora: rgba(168, 15, 250, 0.09);
+  --card-aurora-2: rgba(0, 71, 245, 0.05);
+  --ring-a: #a80ffa;
+  --ring-b: #0047f5;
+  --ring-c: #00c4fb;
+  --nav-active-line: rgba(168, 15, 250, 0.45);
+  --app-aurora: radial-gradient(55% 45% at 10% -10%, rgba(168, 15, 250, 0.13) 0%, rgba(168, 15, 250, 0) 70%), radial-gradient(45% 40% at 100% 0%, rgba(0, 71, 245, 0.1) 0%, rgba(0, 71, 245, 0) 70%), radial-gradient(40% 35% at 70% 110%, rgba(0, 196, 251, 0.05) 0%, rgba(0, 196, 251, 0) 70%);
+  --card-shadow: inset 0 1px 0 rgba(212, 133, 251, 0.06), 0 14px 36px -18px rgba(0, 0, 0, 0.7);
 }
 
 /* ── Tailwind v4 theme mapping — CSS vars stay live, so switching
    [data-theme] updates every bg, text, and border utility instantly,
    with no React re-render ── */
 @theme inline {
-  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
-  /* One family (DESIGN-SYSTEM.md §3): Plus Jakarta Sans has tabular figures. */
-  --font-numeric: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-sans: 'Outfit', system-ui, sans-serif;
+  /* One family: Outfit has tabular figures (font-variant-numeric works). */
+  --font-numeric: 'Outfit', system-ui, sans-serif;
 
   --color-bg: var(--color-bg);
   --color-bg-secondary: var(--color-bg-secondary);
@@ -357,6 +394,8 @@
   --animate-route-in: route-in 250ms cubic-bezier(0, 0, 0, 1);
   --animate-panel-in: panel-in 250ms cubic-bezier(0.05, 0.7, 0.1, 1);
   --animate-dialog-in: dialog-in 250ms cubic-bezier(0.05, 0.7, 0.1, 1);
+  --animate-step-next: step-next 250ms cubic-bezier(0.05, 0.7, 0.1, 1);
+  --animate-step-back: step-back 250ms cubic-bezier(0.05, 0.7, 0.1, 1);
   --animate-overlay-in: overlay-in 250ms cubic-bezier(0, 0, 0, 1);
   --animate-row-in: row-in 250ms cubic-bezier(0, 0, 0, 1);
   --animate-shake: shake 0.4s ease-in-out;
@@ -390,6 +429,200 @@ body {
   font-family: var(--font-numeric);
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
+}
+
+/* ── Nova surfaces (web rework) ───────────────────────────────────────
+   One card recipe for every bento tile and list surface, the gradient
+   primary action and the brand text gradient (headlines only, never on
+   amounts or body copy). */
+.nova-card {
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background:
+    radial-gradient(120% 70% at 100% 0%, var(--card-aurora) 0%, transparent 55%),
+    radial-gradient(90% 60% at 0% 100%, var(--card-aurora-2) 0%, transparent 60%),
+    var(--color-surface);
+  box-shadow: var(--card-shadow);
+}
+/* The app canvas: brand auroras fixed behind every page. */
+.nova-canvas {
+  background: var(--app-aurora), var(--v2-bg);
+  background-attachment: fixed;
+}
+/* A brand progress ring: conic gradient through the mark's three stops up
+   to --p (0–100), then the sunken track. */
+.nova-ring {
+  background: conic-gradient(var(--ring-a) 0%, var(--ring-b) calc(var(--p) * 0.55%), var(--ring-c) calc(var(--p) * 1%), var(--color-surface-sunken) calc(var(--p) * 1%));
+}
+.btn-cta {
+  background: var(--cta-bg);
+  color: #ffffff;
+  box-shadow: var(--cta-glow);
+  transition: filter 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+}
+.btn-cta:hover {
+  filter: brightness(1.08) saturate(1.05);
+}
+.btn-cta:active {
+  transform: scale(0.98);
+}
+
+/* ── Nova motion (web rework) ────────────────────────────────────────────
+   Quick and noticeable, never looping: entrances 380 ms with a 45 ms
+   stagger, hover feedback 200 ms, progress fills 700 ms. Transform and
+   opacity only; prefers-reduced-motion turns all of it off (end of file). */
+:root {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* The primary action catches a light sweep on hover. */
+.btn-cta {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.btn-cta::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.28) 50%, transparent 70%);
+  transform: translateX(-120%);
+  pointer-events: none;
+}
+.btn-cta:hover::after {
+  transform: translateX(120%);
+  transition: transform 550ms var(--ease-out-expo);
+}
+
+/* Cards rise in when a page or tab opens, one after another. */
+.nova-card,
+.nova-rise {
+  animation: nova-rise 380ms var(--ease-out-expo) backwards;
+}
+:is(.nova-card, .nova-rise):nth-child(2) { animation-delay: 45ms; }
+:is(.nova-card, .nova-rise):nth-child(3) { animation-delay: 90ms; }
+:is(.nova-card, .nova-rise):nth-child(4) { animation-delay: 135ms; }
+:is(.nova-card, .nova-rise):nth-child(5) { animation-delay: 180ms; }
+:is(.nova-card, .nova-rise):nth-child(6) { animation-delay: 225ms; }
+:is(.nova-card, .nova-rise):nth-child(n + 7) { animation-delay: 270ms; }
+@keyframes nova-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+}
+
+/* Clickable cards lift toward the pointer. */
+.nova-lift,
+button.nova-card,
+a.nova-card {
+  transition: transform 200ms var(--ease-out-expo), box-shadow 200ms ease, border-color 200ms ease;
+}
+.nova-lift:hover,
+button.nova-card:hover,
+a.nova-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--nav-active-line);
+  box-shadow: var(--card-shadow), 0 16px 32px -18px var(--card-aurora);
+}
+
+/* Progress: bars fill from the left, chart bars grow from the base. */
+.nova-fill {
+  transform-origin: left center;
+  animation: nova-fill 700ms var(--ease-out-expo) 150ms backwards;
+}
+@keyframes nova-fill {
+  from {
+    transform: scaleX(0);
+  }
+}
+.nova-grow {
+  transform-origin: bottom center;
+  animation: nova-grow 600ms var(--ease-out-expo) backwards;
+}
+.nova-grow:nth-child(2) { animation-delay: 40ms; }
+.nova-grow:nth-child(3) { animation-delay: 80ms; }
+.nova-grow:nth-child(4) { animation-delay: 120ms; }
+.nova-grow:nth-child(5) { animation-delay: 160ms; }
+.nova-grow:nth-child(6) { animation-delay: 200ms; }
+.nova-grow:nth-child(n + 7) { animation-delay: 240ms; }
+@keyframes nova-grow {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+/* Rings sweep up to their value (--p is registered so it can animate). */
+@property --p {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+.nova-ring {
+  animation: nova-ring 800ms var(--ease-out-expo) 150ms backwards;
+}
+@keyframes nova-ring {
+  from {
+    --p: 0;
+  }
+}
+
+/* Tabs: the selected one gets a brand underline that opens from the middle. */
+[role='tab'] {
+  position: relative;
+  transition: color 150ms ease;
+}
+[role='tab'][aria-selected='true']::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--cta-bg);
+  animation: nova-tab 250ms var(--ease-out-expo) backwards;
+}
+@keyframes nova-tab {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* Navigation: the active marker slides in, icons nudge on hover. */
+.nova-nav-bar {
+  transform-origin: center;
+  animation: nova-nav 300ms var(--ease-out-expo) backwards;
+}
+@keyframes nova-nav {
+  from {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+}
+.nova-nav-icon {
+  transition: transform 200ms var(--ease-out-expo);
+}
+a:hover > .nova-nav-icon {
+  transform: translateX(2px) scale(1.06);
+}
+
+/* Landing sections reveal once as they scroll into view. */
+.nova-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 600ms var(--ease-out-expo), transform 600ms var(--ease-out-expo);
+}
+.nova-reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+.text-brand-gradient {
+  background: var(--brand-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 ::-webkit-scrollbar {
@@ -467,6 +700,20 @@ button {
   from {
     opacity: 0;
     transform: translateX(32px);
+  }
+}
+
+/* A guided step comes in from the side it moves toward. */
+@keyframes step-next {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+@keyframes step-back {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
   }
 }
 
@@ -562,13 +809,36 @@ button {
   .animate-fade-in,
   .animate-scan-line,
   .animate-sparkle,
-  .animate-row-in {
+  .animate-row-in,
+  .nova-card,
+  .nova-rise,
+  .nova-fill,
+  .nova-grow,
+  .nova-ring,
+  .nova-nav-bar,
+  [role='tab'][aria-selected='true']::after {
     animation: none;
+  }
+  .btn-cta::after {
+    display: none;
+  }
+  .nova-lift:hover,
+  button.nova-card:hover,
+  a.nova-card:hover,
+  a:hover > .nova-nav-icon {
+    transform: none;
+  }
+  .nova-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
   /* Moving surfaces cross-fade instead of sliding or growing. */
   .animate-route-in,
   .animate-panel-in,
-  .animate-dialog-in {
+  .animate-dialog-in,
+  .animate-step-next,
+  .animate-step-back {
     animation: overlay-in 150ms linear;
   }
   /* Press feedback keeps its color change but drops the scale. */
