@@ -434,10 +434,23 @@ data class ReportTotals(val income: Double, val expenses: Double, val savings: D
 
 data class ReportCategory(val category: CategoryId, val amount: Double)
 
+// "¿Qué cambió?": this month up to today against the same days of last
+// month, with the (up to 3) categories that moved the most.
+data class ReportChange(val category: CategoryId, val current: Double, val previous: Double) {
+    val delta: Double get() = current - previous
+}
+
+data class ReportChanges(val current: Double, val previous: Double, val categories: List<ReportChange>)
+
+// The wallets' balance at a month's close (the current month: today).
+data class BalancePoint(val month: String, val balance: Double)
+
 data class Report(
     val range: Int,
     val months: List<MonthlySummary>,
     val totals: ReportTotals,
     val previousTotals: ReportTotals,
     val categories: List<ReportCategory>,
+    val changes: ReportChanges = ReportChanges(0.0, 0.0, emptyList()),
+    val balanceHistory: List<BalancePoint> = emptyList(),
 )

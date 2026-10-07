@@ -65,6 +65,7 @@ import com.s2nova.app.data.formatApprox
 import com.s2nova.app.data.formatMoney
 import com.s2nova.app.data.model.AppAlert
 import com.s2nova.app.data.model.AppLanguage
+import com.s2nova.app.data.model.BalancePoint
 import com.s2nova.app.data.model.BudgetProgress
 import com.s2nova.app.data.model.MonthlySummary
 import com.s2nova.app.data.model.Transaction
@@ -139,6 +140,7 @@ fun HomeScreen(
     val readAlertIds by AppContainer.alertRepository.readIds.collectAsStateWithLifecycle()
     val dismissedAlertIds by AppContainer.alertRepository.dismissedIds.collectAsStateWithLifecycle()
     val months by AppContainer.summaryRepository.months.collectAsStateWithLifecycle()
+    val balances by AppContainer.summaryRepository.balances.collectAsStateWithLifecycle()
     val budgetProgress by AppContainer.budgetRepository.budgetProgress.collectAsStateWithLifecycle()
     val recurringSeries by AppContainer.recurringSeriesRepository.series.collectAsStateWithLifecycle()
     val wallets by AppContainer.walletRepository.wallets.collectAsStateWithLifecycle()
@@ -155,12 +157,19 @@ fun HomeScreen(
     suspend fun refreshHome() {
         val results = listOf(
             runCatching { AppContainer.walletRepository.refresh() },
-            // Six months: the hero's net bars, as on Web.
+            // Six months for the stat tiles' comparison.
             runCatching { AppContainer.summaryRepository.refresh(count = 6) },
             runCatching { AppContainer.alertRepository.refresh() },
             runCatching { AppContainer.budgetRepository.refresh() },
             runCatching { AppContainer.recurringSeriesRepository.refresh() },
             runCatching { AppContainer.transactionRepository.refresh() },
+            // The hero's bars: the balance at each month's close, as on Web.
+            runCatching {
+                AppContainer.summaryRepository.refreshBalances(
+                    AppContainer.walletRepository.wallets.value.sumOf { it.principalBalance },
+                    demoTransactions = { AppContainer.transactionRepository.transactions.value },
+                )
+            },
         )
         syncFailed = results.any { it.isFailure }
     }
@@ -323,7 +332,7 @@ fun HomeScreen(
                     BalanceHero(
                         balance = balance,
                         countUp = dataLoaded,
-                        months = months,
+                        balances = balances,
                         language = language,
                         format = { format(it) },
                         walletCount = wallets.size,
@@ -599,7 +608,7 @@ private fun TileHeader(text: String, showChevron: Boolean = false) {
 private fun BalanceHero(
     balance: Double,
     countUp: Boolean,
-    months: List<MonthlySummary>,
+    balances: List<BalancePoint>,
     language: AppLanguage,
     format: (Double) -> String,
     walletCount: Int,
@@ -722,24 +731,30 @@ private fun BalanceHero(
                     .clickable(role = Role.Button, onClick = onOpenWallets),
             )
         }
-        if (months.size >= 2) HeroMonthBars(months.takeLast(6), language)
+        if (balances.size >= 2) HeroBalanceBars(balances, language, format, hidden)
     }
 }
 
-// Six months of net savings (income − expenses), oldest first; the current
-// month is the brand-gradient bar (web MonthBars). Bars grow from the base
-// one after another the first time they show.
+// The wallets' balance at the close of each of the last six months (the
+// current one up to today), oldest first, so the bars tell how the figure
+// above got here; the current month is the brand-gradient bar (web
+// BalanceBars). Bars grow from the base one after another the first time
+// they show. TalkBack reads every month's balance.
 @Composable
-private fun HeroMonthBars(months: List<MonthlySummary>, language: AppLanguage) {
+private fun HeroBalanceBars(months: List<BalancePoint>, language: AppLanguage, format: (Double) -> String, hidden: Boolean) {
     val colors = NovaColors.current
-    val max = (months.maxOfOrNull { abs(it.savings) } ?: 0.0).coerceAtLeast(1.0)
+    val t = rememberStrings()
+    val max = (months.maxOfOrNull { it.balance } ?: 0.0).coerceAtLeast(1.0)
+    fun abbr(m: BalancePoint) = runCatching { YearMonth.parse(m.month) }.getOrNull()?.let { monthAbbr(it.monthValue, language) } ?: m.month
+    val description = t(StringKey.HOME_BALANCE_BARS) + ": " +
+        months.joinToString(", ") { "${abbr(it)} ${if (hidden) t(StringKey.AMOUNT_HIDDEN) else format(it.balance)}" }
     val grow = rememberIntroProgress(delayMillis = 100, durationMillis = 600)
     val barBrush = Brush.verticalGradient(if (colors.ring.last() == com.s2nova.app.ui.theme.BrandColors.cyan) colors.ring.reversed() else listOf(Color.White, Color(0xFFF1DCFF)))
-    Column(Modifier.fillMaxWidth().padding(top = 20.dp, end = 8.dp).clearAndSetSemantics { }) {
+    Column(Modifier.fillMaxWidth().padding(top = 20.dp, end = 8.dp).clearAndSetSemantics { contentDescription = description }) {
         Row(Modifier.fillMaxWidth().height(72.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.Bottom) {
             months.forEachIndexed { i, m ->
                 val last = i == months.lastIndex
-                val h = (abs(m.savings) / max * 0.9).toFloat().coerceAtLeast(0.05f)
+                val h = (m.balance.coerceAtLeast(0.0) / max * 0.9).toFloat().coerceAtLeast(0.05f)
                 // Each bar starts a little after the one before it.
                 val local = ((grow * (months.size + 2) - i) / 3f).coerceIn(0f, 1f)
                 Box(
@@ -754,9 +769,8 @@ private fun HeroMonthBars(months: List<MonthlySummary>, language: AppLanguage) {
         }
         Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             months.forEachIndexed { i, m ->
-                val ym = runCatching { YearMonth.parse(m.month) }.getOrNull()
                 Text(
-                    (ym?.let { monthAbbr(it.monthValue, language) } ?: m.label).uppercase(),
+                    abbr(m).uppercase(),
                     style = NovaType.caption.copy(letterSpacing = 0.08.em),
                     color = if (i == months.lastIndex) Color.White else colors.heroLabel,
                     fontWeight = if (i == months.lastIndex) FontWeight.SemiBold else FontWeight.Medium,

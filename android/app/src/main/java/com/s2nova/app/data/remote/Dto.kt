@@ -489,12 +489,26 @@ data class ReportTotalsDto(val income: Double, val expenses: Double, val savings
 data class ReportCategoryDto(val categoryId: String, val amount: Double)
 
 @Serializable
+data class ReportChangeDto(val categoryId: String, val current: Double, val previous: Double)
+
+@Serializable
+data class ReportChangesDto(val current: Double, val previous: Double, val categories: List<ReportChangeDto>)
+
+@Serializable
+data class BalancePointDto(val month: String, val balance: Double)
+
+@Serializable
+data class ReportNetWorthDto(val history: List<BalancePointDto> = emptyList())
+
+@Serializable
 data class ReportDto(
     val range: Int,
     val months: List<MonthSummaryDto>,
     val totals: ReportTotalsDto,
     val previousTotals: ReportTotalsDto,
     val categories: List<ReportCategoryDto>,
+    val changes: ReportChangesDto? = null,
+    val netWorth: ReportNetWorthDto? = null,
 )
 
 // GET /alerts — one flat shape for the four alert kinds the backend emits

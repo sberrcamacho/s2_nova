@@ -25,6 +25,13 @@ function mockInicio({ alertsFail = false, empty = false } = {}) {
     ),
     http.get(`${BASE}/goals`, () => HttpResponse.json([])),
     http.get(`${BASE}/recurring-series`, () => HttpResponse.json([])),
+    http.get(`${BASE}/summary/report`, () =>
+      HttpResponse.json({
+        categories: [],
+        incomeSources: [],
+        netWorth: { history: [{ month: '2026-07', balance: 15_000_000, netWorth: 15_000_000 }, { month: '2026-08', balance: 16_147_300, netWorth: 16_567_300 }] },
+      }),
+    ),
   )
 }
 
@@ -47,6 +54,13 @@ describe('InicioPage', () => {
     expect(screen.getByText('Sin alertas pendientes.')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Restaurar' }))
     expect(screen.getByText('Camilo Restrepo te debe')).toBeInTheDocument()
+  })
+
+  it('charts the balance at each month close, named for screen readers', async () => {
+    mockSession()
+    mockInicio()
+    renderApp(<InicioPage />)
+    expect(await screen.findByRole('button', { name: /^Saldo al cierre de cada mes: Jul \$15\.000\.000, Ago \$16\.147\.300\./ })).toBeInTheDocument()
   })
 
   it('hides amounts from screen readers when blurBalance is on', async () => {

@@ -111,6 +111,7 @@ const dictionary = {
   "v2.header.search": { es: "Buscar movimientos, categorías…", en: "Search transactions, categories…" },
   "v2.header.newTx": { es: "Nuevo movimiento", en: "New transaction" },
   "inicio.balance": { es: "SALDO TOTAL", en: "TOTAL BALANCE" },
+  "inicio.balanceBars": { es: "Saldo al cierre de cada mes: {0}. Ver Patrimonio en Reportes", en: "Balance at each month's close: {0}. See Net worth in Reports" },
   "inicio.walletsOne": { es: "1 billetera", en: "1 wallet" },
   "inicio.walletsMany": { es: "{0} billeteras", en: "{0} wallets" },
   "inicio.showAmounts": { es: "Mostrar montos", en: "Show amounts" },

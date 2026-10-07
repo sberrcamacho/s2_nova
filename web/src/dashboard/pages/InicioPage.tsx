@@ -54,9 +54,10 @@ interface InicioData {
   alerts: AppAlert[] | null
   goals: Goal[] | null
   series: RecurringSeries[] | null
+  balances: BalancePoint[] | null
 }
 
-const EMPTY: InicioData = { wallets: null, months: null, alerts: null, goals: null, series: null }
+const EMPTY: InicioData = { wallets: null, months: null, alerts: null, goals: null, series: null, balances: null }
 
 // Each block keeps its last loaded data when a refresh fails (the sync
 // banner says so).
@@ -72,8 +73,10 @@ function useInicioData(version: number) {
       alertService.getAlerts(today),
       goalService.getGoals(),
       recurringService.getRecurringSeries(),
+      // The wallets' balance at each month's close, from the report.
+      summaryService.getReport(6, today).then((r) => r.netWorth.history),
     ])
-    const keys = ['wallets', 'months', 'alerts', 'goals', 'series'] as const
+    const keys = ['wallets', 'months', 'alerts', 'goals', 'series', 'balances'] as const
     setData((prev) => {
       const next = { ...prev } as Record<(typeof keys)[number], unknown>
       results.forEach((r, i) => {
@@ -239,7 +242,7 @@ export default function InicioPage() {
                 {t('inicio.wallets.empty')}
               </button>
             )}
-            <MonthBars months={data.months} language={language} />
+            <BalanceBars history={data.balances} onOpen={() => navigate('/reportes?tab=patrimonio')} />
           </div>
         </section>
 
@@ -603,36 +606,51 @@ function StatTile({
   )
 }
 
-// Six months of net savings (income − expenses), oldest first; the current
-// month is the solid bar.
-function MonthBars({ months, language }: { months: MonthTotals[] | null; language: 'es' | 'en' }) {
-  if (!months) return <SkeletonBar className="mt-auto h-32 w-full" dark />
-  const max = Math.max(1, ...months.map((m) => Math.abs(m.net)))
+interface BalancePoint {
+  month: string
+  balance: number
+}
+
+// The wallets' balance at the close of each of the last six months (the
+// current one up to today), so the bars tell how the figure above got here;
+// the last bar is that figure. Opens Reportes › Patrimonio.
+function BalanceBars({ history, onOpen }: { history: BalancePoint[] | null; onOpen: () => void }) {
+  const { t, language } = useTranslation()
+  const { format } = useCurrency()
+  const { hidden } = useHideAmounts()
+  if (!history) return <SkeletonBar className="mt-auto h-32 w-full" dark />
+  if (history.length < 2) return null
+  const max = Math.max(1, ...history.map((h) => h.balance))
+  const summary = fill(
+    t('inicio.balanceBars'),
+    history.map((h) => `${monthAbbr(h.month, language)} ${hidden ? t('inicio.amountHidden') : format(h.balance)}`).join(', '),
+  )
   return (
-    <div aria-hidden="true" className="mt-auto pt-8">
-      <div className="flex h-32 items-end gap-2">
-        {months.map((m, i) => {
-          const last = i === months.length - 1
+    <button type="button" onClick={onOpen} aria-label={summary} className="mt-auto cursor-pointer pt-8 text-left">
+      <div aria-hidden="true" className="flex h-32 items-end gap-2">
+        {history.map((h, i) => {
+          const last = i === history.length - 1
           return (
             <div
-              key={m.month}
-              className="nova-grow flex-1 rounded-t-[6px] rounded-b-[2px]"
+              key={h.month}
+              title={`${monthAbbr(h.month, language)} · ${hidden ? t('inicio.amountHidden') : format(h.balance)}`}
+              className="nova-grow flex-1 rounded-t-[6px] rounded-b-[2px] transition-opacity hover:opacity-80"
               style={{
-                height: `${Math.max(4, Math.round((Math.abs(m.net) / max) * 83))}%`,
+                height: `${Math.max(4, Math.round((Math.max(0, h.balance) / max) * 90))}%`,
                 background: last ? 'var(--hero-bar)' : 'var(--hero-bar-soft)',
               }}
             />
           )
         })}
       </div>
-      <div className="mt-2.5 flex gap-2 text-caption uppercase tracking-[.08em] text-[var(--hero-label)]">
-        {months.map((m, i) => (
-          <span key={m.month} className={cn('flex-1 text-center', i === months.length - 1 && 'font-semibold text-[var(--hero-text)]')}>
-            {monthAbbr(m.month, language)}
+      <div aria-hidden="true" className="mt-2.5 flex gap-2 text-caption uppercase tracking-[.08em] text-[var(--hero-label)]">
+        {history.map((h, i) => (
+          <span key={h.month} className={cn('flex-1 text-center', i === history.length - 1 && 'font-semibold text-[var(--hero-text)]')}>
+            {monthAbbr(h.month, language)}
           </span>
         ))}
       </div>
-    </div>
+    </button>
   )
 }
 

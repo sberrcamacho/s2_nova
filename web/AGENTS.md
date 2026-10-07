@@ -58,7 +58,9 @@ Reportes** — plus **Ajustes** in the footer. Pre-v2 paths (`/overview`,
   12-column grid driven by a container query on the content width (12
   columns from 1024 px, 2 from 640 px, 1 below). Balance hero (sum of
   wallets, eye toggle for the shared hide-amounts preference, wallets pill
-  → `/billeteras`, 6-month net bars) · Ingresos / Gastos / Ahorro stat
+  → `/billeteras`, bars of the wallets' balance at each of the last six
+  month closes from the report's `netWorth.history`, opening Reportes ›
+  Patrimonio) · Ingresos / Gastos / Ahorro stat
   tiles (month from `summaryService`, change vs last month) · Alertas
   (shared backend rules via `alertService`; two shown, "Ver todas" expands;
   dismissals are per user in localStorage, pruned to live ids) ·

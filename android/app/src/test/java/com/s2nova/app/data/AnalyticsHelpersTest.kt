@@ -78,4 +78,28 @@ class AnalyticsHelpersTest {
         val trend = AnalyticsHelpers.savingsTrend(transactions, months = 1)
         assertEquals(150_000.0, trend.last().balance)
     }
+
+    // Same rule as the backend's `changes`: this month up to today against
+    // last month up to the same day, top 3 categories by absolute change.
+    @Test
+    fun `changes compares this month so far with the same days of last month`() {
+        val e = TransactionType.EXPENSE
+        val transactions = listOf(
+            txn(300_000.0, e, date = "2026-08-05", category = "exp.food"),
+            txn(500_000.0, e, date = "2026-08-20", category = "exp.food"), // after today
+            txn(90_000.0, e, date = "2026-07-03", category = "exp.food"),
+            txn(70_000.0, e, date = "2026-07-15", category = "exp.food"), // after the same day
+            txn(40_000.0, e, date = "2026-08-02", category = "exp.fun"),
+            txn(30_000.0, e, date = "2026-07-09", category = "exp.transport"),
+            txn(10_000.0, e, date = "2026-08-01", category = "exp.health"),
+            txn(5_000.0, e, date = "2026-07-01", category = "exp.health"),
+            txn(20_000.0, e, date = "2026-08-04", category = "exp.home"),
+            txn(20_000.0, e, date = "2026-07-04", category = "exp.home"), // no change
+            txn(99_000.0, e, TransactionStatus.PLANNED, date = "2026-08-06", category = "exp.fun"),
+        )
+        val changes = AnalyticsHelpers.changes(transactions, today = "2026-08-10", principal = "COP")
+        assertEquals(370_000.0, changes.current)
+        assertEquals(145_000.0, changes.previous)
+        assertEquals(listOf("exp.food" to 210_000.0, "exp.fun" to 40_000.0, "exp.transport" to -30_000.0), changes.categories.map { it.category to it.delta })
+    }
 }

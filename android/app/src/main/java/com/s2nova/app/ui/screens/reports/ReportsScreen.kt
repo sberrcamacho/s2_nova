@@ -74,6 +74,8 @@ import com.s2nova.app.ui.components.categoryName
 import com.s2nova.app.ui.rememberAppLanguage
 import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
+import com.s2nova.app.ui.monthName
+import com.s2nova.app.data.todayISO
 import com.s2nova.app.ui.screens.home.SyncErrorBanner
 import com.s2nova.app.ui.theme.NovaColors
 import com.s2nova.app.ui.theme.NovaType
@@ -123,7 +125,8 @@ private fun niceCeiling(max: Double): Double {
 private fun percentText(value: Int, language: AppLanguage): String =
     if (language == AppLanguage.EN) "$value%" else "$value %"
 
-// Reportes: a 3M/6M/12M segmented control, the period totals as a 2×2
+// Reportes: "¿Qué cambió?" (this month so far against the same days of last
+// month), a 3M/6M/12M segmented control, the period totals as a 2×2
 // bento against the range before it, "Ingresos vs gastos" as a grouped bar
 // chart with a value axis and a tap readout, and this month's "Gasto por
 // categoría". Every figure comes from GET /summary/report — the same one
@@ -154,7 +157,6 @@ fun ReportsScreen() {
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
             Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 12.dp)) {
                 Text(t(StringKey.TITLE_REPORTS), style = NovaType.headline, color = MaterialTheme.colorScheme.onBackground)
-                RangeSegmented(range, onPick = { range = it }, modifier = Modifier.padding(top = 12.dp).tourTarget("rep.range", 12.dp))
             }
 
             LazyColumn(
@@ -167,7 +169,10 @@ fun ReportsScreen() {
                         SyncErrorBanner(message = t(StringKey.HOME_SYNC_ERROR), action = t(StringKey.COMMON_RETRY), onRetry = { scope.launch { load() } })
                     }
                 }
-                item { Box(Modifier.novaRise(0).tourTarget("rep.totals", 20.dp)) { TotalsBento(report) } }
+                item { Box(Modifier.novaRise(0)) { ChangesCard(report) } }
+                // The range applies to what follows, not to "¿Qué cambió?".
+                item { RangeSegmented(range, onPick = { range = it }, modifier = Modifier.padding(top = 4.dp).tourTarget("rep.range", 12.dp)) }
+                item { Box(Modifier.novaRise(1).tourTarget("rep.totals", 20.dp)) { TotalsBento(report) } }
                 item { Box(Modifier.novaRise(2)) { BarsCard(report, t(RANGES.first { it.first == range }.third)) } }
                 item { Box(Modifier.novaRise(3).tourTarget("rep.breakdown", 20.dp)) { CategoryCard(report) } }
                 item { Spacer(Modifier.height(58.dp)) }
@@ -482,6 +487,72 @@ private fun Bar(fraction: Float, color: Color, delayMillis: Int = 0) {
     )
 }
 
+// "¿Qué cambió?": one sentence on this month's spending so far against the
+// same days of last month, then the (up to 3) categories that moved the
+// most, each with its arrow and sign so the direction isn't carried by
+// color alone. Web shows the same card at the top of Reportes › Gastos.
+@Composable
+private fun ChangesCard(report: Report?) {
+    val t = rememberStrings()
+    val colors = NovaColors.current
+    val format = rememberCurrencyFormatter()
+    val language = rememberAppLanguage()
+    val today = java.time.LocalDate.parse(todayISO())
+    val thisMonth = monthName(today.monthValue, language)
+    val lastMonth = monthName(today.minusMonths(1).monthValue, language)
+    val changes = report?.changes
+    ReportCard {
+        CardTitle(t(StringKey.REPORTS_CHANGES_TITLE), t(StringKey.REPORTS_CHANGES_SUB).format(today.dayOfMonth.toString(), thisMonth, lastMonth))
+        if (changes == null) {
+            Box(Modifier.padding(top = 12.dp)) { Placeholder(0.8f, 18) }
+            return@ReportCard
+        }
+        val diff = changes.current - changes.previous
+        val sentence = when {
+            changes.current == 0.0 && changes.previous == 0.0 -> t(StringKey.REPORTS_CHANGES_EMPTY)
+            diff > 0 -> t(StringKey.REPORTS_CHANGES_MORE).format(format(diff), lastMonth)
+            diff < 0 -> t(StringKey.REPORTS_CHANGES_LESS).format(format(-diff), lastMonth)
+            else -> t(StringKey.REPORTS_CHANGES_SAME).format(lastMonth)
+        }
+        Text(sentence, style = NovaType.body, color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 10.dp))
+        if (changes.categories.isNotEmpty()) {
+            Column(Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                changes.categories.forEach { c ->
+                    val up = c.delta > 0
+                    Row(
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(colors.surfaceSunken).padding(horizontal = 12.dp, vertical = 10.dp)
+                            .semantics(mergeDescendants = true) {},
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        CatMark(c.category, 32.dp)
+                        Column(Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(categoryName(c.category), style = NovaType.label, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                                Text(
+                                    (if (up) "↑ +" else "↓ −") + format(abs(c.delta)),
+                                    style = NovaType.label.copy(fontFeatureSettings = "tnum", fontWeight = FontWeight.SemiBold),
+                                    color = if (up) colors.negative else colors.positive,
+                                    maxLines = 1,
+                                    softWrap = false,
+                                    modifier = Modifier.padding(start = 8.dp),
+                                )
+                            }
+                            Text(
+                                format(c.previous) + " → " + format(c.current),
+                                style = NovaType.caption.copy(fontFeatureSettings = "tnum"),
+                                color = colors.textDim,
+                                maxLines = 1,
+                                softWrap = false,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 // "Gasto por categoría": this month's top five as horizontal bars (widths
 // relative to the largest, as on Web), each with its mark and amount.
 @Composable
@@ -491,7 +562,8 @@ private fun CategoryCard(report: Report?) {
     val format = rememberCurrencyFormatter()
     val top = report?.categories?.take(5)
     ReportCard {
-        CardTitle(t(StringKey.REPORTS_SPEND_BY_CATEGORY))
+        // The current month, not the range: the title names it.
+        CardTitle(t(StringKey.REPORTS_SPEND_IN).format(monthName(java.time.LocalDate.parse(todayISO()).monthValue, rememberAppLanguage())), t(StringKey.REPORTS_THIS_MONTH))
         Column(modifier = Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             if (top == null) {
                 repeat(4) { Placeholder(1f, 28) }
