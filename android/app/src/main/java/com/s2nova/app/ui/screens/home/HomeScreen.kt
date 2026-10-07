@@ -1,5 +1,6 @@
 package com.s2nova.app.ui.screens.home
 
+import com.s2nova.app.ui.tour.tourTarget
 import com.s2nova.app.ui.theme.NovaMotion
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -238,6 +239,7 @@ fun HomeScreen(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .size(48.dp)
+                    .tourTarget("inicio.alerts", 24.dp)
                     .clip(CircleShape)
                     .clickable(onClickLabel = t(StringKey.SETTINGS_NOTIFICATIONS), role = Role.Button) { showNotifications = true }
                     .semantics { contentDescription = t(StringKey.SETTINGS_NOTIFICATIONS) },
@@ -317,7 +319,7 @@ fun HomeScreen(
 
                 // 2×1 hero.
                 item {
-                    Box(Modifier.novaRise(0, enabled = !introPlayed)) {
+                    Box(Modifier.novaRise(0, enabled = !introPlayed).tourTarget("inicio.balance", 24.dp)) {
                     BalanceHero(
                         balance = balance,
                         countUp = dataLoaded,
@@ -338,7 +340,7 @@ fun HomeScreen(
                 item {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min).novaRise(1, enabled = !introPlayed),
+                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min).novaRise(1, enabled = !introPlayed).tourTarget("inicio.month", 20.dp),
                     ) {
                         StatTile(
                             label = t(StringKey.HOME_INCOME),
@@ -687,6 +689,7 @@ private fun BalanceHero(
                 modifier = Modifier
                     .height(48.dp)
                     .offset(x = (-4).dp)
+                    .tourTarget("inicio.wallets", 8.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .clickable(role = Role.Button, onClick = onOpenWallets),
             ) {

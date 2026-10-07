@@ -1,5 +1,6 @@
 package com.s2nova.app.ui.screens.addtransaction
 
+import com.s2nova.app.ui.tour.tourTarget
 import com.s2nova.app.ui.theme.appCanvas
 import android.content.Context
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -508,9 +509,9 @@ fun AddTransactionScreen(
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            TypeSegmented(s, typeLocked = s.editing)
-            AmountHero(s, cur, wcur, rate, value, wallet.name)
-            CategoryRow(s)
+            Box(Modifier.tourTarget("nm.type", 14.dp)) { TypeSegmented(s, typeLocked = s.editing) }
+            Box(Modifier.tourTarget("nm.amount", 16.dp)) { AmountHero(s, cur, wcur, rate, value, wallet.name) }
+            Box(Modifier.tourTarget("nm.category", 16.dp)) { CategoryRow(s) }
 
             Column {
                 FieldLabel(tr(if (s.isIncome) StringKey.NM_WALLET_IN else if (s.isTransfer) StringKey.NM_WALLET_FROM else StringKey.NM_WALLET))
@@ -594,7 +595,7 @@ fun AddTransactionScreen(
                 }
             }
 
-            MoreOptions(s, open = moreOpen, onToggle = { moreOpen = !moreOpen }, pickedBudgetLabel = pickedBudget?.budget?.name, goalName = goals.firstOrNull { it.id == s.goalId }?.name)
+            Box(Modifier.tourTarget("nm.more", 16.dp)) { MoreOptions(s, open = moreOpen, onToggle = { moreOpen = !moreOpen }, pickedBudgetLabel = pickedBudget?.budget?.name, goalName = goals.firstOrNull { it.id == s.goalId }?.name) }
 
             if (editSeriesId != null) {
                 DraftSheetDeleteRow(label = t(StringKey.RECURRING_DELETE), onClick = { deleting = true })

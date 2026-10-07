@@ -1,5 +1,6 @@
 package com.s2nova.app.ui.nav
 
+import com.s2nova.app.ui.tour.tourTarget
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import com.s2nova.app.ui.theme.pressScale
@@ -142,7 +143,8 @@ fun NovaBottomBar(
                     .fillMaxWidth()
                     // Keeps the tabs clear of the system gesture bar / 3-button nav.
                     .windowInsetsPadding(WindowInsets.navigationBars)
-                    .padding(start = 2.dp, top = 8.dp, end = 2.dp, bottom = 6.dp),
+                    .padding(start = 2.dp, top = 8.dp, end = 2.dp, bottom = 6.dp)
+                    .tourTarget("nav.main", 0.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 TABS.forEachIndexed { index, tab ->
@@ -166,6 +168,7 @@ fun NovaBottomBar(
                 // Centre of the FAB sits on the bar's top edge.
                 .padding(top = FabTouchTop - fabSize / 2)
                 .size(fabSize)
+                .tourTarget("nav.add", fabSize / 2)
                 .pressScale(fabInteraction, pressedScale = 0.92f)
                 .shadow(elevation = 6.dp, shape = CircleShape, ambientColor = NovaColors.current.cta.last().copy(alpha = 0.35f), spotColor = NovaColors.current.cta.last().copy(alpha = 0.35f))
                 .clip(CircleShape)

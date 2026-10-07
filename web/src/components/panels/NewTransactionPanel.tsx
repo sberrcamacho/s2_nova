@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState, type DragEvent, type ReactNode } from 'react'
+import { useAutoTour } from '@/components/tour/TourProvider'
 import { useNavigate } from 'react-router-dom'
 import { SidePanel } from '@/components/panels/SidePanel'
 import { CategoryMark, GlyphMark, PlanMark } from '@/components/v2/CategoryMark'
-import { CancelButton, ErrorBox, Flat, GridCell, IC, Icon, RadioRow, WarnDialog } from '@/components/v2/Kit'
+import { CancelButton, ErrorBox, Flat, GridCell, IC, Icon, RadioRow } from '@/components/v2/Kit'
+import { OverdraftWarning } from '@/components/v2/OverdraftWarning'
 import { AjSwitch } from '@/dashboard/components/ajustes/AjustesUi'
 import { categoryColor, categoryIdFor, categoryGlyph, categoryLabel, categoryName, childCategories, isInCategory, parentCategories, parentOf, useCategories } from '@/lib/backendCategories'
 import { currencyInfo, formatMoney, referenceRate } from '@/lib/currency'
@@ -179,6 +181,8 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
   const [walletId, setWalletId] = useState<string | null>(e0?.accountId ?? null)
   const [toId, setToId] = useState<string | null>(e0?.transferAccountId ?? null)
   const [section, setSection] = useState<Section | null>(null)
+  // Its tour runs over the panel itself; not when editing a movement.
+  useAutoTour('tour.nuevo', !editing, { insidePanel: true })
   // Progressive disclosure: "Más opciones" starts open only when an option
   // is already set (editing a movement that has one).
   const [moreOpen, setMoreOpen] = useState(!!e0 && (!!e0.note || !!e0.attachment || !!e0.counterpartyName || !!e0.customBudgetId || !!e0.loanKind || !!e0.goalId || !!e0.recurringSeriesId || e0.date !== todayISO()))
@@ -714,7 +718,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
         </>
       }
     >
-      <div role="radiogroup" aria-label={t('nm.typeLabel')} className="flex h-11 gap-1 rounded-[12px] bg-surface-sunken p-1">
+      <div role="radiogroup" aria-label={t('nm.typeLabel')} data-tour="nm.type" className="flex h-11 gap-1 rounded-[12px] bg-surface-sunken p-1">
         {TYPES.map((value) => {
           const on = type === value
           return (
@@ -739,6 +743,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
       </div>
 
       <div
+        data-tour="nm.amount"
         className="relative flex flex-col gap-2 overflow-hidden rounded-[16px] border border-border-input bg-surface px-[18px] py-4 text-ink focus-within:border-2 focus-within:border-primary-border"
       >
         <div className="flex items-center gap-2">
@@ -885,6 +890,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
         <button
           type="button"
           onClick={() => setSection('cat')}
+          data-tour="nm.category"
           className="flex min-h-16 cursor-pointer items-center gap-3 nova-card px-4 py-3 text-left hover:border-border-strong"
         >
           {catDone && leaf ? <CategoryMark category={leaf} box={40} /> : <GlyphMark paths={TAX_VIS.other.glyph} color="var(--color-text-tertiary)" box={40} />}
@@ -961,32 +967,12 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
 
       {err && <ErrorBox>{err}</ErrorBox>}
       {overdraftAsk !== null && (
-        <WarnDialog
-          title={t('nm.overdraft.title')}
-          body={fill(t('nm.overdraft.body'), walletName)}
-          details={(() => {
-            // What the wallet has to spend (including what an edited
-            // movement gives back), what this one takes, and where it lands.
-            const available = (wallet?.currentBalance ?? 0) + refund
-            // The sign and the figure never wrap apart; the amount keeps its width.
-            const line = (label: string, value: number, strong = false) => (
-              <div className="flex items-center gap-3">
-                <span className={`min-w-0 flex-1 truncate ${strong ? 'text-body-sm font-semibold text-ink' : 'text-body-sm text-ink-secondary'}`}>{label}</span>
-                <span className={`font-numeric shrink-0 whitespace-nowrap text-amount tabular-nums ${strong ? 'font-semibold text-negative' : 'font-medium text-ink'}`}>{formatMoney(value, wcur)}</span>
-              </div>
-            )
-            return (
-              <div className="flex flex-col gap-2.5">
-                {line(t('nm.overdraft.available'), available)}
-                {line(t('nm.overdraft.spend'), overdraftAsk - available)}
-                <hr className="border-0 border-t border-border" />
-                {line(t('nm.overdraft.left'), overdraftAsk, true)}
-              </div>
-            )
-          })()}
-          cancel={t('nm.overdraft.review')}
-          cta={t('nm.overdraft.confirm')}
-          onCancel={() => setOverdraftAsk(null)}
+        <OverdraftWarning
+          walletName={walletName}
+          currency={wcur}
+          available={(wallet?.currentBalance ?? 0) + refund}
+          after={overdraftAsk}
+          onReview={() => setOverdraftAsk(null)}
           onConfirm={() => void save(true)}
         />
       )}
@@ -1014,7 +1000,7 @@ function MoreOptions({
 }) {
   const { t } = useTranslation()
   return (
-    <section className="nova-card">
+    <section data-tour="nm.more" className="nova-card">
       <button type="button" onClick={onToggle} aria-expanded={open} className="flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-[16px] px-4 py-3 text-left hover:bg-v2-subtle">
         <div className="min-w-0 flex-1">
           <div className="text-title-sm font-semibold text-ink">{t('nm.moreOptions')}</div>

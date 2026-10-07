@@ -1,5 +1,6 @@
 package com.s2nova.app.ui.screens.budgets
 
+import com.s2nova.app.ui.tour.tourTarget
 import com.s2nova.app.ui.theme.appCanvas
 import com.s2nova.app.ui.theme.cardAurora
 import com.s2nova.app.ui.theme.ctaBrush
@@ -136,11 +137,13 @@ fun PlanesScreen(initialTab: Int = 0, initialLoanSide: LoanKind = LoanKind.LENT)
                     color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.semantics { heading() },
                 )
-                PlanesTabs(
-                    labels = listOf(t(StringKey.TITLE_BUDGETS), t(StringKey.GOALS_TITLE), t(StringKey.PLANS_TAB)),
-                    selected = tab,
-                    onSelect = { tab = it },
-                )
+                Box(Modifier.tourTarget("planes.tabs", 0.dp)) {
+                    PlanesTabs(
+                        labels = listOf(t(StringKey.TITLE_BUDGETS), t(StringKey.GOALS_TITLE), t(StringKey.PLANS_TAB)),
+                        selected = tab,
+                        onSelect = { tab = it },
+                    )
+                }
             }
             when (tab) {
                 0 -> BudgetsTab()
@@ -282,11 +285,11 @@ private fun BudgetsTab() {
         }
 
         item {
-            DashedNewRow(label = t(StringKey.BUDGETS_NEW), onClick = { draft = BudgetEditDraft() })
+            DashedNewRow(label = t(StringKey.BUDGETS_NEW), onClick = { draft = BudgetEditDraft() }, modifier = Modifier.tourTarget("planes.create", 16.dp))
         }
 
         itemsIndexed(progressList, key = { _, it -> it.budget.id }) { i, progress ->
-            androidx.compose.foundation.layout.Box(novaItem().novaRise(i + 1)) { BudgetCard(progress) { draft = BudgetEditDraft.from(progress) } }
+            androidx.compose.foundation.layout.Box(novaItem().novaRise(i + 1).then(if (i == 0) Modifier.tourTarget("planes.card", 20.dp) else Modifier)) { BudgetCard(progress) { draft = BudgetEditDraft.from(progress) } }
         }
 
         if (progressList.isEmpty() && !dataLoaded) {

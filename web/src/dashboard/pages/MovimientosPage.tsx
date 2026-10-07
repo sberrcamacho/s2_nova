@@ -1,4 +1,5 @@
 import { ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
+import { useAutoTour } from '@/components/tour/TourProvider'
 import { currentLanguage, fill, tr, type TranslationKey } from '@/lib/i18n/translations'
 import { MONTHS_LONG } from '@/lib/inicio'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -193,6 +194,7 @@ export default function MovimientosPage() {
       ? fill(tr('mv.count'), txns.filter((x) => !isSched(x)).length, txns.filter(isSched).length)
       : ' '
   const open = openId ? txns?.find((x) => x.id === openId) : undefined
+  useAutoTour('tour.movimientos', filtered !== null)
 
   const close = () => {
     setOpenId(null)
@@ -212,10 +214,10 @@ export default function MovimientosPage() {
 
       <div className="flex flex-col gap-3">
         <div>
-          <h1 className="text-display-sm font-medium tracking-[-.025em]">{tr('guide.movimientos.label')}</h1>
+          <h1 className="text-display-sm font-medium tracking-[-.025em]">{tr('v2.nav.movimientos')}</h1>
           <div className="mt-1 text-body-sm text-ink-secondary">{subtitle}</div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div data-tour="mov.filters" className="flex flex-wrap items-center gap-2">
           <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={tr('mv.type')}>
             {FILTERS.map((key) => (
               <Flat
@@ -256,7 +258,7 @@ export default function MovimientosPage() {
         <section className="nova-card px-5 py-[30px] text-center text-body-sm text-ink-secondary">{tr('mv.empty')}</section>
       ) : (
         <div className="flex flex-col gap-5">
-          {groups.map((g) => {
+          {groups.map((g, gi) => {
             const unit = 10 ** currencyInfo(principal).decimals
             const raw = g.items.reduce((a, x) => a + (x.type === 'transfer' ? 0 : x.type === 'income' ? 1 : -1) * toPrincipal(x), 0)
             const sum = (Math.sign(raw) * Math.round(Math.abs(raw) * unit)) / unit
@@ -280,6 +282,7 @@ export default function MovimientosPage() {
                       hidden={hidden}
                       onOpen={() => setOpenId(x.id)}
                       fresh={isFresh(x.id)}
+                      tour={gi === 0 && i === 0 ? 'mov.row' : undefined}
                     />
                   ))}
                 </div>
@@ -308,7 +311,7 @@ export default function MovimientosPage() {
 // ListRow (DESIGN-SYSTEM.md §6.2): icon 40, a one-line title and meta line,
 // and an intrinsic-width amount column; at least 56 px tall. The attachment
 // and repeat badges and a Programado's `warning` clock sit in the meta line.
-function MovementRow({ x, last, wallet, principal, hidden, onOpen, fresh }: { x: Transaction; last: boolean; wallet: string; principal: string; hidden: boolean; onOpen: () => void; fresh: boolean }) {
+function MovementRow({ x, last, wallet, principal, hidden, onOpen, fresh, tour }: { x: Transaction; last: boolean; wallet: string; principal: string; hidden: boolean; onOpen: () => void; fresh: boolean; tour?: string }) {
   const sched = isSched(x)
   const label = categoryLabel(x.type === 'transfer' ? TRANSFER : x.category)
   const sub = `${label} · ${[x.merchant || x.counterpartyName, wallet].filter(Boolean).join(' · ')} · ${sched ? `${shortDayMonth(x.date)} ` : ''}${x.time}`
@@ -318,6 +321,7 @@ function MovementRow({ x, last, wallet, principal, hidden, onOpen, fresh }: { x:
     <button
       type="button"
       onClick={onOpen}
+      data-tour={tour}
       className={cn('flex min-h-14 w-full cursor-pointer items-center gap-3 px-4 py-3 text-left text-ink hover:bg-surface-sunken', !last && 'border-b border-divider', fresh && 'animate-row-in')}
     >
       <CategoryMark category={x.type === 'transfer' ? TRANSFER : x.category} box={40} />

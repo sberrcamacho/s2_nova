@@ -13,7 +13,7 @@ const budget = {
 }
 const wallets = [
   { id: 'a1', name: 'Bancolombia — Ahorros', type: 'SAVINGS', currency: 'COP', initialBalance: 0, currentBalance: 0, principalBalance: 0 },
-  { id: 'a2', name: 'Nequi', type: 'NEQUI', currency: 'COP', initialBalance: 0, currentBalance: 0, principalBalance: 0 },
+  { id: 'a2', name: 'Nequi', type: 'NEQUI', currency: 'COP', initialBalance: 0, currentBalance: 300_000, principalBalance: 300_000 },
 ]
 const goal = {
   id: 'g1', name: 'Viaje a Perú', icon: 'travel', targetAmount: 4_500_000, initialAmount: 500_000, currentAmount: 1_980_000, remaining: 2_520_000, percentage: 44,
@@ -224,6 +224,39 @@ describe('Planes', () => {
     await vi.waitFor(() => expect(body).toEqual({ amount: 100_000, accountId: 'a2', date: '2026-09-23' }))
   })
 
+  it('warns before an abono takes the wallet below zero, and lets it through', async () => {
+    mockSession()
+    let body: unknown = null
+    server.use(
+      http.get(`${BASE}/accounts`, () => HttpResponse.json(wallets)),
+      http.get(`${BASE}/goals`, () => HttpResponse.json([goal])),
+      http.post(`${BASE}/goals/:id/contribute`, async ({ request }) => {
+        body = await request.json()
+        return HttpResponse.json(goal)
+      }),
+    )
+    const user = userEvent.setup()
+    renderApp(<PlanesPage />, { route: '/planes?tab=metas' })
+
+    await user.click(await screen.findByRole('button', { name: 'Abonar' }))
+    const dialog = screen.getByRole('dialog', { name: 'Abonar a Viaje a Perú' })
+    await user.type(within(dialog).getByPlaceholderText('0'), '400000')
+    await user.click(within(dialog).getByRole('radio', { name: 'Nequi' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Abonar' }))
+
+    const warn = await screen.findByRole('alertdialog', { name: 'Saldo insuficiente' })
+    expect(warn).toHaveTextContent('Con este abono, Nequi queda en negativo.')
+    expect(warn).toHaveTextContent('Saldo después')
+    expect(warn).toHaveTextContent('−$100.000')
+    expect(body).toBeNull()
+    await user.click(within(warn).getByRole('button', { name: 'Revisar monto' }))
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+
+    await user.click(within(dialog).getByRole('button', { name: 'Abonar' }))
+    await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Abonar de todos modos' }))
+    await vi.waitFor(() => expect(body).toEqual({ amount: 400_000, accountId: 'a2', date: '2026-09-23' }))
+  })
+
   it('deletes a goal returning its money to the wallets it came from', async () => {
     mockSession()
     let deleted: unknown = null
@@ -277,6 +310,34 @@ describe('Planes', () => {
     await vi.waitFor(() =>
       expect(posted).toMatchObject({ accountId: 'a2', type: 'INCOME', amount: 300_000, categoryId: 'uuid-inc.other', loanKind: 'BORROWED', counterpartyName: 'Andrés', description: 'Deuda con Andrés' }),
     )
+  })
+
+  it('warns before lending more than the wallet has', async () => {
+    mockSession()
+    let posted: Record<string, unknown> | null = null
+    server.use(
+      http.get(`${BASE}/accounts`, () => HttpResponse.json(wallets)),
+      http.get(`${BASE}/transactions`, () => HttpResponse.json([])),
+      http.post(`${BASE}/transactions`, async ({ request }) => {
+        posted = (await request.json()) as Record<string, unknown>
+        return HttpResponse.json({ ...loanRow, id: 'l3' }, { status: 201 })
+      }),
+    )
+    const user = userEvent.setup()
+    renderApp(<PlanesPage />, { route: '/planes?tab=prestamos' })
+
+    await user.click(await screen.findByRole('button', { name: /Registrar préstamo/ }))
+    const dialog = screen.getByRole('dialog', { name: 'Registrar préstamo' })
+    await user.type(within(dialog).getByPlaceholderText('Nombre de la contraparte'), 'Camila')
+    await user.type(within(dialog).getByLabelText('MONTO'), '500000')
+    await user.click(within(dialog).getByRole('button', { name: 'Nequi' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Guardar registro' }))
+
+    const warn = await screen.findByRole('alertdialog', { name: 'Saldo insuficiente' })
+    expect(warn).toHaveTextContent('Con este préstamo, Nequi queda en negativo.')
+    expect(posted).toBeNull()
+    await user.click(within(warn).getByRole('button', { name: 'Guardar de todos modos' }))
+    await vi.waitFor(() => expect(posted).toMatchObject({ accountId: 'a2', type: 'EXPENSE', amount: 500_000, loanKind: 'LENT' }))
   })
 
   it('records an abono on a lent loan', async () => {

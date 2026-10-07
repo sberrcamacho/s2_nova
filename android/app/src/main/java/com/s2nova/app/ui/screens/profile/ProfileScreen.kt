@@ -82,15 +82,9 @@ fun ProfileScreen(
     val activeSeriesCount = recurringSeries.count { it.active }
     val recurringDetail = if (activeSeriesCount > 0) "$activeSeriesCount ${t(StringKey.PROFILE_RECURRING_DETAIL)}" else t(StringKey.PROFILE_RECURRING_DETAIL_EMPTY)
 
-    // "Bogotá, D.C. · desde nov 2024"
-    val placeAndSince = remember(user?.memberSince, user?.city, language) {
-        val since = user?.memberSince?.let { formatMemberSince(it, language) }
-        val city = user?.city?.takeIf { it.isNotBlank() }
-        when {
-            city != null && since != null -> "$city · $since"
-            city != null -> city
-            else -> since?.replaceFirstChar { it.uppercase() }
-        }
+    // "Desde nov 2024"
+    val placeAndSince = remember(user?.memberSince, language) {
+        user?.memberSince?.let { formatMemberSince(it, language) }?.replaceFirstChar { it.uppercase() }
     }
 
     // The app shell's Scaffold already applies the status-bar inset.

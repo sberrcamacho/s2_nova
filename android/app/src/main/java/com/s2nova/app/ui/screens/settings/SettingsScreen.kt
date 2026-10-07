@@ -84,7 +84,7 @@ private val LOCK_OPTIONS = listOf(1, 5, 15, 60, 0)
 // Cambiar contraseña, Zona de riesgo and Acerca de. Sessions live on Web.
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpenCurrencies: () -> Unit = {}, onOpenPassword: () -> Unit = {}, onOpenReset: () -> Unit = {}, onOpenDelete: () -> Unit = {}) {
+fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpenCurrencies: () -> Unit = {}, onOpenPassword: () -> Unit = {}, onOpenReset: () -> Unit = {}, onOpenDelete: () -> Unit = {}, onCreateAccount: () -> Unit = {}) {
     val user by AppContainer.authRepository.currentUser.collectAsStateWithLifecycle()
     val darkOverride by ThemeController.darkOverride.collectAsStateWithLifecycle()
     val isDark = darkOverride ?: androidx.compose.foundation.isSystemInDarkTheme()
@@ -93,8 +93,9 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
     val scope = rememberCoroutineScope()
 
     var name by remember { mutableStateOf(user?.name ?: "") }
-    var phone by remember { mutableStateOf(user?.phone ?: "") }
-    var city by remember { mutableStateOf(user?.city ?: "") }
+    // The example account can't rename itself, set a password, reset its
+    // data or delete itself: those rows give way to "Crear cuenta".
+    val guest = AppContainer.isGuest
     val preferences = user?.preferences
     val context = androidx.compose.ui.platform.LocalContext.current
     // On only when Android lets them through too.
@@ -145,10 +146,11 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 SectionTitle(t(StringKey.SETTINGS_PERSONAL_INFO))
+                if (guest) {
+                    GuestAccountCard(onCreateAccount)
+                } else {
                 FieldBox(label = t(StringKey.SETTINGS_FULL_NAME), value = name, onValueChange = { name = it })
                 FieldBox(label = t(StringKey.SETTINGS_EMAIL), value = user?.email ?: "", onValueChange = {}, enabled = false)
-                FieldBox(label = t(StringKey.SETTINGS_PHONE), value = phone, onValueChange = { phone = it })
-                FieldBox(label = t(StringKey.SETTINGS_CITY), value = city, onValueChange = { city = it })
                 // Primary button (§6.3): 52 dp, full width.
                 Box(
                     contentAlignment = Alignment.Center,
@@ -160,11 +162,12 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
                         .background(com.s2nova.app.ui.theme.ctaBrush())
                         .clickable(role = Role.Button) {
                             scope.launch {
-                                AppContainer.authRepository.updateProfile(name = name, phone = phone.trim().ifBlank { null }, city = city.trim().ifBlank { null })
+                                AppContainer.authRepository.updateProfile(name = name)
                             }
                         },
                 ) {
                     Text(t(StringKey.SETTINGS_SAVE_CHANGES), style = NovaType.label, color = androidx.compose.ui.graphics.Color.White, maxLines = 1, softWrap = false)
+                }
                 }
 
                 SectionTitle(t(StringKey.SETTINGS_PREFERENCES), modifier = Modifier.padding(top = 16.dp))
@@ -271,9 +274,9 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
                     }
                 }
 
-                LinkCard(tr(StringKey.SET_PW_TITLE), tr(StringKey.SET_PW_DETAIL), Modifier.padding(top = 8.dp), onOpenPassword)
+                if (!guest) LinkCard(tr(if (user?.hasPassword != false) StringKey.SET_PW_TITLE else StringKey.SET_PW_CREATE_TITLE), tr(if (user?.hasPassword != false) StringKey.SET_PW_DETAIL else StringKey.SET_PW_CREATE_DETAIL), Modifier.padding(top = 8.dp), onOpenPassword)
 
-                // "Ver las guías otra vez" resets the mini-guides (ONBOARDING.md §3).
+                // "Ver los recorridos otra vez" clears the finished tours (guidesSeen).
                 NovaCard(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), onClick = {
                     scope.launch { AppContainer.authRepository.updateGuides(emptySet(), false) }
                     com.s2nova.app.ui.Snack.show(tr(StringKey.SET_GUIDES_TOAST))
@@ -292,14 +295,37 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
                         Text("S2 Nova · v${BuildConfig.VERSION_NAME}", style = NovaType.bodySm, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
-                SectionTitle(tr(StringKey.SET_RISK_TITLE), modifier = Modifier.padding(top = 16.dp))
-                Text(tr(StringKey.SET_RISK_HINT), style = NovaType.bodySm, color = colors.textDim)
-                DangerLinkCard(tr(StringKey.SET_RESET_TITLE), tr(StringKey.SET_RESET_DETAIL), onOpenReset)
-                DangerLinkCard(tr(StringKey.SET_DELETE_TITLE), tr(StringKey.SET_DELETE_DETAIL), onOpenDelete)
+                if (!guest) {
+                    SectionTitle(tr(StringKey.SET_RISK_TITLE), modifier = Modifier.padding(top = 16.dp))
+                    Text(tr(StringKey.SET_RISK_HINT), style = NovaType.bodySm, color = colors.textDim)
+                    DangerLinkCard(tr(StringKey.SET_RESET_TITLE), tr(StringKey.SET_RESET_DETAIL), onOpenReset)
+                    DangerLinkCard(tr(StringKey.SET_DELETE_TITLE), tr(StringKey.SET_DELETE_DETAIL), onOpenDelete)
+                }
             }
         }
     }
 
+}
+
+// Guest mode: why the account rows are missing, and the way to get them.
+@Composable
+private fun GuestAccountCard(onCreateAccount: () -> Unit) {
+    NovaCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(tr(StringKey.SET_GUEST_ACCOUNT), style = NovaType.bodySm, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(com.s2nova.app.ui.theme.ctaBrush())
+                    .clickable(role = Role.Button, onClick = onCreateAccount)
+                    .padding(horizontal = 16.dp),
+            ) {
+                Text(tr(StringKey.AUTH_CREATE), style = NovaType.label, color = androidx.compose.ui.graphics.Color.White, maxLines = 1, softWrap = false)
+            }
+        }
+    }
 }
 
 @Composable

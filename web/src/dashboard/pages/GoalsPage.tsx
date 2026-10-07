@@ -64,7 +64,7 @@ export default function GoalsPage({ adding, onAddingDone }: { adding: boolean; o
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 min-[1100px]:grid-cols-2">
-          {goals.map((g) => {
+          {goals.map((g, i) => {
             const ic = planIcon(g.icon)
             const pct = Math.min(100, g.percentage)
             return (
@@ -72,6 +72,7 @@ export default function GoalsPage({ adding, onAddingDone }: { adding: boolean; o
                 key={g.id}
                 role="button"
                 tabIndex={0}
+                data-tour={i === 0 ? 'planes.card' : undefined}
                 onClick={() => setEditing(g)}
                 onKeyDown={(e) => e.key === 'Enter' && setEditing(g)}
                 className="cursor-pointer nova-card p-5 text-ink hover:border-border-strong focus-visible:outline-2 focus-visible:outline-focus"

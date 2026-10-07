@@ -1,4 +1,5 @@
 import { tr, type TranslationKey } from '@/lib/i18n/translations'
+import { useAutoTour } from '@/components/tour/TourProvider'
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CategoryMark, Glyph, GlyphMark } from '@/components/v2/CategoryMark'
@@ -131,6 +132,8 @@ export default function InicioPage() {
   // Goal contributions and upcoming Programados first; "meta casi cumplida"
   // is left to the Metas tile.
   const FIRST = ['goal_plan_due', 'goal_plan_auto', 'tx_planned']
+  // The general tour, once the hero, the month and the alerts are drawn.
+  useAutoTour('tour.welcome', data.wallets !== null && data.months !== null && data.alerts !== null)
   const visibleAlerts = (data.alerts ?? [])
     .filter((a) => !dismissed.includes(a.id) && a.kind !== 'goal_near')
     .sort((a, b) => Number(FIRST.includes(b.kind)) - Number(FIRST.includes(a.kind)))
@@ -194,6 +197,7 @@ export default function InicioPage() {
         {/* Balance hero, 8 */}
         <section
           aria-label={t('inicio.balance')}
+          data-tour="inicio.balance"
           className="nova-rise relative col-span-full min-h-[300px] overflow-hidden rounded-[24px] border border-[var(--hero-line)] px-7 py-6 text-[var(--hero-text)] shadow-[var(--card-shadow)] @min-[1024px]:col-span-8"
           style={{ background: 'var(--hero-bg)' }}
         >
@@ -223,6 +227,7 @@ export default function InicioPage() {
               <button
                 type="button"
                 onClick={() => navigate('/billeteras')}
+                data-tour="inicio.wallets"
                 className="mt-4 inline-flex h-9 cursor-pointer self-start items-center gap-1.5 whitespace-nowrap rounded-[8px] border border-[var(--hero-line)] bg-[var(--hero-tile)] pl-3.5 pr-2.5 text-label font-medium text-[var(--hero-text)] backdrop-blur transition-colors hover:bg-white/20"
               >
                 {data.wallets.length === 1 ? t('inicio.walletsOne') : fill(t('inicio.walletsMany'), data.wallets.length)}
@@ -239,7 +244,7 @@ export default function InicioPage() {
         </section>
 
         {/* Ingresos / Gastos / Ahorro, 4 (stacked on wide pages) */}
-        <div className="col-span-full grid grid-cols-2 gap-4 @min-[640px]:grid-cols-3 @min-[640px]:gap-5 @min-[1024px]:col-span-4 @min-[1024px]:grid-cols-1">
+        <div data-tour="inicio.month" className="col-span-full grid grid-cols-2 gap-4 @min-[640px]:grid-cols-3 @min-[640px]:gap-5 @min-[1024px]:col-span-4 @min-[1024px]:grid-cols-1">
           <StatTile label={t('inicio.stat.income')} a11yLabel={t('inicio.monthIncome')} value={thisMonth?.income ?? null} previous={lastMonth?.income} previousMonth={lastMonth?.month} kind="income" hidden={hidden} />
           <StatTile label={t('inicio.stat.expenses')} a11yLabel={t('inicio.monthExpenses')} value={thisMonth?.expenses ?? null} previous={lastMonth?.expenses} previousMonth={lastMonth?.month} kind="expense" hidden={hidden} />
           <StatTile
@@ -255,7 +260,7 @@ export default function InicioPage() {
         </div>
 
         {/* Alertas, 4 */}
-        <Card className="col-span-full @min-[1024px]:col-span-4">
+        <Card tour="inicio.alerts" className="col-span-full @min-[1024px]:col-span-4">
           <CardHead
             title={t('inicio.alerts.title')}
             subtitle={data.alerts === null ? undefined : visibleAlerts.length === 0 ? undefined : visibleAlerts.length === 1 ? t('inicio.alerts.oneOpen') : fill(t('inicio.alerts.manyOpen'), visibleAlerts.length)}
@@ -488,8 +493,12 @@ function budgetsSubtitle(today: string, language: 'es' | 'en', t: (k: Translatio
 
 // ── Pieces ──────────────────────────────────────────────────────────────
 
-function Card({ children, className }: { children: ReactNode; className?: string }) {
-  return <section className={cn('nova-card min-w-0 p-6 text-ink', className)}>{children}</section>
+function Card({ children, className, tour }: { children: ReactNode; className?: string; tour?: string }) {
+  return (
+    <section data-tour={tour} className={cn('nova-card min-w-0 p-6 text-ink', className)}>
+      {children}
+    </section>
+  )
 }
 
 // Card title row: `title` + an optional trailing link. On a narrow card the

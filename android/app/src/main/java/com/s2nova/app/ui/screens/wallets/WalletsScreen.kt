@@ -1,5 +1,6 @@
 package com.s2nova.app.ui.screens.wallets
 
+import com.s2nova.app.ui.tour.tourTarget
 import com.s2nova.app.ui.components.StepDivider
 import com.s2nova.app.ui.components.StepOptionGroup
 import com.s2nova.app.ui.components.StepOptionRow
@@ -134,7 +135,7 @@ fun WalletsScreen(onBack: () -> Unit) {
             )
             val newLabel = tr(StringKey.WALLET_NEW)
             Box(
-                Modifier.size(48.dp).clip(CircleShape)
+                Modifier.size(48.dp).tourTarget("wal.add", 24.dp).clip(CircleShape)
                     .clickable(role = Role.Button) { draft = WalletDraft(null, "", WalletKind.CASH, "", principal, true) }
                     .semantics { contentDescription = newLabel },
                 contentAlignment = Alignment.Center,
@@ -152,7 +153,7 @@ fun WalletsScreen(onBack: () -> Unit) {
             // The total in the principal currency, with the conversion note.
             if (wallets.isNotEmpty()) {
                 Column(
-                    Modifier.novaRise(0).fillMaxWidth().clip(shape).background(MaterialTheme.colorScheme.surface).cardAurora().border(1.dp, MaterialTheme.colorScheme.outline, shape).padding(16.dp),
+                    Modifier.novaRise(0).tourTarget("wal.total", 16.dp).fillMaxWidth().clip(shape).background(MaterialTheme.colorScheme.surface).cardAurora().border(1.dp, MaterialTheme.colorScheme.outline, shape).padding(16.dp),
                 ) {
                     Text(tr(StringKey.WALLET_TOTAL_LABEL, principal).uppercase(), style = NovaType.overline, color = colors.textDim, maxLines = 1, softWrap = false)
                     // Large light figure, as web's Billeteras total.
@@ -181,6 +182,7 @@ fun WalletsScreen(onBack: () -> Unit) {
                         val editLabel = tr(StringKey.WALLET_EDIT)
                         Row(
                             Modifier
+                                .then(if (index == 0) Modifier.tourTarget("wal.card", 16.dp) else Modifier)
                                 .fillMaxWidth()
                                 .heightIn(min = 64.dp)
                                 .clickable(onClickLabel = editLabel, role = Role.Button) { draft = WalletDraft(w.id, w.name, kind, com.s2nova.app.ui.screens.addtransaction.AmountPad.numStr(w.currentBalance), w.currency, false) }

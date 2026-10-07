@@ -528,6 +528,16 @@ OnboardingRepository (DataStore-backed)
   `tutorialCompleted` (not `onboardingCompleted` — replaying the tutorial
   should not re-trigger account/income setup).
 
+> **As built (2026-10):** the plan above was superseded. Both clients have a
+> 2-step first run (moneda principal → primera billetera) gated by the
+> server's `onboardingCompleted`, and the tutorial is a set of in-place
+> product tours (DESIGN-SYSTEM.md §6.13): a general one on Inicio and one per
+> main screen. Their completion lives server-side in
+> `UserPreferences.guidesSeen` (`tour.welcome`, `tour.movimientos`, …), so a
+> tour finished on one client doesn't repeat on the other; Ajustes ›
+> "Ver los recorridos otra vez" clears it. `tutorialCompleted` is only set
+> at the end of first run and gates nothing.
+
 ## 13. Migration strategy from mock data
 
 Incremental, per-entity, both apps stay shippable at every step — this is

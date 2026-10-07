@@ -1,5 +1,8 @@
 package com.s2nova.app.ui.screens.loans
 
+import com.s2nova.app.data.formatMoney
+import com.s2nova.app.ui.components.OverdraftDialog
+import com.s2nova.app.ui.tour.tourTarget
 import com.s2nova.app.ui.components.DateOptionRow
 import com.s2nova.app.ui.components.StepDivider
 import com.s2nova.app.ui.components.StepOptionGroup
@@ -154,12 +157,13 @@ fun LoansTab(initialSide: LoanKind = LoanKind.LENT) {
                 onClick = {
                     draft = LoanDraft(id = null, side = side, counterparty = "", amountText = "", walletId = wallets.firstOrNull()?.id, dueDate = null)
                 },
+                modifier = Modifier.tourTarget("planes.create", 16.dp),
             )
         }
 
         itemsIndexed(items, key = { _, it -> it.id }) { i, txn ->
             LoanCard(
-                modifier = Modifier.novaRise(i + 1),
+                modifier = Modifier.novaRise(i + 1).then(if (i == 0) Modifier.tourTarget("planes.card", 20.dp) else Modifier),
                 txn = txn,
                 outstanding = AppContainer.transactionRepository.outstandingFor(txn),
                 onPay = { payingFor = txn },
@@ -191,6 +195,53 @@ fun LoansTab(initialSide: LoanKind = LoanKind.LENT) {
         item { Spacer(Modifier.height(72.dp)) }
     }
 
+    var loanOverdraft by remember { mutableStateOf<LoanOverdraft?>(null) }
+    fun saveLoan(d: LoanDraft, confirmed: Boolean) {
+        val amount = com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(d.amountText).takeIf { it > 0 }
+        val walletId = d.walletId
+        if (amount != null && amount > 0 && walletId != null && d.counterparty.isNotBlank()) {
+            val counterparty = d.counterparty.trim()
+            // Lending takes the money out of the wallet; when that leaves it
+            // below zero, Guardar asks first. Editing gives back what the
+            // loan had already taken from this same wallet.
+            val wallet = wallets.firstOrNull { it.id == walletId }
+            val original = d.id?.let { id -> items.firstOrNull { it.id == id } }
+            val refund = original?.takeIf { it.loanKind == LoanKind.LENT && it.walletId == walletId }?.let { it.walletAmount ?: it.amount } ?: 0.0
+            val left = if (d.side == LoanKind.LENT && wallet != null) {
+                com.s2nova.app.ui.screens.addtransaction.overdraftAfter(wallet.currentBalance, amount, refund, wallet.type == com.s2nova.app.data.model.WalletType.BANK_CREDIT, false)
+            } else null
+            if (left != null && !confirmed) {
+                loanOverdraft = LoanOverdraft(wallet!!, wallet.currentBalance + refund, left)
+                return
+            }
+            loanOverdraft = null
+            scope.launch {
+                runCatching {
+                    if (d.id == null) {
+                        AppContainer.transactionRepository.add(
+                            NewTransactionInput(
+                                walletId = walletId,
+                                description = tr(if (d.side == LoanKind.LENT) StringKey.LOAN_DESC_LENT else StringKey.LOAN_DESC_BORROWED, counterparty),
+                                amount = amount,
+                                type = if (d.side == LoanKind.LENT) TransactionType.EXPENSE else TransactionType.INCOME,
+                                category = "exp.other",
+                                date = todayISO(),
+                                loanKind = d.side,
+                                counterpartyName = counterparty,
+                                dueDate = d.dueDate,
+                            ),
+                        )
+                    } else {
+                        AppContainer.transactionRepository.updateLoan(d.id, amount, walletId, d.side, counterparty, d.dueDate)
+                    }
+                }
+                runCatching { AppContainer.walletRepository.refresh() }
+                side = d.side
+            }
+            draft = null
+        }
+    }
+
     val d = draft
     if (d != null) {
         LoanDraftSheet(
@@ -198,37 +249,7 @@ fun LoansTab(initialSide: LoanKind = LoanKind.LENT) {
             wallets = wallets,
             onDraftChange = { draft = it },
             onDismiss = { draft = null },
-            onSave = {
-                val amount = com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(d.amountText).takeIf { it > 0 }
-                val walletId = d.walletId
-                if (amount != null && amount > 0 && walletId != null && d.counterparty.isNotBlank()) {
-                    val counterparty = d.counterparty.trim()
-                    scope.launch {
-                        runCatching {
-                            if (d.id == null) {
-                                AppContainer.transactionRepository.add(
-                                    NewTransactionInput(
-                                        walletId = walletId,
-                                        description = tr(if (d.side == LoanKind.LENT) StringKey.LOAN_DESC_LENT else StringKey.LOAN_DESC_BORROWED, counterparty),
-                                        amount = amount,
-                                        type = if (d.side == LoanKind.LENT) TransactionType.EXPENSE else TransactionType.INCOME,
-                                        category = "exp.other",
-                                        date = todayISO(),
-                                        loanKind = d.side,
-                                        counterpartyName = counterparty,
-                                        dueDate = d.dueDate,
-                                    ),
-                                )
-                            } else {
-                                AppContainer.transactionRepository.updateLoan(d.id, amount, walletId, d.side, counterparty, d.dueDate)
-                            }
-                        }
-                        runCatching { AppContainer.walletRepository.refresh() }
-                        side = d.side
-                    }
-                    draft = null
-                }
-            },
+            onSave = { saveLoan(d, false) },
             onRequestDelete = {
                 val target = items.firstOrNull { it.id == d.id }
                 if (target != null) {
@@ -236,6 +257,23 @@ fun LoansTab(initialSide: LoanKind = LoanKind.LENT) {
                     draft = null
                 }
             },
+        )
+    }
+
+    loanOverdraft?.let { o ->
+        OverdraftDialog(
+            title = t(StringKey.NM_OVERDRAFT_TITLE),
+            body = tr(StringKey.LOAN_OVERDRAFT_BODY, shortWalletName(o.wallet.name)),
+            availableLabel = t(StringKey.NM_OVERDRAFT_AVAILABLE),
+            available = formatMoney(o.available, o.wallet.currency),
+            spendLabel = t(StringKey.LOAN_OVERDRAFT_SPEND),
+            spend = formatMoney(o.left - o.available, o.wallet.currency),
+            leftLabel = t(StringKey.NM_OVERDRAFT_LEFT),
+            left = formatMoney(o.left, o.wallet.currency),
+            review = t(StringKey.NM_OVERDRAFT_REVIEW),
+            confirm = t(StringKey.NM_OVERDRAFT_CONFIRM),
+            onReview = { loanOverdraft = null },
+            onConfirm = { draft?.let { saveLoan(it, true) } ?: run { loanOverdraft = null } },
         )
     }
 
@@ -500,3 +538,6 @@ private fun LoanAction(label: String, color: androidx.compose.ui.graphics.Color,
         Text(label, style = NovaType.label, color = color, maxLines = 1, softWrap = false)
     }
 }
+
+// "Saldo insuficiente" for a loan that's about to take its wallet below zero.
+private data class LoanOverdraft(val wallet: Wallet, val available: Double, val left: Double)

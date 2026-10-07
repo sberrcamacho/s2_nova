@@ -1,4 +1,5 @@
 import { NAV_ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
+import { useAutoTour } from '@/components/tour/TourProvider'
 import { walletGlyph } from '@/dashboard/components/WalletModal'
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -49,6 +50,7 @@ export default function ReportesPage() {
   const [series, setSeries] = useState<RecurringSeries[] | null>(null)
   const [failed, setFailed] = useState(false)
   const today = todayISO()
+  useAutoTour('tour.reportes', report !== null)
 
   const load = useCallback(async () => {
     const [r, w, s] = await Promise.allSettled([summaryService.getReport(range, today), accountService.getWallets(), recurringService.getRecurringSeries()])
@@ -87,7 +89,7 @@ export default function ReportesPage() {
           {t('rep.export')}
         </button>
         {/* Segmented 3M / 6M / 12M (DESIGN-SYSTEM.md §6.5). */}
-        <div role="radiogroup" aria-label={t('rep.range')} className="flex h-10 gap-1 rounded-[12px] bg-surface-sunken p-1">
+        <div role="radiogroup" aria-label={t('rep.range')} data-tour="rep.range" className="flex h-10 gap-1 rounded-[12px] bg-surface-sunken p-1">
           {RANGES.map((r) => (
             <button
               key={r}
@@ -108,7 +110,7 @@ export default function ReportesPage() {
       </div>
 
       {/* Scrolls on a narrow screen: the right edge fades while a tab is out of view. */}
-      <div role="tablist" className="scrollbar-none flex gap-1 overflow-x-auto border-b border-border [mask-image:linear-gradient(to_right,#000_calc(100%-32px),transparent)] min-[640px]:[mask-image:none]">
+      <div role="tablist" data-tour="rep.tabs" className="scrollbar-none flex gap-1 overflow-x-auto border-b border-border [mask-image:linear-gradient(to_right,#000_calc(100%-32px),transparent)] min-[640px]:[mask-image:none]">
         {TABS.map((x) => {
           const on = x.id === tab
           return (
@@ -139,9 +141,9 @@ export default function ReportesPage() {
   )
 }
 
-function Card({ children, className, style }: { children: ReactNode; className?: string; style?: CSSProperties }) {
+function Card({ children, className, style, tour }: { children: ReactNode; className?: string; style?: CSSProperties; tour?: string }) {
   return (
-    <div className={cn('min-w-0 nova-card p-5', className)} style={style}>
+    <div data-tour={tour} className={cn('min-w-0 nova-card p-5', className)} style={style}>
       {children}
     </div>
   )
@@ -220,7 +222,7 @@ function SpendingTab({ report }: { report: Report | null }) {
           </div>
         </Card>
 
-        <Card>
+        <Card tour="rep.breakdown">
           <div className="flex flex-wrap items-start justify-between gap-2.5">
             <CardTitle title={t('rep.whereMoneyWent')} subtitle={fill(t('rep.sameCategories'), monthYear(report?.month ?? todayISO().slice(0, 7), language))} />
             <div role="radiogroup" aria-label={t('rep.whereMoneyWent')} className="flex gap-0.5 rounded-[12px] border border-border bg-v2-surface2 p-[3px]">

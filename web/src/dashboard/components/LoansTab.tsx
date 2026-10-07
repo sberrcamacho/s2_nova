@@ -84,7 +84,7 @@ export function LoansTab({ side, onSide, adding, onAddingDone }: { side: LoanKin
 
       <div className="grid grid-cols-1 gap-4 min-[1100px]:grid-cols-2">
         {loans === null && <RowSkeletons count={3} box={40} />}
-        {sideLoans.map((l) => {
+        {sideLoans.map((l, i) => {
           const out = outOf(l)
           const paid = paidOf(l)
           const done = out === 0
@@ -94,7 +94,7 @@ export function LoansTab({ side, onSide, adding, onAddingDone }: { side: LoanKin
             fill(t(isLent ? 'loans.metaLent' : 'loans.metaBorrowed'), walletName(l.accountId), shortDate(l.date, language)) +
             (l.dueDate ? fill(t('loans.metaDue'), shortDate(l.dueDate, language)) : '')
           return (
-            <div key={l.id} className="flex flex-col gap-3.5 rounded-[16px] border border-border bg-surface p-5 text-ink">
+            <div key={l.id} data-tour={i === 0 ? 'planes.card' : undefined} className="flex flex-col gap-3.5 rounded-[16px] border border-border bg-surface p-5 text-ink">
               <div className="flex items-center gap-3">
                 <CategoryMark category="other" box={40} />
                 <div className="min-w-0 flex-1">

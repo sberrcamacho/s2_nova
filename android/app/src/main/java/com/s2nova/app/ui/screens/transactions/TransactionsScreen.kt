@@ -1,5 +1,6 @@
 package com.s2nova.app.ui.screens.transactions
 
+import com.s2nova.app.ui.tour.tourTarget
 import com.s2nova.app.ui.theme.appCanvas
 import com.s2nova.app.ui.theme.ctaBrush
 import com.s2nova.app.ui.theme.novaRise
@@ -174,8 +175,8 @@ fun TransactionsScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                SearchBox(value = query, onValueChange = { query = it }, modifier = Modifier.weight(1f))
-                FiltersButton(count = activeFilters, onClick = { showFilters = true })
+                SearchBox(value = query, onValueChange = { query = it }, modifier = Modifier.weight(1f).tourTarget("mov.search", 14.dp))
+                Box(Modifier.tourTarget("mov.filters", 14.dp)) { FiltersButton(count = activeFilters, onClick = { showFilters = true }) }
             }
 
             val loaded by AppContainer.dataLoaded.collectAsStateWithLifecycle()
@@ -272,6 +273,7 @@ fun TransactionsScreen(
                             Column(
                                 modifier = novaItem()
                                     .novaRise(rowSeq + i, enabled = !introPlayed)
+                                    .then(if (index == 0 && i == 0) Modifier.tourTarget("mov.row", 20.dp) else Modifier)
                                     .fillMaxWidth()
                                     .clip(shape)
                                     .background(MaterialTheme.colorScheme.surface)
@@ -559,6 +561,7 @@ private fun MovimientosHeader(title: String, programados: String, onOpenRecurrin
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .height(48.dp)
+                    .tourTarget("mov.scheduled", 12.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .clickable(role = Role.Button, onClick = onOpenRecurring)
                     .then(if (labeled) Modifier else Modifier.width(48.dp).semantics { contentDescription = programados }),

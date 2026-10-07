@@ -598,6 +598,46 @@ padding or a pseudo-element on Web.
 - **Loading:** skeletons with the final shape (rows, tiles, chart frame) instead of spinners for anything over 300 ms. Reserve the space so nothing shifts.
 - **Error:** inline where the data belongs, with the cause and a "Reintentar" action.
 
+### 6.13 Product tour
+
+A general tour on the first visit to Inicio, then one per main screen on its
+first visit (Movimientos, Planes, Reportes, Billeteras, Nuevo movimiento).
+Each step highlights one element and explains what it is for.
+
+- **When:** only once the screen's data is drawn and no dialog, panel
+  confirmation or sheet is up; one tour at a time. A step whose element is
+  missing (an empty list, the web sidebar folded on a phone) is left out.
+  At most 7 steps.
+- **Scrim and cut-out:** the dialogs' scrim (`rgba(6,6,12,.62)`) with a
+  rounded cut-out 6 dp/px around the element (its own radius + 4) and a
+  2 dp/px ring in the focus colour, so the target is marked by more than
+  dimming. The cut-out glides between steps (`motion-base`); with reduced
+  motion it jumps and scrolling is instant. The screen scrolls the element
+  into view, clear of the bottom bar.
+- **Card:** `surface-raised` (Android `sheetSurface`), radius 16 px / 20 dp,
+  1 px `outline`, elevation 2, padding 16. Width min(320 px, screen − 32) on
+  Web, screen − 32 dp up to 360 dp on Android. It sits under the element,
+  flips above it when there is no room, and is clamped to the 16 dp/px
+  gutters and the system bars; a step without an element is centred.
+- **Content:** "Paso 2 de 7" (`caption`, `text-secondary`) with progress dots
+  (decorative; the text carries the count), the title (`title-sm`) and one or
+  two lines of `body-sm`. Actions on one line: **Omitir** (text button) on the
+  left, **Anterior** (outlined, from step 2) and **Siguiente** (primary) on the
+  right; the last step's primary reads **Listo**. Labels never wrap: on
+  Android above 130 % font scale Omitir moves to its own line. Targets 48 dp
+  on Android, ≥ 32 px on Web.
+- **Behaviour:** the screen behind takes no input while the tour runs (Web:
+  `inert`; Android: the scrim swallows touches). Esc or Android's back is
+  Omitir; ← / → move between steps on Web. The card is a modal dialog
+  (`role="dialog"` / a traversal group with a pane title); each step moves
+  focus to its title, and focus returns where it was when the tour ends.
+- **Completion:** Listo and Omitir both mark the tour seen in the server's
+  `guidesSeen` (`tour.welcome`, `tour.movimientos`, …, shared by both
+  clients), so it never starts on its own again. Ajustes › "Recorridos ›
+  Ver otra vez" (Android "Ver los recorridos otra vez") clears the list.
+- **Brand restraint:** no gradient on the card; the violet is only in the
+  primary button, the ring and the current dot.
+
 ---
 
 ## 7. Accessibility requirements

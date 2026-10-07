@@ -92,7 +92,7 @@ Planes (category and custom budgets, goals with periodic contributions,
 Préstamos), Reportes, Billeteras with currency, Ajustes (Perfil, Seguridad,
 Monedas, Categorías, change/reset password, danger zone), notifications
 with "Confirmar aporte" / "Omitir esta vez", two-step destructive
-confirmation + undo snackbar, guest mode, 2-step first run, mini-guides,
+confirmation + undo snackbar, guest mode, 2-step first run, product tours,
 loading skeletons. Barcode/QR scanning is wired to `/products` but the scan
 action is parked as "coming soon".
 
@@ -103,7 +103,7 @@ Every v2 area is migrated and on the design system: Inicio, Movimientos
 delete / Deshacer), Planes (Presupuestos, Metas, Préstamos), Reportes,
 Nuevo movimiento, Billeteras, Ajustes (Perfil, Contraseña, Sesiones,
 Monedas, Categorías, Eliminar cuenta, danger zone, CSV import/export),
-password recovery, mini-guides, first run and guest mode. Web shows the
+password recovery, product tours, first run and guest mode. Web shows the
 product linked to a scanned movement in its detail.
 
 ## Tests

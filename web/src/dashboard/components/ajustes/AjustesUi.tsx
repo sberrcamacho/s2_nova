@@ -1,4 +1,5 @@
 import type { CSSProperties, InputHTMLAttributes, ReactNode } from 'react'
+import { useId } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from '@/state/useTranslation'
 import { cn } from '@/lib/cn'
@@ -138,15 +139,35 @@ export function AjSubHeader({ title, subtitle, danger, action, children }: { tit
 
 // Input (§6.6): a visible label above a 44 px field (`tall`: 48 px, the
 // password view).
-export function AjField({ label, tall, ...input }: { label: string; tall?: boolean } & InputHTMLAttributes<HTMLInputElement>) {
+// A labeled field. `error` turns the border red and shows the message
+// under it (with an icon, not color alone), linked to the input.
+export function AjField({ label, tall, error, ...input }: { label: string; tall?: boolean; error?: string } & InputHTMLAttributes<HTMLInputElement>) {
+  const errorId = useId()
   return (
-    <label className="flex min-w-0 flex-col gap-1.5">
-      <span className="text-overline font-semibold text-ink-secondary">{label}</span>
-      <input
-        {...input}
-        className={cn('box-border w-full rounded-[8px] border border-border-input bg-surface px-3.5 font-[inherit] text-body text-ink placeholder:text-ink-tertiary focus:border-primary-border disabled:bg-surface-sunken disabled:text-ink-tertiary', tall ? 'h-12' : 'h-11')}
-      />
-    </label>
+    <div className="flex min-w-0 flex-col gap-1.5">
+      <label className="flex min-w-0 flex-col gap-1.5">
+        <span className="text-overline font-semibold text-ink-secondary">{label}</span>
+        <input
+          {...input}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
+          className={cn(
+            'box-border w-full rounded-[8px] border bg-surface px-3.5 font-[inherit] text-body text-ink placeholder:text-ink-tertiary disabled:bg-surface-sunken disabled:text-ink-tertiary',
+            error ? 'border-2 border-negative' : 'border-border-input focus:border-primary-border',
+            tall ? 'h-12' : 'h-11',
+          )}
+        />
+      </label>
+      {error && (
+        <div id={errorId} className="flex items-center gap-1.5 text-caption font-medium text-negative">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true" className="flex-none">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7.5v5 M12 16.2v.3" />
+          </svg>
+          {error}
+        </div>
+      )}
+    </div>
   )
 }
 

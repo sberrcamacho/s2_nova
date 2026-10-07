@@ -2,6 +2,12 @@ package com.s2nova.app.ui.screens.settings
 
 import com.s2nova.app.ui.theme.appCanvas
 import androidx.compose.foundation.border
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -46,7 +52,31 @@ import retrofit2.HttpException
 
 private fun Throwable.isUnauthorized() = this is HttpException && code() == 401
 
-private fun passwordRulesOk(next: String, confirm: String) = next.length >= 8 && next.any { it.isDigit() } && next == confirm
+// Ajustes › Cambiar contraseña rules, the same as Web's: 8+ characters, a
+// number, and the confirmation matches.
+internal fun passwordRules(next: String, confirm: String): List<Pair<StringKey, Boolean>> = listOf(
+    StringKey.SET_PW_RULE_LENGTH to (next.length >= 8),
+    StringKey.SET_PW_RULE_NUMBER to next.any { it.isDigit() },
+    StringKey.SET_PW_RULE_MATCH to (next.isNotEmpty() && next == confirm),
+)
+
+internal data class PasswordErrors(val current: StringKey? = null, val next: StringKey? = null, val confirm: StringKey? = null) {
+    val none get() = current == null && next == null && confirm == null
+}
+
+// What's wrong with the form, field by field, before calling the backend.
+internal fun passwordErrors(needsCurrent: Boolean, current: String, next: String, confirm: String): PasswordErrors {
+    val rules = passwordRules(next, confirm)
+    return PasswordErrors(
+        current = if (needsCurrent && current.isEmpty()) StringKey.SET_PW_ERR_CURRENT else null,
+        next = when {
+            !rules[0].second || !rules[1].second -> StringKey.SET_PW_ERR_RULES
+            needsCurrent && next == current -> StringKey.SET_PW_SAME
+            else -> null
+        },
+        confirm = if (!rules[2].second) StringKey.SET_PW_ERR_MATCH else null,
+    )
+}
 
 // Shared frame of the three account-security screens: back header and a
 // scrolling column of labeled fields.
@@ -63,7 +93,9 @@ private fun SecurityFrame(title: String, onBack: () -> Unit, content: @Composabl
     }
 }
 
-// Ajustes › Cambiar contraseña (same rules as Web: 8+ characters, a number).
+// Ajustes › Cambiar contraseña: current, new, confirm (same rules as Web).
+// An account that signs in with Google and has no password yet gets
+// "Crear contraseña" instead (new + confirm): there's no current one.
 @Composable
 fun ChangePasswordScreen(onBack: () -> Unit) {
     val user by AppContainer.authRepository.currentUser.collectAsStateWithLifecycle()
@@ -73,36 +105,72 @@ fun ChangePasswordScreen(onBack: () -> Unit) {
     var next by remember { mutableStateOf("") }
     var confirm by remember { mutableStateOf("") }
     var show by remember { mutableStateOf(false) }
+    // Errors sit under the field they are about; others go to `error`.
+    var errors by remember { mutableStateOf(PasswordErrors()) }
     var error by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
+    val colors = NovaColors.current
 
-    SecurityFrame(tr(StringKey.SET_PW_TITLE), onBack) {
-        Text(tr(StringKey.SET_PW_DETAIL), style = NovaType.bodySm, color = NovaColors.current.textDim)
+    SecurityFrame(tr(if (needsCurrent) StringKey.SET_PW_TITLE else StringKey.SET_PW_CREATE_TITLE), onBack) {
+        Text(tr(if (needsCurrent) StringKey.SET_PW_DETAIL else StringKey.SET_PW_CREATE_DETAIL), style = NovaType.bodySm, color = colors.textDim)
         if (needsCurrent) {
-            NovaTextField(current, { current = it; error = null }, tr(StringKey.SET_PW_CURRENT), isPassword = true, passwordVisible = show, onTogglePasswordVisible = { show = !show })
+            NovaTextField(
+                current, { current = it; errors = errors.copy(current = null); error = null }, tr(StringKey.SET_PW_CURRENT),
+                isPassword = true, passwordVisible = show, onTogglePasswordVisible = { show = !show },
+                isError = errors.current != null, errorMessage = errors.current?.let { tr(it) },
+            )
         }
-        NovaTextField(next, { next = it; error = null }, tr(StringKey.AUTH_RESET_NEW), isPassword = true, passwordVisible = show, onTogglePasswordVisible = { show = !show })
         NovaTextField(
-            confirm, { confirm = it; error = null }, tr(StringKey.AUTH_RESET_CONFIRM),
+            next, { next = it; errors = errors.copy(next = null); error = null }, tr(StringKey.AUTH_RESET_NEW),
             isPassword = true, passwordVisible = show, onTogglePasswordVisible = { show = !show },
-            isError = error != null, errorMessage = error,
+            isError = errors.next != null, errorMessage = errors.next?.let { tr(it) },
         )
-        Text(tr(StringKey.AUTH_PW_RULES), style = NovaType.bodySm, color = NovaColors.current.textDim)
+        NovaTextField(
+            confirm, { confirm = it; errors = errors.copy(confirm = null); error = null }, tr(StringKey.AUTH_RESET_CONFIRM),
+            isPassword = true, passwordVisible = show, onTogglePasswordVisible = { show = !show },
+            isError = errors.confirm != null, errorMessage = errors.confirm?.let { tr(it) },
+        )
+        // Live checklist: a met rule shows a check, not only a colour.
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            passwordRules(next, confirm).forEach { (key, ok) ->
+                val label = tr(key)
+                val state = tr(if (ok) StringKey.SET_PW_RULE_MET else StringKey.SET_PW_RULE_MISSING)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = "$label, $state" },
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.size(18.dp).clip(CircleShape)
+                            .then(if (ok) Modifier.background(colors.positive) else Modifier.border(1.dp, colors.borderInput, CircleShape)),
+                    ) {
+                        if (ok) com.s2nova.app.ui.components.V2Icon(com.s2nova.app.ui.components.V2Icons.check, Color.White, 12.dp, strokeWidth = 3f)
+                    }
+                    Text(label, style = NovaType.bodySm, color = if (ok) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+        if (error != null) Text(error!!, style = NovaType.bodySm, color = colors.negative)
         NovaPrimaryButton(
-            text = tr(StringKey.AUTH_RESET_SUBMIT),
+            text = tr(if (needsCurrent) StringKey.AUTH_RESET_SUBMIT else StringKey.SET_PW_CREATE_SUBMIT),
             loading = busy,
-            enabled = passwordRulesOk(next, confirm) && (!needsCurrent || current.isNotEmpty()) && !busy,
+            enabled = !busy,
             onClick = {
-                if (needsCurrent && current == next) { error = tr(StringKey.SET_PW_SAME); return@NovaPrimaryButton }
+                errors = passwordErrors(needsCurrent, current, next, confirm)
+                if (!errors.none) return@NovaPrimaryButton
                 busy = true
                 scope.launch {
                     AppContainer.authRepository.changePassword(current, next)
                         .onSuccess {
                             AppContainer.authRepository.updateUser { it.copy(hasPassword = true) }
-                            Snack.show(tr(StringKey.SET_PW_DONE))
+                            Snack.show(tr(if (needsCurrent) StringKey.SET_PW_DONE else StringKey.SET_PW_CREATED))
                             onBack()
                         }
-                        .onFailure { error = if (it.isUnauthorized()) tr(StringKey.SET_PW_WRONG) else it.toUserMessage(tr(StringKey.SET_PW_WRONG)) }
+                        .onFailure {
+                            if (it.isUnauthorized()) errors = PasswordErrors(current = StringKey.SET_PW_WRONG)
+                            else error = it.toUserMessage(tr(StringKey.SET_PW_WRONG))
+                        }
                     busy = false
                 }
             },

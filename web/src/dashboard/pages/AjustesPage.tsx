@@ -36,7 +36,6 @@ export default function AjustesPage() {
 
   const [year, month] = user.memberSince.split('-').map(Number)
   const memberSince = fill(t('aj.memberSince'), `${MONTHS_LONG[language][month - 1]} ${year}`)
-  const city = user.city.trim()
 
   const onTheme = (next: ThemePreference) => {
     const previous = theme
@@ -105,11 +104,21 @@ export default function AjustesPage() {
           <div className="flex h-14 w-14 flex-none items-center justify-center rounded-full bg-primary text-title font-semibold text-on-primary">{initialsOf(user.name)}</div>
           <div className="min-w-[180px] flex-1">
             <div className="truncate text-title font-semibold">{user.name}</div>
-            <div className="truncate text-body-sm text-ink-secondary">{city ? `${user.email} · ${city}` : user.email}</div>
+            <div className="truncate text-body-sm text-ink-secondary">{user.email}</div>
             <div className="text-body-sm text-ink-tertiary">{memberSince}</div>
           </div>
-          <AjOutlineButton onClick={() => navigate('/ajustes/perfil')}>{t('aj.editProfile')}</AjOutlineButton>
+          {!user.isGuest && <AjOutlineButton onClick={() => navigate('/ajustes/perfil')}>{t('aj.editProfile')}</AjOutlineButton>}
         </div>
+        {/* The example account can't rename itself, set a password, reset
+            its data or delete itself: those rows give way to this. */}
+        {user.isGuest && (
+          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-divider pt-4">
+            <div className="min-w-[220px] flex-1 text-body-sm text-ink-secondary">{t('aj.guestAccount')}</div>
+            <button type="button" onClick={() => navigate('/register')} className="btn-cta h-10 flex-none cursor-pointer whitespace-nowrap rounded-[10px] px-4 text-label font-semibold">
+              {t('guest.cta')}
+            </button>
+          </div>
+        )}
       </AjCard>
 
       <AjCard className="p-5">
@@ -166,9 +175,11 @@ export default function AjustesPage() {
       <AjCard className="p-5">
         <AjCardTitle>{t('aj.security')}</AjCardTitle>
         <div className="mt-2 flex flex-col">
-          <AjRow label={t('aj.password')} detail={passwordDetail}>
-            <AjOutlineButton onClick={() => navigate('/ajustes/contrasena')}>{t('aj.change')}</AjOutlineButton>
-          </AjRow>
+          {!user.isGuest && (
+            <AjRow label={t('aj.password')} detail={passwordDetail}>
+              <AjOutlineButton onClick={() => navigate('/ajustes/contrasena')}>{t(user.hasPassword ? 'aj.change' : 'aj.pw.create')}</AjOutlineButton>
+            </AjRow>
+          )}
           <AjRow label={t('aj.autoLock')} detail={t('aj.autoLockHint')}>
             <AjPills<string>
               value={String(user.preferences.autoLockMinutes)}
@@ -197,22 +208,24 @@ export default function AjustesPage() {
         </div>
       </AjCard>
 
-      <AjCard className="p-5" style={{ borderColor: 'var(--color-negative)' }}>
-        <h2 className="text-title font-semibold text-negative">{t('aj.risk.title')}</h2>
-        <div className="text-body-sm text-ink-secondary">{t('aj.risk.hint')}</div>
-        <div className="mt-2 flex flex-col">
-          <AjRow label={t('aj.reset')} detail={t('aj.resetHint')} danger>
-            <AjOutlineButton danger onClick={() => navigate('/ajustes/restablecer')}>
-              {t('aj.resetBtn')}
-            </AjOutlineButton>
-          </AjRow>
-          <AjRow label={t('aj.deleteAccount')} detail={t('aj.deleteAccountHint')} danger last>
-            <AjOutlineButton danger onClick={() => navigate('/ajustes/eliminar')}>
-              {t('aj.delete')}
-            </AjOutlineButton>
-          </AjRow>
-        </div>
-      </AjCard>
+      {!user.isGuest && (
+        <AjCard className="p-5" style={{ borderColor: 'var(--color-negative)' }}>
+          <h2 className="text-title font-semibold text-negative">{t('aj.risk.title')}</h2>
+          <div className="text-body-sm text-ink-secondary">{t('aj.risk.hint')}</div>
+          <div className="mt-2 flex flex-col">
+            <AjRow label={t('aj.reset')} detail={t('aj.resetHint')} danger>
+              <AjOutlineButton danger onClick={() => navigate('/ajustes/restablecer')}>
+                {t('aj.resetBtn')}
+              </AjOutlineButton>
+            </AjRow>
+            <AjRow label={t('aj.deleteAccount')} detail={t('aj.deleteAccountHint')} danger last>
+              <AjOutlineButton danger onClick={() => navigate('/ajustes/eliminar')}>
+                {t('aj.delete')}
+              </AjOutlineButton>
+            </AjRow>
+          </div>
+        </AjCard>
+      )}
     </div>
   )
 }

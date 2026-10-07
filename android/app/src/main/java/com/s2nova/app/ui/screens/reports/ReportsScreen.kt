@@ -1,5 +1,6 @@
 package com.s2nova.app.ui.screens.reports
 
+import com.s2nova.app.ui.tour.tourTarget
 import com.s2nova.app.ui.theme.appCanvas
 import com.s2nova.app.ui.theme.cardAurora
 import com.s2nova.app.ui.theme.novaRise
@@ -153,7 +154,7 @@ fun ReportsScreen() {
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
             Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 12.dp)) {
                 Text(t(StringKey.TITLE_REPORTS), style = NovaType.headline, color = MaterialTheme.colorScheme.onBackground)
-                RangeSegmented(range, onPick = { range = it }, modifier = Modifier.padding(top = 12.dp))
+                RangeSegmented(range, onPick = { range = it }, modifier = Modifier.padding(top = 12.dp).tourTarget("rep.range", 12.dp))
             }
 
             LazyColumn(
@@ -166,9 +167,9 @@ fun ReportsScreen() {
                         SyncErrorBanner(message = t(StringKey.HOME_SYNC_ERROR), action = t(StringKey.COMMON_RETRY), onRetry = { scope.launch { load() } })
                     }
                 }
-                item { Box(Modifier.novaRise(0)) { TotalsBento(report) } }
+                item { Box(Modifier.novaRise(0).tourTarget("rep.totals", 20.dp)) { TotalsBento(report) } }
                 item { Box(Modifier.novaRise(2)) { BarsCard(report, t(RANGES.first { it.first == range }.third)) } }
-                item { Box(Modifier.novaRise(3)) { CategoryCard(report) } }
+                item { Box(Modifier.novaRise(3).tourTarget("rep.breakdown", 20.dp)) { CategoryCard(report) } }
                 item { Spacer(Modifier.height(58.dp)) }
             }
         }

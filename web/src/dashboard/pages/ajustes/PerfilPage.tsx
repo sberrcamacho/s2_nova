@@ -8,8 +8,8 @@ import { useAuth } from '@/state/AuthContext'
 import { useToast } from '@/state/ToastContext'
 import { useTranslation } from '@/state/useTranslation'
 
-// Ajustes › Editar perfil: name, email, phone and city — the same profile
-// Android edits under Ajustes › Información personal. The backend only
+// Ajustes › Editar perfil: name and email — the profile Android edits
+// under Ajustes › Información personal. The backend only
 // changes the email with the current password, so that one field appears
 // when the email is edited.
 export default function PerfilPage() {
@@ -17,7 +17,7 @@ export default function PerfilPage() {
   const { t } = useTranslation()
   const { showToast } = useToast()
   const navigate = useNavigate()
-  const [draft, setDraft] = useState(() => ({ name: user?.name ?? '', email: user?.email ?? '', phone: user?.phone ?? '', city: user?.city ?? '' }))
+  const [draft, setDraft] = useState(() => ({ name: user?.name ?? '', email: user?.email ?? '' }))
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -41,8 +41,6 @@ export default function PerfilPage() {
     try {
       const updated = await userService.updateProfile({
         name: draft.name.trim(),
-        phone: draft.phone.trim(),
-        city: draft.city.trim(),
         ...(emailChanged ? { email: draft.email.trim(), currentPassword: password } : {}),
       })
       updateUser(updated)
@@ -68,8 +66,6 @@ export default function PerfilPage() {
         <div className="grid grid-cols-2 gap-3.5 max-sm:grid-cols-1">
           <AjField label={t('aj.pr.name')} type="text" autoComplete="name" value={draft.name} onChange={set('name')} placeholder={t('aj.pr.namePlaceholder')} />
           <AjField label={t('aj.pr.email')} type="email" autoComplete="email" value={draft.email} onChange={set('email')} placeholder={t('aj.pr.emailPlaceholder')} />
-          <AjField label={t('aj.pr.phone')} type="tel" autoComplete="tel" value={draft.phone} onChange={set('phone')} placeholder="+57 300 000 0000" />
-          <AjField label={t('aj.pr.city')} type="text" autoComplete="address-level2" value={draft.city} onChange={set('city')} placeholder={t('aj.pr.cityPlaceholder')} />
           {emailChanged && user.hasPassword && (
             <AjField
               label={t('aj.pr.emailPassword')}

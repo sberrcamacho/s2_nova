@@ -75,6 +75,20 @@ const setPasswordSchema = z.object({
 // needing a separate "enabled" flag alongside it.
 const AUTO_LOCK_MINUTE_OPTIONS = [0, 1, 5, 15, 60] as const;
 
+const GUIDE_KEYS = [
+  "inicio",
+  "movimientos",
+  "planes",
+  "reportes",
+  "billeteras",
+  "tour.welcome",
+  "tour.movimientos",
+  "tour.planes",
+  "tour.reportes",
+  "tour.billeteras",
+  "tour.nuevo",
+] as const;
+
 const updatePreferencesSchema = z.object({
   language: z.string().min(2).max(5).optional(),
   currency: z.enum(["COP", "USD"]).optional(),
@@ -89,8 +103,10 @@ const updatePreferencesSchema = z.object({
     .optional(),
   onboardingCompleted: z.boolean().optional(),
   tutorialCompleted: z.boolean().optional(),
-  // Mini-guides (ONBOARDING.md §3): the full seen list, and "Omitir guías".
-  guidesSeen: z.array(z.enum(["inicio", "movimientos", "planes", "reportes", "billeteras"])).max(10).optional(),
+  // Product tours: the full list of tours already finished or skipped
+  // (tour.*). The bare screen keys are the retired mini-guide cards, still
+  // accepted because accounts have them stored. guidesOff is legacy.
+  guidesSeen: z.array(z.enum(GUIDE_KEYS)).max(20).optional(),
   guidesOff: z.boolean().optional(),
 });
 

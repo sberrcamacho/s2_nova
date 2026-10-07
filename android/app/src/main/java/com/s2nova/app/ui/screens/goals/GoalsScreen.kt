@@ -1,5 +1,7 @@
 package com.s2nova.app.ui.screens.goals
 
+import com.s2nova.app.ui.components.OverdraftDialog
+import com.s2nova.app.ui.tour.tourTarget
 import com.s2nova.app.ui.theme.cardAurora
 import com.s2nova.app.ui.theme.ringBrushColors
 import com.s2nova.app.ui.theme.rememberIntroProgress
@@ -125,11 +127,12 @@ fun GoalsTab(snackbarHostState: SnackbarHostState) {
             DashedNewRow(
                 label = t(StringKey.GOALS_NEW),
                 onClick = { draft = GoalDraft() },
+                modifier = Modifier.tourTarget("planes.create", 16.dp),
             )
         }
 
         itemsIndexed(goals, key = { _, it -> it.id }) { i, goal ->
-            Box(Modifier.novaRise(i)) { GoalCard(goal = goal, onEdit = { draft = GoalDraft.from(goal) }, onPay = { paying = goal }) }
+            Box(Modifier.novaRise(i).then(if (i == 0) Modifier.tourTarget("planes.card", 20.dp) else Modifier)) { GoalCard(goal = goal, onEdit = { draft = GoalDraft.from(goal) }, onPay = { paying = goal }) }
         }
 
         if (goals.isEmpty()) {
@@ -499,7 +502,59 @@ private fun GoalPaySheet(
     var walletId by remember { mutableStateOf(wallets.firstOrNull()?.id) }
     var error by remember { mutableStateOf<String?>(null) }
     var saving by remember { mutableStateOf(false) }
+    var overdraftAsk by remember { mutableStateOf<Double?>(null) }
     val amount = com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(amountText)
+    // The abono is in the principal currency; the wallet pays it in its own.
+    // When that takes the wallet below zero, Abonar asks first.
+    val principal = AppContainer.currencyRepository.principal
+    val payWallet = wallets.firstOrNull { it.id == walletId }
+    val overdraft = payWallet?.let {
+        com.s2nova.app.ui.screens.addtransaction.overdraftAfter(
+            it.currentBalance, amount * AppContainer.currencyRepository.rate(principal, it.currency), 0.0, it.type == com.s2nova.app.data.model.WalletType.BANK_CREDIT, false,
+        )
+    }
+
+    fun pay(confirmed: Boolean) {
+        val selectedWallet = walletId ?: return
+        if (overdraft != null && !confirmed) {
+            overdraftAsk = overdraft
+            return
+        }
+        overdraftAsk = null
+        val input = NewTransactionInput(
+            walletId = selectedWallet,
+            description = t(StringKey.GOAL_CONTRIBUTION_DESCRIPTION_PREFIX) + goal.name,
+            amount = amount,
+            type = TransactionType.EXPENSE,
+            category = "exp.other",
+            date = todayISO(),
+            goalId = goal.id,
+        )
+        saving = true
+        scope.launch {
+            val created = runCatching { AppContainer.transactionRepository.add(input) }.getOrNull()
+            if (created == null) {
+                saving = false
+                error = t(StringKey.COMMON_SAVE_ERROR)
+                return@launch
+            }
+            runCatching { AppContainer.walletRepository.refresh() }
+            runCatching { AppContainer.goalRepository.refresh() }
+            onDismiss()
+            val result = snackbarHostState.showSnackbar(
+                message = t(StringKey.GOAL_CONTRIBUTION_SAVED),
+                actionLabel = t(StringKey.COMMON_UNDO),
+                duration = SnackbarDuration.Long,
+            )
+            if (result == SnackbarResult.ActionPerformed) {
+                runCatching {
+                    AppContainer.transactionRepository.delete(created.id)
+                    AppContainer.walletRepository.refresh()
+                    AppContainer.goalRepository.refresh()
+                }
+            }
+        }
+    }
 
     NovaDraftSheet(
         onDismiss = onDismiss,
@@ -527,43 +582,26 @@ private fun GoalPaySheet(
             DraftSheetPrimaryButton(
                 label = t(StringKey.GOAL_CONTRIBUTION_SAVE),
                 enabled = !saving && amount > 0 && walletId != null,
-                onClick = {
-                    val selectedWallet = walletId ?: return@DraftSheetPrimaryButton
-                    val input = NewTransactionInput(
-                        walletId = selectedWallet,
-                        description = t(StringKey.GOAL_CONTRIBUTION_DESCRIPTION_PREFIX) + goal.name,
-                        amount = amount,
-                        type = TransactionType.EXPENSE,
-                        category = "exp.other",
-                        date = todayISO(),
-                        goalId = goal.id,
-                    )
-                    saving = true
-                    scope.launch {
-                        val created = runCatching { AppContainer.transactionRepository.add(input) }.getOrNull()
-                        if (created == null) {
-                            saving = false
-                            error = t(StringKey.COMMON_SAVE_ERROR)
-                            return@launch
-                        }
-                        runCatching { AppContainer.walletRepository.refresh() }
-                        runCatching { AppContainer.goalRepository.refresh() }
-                        onDismiss()
-                        val result = snackbarHostState.showSnackbar(
-                            message = t(StringKey.GOAL_CONTRIBUTION_SAVED),
-                            actionLabel = t(StringKey.COMMON_UNDO),
-                            duration = SnackbarDuration.Long,
-                        )
-                        if (result == SnackbarResult.ActionPerformed) {
-                            runCatching {
-                                AppContainer.transactionRepository.delete(created.id)
-                                AppContainer.walletRepository.refresh()
-                                AppContainer.goalRepository.refresh()
-                            }
-                        }
-                    }
-                },
+                onClick = { pay(false) },
             )
         }
+    }
+
+    overdraftAsk?.let { left ->
+        val w = payWallet ?: return@let
+        OverdraftDialog(
+            title = t(StringKey.NM_OVERDRAFT_TITLE),
+            body = tr(StringKey.GOAL_PAY_OVERDRAFT_BODY, shortWalletName(w.name)),
+            availableLabel = t(StringKey.NM_OVERDRAFT_AVAILABLE),
+            available = formatMoney(w.currentBalance, w.currency),
+            spendLabel = t(StringKey.GOAL_PAY_OVERDRAFT_SPEND),
+            spend = formatMoney(left - w.currentBalance, w.currency),
+            leftLabel = t(StringKey.NM_OVERDRAFT_LEFT),
+            left = formatMoney(left, w.currency),
+            review = t(StringKey.NM_OVERDRAFT_REVIEW),
+            confirm = t(StringKey.GOAL_PAY_OVERDRAFT_CONFIRM),
+            onReview = { overdraftAsk = null },
+            onConfirm = { pay(true) },
+        )
     }
 }

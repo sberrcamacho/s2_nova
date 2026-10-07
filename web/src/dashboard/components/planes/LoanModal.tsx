@@ -3,7 +3,8 @@ import { useState } from 'react'
 import { CancelButton, ConfirmDialog, DangerLink, ErrorBox, Flat, IC, Icon, Label, ModalFooter, ModalTitle, V2Modal } from '@/components/v2/Kit'
 import { AmountHero, SegmentedChoice } from '@/components/v2/Steps'
 import { todayISO } from '@/lib/date'
-import { evalExpr, numStr } from '@/lib/nuevoMovimiento'
+import { evalExpr, numStr, overdraftAfter } from '@/lib/nuevoMovimiento'
+import { OverdraftWarning } from '@/components/v2/OverdraftWarning'
 import { shortDate } from '@/lib/inicio'
 import { shortWallet } from '@/lib/movimientos'
 import { transactionService } from '@/services/transactionService'
@@ -35,7 +36,14 @@ export function LoanModal({ loan, side, wallets, onClose, onSaved }: { loan: Tra
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
   const [confirming, setConfirming] = useState(false)
+  const [overdraftAsk, setOverdraftAsk] = useState<number | null>(null)
   const lent = kind === 'lent'
+  // Lending takes the money out of the wallet (in its own currency); when
+  // that leaves it below zero, Guardar asks first. Editing gives back what
+  // the loan had already taken from this same wallet.
+  const wallet = wallets.find((w) => w.id === walletId)
+  const refund = loan && loan.loanKind === 'lent' && loan.accountId === walletId ? (loan.walletAmount ?? loan.amount) : 0
+  const overdraft = lent && wallet ? overdraftAfter({ balance: wallet.currentBalance, spend: evalExpr(amount), refund, credit: wallet.accountType === 'BANK_CREDIT', future: false }) : null
   const clear = <T,>(set: (v: T) => void) => (v: T) => {
     set(v)
     setErr('')
@@ -53,12 +61,14 @@ export function LoanModal({ loan, side, wallets, onClose, onSaved }: { loan: Tra
     }
   }
 
-  const save = () => {
+  const save = (anyway = false) => {
     const value = evalExpr(amount)
     const name = person.trim()
     if (!name) return setErr(tr('loan.err.person'))
     if (!value) return setErr(tr('nm.err.amount'))
     if (!walletId) return setErr(tr('nm.err.wallet'))
+    if (overdraft !== null && !anyway) return setOverdraftAsk(overdraft)
+    setOverdraftAsk(null)
     const toast = tr(lent ? 'loan.toast.lent' : 'loan.toast.borrowed')
     if (loan) {
       return run(() => transactionService.updateLoan(loan.id, { amount: value, accountId: walletId, loanKind: kind, counterpartyName: name, dueDate: due || null }), toast)
@@ -131,10 +141,22 @@ export function LoanModal({ loan, side, wallets, onClose, onSaved }: { loan: Tra
       {err && <ErrorBox>{err}</ErrorBox>}
       <ModalFooter left={loan && <DangerLink onClick={() => setConfirming(true)}>{tr('loan.delete')}</DangerLink>}>
         <CancelButton onClick={onClose} />
-        <button type="button" onClick={save} disabled={busy} className="cursor-pointer self-stretch whitespace-nowrap rounded-[10px] bg-primary px-4 py-2.5 text-body-sm font-semibold text-white">
+        <button type="button" onClick={() => save()} disabled={busy} className="cursor-pointer self-stretch whitespace-nowrap rounded-[10px] bg-primary px-4 py-2.5 text-body-sm font-semibold text-white">
           {tr('loan.save')}
         </button>
       </ModalFooter>
+      {overdraftAsk !== null && wallet && (
+        <OverdraftWarning
+          walletName={shortWallet(wallet.name)}
+          currency={wallet.currency}
+          available={wallet.currentBalance + refund}
+          after={overdraftAsk}
+          body="loan.overdraft.body"
+          spendLabel="loan.overdraft.spend"
+          onReview={() => setOverdraftAsk(null)}
+          onConfirm={() => save(true)}
+        />
+      )}
       {confirming && loan && (
         <ConfirmDialog
           title={fill(tr('loan.delete.title'), loan.counterpartyName ?? loan.description)}

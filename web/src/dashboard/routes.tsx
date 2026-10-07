@@ -2,6 +2,7 @@ import type { RouteObject } from 'react-router-dom'
 import { Navigate } from 'react-router-dom'
 import { DashboardLayout } from '@/dashboard/DashboardLayout'
 import { ProtectedRoute } from '@/dashboard/ProtectedRoute'
+import { AccountOnly } from '@/dashboard/AccountOnly'
 import LoginPage from '@/auth/LoginPage'
 import RegisterPage from '@/auth/RegisterPage'
 import { RecuperarPage, NuevaContrasenaPage } from '@/auth/RecoveryPages'
@@ -48,11 +49,11 @@ export const dashboardRoutes: RouteObject[] = [
           { path: 'reportes', element: <ReportesPage /> },
           { path: 'billeteras', element: <BilleterasPage /> },
           { path: 'ajustes', element: <AjustesPage /> },
-          { path: 'ajustes/perfil', element: <PerfilPage /> },
-          { path: 'ajustes/contrasena', element: <ContrasenaPage /> },
+          { path: 'ajustes/perfil', element: <AccountOnly><PerfilPage /></AccountOnly> },
+          { path: 'ajustes/contrasena', element: <AccountOnly><ContrasenaPage /></AccountOnly> },
           { path: 'ajustes/sesiones', element: <SesionesPage /> },
-          { path: 'ajustes/eliminar', element: <EliminarPage /> },
-          { path: 'ajustes/restablecer', element: <RestablecerPage /> },
+          { path: 'ajustes/eliminar', element: <AccountOnly><EliminarPage /></AccountOnly> },
+          { path: 'ajustes/restablecer', element: <AccountOnly><RestablecerPage /></AccountOnly> },
           { path: 'ajustes/importar', element: <ImportarPage /> },
           { path: 'ajustes/monedas', element: <MonedasPage /> },
           { path: 'ajustes/categorias', element: <CategoriasPage /> },

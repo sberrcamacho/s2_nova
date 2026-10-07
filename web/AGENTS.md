@@ -21,7 +21,7 @@ by one; a screen not yet migrated is unverified.
 layer (taxonomy, multi-currency), Inicio, Movimientos, Planes
 (Presupuestos · Metas · Préstamos), Reportes, Ajustes (profile, password,
 sessions, deletion, Monedas, Categorías), Nuevo movimiento,
-Billeteras, mini-guides, first run, guest mode. Every screen has had its
+Billeteras, product tours, first run, guest mode. Every screen has had its
 v2 visual pass against the mockup. Movimientos lists every Programado on top of the current
 month, then the month by day with each day's total; its detail shows the
 comprobante (Ver · Reemplazar · Descargar · Quitar, or attach one) and
@@ -156,15 +156,34 @@ same seed as Android's `DemoData`, plus eleven earlier months from the
 mockup's `BAR_DATA` so the charts have a history) and mirrors the
 backend's balance, budget, goal, alert and summary rules, so everything is
 interactive. `user.isGuest` shows the "Modo invitado" banner above every
-page (`DashboardLayout`); guides are on. Signing out, reloading, or
+page (`DashboardLayout`); the tours are on. Signing out, reloading, or
 reaching Login/Crear cuenta (the banner's button) drops the account.
+Ajustes hides what only a real account has (Editar perfil, Contraseña,
+Zona de riesgo) and says so next to "Crear cuenta"; `AccountOnly`
+(`dashboard/AccountOnly.tsx`) sends a guest who opens `/ajustes/perfil`,
+`/contrasena`, `/restablecer` or `/eliminar` back to Ajustes. The profile is
+name and email only; the backend's optional phone/city aren't shown.
 
-Mini-guides (`dashboard/components/GuideCard.tsx`, ONBOARDING.md §3):
-one card bottom-right on Inicio, Movimientos, Planes, Reportes and
-Billeteras until "Entendido"; "Omitir guías" turns them off and
-Ajustes › "Ver otra vez" resets them. `guidesSeen`/`guidesOff` are server
-preferences shared with Android. The card hides while anything marked
-`aria-modal` is open.
+"Saldo insuficiente" (`components/v2/OverdraftWarning.tsx` over Kit's
+`WarnDialog`, with `overdraftAfter` from `lib/nuevoMovimiento.ts`) is asked
+before money leaves a wallet and takes it below zero: Nuevo movimiento,
+a goal's Abonar (the principal amount converted to the wallet's currency)
+and a new or edited "Yo presté". Credit-card wallets and scheduled
+movements never ask; going ahead anyway is allowed. A goal's initial amount
+moves no wallet, so it never asks.
+
+Product tours (`components/tour/`, DESIGN-SYSTEM.md §6.13): a general
+tour on the first visit to Inicio and one per screen (Movimientos, Planes,
+Reportes, Billeteras, and Nuevo movimiento over its side panel). Pages
+tag what a step highlights with `data-tour="…"` and ask for their tour
+with `useAutoTour(key, ready)` once their data is drawn; `TourProvider`
+(in `DashboardLayout`) runs one at a time, never while another
+`aria-modal` is open, and leaves out steps whose element is missing or
+off screen. `TourOverlay` draws an SVG scrim with the cut-out, makes the
+rest of `<body>` inert and keeps focus in the step card (Esc skips,
+← / → step). Listo and Omitir both add the key (`tour.welcome`, …) to the
+server's `guidesSeen`, shared with Android; Ajustes › Recorridos "Ver otra
+vez" clears it. The step copy is `tour.<tour>.<step>.title/body`.
 
 Toasts (`components/ui/Toast.tsx`) follow the mockup: one inverted pill
 at the bottom centre, 2.6 s, the same for confirmations and errors.

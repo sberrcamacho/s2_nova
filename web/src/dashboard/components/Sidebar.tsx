@@ -31,6 +31,9 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const { showToast } = useToast()
   const { t } = useTranslation()
   const navigate = useNavigate()
+  // The example account of guest mode has no profile to edit.
+  const profilePath = user?.isGuest ? '/ajustes' : '/ajustes/perfil'
+  const profileLabel = user?.isGuest ? t('v2.nav.ajustes') : t('v2.sidebar.editProfile')
 
   const onLogout = () => {
     logout()
@@ -55,9 +58,11 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         </div>
 
         <nav className="flex flex-1 flex-col gap-1 px-3" aria-label={t('sidebar.mainNavigation')}>
+          <div data-tour="nav.main" className="flex flex-col gap-1">
           {NAV_ITEMS.map((item) => (
             <SidebarLink key={item.to} item={item} onClick={onClose} />
           ))}
+          </div>
           <div className="mt-auto flex flex-col gap-1 border-t border-v2-line pt-4">
             {FOOTER_ITEMS.map((item) => (
               <SidebarLink key={item.to} item={item} onClick={onClose} />
@@ -69,9 +74,9 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <div className="flex items-center gap-3 rounded-[14px] border border-v2-line bg-v2-surface p-2.5">
             <button
               type="button"
-              onClick={() => navigate('/ajustes/perfil')}
-              title={t('v2.sidebar.editProfile')}
-              aria-label={t('v2.sidebar.editProfile')}
+              onClick={() => navigate(profilePath)}
+              title={profileLabel}
+              aria-label={profileLabel}
               className="btn-cta flex h-9 w-9 flex-none cursor-pointer items-center justify-center rounded-full text-caption font-semibold"
             >
               {user?.avatarInitials ?? 'US'}
@@ -79,7 +84,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <div className="min-w-0 flex-1">
               <button
                 type="button"
-                onClick={() => navigate('/ajustes/perfil')}
+                onClick={() => navigate(profilePath)}
                 className="block w-full cursor-pointer truncate text-left text-label font-semibold text-v2-text"
               >
                 {user?.name ?? t('sidebar.fallbackUserName')}

@@ -62,7 +62,9 @@ describe('Ajustes', () => {
     await user.type(screen.getByLabelText('NUEVA CONTRASEÑA'), 'sinnumero')
     await user.type(screen.getByLabelText('CONFIRMAR NUEVA CONTRASEÑA'), 'sinnumero')
     await user.click(screen.getByRole('button', { name: 'Actualizar contraseña' }))
-    expect(screen.getByRole('alert')).toHaveTextContent('La nueva contraseña no cumple todos los requisitos.')
+    // The error sits under the field it is about.
+    expect(screen.getByLabelText('NUEVA CONTRASEÑA')).toHaveAccessibleDescription('La nueva contraseña no cumple todos los requisitos.')
+    expect(screen.getByLabelText('NUEVA CONTRASEÑA')).toHaveAttribute('aria-invalid', 'true')
     expect(bodies).toEqual([])
 
     await user.type(screen.getByLabelText('NUEVA CONTRASEÑA'), '1')
@@ -70,6 +72,48 @@ describe('Ajustes', () => {
     await user.click(screen.getByRole('button', { name: 'Actualizar contraseña' }))
     expect(await screen.findByText('Contraseña actualizada. Cerramos tus otras sesiones.')).toBeInTheDocument()
     expect(bodies).toEqual([{ currentPassword: 'Actual123', newPassword: 'sinnumero1' }])
+  })
+
+  it('asks for the current password first and shows a wrong one under its field', async () => {
+    mockSession()
+    server.use(http.post(`${BASE}/me/password`, () => HttpResponse.json({ error: 'Incorrect password.' }, { status: 401 })))
+    const user = userEvent.setup()
+    renderApp(<ContrasenaPage />, { route: '/ajustes/contrasena' })
+
+    const fields = await screen.findAllByLabelText(/CONTRASEÑA/)
+    expect(fields.map((f) => f.getAttribute('autocomplete'))).toEqual(['current-password', 'new-password', 'new-password'])
+    await user.type(screen.getByLabelText('NUEVA CONTRASEÑA'), 'nueva1234')
+    await user.type(screen.getByLabelText('CONFIRMAR NUEVA CONTRASEÑA'), 'nueva12345')
+    await user.click(screen.getByRole('button', { name: 'Actualizar contraseña' }))
+    expect(screen.getByLabelText('CONTRASEÑA ACTUAL')).toHaveAccessibleDescription('Escribe tu contraseña actual.')
+    expect(screen.getByLabelText('CONFIRMAR NUEVA CONTRASEÑA')).toHaveAccessibleDescription('Las contraseñas no coinciden.')
+
+    await user.type(screen.getByLabelText('CONTRASEÑA ACTUAL'), 'Mala1234')
+    await user.clear(screen.getByLabelText('CONFIRMAR NUEVA CONTRASEÑA'))
+    await user.type(screen.getByLabelText('CONFIRMAR NUEVA CONTRASEÑA'), 'nueva1234')
+    await user.click(screen.getByRole('button', { name: 'Actualizar contraseña' }))
+    await waitFor(() => expect(screen.getByLabelText('CONTRASEÑA ACTUAL')).toHaveAccessibleDescription('La contraseña actual no es correcta.'))
+  })
+
+  it('offers "Crear contraseña" without a current password to an account that signs in with Google', async () => {
+    mockSession({ hasPassword: false })
+    const bodies: unknown[] = []
+    server.use(
+      http.post(`${BASE}/me/password`, async ({ request }) => {
+        bodies.push(await request.json())
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+    const user = userEvent.setup()
+    renderApp(<ContrasenaPage />, { route: '/ajustes/contrasena' })
+
+    expect(await screen.findByRole('heading', { name: 'Crear contraseña' })).toBeInTheDocument()
+    expect(screen.queryByLabelText('CONTRASEÑA ACTUAL')).not.toBeInTheDocument()
+    await user.type(screen.getByLabelText('NUEVA CONTRASEÑA'), 'nueva1234')
+    await user.type(screen.getByLabelText('CONFIRMAR NUEVA CONTRASEÑA'), 'nueva1234')
+    await user.click(screen.getByRole('button', { name: 'Crear contraseña' }))
+    expect(await screen.findByText('Contraseña creada. Ya puedes entrar también con tu correo.')).toBeInTheDocument()
+    expect(bodies).toEqual([{ newPassword: 'nueva1234' }])
   })
 
   it('lists what gets deleted and only deletes after the word, the password and the checkbox', async () => {

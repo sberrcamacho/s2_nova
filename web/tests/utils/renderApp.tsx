@@ -27,13 +27,13 @@ export const CATEGORIES = TAX_NODES.map((n) => ({
 
 // Signed-in session with the given blurBalance preference, plus empty
 // transactions/budgets for AppDataProvider unless a test overrides them.
-export function mockSession({ blurBalance = false, onboardingCompleted = true, language = 'es' }: { blurBalance?: boolean; onboardingCompleted?: boolean; language?: 'es' | 'en' } = {}) {
+export function mockSession({ blurBalance = false, onboardingCompleted = true, language = 'es', guidesSeen = [], hasPassword = true }: { blurBalance?: boolean; onboardingCompleted?: boolean; language?: 'es' | 'en'; guidesSeen?: string[]; hasPassword?: boolean } = {}) {
   server.use(
     http.post(`${BASE}/auth/refresh`, () => HttpResponse.json({ accessToken: 't' })),
     http.get(`${BASE}/me`, () =>
       HttpResponse.json({
-        id: 'u1', name: 'Ada Lovelace', email: 'ada@example.com', createdAt: '2024-03-05T12:00:00.000Z', hasPassword: true,
-        preferences: { language, currency: 'COP', theme: 'SYSTEM', notifications: true, biometricLogin: false, blurBalance, onboardingCompleted, tutorialCompleted: true },
+        id: 'u1', name: 'Ada Lovelace', email: 'ada@example.com', createdAt: '2024-03-05T12:00:00.000Z', hasPassword,
+        preferences: { language, currency: 'COP', theme: 'SYSTEM', notifications: true, biometricLogin: false, blurBalance, onboardingCompleted, tutorialCompleted: true, guidesSeen, guidesOff: false },
       }),
     ),
     http.get(`${BASE}/categories`, () => HttpResponse.json(CATEGORIES)),

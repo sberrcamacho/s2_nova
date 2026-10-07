@@ -55,6 +55,7 @@ export function Header({ title, onMenuClick, onNewTransaction }: HeaderProps) {
           type="button"
           onClick={onMenuClick}
           aria-label={t('header.openMenu')}
+          data-tour="nav.menu"
           className="flex h-10 w-10 flex-none cursor-pointer items-center justify-center rounded-full border border-v2-line bg-v2-surface text-v2-muted hover:text-v2-text min-[760px]:hidden"
         >
           <StrokeIcon paths={ICON_PATHS.menu} size={18} />
@@ -69,7 +70,7 @@ export function Header({ title, onMenuClick, onNewTransaction }: HeaderProps) {
         </div>
       </div>
       <div className="flex flex-none items-center gap-2.5">
-        <label className="hidden h-10 w-[min(300px,24vw)] min-w-0 items-center gap-2.5 rounded-[12px] border border-v2-line bg-v2-surface px-4 text-v2-dim transition-colors focus-within:border-[var(--color-border-input)] min-[900px]:flex">
+        <label data-tour="mov.search" className="hidden h-10 w-[min(300px,24vw)] min-w-0 items-center gap-2.5 rounded-[12px] border border-v2-line bg-v2-surface px-4 text-v2-dim transition-colors focus-within:border-[var(--color-border-input)] min-[900px]:flex">
           <StrokeIcon paths={ICON_PATHS.search} size={16} />
           <input
             value={query}
@@ -84,6 +85,7 @@ export function Header({ title, onMenuClick, onNewTransaction }: HeaderProps) {
           type="button"
           onClick={onNewTransaction}
           aria-keyshortcuts="N"
+          data-tour="nav.add"
           title={t('v2.header.newTx')}
           // Icon-only on phones, and below 1100 px next to Movimientos' period
           // selector, where the label would squeeze the page title away.
@@ -112,6 +114,7 @@ function PeriodSelector() {
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="listbox"
+        data-tour="mov.period"
         aria-expanded={open}
         aria-label={`${t('mov.period')}: ${monthYear(period, language)}`}
         className="flex h-10 cursor-pointer items-center gap-2 whitespace-nowrap rounded-[12px] border border-v2-line bg-v2-surface px-4 text-label font-semibold text-v2-muted hover:border-v2-line2 hover:text-v2-text"

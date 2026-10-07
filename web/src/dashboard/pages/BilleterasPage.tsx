@@ -1,4 +1,5 @@
 import { ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
+import { useAutoTour } from '@/components/tour/TourProvider'
 import { fill, tr } from '@/lib/i18n/translations'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -32,6 +33,7 @@ export default function BilleterasPage() {
   }, [])
   useEffect(load, [load])
 
+  useAutoTour('tour.billeteras', wallets !== null)
   const total = wallets?.reduce((s, w) => s + w.principalBalance, 0) ?? 0
   const share = (w: Wallet) => fill(tr('wallet.share'), total > 0 ? Math.round((w.principalBalance / total) * 100) : 0)
 
@@ -45,10 +47,11 @@ export default function BilleterasPage() {
   return (
     <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-5 px-4 pb-12 pt-6 min-[760px]:px-8 min-[760px]:pt-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-display-sm font-medium tracking-[-.025em]">{tr('guide.billeteras.label')}</h1>
+        <h1 className="text-display-sm font-medium tracking-[-.025em]">{tr('v2.nav.billeteras')}</h1>
         <button
           type="button"
           onClick={() => setEditing('new')}
+          data-tour="wal.add"
           className="btn-cta flex h-11 cursor-pointer items-center gap-2 whitespace-nowrap rounded-[12px] px-5 text-label font-semibold"
         >
           <StrokeIcon paths={ICON_PATHS.plus} size={16} strokeWidth={2.4} />
@@ -57,7 +60,7 @@ export default function BilleterasPage() {
       </div>
       {/* The total in the principal currency, with the conversion note. */}
       {wallets && wallets.length > 0 && (
-        <section className="nova-card p-5 text-ink">
+        <section data-tour="wal.total" className="nova-card p-5 text-ink">
           <div className="text-overline font-semibold uppercase text-ink-tertiary">{fill(tr('wallet.totalLabel'), principal)}</div>
           <Money hidden={hidden} className="mt-1 block whitespace-nowrap text-[40px] font-normal leading-[1.1] tracking-[-.035em] tabular-nums">
             {format(total)}
@@ -73,11 +76,12 @@ export default function BilleterasPage() {
               <div className="h-6 w-2/3 rounded-[6px] bg-v2-line" />
             </div>
           ))}
-        {wallets?.map((w) => (
+        {wallets?.map((w, i) => (
           <div
             key={w.id}
             role="button"
             tabIndex={0}
+            data-tour={i === 0 ? 'wal.card' : undefined}
             onClick={() => setEditing(w)}
             onKeyDown={(e) => e.key === 'Enter' && setEditing(w)}
             className="flex cursor-pointer flex-col gap-3 nova-card p-5 text-ink hover:border-border-strong focus-visible:outline-2 focus-visible:outline-focus"

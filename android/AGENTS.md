@@ -75,18 +75,19 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   OAuth client ID from Google Cloud Console (see `build.gradle.kts`'s
   comment on why — Credential Manager always audiences its ID token to the
   web client, even on Android) or the button doesn't render at all. The
-  account model is name, email, login method (password and/or Google), plus
-  optional `phone`/`city` (`User`, matching `backend/prisma/schema.prisma`'s
-  `User` model) — both editable from `SettingsScreen` and shown on
-  `ProfileScreen` as `"{city} · desde {mes} {año}"`, per the mockup. Editing
-  name/phone/city (`AuthRepository.updateProfile`) calls the real backend.
+  account model is name, email and login method (password and/or Google).
+  The backend still stores an optional `phone`/`city`, but neither client
+  shows or edits them any more: Ajustes › Información personal is the name
+  (editable) and the email (read-only), and `ProfileScreen` shows
+  "Desde {mes} {año}". Editing the name (`AuthRepository.updateProfile`)
+  calls the real backend.
   Ajustes offers Cambiar contraseña and a Zona de riesgo (Restablecer datos,
   Eliminar cuenta; `SecurityScreens.kt`), both confirmed with the current
   password. Managing sessions stays on Web (Ajustes › Seguridad); the email
   is read-only here. "Olvidaste tu contraseña" mails a code that
   `ResetPasswordScreen` exchanges for a new password. List screens show
   `NovaSkeletonRows` until `AppContainer.dataLoaded` flips. Ajustes links to Categorías and
-  Monedas and offers "Ver las guías otra vez". Demo mode has no switch any more;
+  Monedas and offers "Ver los recorridos otra vez". Demo mode has no switch any more;
   signing out also leaves it. Every request carries
   `User-Agent: S2Nova-Android/<version> (<model>)` so Web's session list
   names this device.
@@ -248,14 +249,27 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   region) → "Crea tu primera billetera" — then lands on Inicio. The
   server's `onboardingCompleted` flag decides the route after auth
   (`routeAfterAuth` in `NovaNavGraph.kt`). The old welcome/income/budget/
-  tutorial carousel is gone; contextual mini-guides (`GUIDES`/`GuideCard`
-  in `ui/Overlays.kt`) replace it, with seen/off state stored server-side
-  in `prefs.guidesSeen`/`guidesOff` and "Ver las guías otra vez" in Ajustes.
+  tutorial carousel is gone; product tours (`ui/tour/`, DESIGN-SYSTEM.md
+  §6.13) replace it: a general one on Inicio's first visit and one per
+  screen. Screens tag what a step highlights with `Modifier.tourTarget(id)`;
+  `TourHost` (root overlay in `NovaNavGraph`) runs the route's tour once the
+  screen settles with no sheet (`OpenSheets`) or confirmation up. Finished
+  or skipped tours go to the server's `prefs.guidesSeen` (`tour.*`, shared
+  with Web); "Ver los recorridos otra vez" in Ajustes clears them.
 - **Guest mode** ("Continuar como invitado" on Login): `AppContainer.
   enterGuestMode()` sets `DemoModeFlag` and loads `data/mock/DemoData.kt`
   (the v2 mockup's seed, dates shifted relative to today). Mutations apply
   locally (`DemoLedger`) and are never sent to the server; Inicio shows the
-  "Modo invitado" banner with "Crear cuenta".
+  "Modo invitado" banner with "Crear cuenta". Ajustes hides what only a real
+  account has (editing the name, Cambiar contraseña, Restablecer datos,
+  Eliminar cuenta) and says so in a card with "Crear cuenta".
+- **"Saldo insuficiente"** (`components/OverdraftDialog.kt` +
+  `overdraftAfter` in `AddTransactionScreen.kt`): asked before money leaves a
+  wallet and takes it below zero — Nuevo movimiento's Guardar, a goal's
+  Abonar (the principal amount converted to the wallet's currency) and a new
+  or edited "Yo presté". Credit-card wallets and scheduled movements never
+  ask; going ahead anyway is allowed. A goal's initial amount ("Ya
+  ahorrado") moves no wallet, so it never asks.
 - **v2 overlays** (`ui/Overlays.kt`): `Snack` (undo snackbar, 4.5 s) for
   minor deletions via `hideLocal`/`restoreLocal`, and `Confirm` (two-step
   destructive confirmation) for significant ones. Both hosts live at the

@@ -46,7 +46,9 @@ import com.s2nova.app.ui.screens.profile.ProfileScreen
 import com.s2nova.app.ui.screens.settings.CategoriesScreen
 import com.s2nova.app.ui.screens.settings.CurrenciesScreen
 import com.s2nova.app.ui.ConfirmHost
-import com.s2nova.app.ui.GuideCard
+import com.s2nova.app.ui.tour.LocalTourRegistry
+import com.s2nova.app.ui.tour.TourHost
+import com.s2nova.app.ui.tour.TourRegistry
 import com.s2nova.app.ui.SnackHost
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -143,6 +145,9 @@ fun NovaApp() {
 
     com.s2nova.app.ui.components.IdleLogoutEffect()
 
+    // Screens tag what the product tours highlight; TourHost reads it.
+    val tourRegistry = remember { TourRegistry() }
+    androidx.compose.runtime.CompositionLocalProvider(LocalTourRegistry provides tourRegistry) {
     Box(Modifier.fillMaxSize()) {
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -341,6 +346,13 @@ fun NovaApp() {
                     onOpenPassword = { navController.navigate(NovaDestinations.SETTINGS_PASSWORD) },
                     onOpenReset = { navController.navigate(NovaDestinations.SETTINGS_RESET) },
                     onOpenDelete = { navController.navigate(NovaDestinations.SETTINGS_DELETE) },
+                    onCreateAccount = {
+                        scope.launch {
+                            leaveGuestMode()
+                            navController.navigateAsRoot(NovaDestinations.LOGIN)
+                            navController.navigate(NovaDestinations.REGISTER)
+                        }
+                    },
                 )
             }
             composable(NovaDestinations.SETTINGS_PASSWORD) { ChangePasswordScreen(onBack = { navController.popBackStack() }) }
@@ -365,8 +377,9 @@ fun NovaApp() {
 
     val barVisible = bottomBarVisibleFor(currentRoute)
     SnackHost(bottom = if (barVisible) 92.dp else 24.dp)
-    GuideHost(currentRoute, barVisible)
+    TourHost(currentRoute, tourRegistry)
     ConfirmHost()
+    }
     }
 
     if (showAddSheet) {
@@ -447,29 +460,4 @@ private fun NavHostController.navigateAsRoot(route: String) {
 private suspend fun leaveGuestMode() {
     DemoModeFlag.set(false)
     AppContainer.authRepository.logout()
-}
-
-// Mini-guide for the current main screen (ONBOARDING.md §3), until the
-// user taps "Entendido" (or "Omitir guías" for all of them).
-@Composable
-private fun androidx.compose.foundation.layout.BoxScope.GuideHost(route: String?, barVisible: Boolean) {
-    val user by AppContainer.authRepository.currentUser.collectAsStateWithLifecycle()
-    val confirm by com.s2nova.app.ui.Confirm.current.collectAsStateWithLifecycle()
-    val scope = rememberCoroutineScope()
-    val prefs = user?.preferences ?: return
-    val key = when (route?.substringBefore('?')) {
-        NovaDestinations.HOME -> "inicio"
-        NovaDestinations.TRANSACTIONS -> "movimientos"
-        NovaDestinations.BUDGETS -> "planes"
-        NovaDestinations.REPORTS -> "reportes"
-        NovaDestinations.WALLETS -> "billeteras"
-        else -> null
-    } ?: return
-    if (prefs.guidesOff || key in prefs.guidesSeen || confirm != null) return
-    GuideCard(
-        key = key,
-        bottom = if (barVisible) 92.dp else 24.dp,
-        onOk = { scope.launch { AppContainer.authRepository.updateGuides(prefs.guidesSeen + key, prefs.guidesOff) } },
-        onSkipAll = { scope.launch { AppContainer.authRepository.updateGuides(prefs.guidesSeen, true) } },
-    )
 }

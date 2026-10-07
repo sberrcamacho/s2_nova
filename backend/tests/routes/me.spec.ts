@@ -242,5 +242,28 @@ describe("me routes", () => {
       });
       expect(res.json().preferences.onboardingCompleted).toBe(true);
     });
+
+    it("stores finished product tours in guidesSeen, next to the retired guide keys", async () => {
+      const user = await createTestUser();
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/v1/me/preferences",
+        headers: authHeader(user),
+        payload: { guidesSeen: ["inicio", "tour.welcome", "tour.nuevo"] },
+      });
+      expect(res.statusCode).toBe(200);
+      expect(res.json().preferences.guidesSeen).toEqual(["inicio", "tour.welcome", "tour.nuevo"]);
+    });
+
+    it("rejects an unknown tour key", async () => {
+      const user = await createTestUser();
+      const res = await app.inject({
+        method: "PATCH",
+        url: "/api/v1/me/preferences",
+        headers: authHeader(user),
+        payload: { guidesSeen: ["tour.ajustes"] },
+      });
+      expect(res.statusCode).toBe(400);
+    });
   });
 });

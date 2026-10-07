@@ -48,7 +48,9 @@ object DemoData {
         id = "demo-local-user",
         name = "Invitado",
         email = "invitado@s2nova.local",
-        hasPassword = false,
+        // The example account behaves like a password account (as on Web):
+        // Cambiar contraseña asks for the current one.
+        hasPassword = true,
         avatarInitials = "IN",
         memberSince = LocalDate.now().toString(),
         preferences = preferences.copy(guidesSeen = emptySet(), guidesOff = false),

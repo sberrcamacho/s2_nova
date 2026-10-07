@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useAutoTour } from '@/components/tour/TourProvider'
+import { useAppData } from '@/state/AppDataContext'
 import { useSearchParams } from 'react-router-dom'
 import BudgetsPage from '@/dashboard/pages/BudgetsPage'
 import GoalsPage from '@/dashboard/pages/GoalsPage'
@@ -23,6 +25,8 @@ export default function PlanesPage() {
   const side = params.get('side') === 'borrowed' ? 'borrowed' : 'lent'
   const [adding, setAdding] = useState(false)
   const done = () => setAdding(false)
+  const { isLoading } = useAppData()
+  useAutoTour('tour.planes', !isLoading)
   const addLabel = t(tab === 'presupuestos' ? 'plans.newBudget' : tab === 'metas' ? 'plans.newGoal' : side === 'borrowed' ? 'loans.newBorrowed' : 'loans.newLent')
 
   return (
@@ -36,6 +40,7 @@ export default function PlanesPage() {
           <button
             type="button"
             onClick={() => setAdding(true)}
+            data-tour="planes.create"
             className="btn-cta flex h-11 cursor-pointer items-center gap-2 whitespace-nowrap rounded-[12px] px-5 text-label font-semibold"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" className="flex-none">
@@ -44,7 +49,7 @@ export default function PlanesPage() {
             {addLabel}
           </button>
         </div>
-        <div role="tablist" className="flex overflow-x-auto border-b border-border scrollbar-none">
+        <div role="tablist" data-tour="planes.tabs" className="flex overflow-x-auto border-b border-border scrollbar-none">
           {TABS.map((x) => {
             const on = x.id === tab
             return (

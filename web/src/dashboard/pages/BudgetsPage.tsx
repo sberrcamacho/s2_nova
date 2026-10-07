@@ -51,7 +51,7 @@ export default function BudgetsPage({ adding, onAddingDone }: { adding: boolean;
   return (
     <>
       <div className="grid grid-cols-1 gap-4 min-[760px]:grid-cols-2 min-[1100px]:grid-cols-3">
-        {sorted.map((b) => {
+        {sorted.map((b, i) => {
           const tone = budgetTone(b.percentage)
           const color = TONE_VAR[tone]
           const name = b.name ?? categoryName(b.category)
@@ -61,6 +61,7 @@ export default function BudgetsPage({ adding, onAddingDone }: { adding: boolean;
             <button
               key={b.id}
               type="button"
+              data-tour={i === 0 ? 'planes.card' : undefined}
               onClick={() => setEditing(b)}
               aria-label={`${tr('bud.edit')}: ${name}`}
               className={cn(

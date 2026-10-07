@@ -58,6 +58,11 @@ internal fun SheetSystemBars() {
     }
 }
 
+// How many NovaDraftSheets are open right now.
+object OpenSheets {
+    val count = kotlinx.coroutines.flow.MutableStateFlow(0)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NovaDraftSheet(
@@ -74,6 +79,12 @@ fun NovaDraftSheet(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = NovaColors.current
+    // Counted so a product tour waits while any sheet is up (sheets draw in
+    // their own window, above it).
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        OpenSheets.count.value += 1
+        onDispose { OpenSheets.count.value -= 1 }
+    }
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,

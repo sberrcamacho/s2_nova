@@ -3,7 +3,9 @@ import { useState } from 'react'
 import { PlanMark } from '@/components/v2/CategoryMark'
 import { AmountField, CancelButton, ConfirmDialog, DateInput, ErrorBox, Field, Flat, IC, Label, Pills, RadioRow, V2Modal } from '@/components/v2/Kit'
 import { AmountHero, ChoiceCard, PlanIconPicker, SegmentedChoice, StepChoiceRow, StepDeleteButton, StepModal, StepNote, StepOptionGroup, StepOptionRow, StepQuestion } from '@/components/v2/Steps'
-import { evalExpr, numStr } from '@/lib/nuevoMovimiento'
+import { evalExpr, numStr, overdraftAfter } from '@/lib/nuevoMovimiento'
+import { referenceRate } from '@/lib/currency'
+import { OverdraftWarning } from '@/components/v2/OverdraftWarning'
 import { todayISO } from '@/lib/date'
 import { shortWallet } from '@/lib/movimientos'
 import { addSteps, longDate, monthYearLong, shortDayMonth } from '@/lib/planCopy'
@@ -347,16 +349,25 @@ export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | nu
 
 // "Abonar" — the mockup's gPay modal: a one-off contribution from a wallet.
 export function GoalPayModal({ goal, wallets, onClose, onSaved }: { goal: Goal; wallets: Wallet[]; onClose: () => void; onSaved: () => void }) {
-  const { format } = useCurrency()
+  const { format, currency: principal } = useCurrency()
   const { showToast } = useToast()
   const [amount, setAmount] = useState('')
   const [accountId, setAccountId] = useState(wallets[0]?.id ?? '')
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
+  const [overdraftAsk, setOverdraftAsk] = useState<number | null>(null)
   const ok = evalExpr(amount) > 0 && !!accountId
+  // The abono is in the principal currency; the wallet pays it in its own.
+  const wallet = wallets.find((w) => w.id === accountId)
+  const overdraft = wallet
+    ? overdraftAfter({ balance: wallet.currentBalance, spend: evalExpr(amount) * referenceRate(principal, wallet.currency), refund: 0, credit: wallet.accountType === 'BANK_CREDIT', future: false })
+    : null
 
-  const confirm = async () => {
+  const confirm = async (anyway = false) => {
     if (!ok || busy) return
+    // Taking the wallet below zero asks first; abonar anyway is allowed.
+    if (overdraft !== null && !anyway) return setOverdraftAsk(overdraft)
+    setOverdraftAsk(null)
     setBusy(true)
     try {
       await goalService.contribute(goal.id, { amount: evalExpr(amount), accountId, date: todayISO() })
@@ -403,6 +414,19 @@ export function GoalPayModal({ goal, wallets, onClose, onSaved }: { goal: Goal; 
           {tr('goal.pay')}
         </button>
       </div>
+      {overdraftAsk !== null && wallet && (
+        <OverdraftWarning
+          walletName={shortWallet(wallet.name)}
+          currency={wallet.currency}
+          available={wallet.currentBalance}
+          after={overdraftAsk}
+          body="goal.pay.overdraft.body"
+          spendLabel="goal.pay.overdraft.spend"
+          confirm="goal.pay.overdraft.confirm"
+          onReview={() => setOverdraftAsk(null)}
+          onConfirm={() => void confirm(true)}
+        />
+      )}
     </V2Modal>
   )
 }

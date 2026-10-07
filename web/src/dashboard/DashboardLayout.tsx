@@ -2,7 +2,7 @@ import { tr } from '@/lib/i18n/translations'
 import { useCallback, useEffect, useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Sidebar } from '@/dashboard/components/Sidebar'
-import { GuideCard } from '@/dashboard/components/GuideCard'
+import { TourProvider } from '@/components/tour/TourProvider'
 import { Header } from '@/dashboard/components/Header'
 import { NewTransactionPanel } from '@/components/panels/NewTransactionPanel'
 import { useAuth } from '@/state/AuthContext'
@@ -76,6 +76,7 @@ export function DashboardLayout() {
 
   return (
     <NewMovementContext.Provider value={openNewTx}>
+      <TourProvider>
       <div className="nova-canvas flex h-screen overflow-hidden text-v2-text [line-height:normal]">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         {/* `relative` so absolutely positioned descendants (sr-only text, bars)
@@ -91,7 +92,7 @@ export function DashboardLayout() {
         </div>
       </div>
       {newTxOpen && <NewTransactionPanel key={editing?.id ?? 'new'} onClose={closeNewTx} editing={editing} />}
-      <GuideCard />
+      </TourProvider>
     </NewMovementContext.Provider>
   )
 }
