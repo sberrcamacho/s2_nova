@@ -220,11 +220,13 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   never disagree. `AddTransactionScreen` has no payment-method picker for
   this reason — `PaymentMethod` (Kotlin) only exists to deserialize and
   display the value the server already computed
-  (`TransactionDetailScreen`/`TransactionRow`); `ScannerScreen`'s payment-
-  method chips are the one exception, kept as cosmetic-only (it has no
-  wallet picker of its own either, always uses the first wallet) rather
-  than removed, since giving Scanner a real wallet picker was out of
-  scope for this pass.
+  (`TransactionDetailScreen`/`TransactionRow`). Every form that picks a
+  wallet (Nuevo movimiento, budgets, goals and their Abonar, loans and
+  their abonos, the scanner's purchase sheet) uses the same option row
+  ("Billetera · Nequi ›") that opens the list of wallets on its own page;
+  foreign wallets show their currency. Scanning is still off
+  (`SCAN_ENABLED` in `AddActionsSheet.kt`); without a camera the scanner
+  keeps the manual code entry instead of crashing.
 - **Goal contributions** (`GoalPaySheet`, a private composable inside
   `ui/screens/goals/GoalsScreen.kt`, reached via a goal card's "Abonar"
   button in `GoalsTab` — not its own screen/nav destination, per the

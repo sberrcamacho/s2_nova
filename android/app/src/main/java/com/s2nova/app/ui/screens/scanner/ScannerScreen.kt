@@ -8,7 +8,6 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,9 +17,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.layout.padding
@@ -284,7 +280,9 @@ private fun CameraPreview(active: Boolean, onBarcodeDetected: (String) -> Unit) 
             val previewView = PreviewView(ctx)
             val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
             cameraProviderFuture.addListener({
-                val cameraProvider = cameraProviderFuture.get()
+                // No camera at all (e.g. an emulator without one) fails here,
+                // before binding: keep the manual entry instead of crashing.
+                val cameraProvider = runCatching { cameraProviderFuture.get() }.getOrNull() ?: return@addListener
                 val preview = Preview.Builder().build().also {
                     it.surfaceProvider = previewView.surfaceProvider
                 }
@@ -351,6 +349,24 @@ private fun ProductFoundSheet(
     var walletId by remember { mutableStateOf(wallets.firstOrNull()?.id) }
     val amount = amountText.replace(',', '.').toDoubleOrNull() ?: 0.0
     val canConfirm = walletId != null && amount > 0
+    val principal = com.s2nova.app.data.AppContainer.currencyRepository.principal
+    val walletName = { w: Wallet -> com.s2nova.app.ui.components.shortWalletName(w.name) + if (w.currency != principal) " · ${w.currency}" else "" }
+    var pickingWallet by remember { mutableStateOf(false) }
+    // The wallets on their own page, as in every other form.
+    if (pickingWallet) {
+        Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)) {
+            com.s2nova.app.ui.components.SheetPageHeader(t(StringKey.SCANNER_WALLET_LABEL)) { pickingWallet = false }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 16.dp)) {
+                wallets.forEach { w ->
+                    com.s2nova.app.ui.components.StepChoiceRow(walletName(w), walletId == w.id, {
+                        walletId = w.id
+                        pickingWallet = false
+                    })
+                }
+            }
+        }
+        return
+    }
     Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             CategoryIcon(category = product.category, size = com.s2nova.app.ui.components.CategoryIconSize.LG)
@@ -373,21 +389,13 @@ private fun ProductFoundSheet(
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
         )
 
-        Text(t(StringKey.SCANNER_WALLET_LABEL), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
-        Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            wallets.forEach { w ->
-                val selected = walletId == w.id
-                Text(
-                    w.name,
-                    color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1,
-                    modifier = Modifier
-                        .background(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(10.dp))
-                        .clickable { walletId = w.id }
-                        .heightIn(min = 48.dp)
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                )
+        Box(Modifier.padding(top = 16.dp)) {
+            com.s2nova.app.ui.components.StepOptionGroup {
+                com.s2nova.app.ui.components.StepOptionRow(
+                    com.s2nova.app.ui.components.V2Icons.wallet,
+                    t(StringKey.NM_WALLET),
+                    wallets.firstOrNull { it.id == walletId }?.let(walletName) ?: t(StringKey.NM_PICK_WALLET),
+                ) { pickingWallet = true }
             }
         }
 
