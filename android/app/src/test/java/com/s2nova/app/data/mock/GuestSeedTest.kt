@@ -50,6 +50,8 @@ class GuestSeedTest {
             listOf("series:guest-series-admin", "loan:guest-loan-daniela", "loan:guest-loan-camilo", "budget:guest-budget-restaurants", "goal:guest-goal-portatil", "goalplan:guest-goal-peru", "goalauto", "planned", "planned"),
             account.alerts.map { a -> a.id.split(":").let { if (it[0] in setOf("goalauto", "planned")) it[0] else "${it[0]}:${it[1]}" } },
         )
+        // Newest first, as the backend lists them.
+        assertEquals(account.transactions.sortedByDescending { it.date }.map { it.date }, account.transactions.map { it.date })
         // The receipts carry real files.
         assertEquals(2, account.files.size)
         assertTrue(account.files.values.all { it.size > 500 })

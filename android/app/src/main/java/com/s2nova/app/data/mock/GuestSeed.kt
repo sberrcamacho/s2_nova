@@ -261,8 +261,9 @@ object GuestSeed {
                 parentLoanId = m.parentLoan,
             )
         }
-        // A loan whose repayments cover it is settled by the last one.
-        val transactions = built.map { t ->
+        // A loan whose repayments cover it is settled by the last one. The
+        // list is newest first, as the backend returns it.
+        val transactions = built.sortedWith(compareByDescending<Transaction> { it.date }.thenByDescending { it.time }).map { t ->
             if (t.loanKind == null) return@map t
             val repayments = built.filter { it.parentLoanId == t.id }.sortedBy { it.date }
             if (repayments.isNotEmpty() && repayments.sumOf { it.amount } >= t.amount) t.copy(loanSettled = true, settledByTransactionId = repayments.last().id) else t
