@@ -60,7 +60,7 @@ export default function ReportesPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-5 px-4 pb-12 pt-6 min-[760px]:px-8 min-[760px]:pt-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      <div className="flex flex-wrap min-h-10 items-end justify-between gap-4">
         <h1 className="text-display-sm font-medium tracking-[-.025em]">{t('rep.title')}</h1>
         {/* The range only applies to Gastos and Ingresos; Flujo de caja looks
             ahead and Patrimonio is today's, so they don't show it. */}
@@ -302,15 +302,17 @@ function WhatChanged({ report }: { report: Report | null }) {
                   <li key={c.category} className="flex min-w-0 items-center gap-2.5 rounded-[12px] bg-surface-sunken px-3 py-2.5">
                     <CategoryMark category={c.category} box={32} />
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-label font-semibold" title={categoryName(c.category)}>{categoryName(c.category)}</div>
-                      <Money hidden={hidden} className="block truncate text-caption text-ink-tertiary">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="min-w-0 truncate text-label font-semibold" title={categoryName(c.category)}>{categoryName(c.category)}</span>
+                        {/* Spending going up reads as negative; the arrow and sign say it too. */}
+                        <Money hidden={hidden} className={cn('flex-none whitespace-nowrap text-label font-semibold', up ? 'text-negative' : 'text-positive')}>
+                          {`${up ? '↑ +' : '↓ −'}${format(Math.abs(c.delta))}`}
+                        </Money>
+                      </div>
+                      <Money hidden={hidden} className="block whitespace-nowrap text-caption text-ink-tertiary">
                         {`${format(c.previous)} → ${format(c.current)}`}
                       </Money>
                     </div>
-                    {/* Spending going up reads as negative; the arrow and sign say it too. */}
-                    <Money hidden={hidden} className={cn('flex-none whitespace-nowrap text-label font-semibold', up ? 'text-negative' : 'text-positive')}>
-                      {`${up ? '↑ +' : '↓ −'}${format(Math.abs(c.delta))}`}
-                    </Money>
                   </li>
                 )
               })}
@@ -444,7 +446,11 @@ function IncomeTab({ report }: { report: Report | null }) {
               const pct = m.prev ? Math.round(((m.income - m.prev) / m.prev) * 100) : null
               return (
                 <div key={m.month} className="flex min-h-12 items-center gap-3 border-b border-divider py-2 last:border-b-0">
-                  <span className="w-28 flex-none text-label font-semibold capitalize">{monthYear(m.month, language)}</span>
+                  <div className="flex-none">
+                    <div className="whitespace-nowrap text-label font-semibold capitalize">{monthYear(m.month, language)}</div>
+                    {/* The current month is still open, so its change isn't final. */}
+                    {m.month === report?.month && <div className="text-caption text-ink-tertiary">{t('rep.inProgress')}</div>}
+                  </div>
                   <Money hidden={hidden} className="min-w-0 flex-1 truncate text-right text-label">
                     {format(m.income)}
                   </Money>
@@ -595,13 +601,13 @@ function NetWorthTab({ report }: { report: Report | null }) {
     <div className={cn('flex items-baseline justify-between gap-3 py-2.5', strong ? 'border-t border-border pt-3.5' : 'border-b border-divider')}>
       <span className={cn('min-w-0 truncate', strong ? 'text-label font-semibold text-ink' : 'text-body-sm text-ink-secondary')}>{label}</span>
       <Money hidden={hidden} className={cn('flex-none whitespace-nowrap tabular-nums', strong ? 'text-title font-semibold' : 'text-label font-semibold')}>
-        {`${sign}${format(value)}`}
+        {`${value > 0 ? sign : ''}${format(value)}`}
       </Money>
     </div>
   )
 
   return (
-    <div className="grid grid-cols-1 gap-[18px] min-[1100px]:grid-cols-2">
+    <div className="grid grid-cols-1 gap-[18px] min-[1100px]:grid-cols-2 min-[1100px]:items-start">
       <Card>
         <CardTitle title={t('rep.netWorth')} subtitle={t('rep.nw.sub')} />
         <div className="mt-3 flex flex-col">

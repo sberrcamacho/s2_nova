@@ -331,6 +331,7 @@ const dictionary = {
   "rep.runwayValue": { es: "Tu saldo cubre {0} meses de gastos", en: "Your balance covers {0} months of spending" },
   "rep.runwayHint": { es: "Saldo de hoy ÷ gasto mensual promedio de los últimos {0} meses.", en: "Today's balance ÷ average monthly spending over the last {0} months." },
   "rep.incomeChange": { es: "Cambio mes a mes", en: "Month-over-month change" },
+  "rep.inProgress": { es: "En curso, hasta hoy", en: "In progress, up to today" },
   "rep.incomeChangeSub": { es: "Ingresos de cada mes frente al anterior", en: "Each month's income against the month before" },
   "rep.projection": { es: "Proyección hasta fin de {0}", en: "Projection through the end of {0}" },
   "rep.closeOf": { es: "Saldo estimado al cierre de {0}", en: "Estimated balance at the end of {0}" },

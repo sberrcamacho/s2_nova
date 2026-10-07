@@ -107,19 +107,27 @@ Reportes** — plus **Ajustes** in the footer. Pre-v2 paths (`/overview`,
   "Registrar abono" dialog. The modal building
   blocks live in `components/v2/Kit.tsx`; budget/goal copy shared with
   Inicio lives in `lib/planCopy.ts`.
-- **Reportes** (`ReportesPage.tsx`) — v2-migrated. Gastos · Ingresos ·
-  Flujo de caja · Patrimonio (`?tab=gastos|ingresos|flujo|patrimonio`)
-  over the page's own 3M/6M/12M range; the header shows no period
-  selector here. Every figure comes from `summaryService.getReport`
-  (backend `GET /summary/report`, the same one Android's Reportes uses);
-  only Flujo de caja's projection of active Programados is built
-  client-side, with Inicio's 14-day `upcomingWithin` rule. "En qué se fue
-  el dinero" toggles Categorías (with the month-over-month rise) and
-  Subcategorías (the report's `subcategories`, per leaf); income sources
-  are named "Subcategoría — De". Flujo de caja's Entradas/Salidas/Flujo
-  neto are the current month's, as in the mockup. The pre-v2 Analytics,
-  Insights and Reports pages folded into it and are gone.
-- **Ajustes** — `AjustesPage` (profile card, Preferencias, Seguridad) plus
+- **Reportes** (`ReportesPage.tsx`) — Gastos · Ingresos · Flujo de caja ·
+  Patrimonio (`?tab=gastos|ingresos|flujo|patrimonio`). The 3M/6M/12M range
+  shows only on Gastos and Ingresos; every card states its own period.
+  Figures come from `summaryService.getReport` (backend
+  `GET /summary/report`, which Android's Reportes also uses).
+  - **Gastos** opens with "¿Qué cambió?" (`changes`: this month so far
+    against the same days of last month, top 3 categories by change).
+    Then come the chart, "En qué se fue el dinero en {mes}" (current
+    month; Categorías/Subcategorías), and Fijo vs variable (`fixedAmount`
+    with a split bar). Meses de respaldo is explained in words.
+  - **Ingresos** shows sources ("Subcategoría — De") and the month-over-month
+    change of income; the current month is marked as in progress.
+  - **Flujo de caja** is built client-side with `projectUntil`
+    (`lib/inicio.ts`). Every occurrence of each active Programado runs
+    through the end of next month, with each month's estimated close and
+    the lowest balance. Inicio keeps its 14-day `upcomingWithin`.
+  - **Patrimonio** is the real net worth (Billeteras + Te deben − Debes,
+    `netWorth.total`), with its month-end history and the loans card.
+  - CSV export lives in Ajustes › Datos ("Exportar mis datos"), not here.
+- **Ajustes** — `AjustesPage` (profile card, Preferencias, Seguridad, Datos
+  with Exportar mis datos and Importar) plus
   one route per sub-view under `pages/ajustes/`: `/ajustes/perfil`,
   `/ajustes/contrasena`, `/ajustes/sesiones`, `/ajustes/eliminar`,
   `/ajustes/monedas` (principal currency, the others with their rate and
