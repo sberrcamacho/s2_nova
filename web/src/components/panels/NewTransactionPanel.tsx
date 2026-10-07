@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState, type DragEvent, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type DragEvent, type ReactNode } from 'react'
 import { useAutoTour } from '@/components/tour/TourProvider'
 import { useNavigate } from 'react-router-dom'
 import { SidePanel } from '@/components/panels/SidePanel'
 import { CategoryMark, GlyphMark, PlanMark } from '@/components/v2/CategoryMark'
 import { CancelButton, ErrorBox, Flat, GridCell, IC, Icon, RadioRow } from '@/components/v2/Kit'
 import { OverdraftWarning } from '@/components/v2/OverdraftWarning'
+import { StepChoiceRow, StepOptionGroup, StepOptionRow } from '@/components/v2/Steps'
 import { AjSwitch } from '@/dashboard/components/ajustes/AjustesUi'
 import { categoryColor, categoryIdFor, categoryGlyph, categoryLabel, categoryName, childCategories, isInCategory, parentCategories, parentOf, useCategories } from '@/lib/backendCategories'
 import { currencyInfo, formatMoney, referenceRate } from '@/lib/currency'
@@ -57,7 +58,7 @@ import type { CategoryId, CounterpartyKind, Goal, NewTransactionInput, Recurring
 // `editing` it is "Editar movimiento": every field starts from the movement
 // — its Repetir from its series, its receipt — and saves with PATCH.
 
-type Section = 'cat' | 'when' | 'repeat' | 'attach' | 'from' | 'bpick' | 'more' | 'currency'
+type Section = 'cat' | 'when' | 'repeat' | 'attach' | 'from' | 'bpick' | 'more' | 'currency' | 'wallet' | 'walletTo'
 
 const TYPES: TransactionType[] = ['expense', 'income', 'transfer']
 const FROM_KINDS: CounterpartyKind[] = ['employer', 'client', 'family', 'friend', 'other']
@@ -164,6 +165,13 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
   // "Sugerido" tag); typing your own (or emptying the field) clears it.
   const [titleSuggested, setTitleSuggested] = useState(!e0)
   const [titleHints, setTitleHints] = useState<string[]>([])
+  const hintsRef = useRef<HTMLDivElement>(null)
+  const [hintsFade, setHintsFade] = useState(false)
+  const updateHintsFade = () => {
+    const el = hintsRef.current
+    setHintsFade(!!el && el.scrollLeft + el.clientWidth < el.scrollWidth - 1)
+  }
+  useLayoutEffect(updateHintsFade, [titleHints, title])
   const [note, setNote] = useState(e0?.note ?? '')
   const [date, setDate] = useState(e0?.date ?? today)
   const [time, setTime] = useState(e0?.time ?? now)
@@ -446,7 +454,13 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
     }
   }
 
-  const sectionPanel = section && section !== 'cat' ? (
+  const walletLabel = (id: string | null) => {
+    const w = wallets.find((x) => x.id === id)
+    return w ? shortWallet(w.name) + (w.currency !== principal ? ' · ' + w.currency : '') : undefined
+  }
+  const walletRowKey = (to: boolean): TranslationKey => (to ? 'nm.row.walletTo' : isInc ? 'nm.row.walletIn' : isTr ? 'nm.row.walletFrom' : 'nm.row.wallet')
+
+  const sectionPanel = section && section !== 'cat' && section !== 'wallet' && section !== 'walletTo' ? (
           <div className="flex flex-col gap-3 rounded-[14px] border border-v2-line2 bg-v2-surface2 p-3.5">
             <SectionHead title={t(`nm.section.${section}` as TranslationKey)} action={t('nm.done')} onAction={() => setSection(null)} />
 
@@ -902,30 +916,31 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
         </button>
       )}
 
-      <div className="flex flex-col gap-2">
-        <div className={fieldLabel}>{t(isInc ? 'nm.walletIn' : isTr ? 'nm.walletFrom' : 'nm.wallet')}</div>
-        <PillRow>
-          {wallets.map((w) => (
-            <Flat key={w.id} on={walletId === w.id} onClick={() => pickWallet(w.id)}>
-              {shortWallet(w.name) + (w.currency !== principal ? ' · ' + w.currency : '')}
-            </Flat>
-          ))}
-        </PillRow>
-      </div>
-
-      {isTr && (
-        <div className="flex flex-col gap-2">
-          <div className={fieldLabel}>{t('nm.walletTo')}</div>
-          <PillRow>
-            {wallets
-              .filter((w) => w.id !== walletId)
-              .map((w) => (
-                <Flat key={w.id} on={toId === w.id} onClick={edit(() => setToId(w.id))}>
-                  {shortWallet(w.name)}
-                </Flat>
-              ))}
-          </PillRow>
+      {/* Wallets as option rows (like a budget's Periodo / Billeteras): each
+          shows its value and opens the list of wallets in its place. */}
+      {section === 'wallet' || section === 'walletTo' ? (
+        <div className="flex flex-col gap-2" role="radiogroup" aria-label={t(walletRowKey(section === 'walletTo'))}>
+          <div className={fieldLabel}>{t(walletRowKey(section === 'walletTo')).toUpperCase()}</div>
+          {wallets
+            .filter((w) => section === 'wallet' || w.id !== walletId)
+            .map((w) => (
+              <StepChoiceRow
+                key={w.id}
+                label={walletLabel(w.id)!}
+                on={section === 'walletTo' ? toId === w.id : walletId === w.id}
+                onClick={() => {
+                  if (section === 'walletTo') edit(setToId)(w.id)
+                  else pickWallet(w.id)
+                  setSection(null)
+                }}
+              />
+            ))}
         </div>
+      ) : (
+        <StepOptionGroup>
+          <StepOptionRow icon={[...IC.wallet]} label={t(walletRowKey(false))} value={walletLabel(walletId) ?? t('nm.pickWallet')} onClick={() => setSection('wallet')} />
+          {isTr && <StepOptionRow icon={[...IC.wallet]} label={t(walletRowKey(true))} value={walletLabel(toId) ?? t('nm.pickWallet')} onClick={() => setSection('walletTo')} />}
+        </StepOptionGroup>
       )}
 
       {budgetLine}
@@ -940,11 +955,24 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
             </span>
           )}
         </div>
-        <input id="nt-title" value={title} onChange={(e) => { const v = e.target.value.slice(0, 60); titleTouched.current = true; setTitleSuggested(false); edit(setTitle)(v) }} onFocus={(e) => { if (!titleTouched.current) e.target.select() }} placeholder={t('nm.titleEx')} className={textInput} />
+        {/* The title field of a budget's Nombre: the category's mark, then the text. */}
+        <div className="flex h-14 items-center gap-2.5 rounded-[12px] border border-border-input bg-surface pr-3 pl-2 focus-within:border-primary-border">
+          {isTr ? (
+            <GlyphMark paths={['M4 8h14l-3-3', 'M20 16H6l3 3']} color="var(--color-link)" box={40} />
+          ) : catDone && leaf ? (
+            <CategoryMark category={leaf} box={40} />
+          ) : (
+            <span aria-hidden="true" className="flex h-10 w-10 flex-none items-center justify-center rounded-[12px] bg-surface-sunken">
+              <Icon paths={['M4 7V5h16v2', 'M12 5v14', 'M9 19h6']} size={18} color="var(--color-text-secondary)" />
+            </span>
+          )}
+          <input id="nt-title" value={title} onChange={(e) => { const v = e.target.value.slice(0, 60); titleTouched.current = true; setTitleSuggested(false); edit(setTitle)(v) }} onFocus={(e) => { if (!titleTouched.current) e.target.select() }} placeholder={t('nm.titleEx')} className="min-w-0 flex-1 border-none bg-transparent text-body font-semibold text-ink outline-none placeholder:text-ink-tertiary" />
+        </div>
         {titleHints.filter((h) => h !== title).length > 0 && (
-          <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('nm.titleHints')}>
+          // One line that scrolls sideways; the edge fades while there's more.
+          <div ref={hintsRef} onScroll={updateHintsFade} className="scrollbar-none flex gap-1.5 overflow-x-auto" style={hintsFade ? { maskImage: 'linear-gradient(to right, #000 calc(100% - 32px), transparent)', WebkitMaskImage: 'linear-gradient(to right, #000 calc(100% - 32px), transparent)' } : undefined} role="group" aria-label={t('nm.titleHints')}>
             {titleHints.filter((h) => h !== title).map((h) => (
-              <button key={h} type="button" onClick={() => { titleTouched.current = true; setTitleSuggested(false); edit(setTitle)(h) }} className="inline-flex h-8 max-w-full cursor-pointer items-center whitespace-nowrap rounded-[10px] border border-border-input px-3 text-body-sm text-ink-secondary hover:bg-surface-sunken">
+              <button key={h} type="button" onClick={() => { titleTouched.current = true; setTitleSuggested(false); edit(setTitle)(h) }} className="inline-flex h-8 flex-none cursor-pointer items-center whitespace-nowrap rounded-[10px] border border-border-input px-3 text-body-sm text-ink-secondary hover:bg-surface-sunken">
                 <span className="truncate">{h}</span>
               </button>
             ))}

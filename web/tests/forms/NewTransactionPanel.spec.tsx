@@ -40,7 +40,7 @@ function mockPanel(wallets = WALLETS) {
 async function open() {
   const onClose = vi.fn()
   renderApp(<NewTransactionPanel onClose={onClose} />)
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Bancolombia' })).toBeInTheDocument())
+  await waitFor(() => expect(screen.getByRole('button', { name: /^Billetera\s*Bancolombia/ })).toBeInTheDocument())
   return onClose
 }
 
@@ -203,13 +203,26 @@ describe('NewTransactionPanel', () => {
     expect(sent()).toMatchObject({ type: 'INCOME', counterpartyName: 'Andrés Gómez', counterpartyKind: 'CLIENT', categoryId: 'uuid-inc.work' })
   })
 
+  it('picks the wallet from a list that opens from its row', async () => {
+    mockPanel()
+    const user = userEvent.setup()
+    await open()
+    await user.click(screen.getByRole('button', { name: /^Billetera\s*Bancolombia/ }))
+    const list = screen.getByRole('radiogroup', { name: 'Billetera' })
+    expect(within(list).getByRole('radio', { name: 'Bancolombia' })).toBeChecked()
+    await user.click(within(list).getByRole('radio', { name: 'Nequi' }))
+    expect(screen.queryByRole('radiogroup', { name: 'Billetera' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Billetera\s*Nequi/ })).toBeInTheDocument()
+  })
+
   it('needs a destination wallet for a transfer', async () => {
     mockPanel([WALLETS[0]])
     const user = userEvent.setup()
     await open()
     await user.click(screen.getByRole('radio', { name: 'Transferencia' }))
     expect(screen.queryByText('CATEGORÍA')).not.toBeInTheDocument()
-    expect(within(screen.getByRole('dialog')).getByText('DESDE')).toBeInTheDocument()
+    expect(within(screen.getByRole('dialog')).getByRole('button', { name: /^Desde\s*Bancolombia/ })).toBeInTheDocument()
+    expect(within(screen.getByRole('dialog')).getByRole('button', { name: /^Transferir a\s*Elige una billetera/ })).toBeInTheDocument()
     await user.type(screen.getByLabelText('MONTO'), '1000')
     await user.type(screen.getByLabelText('Título'), 'Ahorro')
     await user.click(screen.getByRole('button', { name: 'Guardar movimiento' }))

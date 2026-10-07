@@ -1,5 +1,7 @@
 package com.s2nova.app.ui.screens.addtransaction
 
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.drawWithContent
 import com.s2nova.app.ui.tour.tourTarget
 import com.s2nova.app.ui.theme.appCanvas
 import android.content.Context
@@ -114,7 +116,7 @@ import com.s2nova.app.ui.dayMonthLabel
 // a Programados series (editSeriesId): its template and its Repetir rule,
 // the date being its next occurrence.
 
-enum class NmSheet { CATEGORY, SUB, PAD, WHEN, REPEAT, CURRENCY, ATTACH, FROM, BPICK, MORE }
+enum class NmSheet { CATEGORY, SUB, PAD, WHEN, REPEAT, CURRENCY, ATTACH, FROM, BPICK, MORE, WALLET, WALLET_TO }
 
 enum class Freq(val interval: RecurrenceInterval, private val labelKey: StringKey, private val everyKey: StringKey) {
     DAILY(RecurrenceInterval.DAILY, StringKey.NM_FREQ_DAILY, StringKey.NM_EVERY_DAILY),
@@ -513,25 +515,18 @@ fun AddTransactionScreen(
             Box(Modifier.tourTarget("nm.amount", 16.dp)) { AmountHero(s, cur, wcur, rate, value, wallet.name) }
             Box(Modifier.tourTarget("nm.category", 16.dp)) { CategoryRow(s) }
 
-            Column {
-                FieldLabel(tr(if (s.isIncome) StringKey.NM_WALLET_IN else if (s.isTransfer) StringKey.NM_WALLET_FROM else StringKey.NM_WALLET))
-                PillRow {
-                    wallets.forEach { w ->
-                        V2Pill(shortWallet(w.name) + if (w.currency != principal) " · " + w.currency else "", w.id == s.walletId, {
-                            s.walletId = w.id
-                            if (s.transferTo == w.id) s.transferTo = null
-                        })
-                    }
-                }
-            }
-            if (s.isTransfer) {
-                Column {
-                    FieldLabel(tr(StringKey.NM_WALLET_TO))
-                    PillRow {
-                        wallets.filter { it.id != s.walletId }.forEach { w ->
-                            V2Pill(shortWallet(w.name), s.transferTo == w.id, { s.transferTo = w.id })
-                        }
-                    }
+            // Wallets as option rows (like a budget's Periodo / Billeteras):
+            // each shows its value and opens the list of wallets.
+            val walletLabel = { id: String? -> wallets.firstOrNull { it.id == id }?.let { shortWallet(it.name) + if (it.currency != principal) " · " + it.currency else "" } }
+            com.s2nova.app.ui.components.StepOptionGroup {
+                com.s2nova.app.ui.components.StepOptionRow(
+                    V2Icons.wallet,
+                    tr(if (s.isIncome) StringKey.NM_WALLET_IN else if (s.isTransfer) StringKey.NM_WALLET_FROM else StringKey.NM_WALLET),
+                    walletLabel(s.walletId) ?: tr(StringKey.NM_PICK_WALLET),
+                ) { s.sheet = NmSheet.WALLET }
+                if (s.isTransfer) {
+                    com.s2nova.app.ui.components.StepDivider()
+                    com.s2nova.app.ui.components.StepOptionRow(V2Icons.wallet, tr(StringKey.NM_WALLET_TO), walletLabel(s.transferTo) ?: tr(StringKey.NM_PICK_WALLET)) { s.sheet = NmSheet.WALLET_TO }
                 }
             }
 
@@ -580,14 +575,37 @@ fun AddTransactionScreen(
                     FieldLabel(tr(StringKey.NM_TITLE_PH))
                     if (!s.editing && s.titleSuggested && s.title.isNotBlank()) SuggestedTag(tr(StringKey.NM_TITLE_SUGGESTED))
                 }
-                InputBox(height = 52.dp) {
-                    V2Icon(V2Icons.title, colors.textDim, 20.dp)
-                    BareField(s.title, { s.titleTouched = true; s.titleSuggested = false; s.title = it.take(60) }, tr(StringKey.NM_TITLE_EXAMPLE))
+                // The title field of a budget's Nombre: the category's mark,
+                // then the text.
+                InputBox(height = 60.dp, horizontal = 8.dp) {
+                    when {
+                        s.isTransfer -> GlyphMark(listOf("M4 8h14l-3-3", "M20 16H6l3 3"), colors.link, 40.dp)
+                        s.catPicked -> CatMark(s.leaf, 40.dp)
+                        else -> Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(colors.surfaceSunken), contentAlignment = Alignment.Center) {
+                            V2Icon(V2Icons.title, colors.textDim, 20.dp)
+                        }
+                    }
+                    BareField(s.title, { s.titleTouched = true; s.titleSuggested = false; s.title = it.take(60) }, tr(StringKey.NM_TITLE_EXAMPLE), fontSize = 16.sp)
                 }
                 val hints = s.titleHints.filter { it != s.title }
                 if (hints.isNotEmpty()) {
+                    // One line that scrolls sideways; the edge fades while
+                    // there is more to the right, so nothing looks cut off.
+                    val hintScroll = androidx.compose.foundation.rememberScrollState()
+                    val fade = hintScroll.canScrollForward
                     Row(
-                        modifier = Modifier.padding(top = 8.dp).horizontalScroll(androidx.compose.foundation.rememberScrollState()),
+                        modifier = Modifier
+                            .padding(top = 8.dp)
+                            .fillMaxWidth()
+                            .graphicsLayer(compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen)
+                            .drawWithContent {
+                                drawContent()
+                                if (fade) drawRect(
+                                    androidx.compose.ui.graphics.Brush.horizontalGradient(0f to Color.Black, (1f - 32.dp.toPx() / size.width).coerceIn(0f, 1f) to Color.Black, 1f to Color.Transparent),
+                                    blendMode = androidx.compose.ui.graphics.BlendMode.DstIn,
+                                )
+                            }
+                            .horizontalScroll(hintScroll),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         hints.forEach { h -> com.s2nova.app.ui.components.V2Pill(h, selected = false, onClick = { s.titleTouched = true; s.titleSuggested = false; s.title = h }, role = Role.Button) }

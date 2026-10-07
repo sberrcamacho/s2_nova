@@ -1,5 +1,6 @@
 package com.s2nova.app.ui.screens.addtransaction
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -127,6 +128,7 @@ fun NmSheets(
         }
         NmSheet.ATTACH -> AttachSheet(s)
         NmSheet.FROM -> FromSheet(s)
+        NmSheet.WALLET, NmSheet.WALLET_TO -> WalletSheet(s, to = s.sheet == NmSheet.WALLET_TO, principal = principal)
         NmSheet.BPICK -> NovaDraftSheet(onDismiss = close) {
             SheetHeader(
                 tr(StringKey.NM_SECTION_BPICK),
@@ -663,6 +665,29 @@ private fun FromSheet(s: NmState) {
             }
             V2Button(tr(StringKey.NM_DONE), onClick = { s.sheet = null })
             if (s.from.isNotBlank()) SheetTextAction(tr(StringKey.NM_REMOVE_FROM), MaterialTheme.colorScheme.onSurfaceVariant, { s.from = ""; s.fromKind = null })
+        }
+    }
+}
+
+// The wallet a movement leaves or enters (or a transfer's destination): one
+// radio row per wallet; a tap picks it and closes.
+@Composable
+private fun WalletSheet(s: NmState, to: Boolean, principal: String) {
+    val wallets by AppContainer.walletRepository.wallets.collectAsStateWithLifecycle()
+    val title = tr(if (to) StringKey.NM_WALLET_TO else if (s.isIncome) StringKey.NM_WALLET_IN else if (s.isTransfer) StringKey.NM_WALLET_FROM else StringKey.NM_WALLET)
+    NovaDraftSheet(onDismiss = { s.sheet = null }) {
+        SheetHeader(title)
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            wallets.filter { !to || it.id != s.walletId }.forEach { w ->
+                val label = shortWallet(w.name) + if (w.currency != principal) " · " + w.currency else ""
+                com.s2nova.app.ui.components.StepChoiceRow(label, selected = if (to) s.transferTo == w.id else s.walletId == w.id, onClick = {
+                    if (to) s.transferTo = w.id else {
+                        s.walletId = w.id
+                        if (s.transferTo == w.id) s.transferTo = null
+                    }
+                    s.sheet = null
+                })
+            }
         }
     }
 }

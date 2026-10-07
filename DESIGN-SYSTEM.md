@@ -401,9 +401,9 @@ Nuevo movimiento (both, progressive disclosure):
 1. Type segmented.
 2. Amount (`display-sm`) + currency.
 3. Category row.
-4. Wallet chips.
+4. Wallet row (`Desde` / `Transferir a` on transfers) in an option group, opening a radio list, as a budget's Billeteras.
 5. Budget impact line.
-6. A labeled Título field (required, so it stays on the first level).
+6. A labeled Título field (required, so it stays on the first level), built like a budget's Nombre: the category's mark in a 40 tile, then the text. The suggested titles under it are one line of chips that scrolls sideways with an edge fade.
 7. A collapsed "Más opciones" section: one full-width row per option with
    its current value (Fecha y hora, Repetir, Adjuntar, De on income or
    Presupuesto on expenses, Préstamo o meta), then the Nota field. Its
@@ -487,7 +487,8 @@ padding or a pseudo-element on Web.
 
 ### 6.5 Chip and Segmented control
 
-- **Chip** (filters, wallet picker):
+- **Chip** (filters and shortcuts, such as quick dates and suggested titles). A single-choice form field is not a chip collection: it is an option row with its value that opens a radio list (§6.11), or a segmented control for 2–3 short options.
+- **Chip** details:
   - 40 dp tall (48 dp hit area) / 32 px on Web.
   - Padding 16 horizontal, 10 radius, `label` text, one line, never wraps.
   - The collection wraps or scrolls horizontally with a visible edge fade.
