@@ -181,11 +181,12 @@ fun NmSheets(
                         }
                     }
                 }
-                Column {
+                // The goal it counts toward: one radio row per goal, with its icon.
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     FieldLabel(tr(StringKey.NM_GOAL))
-                    PillRow {
-                        V2Pill(tr(StringKey.NM_NONE_F), s.goalId == null, { s.goalId = null })
-                        goals.forEach { g -> V2Pill(g.name, s.goalId == g.id, { s.goalId = g.id }) }
+                    com.s2nova.app.ui.components.StepChoiceRow(tr(StringKey.NM_NONE_F), selected = s.goalId == null, onClick = { s.goalId = null })
+                    goals.forEach { g ->
+                        com.s2nova.app.ui.components.StepChoiceRow(g.name, selected = s.goalId == g.id, onClick = { s.goalId = g.id }, leading = { PlanMark(g.icon, 32.dp) })
                     }
                 }
                 V2Button(tr(StringKey.NM_DONE), onClick = close)

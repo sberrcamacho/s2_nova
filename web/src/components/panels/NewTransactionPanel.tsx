@@ -718,17 +718,14 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
                     <Icon paths={['M9 6l6 6-6 6']} size={18} color="var(--color-text-secondary)" />
                   </button>
                 )}
-                <div className={fieldLabel}>{t('nm.goal')}</div>
-                <PillRow>
-                  <Flat on={goalId === null} onClick={() => setGoalId(null)}>
-                    {t('nm.none.f')}
-                  </Flat>
+                {/* The goal it counts toward: one radio row per goal, with its icon. */}
+                <div className={fieldLabel} id="nt-goal-label">{t('nm.goal')}</div>
+                <div role="radiogroup" aria-labelledby="nt-goal-label" className="flex flex-col gap-2">
+                  <StepChoiceRow label={t('nm.none.f')} on={goalId === null} onClick={() => setGoalId(null)} />
                   {goals.map((g) => (
-                    <Flat key={g.id} on={goalId === g.id} onClick={() => setGoalId(g.id)}>
-                      {g.name}
-                    </Flat>
+                    <StepChoiceRow key={g.id} label={g.name} on={goalId === g.id} onClick={() => setGoalId(g.id)} leading={<PlanMark icon={g.icon} box={32} />} />
                   ))}
-                </PillRow>
+                </div>
               </>
             )}
           </div>

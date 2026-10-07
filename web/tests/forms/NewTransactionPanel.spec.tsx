@@ -244,6 +244,24 @@ describe('NewTransactionPanel', () => {
     expect(where).toHaveTextContent('/planes?tab=prestamos&side=lent&new=loan&amount=200000&wallet=11111111-1111-4111-8111-111111111111')
   })
 
+  it('picks the goal a movement counts toward from a radio list', async () => {
+    mockPanel()
+    server.use(
+      http.get(`${BASE}/goals`, () =>
+        HttpResponse.json([{ id: 'g1', name: 'Viaje a Perú', icon: 'travel', targetAmount: 4_500_000, initialAmount: 0, currentAmount: 0, remaining: 4_500_000, percentage: 0, targetDate: null, plan: null, contributions: [] }]),
+      ),
+    )
+    const user = userEvent.setup()
+    await open()
+    await user.click(screen.getByRole('button', { name: /^Más opciones/ }))
+    await user.click(screen.getByRole('button', { name: /^Préstamo o meta/ }))
+    const list = await screen.findByRole('radiogroup', { name: 'APORTE A UNA META' })
+    expect(within(list).getByRole('radio', { name: 'Ninguna' })).toBeChecked()
+    await user.click(await within(list).findByRole('radio', { name: 'Viaje a Perú' }))
+    expect(within(list).getByRole('radio', { name: 'Viaje a Perú' })).toBeChecked()
+    expect(within(list).getByRole('radio', { name: 'Ninguna' })).not.toBeChecked()
+  })
+
   it('needs a destination wallet for a transfer', async () => {
     mockPanel([WALLETS[0]])
     const user = userEvent.setup()
