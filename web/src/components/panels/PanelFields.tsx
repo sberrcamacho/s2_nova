@@ -1,8 +1,6 @@
 import type { ReactNode } from 'react'
-import { chipClass, fieldLabelClass } from '@/components/panels/SidePanel'
-import { shortWallet } from '@/lib/movimientos'
+import { fieldLabelClass } from '@/components/panels/SidePanel'
 import { cn } from '@/lib/cn'
-import type { Wallet } from '@/types'
 
 // Field pieces for the Planes side panels, in the "Nuevo movimiento" panel's
 // idiom (uppercase 11px label, 44px input on --sidebar). The copy and the
@@ -26,18 +24,6 @@ export function PanelField({ label, htmlFor, aside, note, children }: { label: s
       </div>
       {children}
       {note && <div className="text-caption text-ink-secondary">{note}</div>}
-    </div>
-  )
-}
-
-export function WalletChips({ wallets, selected, onSelect }: { wallets: Wallet[]; selected: string | null; onSelect: (id: string) => void }) {
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {wallets.map((w) => (
-        <button key={w.id} type="button" aria-pressed={selected === w.id} onClick={() => onSelect(w.id)} className={chipClass(selected === w.id)}>
-          {shortWallet(w.name)}
-        </button>
-      ))}
     </div>
   )
 }

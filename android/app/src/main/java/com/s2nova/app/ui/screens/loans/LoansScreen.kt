@@ -429,7 +429,7 @@ private fun LoanDraftSheet(
             SheetPageHeader(t(if (isLent) StringKey.LOANS_FORM_WALLET_LENT else StringKey.LOANS_FORM_WALLET_BORROWED)) { pickingWallet = false }
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 wallets.forEach { wallet ->
-                    StepChoiceRow(shortWalletName(wallet.name), draft.walletId == wallet.id, {
+                    StepChoiceRow(shortWalletName(wallet.name) + if (wallet.currency != principal) " · ${wallet.currency}" else "", draft.walletId == wallet.id, {
                         onDraftChange(draft.copy(walletId = wallet.id))
                         pickingWallet = false
                     })
@@ -458,7 +458,7 @@ private fun LoanDraftSheet(
                     StepOptionRow(
                         V2Icons.wallet,
                         t(StringKey.NM_WALLET),
-                        wallets.firstOrNull { it.id == draft.walletId }?.let { shortWalletName(it.name) } ?: "—",
+                        wallets.firstOrNull { it.id == draft.walletId }?.let { shortWalletName(it.name) + if (it.currency != principal) " · ${it.currency}" else "" } ?: "—",
                     ) { pickingWallet = true }
                     StepDivider()
                 }
@@ -502,12 +502,28 @@ private fun LoanPaySheet(
     var walletId by remember { mutableStateOf(loan.walletId.takeIf { wallets.any { w -> w.id == it } } ?: wallets.firstOrNull()?.id) }
     val amount = com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(amountText)
     val over = amount > outstanding
+    val principal = AppContainer.currencyRepository.principal
+    val walletName = { w: Wallet -> shortWalletName(w.name) + if (w.currency != principal) " · ${w.currency}" else "" }
+    var pickingWallet by remember { mutableStateOf(false) }
 
     NovaDraftSheet(
         onDismiss = onDismiss,
-        title = String.format(t(if (isLent) StringKey.LOANS_PAY_TITLE_LENT else StringKey.LOANS_PAY_TITLE_BORROWED), person),
-        subtitle = buildAnnotatedString { append(String.format(t(StringKey.LOANS_PAY_NOTE), format(outstanding), format(loan.amount))) },
+        title = if (pickingWallet) null else String.format(t(if (isLent) StringKey.LOANS_PAY_TITLE_LENT else StringKey.LOANS_PAY_TITLE_BORROWED), person),
+        subtitle = if (pickingWallet) null else buildAnnotatedString { append(String.format(t(StringKey.LOANS_PAY_NOTE), format(outstanding), format(loan.amount))) },
     ) {
+        // The wallets on their own page, as in the loan form.
+        if (pickingWallet) {
+            SheetPageHeader(t(if (isLent) StringKey.LOANS_PAYMENT_WALLET_LENT else StringKey.LOANS_PAYMENT_WALLET_BORROWED)) { pickingWallet = false }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                wallets.forEach { wallet ->
+                    StepChoiceRow(walletName(wallet), walletId == wallet.id, {
+                        walletId = wallet.id
+                        pickingWallet = false
+                    })
+                }
+            }
+            return@NovaDraftSheet
+        }
         Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 AmountHeroField(t(StringKey.GOAL_CONTRIBUTION_AMOUNT), amountText, { amountText = it }, AppContainer.currencyRepository.principal)
@@ -521,13 +537,8 @@ private fun LoanPaySheet(
                     amountText = com.s2nova.app.ui.screens.addtransaction.AmountPad.numStr(outstanding)
                 }
             }
-            Column {
-                FieldLabel(t(if (isLent) StringKey.LOANS_PAYMENT_WALLET_LENT else StringKey.LOANS_PAYMENT_WALLET_BORROWED))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    wallets.forEach { wallet ->
-                        SheetPill(shortWalletName(wallet.name), selected = walletId == wallet.id) { walletId = wallet.id }
-                    }
-                }
+            StepOptionGroup {
+                StepOptionRow(V2Icons.wallet, t(StringKey.NM_WALLET), wallets.firstOrNull { it.id == walletId }?.let(walletName) ?: t(StringKey.NM_PICK_WALLET)) { pickingWallet = true }
             }
             DraftSheetPrimaryButton(
                 label = t(StringKey.LOANS_REGISTER_PAYMENT),

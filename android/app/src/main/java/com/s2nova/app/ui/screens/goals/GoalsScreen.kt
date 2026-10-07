@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -89,8 +88,6 @@ import com.s2nova.app.ui.components.MockupIcons
 import com.s2nova.app.ui.components.NovaDraftSheet
 import com.s2nova.app.ui.components.SheetBox
 import com.s2nova.app.ui.components.SheetInput
-import com.s2nova.app.ui.components.SheetLabel
-import com.s2nova.app.ui.components.SheetPill
 import com.s2nova.app.ui.components.shortWalletName
 import com.s2nova.app.ui.rememberCurrencyFormatter
 import com.s2nova.app.ui.rememberStrings
@@ -556,24 +553,37 @@ private fun GoalPaySheet(
         }
     }
 
+    var pickingWallet by remember { mutableStateOf(false) }
     NovaDraftSheet(
         onDismiss = onDismiss,
-        title = "${t(StringKey.GOAL_CONTRIBUTION_TITLE)} ${goal.name}",
-        subtitle = buildAnnotatedString { append(String.format(t(StringKey.GOAL_PAY_NOTE), format(goal.currentAmount), format(goal.targetAmount))) },
+        title = if (pickingWallet) null else "${t(StringKey.GOAL_CONTRIBUTION_TITLE)} ${goal.name}",
+        subtitle = if (pickingWallet) null else buildAnnotatedString { append(String.format(t(StringKey.GOAL_PAY_NOTE), format(goal.currentAmount), format(goal.targetAmount))) },
     ) {
+        // The wallets on their own page, as in Nuevo movimiento and Préstamos.
+        if (pickingWallet) {
+            com.s2nova.app.ui.components.SheetPageHeader(t(StringKey.GOAL_CONTRIBUTION_WALLET)) { pickingWallet = false }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                wallets.forEach { wallet ->
+                    com.s2nova.app.ui.components.StepChoiceRow(shortWalletName(wallet.name) + if (wallet.currency != principal) " · ${wallet.currency}" else "", walletId == wallet.id, {
+                        walletId = wallet.id
+                        pickingWallet = false
+                    })
+                }
+            }
+            return@NovaDraftSheet
+        }
         Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
             com.s2nova.app.ui.components.AmountHeroField(t(StringKey.GOAL_CONTRIBUTION_AMOUNT), amountText, { amountText = it; error = null }, AppContainer.currencyRepository.principal, padTitle = tr(StringKey.GOAL_PAY_AMOUNT))
 
             if (wallets.isEmpty()) {
                 Text(t(StringKey.ADD_TXN_NO_WALLET_SUBTITLE), fontSize = 12.sp, color = colors.textDim)
             } else {
-                Column {
-                    SheetLabel(t(StringKey.GOAL_CONTRIBUTION_WALLET))
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        wallets.forEach { wallet ->
-                            SheetPill(shortWalletName(wallet.name), selected = walletId == wallet.id) { walletId = wallet.id }
-                        }
-                    }
+                com.s2nova.app.ui.components.StepOptionGroup {
+                    com.s2nova.app.ui.components.StepOptionRow(
+                        V2Icons.wallet,
+                        t(StringKey.NM_WALLET),
+                        payWallet?.let { shortWalletName(it.name) + if (it.currency != principal) " · ${it.currency}" else "" } ?: t(StringKey.NM_PICK_WALLET),
+                    ) { pickingWallet = true }
                 }
             }
 

@@ -1,7 +1,7 @@
 import { currentLanguage, fill, tr } from '@/lib/i18n/translations'
 import { useEffect, useState } from 'react'
-import { CancelButton, ConfirmDialog, DangerLink, ErrorBox, Flat, IC, Icon, Label, ModalFooter, ModalTitle, V2Modal } from '@/components/v2/Kit'
-import { AmountHero, SegmentedChoice } from '@/components/v2/Steps'
+import { CancelButton, ConfirmDialog, DangerLink, ErrorBox, IC, Icon, Label, ModalFooter, ModalTitle, V2Modal } from '@/components/v2/Kit'
+import { AmountHero, SegmentedChoice, WalletPicker } from '@/components/v2/Steps'
 import { todayISO } from '@/lib/date'
 import { evalExpr, numStr, overdraftAfter } from '@/lib/nuevoMovimiento'
 import { OverdraftWarning } from '@/components/v2/OverdraftWarning'
@@ -26,7 +26,7 @@ const LOAN_IN_ICON = ['M17 7 7 17', 'M16 17H7V8']
 
 export function LoanModal({ loan, side, wallets, onClose, onSaved, initialAmount, initialWalletId }: { loan: Transaction | null; side: LoanKind; wallets: Wallet[]; onClose: () => void; onSaved: (side: LoanKind) => void; initialAmount?: string; initialWalletId?: string | null }) {
   const { addTransaction } = useAppData()
-  const { format } = useCurrency()
+  const { format, currency: principal } = useCurrency()
   const { showToast } = useToast()
   const [kind, setKind] = useState<LoanKind>(loan?.loanKind ?? side)
   const [person, setPerson] = useState(loan?.counterpartyName ?? '')
@@ -129,16 +129,7 @@ export function LoanModal({ loan, side, wallets, onClose, onSaved, initialAmount
           />
         </div>
       </div>
-      <div className="flex flex-col gap-2">
-        <Label>{tr(lent ? 'loan.walletOut' : 'loan.walletIn')}</Label>
-        <div className="flex flex-wrap gap-1.5">
-          {wallets.map((w) => (
-            <Flat key={w.id} on={walletId === w.id} onClick={() => clear(setWalletId)(w.id)}>
-              {shortWallet(w.name)}
-            </Flat>
-          ))}
-        </div>
-      </div>
+      <WalletPicker label={tr('nm.row.wallet')} listLabel={tr(lent ? 'loan.walletOut' : 'loan.walletIn')} wallets={wallets} value={walletId} onChange={(id) => clear(setWalletId)(id)} principal={principal} />
       <div className="flex flex-col gap-1.5">
         <Label>{tr('loan.due')}</Label>
         <input type="date" value={due} onChange={(e) => setDue(e.target.value)} aria-label={tr('loan.dueLabel')} className={loanInput} />

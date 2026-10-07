@@ -337,6 +337,38 @@ export function StepOptionRow({ icon, label, value, onClick }: { icon: string[];
   )
 }
 
+// "Desde qué billetera" as in Nuevo movimiento and the budget form: an
+// option row with the chosen wallet that opens the list of wallets in its
+// place; picking one closes it.
+export function WalletPicker({ label, listLabel = label, wallets, value, onChange, principal }: { label: string; listLabel?: string; wallets: { id: string; name: string; currency: string }[]; value: string | null; onChange: (id: string) => void; principal: string }) {
+  const [open, setOpen] = useState(false)
+  const name = (w: { name: string; currency: string }) => w.name.split(' — ')[0] + (w.currency !== principal ? ` · ${w.currency}` : '')
+  const current = wallets.find((w) => w.id === value)
+  if (open) {
+    return (
+      <div className="flex flex-col gap-2" role="radiogroup" aria-label={listLabel}>
+        <div className="text-caption font-semibold uppercase tracking-[.06em] text-ink-secondary">{listLabel}</div>
+        {wallets.map((w) => (
+          <StepChoiceRow
+            key={w.id}
+            label={name(w)}
+            on={w.id === value}
+            onClick={() => {
+              onChange(w.id)
+              setOpen(false)
+            }}
+          />
+        ))}
+      </div>
+    )
+  }
+  return (
+    <StepOptionGroup>
+      <StepOptionRow icon={[...IC.wallet]} label={label} value={current ? name(current) : tr('nm.pickWallet')} onClick={() => setOpen(true)} />
+    </StepOptionGroup>
+  )
+}
+
 // Option rows in one bordered group with hairline dividers.
 export function StepOptionGroup({ children }: { children: ReactNode }) {
   return <div className="flex flex-col divide-y divide-border overflow-hidden rounded-[12px] border border-border">{children}</div>

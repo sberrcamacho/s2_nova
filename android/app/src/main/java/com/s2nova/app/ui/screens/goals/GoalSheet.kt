@@ -119,6 +119,7 @@ fun GoalDraftSheet(draft: GoalDraft, onDraftChange: (GoalDraft) -> Unit, onDismi
     val planValid = !planOn || (amt > 0 && p.walletId != null)
     val stepCount = if (planOn) 5 else 3
     var endPage by remember { mutableStateOf(false) }
+    var walletPage by remember { mutableStateOf(false) }
     val last = step == stepCount - 1
     val stepValid = when (step) {
         0 -> d.name.isNotBlank()
@@ -164,8 +165,18 @@ fun GoalDraftSheet(draft: GoalDraft, onDraftChange: (GoalDraft) -> Unit, onDismi
                 GoalPlanEnd.DATE -> DateBox(p.until, Modifier.padding(top = 12.dp)) { p = p.copy(until = it) }
                 else -> {}
             }
+        } else if (walletPage) StepSubPage("wallet", tr(StringKey.GOAL_FROM_WALLET)) {
+            // Picking a wallet returns to the step, as in Nuevo movimiento.
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                wallets.forEach { w ->
+                    StepChoiceRow(shortWallet(w.name) + if (w.currency != principal) " · ${w.currency}" else "", p.walletId == w.id, {
+                        p = p.copy(walletId = w.id)
+                        walletPage = false
+                    })
+                }
+            }
         } else null,
-        onSubDone = { endPage = false },
+        onSubDone = { endPage = false; walletPage = false },
     ) { shown ->
         when (shown) {
             0 -> {
@@ -205,8 +216,9 @@ fun GoalDraftSheet(draft: GoalDraft, onDraftChange: (GoalDraft) -> Unit, onDismi
                 FieldLabel(tr(StringKey.GOAL_FREQ))
                 PillRow { listOf(Freq.DAILY, Freq.WEEKLY, Freq.MONTHLY).forEach { f -> V2Pill(f.label, p.freq == f, { p = p.copy(freq = f) }) } }
                 StepSpacer()
-                FieldLabel(tr(StringKey.GOAL_FROM_WALLET))
-                PillRow { wallets.forEach { w -> V2Pill(shortWallet(w.name), p.walletId == w.id, { p = p.copy(walletId = w.id) }) } }
+                StepOptionGroup {
+                    StepOptionRow(V2Icons.wallet, tr(StringKey.NM_WALLET), wallets.firstOrNull { it.id == p.walletId }?.let { shortWallet(it.name) + if (it.currency != principal) " · ${it.currency}" else "" } ?: tr(StringKey.NM_PICK_WALLET)) { walletPage = true }
+                }
             }
             else -> {
                 StepQuestion(tr(StringKey.GOAL_Q_SCHEDULE))

@@ -50,7 +50,7 @@ export function SidePanel({ title, onClose, footer, children }: SidePanelProps) 
             <StrokeIcon paths={ICON_PATHS.close} size={14} />
           </button>
         </div>
-        <div className="grid min-h-0 flex-1 auto-rows-max content-start gap-5 overflow-y-auto overflow-x-hidden px-6 pb-7 pt-[22px]">{children}</div>
+        <div className="grid min-h-0 flex-1 auto-rows-max grid-cols-[minmax(0,1fr)] content-start gap-5 overflow-y-auto overflow-x-hidden px-6 pb-7 pt-[22px]">{children}</div>
         <div className="flex justify-end gap-2.5 border-t border-border px-6 py-4">{footer}</div>
       </div>
     </>,

@@ -3,8 +3,8 @@ import { RowSkeletons } from '@/components/v2/Rows'
 import { createPortal } from 'react-dom'
 import { CategoryMark } from '@/components/v2/CategoryMark'
 import { Money } from '@/components/v2/Money'
-import { CancelButton, ErrorBox, IC, Icon, Label, flatClass } from '@/components/v2/Kit'
-import { AmountHero } from '@/components/v2/Steps'
+import { CancelButton, ErrorBox, IC, Icon, flatClass } from '@/components/v2/Kit'
+import { AmountHero, WalletPicker } from '@/components/v2/Steps'
 import { ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
 import { cn } from '@/lib/cn'
 import { LoanModal } from '@/dashboard/components/planes/LoanModal'
@@ -218,7 +218,7 @@ function HistoryRow({ label, amount, color, hidden }: { label: string; amount: s
 // and the user picks the wallet it's received into / paid from.
 function PayDialog({ loan, wallets, onClose, onSaved }: { loan: Transaction; wallets: Wallet[]; onClose: () => void; onSaved: () => void }) {
   const { t } = useTranslation()
-  const { format } = useCurrency()
+  const { format, currency: principal } = useCurrency()
   const { showToast } = useToast()
   const out = loan.outstanding ?? 0
   const [amount, setAmount] = useState(numStr(out))
@@ -276,16 +276,7 @@ function PayDialog({ loan, wallets, onClose, onSaved }: { loan: Transaction; wal
             </button>
           </div>
         </div>
-        <div className="flex flex-col gap-2">
-          <Label>{t(loan.loanKind === 'lent' ? 'loans.receiveIn' : 'loans.payFrom')}</Label>
-          <div className="flex flex-wrap gap-1.5">
-            {wallets.map((w) => (
-              <button key={w.id} type="button" aria-pressed={walletId === w.id} onClick={() => setWalletId(w.id)} className={flatClass(walletId === w.id)}>
-                {shortWallet(w.name)}
-              </button>
-            ))}
-          </div>
-        </div>
+        <WalletPicker label={t('nm.row.wallet')} listLabel={t(loan.loanKind === 'lent' ? 'loans.receiveIn' : 'loans.payFrom')} wallets={wallets} value={walletId} onChange={setWalletId} principal={principal} />
         {error && <ErrorBox>{error}</ErrorBox>}
         <div className="flex justify-end gap-2">
           <CancelButton onClick={onClose}>{t('common.cancel')}</CancelButton>

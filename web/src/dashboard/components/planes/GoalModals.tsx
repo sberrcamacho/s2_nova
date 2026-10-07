@@ -1,8 +1,8 @@
 import { fill, tr } from '@/lib/i18n/translations'
 import { useState } from 'react'
 import { PlanMark } from '@/components/v2/CategoryMark'
-import { AmountField, CancelButton, ConfirmDialog, DateInput, ErrorBox, Field, Flat, IC, Label, Pills, RadioRow, V2Modal } from '@/components/v2/Kit'
-import { AmountHero, ChoiceCard, PlanIconPicker, SegmentedChoice, StepChoiceRow, StepDeleteButton, StepModal, StepNote, StepOptionGroup, StepOptionRow, StepQuestion } from '@/components/v2/Steps'
+import { AmountField, CancelButton, ConfirmDialog, DateInput, ErrorBox, Field, Flat, IC, Label, V2Modal } from '@/components/v2/Kit'
+import { AmountHero, ChoiceCard, PlanIconPicker, SegmentedChoice, StepChoiceRow, StepDeleteButton, StepModal, StepNote, StepOptionGroup, StepOptionRow, StepQuestion, WalletPicker } from '@/components/v2/Steps'
 import { evalExpr, numStr, overdraftAfter } from '@/lib/nuevoMovimiento'
 import { referenceRate } from '@/lib/currency'
 import { OverdraftWarning } from '@/components/v2/OverdraftWarning'
@@ -72,7 +72,7 @@ function samePlan(a: GoalPlan, b: GoalPlanInput): boolean {
 // amounts and target date, then how to save (by hand or with a recurring
 // contribution). Editing opens on the last step. PLANS.md §2–3.
 export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | null; wallets: Wallet[]; onClose: () => void; onSaved: () => void }) {
-  const { format } = useCurrency()
+  const { format, currency: principal } = useCurrency()
   const { showToast } = useToast()
   const [name, setName] = useState(goal?.name ?? '')
   const [icon, setIcon] = useState(goal?.icon ?? 'other')
@@ -281,15 +281,7 @@ export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | nu
               </Field>
             </div>
             <div className="mt-5">
-              <Field label={tr('goal.fromWallet')}>
-                <div className="flex flex-wrap gap-2" role="radiogroup">
-                  {wallets.map((w) => (
-                    <Flat key={w.id} role="radio" on={pl.accountId === w.id} onClick={() => plSet({ accountId: w.id })}>
-                      {shortWallet(w.name)}
-                    </Flat>
-                  ))}
-                </div>
-              </Field>
+              <WalletPicker label={tr('nm.row.wallet')} listLabel={tr('goal.fromWallet')} wallets={wallets} value={pl.accountId} onChange={(id) => plSet({ accountId: id })} principal={principal} />
             </div>
           </>
         )}
@@ -398,10 +390,7 @@ export function GoalPayModal({ goal, wallets, onClose, onSaved }: { goal: Goal; 
           setErr('')
         }}
       />
-      <div className="flex flex-col gap-2">
-        <Label>{tr('goal.fromWallet')}</Label>
-        <Pills options={wallets.map((w) => ({ value: w.id, label: shortWallet(w.name) }))} value={accountId} onChange={setAccountId} />
-      </div>
+      <WalletPicker label={tr('nm.row.wallet')} listLabel={tr('goal.fromWallet')} wallets={wallets} value={accountId} onChange={setAccountId} principal={principal} />
       {err && <ErrorBox>{err}</ErrorBox>}
       <div className="flex justify-end gap-2.5">
         <CancelButton onClick={onClose} />

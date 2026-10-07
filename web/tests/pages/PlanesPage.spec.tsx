@@ -192,6 +192,7 @@ describe('Planes', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Continuar' }))
     expect(within(dialog).getByRole('button', { name: 'Continuar' })).toBeDisabled()
     await user.type(within(dialog).getByPlaceholderText('0'), '350000')
+    await user.click(within(dialog).getByRole('button', { name: /^Billetera/ }))
     await user.click(within(dialog).getByRole('radio', { name: 'Nequi' }))
     await user.click(within(dialog).getByRole('button', { name: 'Continuar' }))
     expect(dialog).toHaveTextContent('Con 8 aportes de $350.000 cumples la meta hacia abril de 2027.')
@@ -219,6 +220,7 @@ describe('Planes', () => {
     await user.click(await screen.findByRole('button', { name: 'Abonar' }))
     const dialog = screen.getByRole('dialog', { name: 'Abonar a Viaje a Perú' })
     await user.type(within(dialog).getByPlaceholderText('0'), '100000')
+    await user.click(within(dialog).getByRole('button', { name: /^Billetera/ }))
     await user.click(within(dialog).getByRole('radio', { name: 'Nequi' }))
     await user.click(within(dialog).getByRole('button', { name: 'Abonar' }))
     await vi.waitFor(() => expect(body).toEqual({ amount: 100_000, accountId: 'a2', date: '2026-09-23' }))
@@ -241,6 +243,7 @@ describe('Planes', () => {
     await user.click(await screen.findByRole('button', { name: 'Abonar' }))
     const dialog = screen.getByRole('dialog', { name: 'Abonar a Viaje a Perú' })
     await user.type(within(dialog).getByPlaceholderText('0'), '400000')
+    await user.click(within(dialog).getByRole('button', { name: /^Billetera/ }))
     await user.click(within(dialog).getByRole('radio', { name: 'Nequi' }))
     await user.click(within(dialog).getByRole('button', { name: 'Abonar' }))
 
@@ -297,15 +300,16 @@ describe('Planes', () => {
 
     await user.click(await screen.findByRole('button', { name: /Registrar préstamo/ }))
     const dialog = screen.getByRole('dialog', { name: 'Registrar préstamo' })
-    expect(dialog).toHaveTextContent('SALE DE')
     await user.click(within(dialog).getByRole('radio', { name: 'Me prestaron' }))
     expect(dialog).toHaveTextContent('QUIÉN TE PRESTÓ')
-    expect(dialog).toHaveTextContent('ENTRA A')
     await user.click(within(dialog).getByRole('button', { name: 'Guardar registro' }))
     expect(within(dialog).getByRole('alert')).toHaveTextContent('Escribe el nombre de la contraparte.')
     await user.type(within(dialog).getByPlaceholderText('Nombre de la contraparte'), 'Andrés')
     await user.type(within(dialog).getByLabelText('MONTO'), '300000')
-    await user.click(within(dialog).getByRole('button', { name: 'Nequi' }))
+    // The wallet list says where the borrowed money goes in.
+    await user.click(within(dialog).getByRole('button', { name: /^Billetera/ }))
+    expect(within(dialog).getByRole('radiogroup', { name: /entra a/i })).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('radio', { name: 'Nequi' }))
     await user.click(within(dialog).getByRole('button', { name: 'Guardar registro' }))
     await vi.waitFor(() =>
       expect(posted).toMatchObject({ accountId: 'a2', type: 'INCOME', amount: 300_000, categoryId: 'uuid-inc.other', loanKind: 'BORROWED', counterpartyName: 'Andrés', description: 'Deuda con Andrés' }),
@@ -330,7 +334,8 @@ describe('Planes', () => {
     const dialog = screen.getByRole('dialog', { name: 'Registrar préstamo' })
     await user.type(within(dialog).getByPlaceholderText('Nombre de la contraparte'), 'Camila')
     await user.type(within(dialog).getByLabelText('MONTO'), '500000')
-    await user.click(within(dialog).getByRole('button', { name: 'Nequi' }))
+    await user.click(within(dialog).getByRole('button', { name: /^Billetera/ }))
+    await user.click(within(dialog).getByRole('radio', { name: 'Nequi' }))
     await user.click(within(dialog).getByRole('button', { name: 'Guardar registro' }))
 
     const warn = await screen.findByRole('alertdialog', { name: 'Saldo insuficiente' })
@@ -350,7 +355,7 @@ describe('Planes', () => {
 
     const dialog = await screen.findByRole('dialog', { name: 'Registrar préstamo' })
     expect(within(dialog).getByLabelText('MONTO')).toHaveValue('150.000')
-    expect(within(dialog).getByRole('button', { name: 'Nequi' })).toHaveAttribute('aria-pressed', 'true')
+    expect(within(dialog).getByRole('button', { name: /^Billetera/ })).toHaveTextContent('Nequi')
   })
 
   it('records an abono on a lent loan', async () => {
@@ -379,7 +384,8 @@ describe('Planes', () => {
     expect(within(dialog).getByRole('button', { name: 'Guardar abono' })).toBeDisabled()
     await user.clear(amount)
     await user.type(amount, '50000')
-    await user.click(within(dialog).getByRole('button', { name: 'Nequi' }))
+    await user.click(within(dialog).getByRole('button', { name: /^Billetera/ }))
+    await user.click(within(dialog).getByRole('radio', { name: 'Nequi' }))
     await user.click(within(dialog).getByRole('button', { name: 'Guardar abono' }))
     await vi.waitFor(() => expect(settled).toEqual({ amount: 50_000, accountId: 'a2', date: '2026-09-23' }))
   })

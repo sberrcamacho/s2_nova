@@ -626,6 +626,11 @@ a:hover > .nova-nav-icon {
 [tabindex='-1']:focus-visible {
   outline: none;
 }
+/* A field inside a frame that shows focus itself (a 2 px primary border on
+   focus-within: the amount, title and search boxes) takes no second ring. */
+[class*='focus-within:border'] :focus-visible {
+  outline: none;
+}
 
 button {
   font-family: inherit;
