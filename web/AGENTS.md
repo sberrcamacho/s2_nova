@@ -201,14 +201,18 @@ The header's "Nuevo movimiento" button (and the `N` shortcut) opens
 `components/panels/NewTransactionPanel.tsx` inside `SidePanel.tsx` (the
 mockup's 460px side panel), in progressive disclosure (DESIGN-SYSTEM.md
 §5.3, F3): type, the amount hero with typed arithmetic and the
-Teclado/Calculadora switch, "Elige una categoría" (inline
-category/subcategory grid), wallet, the automatic budget line and a
+Teclado/Calculadora switch, "Elige una categoría" (a drill-in page in the
+panel, `CategoryPicker.tsx`: the categories, then the subcategories, each with
+a back arrow), the wallet row (it opens the radio list in its place), the automatic budget line and a
 labeled Título; everything optional sits in a collapsed "Más opciones"
 (rows Fecha y hora, Repetir, Adjuntar, De or Presupuesto, Préstamo o meta,
 each showing its value and opening its section inline, plus the Nota
 field), open from the start only when editing a movement that has one. The pure helpers (evalExpr, calculator keys, Repetir
 summaries) live in `lib/nuevoMovimiento.ts`; pad mode, last wallet and
-"Como el anterior" are per-device localStorage preferences. The status is
+"Como el anterior" are per-device localStorage preferences. "Es dinero que presté / me prestaron" (Préstamo o meta) doesn't mark the
+movement: a loan needs a counterparty and a due date, so it closes the panel
+and opens Planes › Préstamos with the loan form filled in (`?new=loan&amount=
+&wallet=`, read once by `PlanesPage`). The status is
 left to the backend (a future date/time saves as PLANNED); the receipt is
 uploaded after the movement is created. Planes' forms are centered
 modals instead, as in the mockup.

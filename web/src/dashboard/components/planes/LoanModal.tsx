@@ -1,5 +1,5 @@
 import { currentLanguage, fill, tr } from '@/lib/i18n/translations'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CancelButton, ConfirmDialog, DangerLink, ErrorBox, Flat, IC, Icon, Label, ModalFooter, ModalTitle, V2Modal } from '@/components/v2/Kit'
 import { AmountHero, SegmentedChoice } from '@/components/v2/Steps'
 import { todayISO } from '@/lib/date'
@@ -24,14 +24,19 @@ const loanInput =
 const LOAN_OUT_ICON = ['M7 17 17 7', 'M8 7h9v9']
 const LOAN_IN_ICON = ['M17 7 7 17', 'M16 17H7V8']
 
-export function LoanModal({ loan, side, wallets, onClose, onSaved }: { loan: Transaction | null; side: LoanKind; wallets: Wallet[]; onClose: () => void; onSaved: (side: LoanKind) => void }) {
+export function LoanModal({ loan, side, wallets, onClose, onSaved, initialAmount, initialWalletId }: { loan: Transaction | null; side: LoanKind; wallets: Wallet[]; onClose: () => void; onSaved: (side: LoanKind) => void; initialAmount?: string; initialWalletId?: string | null }) {
   const { addTransaction } = useAppData()
   const { format } = useCurrency()
   const { showToast } = useToast()
   const [kind, setKind] = useState<LoanKind>(loan?.loanKind ?? side)
   const [person, setPerson] = useState(loan?.counterpartyName ?? '')
-  const [amount, setAmount] = useState(loan ? numStr(loan.amount) : '')
-  const [walletId, setWalletId] = useState<string | null>(loan?.accountId ?? wallets[0]?.id ?? null)
+  const [amount, setAmount] = useState(loan ? numStr(loan.amount) : (initialAmount ?? ''))
+  const [walletId, setWalletId] = useState<string | null>(loan?.accountId ?? initialWalletId ?? wallets[0]?.id ?? null)
+  // Opened before the wallets arrive (from Nuevo movimiento): default to the
+  // first one once they do, unless one was already chosen.
+  useEffect(() => {
+    if (!walletId && wallets[0]) setWalletId(wallets[0].id)
+  }, [walletId, wallets])
   const [due, setDue] = useState(loan?.dueDate?.slice(0, 10) ?? '')
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)

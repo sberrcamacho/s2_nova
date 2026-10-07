@@ -1,5 +1,6 @@
 package com.s2nova.app.ui.screens.loans
 
+import androidx.compose.runtime.LaunchedEffect
 import com.s2nova.app.data.formatMoney
 import com.s2nova.app.ui.components.OverdraftDialog
 import com.s2nova.app.ui.tour.tourTarget
@@ -101,6 +102,14 @@ fun LoansTab(initialSide: LoanKind = LoanKind.LENT) {
 
     var side by remember(initialSide) { mutableStateOf(initialSide) }
     var draft by remember { mutableStateOf<LoanDraft?>(null) }
+    // Nuevo movimiento's "Es dinero que presté / me prestaron" opens the
+    // loan form here, filled in with the amount and wallet it had.
+    LaunchedEffect(Unit) {
+        LoanPrefill.take()?.let { p ->
+            side = p.side
+            draft = LoanDraft(id = null, side = p.side, counterparty = "", amountText = if (p.amount > 0) com.s2nova.app.ui.screens.addtransaction.AmountPad.numStr(p.amount) else "", walletId = p.walletId ?: AppContainer.walletRepository.wallets.value.firstOrNull()?.id, dueDate = null)
+        }
+    }
     var payingFor by remember { mutableStateOf<Transaction?>(null) }
     var deleting by remember { mutableStateOf<Transaction?>(null) }
 
@@ -541,3 +550,19 @@ private fun LoanAction(label: String, color: androidx.compose.ui.graphics.Color,
 
 // "Saldo insuficiente" for a loan that's about to take its wallet below zero.
 private data class LoanOverdraft(val wallet: Wallet, val available: Double, val left: Double)
+
+// A loan Nuevo movimiento hands over to Préstamos (it needs a counterparty
+// and a due date, which only the loan form has). Taken once.
+object LoanPrefill {
+    data class Pending(val side: LoanKind, val amount: Double, val walletId: String?)
+
+    private var pending: Pending? = null
+
+    fun set(p: Pending) {
+        pending = p
+    }
+
+    fun take(): Pending? = pending.also { pending = null }
+
+    fun peekSide(): LoanKind = pending?.side ?: LoanKind.LENT
+}

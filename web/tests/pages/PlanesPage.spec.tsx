@@ -340,6 +340,19 @@ describe('Planes', () => {
     await vi.waitFor(() => expect(posted).toMatchObject({ accountId: 'a2', type: 'EXPENSE', amount: 500_000, loanKind: 'LENT' }))
   })
 
+  it('opens the loan form filled in when Nuevo movimiento sends a loan here', async () => {
+    mockSession()
+    server.use(
+      http.get(`${BASE}/accounts`, () => HttpResponse.json(wallets)),
+      http.get(`${BASE}/transactions`, () => HttpResponse.json([])),
+    )
+    renderApp(<PlanesPage />, { route: '/planes?tab=prestamos&side=lent&new=loan&amount=150000&wallet=a2' })
+
+    const dialog = await screen.findByRole('dialog', { name: 'Registrar préstamo' })
+    expect(within(dialog).getByLabelText('MONTO')).toHaveValue('150.000')
+    expect(within(dialog).getByRole('button', { name: 'Nequi' })).toHaveAttribute('aria-pressed', 'true')
+  })
+
   it('records an abono on a lent loan', async () => {
     mockSession()
     let settled: unknown = null

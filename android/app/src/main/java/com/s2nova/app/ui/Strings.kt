@@ -76,7 +76,7 @@ enum class StringKey {
     NM_CURRENCY_HINT, NM_CURRENCY_OF, NM_MANAGE_CURRENCIES, NM_DONE, NM_SECTION_BPICK,
     NM_BPICK_AUTO, NM_BPICK_NONE, NM_NONE_M, NM_NONE_F, NM_BPICK_NONE_DETAIL,
     NM_MORE_OPTIONS, NM_TITLE_EXAMPLE, NM_NOTE_LABEL, NM_LOAN, NM_EXPANDED, NM_COLLAPSED, NM_OPTIONAL,
-    NM_X_OF_Y, NM_SECTION_MORE, NM_LOAN_BORROWED, NM_LOAN_LENT, NM_LOAN_DETAIL,
+    NM_X_OF_Y, NM_SECTION_MORE, NM_LOAN_BORROWED, NM_LOAN_LENT, NM_LOAN_DETAIL, NM_LOAN_GO_DETAIL,
     NM_GOAL, NM_CAT_INCOME, NM_CAT_EXPENSE, NM_CAT_STEP, NM_MANAGE_CATEGORIES,
     NM_SUBCATEGORY, NM_CHANGE_CATEGORY, NM_AMOUNT, NM_SECTION_WHEN, NM_YESTERDAY,
     NM_DAY_BEFORE, NM_LIKE_LAST, NM_FUTURE, NM_TOMORROW, NM_IN_A_WEEK,
@@ -155,6 +155,7 @@ enum class StringKey {
 }
 
 private val ES: Map<StringKey, String> = mapOf(
+    StringKey.NM_LOAN_GO_DETAIL to "Regístralo en Préstamos con la contraparte y el vencimiento; el monto pasa tal cual.",
     StringKey.NM_PICK_WALLET to "Elige una billetera",
     StringKey.GOAL_PAY_OVERDRAFT_BODY to "Con este abono, %1\$s queda en negativo.",
     StringKey.GOAL_PAY_OVERDRAFT_SPEND to "Este abono",
@@ -1040,6 +1041,7 @@ private val ES: Map<StringKey, String> = mapOf(
 )
 
 private val EN: Map<StringKey, String> = mapOf(
+    StringKey.NM_LOAN_GO_DETAIL to "Record it in Loans with the counterparty and due date; the amount carries over.",
     StringKey.NM_PICK_WALLET to "Choose a wallet",
     StringKey.GOAL_PAY_OVERDRAFT_BODY to "This contribution takes %1\$s below zero.",
     StringKey.GOAL_PAY_OVERDRAFT_SPEND to "This contribution",

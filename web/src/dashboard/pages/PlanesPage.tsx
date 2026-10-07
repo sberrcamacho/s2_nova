@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { numStr } from '@/lib/nuevoMovimiento'
 import { useAutoTour } from '@/components/tour/TourProvider'
 import { useAppData } from '@/state/AppDataContext'
 import { useSearchParams } from 'react-router-dom'
@@ -23,7 +24,17 @@ export default function PlanesPage() {
   const [params, setParams] = useSearchParams()
   const tab = TABS.find((x) => x.id === params.get('tab'))?.id ?? 'presupuestos'
   const side = params.get('side') === 'borrowed' ? 'borrowed' : 'lent'
-  const [adding, setAdding] = useState(false)
+  // Nuevo movimiento's "Es dinero que presté / me prestaron" lands here with
+  // `new=loan` (and the amount and wallet it had) to open the loan form
+  // filled in. The parameters are dropped once read.
+  const [loanPrefill] = useState(() => (params.get('new') === 'loan' ? { amount: Number(params.get('amount')) > 0 ? numStr(Number(params.get('amount'))) : '', walletId: params.get('wallet') } : null))
+  const [adding, setAdding] = useState(loanPrefill !== null)
+  useEffect(() => {
+    if (params.get('new') === null) return
+    const next = new URLSearchParams(params)
+    ;['new', 'amount', 'wallet'].forEach((k) => next.delete(k))
+    setParams(next, { replace: true })
+  }, [params, setParams])
   const done = () => setAdding(false)
   const { isLoading } = useAppData()
   useAutoTour('tour.planes', !isLoading)
@@ -75,7 +86,7 @@ export default function PlanesPage() {
       </div>
       {tab === 'presupuestos' && <BudgetsPage adding={adding} onAddingDone={done} />}
       {tab === 'metas' && <GoalsPage adding={adding} onAddingDone={done} />}
-      {tab === 'prestamos' && <LoansTab side={side} onSide={(s) => setParams({ tab: 'prestamos', side: s }, { replace: true })} adding={adding} onAddingDone={done} />}
+      {tab === 'prestamos' && <LoansTab side={side} onSide={(s) => setParams({ tab: 'prestamos', side: s }, { replace: true })} adding={adding} onAddingDone={done} prefill={loanPrefill} />}
     </div>
   )
 }

@@ -1,5 +1,6 @@
 package com.s2nova.app.ui.screens.addtransaction
 
+import androidx.compose.foundation.clickable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import android.Manifest
 import android.content.pm.PackageManager
@@ -97,6 +98,7 @@ fun NmSheets(
     goals: List<Goal>,
     onOpenCategories: () -> Unit,
     onOpenCurrencies: () -> Unit,
+    onRegisterLoan: () -> Unit = {},
 ) {
     val close = { s.sheet = null }
     when (s.sheet) {
@@ -154,12 +156,30 @@ fun NmSheets(
         NmSheet.MORE -> NovaDraftSheet(onDismiss = close) {
             SheetHeader(tr(StringKey.NM_SECTION_MORE), bottom = 16.dp)
             Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Column(Modifier.weight(1f)) {
-                        Text(tr(if (s.isIncome) StringKey.NM_LOAN_BORROWED else StringKey.NM_LOAN_LENT), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-                        Text(tr(StringKey.NM_LOAN_DETAIL), fontSize = 12.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 2.dp))
+                if (s.editing) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                        Column(Modifier.weight(1f)) {
+                            Text(tr(if (s.isIncome) StringKey.NM_LOAN_BORROWED else StringKey.NM_LOAN_LENT), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+                            Text(tr(StringKey.NM_LOAN_DETAIL), fontSize = 12.sp, color = NovaColors.current.textDim, modifier = Modifier.padding(top = 2.dp))
+                        }
+                        V2Switch(s.loan) { }
                     }
-                    V2Switch(s.loan) { if (!s.editing) s.loan = !s.loan }
+                } else {
+                    // A loan needs its counterparty and due date, which live
+                    // in Préstamos: this opens its form with what's typed here.
+                    com.s2nova.app.ui.components.StepOptionGroup {
+                        Row(
+                            Modifier.fillMaxWidth().heightIn(min = 64.dp).clickable(role = androidx.compose.ui.semantics.Role.Button) { s.sheet = null; onRegisterLoan() }.padding(horizontal = 16.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(tr(if (s.isIncome) StringKey.NM_LOAN_BORROWED else StringKey.NM_LOAN_LENT), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+                                Text(tr(StringKey.NM_LOAN_GO_DETAIL), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
+                            }
+                            V2Icon(V2Icons.chevronRight, NovaColors.current.textDim, 20.dp)
+                        }
+                    }
                 }
                 Column {
                     FieldLabel(tr(StringKey.NM_GOAL))

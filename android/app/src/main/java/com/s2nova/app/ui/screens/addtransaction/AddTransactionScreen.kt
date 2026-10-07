@@ -262,6 +262,7 @@ fun AddTransactionScreen(
     onAddWallet: () -> Unit,
     onOpenCategories: (income: Boolean) -> Unit = {},
     onOpenCurrencies: () -> Unit = {},
+    onRegisterLoan: () -> Unit = {},
     editTransactionId: String? = null,
     editSeriesId: String? = null,
     state: NmState? = null,
@@ -690,6 +691,17 @@ fun AddTransactionScreen(
         goals = goals,
         onOpenCategories = { onOpenCategories(s.isIncome) },
         onOpenCurrencies = onOpenCurrencies,
+        onRegisterLoan = {
+            // In the wallet's currency, as the loan form expects.
+            com.s2nova.app.ui.screens.loans.LoanPrefill.set(
+                com.s2nova.app.ui.screens.loans.LoanPrefill.Pending(
+                    side = if (s.isIncome) com.s2nova.app.data.model.LoanKind.BORROWED else com.s2nova.app.data.model.LoanKind.LENT,
+                    amount = Math.round(value * rate * 100) / 100.0,
+                    walletId = s.walletId,
+                ),
+            )
+            onRegisterLoan()
+        },
     )
 }
 

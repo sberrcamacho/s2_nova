@@ -25,7 +25,7 @@ import type { LoanKind, Transaction, Wallet } from '@/types'
 // transaction; its pending balance is the server's `outstanding`, and each
 // abono is a transaction whose parentLoanId points back at it. "Editar" and
 // the header's "Registrar préstamo/deuda" (PlanesPage) open LoanModal.
-export function LoansTab({ side, onSide, adding, onAddingDone }: { side: LoanKind; onSide: (side: LoanKind) => void; adding: boolean; onAddingDone: () => void }) {
+export function LoansTab({ side, onSide, adding, onAddingDone, prefill = null }: { side: LoanKind; onSide: (side: LoanKind) => void; adding: boolean; onAddingDone: () => void; prefill?: { amount: string; walletId: string | null } | null }) {
   const { t, language } = useTranslation()
   const { format } = useCurrency()
   const { hidden } = useHideAmounts()
@@ -160,6 +160,8 @@ export function LoansTab({ side, onSide, adding, onAddingDone }: { side: LoanKin
           loan={editing === 'new' ? null : editing}
           side={side}
           wallets={wallets}
+          initialAmount={editing ? undefined : prefill?.amount}
+          initialWalletId={editing ? undefined : prefill?.walletId}
           onClose={() => {
             setEditing(null)
             onAddingDone()

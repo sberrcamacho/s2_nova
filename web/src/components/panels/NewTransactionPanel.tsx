@@ -5,6 +5,7 @@ import { SidePanel } from '@/components/panels/SidePanel'
 import { CategoryMark, GlyphMark, PlanMark } from '@/components/v2/CategoryMark'
 import { CancelButton, ErrorBox, Flat, GridCell, IC, Icon, RadioRow } from '@/components/v2/Kit'
 import { OverdraftWarning } from '@/components/v2/OverdraftWarning'
+import { CategoryPicker } from '@/components/panels/CategoryPicker'
 import { StepChoiceRow, StepOptionGroup, StepOptionRow } from '@/components/v2/Steps'
 import { AjSwitch } from '@/dashboard/components/ajustes/AjustesUi'
 import { categoryColor, categoryIdFor, categoryGlyph, categoryLabel, categoryName, childCategories, isInCategory, parentCategories, parentOf, useCategories } from '@/lib/backendCategories'
@@ -460,6 +461,18 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
   }
   const walletRowKey = (to: boolean): TranslationKey => (to ? 'nm.row.walletTo' : isInc ? 'nm.row.walletIn' : isTr ? 'nm.row.walletFrom' : 'nm.row.wallet')
 
+  // "Es dinero que presté / me prestaron": the loan is registered in
+  // Préstamos (it needs a counterparty and a due date), with the amount in
+  // the wallet's currency and the wallet already chosen here.
+  const toLoans = () => {
+    const q = new URLSearchParams({ tab: 'prestamos', side: isInc ? 'borrowed' : 'lent', new: 'loan' })
+    const amountInWallet = Math.round(val * rate * 100) / 100
+    if (amountInWallet > 0) q.set('amount', String(amountInWallet))
+    if (walletId) q.set('wallet', walletId)
+    onClose()
+    navigate(`/planes?${q.toString()}`)
+  }
+
   const sectionPanel = section && section !== 'cat' && section !== 'wallet' && section !== 'walletTo' ? (
           <div className="flex flex-col gap-3 rounded-[14px] border border-v2-line2 bg-v2-surface2 p-3.5">
             <SectionHead title={t(`nm.section.${section}` as TranslationKey)} action={t('nm.done')} onAction={() => setSection(null)} />
@@ -686,13 +699,25 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
 
             {section === 'more' && (
               <>
-                <div className="flex items-center gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="text-caption font-semibold">{t(isInc ? 'nm.loan.borrowed' : 'nm.loan.lent')}</div>
-                    <div className="mt-0.5 text-caption text-v2-dim">{t('nm.loan.detail')}</div>
+                {editing ? (
+                  <div className="flex items-center gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-caption font-semibold">{t(isInc ? 'nm.loan.borrowed' : 'nm.loan.lent')}</div>
+                      <div className="mt-0.5 text-caption text-v2-dim">{t('nm.loan.detail')}</div>
+                    </div>
+                    <AjSwitch on={loan} label={t(isInc ? 'nm.loan.borrowed' : 'nm.loan.lent')} onToggle={() => undefined} />
                   </div>
-                  <AjSwitch on={loan} label={t(isInc ? 'nm.loan.borrowed' : 'nm.loan.lent')} onToggle={() => !editing && setLoan(!loan)} />
-                </div>
+                ) : (
+                  // A loan needs its counterparty and due date, which live in
+                  // Préstamos: this opens its form with what's typed here.
+                  <button type="button" onClick={toLoans} className="flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-[12px] border border-border bg-surface px-3.5 py-2.5 text-left hover:bg-surface-sunken">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-body-sm font-semibold text-ink">{t(isInc ? 'nm.loan.borrowed' : 'nm.loan.lent')}</div>
+                      <div className="mt-0.5 text-caption text-ink-secondary">{t('nm.loan.goDetail')}</div>
+                    </div>
+                    <Icon paths={['M9 6l6 6-6 6']} size={18} color="var(--color-text-secondary)" />
+                  </button>
+                )}
                 <div className={fieldLabel}>{t('nm.goal')}</div>
                 <PillRow>
                   <Flat on={goalId === null} onClick={() => setGoalId(null)}>
@@ -732,6 +757,26 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
         </>
       }
     >
+      {!isTr && section === 'cat' ? (
+        <CategoryPicker
+          income={ctypeIncome}
+          cat={cat}
+          sub={sub}
+          done={catDone}
+          onBack={() => setSection(null)}
+          onPick={edit((c: CategoryId, sc: CategoryId | null) => {
+            setCat(c)
+            setSub(sc)
+            setCatDone(true)
+            setSection(null)
+          })}
+          onManage={() => {
+            onClose()
+            navigate(ctypeIncome ? '/ajustes/categorias?tab=ingresos' : '/ajustes/categorias')
+          }}
+        />
+      ) : (
+      <>
       <div role="radiogroup" aria-label={t('nm.typeLabel')} data-tour="nm.type" className="flex h-11 gap-1 rounded-[12px] bg-surface-sunken p-1">
         {TYPES.map((value) => {
           const on = type === value
@@ -839,67 +884,6 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
         </div>
       )}
 
-      {!isTr && section === 'cat' && (
-        <div className="flex flex-col gap-2.5">
-          <div className="flex items-center">
-            <div className="flex-1 text-body-sm font-semibold">{t(ctypeIncome ? 'nm.cat.income' : 'nm.cat.expense')}</div>
-            <button type="button" onClick={() => setSection(null)} className="cursor-pointer text-caption font-semibold text-v2-accent2">
-              {t('common.close')}
-            </button>
-          </div>
-          <div className="grid grid-cols-4 gap-1">
-            {parentCategories(ctypeIncome, false).map((x) => (
-              <GridCell
-                key={x.id}
-                on={cat === x.id}
-                color={x.color}
-                chip={<CategoryMark category={x.id} box={36} />}
-                label={categoryName(x.id)}
-                onClick={edit(() => {
-                  setCat(x.id)
-                  setSub(null)
-                  if (!childCategories(x.id, false).length) {
-                    setCatDone(true)
-                    setSection(null)
-                  }
-                })}
-              />
-            ))}
-          </div>
-          {cat && subs.length > 0 && (
-            <>
-              <div className="mt-1.5 text-caption font-semibold tracking-[.06em] text-v2-muted">{fill(t('nm.subOf'), categoryName(cat))}</div>
-              <div className="grid grid-cols-4 gap-1">
-                {[{ id: null as CategoryId | null, name: t('nm.none.f') }, ...subs.map((s) => ({ id: s.id as CategoryId | null, name: categoryName(s.id) }))].map((x) => (
-                  <GridCell
-                    key={x.id ?? 'none'}
-                    on={catDone && sub === x.id}
-                    color={categoryColor(cat)}
-                    chip={<GlyphMark paths={categoryGlyph(x.id ?? cat)} color={categoryColor(cat)} box={36} />}
-                    label={x.name}
-                    onClick={edit(() => {
-                      setSub(x.id)
-                      setCatDone(true)
-                      setSection(null)
-                    })}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-          <button
-            type="button"
-            onClick={() => {
-              onClose()
-              navigate(ctypeIncome ? '/ajustes/categorias?tab=ingresos' : '/ajustes/categorias')
-            }}
-            className="cursor-pointer self-start text-caption font-semibold text-v2-accent2"
-          >
-            {t('nm.manageCategories')}
-          </button>
-        </div>
-      )}
-
       {!isTr && section !== 'cat' && (
         <button
           type="button"
@@ -1003,6 +987,8 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
           onReview={() => setOverdraftAsk(null)}
           onConfirm={() => void save(true)}
         />
+      )}
+      </>
       )}
     </SidePanel>
   )

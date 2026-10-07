@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { http, HttpResponse } from 'msw'
 import { screen, waitFor, within } from '@testing-library/react'
+import { Route, Routes, useLocation } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
 import { server } from '../mocks/server'
 import { BASE, mockSession, renderApp } from '../utils/renderApp'
@@ -90,9 +91,12 @@ describe('NewTransactionPanel', () => {
     expect(screen.getByLabelText('Título')).toHaveValue('Gasto')
     expect(screen.getByText('Sugerido')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /Elige una categoría/ }))
+    // The categories, then that category's subcategories, each on its own
+    // page with a way back; picking one returns to the form.
     await user.click(screen.getByRole('radio', { name: 'Alimentación' }))
-    await waitFor(() => expect(screen.getByLabelText('Título')).toHaveValue('Alimentación'))
-    expect(screen.getByText('Sugerido')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Alimentación' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Volver' }))
+    await user.click(screen.getByRole('radio', { name: 'Alimentación' }))
     await user.click(screen.getByRole('radio', { name: 'Mercado' }))
     await waitFor(() => expect(screen.getByLabelText('Título')).toHaveValue('Mercado de la semana'))
     expect(screen.getByText('Sugerido')).toBeInTheDocument()
@@ -109,6 +113,7 @@ describe('NewTransactionPanel', () => {
     expect(screen.queryByText('Sugerido')).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /Alimentación · Mercado/ }))
     await user.click(screen.getByRole('radio', { name: 'Alimentación' }))
+    await user.click(screen.getByRole('radio', { name: 'Restaurantes' }))
     expect(screen.getByLabelText('Título')).toHaveValue('Cena con Ana')
   })
 
@@ -213,6 +218,30 @@ describe('NewTransactionPanel', () => {
     await user.click(within(list).getByRole('radio', { name: 'Nequi' }))
     expect(screen.queryByRole('radiogroup', { name: 'Billetera' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^Billetera\s*Nequi/ })).toBeInTheDocument()
+  })
+
+  it('sends a loan to Préstamos with the amount and wallet already typed', async () => {
+    mockPanel()
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+    function Where() {
+      const { pathname, search } = useLocation()
+      return <div data-testid="where">{pathname + search}</div>
+    }
+    renderApp(
+      <Routes>
+        <Route path="/" element={<NewTransactionPanel onClose={onClose} />} />
+        <Route path="/planes" element={<Where />} />
+      </Routes>,
+    )
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Billetera\s*Bancolombia/ })).toBeInTheDocument())
+    await user.type(screen.getByLabelText('MONTO'), '200000')
+    await user.click(screen.getByRole('button', { name: /^Más opciones/ }))
+    await user.click(screen.getByRole('button', { name: /^Préstamo o meta/ }))
+    await user.click(screen.getByRole('button', { name: /^Es dinero que presté/ }))
+    expect(onClose).toHaveBeenCalled()
+    const where = await screen.findByTestId('where')
+    expect(where).toHaveTextContent('/planes?tab=prestamos&side=lent&new=loan&amount=200000&wallet=11111111-1111-4111-8111-111111111111')
   })
 
   it('needs a destination wallet for a transfer', async () => {

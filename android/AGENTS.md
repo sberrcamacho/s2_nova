@@ -263,6 +263,10 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   "Modo invitado" banner with "Crear cuenta". Ajustes hides what only a real
   account has (editing the name, Cambiar contraseña, Restablecer datos,
   Eliminar cuenta) and says so in a card with "Crear cuenta".
+- **Loans from Nuevo movimiento**: "Es dinero que presté / me prestaron" in
+  Préstamo o meta hands the amount (in the wallet's currency) and wallet to
+  `LoanPrefill` and opens Planes › Préstamos, whose loan sheet starts filled
+  in; the counterparty and due date only exist there.
 - **"Saldo insuficiente"** (`components/OverdraftDialog.kt` +
   `overdraftAfter` in `AddTransactionScreen.kt`): asked before money leaves a
   wallet and takes it below zero — Nuevo movimiento's Guardar, a goal's

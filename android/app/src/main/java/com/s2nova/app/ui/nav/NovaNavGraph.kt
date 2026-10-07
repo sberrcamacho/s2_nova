@@ -266,6 +266,11 @@ fun NovaApp() {
                     onAddWallet = { navController.navigate(NovaDestinations.WALLETS) },
                     onOpenCategories = { income -> navController.navigate(NovaDestinations.categories(income)) },
                     onOpenCurrencies = { navController.navigate(NovaDestinations.CURRENCIES) },
+                    onRegisterLoan = {
+                        val side = com.s2nova.app.ui.screens.loans.LoanPrefill.peekSide()
+                        navController.popBackStack()
+                        navigateToTab(NovaDestinations.budgets(tab = 2, side = side.name))
+                    },
                 )
             }
             composable(
