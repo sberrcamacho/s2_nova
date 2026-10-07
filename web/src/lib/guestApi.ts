@@ -3,13 +3,14 @@ import { currentLanguage } from '@/lib/i18n/translations'
 import { CURRENCY_CATALOG, currencyInfo, referenceRate } from '@/lib/currency'
 import { todayISO } from '@/lib/date'
 import { TAX_NODES, visColor } from '@/lib/taxonomy'
+import { SEED, resolveSeedDate } from '@/lib/guestSeed'
 
 // Guest mode ("Continuar como invitado", ONBOARDING.md §1): an in-memory
 // stand-in for the backend, answering every request apiClient makes with
-// the same wire shapes. It holds the v2 mockup's example account — the same
-// seed as Android's DemoData (wallets incl. a USD wallet, movements with
-// receipts, budgets, goals with periodic contributions, loans,
-// Programados). Everything is interactive; nothing reaches the server and
+// the same wire shapes. It holds the example account from the seed shared
+// with Android (scripts/gen-guest-seed.mjs): a year of movements across six
+// wallets in three currencies, budgets, goals with every kind of plan, loans
+// both ways and Programados. Everything is interactive; nothing reaches the server and
 // nothing survives signing out or reloading. The backend's balance,
 // progress, alert and summary rules (backend/src/lib, routes/alerts.ts,
 // routes/summary.ts) are mirrored here so a guest sees what a real account
@@ -222,20 +223,18 @@ function convert(amount: number, from: string, to: string): number {
 
 // The mockup's "today"; seed dates keep their distance from it relative to
 // the real today, so the month views populate (as Android's DemoData does).
-const MOCK_TODAY = '2026-08-21'
-const BANCOLOMBIA = 'guest-bancolombia'
-const NEQUI = 'guest-nequi'
-const EFECTIVO = 'guest-efectivo'
-const WISE = 'guest-wise'
-
 let seq = 0
 let nextId = 0
 const newId = (prefix: string) => `guest-new-${prefix}-${++nextId}`
 
+// The example account comes from the shared seed (scripts/gen-guest-seed.mjs,
+// the same file Android loads), with its relative dates resolved against
+// today. Balances, goal progress, Programado and plan counts and settled
+// loans all follow from the movements that are dated up to today.
 function seed(): GuestState {
-  const shift = Math.round((parse(todayISO()).getTime() - parse(MOCK_TODAY).getTime()) / 86_400_000)
-  const d = (day: string) => addDays(day, shift)
   const today = todayISO()
+  const at = (spec: string) => resolveSeedDate(spec, today)
+  const en = currentLanguage() === 'en'
 
   const categories: GCategory[] = TAX_NODES.map((n) => ({
     id: n.id,
@@ -249,149 +248,134 @@ function seed(): GuestState {
     isCustom: false,
     hidden: false,
   }))
+  for (const c of SEED.categories) {
+    const parent = categories.find((x) => x.id === c.parentId)
+    const name = en ? c.nameEn : c.name
+    categories.push({ id: c.id, slug: c.id, name, defaultName: name, icon: parent?.icon ?? c.vis, color: parent?.color ?? visColor(c.vis), kind: c.kind as GCategory['kind'], parentId: c.parentId, isCustom: true, hidden: false })
+  }
 
-  const accounts: GAccount[] = [
-    { id: BANCOLOMBIA, name: 'Bancolombia — Ahorros', type: 'SAVINGS', currency: 'COP', initialBalance: 13_740_000, currentBalance: 13_740_000 },
-    { id: NEQUI, name: 'Nequi', type: 'NEQUI', currency: 'COP', initialBalance: 1_982_300, currentBalance: 1_982_300 },
-    { id: EFECTIVO, name: 'Efectivo', type: 'CASH', currency: 'COP', initialBalance: 425_000, currentBalance: 425_000 },
-    { id: WISE, name: 'Wise — Dólares', type: 'SAVINGS', currency: 'USD', initialBalance: 320, currentBalance: 320 },
-  ]
+  const accounts: GAccount[] = SEED.wallets.map((w) => ({ id: w.id, name: w.name, type: w.type, currency: w.currency, initialBalance: w.opening, currentBalance: w.opening }))
+  const currencyOf = (id: string) => accounts.find((a) => a.id === id)!.currency
+  const typeOf = (id: string) => accounts.find((a) => a.id === id)!.type
 
-  const tx = (p: Partial<GTx> & Pick<GTx, 'id' | 'accountId' | 'amount' | 'categoryId' | 'date'>): GTx => {
-    const wallet = accounts.find((a) => a.id === p.accountId)!
-    const currency = p.currency ?? wallet.currency
-    const foreign = currency !== wallet.currency
+  const kept = SEED.movements.map((m) => ({ m, date: at(m.date) })).filter(({ m, date }) => date <= today || m.planned)
+  const txs: GTx[] = kept.map(({ m, date }): GTx => {
+    const walletCurrency = currencyOf(m.wallet)
+    const currency = m.currency ?? walletCurrency
+    const target = m.to ? currencyOf(m.to) : walletCurrency
+    const file = m.attachment ? SEED.files[m.attachment.file as keyof typeof SEED.files] : undefined
     return {
-      transferToAccountId: null,
-      type: 'EXPENSE',
-      status: 'COMPLETED',
+      id: m.id,
+      accountId: m.wallet,
+      transferToAccountId: m.to ?? null,
+      type: m.type as GTx['type'],
+      status: m.planned ? 'PLANNED' : 'COMPLETED',
+      amount: m.amount,
       currency,
-      fxRate: foreign ? referenceRate(currency, wallet.currency) : null,
-      walletAmount: foreign ? convert(p.amount, currency, wallet.currency) : null,
-      subcategoryId: null,
+      ...priced(m.amount, currency, target),
+      categoryId: m.category,
+      subcategoryId: m.sub ?? null,
       productId: null,
       budgetId: null,
-      customBudgetId: null,
-      goalId: null,
-      recurringSeriesId: null,
-      loanKind: null,
-      counterpartyName: null,
-      counterpartyKind: null,
+      customBudgetId: m.customBudget ?? null,
+      goalId: m.goal ?? null,
+      recurringSeriesId: m.series ?? null,
+      loanKind: (m.loan?.kind as GTx['loanKind']) ?? null,
+      counterpartyName: m.counterparty ?? null,
+      counterpartyKind: m.counterpartyKind ?? null,
+      dueDate: m.loan?.due ? at(m.loan.due) : null,
       loanSettledAt: null,
       settledByTransactionId: null,
-      parentLoanId: null,
-      paymentMethod: paymentMethodFor(wallet.type),
-      description: '',
-      merchant: null,
-      note: null,
-      time: '12:00',
+      parentLoanId: m.parentLoan ?? null,
+      paymentMethod: paymentMethodFor(typeOf(m.wallet)),
+      description: m.title,
+      merchant: m.merchant ?? null,
+      note: m.note ?? null,
+      date,
+      time: m.time,
       seq: ++seq,
-      attachment: null,
-      ...p,
-      date: d(p.date),
-      dueDate: p.dueDate ? d(p.dueDate) : null,
+      attachment:
+        m.attachment && file
+          ? {
+              id: `${m.id}-file`,
+              kind: m.attachment.kind as GAttachment['kind'],
+              mime: m.attachment.kind === 'PDF' ? 'application/pdf' : 'image/png',
+              name: m.attachment.name,
+              size: Math.floor((file.length * 3) / 4),
+              createdAt: `${date}T${m.time}:00.000Z`,
+              data: file,
+            }
+          : null,
+    }
+  })
+
+  // A loan whose repayments cover it is settled by the last one.
+  for (const loan of txs.filter((t) => t.loanKind)) {
+    const repayments = txs.filter((t) => t.parentLoanId === loan.id).sort((a, b) => a.date.localeCompare(b.date))
+    if (repayments.length && repayments.reduce((sum, t) => sum + t.amount, 0) >= loan.amount) {
+      const last = repayments[repayments.length - 1]
+      loan.loanSettledAt = `${last.date}T12:00:00.000Z`
+      loan.settledByTransactionId = last.id
     }
   }
-  const attach = (id: string, kind: 'IMAGE' | 'PDF', name: string, size: number, day: string): GAttachment => ({
-    id,
-    kind,
-    mime: kind === 'PDF' ? 'application/pdf' : 'image/jpeg',
-    name,
-    size,
-    createdAt: `${d(day)}T12:00:00.000Z`,
-  })
 
-  const txs: GTx[] = [
-    tx({ id: 'guest-tx-101', accountId: BANCOLOMBIA, amount: 1_450_000, categoryId: 'exp.housing', subcategoryId: 'exp.housing.rent', date: '2026-09-01', time: '08:00', status: 'PLANNED', description: 'Arriendo', recurringSeriesId: 'guest-series-rent' }),
-    tx({ id: 'guest-tx-102', accountId: NEQUI, amount: 180_000, categoryId: 'exp.education', subcategoryId: 'exp.education.courses', date: '2026-08-28', time: '09:00', status: 'PLANNED', description: 'Cuota del curso de inglés' }),
-    tx({ id: 'guest-tx-1', accountId: BANCOLOMBIA, amount: 168_500, categoryId: 'exp.food', subcategoryId: 'exp.food.groceries', date: '2026-08-21', time: '09:12', description: 'Mercado semanal', merchant: 'Éxito', attachment: attach('guest-att-1', 'IMAGE', 'recibo-exito.jpg', 1_200_000, '2026-08-21') }),
-    tx({ id: 'guest-tx-2', accountId: EFECTIVO, amount: 21_000, categoryId: 'exp.food', subcategoryId: 'exp.food.cafes', date: '2026-08-21', time: '07:48', description: 'Café', merchant: 'Tostao' }),
-    tx({ id: 'guest-tx-3', accountId: BANCOLOMBIA, amount: 5.99, currency: 'USD', categoryId: 'exp.entertainment', subcategoryId: 'exp.entertainment.streaming', date: '2026-08-20', time: '22:15', description: 'Spotify', merchant: 'Spotify' }),
-    tx({ id: 'guest-tx-4', accountId: BANCOLOMBIA, amount: 109_000, categoryId: 'exp.utilities', subcategoryId: 'exp.utilities.internet', date: '2026-08-20', time: '10:30', description: 'Internet y celular', merchant: 'Claro', attachment: attach('guest-att-4', 'PDF', 'factura-claro-ago.pdf', 240_000, '2026-08-20') }),
-    tx({ id: 'guest-tx-5', accountId: WISE, type: 'INCOME', amount: 200, categoryId: 'inc.work', subcategoryId: 'inc.work.freelance', date: '2026-08-18', time: '16:05', description: 'Diseño de logo', counterpartyName: 'Andrés Gómez', counterpartyKind: 'CLIENT' }),
-    tx({ id: 'guest-tx-6', accountId: BANCOLOMBIA, type: 'INCOME', amount: 4_400_000, categoryId: 'inc.work', subcategoryId: 'inc.work.salary', date: '2026-08-01', time: '06:00', description: 'Salario mensual', counterpartyName: 'Grupo Éxito', counterpartyKind: 'EMPLOYER' }),
-    // The automatic weekly aporte to "Fondo de emergencia" ("Aporte automático registrado").
-    tx({ id: 'guest-tx-7', accountId: NEQUI, amount: 100_000, categoryId: 'exp.other', date: '2026-08-17', time: '08:00', description: 'Aporte a Fondo de emergencia', goalId: 'guest-goal-1' }),
-    // Préstamos (Planes › Préstamos).
-    tx({ id: 'guest-loan-1', accountId: BANCOLOMBIA, amount: 420_000, categoryId: 'exp.other', date: '2026-08-05', description: 'Préstamo a Camilo', loanKind: 'LENT', counterpartyName: 'Camilo Restrepo', dueDate: '2026-09-15' }),
-    tx({ id: 'guest-loan-2', accountId: NEQUI, amount: 200_000, categoryId: 'exp.other', date: '2026-07-10', description: 'Préstamo a Ana María', loanKind: 'LENT', counterpartyName: 'Ana María Ruiz', loanSettledAt: `${d('2026-08-02')}T12:00:00.000Z`, settledByTransactionId: 'guest-loan-2-pay' }),
-    tx({ id: 'guest-loan-2-pay', accountId: NEQUI, type: 'INCOME', amount: 200_000, categoryId: 'exp.other', date: '2026-08-02', description: 'Pago recibido de Ana María Ruiz', counterpartyName: 'Ana María Ruiz', parentLoanId: 'guest-loan-2' }),
-  ]
-
-  // The eleven months before this one, from the mockup's BAR_DATA (millions
-  // of income, expenses), so Inicio's chart and Reportes have a history.
-  const HISTORY = [[4.05, 2.2], [4.12, 2.31], [4.18, 2.75], [5.6, 3.42], [4.1, 2.05], [4.16, 1.88], [4.21, 1.91], [4.38, 2.14], [4.25, 2.42], [4.42, 1.78], [4.41, 2.03]]
-  HISTORY.forEach(([income, expenses], i) => {
-    const month = shiftMonth(monthOf(today), i - HISTORY.length)
-    const million = (m: number) => Math.round((m * 1_000_000) / 100) * 100
-    const food = million(expenses * 0.4)
-    const transport = million(expenses * 0.12)
-    const past = (day: string, p: Omit<Parameters<typeof tx>[0], 'date'>) => ({ ...tx({ ...p, date: MOCK_TODAY }), date: `${month}-${day}` })
-    txs.push(
-      past('01', { id: `guest-hist-${i}-salary`, accountId: BANCOLOMBIA, type: 'INCOME', amount: million(income), categoryId: 'inc.work', subcategoryId: 'inc.work.salary', time: '06:00', description: 'Salario mensual', counterpartyName: 'Grupo Éxito', counterpartyKind: 'EMPLOYER' }),
-      past('06', { id: `guest-hist-${i}-food`, accountId: BANCOLOMBIA, amount: food, categoryId: 'exp.food', subcategoryId: 'exp.food.groceries', time: '10:20', description: 'Mercado del mes', merchant: 'Éxito' }),
-      past('12', { id: `guest-hist-${i}-internet`, accountId: BANCOLOMBIA, amount: 109_000, categoryId: 'exp.utilities', subcategoryId: 'exp.utilities.internet', time: '10:30', description: 'Internet y celular', merchant: 'Claro' }),
-      past('17', { id: `guest-hist-${i}-transport`, accountId: NEQUI, amount: transport, categoryId: 'exp.transportation', time: '18:40', description: 'Transporte' }),
-      past('24', { id: `guest-hist-${i}-shopping`, accountId: BANCOLOMBIA, amount: million(expenses) - food - transport - 109_000, categoryId: 'exp.shopping', time: '15:10', description: 'Compras' }),
-    )
-  })
-
-  const monthStart = `${monthOf(today)}-01`
-  const budget = (p: Partial<GBudget> & Pick<GBudget, 'id' | 'amount'>, spent: number): GBudget & { target: number } => ({
-    name: null,
-    kind: 'CATEGORY',
-    categoryId: null,
-    icon: null,
-    walletIds: [],
-    period: 'MONTHLY',
-    startDate: monthStart,
-    endDate: null,
+  const firstMonth = `${at('M:-11:1').slice(0, 7)}-01`
+  const budgets: GBudget[] = SEED.budgets.map((b) => ({
+    id: b.id,
+    name: b.name ?? null,
+    kind: b.kind as GBudget['kind'],
+    categoryId: b.category ?? null,
+    icon: b.icon ?? null,
+    walletIds: b.walletIds,
+    period: b.period as GBudget['period'],
+    startDate: b.start ? at(b.start) : firstMonth,
+    endDate: b.end ? at(b.end) : null,
+    amount: b.amount,
     baseSpent: 0,
-    ...p,
-    target: spent,
-  })
-  const budgets = [
-    budget({ id: 'guest-budget-1', categoryId: 'exp.housing', amount: 250_000 }, 232_000),
-    budget({ id: 'guest-budget-2', categoryId: 'exp.entertainment.streaming', amount: 90_000 }, 84_800),
-    budget({ id: 'guest-budget-3', categoryId: 'exp.food', amount: 900_000 }, 612_400),
-    budget({ id: 'guest-budget-4', categoryId: 'exp.utilities', amount: 200_000 }, 180_000),
-    budget({ id: 'guest-budget-5', categoryId: 'exp.transportation', amount: 150_000 }, 95_500),
-    budget({ id: 'guest-budget-6', categoryId: 'exp.shopping', amount: 780_000 }, 318_500),
-    budget({ id: 'guest-budget-7', kind: 'CUSTOM', name: 'Viaje de fin de año', icon: 'travel', period: 'CUSTOM', startDate: d('2026-12-01'), endDate: d('2027-01-15'), amount: 2_500_000 }, 640_000),
-    budget({ id: 'guest-budget-8', kind: 'CUSTOM', name: 'Cumpleaños de Sofía', icon: 'events', period: 'CUSTOM', startDate: d('2026-08-10'), endDate: d('2026-08-31'), amount: 300_000 }, 120_000),
-  ]
+  }))
 
-  const goals: GGoal[] = [
-    {
-      id: 'guest-goal-1', name: 'Fondo de emergencia', icon: 'savings', targetAmount: 12_000_000, initialAmount: 0, targetDate: null,
-      base: { [BANCOLOMBIA]: 6_000_000, [NEQUI]: 1_700_000, [EFECTIVO]: 600_000 },
-      plan: { amount: 100_000, frequency: 'WEEKLY', accountId: NEQUI, startDate: d('2026-06-01'), endMode: 'GOAL', count: null, endDate: null, autoConfirm: true, nextDate: d('2026-08-24'), doneCount: 12, active: true },
+  const goals: GGoal[] = SEED.goals.map((g) => ({
+    id: g.id,
+    name: g.name,
+    icon: g.icon,
+    targetAmount: g.target,
+    initialAmount: g.initial,
+    targetDate: g.targetDate ? at(g.targetDate) : null,
+    base: {},
+    plan: g.plan && {
+      amount: g.plan.amount,
+      frequency: g.plan.frequency as GPlan['frequency'],
+      accountId: g.plan.wallet,
+      startDate: at(g.plan.start),
+      endMode: g.plan.endMode as GPlan['endMode'],
+      count: g.plan.count,
+      endDate: g.plan.endDate ? at(g.plan.endDate) : null,
+      autoConfirm: g.plan.autoConfirm,
+      nextDate: at(g.plan.next),
+      doneCount: kept.filter(({ m }) => m.goal === g.id && m.goalPlan).length,
+      active: g.plan.active,
     },
-    {
-      id: 'guest-goal-2', name: 'Viaje a Perú', icon: 'travel', targetAmount: 4_500_000, initialAmount: 500_000, targetDate: d('2027-06-30'),
-      base: { [BANCOLOMBIA]: 700_000, [NEQUI]: 780_000 },
-      plan: { amount: 250_000, frequency: 'MONTHLY', accountId: BANCOLOMBIA, startDate: d('2026-05-21'), endMode: 'GOAL', count: null, endDate: null, autoConfirm: false, nextDate: d('2026-08-21'), doneCount: 3, active: true },
-    },
-    { id: 'guest-goal-3', name: 'Portátil nuevo', icon: 'technology', targetAmount: 5_200_000, initialAmount: 1_000_000, targetDate: d('2026-10-31'), base: { [BANCOLOMBIA]: 3_680_000 }, plan: null },
-    { id: 'guest-goal-4', name: 'Especialización', icon: 'education', targetAmount: 3_000_000, initialAmount: 0, targetDate: null, base: { [NEQUI]: 300_000, [EFECTIVO]: 150_000 }, plan: null },
-  ]
+  }))
 
-  const series = (p: Partial<GSeries> & Pick<GSeries, 'id' | 'name' | 'amount' | 'categoryId' | 'nextOccurrenceDate'>): GSeries => ({
-    type: 'EXPENSE',
-    currency: 'COP',
-    accountId: BANCOLOMBIA,
-    subcategoryId: null,
+  const series: GSeries[] = SEED.series.map((x) => ({
+    id: x.id,
+    name: x.name,
+    type: (x.type ?? 'EXPENSE') as GSeries['type'],
+    amount: x.amount,
+    currency: x.currency,
+    accountId: x.wallet,
+    categoryId: x.category,
+    subcategoryId: x.sub ?? null,
     customBudgetId: null,
-    paymentMethod: 'BANK_TRANSFER',
-    interval: 'MONTHLY',
-    occurrences: null,
-    occurrencesDone: 1,
-    endDate: null,
-    autoConfirm: false,
-    active: true,
-    ...p,
-    nextOccurrenceDate: d(p.nextOccurrenceDate),
-  })
+    paymentMethod: paymentMethodFor(typeOf(x.wallet)),
+    interval: x.interval as GSeries['interval'],
+    nextOccurrenceDate: at(x.next),
+    occurrences: x.occurrences,
+    occurrencesDone: kept.filter(({ m }) => m.series === x.id).length,
+    endDate: x.endDate ? at(x.endDate) : null,
+    autoConfirm: x.autoConfirm,
+    active: x.active,
+  }))
 
   const state: GuestState = {
     me: {
@@ -399,13 +383,12 @@ function seed(): GuestState {
       email: 'invitado@s2nova.local',
       phone: null,
       city: null,
-      createdAt: `${today}T12:00:00.000Z`,
-      // "Cambiada hace 4 meses", as in the mockup.
+      createdAt: `${firstMonth}T12:00:00.000Z`,
       passwordChangedAt: new Date(Date.now() - 122 * 86_400_000).toISOString(),
       // Guides are on for guests; the language is the one already showing.
       preferences: {
         language: currentLanguage(),
-        currency: 'COP',
+        currency: SEED.principal,
         theme: 'SYSTEM',
         notifications: true,
         biometricLogin: false,
@@ -420,26 +403,17 @@ function seed(): GuestState {
     sessions: [
       { id: 'guest-session-1', device: null, kind: 'desktop', lastActiveAt: new Date().toISOString(), current: true },
       { id: 'guest-session-2', device: 'S2 Nova app · Pixel 8', kind: 'phone', lastActiveAt: new Date(Date.now() - 2 * 3_600_000).toISOString(), current: false },
-      { id: 'guest-session-3', device: 'Safari · iPad', kind: 'tablet', lastActiveAt: new Date(Date.now() - 3 * 86_400_000).toISOString(), current: false },
     ],
-    principal: 'COP',
-    currencies: ['COP', 'USD', 'EUR'],
+    principal: SEED.principal,
+    currencies: [...SEED.currencies],
     categories,
     accounts,
     txs,
-    budgets: [],
+    budgets,
     goals,
-    series: [
-      series({ id: 'guest-series-1', name: 'Netflix', amount: 45_000, categoryId: 'exp.entertainment', subcategoryId: 'exp.entertainment.streaming', nextOccurrenceDate: '2026-08-24' }),
-      series({ id: 'guest-series-2', name: 'Internet y celular', amount: 109_000, categoryId: 'exp.utilities', subcategoryId: 'exp.utilities.internet', nextOccurrenceDate: '2026-08-26' }),
-      series({ id: 'guest-series-3', name: 'Administración', amount: 232_000, categoryId: 'exp.housing', subcategoryId: 'exp.housing.maintenance', nextOccurrenceDate: '2026-08-21' }),
-      series({ id: 'guest-series-4', name: 'Salario mensual', type: 'INCOME', amount: 4_400_000, categoryId: 'inc.work', subcategoryId: 'inc.work.salary', nextOccurrenceDate: '2026-09-01' }),
-      series({ id: 'guest-series-5', name: 'Gimnasio', amount: 89_000, categoryId: 'exp.health', nextOccurrenceDate: '2026-09-05', active: false }),
-      series({ id: 'guest-series-rent', name: 'Arriendo', amount: 1_450_000, categoryId: 'exp.housing', subcategoryId: 'exp.housing.rent', nextOccurrenceDate: '2026-10-01' }),
-    ],
+    series,
   }
-  // The part of each budget's example spending no movement explains.
-  state.budgets = budgets.map(({ target, ...b }) => ({ ...b, baseSpent: Math.max(0, target - movementSpent(state, b, monthOf(today))) }))
+  for (const t of txs) applyEffect(state, t, 1)
   return state
 }
 
@@ -1069,6 +1043,63 @@ function listTransactions(s: GuestState, q: URLSearchParams) {
   return rows.slice(offset, offset + limit).map((t) => serializeTx(s, t))
 }
 
+// GET /transactions/titles: titles already used, most recent first, and the
+// latest one for the exact category + subcategory pair (backend rule).
+function titles(s: GuestState, q: URLSearchParams) {
+  const type = q.get('type')
+  const categoryId = q.get('categoryId')
+  const subcategoryId = q.get('subcategoryId')
+  const prefix = q.get('q')?.toLowerCase()
+  const limit = Number(q.get('limit') ?? 5)
+  const recent = s.txs
+    .filter((t) => (!type || t.type === type) && (!categoryId || t.categoryId === categoryId) && (!subcategoryId || t.subcategoryId === subcategoryId))
+    .sort((a, b) => b.date.localeCompare(a.date) || b.seq - a.seq)
+  const seen = new Set<string>()
+  const list: string[] = []
+  for (const t of recent) {
+    if (!t.description || seen.has(t.description) || (prefix && !t.description.toLowerCase().startsWith(prefix))) continue
+    seen.add(t.description)
+    list.push(t.description)
+    if (list.length >= limit) break
+  }
+  const last = categoryId ? recent.find((t) => t.categoryId === categoryId && t.subcategoryId === (subcategoryId ?? null))?.description ?? null : null
+  return { titles: list, last }
+}
+
+// GET /me/export: the backend's CSV (one block per kind of record).
+function exportCsv(s: GuestState): string {
+  const TYPE = { INCOME: 'Ingreso', EXPENSE: 'Gasto', TRANSFER: 'Transferencia' } as const
+  const STATUS = { COMPLETED: 'Registrado', PLANNED: 'Próximo' } as const
+  const cell = (v: string | number | null | undefined) => {
+    if (v === null || v === undefined) return ''
+    const text = String(v)
+    return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
+  }
+  const block = (title: string, header: string[], rows: (string | number | null | undefined)[][]) => [title, header.join(','), ...rows.map((r) => r.map(cell).join(','))].join('\r\n')
+  const name = (id: string | null) => (id ? (s.categories.find((c) => c.id === id)?.name ?? '') : '')
+  const wallet = (id: string | null) => (id ? (s.accounts.find((a) => a.id === id)?.name ?? '') : '')
+  const txs = [...s.txs].sort((a, b) => b.date.localeCompare(a.date) || b.seq - a.seq)
+  const loans = txs.filter((t) => t.loanKind)
+  return [
+    block(
+      'Movimientos',
+      ['Fecha', 'Tipo', 'Estado', 'Descripción', 'Comercio', 'Categoría', 'Subcategoría', 'Billetera', 'Billetera destino', 'Monto', 'Nota'],
+      txs.map((t) => [t.date, TYPE[t.type], STATUS[t.status], t.description, t.merchant, t.type === 'TRANSFER' ? 'Transferencia' : name(t.categoryId), name(t.subcategoryId), wallet(t.accountId), wallet(t.transferToAccountId), t.amount, t.note]),
+    ),
+    block(
+      'Presupuestos',
+      ['Nombre', 'Categoría', 'Límite mensual', 'Desde', 'Hasta'],
+      s.budgets.map((b) => [b.name, b.categoryId ? name(b.categoryId) : 'Personalizado', b.amount, b.startDate, b.endDate]),
+    ),
+    block('Metas', ['Nombre', 'Objetivo', 'Ahorrado', 'Fecha objetivo'], s.goals.map((g) => [g.name, g.targetAmount, round(goalCurrent(s, g), s.principal), g.targetDate])),
+    block(
+      'Préstamos',
+      ['Fecha', 'Tipo', 'Persona', 'Monto', 'Pendiente', 'Vence', 'Billetera'],
+      loans.map((l) => [l.date, l.loanKind === 'LENT' ? 'Prestado' : 'Recibido', l.counterpartyName, l.amount, outstanding(s, l), l.dueDate, wallet(l.accountId)]),
+    ),
+  ].join('\r\n\r\n')
+}
+
 type GRepeat = { interval: GSeries['interval']; occurrences?: number; endDate?: string; autoConfirm?: boolean }
 
 function seriesEnded(series: GSeries): boolean {
@@ -1413,7 +1444,7 @@ function route(s: GuestState, method: Method, path: string, body: Row): unknown 
     }
   }
   if (is('DOWNLOAD', '/me/export')) {
-    return { data: new Blob([JSON.stringify(s, null, 2)], { type: 'application/json' }), fileName: 's2nova-invitado.json' }
+    return { data: new Blob([`\uFEFF${exportCsv(s)}\r\n`], { type: 'text/csv;charset=utf-8' }), fileName: `s2-nova-${todayISO()}.csv` }
   }
   if (p[0] === 'me' && (p[1] === 'password' || p[1] === 'sessions' || p.length === 1)) throw new ApiError(NOT_FOR_GUESTS, 403)
 
@@ -1463,6 +1494,7 @@ function route(s: GuestState, method: Method, path: string, body: Row): unknown 
 
   // Movements
   if (is('GET', '/transactions')) return listTransactions(s, q)
+  if (is('GET', '/transactions/titles')) return titles(s, q)
   if (is('POST', '/transactions')) return createTransaction(s, body)
   if (is('GET', '/transactions/:id')) return serializeTx(s, tx(s, p[1]))
   if (is('PATCH', '/transactions/:id')) return updateTransaction(s, p[1], body)

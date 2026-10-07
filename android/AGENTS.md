@@ -257,8 +257,13 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   or skipped tours go to the server's `prefs.guidesSeen` (`tour.*`, shared
   with Web); "Ver los recorridos otra vez" in Ajustes clears them.
 - **Guest mode** ("Continuar como invitado" on Login): `AppContainer.
-  enterGuestMode()` sets `DemoModeFlag` and loads `data/mock/DemoData.kt`
-  (the v2 mockup's seed, dates shifted relative to today). Mutations apply
+  enterGuestMode()` sets `DemoModeFlag` and loads the example account from
+  the seed shared with Web (`assets/guest_seed.json`, written by
+  `scripts/gen-guest-seed.mjs`; `data/mock/GuestSeed.kt` resolves its
+  month-relative dates against today and derives balances, budget
+  spending, goal progress, Programado and plan counts, settled loans and
+  the alerts with the backend's rules). `GuestSeedTest` and Web's
+  `guestSeed.spec.ts` expect the same figures for the same day. Mutations apply
   locally (`DemoLedger`) and are never sent to the server; Inicio shows the
   "Modo invitado" banner with "Crear cuenta". Ajustes hides what only a real
   account has (editing the name, Cambiar contraseña, Restablecer datos,

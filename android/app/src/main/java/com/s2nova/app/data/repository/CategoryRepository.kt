@@ -51,9 +51,10 @@ class CategoryRepository(private val api: ApiService = ApiClient.api) {
         _nodes.value = api.getCategories().toNodes().sortedBy { order[it.id] ?: Int.MAX_VALUE }
     }
 
-    // Guest mode: the bundled taxonomy, editable locally.
-    fun loadDemo() {
-        _nodes.value = bundled()
+    // Guest mode: the bundled taxonomy plus the example account's own
+    // categories, editable locally.
+    fun loadDemo(custom: List<CategoryNode> = emptyList()) {
+        _nodes.value = bundled() + custom
     }
 
     fun all(): List<CategoryNode> = current()

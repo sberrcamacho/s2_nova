@@ -26,21 +26,44 @@ describe('Guest mode example account', () => {
     resetCategoryCache()
   })
 
-  it('holds the mockup example account, with guides on', async () => {
+  it('holds the shared example account, with balances that follow from its movements', async () => {
     const wallets = await accountService.getWallets()
-    expect(wallets.map((w) => [w.name, w.currency, w.currentBalance])).toEqual([
-      ['Bancolombia — Ahorros', 'COP', 13_740_000],
-      ['Nequi', 'COP', 1_982_300],
-      ['Efectivo', 'COP', 425_000],
-      ['Wise — Dólares', 'USD', 320],
+    expect(wallets.map((w) => [w.name, w.currency])).toEqual([
+      ['Bancolombia — Ahorros', 'COP'],
+      ['Nequi', 'COP'],
+      ['Efectivo', 'COP'],
+      ['Visa Bancolombia', 'COP'],
+      ['Wise — Dólares', 'USD'],
+      ['Revolut — Euros', 'EUR'],
     ])
-    expect(wallets[3].principalBalance).toBe(1_264_000)
+    // Only the credit card carries a debt.
+    for (const w of wallets) expect(w.id === 'guest-visa' ? w.currentBalance <= 0 : w.currentBalance > 0).toBe(true)
 
     const me = await userService.getCurrentUser()
     expect(me).toMatchObject({ name: 'Invitado', principalCurrency: 'COP', onboardingCompleted: true, guidesSeen: [], guidesOff: false })
-    // The six months ending now have income, except the current one on the
-    // first days of a month, before its salary is dated.
-    expect((await summaryService.getMonths(6)).filter((m) => m.income > 0).length).toBeGreaterThanOrEqual(5)
+    // Every month of the year has its salary, the current one included.
+    const months = await summaryService.getMonths(12)
+    expect(months.every((m) => m.income >= 4_400_000)).toBe(true)
+  })
+
+  it('suggests the titles already used, most recent first', async () => {
+    const { titles, last } = await transactionService.getTitleSuggestions({ type: 'EXPENSE', categoryId: 'exp.food', subcategoryId: 'exp.food.cafes' })
+    expect(titles).toEqual(['Café'])
+    expect(last).toBe('Café')
+  })
+
+  it('exports the account as the backend CSV', async () => {
+    let csv = ''
+    URL.createObjectURL = (blob: Blob) => {
+      void blob.text().then((t) => (csv = t))
+      return 'blob:x'
+    }
+    URL.revokeObjectURL = () => {}
+    await userService.exportData()
+    await new Promise((r) => setTimeout(r, 0))
+    expect(csv).toContain('Movimientos\r\nFecha,Tipo,Estado,Descripción')
+    expect(csv).toContain('Préstamos\r\nFecha,Tipo,Persona')
+    expect(csv).toContain('Salario mensual')
   })
 
   it('reports the real net worth, the fixed amount and what changed, as the backend does', async () => {
@@ -70,24 +93,27 @@ describe('Guest mode example account', () => {
 
   it('confirms a due aporte from its alert', async () => {
     const due = (await alertService.getAlerts()).find((a) => a.kind === 'goal_plan_due')
-    expect(due).toMatchObject({ goalId: 'guest-goal-2', amount: 250_000 })
-    const before = await balanceOf('guest-bancolombia')
+    expect(due).toMatchObject({ goalId: 'guest-goal-peru', amount: 250_000 })
+    const before = { wallet: await balanceOf('guest-bancolombia'), saved: (await goalService.getGoals()).find((g) => g.id === 'guest-goal-peru')!.currentAmount }
 
-    const goal = await goalService.confirmPlan('guest-goal-2')
+    const goal = await goalService.confirmPlan('guest-goal-peru')
 
-    expect(goal.currentAmount).toBe(2_230_000)
-    expect(await balanceOf('guest-bancolombia')).toBe(before - 250_000)
+    expect(goal.currentAmount).toBe(before.saved + 250_000)
+    expect(await balanceOf('guest-bancolombia')).toBe(before.wallet - 250_000)
     expect((await alertService.getAlerts()).some((a) => a.kind === 'goal_plan_due')).toBe(false)
   })
 
   it('settles a loan with an abono and clears its alert', async () => {
-    expect((await alertService.getAlerts()).some((a) => a.kind === 'loan_open')).toBe(true)
+    const camilo = (a: { kind: string }) => a.kind === 'loan_open' && (a as { transactionId?: string }).transactionId === 'guest-loan-camilo'
+    expect((await alertService.getAlerts()).some(camilo)).toBe(true)
+    // Half of it was already paid back.
+    expect((await transactionService.getLoans()).find((l) => l.id === 'guest-loan-camilo')).toMatchObject({ outstanding: 270_000 })
 
-    await transactionService.settleLoan('guest-loan-1', { amount: 420_000, accountId: 'guest-bancolombia', date: todayISO() })
+    await transactionService.settleLoan('guest-loan-camilo', { amount: 270_000, accountId: 'guest-bancolombia', date: todayISO() })
 
-    const loan = (await transactionService.getLoans()).find((l) => l.id === 'guest-loan-1')!
+    const loan = (await transactionService.getLoans()).find((l) => l.id === 'guest-loan-camilo')!
     expect(loan).toMatchObject({ loanSettled: true, outstanding: 0 })
-    expect((await alertService.getAlerts()).some((a) => a.kind === 'loan_open')).toBe(false)
+    expect((await alertService.getAlerts()).some(camilo)).toBe(false)
   })
 
   it('keeps the backend rule that the principal is fixed once wallets exist', async () => {

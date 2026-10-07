@@ -119,9 +119,10 @@ class TransactionRepository(
         }.getOrDefault(TitleSuggestions(emptyList(), null))
     }
 
-    fun loadDemo(transactions: List<Transaction>) {
+    fun loadDemo(transactions: List<Transaction>, files: Map<String, ByteArray> = emptyMap()) {
         _transactions.value = transactions
         demoFiles.clear()
+        demoFiles.putAll(files)
     }
 
     suspend fun add(input: NewTransactionInput): Transaction? {

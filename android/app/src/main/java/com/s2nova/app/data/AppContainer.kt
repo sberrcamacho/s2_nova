@@ -98,6 +98,7 @@ object AppContainer {
         initialized = true
         ApiClient.init(context)
         Taxonomy.init(context)
+        com.s2nova.app.data.mock.GuestSeed.init(context)
         sessionStore = SessionStore.getInstance(context)
         onboardingStore = OnboardingStore.getInstance(context)
         demoModeStore = DemoModeStore.getInstance(context)
@@ -122,7 +123,7 @@ object AppContainer {
     )
 
     // "Continuar como invitado" (ONBOARDING.md §1): a sandboxed example
-    // account with the mockup's seed data. Every repository mutation checks
+    // account from the seed shared with Web (GuestSeed). Every repository mutation checks
     // DemoModeFlag and applies in memory only — nothing reaches the backend,
     // and nothing survives signing out. There is no way to switch to it from
     // inside a real account.
@@ -130,17 +131,18 @@ object AppContainer {
         DemoModeFlag.set(true)
         idleTimeoutStore.touch()
         authRepository.setCurrentUserLocally(DemoData.user(guestPreferences()))
-        categoryRepository.loadDemo()
-        currencyRepository.loadDemo(DemoData.currencies, "COP")
-        walletRepository.principal = "COP"
-        walletRepository.loadDemo(DemoData.wallets)
-        transactionRepository.loadDemo(DemoData.transactions)
+        val guest = com.s2nova.app.data.mock.GuestSeed.account(english = com.s2nova.app.ui.AppLang.current == com.s2nova.app.data.model.AppLanguage.EN)
+        categoryRepository.loadDemo(guest.categories)
+        currencyRepository.loadDemo(guest.currencies, guest.principal)
+        walletRepository.principal = guest.principal
+        walletRepository.loadDemo(guest.wallets)
+        transactionRepository.loadDemo(guest.transactions, guest.files)
         dataLoaded.value = true
-        budgetRepository.loadDemo(DemoData.budgetProgress)
-        goalRepository.loadDemo(DemoData.goals)
-        recurringSeriesRepository.loadDemo(DemoData.recurringSeries)
-        summaryRepository.loadDemo(DemoData.monthSummaries)
-        alertRepository.loadDemo(DemoData.alerts)
+        budgetRepository.loadDemo(guest.budgets)
+        goalRepository.loadDemo(guest.goals)
+        recurringSeriesRepository.loadDemo(guest.series)
+        summaryRepository.loadDemo(AnalyticsHelpers.monthlyHistory(guest.transactions, 6, guest.principal))
+        alertRepository.loadDemo(guest.alerts)
     }
 
     val isGuest: Boolean get() = DemoModeFlag.active

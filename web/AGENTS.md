@@ -161,11 +161,18 @@ Guest mode (`lib/guestApi.ts`, ONBOARDING.md §1): Login's "Continuar como
 invitado" calls `AuthContext.enterGuest()`, which installs an in-memory
 stand-in for the backend behind `apiClient` (`setGuestHandler`): every
 service call is answered locally with the backend's wire shapes and
-nothing reaches the server. It holds the mockup's example account (the
-same seed as Android's `DemoData`, plus eleven earlier months from the
-mockup's `BAR_DATA` so the charts have a history) and mirrors the
-backend's balance, budget, goal, alert and summary rules, so everything is
-interactive. `user.isGuest` shows the "Modo invitado" banner above every
+nothing reaches the server. It holds the example account from the seed
+shared with Android (`lib/guestSeed.json`, written by
+`scripts/gen-guest-seed.mjs`; resolved by `lib/guestSeed.ts`). That is a
+year of movements across six wallets in three currencies, custom
+categories, budgets (one over its limit, one card-only, custom ones),
+goals with every kind of plan, loans in both directions, Programados of
+every interval and two receipts with real files. Its dates are relative
+to today's month, so the current month always has its salary. Balances,
+goal progress, Programado and plan counts and settled loans follow from
+the movements dated up to today. It mirrors the backend's balance,
+budget, goal, alert, summary, titles and CSV export rules, so everything
+is interactive. `user.isGuest` shows the "Modo invitado" banner above every
 page (`DashboardLayout`); the tours are on. Signing out, reloading, or
 reaching Login/Crear cuenta (the banner's button) drops the account.
 Ajustes hides what only a real account has (Editar perfil, Contraseña,
