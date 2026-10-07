@@ -5,6 +5,7 @@ import {
   goalEta,
   guessCategory,
   nextOccurrenceAfter,
+  projectUntil,
   pruneDismissed,
   upcomingWithin,
   walletKind,
@@ -24,6 +25,30 @@ const series = (over: Partial<RecurringSeries>): RecurringSeries => ({
   isDue: false,
   active: true,
   ...over,
+})
+
+describe('projectUntil (Reportes › Flujo de caja)', () => {
+  it('repeats each series up to the horizon, respecting remaining occurrences and end dates', () => {
+    const list = projectUntil(
+      [
+        series({ id: 'weekly', interval: 'weekly', amount: 10_000, nextOccurrenceDate: '2026-08-22' }),
+        series({ id: 'last', amount: 50_000, nextOccurrenceDate: '2026-08-25', occurrences: 3, occurrencesDone: 2 }),
+        series({ id: 'ends', amount: 5_000, nextOccurrenceDate: '2026-08-30', endDate: '2026-09-15' }),
+        series({ id: 'late', amount: 1_000, nextOccurrenceDate: '2026-08-19' }),
+        series({ id: 'paused', active: false, nextOccurrenceDate: '2026-08-22' }),
+      ],
+      '2026-08-21',
+      1_000_000,
+      '2026-09-30',
+    )
+    expect(list.filter((e) => e.series.id === 'weekly').map((e) => e.date)).toEqual(['2026-08-22', '2026-08-29', '2026-09-05', '2026-09-12', '2026-09-19', '2026-09-26'])
+    expect(list.filter((e) => e.series.id === 'last')).toHaveLength(1)
+    expect(list.filter((e) => e.series.id === 'ends').map((e) => e.date)).toEqual(['2026-08-30'])
+    // Overdue is dated today and comes first; a monthly one repeats.
+    expect(list[0]).toMatchObject({ dueToday: true, date: '2026-08-21' })
+    expect(list.filter((e) => e.series.id === 'late').map((e) => e.date)).toEqual(['2026-08-21', '2026-09-19'])
+    expect(list.at(-1)!.running).toBe(1_000_000 - 60_000 - 50_000 - 5_000 - 2_000)
+  })
 })
 
 describe('upcomingWithin (Próximos 14 días)', () => {

@@ -43,6 +43,17 @@ describe('Guest mode example account', () => {
     expect((await summaryService.getMonths(6)).filter((m) => m.income > 0).length).toBeGreaterThanOrEqual(5)
   })
 
+  it('reports the real net worth, the fixed amount and what changed, as the backend does', async () => {
+    const report = await summaryService.getReport(6, todayISO())
+    const { wallets, lent, borrowed, total, history } = report.netWorth
+    expect(total).toBe(wallets + lent.outstanding - borrowed.outstanding)
+    expect(history.at(-1)!.netWorth).toBe(total)
+    expect(report.fixedAmount).toBeGreaterThanOrEqual(0)
+    expect(report.fixedAmount).toBeLessThanOrEqual(report.totals.expenses)
+    expect(report.changes.categories.length).toBeLessThanOrEqual(3)
+    for (const c of report.changes.categories) expect(c.delta).toBe(c.current - c.previous)
+  })
+
   it('applies a new expense to its wallet, the month and the budget', async () => {
     const food = async () => (await budgetService.getBudgets()).find((b) => b.category === 'exp.food')!
     const before = { wallet: await balanceOf('guest-nequi'), budget: (await food()).spent, month: (await summaryService.getMonths(1))[0].expenses }

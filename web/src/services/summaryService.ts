@@ -107,10 +107,26 @@ export interface Report {
   fixedShare: number | null
   runwayMonths: number | null
   incomeSources: IncomeSource[]
-  netWorth: { wallets: number; lent: LoanSide; borrowed: LoanSide; history: { month: string; balance: number }[] }
+  // Spending in "fixed" categories over the range (rent, utilities, debt and
+  // the categories of active Programados), the amount behind `fixedShare`.
+  fixedAmount: number
+  // Net worth: wallets + what others owe − what is owed. `history` has the
+  // wallet balance and the net worth at each of the last six month-ends.
+  netWorth: { wallets: number; lent: LoanSide; borrowed: LoanSide; total: number; history: { month: string; balance: number; netWorth: number }[] }
+  // "¿Qué cambió?": this month so far against the same days of last month,
+  // with the three categories that changed the most.
+  changes: { current: number; previous: number; categories: ReportChange[] }
 }
 
-type BackendReport = Omit<Report, 'categories' | 'subcategories' | 'incomeSources'> & {
+export interface ReportChange {
+  category: CategoryId
+  current: number
+  previous: number
+  delta: number
+}
+
+type BackendReport = Omit<Report, 'categories' | 'subcategories' | 'incomeSources' | 'changes'> & {
+  changes?: { current: number; previous: number; categories: (Omit<ReportChange, 'category'> & { categoryId: string })[] }
   categories: (Omit<ReportCategory, 'category'> & { categoryId: string })[]
   subcategories?: { categoryId: string; amount: number }[]
   incomeSources: (Omit<IncomeSource, 'category'> & { categoryId: string })[]
@@ -118,10 +134,12 @@ type BackendReport = Omit<Report, 'categories' | 'subcategories' | 'incomeSource
 
 export async function getReport(range: ReportRange, today: string = todayISO()): Promise<Report> {
   const body = await apiClient.get<BackendReport>(`/summary/report?range=${range}&today=${today}`)
-  const [categories, subcategories, incomeSources] = await Promise.all([
+  const [categories, subcategories, incomeSources, changeCategories] = await Promise.all([
     Promise.all(body.categories.map(async ({ categoryId, ...row }) => ({ ...row, category: await categorySlugFor(categoryId) }))),
     Promise.all((body.subcategories ?? []).map(async ({ categoryId, amount }) => ({ amount, category: await categorySlugFor(categoryId) }))),
     Promise.all(body.incomeSources.map(async ({ categoryId, ...row }) => ({ ...row, category: await categorySlugFor(categoryId) }))),
+    Promise.all((body.changes?.categories ?? []).map(async ({ categoryId, ...row }) => ({ ...row, category: await categorySlugFor(categoryId) }))),
   ])
-  return { ...body, categories, subcategories, incomeSources }
+  const changes = { current: body.changes?.current ?? 0, previous: body.changes?.previous ?? 0, categories: changeCategories }
+  return { ...body, categories, subcategories, incomeSources, changes }
 }

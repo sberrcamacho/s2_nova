@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { http, HttpResponse } from 'msw'
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -28,6 +28,28 @@ describe('Ajustes', () => {
     expect(await screen.findByText('COP principal · USD, EUR')).toBeInTheDocument()
     expect(await screen.findByText('14 de gasto · 7 de ingreso')).toBeInTheDocument()
     expect(await screen.findByText('Este navegador · S2 Nova app · Pixel 8')).toBeInTheDocument()
+  })
+
+  it('exports every movement as a CSV from Datos', async () => {
+    mockSession()
+    let exported = 0
+    server.use(
+      http.get(`${BASE}/me/sessions`, () => HttpResponse.json([])),
+      http.get(`${BASE}/me/currencies`, () => HttpResponse.json([])),
+      http.get(`${BASE}/me/export`, () => {
+        exported += 1
+        return new HttpResponse('date,amount\n', { headers: { 'Content-Type': 'text/csv', 'Content-Disposition': 'attachment; filename="s2-nova.csv"' } })
+      }),
+    )
+    URL.createObjectURL = vi.fn(() => 'blob:csv')
+    URL.revokeObjectURL = vi.fn()
+    const user = userEvent.setup()
+    renderApp(<AjustesPage />, { route: '/ajustes' })
+
+    expect(await screen.findByText('Exportar mis datos')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Exportar' }))
+    await waitFor(() => expect(URL.createObjectURL).toHaveBeenCalled())
+    expect(exported).toBe(1)
   })
 
   it('reverts the notifications switch when the backend rejects it', async () => {

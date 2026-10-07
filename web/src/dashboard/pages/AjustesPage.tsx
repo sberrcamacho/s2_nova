@@ -26,6 +26,21 @@ export default function AjustesPage() {
   const [currencies, setCurrencies] = useState<UserCurrency[] | null>(null)
   const categories = useCategories()
   const [sessions, setSessions] = useState<Session[] | null>(null)
+  const [exporting, setExporting] = useState(false)
+
+  // Every movement as a CSV download (it used to live in Reportes).
+  const exportData = async () => {
+    if (exporting) return
+    setExporting(true)
+    try {
+      await userService.exportData()
+      showToast(t('rep.exported'), 'success')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : t('api.generic'), 'error')
+    } finally {
+      setExporting(false)
+    }
+  }
 
   useEffect(() => {
     currencyService.getMine().then(setCurrencies, () => setCurrencies(null))
@@ -202,6 +217,9 @@ export default function AjustesPage() {
       <AjCard className="p-5">
         <AjCardTitle>{t('aj.data')}</AjCardTitle>
         <div className="mt-2 flex flex-col">
+          <AjRow label={t('aj.export')} detail={t('aj.exportHint')}>
+            <AjOutlineButton onClick={exportData}>{t('aj.exportBtn')}</AjOutlineButton>
+          </AjRow>
           <AjRow label={t('aj.import')} detail={t('aj.importHint')} last>
             <AjOutlineButton onClick={() => navigate('/ajustes/importar')}>{t('aj.importBtn')}</AjOutlineButton>
           </AjRow>

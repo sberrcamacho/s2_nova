@@ -182,7 +182,7 @@ export async function summaryRoutes(app: FastifyInstance) {
       prisma.recurringSeries.findMany({ where: { userId, active: true, type: "EXPENSE" }, select: { categoryId: true } }),
       prisma.transaction.findMany({
         where: { userId, status: "COMPLETED", loanKind: { not: null } },
-        select: { id: true, loanKind: true, counterpartyName: true, amountMinor: true },
+        select: { id: true, loanKind: true, counterpartyName: true, amountMinor: true, transactionDate: true },
       }),
     ]);
 
@@ -252,6 +252,36 @@ export async function summaryRoutes(app: FastifyInstance) {
       })
       .sort((a, b) => (a.amount === b.amount ? 0 : a.amount > b.amount ? -1 : 1));
 
+    // "¿Qué cambió?": this month so far against the same days of last month
+    // (up to today's day number, or the month's last day), so an early-month
+    // comparison isn't against a whole month. Top three categories by the
+    // size of their change.
+    const sameDayCutoff = Math.min(today.getUTCDate(), monthEnd(previousMonth).getUTCDate());
+    const changeNow = new Map<string, bigint>();
+    const changeBefore = new Map<string, bigint>();
+    for (const row of rows) {
+      if (row.type !== "EXPENSE") continue;
+      const month = monthKeyOf(row.transactionDate);
+      const day = row.transactionDate.getUTCDate();
+      const amount = row._sum.amountMinor ?? 0n;
+      if (month === currentMonth && day <= today.getUTCDate()) changeNow.set(row.categoryId, (changeNow.get(row.categoryId) ?? 0n) + amount);
+      else if (month === previousMonth && day <= sameDayCutoff) changeBefore.set(row.categoryId, (changeBefore.get(row.categoryId) ?? 0n) + amount);
+    }
+    const sumMap = (m: Map<string, bigint>) => [...m.values()].reduce((sum, v) => sum + v, 0n);
+    const changeCategories = [...new Set([...changeNow.keys(), ...changeBefore.keys()])]
+      .map((categoryId) => {
+        const current = changeNow.get(categoryId) ?? 0n;
+        const previous = changeBefore.get(categoryId) ?? 0n;
+        return { categoryId, current, previous, delta: current - previous };
+      })
+      .filter((c) => c.delta !== 0n)
+      .sort((a, b) => {
+        const x = a.delta < 0n ? -a.delta : a.delta;
+        const y = b.delta < 0n ? -b.delta : b.delta;
+        return x === y ? 0 : x > y ? -1 : 1;
+      })
+      .slice(0, 3);
+
     const monthExpenses = byMonth.get(currentMonth)?.expenses ?? 0n;
     const peak = weekdays.reduce((best, amount, day) => (amount > weekdays[best]! ? day : best), 0);
     const walletTotal = accounts;
@@ -271,18 +301,35 @@ export async function summaryRoutes(app: FastifyInstance) {
         };
       });
 
+    const repaid = await loanRepaidMap(loans.map((loan) => loan.id));
+    // Each loan's repayments with their dates, for the outstanding balance
+    // at every month-end of the history.
+    const repayments = loans.length
+      ? await prisma.transaction.findMany({
+          where: { userId, parentLoanId: { in: loans.map((loan) => loan.id) } },
+          select: { parentLoanId: true, amountMinor: true, transactionDate: true },
+        })
+      : [];
+    const loansAt = (end: Date) =>
+      loans.reduce((sum, loan) => {
+        if (loan.transactionDate > end) return sum;
+        const paid = repayments.filter((r) => r.parentLoanId === loan.id && r.transactionDate <= end).reduce((p, r) => p + r.amountMinor, 0n);
+        const open = outstandingOf(loan, paid);
+        return loan.loanKind === "LENT" ? sum + open : sum - open;
+      }, 0n);
+
     // Month-end balances, newest first: today's wallets minus everything that
     // happened after each month closed.
     let after = laterNet.reduce((sum, r) => sum + (r.type === "INCOME" ? r._sum.amountMinor : -r._sum.amountMinor), 0n);
-    const history: { month: string; balance: bigint }[] = [];
+    const history: { month: string; balance: bigint; netWorth: bigint }[] = [];
     for (let index = 0; index < NET_WORTH_MONTHS; index++) {
       const key = shiftMonth(currentMonth, -index);
-      history.unshift({ month: key, balance: walletTotal - after });
+      history.unshift({ month: key, balance: walletTotal - after, netWorth: walletTotal - after + loansAt(key === currentMonth ? today : monthEnd(key)) });
       const bucket = byMonth.get(key);
       after += (bucket?.income ?? 0n) - (bucket?.expenses ?? 0n);
     }
 
-    const repaid = await loanRepaidMap(loans.map((loan) => loan.id));
+
     const loanSide = (kind: "LENT" | "BORROWED") => {
       const own = loans.filter((loan) => loan.loanKind === kind).map((loan) => ({ loan, outstanding: outstandingOf(loan, repaid.get(loan.id)) }));
       const open = own.filter(({ outstanding }) => outstanding > 0n);
@@ -292,6 +339,9 @@ export async function summaryRoutes(app: FastifyInstance) {
         settled: own.length - open.length,
       };
     };
+
+    const lent = loanSide("LENT");
+    const borrowed = loanSide("BORROWED");
 
     return {
       range: query.range,
@@ -309,9 +359,17 @@ export async function summaryRoutes(app: FastifyInstance) {
       dailyAverage: monthExpenses / BigInt(today.getUTCDate()),
       peakWeekday: weekdays[peak]! > 0n ? peak : null,
       fixedShare: totals.expenses > 0n ? Math.round((Number(rangeFixed) / Number(totals.expenses)) * 100) : null,
+      fixedAmount: rangeFixed,
       runwayMonths: averageExpenses > 0 ? Math.round((Number(walletTotal) / averageExpenses) * 10) / 10 : null,
       incomeSources,
-      netWorth: { wallets: walletTotal, lent: loanSide("LENT"), borrowed: loanSide("BORROWED"), history },
+      netWorth: {
+        wallets: walletTotal,
+        lent: lent,
+        borrowed: borrowed,
+        total: walletTotal + lent.outstanding - borrowed.outstanding,
+        history,
+      },
+      changes: { current: sumMap(changeNow), previous: sumMap(changeBefore), categories: changeCategories },
     };
   });
 }

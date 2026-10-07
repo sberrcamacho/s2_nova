@@ -195,9 +195,38 @@ export function upcomingWithin(series: RecurringSeries[], today: string, startBa
     })
 }
 
+// Reportes' Flujo de caja: every occurrence of each active Programado from
+// today through `horizon` (inclusive), weekly ones repeating, respecting a
+// series' end date and remaining occurrences. Overdue ones are dated today.
+// Sorted by date with the running balance in `principal`, like
+// `upcomingWithin` (which Inicio keeps for its 14-day list).
+export function projectUntil(series: RecurringSeries[], today: string, startBalance: number, horizon: string, principal?: string): UpcomingEvent[] {
+  const occurrences: { s: RecurringSeries; date: string; dueToday: boolean }[] = []
+  for (const s of series) {
+    if (!s.active) continue
+    let date = s.nextOccurrenceDate
+    let left = s.occurrences !== undefined ? s.occurrences - s.occurrencesDone : Infinity
+    let guard = 0
+    while (date <= horizon && left > 0 && (!s.endDate || date <= s.endDate) && guard++ < 400) {
+      occurrences.push({ s, date: date < today ? today : date, dueToday: date <= today })
+      left -= 1
+      date = nextOccurrenceAfter(date, s.interval)
+    }
+  }
+  let running = startBalance
+  return occurrences
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.dueToday === b.dueToday ? 0 : a.dueToday ? -1 : 1))
+    .map(({ s, date, dueToday }) => {
+      const signed = s.type === 'expense' ? -s.amount : s.amount
+      running += principal ? signed * referenceRate(s.currency, principal) : signed
+      return { series: s, date, dueToday, signed, running }
+    })
+}
+
 // Display-only: the occurrence after `iso` for the event dialog's
 // "Siguiente" row. The real advance happens server-side on confirm/skip.
 export function nextOccurrenceAfter(iso: string, interval: RecurringSeries['interval']): string {
+  if (interval === 'daily') return addDays(iso, 1)
   if (interval === 'weekly') return addDays(iso, 7)
   const [y, m, d] = parts(iso)
   const targetYear = interval === 'yearly' ? y + 1 : m === 12 ? y + 1 : y

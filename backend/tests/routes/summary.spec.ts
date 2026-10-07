@@ -164,12 +164,12 @@ describe("summary routes", () => {
       ]);
       expect(body.netWorth.wallets).toBe(5300000);
       expect(body.netWorth.history).toEqual([
-        { month: "2026-03", balance: 1000000 },
-        { month: "2026-04", balance: 1000000 },
-        { month: "2026-05", balance: 1500000 },
-        { month: "2026-06", balance: 1500000 },
-        { month: "2026-07", balance: 1900000 },
-        { month: "2026-08", balance: 5300000 },
+        { month: "2026-03", balance: 1000000, netWorth: 1000000 },
+        { month: "2026-04", balance: 1000000, netWorth: 1000000 },
+        { month: "2026-05", balance: 1500000, netWorth: 1500000 },
+        { month: "2026-06", balance: 1500000, netWorth: 1500000 },
+        { month: "2026-07", balance: 1900000, netWorth: 1900000 },
+        { month: "2026-08", balance: 5300000, netWorth: 5300000 },
       ]);
     });
 
@@ -186,6 +186,10 @@ describe("summary routes", () => {
       const res = await app.inject({ method: "GET", url: "/api/v1/summary/report?today=2026-08-21", headers: authHeader(user) });
       expect(res.json().netWorth.lent).toEqual({ outstanding: 420000, people: 1, settled: 1 });
       expect(res.json().netWorth.borrowed).toEqual({ outstanding: 0, people: 0, settled: 0 });
+      // Net worth adds what others owe and subtracts what is owed: lending
+      // moved money out of the wallet but it is still the user's.
+      expect(res.json().netWorth.total).toBe(res.json().netWorth.wallets + 420000)
+      expect(res.json().netWorth.history.at(-1).netWorth).toBe(res.json().netWorth.total)
     });
 
     it("groups this month's spending by leaf and names income sources by leaf and who paid", async () => {
@@ -211,6 +215,32 @@ describe("summary routes", () => {
       expect(body.incomeSources).toEqual([
         { categoryId: salary.id, merchant: "Grupo Éxito", amount: 4400000, percentage: 100, monthlyMin: 0, monthlyMax: 4400000 },
       ]);
+    });
+
+    it("compares this month so far with the same days of last month, by category", async () => {
+      const user = await createTestUser();
+      const wallet = await createAccount(user.id, { initialBalanceMinor: 5000000n });
+      const [food, transport, fun] = await Promise.all(["exp.food", "exp.transportation", "exp.entertainment"].map((slug) => categoryBySlug(slug)));
+      const spend = (categoryId: string, amount: number, date: string) => post(user, { accountId: wallet.id, type: "EXPENSE", categoryId, description: "x", amount, date })
+      // Last month: up to day 10 counts, day 25 doesn't (it's after today's day number).
+      await spend(food.id, 100000, "2026-07-05")
+      await spend(transport.id, 50000, "2026-07-08")
+      await spend(food.id, 900000, "2026-07-25")
+      // This month so far.
+      await spend(food.id, 310000, "2026-08-03")
+      await spend(transport.id, 20000, "2026-08-09")
+      await spend(fun.id, 40000, "2026-08-10")
+
+      const res = await app.inject({ method: "GET", url: "/api/v1/summary/report?today=2026-08-10", headers: authHeader(user) });
+      const changes = res.json().changes;
+      expect(changes.current).toBe(370000);
+      expect(changes.previous).toBe(150000);
+      expect(changes.categories).toEqual([
+        { categoryId: food.id, current: 310000, previous: 100000, delta: 210000 },
+        { categoryId: fun.id, current: 40000, previous: 0, delta: 40000 },
+        { categoryId: transport.id, current: 20000, previous: 50000, delta: -30000 },
+      ]);
+      expect(res.json().fixedAmount).toBe(0);
     });
 
     it("has empty figures for a new user and rejects other ranges", async () => {

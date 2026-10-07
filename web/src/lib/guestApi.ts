@@ -783,10 +783,25 @@ function report(s: GuestState, range: number, today: string) {
   const peak = weekdays.reduce((best, amount, day) => (amount > weekdays[best] ? day : best), 0)
   const average = totals.expenses / range
 
-  const history: { month: string; balance: number }[] = []
+  // Loans still open at a date (lent adds, borrowed subtracts), for the
+  // net worth at each month-end (backend's loansAt).
+  const loanRows = s.txs.filter((t) => t.status === 'COMPLETED' && t.loanKind)
+  const loansAt = (end: string) =>
+    loanRows.reduce((sum, l) => {
+      if (l.date > end) return sum
+      const paid = s.txs.filter((t) => t.parentLoanId === l.id && t.date <= end).reduce((p, t) => p + t.amount, 0)
+      const open = Math.max(0, l.amount - paid)
+      return l.loanKind === 'LENT' ? sum + open : sum - open
+    }, 0)
+  const monthLastDay = (key: string) => {
+    const [y, m] = key.split('-').map(Number)
+    return `${key}-${String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, '0')}`
+  }
+
+  const history: { month: string; balance: number; netWorth: number }[] = []
   for (let i = 0; i < 6; i++) {
     const key = shiftMonth(current, -i)
-    history.unshift({ month: key, balance: walletTotal - after })
+    history.unshift({ month: key, balance: walletTotal - after, netWorth: walletTotal - after + loansAt(key === current ? today : monthLastDay(key)) })
     const bucket = byMonth.get(key)
     after += (bucket?.income ?? 0) - (bucket?.expenses ?? 0)
   }
@@ -801,6 +816,29 @@ function report(s: GuestState, range: number, today: string) {
       settled: own.length - open.length,
     }
   }
+
+  // "¿Qué cambió?" (backend's `changes`): this month so far against the same
+  // days of last month, top three categories by the size of their change.
+  const todayDay = parse(today).getDate()
+  const cutoff = Math.min(todayDay, Number(monthLastDay(previous).slice(8)))
+  const now = new Map<string, number>()
+  const before = new Map<string, number>()
+  for (const t of rows) {
+    if (t.type !== 'EXPENSE') continue
+    const month = monthOf(t.date)
+    const day = Number(t.date.slice(8, 10))
+    const amount = principalAmount(s, t)
+    if (month === current && day <= todayDay) now.set(t.categoryId, (now.get(t.categoryId) ?? 0) + amount)
+    else if (month === previous && day <= cutoff) before.set(t.categoryId, (before.get(t.categoryId) ?? 0) + amount)
+  }
+  const total = (m: Map<string, number>) => [...m.values()].reduce((a, b) => a + b, 0)
+  const changeCategories = [...new Set([...now.keys(), ...before.keys()])]
+    .map((categoryId) => ({ categoryId, current: now.get(categoryId) ?? 0, previous: before.get(categoryId) ?? 0, delta: (now.get(categoryId) ?? 0) - (before.get(categoryId) ?? 0) }))
+    .filter((c) => c.delta !== 0)
+    .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
+    .slice(0, 3)
+  const lent = loanSide('LENT')
+  const borrowed = loanSide('BORROWED')
 
   return {
     range,
@@ -824,6 +862,7 @@ function report(s: GuestState, range: number, today: string) {
     dailyAverage: Math.round((byMonth.get(current)?.expenses ?? 0) / parse(today).getDate()),
     peakWeekday: weekdays[peak] > 0 ? peak : null,
     fixedShare: totals.expenses > 0 ? Math.round((rangeFixed / totals.expenses) * 100) : null,
+    fixedAmount: rangeFixed,
     runwayMonths: average > 0 ? Math.round((walletTotal / average) * 10) / 10 : null,
     incomeSources: [...sources.values()]
       .sort((a, b) => b.amount - a.amount)
@@ -838,7 +877,8 @@ function report(s: GuestState, range: number, today: string) {
           monthlyMax: Math.max(...monthly),
         }
       }),
-    netWorth: { wallets: walletTotal, lent: loanSide('LENT'), borrowed: loanSide('BORROWED'), history },
+    netWorth: { wallets: walletTotal, lent, borrowed, total: walletTotal + lent.outstanding - borrowed.outstanding, history },
+    changes: { current: total(now), previous: total(before), categories: changeCategories },
   }
 }
 
