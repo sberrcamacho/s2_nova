@@ -67,7 +67,7 @@ directly in that external service's dashboard — nothing in this repo to set
 up beyond pointing it at the URL above.
 
 **Nothing may hang**: `lib/prisma.ts` adds `connection_limit=10`,
-`pool_timeout=20`, `connect_timeout=15` and a Postgres
+`pool_timeout=20`, `connect_timeout=15`, `socket_timeout=30` (a connection left dead by an Aiven master promotion fails instead of hanging) and a Postgres
 `statement_timeout=15000` / `lock_timeout=10000` to `DATABASE_URL` unless
 the URL already sets them, and Fastify closes a socket idle for 90 s
 (`app.ts`). Interactive transactions only query through their `tx` (a
