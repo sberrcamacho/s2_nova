@@ -4,7 +4,7 @@ import { activeInMonth, serializeBudget } from "../lib/budgetProgress.js";
 import { fromMinor, principalOf } from "../lib/currency.js";
 import { processDueSeries } from "../lib/recurring.js";
 import { dateKey, monthKeyOf } from "../lib/dates.js";
-import { processDuePlans, serializeGoal } from "../lib/goalProgress.js";
+import { processDuePlans, serializeGoals } from "../lib/goalProgress.js";
 import { loanRepaidMap, outstandingOf } from "../lib/loans.js";
 import { prisma } from "../lib/prisma.js";
 import { dateOnlySchema } from "../lib/validation.js";
@@ -54,7 +54,7 @@ export async function alertRoutes(app: FastifyInstance) {
 
     const repaid = await loanRepaidMap(loans.map((loan) => loan.id));
     const budgetProgress = await Promise.all(budgets.map((budget) => serializeBudget(userId, budget, monthKeyOf(today))));
-    const goalProgress = await Promise.all(goals.map((goal) => serializeGoal(goal, today)));
+    const goalProgress = await serializeGoals(userId, goals, today);
     const autoContributions = await prisma.transaction.findMany({
       where: { userId, status: "COMPLETED", goal: { plan: { autoConfirm: true } }, transactionDate: { gte: weekAgo, lte: today } },
       include: { goal: true, account: true },

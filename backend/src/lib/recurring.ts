@@ -64,19 +64,33 @@ export async function materializeOccurrence(tx: Tx, series: RecurringSeries, dat
   return transaction;
 }
 
-// Records every due date of the user's automatic series, up to `today`.
+// How many missed dates of one series a read records (three queries each,
+// so the transaction stays well inside its timeout).
+export const SERIES_CATCH_UP_LIMIT = 24;
+
+// Records the due dates of the user's automatic series, up to `today`.
 export async function processDueSeries(userId: string, today: Date) {
   const due = await prisma.recurringSeries.findMany({
     where: { userId, active: true, autoConfirm: true, nextOccurrenceDate: { lte: today } },
   });
   for (const initial of due) {
-    await prisma.$transaction(async (tx) => {
-      let series = initial;
-      // Bounded: a daily series left alone for a long time still stops.
-      for (let i = 0; i < 400 && series.active && series.nextOccurrenceDate <= today; i++) {
-        await materializeOccurrence(tx, series, series.nextOccurrenceDate);
-        series = await tx.recurringSeries.update({ where: { id: series.id }, data: advanceData(series) });
-      }
-    });
+    try {
+      await prisma.$transaction(
+        async (tx) => {
+          let series = initial;
+          // Bounded per read: a daily series left alone for a long time
+          // catches up over the next reads instead of in one long request.
+          for (let i = 0; i < SERIES_CATCH_UP_LIMIT && series.active && series.nextOccurrenceDate <= today; i++) {
+            await materializeOccurrence(tx, series, series.nextOccurrenceDate);
+            series = await tx.recurringSeries.update({ where: { id: series.id }, data: advanceData(series) });
+          }
+        },
+        { maxWait: 5_000, timeout: 15_000 },
+      );
+    } catch (error) {
+      // One series that can't be recorded must not fail the read that
+      // triggered it; it is tried again on the next one.
+      console.error(`processDueSeries: series ${initial.id} failed`, error);
+    }
   }
 }

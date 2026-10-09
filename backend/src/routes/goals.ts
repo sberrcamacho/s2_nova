@@ -7,9 +7,11 @@ import {
   advancePlan,
   computeContributions,
   computeProgress,
+  contributionContext,
   processDuePlans,
   recordContribution,
   serializeGoal,
+  serializeGoals,
 } from "../lib/goalProgress.js";
 import { prisma } from "../lib/prisma.js";
 import { guessPlanIcon, PLAN_ICON_KEYS } from "../lib/taxonomy.js";
@@ -67,6 +69,29 @@ const deleteGoalSchema = z.object({
 
 const todayQuery = z.object({ today: dateOnlySchema.optional() });
 
+// "Abonar" and "Confirmar aporte" carry an Idempotency-Key (a UUID made once
+// per submit), so a client that retries after a timeout doesn't pay twice.
+const idempotencyKey = z.string().trim().min(8).max(100).optional();
+
+function requestKeyOf(headers: Record<string, unknown>): string | undefined {
+  const raw = headers["idempotency-key"];
+  return idempotencyKey.parse(Array.isArray(raw) ? raw[0] : raw);
+}
+
+// The goal as it is now, when this key was already recorded for it.
+async function replayed(key: string | undefined, goalId: string, userId: string) {
+  if (!key) return null;
+  const row = await prisma.transaction.findUnique({ where: { clientRequestId: key }, select: { goalId: true, userId: true } });
+  if (!row || row.userId !== userId || row.goalId !== goalId) return null;
+  return serializeGoal((await goalWithPlan(goalId, userId))!);
+}
+
+// Two requests with the same key at the same moment: the second one's
+// insert hits the unique index, and it answers like a replay.
+function isDuplicateKey(error: unknown): boolean {
+  return typeof error === "object" && error !== null && (error as { code?: string }).code === "P2002";
+}
+
 async function goalWithPlan(id: string, userId: string) {
   return prisma.goal.findFirst({ where: { id, userId }, include: { plan: true } });
 }
@@ -80,7 +105,7 @@ export async function goalRoutes(app: FastifyInstance) {
       include: { plan: true },
       orderBy: { createdAt: "asc" },
     });
-    return Promise.all(goals.map((goal) => serializeGoal(goal, today)));
+    return serializeGoals(request.userId!, goals, today);
   });
 
   app.post("/goals", { preHandler: app.authenticate }, async (request, reply) => {
@@ -129,15 +154,24 @@ export async function goalRoutes(app: FastifyInstance) {
   app.post("/goals/:id/contribute", { preHandler: app.authenticate }, async (request, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
     const body = contributeSchema.parse(request.body);
+    const key = requestKeyOf(request.headers);
     const userId = request.userId!;
-    const goal = await goalWithPlan(id, userId);
+    const again = await replayed(key, id, userId);
+    if (again) return again;
+    const [goal, account, ctx] = await Promise.all([
+      goalWithPlan(id, userId),
+      prisma.account.findFirst({ where: { id: body.accountId, userId } }),
+      contributionContext(userId),
+    ]);
     if (!goal) return reply.status(404).send({ error: "Goal not found." });
-    const account = await prisma.account.findFirst({ where: { id: body.accountId, userId } });
     if (!account) return reply.status(422).send({ error: "Unknown wallet." });
-    const principal = await principalOf(userId);
-    await prisma.$transaction((tx) =>
-      recordContribution(tx, goal, account.id, toMinor(body.amount, principal), body.date ? parseDateOnly(body.date) : new Date()),
-    );
+    try {
+      await prisma.$transaction((tx) =>
+        recordContribution(tx, goal, account.id, toMinor(body.amount, ctx.principal), body.date ? parseDateOnly(body.date) : new Date(), ctx, key),
+      );
+    } catch (error) {
+      if (!isDuplicateKey(error)) throw error;
+    }
     return serializeGoal((await goalWithPlan(id, userId))!);
   });
 
@@ -182,16 +216,22 @@ export async function goalRoutes(app: FastifyInstance) {
   app.post("/goals/:id/plan/confirm", { preHandler: app.authenticate }, async (request, reply) => {
     const { id } = z.object({ id: z.string().uuid() }).parse(request.params);
     const body = z.object({ amount: money.optional() }).parse(request.body ?? {});
+    const key = requestKeyOf(request.headers);
     const userId = request.userId!;
-    const goal = await goalWithPlan(id, userId);
+    const again = await replayed(key, id, userId);
+    if (again) return again;
+    const [goal, ctx] = await Promise.all([goalWithPlan(id, userId), contributionContext(userId)]);
     if (!goal?.plan) return reply.status(404).send({ error: "Goal plan not found." });
     if (!goal.plan.active) return reply.status(422).send({ error: "This plan has ended." });
     const plan = goal.plan;
-    const principal = await principalOf(userId);
-    await prisma.$transaction(async (tx) => {
-      await recordContribution(tx, goal, plan.accountId, body.amount !== undefined ? toMinor(body.amount, principal) : plan.amountMinor, new Date());
-      await advancePlan(tx, plan, goal, true);
-    });
+    try {
+      await prisma.$transaction(async (tx) => {
+        await recordContribution(tx, goal, plan.accountId, body.amount !== undefined ? toMinor(body.amount, ctx.principal) : plan.amountMinor, new Date(), ctx, key);
+        await advancePlan(tx, plan, goal, true);
+      });
+    } catch (error) {
+      if (!isDuplicateKey(error)) throw error;
+    }
     return serializeGoal((await goalWithPlan(id, userId))!);
   });
 

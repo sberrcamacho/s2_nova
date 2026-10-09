@@ -293,4 +293,73 @@ describe("goal routes", () => {
       expect(res.statusCode).toBe(404);
     });
   });
+
+  describe("contributions", () => {
+    async function newGoal(user: Awaited<ReturnType<typeof createTestUser>>, targetAmount: number) {
+      const res = await app.inject({ method: "POST", url: "/api/v1/goals", headers: authHeader(user), payload: { name: "Viaje", targetAmount } });
+      return res.json() as { id: string };
+    }
+
+    it("records an Abonar retried with the same Idempotency-Key only once", async () => {
+      const user = await createTestUser();
+      const wallet = await createAccount(user.id, { initialBalanceMinor: 1_000_000n });
+      const goal = await newGoal(user, 500_000);
+      const send = () =>
+        app.inject({
+          method: "POST",
+          url: `/api/v1/goals/${goal.id}/contribute`,
+          headers: { ...authHeader(user), "idempotency-key": "abonar-0c1d7f2e-retry" },
+          payload: { amount: 100_000, accountId: wallet.id },
+        });
+      const [first, second] = await Promise.all([send(), send()]);
+      const third = await send();
+      for (const res of [first, second, third]) {
+        expect(res.statusCode).toBe(200);
+        expect(res.json()).toMatchObject({ currentAmount: 100_000 });
+      }
+      expect(await prisma.transaction.count({ where: { goalId: goal.id } })).toBe(1);
+      expect((await prisma.account.findUniqueOrThrow({ where: { id: wallet.id } })).currentBalanceMinor).toBe(900_000n);
+    });
+
+    it("ends a GOAL plan on the confirmed contribution that reaches the target", async () => {
+      const user = await createTestUser();
+      const wallet = await createAccount(user.id, { initialBalanceMinor: 1_000_000n });
+      const goal = await newGoal(user, 500_000);
+      await app.inject({
+        method: "PUT",
+        url: `/api/v1/goals/${goal.id}/plan`,
+        headers: authHeader(user),
+        payload: { amount: 250_000, frequency: "MONTHLY", accountId: wallet.id, startDate: "2026-06-01" },
+      });
+      const confirm = () => app.inject({ method: "POST", url: `/api/v1/goals/${goal.id}/plan/confirm`, headers: authHeader(user), payload: {} });
+      expect((await confirm()).json().plan.active).toBe(true);
+      const last = (await confirm()).json();
+      expect(last).toMatchObject({ currentAmount: 500_000 });
+      expect(last.plan.active).toBe(false);
+    });
+
+    it("catches an overdue automatic plan up a bounded batch per read", async () => {
+      const user = await createTestUser();
+      const wallet = await createAccount(user.id, { initialBalanceMinor: 10_000_000n });
+      const goal = await newGoal(user, 100_000_000);
+      await app.inject({
+        method: "PUT",
+        url: `/api/v1/goals/${goal.id}/plan`,
+        headers: authHeader(user),
+        payload: { amount: 1_000, frequency: "DAILY", accountId: wallet.id, startDate: "2026-01-01", autoConfirm: true },
+      });
+      // 2026-01-01 .. 2026-04-10 is 100 due dates.
+      const read = () => app.inject({ method: "GET", url: "/api/v1/goals?today=2026-04-10", headers: authHeader(user) });
+      const [a, b] = await Promise.all([read(), read()]);
+      expect(a.statusCode).toBe(200);
+      expect(b.statusCode).toBe(200);
+      expect(await prisma.transaction.count({ where: { goalId: goal.id } })).toBe(60);
+      const caughtUp = (await read()).json() as { id: string; currentAmount: number; plan: { nextDate: string; doneCount: number } }[];
+      const mine = caughtUp.find((g) => g.id === goal.id)!;
+      expect(mine.currentAmount).toBe(100_000);
+      expect(mine.plan.doneCount).toBe(100);
+      expect(mine.plan.nextDate.slice(0, 10)).toBe("2026-04-11");
+      expect((await prisma.account.findUniqueOrThrow({ where: { id: wallet.id } })).currentBalanceMinor).toBe(9_900_000n);
+    });
+  });
 });

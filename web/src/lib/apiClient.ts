@@ -99,19 +99,43 @@ async function parseErrorMessage(response: Response): Promise<string> {
 
 interface RequestOptions {
   skipAuthRetry?: boolean
+  // Sent as Idempotency-Key: the same key on a retry is never recorded twice
+  // (goal "Abonar" and "Confirmar aporte").
+  idempotencyKey?: string
 }
 
-async function rawRequest(path: string, init: RequestInit): Promise<Response> {
+// Long enough for the server to wake from sleep (about a minute on the
+// free plan), short enough that nobody waits on a stalled connection.
+const REQUEST_TIMEOUT_MS = 75_000
+
+// A key for one user action, reused if that action is retried.
+export function newRequestKey(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID()
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`
+}
+
+async function rawRequest(path: string, init: RequestInit, options: RequestOptions = {}): Promise<Response> {
   const headers = new Headers(init.headers)
   headers.set('X-Client-Platform', 'web')
   if (init.body) headers.set('Content-Type', 'application/json')
   if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`)
+  if (options.idempotencyKey) headers.set('Idempotency-Key', options.idempotencyKey)
 
-  return fetch(`${BASE_URL}${path}`, {
-    ...init,
-    headers,
-    credentials: 'include',
-  })
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  try {
+    return await fetch(`${BASE_URL}${path}`, {
+      ...init,
+      headers,
+      credentials: 'include',
+      signal: controller.signal,
+    })
+  } catch (error) {
+    if (controller.signal.aborted) throw new ApiError(tr('api.timeout'), 0)
+    throw error
+  } finally {
+    clearTimeout(timer)
+  }
 }
 
 // A single in-flight refresh is shared by every caller that hits a 401 at
@@ -152,7 +176,7 @@ export class ApiError extends Error {
 }
 
 async function send(path: string, init: RequestInit, options: RequestOptions = {}): Promise<Response> {
-  let response = await rawRequest(path, init)
+  let response = await rawRequest(path, init, options)
 
   // Only the auth layer's own 401s concern the session (backend
   // plugins/auth.ts); a wrong current password is just an error.
@@ -161,7 +185,7 @@ async function send(path: string, init: RequestInit, options: RequestOptions = {
     const hadSession = accessToken !== null
     const result: RefreshResult = code === 'token_invalid' ? await refreshSession() : code === 'session_idle' ? 'idle' : 'expired'
     if (result === 'ok') {
-      response = await rawRequest(path, init)
+      response = await rawRequest(path, init, options)
     } else if (hadSession) {
       setAccessToken(null)
       sessionEndedHandler?.(result)

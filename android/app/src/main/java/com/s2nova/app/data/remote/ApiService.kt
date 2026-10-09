@@ -5,6 +5,7 @@ import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.HTTP
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.PUT
 import retrofit2.http.POST
@@ -197,7 +198,7 @@ interface ApiService {
     suspend fun getGoals(@Query("today") today: String? = null): List<GoalDto>
 
     @POST("goals/{id}/contribute")
-    suspend fun contributeToGoal(@Path("id") id: String, @Body body: GoalContributeRequest): GoalDto
+    suspend fun contributeToGoal(@Path("id") id: String, @Body body: GoalContributeRequest, @Header("Idempotency-Key") requestKey: String? = null): GoalDto
 
     @PUT("goals/{id}/plan")
     suspend fun setGoalPlan(@Path("id") id: String, @Body body: GoalPlanRequest): GoalDto
@@ -206,7 +207,7 @@ interface ApiService {
     suspend fun removeGoalPlan(@Path("id") id: String): GoalDto
 
     @POST("goals/{id}/plan/confirm")
-    suspend fun confirmGoalPlan(@Path("id") id: String, @Body body: Map<String, Double> = emptyMap()): GoalDto
+    suspend fun confirmGoalPlan(@Path("id") id: String, @Body body: Map<String, Double> = emptyMap(), @Header("Idempotency-Key") requestKey: String? = null): GoalDto
 
     @POST("goals/{id}/plan/skip")
     suspend fun skipGoalPlan(@Path("id") id: String, @Body body: Map<String, String> = emptyMap()): GoalDto

@@ -28,6 +28,11 @@ import { transactionRoutes } from "./routes/transactions.js";
 // port or triggering the top-level `.listen()` side effect.
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
+    // No request may hang: a socket idle for 90 s (no bytes either way,
+    // e.g. a handler stuck on the database) is closed, so the client gets
+    // an error and can retry (goal contributions carry an Idempotency-Key).
+    // Generous enough for receipt uploads and the AI scan calls.
+    connectionTimeout: 90_000,
     logger: env.NODE_ENV === "test" ? false : { level: env.NODE_ENV === "production" ? "info" : "debug" },
   });
 

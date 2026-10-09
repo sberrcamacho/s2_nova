@@ -774,6 +774,7 @@ const dictionary = {
   "api.tooMany": { es: "Demasiados intentos. Intenta de nuevo en un momento.", en: "Too many attempts. Try again in a moment." },
   "api.server": { es: "Tuvimos un problema en el servidor. Intenta de nuevo.", en: "We had a server problem. Try again." },
   "api.generic": { es: "Algo salió mal. Intenta de nuevo.", en: "Something went wrong. Try again." },
+  "api.timeout": { es: "El servidor tardó demasiado en responder. Intenta de nuevo.", en: "The server took too long to respond. Try again." },
   "api.badCredentials": { es: "Correo o contraseña incorrectos.", en: "Wrong email or password." },
   "api.emailTaken": { es: "Ya existe una cuenta con ese correo.", en: "An account with that email already exists." },
   "api.emailTakenGoogle": { es: "Ya existe una cuenta con ese correo. Entra con tu contraseña o verifica el correo con Google primero.", en: "An account with that email already exists. Sign in with your password, or verify this email with Google first." },

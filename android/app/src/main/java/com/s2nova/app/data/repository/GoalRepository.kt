@@ -118,8 +118,15 @@ class GoalRepository(private val api: ApiService = ApiClient.api) {
             val contributions = old.contributions + (walletId to (old.contributions[walletId] ?: 0.0) + amount)
             return replace(recompute(old.copy(contributions = contributions), old.currentAmount + amount))
         }
-        return replace(api.contributeToGoal(id, GoalContributeRequest(amount, walletId)).toGoal())
+        val key = requestKeys.getOrPut("contribute:$id:$walletId:$amount") { java.util.UUID.randomUUID().toString() }
+        return replace(api.contributeToGoal(id, GoalContributeRequest(amount, walletId), key).toGoal())
+            .also { requestKeys.remove("contribute:$id:$walletId:$amount") }
     }
+
+    // One Idempotency-Key per pending abono / aporte, kept until it goes
+    // through: a retry (by OkHttp or by the user after an error) reuses it,
+    // so the server never records it twice.
+    private val requestKeys = java.util.concurrent.ConcurrentHashMap<String, String>()
 
     // "Confirmar aporte" / "Omitir esta vez" on a due periodic contribution.
     suspend fun confirmPlan(id: String): Goal? {
@@ -129,7 +136,8 @@ class GoalRepository(private val api: ApiService = ApiClient.api) {
             val after = contribute(id, plan.amount, plan.walletId) ?: return null
             return replace(after.copy(plan = plan.copy(nextDate = plan.nextAfter(), due = false)))
         }
-        return replace(api.confirmGoalPlan(id).toGoal())
+        val key = requestKeys.getOrPut("confirm:$id") { java.util.UUID.randomUUID().toString() }
+        return replace(api.confirmGoalPlan(id, requestKey = key).toGoal()).also { requestKeys.remove("confirm:$id") }
     }
 
     suspend fun skipPlan(id: String): Goal? {

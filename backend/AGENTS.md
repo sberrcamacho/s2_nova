@@ -66,6 +66,18 @@ free monitor (5-minute interval) works the same way. This is configured
 directly in that external service's dashboard — nothing in this repo to set
 up beyond pointing it at the URL above.
 
+**Nothing may hang**: `lib/prisma.ts` adds `connection_limit=10`,
+`pool_timeout=20`, `connect_timeout=15` and a Postgres
+`statement_timeout=15000` / `lock_timeout=10000` to `DATABASE_URL` unless
+the URL already sets them, and Fastify closes a socket idle for 90 s
+(`app.ts`). Interactive transactions only query through their `tx` (a
+global-client query inside one needs a second pooled connection while the
+first is held). The automatic catch-up on reads (`processDuePlans`,
+`processDueSeries`) is bounded per read and has an explicit transaction
+timeout. Goal "Abonar" and "Confirmar aporte" accept an `Idempotency-Key`
+header (stored in `transactions.client_request_id`); both clients send one
+and reuse it on retry, and the web client gives up on a request after 75 s.
+
 ## Project structure
 
 - `prisma/schema.prisma` — the database schema (source of truth for the

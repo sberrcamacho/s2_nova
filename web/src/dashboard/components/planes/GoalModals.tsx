@@ -1,5 +1,5 @@
 import { fill, tr } from '@/lib/i18n/translations'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { PlanMark } from '@/components/v2/CategoryMark'
 import { AmountField, CancelButton, ConfirmDialog, DateInput, ErrorBox, Field, Flat, IC, Label, V2Modal } from '@/components/v2/Kit'
 import { AmountHero, ChoiceCard, PlanIconPicker, SegmentedChoice, StepChoiceRow, StepDeleteButton, StepModal, StepNote, StepOptionGroup, StepOptionRow, StepQuestion, WalletPicker } from '@/components/v2/Steps'
@@ -11,6 +11,7 @@ import { shortWallet } from '@/lib/movimientos'
 import { addSteps, longDate, monthYearLong, shortDayMonth } from '@/lib/planCopy'
 import { guessPlanIcon } from '@/lib/taxonomy'
 import { goalService, type GoalPlanInput } from '@/services/goalService'
+import { newRequestKey } from '@/lib/apiClient'
 import { useCurrency } from '@/state/useCurrency'
 import { useToast } from '@/state/ToastContext'
 import type { Goal, GoalPlan, Wallet } from '@/types'
@@ -348,6 +349,9 @@ export function GoalPayModal({ goal, wallets, onClose, onSaved }: { goal: Goal; 
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
   const [overdraftAsk, setOverdraftAsk] = useState<number | null>(null)
+  // One key per amount + wallet: retrying the same abono after an error
+  // reuses it, so the server never records it twice.
+  const requestKey = useRef<{ for: string; key: string } | null>(null)
   const ok = evalExpr(amount) > 0 && !!accountId
   // The abono is in the principal currency; the wallet pays it in its own.
   const wallet = wallets.find((w) => w.id === accountId)
@@ -362,7 +366,9 @@ export function GoalPayModal({ goal, wallets, onClose, onSaved }: { goal: Goal; 
     setOverdraftAsk(null)
     setBusy(true)
     try {
-      await goalService.contribute(goal.id, { amount: evalExpr(amount), accountId, date: todayISO() })
+      const sig = `${evalExpr(amount)}|${accountId}`
+      if (requestKey.current?.for !== sig) requestKey.current = { for: sig, key: newRequestKey() }
+      await goalService.contribute(goal.id, { amount: evalExpr(amount), accountId, date: todayISO() }, requestKey.current.key)
       showToast(fill(tr('goal.pay.toast'), format(evalExpr(amount)), goal.name, shortWallet(wallets.find((w) => w.id === accountId)?.name ?? '')), 'success')
       onSaved()
     } catch (e) {

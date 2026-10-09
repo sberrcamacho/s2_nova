@@ -1,6 +1,6 @@
 import { tr, type TranslationKey } from '@/lib/i18n/translations'
 import { useAutoTour } from '@/components/tour/TourProvider'
-import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CategoryMark, Glyph, GlyphMark } from '@/components/v2/CategoryMark'
 import { ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
@@ -10,6 +10,7 @@ import { EventDialog } from '@/dashboard/components/EventDialog'
 import { accountService } from '@/services/accountService'
 import { alertService, type AppAlert } from '@/services/alertService'
 import { goalService } from '@/services/goalService'
+import { newRequestKey } from '@/lib/apiClient'
 import { recurringService } from '@/services/recurringService'
 import { summaryService, type MonthTotals } from '@/services/summaryService'
 import { useAppData } from '@/state/AppDataContext'
@@ -178,10 +179,17 @@ export default function InicioPage() {
     }
   }
 
+  // One key per due aporte, kept until it goes through, so a retry after
+  // an error never records it twice.
+  const planKeys = useRef(new Map<string, string>())
   const resolvePlan = async (alert: Extract<AppAlert, { kind: 'goal_plan_due' }>, confirm: boolean) => {
     try {
-      if (confirm) await goalService.confirmPlan(alert.goalId)
-      else await goalService.skipPlan(alert.goalId)
+      if (confirm) {
+        const key = planKeys.current.get(alert.goalId) ?? newRequestKey()
+        planKeys.current.set(alert.goalId, key)
+        await goalService.confirmPlan(alert.goalId, key)
+        planKeys.current.delete(alert.goalId)
+      } else await goalService.skipPlan(alert.goalId)
       showToast(confirm ? fill(t('inicio.plan.done'), format(alert.amount)) : t('inicio.plan.skipped'))
       void refresh()
       void refreshAppData()

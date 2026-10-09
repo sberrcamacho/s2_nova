@@ -101,8 +101,9 @@ export const goalService = {
   },
 
   // "Abonar": a one-off contribution from a wallet.
-  async contribute(id: string, input: { amount: number; accountId: string; date?: string }): Promise<Goal> {
-    return mapGoal(await apiClient.post<BackendGoal>(`/goals/${id}/contribute`, input))
+  // `requestKey` is made once per "Abonar" and reused if it is retried.
+  async contribute(id: string, input: { amount: number; accountId: string; date?: string }, requestKey?: string): Promise<Goal> {
+    return mapGoal(await apiClient.post<BackendGoal>(`/goals/${id}/contribute`, input, { idempotencyKey: requestKey }))
   },
 
   async setPlan(id: string, plan: GoalPlanInput): Promise<Goal> {
@@ -122,8 +123,8 @@ export const goalService = {
   },
 
   // "Confirmar aporte" / "Omitir esta vez" on a due contribution.
-  async confirmPlan(id: string): Promise<Goal> {
-    return mapGoal(await apiClient.post<BackendGoal>(`/goals/${id}/plan/confirm`, {}))
+  async confirmPlan(id: string, requestKey?: string): Promise<Goal> {
+    return mapGoal(await apiClient.post<BackendGoal>(`/goals/${id}/plan/confirm`, {}, { idempotencyKey: requestKey }))
   },
 
   async skipPlan(id: string): Promise<Goal> {

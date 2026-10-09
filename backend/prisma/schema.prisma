@@ -462,6 +462,9 @@ model Transaction {
   // reflects the money coming back (LENT) or going out (BORROWED) without
   // touching or duplicating this original row.
   settledByTransactionId String?           @unique @map("settled_by_transaction_id")
+  // The client's Idempotency-Key for a goal "Abonar" / "Confirmar aporte":
+  // a retried request finds its row here and is not recorded twice.
+  clientRequestId        String?           @unique @map("client_request_id")
   // Set on every settlement transaction created by POST
   // /transactions/:id/settle-loan (partial or final) — points back at the
   // original Lent/Borrowed row. `paid` for a loan is the sum of every

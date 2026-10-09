@@ -42,6 +42,9 @@ object ApiClient {
         .connectTimeout(45, TimeUnit.SECONDS)
         .readTimeout(45, TimeUnit.SECONDS)
         .writeTimeout(45, TimeUnit.SECONDS)
+        // The whole call, retries and redirects included: nothing waits on
+        // a stalled connection for longer than this.
+        .callTimeout(90, TimeUnit.SECONDS)
 
     // Web's Ajustes › Sesiones activas names each session from the User-Agent
     // its login sent; this one reads "S2 Nova app · <model>" there (see
