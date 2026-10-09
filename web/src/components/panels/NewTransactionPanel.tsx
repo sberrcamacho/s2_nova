@@ -1,9 +1,9 @@
-import { useEffect, useLayoutEffect, useRef, useState, type DragEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type DragEvent, type ReactNode } from 'react'
 import { useAutoTour } from '@/components/tour/TourProvider'
 import { useNavigate } from 'react-router-dom'
 import { SidePanel } from '@/components/panels/SidePanel'
 import { CategoryMark, GlyphMark, PlanMark } from '@/components/v2/CategoryMark'
-import { CancelButton, ErrorBox, Flat, GridCell, IC, Icon, RadioRow } from '@/components/v2/Kit'
+import { CancelButton, ChipStrip, ErrorBox, Flat, GridCell, IC, Icon, RadioRow } from '@/components/v2/Kit'
 import { OverdraftWarning } from '@/components/v2/OverdraftWarning'
 import { CategoryPicker } from '@/components/panels/CategoryPicker'
 import { StepChoiceRow, StepOptionGroup, StepOptionRow } from '@/components/v2/Steps'
@@ -133,54 +133,6 @@ function repeatOf(series: RecurringSeries): RepeatDraft {
 }
 
 type AttachDraft = { file?: File; name: string; size: number; photo: boolean }
-
-// Fades the edge(s) of a sideways strip that has more chips past it.
-function edgeFade(left: boolean, right: boolean): string | undefined {
-  if (!left && !right) return undefined
-  return `linear-gradient(to right, ${left ? 'transparent, #000 32px' : '#000'}, ${right ? '#000 calc(100% - 32px), transparent' : '#000'})`
-}
-
-// One line of chips that scrolls sideways (DESIGN-SYSTEM.md §6.5): chips
-// never wrap, an edge fades while there is more past it, and the selected
-// chip is brought into view when the selection changes.
-function PillRow({ children, label }: { children: ReactNode; label?: string }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [fade, setFade] = useState<[boolean, boolean]>([false, false])
-  const shown = useRef<Element | null>(null)
-  const updateFade = () => {
-    const el = ref.current
-    const left = !!el && el.scrollLeft > 1
-    const right = !!el && el.scrollLeft + el.clientWidth < el.scrollWidth - 1
-    setFade((f) => (f[0] === left && f[1] === right ? f : [left, right]))
-  }
-  useLayoutEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const on = el.querySelector<HTMLElement>('[aria-pressed="true"],[aria-checked="true"]')
-    if (on && on !== shown.current) {
-      const right = on.offsetLeft + on.offsetWidth + 32
-      if (right > el.scrollLeft + el.clientWidth) el.scrollLeft = right - el.clientWidth
-      else if (on.offsetLeft - 32 < el.scrollLeft) el.scrollLeft = Math.max(0, on.offsetLeft - 32)
-    }
-    shown.current = on
-    updateFade()
-  })
-  const mask = edgeFade(fade[0], fade[1])
-  return (
-    // The 4 px padding (cancelled by the margin) keeps focus rings and the
-    // selected chip's shadow from being clipped by the scroller.
-    <div
-      ref={ref}
-      onScroll={updateFade}
-      role="group"
-      aria-label={label}
-      className="scrollbar-none relative -m-1 flex gap-1.5 overflow-x-auto p-1 [&>*]:flex-none"
-      style={mask ? { maskImage: mask, WebkitMaskImage: mask } : undefined}
-    >
-      {children}
-    </div>
-  )
-}
 
 export function NewTransactionPanel({ onClose, editing }: { onClose: () => void; editing?: Transaction }) {
   useCategories()
@@ -516,7 +468,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
 
             {section === 'when' && (
               <>
-                <PillRow label={t('nm.section.when')}>
+                <ChipStrip label={t('nm.section.when')}>
                   <Flat on={date === today && time === now} onClick={edit(() => (setDate(today), setTime(now)))}>
                     {t('nm.now')}
                   </Flat>
@@ -535,9 +487,9 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
                       {fill(t('nm.likeLast'), fmtDate(lastWhen[0]), lastWhen[1])}
                     </Flat>
                   )}
-                </PillRow>
+                </ChipStrip>
                 <div className={fieldLabel}>{t('nm.future')}</div>
-                <PillRow label={t('nm.future')}>
+                <ChipStrip label={t('nm.future')}>
                   {(
                     [
                       [t('nm.tomorrow'), addDays(today, 1)],
@@ -549,7 +501,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
                       {label}
                     </Flat>
                   ))}
-                </PillRow>
+                </ChipStrip>
                 <div className="grid grid-cols-[minmax(0,1fr)_130px] gap-2">
                   <input type="date" aria-label={t('nm.date')} value={date} onChange={(e) => edit(setDate)(e.target.value || today)} className={textInput} />
                   <input type="time" aria-label={t('nm.time')} value={time} onChange={(e) => edit(setTime)(e.target.value || now)} className={textInput} />
@@ -570,7 +522,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
             {section === 'repeat' && (
               <>
                 <div className="font-numeric text-caption text-v2-dim">{repeatSummary(rp.freq ? rp : null, date)}</div>
-                <PillRow label={t('nm.section.repeat')}>
+                <ChipStrip label={t('nm.section.repeat')}>
                   <Flat on={!rp.freq} onClick={() => rpSet({ freq: null })}>
                     {t('nm.noRepeat')}
                   </Flat>
@@ -579,11 +531,11 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
                       {freqLabel(f)}
                     </Flat>
                   ))}
-                </PillRow>
+                </ChipStrip>
                 {rp.freq && (
                   <>
                     <div className={fieldLabel}>{t('nm.ends')}</div>
-                    <PillRow label={t('nm.ends')}>
+                    <ChipStrip label={t('nm.ends')}>
                       {(
                         [
                           ['count', t('nm.ends.count')],
@@ -595,7 +547,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
                           {label}
                         </Flat>
                       ))}
-                    </PillRow>
+                    </ChipStrip>
                     {rp.endMode === 'count' && (
                       <div className="flex items-center gap-2.5">
                         <button type="button" aria-label={t('nm.less')} onClick={() => rpSet({ count: Math.max(2, rp.count - 1) })} className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded-[10px] border border-v2-line2 text-body font-semibold">
@@ -692,23 +644,23 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
               <>
                 <input value={from} onChange={(e) => edit(setFrom)(e.target.value.slice(0, 40))} placeholder={t('nm.from.ph')} className={textInput} />
                 <div className={fieldLabel}>{t('nm.from.kind')}</div>
-                <PillRow label={t('nm.from.kind')}>
+                <ChipStrip label={t('nm.from.kind')}>
                   {FROM_KINDS.map((k) => (
                     <Flat key={k} on={fromKind === k} onClick={() => setFromKind(fromKind === k ? null : k)}>
                       {t(`nm.from.${k}` as TranslationKey)}
                     </Flat>
                   ))}
-                </PillRow>
+                </ChipStrip>
                 {recents.length > 0 && (
                   <>
                     <div className={fieldLabel}>{t('nm.recents')}</div>
-                    <PillRow label={t('nm.recents')}>
+                    <ChipStrip label={t('nm.recents')}>
                       {recents.map(([name, kind]) => (
                         <Flat key={name} on={from === name} onClick={edit(() => (setFrom(name), setFromKind(kind)))}>
                           {name}
                         </Flat>
                       ))}
-                    </PillRow>
+                    </ChipStrip>
                   </>
                 )}
               </>
@@ -987,13 +939,13 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
           <input id="nt-title" value={title} onChange={(e) => { const v = e.target.value.slice(0, 60); titleTouched.current = true; setTitleSuggested(false); edit(setTitle)(v) }} onFocus={(e) => { if (!titleTouched.current) e.target.select() }} placeholder={t('nm.titleEx')} className="min-w-0 flex-1 border-none bg-transparent text-body font-semibold text-ink outline-none placeholder:text-ink-tertiary" />
         </div>
         {titleHints.filter((h) => h !== title).length > 0 && (
-          <PillRow label={t('nm.titleHints')}>
+          <ChipStrip label={t('nm.titleHints')}>
             {titleHints.filter((h) => h !== title).map((h) => (
               <button key={h} type="button" onClick={() => { titleTouched.current = true; setTitleSuggested(false); edit(setTitle)(h) }} className="inline-flex h-8 flex-none cursor-pointer items-center whitespace-nowrap rounded-[10px] border border-border-input px-3 text-body-sm text-ink-secondary hover:bg-surface-sunken">
                 <span className="truncate">{h}</span>
               </button>
             ))}
-          </PillRow>
+          </ChipStrip>
         )}
       </div>
 

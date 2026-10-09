@@ -77,7 +77,7 @@ export function DashboardLayout() {
   return (
     <NewMovementContext.Provider value={openNewTx}>
       <TourProvider>
-      <div className="nova-canvas flex h-screen overflow-hidden text-v2-text [line-height:normal]">
+      <div className="nova-canvas flex h-dvh overflow-hidden text-v2-text [line-height:normal]">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         {/* `relative` so absolutely positioned descendants (sr-only text, bars)
             are contained and clipped here instead of growing the document. */}

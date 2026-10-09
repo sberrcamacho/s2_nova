@@ -1,5 +1,5 @@
 import type { CSSProperties, InputHTMLAttributes, ReactNode } from 'react'
-import { useId } from 'react'
+import { useId, type Ref } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from '@/state/useTranslation'
 import { cn } from '@/lib/cn'
@@ -8,9 +8,9 @@ import { flatClass } from '@/components/v2/Kit'
 // The Ajustes building blocks on the design-system tokens and type roles
 // (cards, rows, chips, segmented control, switches, form fields, buttons).
 
-export function AjCard({ className, style, children }: { className?: string; style?: CSSProperties; children: ReactNode }) {
+export function AjCard({ className, style, children, ref }: { className?: string; style?: CSSProperties; children: ReactNode; ref?: Ref<HTMLDivElement> }) {
   return (
-    <div className={cn('nova-card text-ink', className)} style={style}>
+    <div ref={ref} className={cn('nova-card text-ink', className)} style={style}>
       {children}
     </div>
   )
@@ -185,7 +185,8 @@ export function AjMessage({ ok, children }: { ok?: boolean; children: ReactNode 
 export function AjActions({ onCancel, submitLabel, onSubmit, submitClassName, disabled }: { onCancel: () => void; submitLabel: string; onSubmit: () => void; submitClassName?: string; disabled?: boolean }) {
   const { t } = useTranslation()
   return (
-    <div className="flex justify-end gap-2">
+    // Wraps on a phone instead of pushing "Cancelar" off the card.
+    <div className="flex flex-wrap justify-end gap-2">
       <button type="button" onClick={onCancel} className="h-11 cursor-pointer whitespace-nowrap rounded-[12px] border border-border-input bg-surface px-4 text-label font-semibold text-ink hover:bg-surface-sunken">
         {t('aj.cancel')}
       </button>

@@ -5,7 +5,7 @@ import { ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
 import { useTranslation } from '@/state/useTranslation'
 import { cn } from '@/lib/cn'
 import { todayISO } from '@/lib/date'
-import { monthYear } from '@/lib/inicio'
+import { monthAbbr, monthYear } from '@/lib/inicio'
 import { recentMonths } from '@/lib/movimientos'
 import { usePeriod } from '@/dashboard/usePeriod'
 
@@ -117,9 +117,11 @@ function PeriodSelector() {
         data-tour="mov.period"
         aria-expanded={open}
         aria-label={`${t('mov.period')}: ${monthYear(period, language)}`}
-        className="flex h-10 cursor-pointer items-center gap-2 whitespace-nowrap rounded-[12px] border border-v2-line bg-v2-surface px-4 text-label font-semibold text-v2-muted hover:border-v2-line2 hover:text-v2-text"
+        className="flex h-10 cursor-pointer items-center gap-2 whitespace-nowrap rounded-[12px] border border-v2-line bg-v2-surface px-4 text-label font-semibold text-v2-muted hover:border-v2-line2 hover:text-v2-text max-[519px]:px-3"
       >
-        {monthYear(period, language)}
+        {/* "Oct 2026" on a phone, so the page title keeps its room. */}
+        <span className="max-[519px]:hidden">{monthYear(period, language)}</span>
+        <span aria-hidden="true" className="min-[520px]:hidden">{`${monthAbbr(period, language)} ${period.slice(0, 4)}`}</span>
         <StrokeIcon paths={['M6 9l6 6 6-6']} size={12} strokeWidth={2.4} />
       </button>
       {open && (

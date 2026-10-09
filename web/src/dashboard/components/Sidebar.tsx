@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import logoMarkDark from '@/assets/logo-mark-dark.png'
 import { NAV_ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
@@ -26,6 +27,21 @@ interface SidebarProps {
   onClose: () => void
 }
 
+// Below 760 px the sidebar is an off-canvas drawer.
+const DRAWER_QUERY = '(max-width: 759px)'
+
+function useDrawerMode(): boolean {
+  const [drawer, setDrawer] = useState(() => typeof window !== 'undefined' && !!window.matchMedia?.(DRAWER_QUERY).matches)
+  useEffect(() => {
+    const mq = window.matchMedia?.(DRAWER_QUERY)
+    if (!mq) return
+    const update = () => setDrawer(mq.matches)
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
+  return drawer
+}
+
 export function Sidebar({ open, onClose }: SidebarProps) {
   const { user, logout } = useAuth()
   const { showToast } = useToast()
@@ -34,6 +50,18 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   // The example account of guest mode has no profile to edit.
   const profilePath = user?.isGuest ? '/ajustes' : '/ajustes/perfil'
   const profileLabel = user?.isGuest ? t('v2.nav.ajustes') : t('v2.sidebar.editProfile')
+
+  // A closed drawer is out of the Tab order and the screen-reader tree;
+  // Escape closes an open one.
+  const drawer = useDrawerMode()
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onClose])
 
   const onLogout = () => {
     logout()
@@ -44,8 +72,9 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     <>
       {open && <div className="fixed inset-0 z-40 bg-[rgba(6,6,12,.5)] min-[760px]:hidden" onClick={onClose} aria-hidden="true" />}
       <aside
+        inert={drawer && !open}
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex h-screen w-[240px] flex-none flex-col border-r border-v2-line bg-v2-sidebar text-v2-text transition-transform duration-200 min-[760px]:sticky min-[760px]:top-0 min-[760px]:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 flex h-dvh w-[240px] flex-none flex-col border-r border-v2-line bg-v2-sidebar text-v2-text transition-transform duration-200 min-[760px]:sticky min-[760px]:top-0 min-[760px]:translate-x-0',
           open ? 'translate-x-0' : '-translate-x-full',
         )}
       >

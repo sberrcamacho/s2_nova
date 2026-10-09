@@ -20,7 +20,7 @@ export function Money({ hidden, children, className, style, inline }: { hidden: 
   }
   return (
     <span className={cn(base, className)} style={style}>
-      <span aria-hidden="true" className="blur-[9px] transition-[filter] duration-150 hover:blur-none">
+      <span aria-hidden="true" className="blur-[9px] transition-[filter] duration-150 hover:blur-none active:blur-none">
         {children}
       </span>
       <span className="sr-only">{t('inicio.amountHidden')}</span>

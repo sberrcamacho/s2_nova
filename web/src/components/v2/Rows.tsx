@@ -44,7 +44,7 @@ export function SyncBanner({ onRetry }: { onRetry: () => void }) {
   return (
     <div role="status" className="flex items-center justify-between gap-3 rounded-[12px] bg-[color-mix(in_oklab,var(--v2-neg)_10%,transparent)] px-3.5 py-2.5 text-body-sm font-semibold text-negative">
       <span>{t('inicio.syncError')}</span>
-      <button type="button" onClick={onRetry} className="cursor-pointer font-semibold text-link">
+      <button type="button" onClick={onRetry} className="-my-1.5 min-h-8 flex-none cursor-pointer rounded-[8px] px-2 font-semibold text-link">
         {t('inicio.retry')}
       </button>
     </div>

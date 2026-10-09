@@ -60,9 +60,9 @@ export default function BilleterasPage() {
       </div>
       {/* The total in the principal currency, with the conversion note. */}
       {wallets && wallets.length > 0 && (
-        <section data-tour="wal.total" className="nova-card p-5 text-ink">
+        <section data-tour="wal.total" className="nova-card p-5 text-ink [container-type:inline-size]">
           <div className="text-overline font-semibold uppercase text-ink-tertiary">{fill(tr('wallet.totalLabel'), principal)}</div>
-          <Money hidden={hidden} className="mt-1 block whitespace-nowrap text-[40px] font-normal leading-[1.1] tracking-[-.035em] tabular-nums">
+          <Money hidden={hidden} className="mt-1 block whitespace-nowrap text-[clamp(28px,10cqi,40px)] font-normal leading-[1.1] tracking-[-.035em] tabular-nums">
             {format(total)}
           </Money>
           {wallets.some((w) => w.currency !== principal) && <div className="mt-1 text-body-sm text-ink-secondary">{tr('wallet.totalNote')}</div>}

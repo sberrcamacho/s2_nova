@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useSearchParams } from 'react-router-dom'
 import { CategoryMark } from '@/components/v2/CategoryMark'
-import { CancelButton, ConfirmDialog, DangerLink, Flat, IC, Icon, ModalFooter, V2Modal } from '@/components/v2/Kit'
+import { CancelButton, ChipStrip, ConfirmDialog, DangerLink, Flat, IC, Icon, ModalFooter, V2Modal } from '@/components/v2/Kit'
 import { Money } from '@/components/v2/Money'
 import { RowSkeletons, SyncBanner } from '@/components/v2/Rows'
 import { primaryButtonClass } from '@/components/panels/SidePanel'
@@ -217,8 +217,39 @@ export default function MovimientosPage() {
           <h1 className="text-display-sm font-medium tracking-[-.025em]">{tr('v2.nav.movimientos')}</h1>
           <div className="mt-1 text-body-sm text-ink-secondary">{subtitle}</div>
         </div>
-        <div data-tour="mov.filters" className="flex flex-wrap items-center gap-2">
-          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={tr('mv.type')}>
+        {/* Phones: the header has no room for search, so it lives here. */}
+        <label className="flex h-11 items-center gap-2.5 rounded-[12px] border border-border-input bg-surface px-4 text-v2-dim focus-within:border-primary-border min-[900px]:hidden">
+          <StrokeIcon paths={ICON_PATHS.search} size={16} />
+          <input
+            type="search"
+            value={params.get('q') ?? ''}
+            onChange={(e) => {
+              const next = new URLSearchParams(params)
+              if (e.target.value) next.set('q', e.target.value)
+              else next.delete('q')
+              setParams(next, { replace: true })
+            }}
+            placeholder={tr('v2.header.search')}
+            aria-label={tr('v2.header.search')}
+            className="min-w-0 flex-1 border-none bg-transparent text-body text-ink outline-none placeholder:text-ink-tertiary"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => {
+                params.delete('q')
+                setParams(params, { replace: true })
+              }}
+              aria-label={tr('mv.clearSearch')}
+              className="-mr-2 flex h-8 w-8 flex-none cursor-pointer items-center justify-center rounded-full text-ink-secondary hover:bg-surface-sunken"
+            >
+              <StrokeIcon paths={ICON_PATHS.close} size={16} />
+            </button>
+          )}
+        </label>
+        <div data-tour="mov.filters" className="flex flex-col gap-2 min-[760px]:flex-row min-[760px]:items-center">
+          {/* One line that scrolls sideways when it doesn't fit. */}
+          <ChipStrip role="radiogroup" label={tr('mv.type')}>
             {FILTERS.map((key) => (
               <Flat
                 key={key}
@@ -232,12 +263,12 @@ export default function MovimientosPage() {
                 {tr(`mv.filter.${key}` as TranslationKey)}
               </Flat>
             ))}
-          </div>
+          </ChipStrip>
           <select
             aria-label={tr('bud.category')}
             value={cat}
             onChange={(e) => setCat(e.target.value)}
-            className="ml-auto h-8 min-w-0 max-w-full cursor-pointer rounded-[8px] border border-border-input bg-surface px-2.5 text-label font-semibold text-ink"
+            className="h-11 min-w-0 max-w-full cursor-pointer rounded-[10px] border border-border-input bg-surface px-2.5 text-body font-semibold text-ink min-[760px]:ml-auto min-[760px]:h-8 min-[760px]:rounded-[8px] min-[760px]:text-label"
           >
             <option value="">{tr('mv.allCategories')}</option>
             {catOptions.map((o) => (

@@ -241,7 +241,7 @@ export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | nu
           <>
             <StepQuestion text={tr('goal.q.amount')} hint={tr('goal.q.amountHint')} />
             <AmountHero label={tr('goal.target')} expr={target} onExpr={clear(setTarget)} />
-            <div className="mt-5 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2.5">
+            <div className="mt-5 grid grid-cols-1 gap-2.5 min-[520px]:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
               <Field label={tr('goal.initial')}>
                 <AmountField expr={initial} onExpr={clear(setInitial)} label={tr('goal.initialLabel')} height={48} fontSize={16} />
               </Field>

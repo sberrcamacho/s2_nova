@@ -338,7 +338,7 @@ function FixedVsVariable({ report }: { report: Report | null }) {
   const side = (label: string, amount: number, pct: number) => (
     <div className="min-w-0">
       <div className="text-overline uppercase text-ink-secondary">{label}</div>
-      <Money hidden={hidden} className="mt-1 block whitespace-nowrap text-title font-semibold">
+      <Money hidden={hidden} className="mt-1 block whitespace-nowrap text-title-sm font-semibold min-[520px]:text-title">
         {format(amount)}
       </Money>
       <div className="font-numeric text-caption text-ink-tertiary">{pct} %</div>
@@ -446,15 +446,16 @@ function IncomeTab({ report }: { report: Report | null }) {
               const pct = m.prev ? Math.round(((m.income - m.prev) / m.prev) * 100) : null
               return (
                 <div key={m.month} className="flex min-h-12 items-center gap-3 border-b border-divider py-2 last:border-b-0">
-                  <div className="flex-none">
-                    <div className="whitespace-nowrap text-label font-semibold capitalize">{monthYear(m.month, language)}</div>
+                  {/* The amount takes width first; the month truncates. */}
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-label font-semibold capitalize" title={monthYear(m.month, language)}>{monthYear(m.month, language)}</div>
                     {/* The current month is still open, so its change isn't final. */}
                     {m.month === report?.month && <div className="text-caption text-ink-tertiary">{t('rep.inProgress')}</div>}
                   </div>
-                  <Money hidden={hidden} className="min-w-0 flex-1 truncate text-right text-label">
+                  <Money hidden={hidden} className="flex-none whitespace-nowrap text-right text-label">
                     {format(m.income)}
                   </Money>
-                  <span className={cn('font-numeric w-20 flex-none whitespace-nowrap text-right text-label font-semibold', pct === null || pct === 0 ? 'text-ink-tertiary' : pct > 0 ? 'text-positive' : 'text-negative')}>
+                  <span className={cn('font-numeric min-w-16 flex-none whitespace-nowrap text-right text-label font-semibold', pct === null || pct === 0 ? 'text-ink-tertiary' : pct > 0 ? 'text-positive' : 'text-negative')}>
                     {pct === null ? '—' : pct === 0 ? '0 %' : `${pct > 0 ? '↑ +' : '↓ −'}${Math.abs(pct)} %`}
                   </span>
                 </div>

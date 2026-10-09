@@ -985,6 +985,7 @@ const dictionary = {
   "tour.nuevo.more.body": { es: "Fecha, repetición, comprobante, nota y a qué presupuesto, préstamo o meta suma.", en: "Date, repeat, receipt, note and which budget, loan or goal it counts toward." },
   "mv.scheduled": { es: "Programados", en: "Scheduled" },
   "mv.scheduledOne": { es: "Programado", en: "Scheduled" },
+  "mv.clearSearch": { es: "Borrar búsqueda", en: "Clear search" },
   "mv.results": { es: "{0} resultados para “{1}”", en: "{0} results for “{1}”" },
   "mv.count": { es: "{0} movimientos · {1} programados", en: "{0} transactions · {1} scheduled" },
   "mv.type": { es: "Tipo", en: "Type" },

@@ -596,7 +596,10 @@ function StatTile({
         ) : (
           <Money
             hidden={hidden}
-            className={cn('mt-3 block whitespace-nowrap text-[clamp(18px,12cqi,28px)] font-medium leading-[1.2] tracking-[-.01em] tabular-nums', positive ? 'text-positive' : 'text-negative')}
+            className={cn('mt-3 block whitespace-nowrap font-medium leading-[1.2] tracking-[-.01em] tabular-nums', positive ? 'text-positive' : 'text-negative')}
+            // Scales with the tile; a long figure (e.g. +$125.000.000 in a
+            // phone's half-width tile) may go a little smaller so it fits.
+            style={{ fontSize: `clamp(${String(figure).length > 11 ? 15 : 18}px, ${Math.min(12, 140 / Math.max(1, String(figure).length)).toFixed(2)}cqi, 28px)` }}
           >
             {figure}
           </Money>

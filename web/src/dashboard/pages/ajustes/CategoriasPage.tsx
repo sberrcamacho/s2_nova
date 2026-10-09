@@ -1,5 +1,5 @@
 import { fill, tr } from '@/lib/i18n/translations'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ConfirmDialog, IC, Icon } from '@/components/v2/Kit'
 import { CategoryMark, GlyphMark } from '@/components/v2/CategoryMark'
@@ -23,7 +23,7 @@ interface Draft {
 const EMPTY: Draft = { id: null, name: '', parentId: '', vis: 'other', hidden: false, err: '' }
 
 const fieldLabel = 'text-caption font-semibold tracking-[.06em] text-ink-secondary'
-const field = 'box-border h-11 w-full rounded-[8px] border border-border-input bg-surface px-3 font-[inherit] text-body-sm text-ink outline-none focus:border-primary-border'
+const field = 'box-border h-11 w-full rounded-[8px] border border-border-input bg-surface px-3 font-[inherit] text-body text-ink outline-none focus:border-primary-border min-[760px]:text-body-sm'
 
 // Ajustes › Categorías (Dashboard v2 isSettingsCategories,
 // CATEGORY_SYSTEM.md §7b): the Gastos / Ingresos taxonomy with each
@@ -46,7 +46,13 @@ export default function CategoriasPage() {
   const parent = d.parentId ? (categoryNode(d.parentId) ?? null) : null
   const parents = parentCategories(income)
 
-  const openEdit = (n: CategoryNode) => setDraft({ id: n.id, name: displayName(n), parentId: n.parentId ?? '', vis: n.vis, hidden: n.hidden, err: '' })
+  // Below 900 px the form sits above the list, so picking a row brings it
+  // into view.
+  const formRef = useRef<HTMLDivElement>(null)
+  const openEdit = (n: CategoryNode) => {
+    setDraft({ id: n.id, name: displayName(n), parentId: n.parentId ?? '', vis: n.vis, hidden: n.hidden, err: '' })
+    if (window.matchMedia?.('(max-width: 899px)').matches) formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
   const switchTab = (toIncome: boolean) => {
     setParams(toIncome ? { tab: 'ingresos' } : {}, { replace: true })
     setDraft(EMPTY)
@@ -103,7 +109,7 @@ export default function CategoriasPage() {
   const shown = !d.hidden
 
   return (
-    <div className="flex max-w-[1036px] flex-col gap-[18px] px-7 pt-[26px] pb-10">
+    <div className="flex max-w-[1036px] flex-col gap-[18px] px-4 pt-6 pb-10 min-[760px]:px-7 min-[760px]:pt-[26px]">
       <AjSubHeader title={tr('cat.title')} subtitle={tr('cat.subtitle')}>
         <div role="tablist" className="flex border-b border-border">
           {[false, true].map((inc) => {
@@ -132,13 +138,16 @@ export default function CategoriasPage() {
               <div key={p.id} className={cn('-mx-2.5 flex flex-col gap-2.5 rounded-[12px] px-2.5 py-3.5', d.id === p.id && 'bg-surface-sunken', i < parents.length - 1 && 'border-b border-divider')}>
                 <div role="button" tabIndex={0} onClick={() => openEdit(p)} onKeyDown={(e) => e.key === 'Enter' && openEdit(p)} className="flex cursor-pointer items-center gap-3">
                   <CategoryMark category={p.id} box={40} />
-                  <div className="min-w-0 flex-1 truncate text-title-sm font-semibold" title={displayName(p)}>{displayName(p)}</div>
-                  {p.hidden && <span className="rounded-[6px] border border-border-input px-2 py-0.5 text-caption font-semibold text-ink-secondary">{tr('cat.hidden')}</span>}
-                  {p.custom && (
-                    <span className="rounded-[6px] px-2 py-[3px] text-caption font-semibold text-link" style={{ background: 'var(--color-accent-soft)' }}>
-                      {tr('cat.custom')}
-                    </span>
-                  )}
+                  {/* The tags drop under the name when the row is narrow. */}
+                  <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+                    <div className="min-w-0 max-w-full truncate text-title-sm font-semibold" title={displayName(p)}>{displayName(p)}</div>
+                    {p.hidden && <span className="whitespace-nowrap rounded-[6px] border border-border-input px-2 py-0.5 text-caption font-semibold text-ink-secondary">{tr('cat.hidden')}</span>}
+                    {p.custom && (
+                      <span className="whitespace-nowrap rounded-[6px] px-2 py-[3px] text-caption font-semibold text-link" style={{ background: 'var(--color-accent-soft)' }}>
+                        {tr('cat.custom')}
+                      </span>
+                    )}
+                  </div>
                   <span className="flex-none whitespace-nowrap text-body-sm tabular-nums text-ink-secondary">{fill(tr(kids.length === 1 ? 'cat.subOne' : 'cat.subMany'), kids.length)}</span>
                 </div>
                 <div className="flex flex-wrap gap-2 min-[640px]:pl-[52px]">
@@ -168,7 +177,7 @@ export default function CategoriasPage() {
             )
           })}
         </AjCard>
-        <AjCard className="order-1 flex flex-col gap-3.5 p-5 min-[900px]:sticky min-[900px]:top-20 min-[900px]:order-2">
+        <AjCard ref={formRef} className="order-1 flex scroll-mt-20 flex-col gap-3.5 p-5 min-[900px]:sticky min-[900px]:top-20 min-[900px]:order-2">
           <div className="flex items-start gap-2.5">
             <div className="min-w-0 flex-1">
               <div className="text-title font-semibold">{title}</div>
@@ -247,7 +256,7 @@ export default function CategoriasPage() {
                 aria-checked={shown}
                 aria-label={tr('cat.show')}
                 onClick={() => setD({ hidden: !d.hidden })}
-                className={cn('box-border flex h-[22px] w-[38px] flex-none cursor-pointer rounded-full p-[3px]', shown ? 'justify-end bg-primary' : 'justify-start bg-border-input')}
+                className={cn("relative box-border flex h-[22px] w-[38px] flex-none cursor-pointer rounded-full p-[3px] before:absolute before:-inset-[5px] before:content-['']", shown ? 'justify-end bg-primary' : 'justify-start bg-border-input')}
               >
                 <span className="block h-4 w-4 rounded-full bg-white" />
               </button>

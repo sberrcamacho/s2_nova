@@ -64,6 +64,10 @@ export function BarChart({
   }
   const top = niceCeiling(Math.max(0, ...series.flatMap((s) => s.values)))
   const ticks = [top, top / 2, 0]
+  // Twelve months on a phone: tighter gaps, and every other month label
+  // (always the latest), so none is cut to one letter.
+  const dense = labels.length > 6
+  const gap = dense ? 'gap-1 min-[520px]:gap-2' : 'gap-2'
   return (
     <figure className="m-0">
       <p className="sr-only">{summary}</p>
@@ -81,7 +85,7 @@ export function BarChart({
             {ticks.map((_, i) => (
               <div key={i} aria-hidden="true" className={cn('absolute inset-x-0 border-t', i === ticks.length - 1 ? 'border-border' : 'border-divider')} style={{ top: `${(i / (ticks.length - 1)) * 100}%` }} />
             ))}
-            <div className="absolute inset-0 flex items-end gap-2">
+            <div className={cn('absolute inset-0 flex items-end', gap)}>
               {labels.map((label, i) => {
                 const values = series.map((s) => s.values[i] ?? 0)
                 const description = `${label}: ${series.map((s, k) => `${s.label} ${hidden ? t('inicio.amountHidden') : format(values[k]!)}`).join(', ')}`
@@ -114,7 +118,11 @@ export function BarChart({
                     {active === i && (
                       <span
                         role="tooltip"
-                        className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap rounded-[10px] bg-ink px-3 py-2 text-left text-caption text-surface shadow-[var(--shadow-md)]"
+                        // Anchored to the side with room, so it stays inside the card.
+                        className={cn(
+                          'pointer-events-none absolute bottom-full z-10 mb-2 whitespace-nowrap rounded-[10px] bg-ink px-3 py-2 text-left text-caption text-surface shadow-[var(--shadow-md)]',
+                          i < labels.length / 3 ? 'left-0' : i >= (labels.length * 2) / 3 ? 'right-0' : 'left-1/2 -translate-x-1/2',
+                        )}
                       >
                         <span className="block font-semibold">{label}</span>
                         {series.map((s, k) => (
@@ -133,9 +141,9 @@ export function BarChart({
               })}
             </div>
           </div>
-          <div aria-hidden="true" className="mt-2 flex gap-2">
+          <div aria-hidden="true" className={cn('mt-2 flex', gap)}>
             {labels.map((label, i) => (
-              <span key={label + i} className="min-w-0 flex-1 truncate text-center text-caption text-ink-tertiary">
+              <span key={label + i} className={cn('min-w-0 flex-1 truncate text-center text-caption text-ink-tertiary', dense && (labels.length - 1 - i) % 2 === 1 && 'max-[519px]:invisible')}>
                 {label}
               </span>
             ))}

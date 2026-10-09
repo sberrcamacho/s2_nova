@@ -18,7 +18,7 @@ import type { LoanKind, Transaction, Wallet } from '@/types'
 // due date. Editing reuses it, with "Eliminar registro" behind the
 // two-step confirmation.
 const loanInput =
-  'box-border h-11 w-full min-w-0 rounded-[12px] border border-border-input bg-surface px-3.5 font-[inherit] text-body-sm text-ink outline-none [color-scheme:dark] placeholder:text-ink-secondary focus:border-primary-border'
+  'box-border h-11 w-full min-w-0 rounded-[12px] border border-border-input bg-surface px-3.5 font-[inherit] text-body text-ink outline-none [color-scheme:dark] min-[760px]:text-body-sm placeholder:text-ink-secondary focus:border-primary-border'
 
 // Arrows for the direction: money going out (lent) or coming in (borrowed).
 const LOAN_OUT_ICON = ['M7 17 17 7', 'M8 7h9v9']

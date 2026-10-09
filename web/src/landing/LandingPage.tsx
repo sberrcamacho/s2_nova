@@ -188,7 +188,7 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="relative min-h-dvh overflow-x-hidden bg-bg text-ink">
+    <div className="relative min-h-dvh overflow-x-clip bg-bg text-ink">
       <a
         href="#contenido"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-[var(--radius-sm)] focus:bg-surface focus:px-4 focus:py-2 focus:text-label focus:text-link focus:shadow-[var(--shadow-md)]"
@@ -290,14 +290,14 @@ export default function LandingPage() {
             <BentoCard className="justify-between md:col-span-2 md:row-span-2">
               <FeatureText icon={Coins} title="landing.f.currencies" body="landing.f.currenciesBody" />
               <div aria-hidden="true" className="relative mt-10 h-64">
-                <div className="absolute bottom-16 right-[min(52%,300px)] flex h-40 w-72 -rotate-6 flex-col justify-between rounded-[20px] border border-border bg-bg-secondary p-5 shadow-[var(--shadow-md)]">
+                <div className="absolute bottom-16 right-[min(52%,300px)] flex h-40 w-72 max-w-[85%] -rotate-6 flex-col justify-between rounded-[20px] border border-border bg-bg-secondary p-5 shadow-[var(--shadow-md)]">
                   <div className="flex justify-between text-caption font-semibold text-ink-tertiary">
                     <span>Wise</span>
                     <span>USD</span>
                   </div>
                   <div className="text-[24px] font-light tracking-[-.03em] tabular-nums text-ink-secondary">US$2.450,00</div>
                 </div>
-                <div className="absolute bottom-2 right-2 flex h-44 w-80 rotate-2 flex-col justify-between rounded-[20px] border border-border-strong bg-surface p-6 shadow-[var(--shadow-lg)]">
+                <div className="absolute bottom-2 right-2 flex h-44 w-80 max-w-[calc(100%-1rem)] rotate-2 flex-col justify-between rounded-[20px] border border-border-strong bg-surface p-6 shadow-[var(--shadow-lg)]">
                   <div className="flex items-start justify-between">
                     <span className="text-label font-semibold text-ink">Bancolombia</span>
                     <span className="rounded-full bg-accent-soft px-2 py-0.5 text-caption font-semibold text-on-primary-soft">COP</span>

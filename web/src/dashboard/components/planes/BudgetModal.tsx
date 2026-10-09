@@ -159,7 +159,7 @@ export function BudgetModal({ budget, wallets, onClose, onSaved }: { budget: Bud
               <StepChoiceRow label={t('bud.monthly')} on={d.period === 'monthly'} onClick={() => set({ period: 'monthly' })} />
               <StepChoiceRow label={t('bud.customRange')} on={d.period === 'custom'} onClick={() => set({ period: 'custom' })} />
               {d.period === 'custom' && (
-                <div className="mt-2 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
+                <div className="mt-2 grid grid-cols-1 gap-2 min-[520px]:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                   <DateInput value={d.start} onChange={(v) => set({ start: v })} />
                   <DateInput value={d.end} onChange={(v) => set({ end: v })} />
                 </div>

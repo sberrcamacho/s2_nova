@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Glyph, GlyphMark } from '@/components/v2/CategoryMark'
 import { PLAN_ICONS } from '@/lib/taxonomy'
@@ -55,7 +55,7 @@ export function V2Modal({ width = 500, onClose, children, label }: { width?: num
         aria-modal="true"
         aria-label={label}
         onClick={(e) => e.stopPropagation()}
-        className="box-border flex max-h-[calc(100vh-48px)] max-w-full animate-dialog-in flex-col gap-5 overflow-y-auto overflow-x-hidden rounded-[24px] border border-border-input bg-surface px-[26px] py-6 text-ink shadow-[0_24px_60px_rgba(0,0,0,.45)]"
+        className="box-border flex max-h-[calc(100dvh-48px)] max-w-full animate-dialog-in flex-col gap-5 overflow-y-auto overflow-x-hidden rounded-[24px] border border-border-input bg-surface px-[26px] py-6 text-ink shadow-[0_24px_60px_rgba(0,0,0,.45)]"
         style={{ width }}
       >
         {children}
@@ -84,7 +84,7 @@ export function Field({ label, children, note }: { label: ReactNode; children: R
 }
 
 export const inputClass =
-  'box-border h-11 w-full min-w-0 rounded-[8px] border border-border-input bg-surface px-3 font-[inherit] text-body-sm text-ink outline-none placeholder:text-ink-tertiary focus:border-primary-border'
+  'box-border h-11 w-full min-w-0 rounded-[8px] border border-border-input bg-surface px-3 font-[inherit] text-body text-ink outline-none placeholder:text-ink-tertiary focus:border-primary-border min-[760px]:text-body-sm'
 
 export function TextInput({ value, onChange, placeholder, className, autoFocus }: { value: string; onChange: (v: string) => void; placeholder?: string; className?: string; autoFocus?: boolean }) {
   return <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} autoFocus={autoFocus} className={cn(inputClass, className)} />
@@ -139,7 +139,9 @@ export function AmountField({
           aria-label={label}
           autoFocus={autoFocus}
           disabled={disabled}
-          className="min-w-0 flex-1 border-none bg-transparent px-0.5 py-px font-[inherit] font-semibold text-ink outline-none [font-variant-numeric:tabular-nums]"
+          // 16 px on phones whatever the box's size: iOS zooms into a
+          // focused field under 16 px.
+          className="min-w-0 flex-1 border-none bg-transparent px-0.5 py-px font-[inherit] font-semibold text-ink outline-none [font-variant-numeric:tabular-nums] max-[759px]:text-[16px]!"
           style={{ fontSize }}
         />
         {!disabled && (
@@ -223,6 +225,54 @@ export function Flat({ on, onClick, children, className, role }: { on: boolean; 
     <button type="button" role={role} aria-checked={role ? on : undefined} aria-pressed={role ? undefined : on} onClick={onClick} className={cn(flatClass(on), className)}>
       {children}
     </button>
+  )
+}
+
+// Fades the edge(s) of a sideways strip that has more chips past it.
+function edgeFade(left: boolean, right: boolean): string | undefined {
+  if (!left && !right) return undefined
+  return `linear-gradient(to right, ${left ? 'transparent, #000 32px' : '#000'}, ${right ? '#000 calc(100% - 32px), transparent' : '#000'})`
+}
+
+// One line of chips that scrolls sideways (DESIGN-SYSTEM.md §6.5): chips
+// never wrap, an edge fades while there is more past it, and the selected
+// chip is brought into view when the selection changes.
+export function ChipStrip({ children, label, role = 'group' }: { children: ReactNode; label?: string; role?: 'group' | 'radiogroup' }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [fade, setFade] = useState<[boolean, boolean]>([false, false])
+  const shown = useRef<Element | null>(null)
+  const updateFade = () => {
+    const el = ref.current
+    const left = !!el && el.scrollLeft > 1
+    const right = !!el && el.scrollLeft + el.clientWidth < el.scrollWidth - 1
+    setFade((f) => (f[0] === left && f[1] === right ? f : [left, right]))
+  }
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const on = el.querySelector<HTMLElement>('[aria-pressed="true"],[aria-checked="true"]')
+    if (on && on !== shown.current) {
+      const right = on.offsetLeft + on.offsetWidth + 32
+      if (right > el.scrollLeft + el.clientWidth) el.scrollLeft = right - el.clientWidth
+      else if (on.offsetLeft - 32 < el.scrollLeft) el.scrollLeft = Math.max(0, on.offsetLeft - 32)
+    }
+    shown.current = on
+    updateFade()
+  })
+  const mask = edgeFade(fade[0], fade[1])
+  return (
+    // The 4 px padding (cancelled by the margin) keeps focus rings and the
+    // selected chip's shadow from being clipped by the scroller.
+    <div
+      ref={ref}
+      onScroll={updateFade}
+      role={role}
+      aria-label={label}
+      className="scrollbar-none relative -m-1 flex gap-1.5 overflow-x-auto p-1 [&>*]:flex-none"
+      style={mask ? { maskImage: mask, WebkitMaskImage: mask } : undefined}
+    >
+      {children}
+    </div>
   )
 }
 
@@ -383,18 +433,19 @@ export function SaveButton({ valid, onClick, children = tr('common.save'), busy 
 
 export function DangerLink({ onClick, children }: { onClick: () => void; children: ReactNode }) {
   return (
-    <button type="button" onClick={onClick} className="cursor-pointer text-body-sm font-semibold text-negative">
+    <button type="button" onClick={onClick} className="inline-flex min-h-8 cursor-pointer items-center whitespace-nowrap text-body-sm font-semibold text-negative">
       {children}
     </button>
   )
 }
 
+// On a phone the buttons drop below the left link and share the line
+// evenly, so none is clipped by the modal.
 export function ModalFooter({ left, children }: { left?: ReactNode; children: ReactNode }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       {left}
-      <div className="flex-1" />
-      {children}
+      <div className="ml-auto flex min-w-0 flex-wrap justify-end gap-2 max-[519px]:w-full max-[519px]:[&>*]:flex-1">{children}</div>
     </div>
   )
 }

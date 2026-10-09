@@ -60,7 +60,7 @@ export default function MonedasPage() {
   return (
     <div className="flex max-w-[976px] flex-col gap-5 px-4 pt-6 pb-12 min-[760px]:px-8 min-[760px]:pt-8">
       <AjSubHeader title={t('aj.currencies')} subtitle={t('cur.subtitle')} />
-      <div className="grid grid-cols-[minmax(0,1fr)_300px] items-start gap-[18px]">
+      <div className="grid grid-cols-1 items-start gap-[18px] min-[1024px]:grid-cols-[minmax(0,1fr)_300px]">
         <div className="flex flex-col gap-3.5">
           <AjCard className="flex flex-col gap-2.5 p-5">
             <div className="text-overline font-semibold text-ink-tertiary">{t('cur.principal').toUpperCase()}</div>

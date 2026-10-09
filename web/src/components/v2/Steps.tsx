@@ -72,7 +72,7 @@ export function StepModal({
         aria-modal="true"
         aria-label={title}
         onClick={(e) => e.stopPropagation()}
-        className="box-border flex max-h-[calc(100vh-48px)] w-[520px] max-w-full animate-dialog-in flex-col overflow-hidden rounded-[18px] border border-border-input bg-surface text-ink shadow-[0_24px_60px_rgba(0,0,0,.45)]"
+        className="box-border flex max-h-[calc(100dvh-48px)] w-[520px] max-w-full animate-dialog-in flex-col overflow-hidden rounded-[18px] border border-border-input bg-surface text-ink shadow-[0_24px_60px_rgba(0,0,0,.45)]"
       >
         <div className="flex items-center gap-1 px-4 pt-4">
           {(showBack || subPage) && <StepIconButton paths={['M19 12H5', 'M12 19l-7-7 7-7']} label={tr('step.back')} onClick={subPage ? () => onSubDone?.() : onBack} />}
