@@ -1,6 +1,9 @@
 package com.s2nova.app.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -203,6 +206,67 @@ fun PillRow(content: @Composable () -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) { content() }
+}
+
+// One line of pills that scrolls sideways (DESIGN-SYSTEM.md §6.5): pills
+// never wrap, an edge fades while there are more past it, and the pill at
+// `selectedIndex` (its position among `content`'s children, -1 for none)
+// is brought into view when the selection changes.
+@Composable
+fun ScrollPillRow(selectedIndex: Int = -1, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    val scroll = androidx.compose.foundation.rememberScrollState()
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val fadePx = with(density) { 32.dp.toPx() }
+    val gapPx = with(density) { 8.dp.roundToPx() }
+    // Each child's [start, end) in px, written by the layout below.
+    val spans = remember { ArrayList<IntArray>() }
+    androidx.compose.runtime.LaunchedEffect(selectedIndex) {
+        androidx.compose.runtime.withFrameNanos { }
+        val span = spans.getOrNull(selectedIndex) ?: return@LaunchedEffect
+        val viewport = scroll.viewportSize
+        val target = when {
+            span[1] + fadePx > scroll.value + viewport -> (span[1] + fadePx - viewport).toInt()
+            span[0] - fadePx < scroll.value -> (span[0] - fadePx).toInt().coerceAtLeast(0)
+            else -> return@LaunchedEffect
+        }
+        scroll.animateScrollTo(target)
+    }
+    androidx.compose.ui.layout.Layout(
+        content = content,
+        modifier = modifier
+            .fillMaxWidth()
+            .graphicsLayer(compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen)
+            .drawWithContent {
+                drawContent()
+                val left = scroll.canScrollBackward
+                val right = scroll.canScrollForward
+                if (left || right) {
+                    val edge = (fadePx / size.width).coerceIn(0f, 0.5f)
+                    drawRect(
+                        androidx.compose.ui.graphics.Brush.horizontalGradient(
+                            0f to (if (left) Color.Transparent else Color.Black),
+                            edge to Color.Black,
+                            1f - edge to Color.Black,
+                            1f to (if (right) Color.Transparent else Color.Black),
+                        ),
+                        blendMode = androidx.compose.ui.graphics.BlendMode.DstIn,
+                    )
+                }
+            }
+            .horizontalScroll(scroll),
+    ) { measurables, constraints ->
+        val placeables = measurables.map { it.measure(constraints.copy(minWidth = 0, maxWidth = androidx.compose.ui.unit.Constraints.Infinity)) }
+        val height = placeables.maxOfOrNull { it.height } ?: 0
+        spans.clear()
+        var x = 0
+        placeables.forEachIndexed { i, p ->
+            spans.add(intArrayOf(x, x + p.width))
+            x += p.width + if (i < placeables.lastIndex) gapPx else 0
+        }
+        layout(x, height) {
+            placeables.forEachIndexed { i, p -> p.placeRelative(spans[i][0], (height - p.height) / 2) }
+        }
+    }
 }
 
 // Section label: 11.5 sp / 700 muted, 8 dp below.

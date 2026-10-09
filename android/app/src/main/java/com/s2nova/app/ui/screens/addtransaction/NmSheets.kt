@@ -61,7 +61,7 @@ import com.s2nova.app.ui.components.FieldLabel
 import com.s2nova.app.ui.components.GlyphMark
 import com.s2nova.app.ui.components.InputBox
 import com.s2nova.app.ui.components.NovaDraftSheet
-import com.s2nova.app.ui.components.PillRow
+import com.s2nova.app.ui.components.ScrollPillRow
 import com.s2nova.app.ui.components.PlanMark
 import com.s2nova.app.ui.components.RadioRow
 import com.s2nova.app.ui.components.SheetHeader
@@ -366,22 +366,23 @@ private fun WhenSheet(s: NmState) {
         Column(Modifier.verticalScroll(rememberScrollState())) {
             SheetHeader(tr(StringKey.NM_SECTION_WHEN), fmtDateLong(s.date.toString()) + " · " + s.time)
             val last = NmPrefs.lastWhen(context)
-            PillRow {
-                V2Pill(tr(StringKey.NM_NOW), s.date == today && s.time == s.nowTime, { s.date = today; s.time = s.nowTime; s.cal = today.withDayOfMonth(1) })
-                V2Pill(tr(StringKey.NM_YESTERDAY), s.date == today.minusDays(1) && (last == null || s.time != last.second), { s.date = today.minusDays(1); s.cal = s.date.withDayOfMonth(1) })
-                V2Pill(tr(StringKey.NM_DAY_BEFORE), s.date == today.minusDays(2) && (last == null || s.time != last.second), { s.date = today.minusDays(2); s.cal = s.date.withDayOfMonth(1) })
+            // Future dates in the same group (the note below says a future
+            // date becomes a Programado), so the sheet fits.
+            val nextFirst = today.plusMonths(1).withDayOfMonth(1)
+            val pills = buildList<Triple<String, Boolean, () -> Unit>> {
+                add(Triple(tr(StringKey.NM_NOW), s.date == today && s.time == s.nowTime) { s.date = today; s.time = s.nowTime; s.cal = today.withDayOfMonth(1) })
+                add(Triple(tr(StringKey.NM_YESTERDAY), s.date == today.minusDays(1) && (last == null || s.time != last.second)) { s.date = today.minusDays(1); s.cal = s.date.withDayOfMonth(1) })
+                add(Triple(tr(StringKey.NM_DAY_BEFORE), s.date == today.minusDays(2) && (last == null || s.time != last.second)) { s.date = today.minusDays(2); s.cal = s.date.withDayOfMonth(1) })
                 if (last != null) {
-                    V2Pill(tr(StringKey.NM_LIKE_LAST, fmtDate(last.first), last.second), s.date.toString() == last.first && s.time == last.second, {
+                    add(Triple(tr(StringKey.NM_LIKE_LAST, fmtDate(last.first), last.second), s.date.toString() == last.first && s.time == last.second) {
                         s.date = LocalDate.parse(last.first); s.time = last.second; s.cal = s.date.withDayOfMonth(1)
                     })
                 }
-                // Future dates in the same group (the note below says a
-                // future date becomes a Programado), so the sheet fits.
-                val nextFirst = today.plusMonths(1).withDayOfMonth(1)
                 listOf(tr(StringKey.NM_TOMORROW) to today.plusDays(1), tr(StringKey.NM_IN_A_WEEK) to today.plusWeeks(1), dayMonthLabel(nextFirst) to nextFirst).forEach { (label, d) ->
-                    V2Pill(label, s.date == d, { s.date = d; s.cal = d.withDayOfMonth(1) })
+                    add(Triple(label, s.date == d) { s.date = d; s.cal = d.withDayOfMonth(1) })
                 }
             }
+            ScrollPillRow(pills.indexOfFirst { it.second }) { pills.forEach { (label, on, pick) -> V2Pill(label, on, pick) } }
             Row(Modifier.fillMaxWidth().padding(start = 2.dp, end = 2.dp, top = 12.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 NavCircle("←") { s.cal = s.cal.minusMonths(1) }
                 Text(
@@ -478,17 +479,16 @@ private fun RepeatSheet(s: NmState) {
         Column(Modifier.verticalScroll(rememberScrollState())) {
             SheetHeader(tr(StringKey.NM_REPEAT), repeatSummary(rp.takeIf { it.freq != null }, s.date))
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                PillRow {
+                ScrollPillRow(if (rp.freq == null) 0 else Freq.entries.indexOf(rp.freq) + 1) {
                     V2Pill(tr(StringKey.NM_NO_REPEAT), rp.freq == null, { set(rp.copy(freq = null)) })
                     Freq.entries.forEach { f -> V2Pill(f.label, rp.freq == f, { set(rp.copy(freq = f)) }) }
                 }
                 if (rp.freq != null) {
                     Column {
                         FieldLabel(tr(StringKey.NM_ENDS))
-                        PillRow {
-                            listOf(RepeatEnd.COUNT to tr(StringKey.NM_ENDS_COUNT), RepeatEnd.UNTIL to tr(StringKey.NM_ENDS_UNTIL), RepeatEnd.NEVER to tr(StringKey.NM_ENDS_NEVER)).forEach { (k, label) ->
-                                V2Pill(label, rp.end == k, { set(rp.copy(end = k)) })
-                            }
+                        val ends = listOf(RepeatEnd.COUNT to tr(StringKey.NM_ENDS_COUNT), RepeatEnd.UNTIL to tr(StringKey.NM_ENDS_UNTIL), RepeatEnd.NEVER to tr(StringKey.NM_ENDS_NEVER))
+                        ScrollPillRow(ends.indexOfFirst { it.first == rp.end }) {
+                            ends.forEach { (k, label) -> V2Pill(label, rp.end == k, { set(rp.copy(end = k)) }) }
                         }
                         if (rp.end == RepeatEnd.COUNT) {
                             Stepper(tr(if (rp.count == 1) StringKey.NM_TIME_1 else StringKey.NM_TIMES_N, rp.count), { set(rp.copy(count = (rp.count - 1).coerceAtLeast(2))) }, { set(rp.copy(count = (rp.count + 1).coerceAtMost(99))) })
@@ -676,12 +676,12 @@ private fun FromSheet(s: NmState) {
             }
             Column {
                 FieldLabel(tr(StringKey.NM_FROM_KIND))
-                PillRow { CounterpartyKind.entries.forEach { k -> V2Pill(tr(StringKey.valueOf("NM_FROM_" + k.name)), s.fromKind == k, { s.fromKind = if (s.fromKind == k) null else k }) } }
+                ScrollPillRow(CounterpartyKind.entries.indexOf(s.fromKind)) { CounterpartyKind.entries.forEach { k -> V2Pill(tr(StringKey.valueOf("NM_FROM_" + k.name)), s.fromKind == k, { s.fromKind = if (s.fromKind == k) null else k }) } }
             }
             if (recents.isNotEmpty()) {
                 Column {
                     FieldLabel(tr(StringKey.NM_RECENTS))
-                    PillRow { recents.forEach { (n, k) -> V2Pill(n, s.from == n, { s.from = n; s.fromKind = k }) } }
+                    ScrollPillRow(recents.indexOfFirst { it.first == s.from }) { recents.forEach { (n, k) -> V2Pill(n, s.from == n, { s.from = n; s.fromKind = k }) } }
                 }
             }
             V2Button(tr(StringKey.NM_DONE), onClick = { s.sheet = null })

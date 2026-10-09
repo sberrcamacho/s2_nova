@@ -592,23 +592,7 @@ fun AddTransactionScreen(
                 if (hints.isNotEmpty()) {
                     // One line that scrolls sideways; the edge fades while
                     // there is more to the right, so nothing looks cut off.
-                    val hintScroll = androidx.compose.foundation.rememberScrollState()
-                    val fade = hintScroll.canScrollForward
-                    Row(
-                        modifier = Modifier
-                            .padding(top = 8.dp)
-                            .fillMaxWidth()
-                            .graphicsLayer(compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen)
-                            .drawWithContent {
-                                drawContent()
-                                if (fade) drawRect(
-                                    androidx.compose.ui.graphics.Brush.horizontalGradient(0f to Color.Black, (1f - 32.dp.toPx() / size.width).coerceIn(0f, 1f) to Color.Black, 1f to Color.Transparent),
-                                    blendMode = androidx.compose.ui.graphics.BlendMode.DstIn,
-                                )
-                            }
-                            .horizontalScroll(hintScroll),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
+                    com.s2nova.app.ui.components.ScrollPillRow(modifier = Modifier.padding(top = 8.dp)) {
                         hints.forEach { h -> com.s2nova.app.ui.components.V2Pill(h, selected = false, onClick = { s.titleTouched = true; s.titleSuggested = false; s.title = h }, role = Role.Button) }
                     }
                 }

@@ -134,8 +134,52 @@ function repeatOf(series: RecurringSeries): RepeatDraft {
 
 type AttachDraft = { file?: File; name: string; size: number; photo: boolean }
 
-function PillRow({ children }: { children: ReactNode }) {
-  return <div className="flex flex-wrap gap-1.5">{children}</div>
+// Fades the edge(s) of a sideways strip that has more chips past it.
+function edgeFade(left: boolean, right: boolean): string | undefined {
+  if (!left && !right) return undefined
+  return `linear-gradient(to right, ${left ? 'transparent, #000 32px' : '#000'}, ${right ? '#000 calc(100% - 32px), transparent' : '#000'})`
+}
+
+// One line of chips that scrolls sideways (DESIGN-SYSTEM.md §6.5): chips
+// never wrap, an edge fades while there is more past it, and the selected
+// chip is brought into view when the selection changes.
+function PillRow({ children, label }: { children: ReactNode; label?: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [fade, setFade] = useState<[boolean, boolean]>([false, false])
+  const shown = useRef<Element | null>(null)
+  const updateFade = () => {
+    const el = ref.current
+    const left = !!el && el.scrollLeft > 1
+    const right = !!el && el.scrollLeft + el.clientWidth < el.scrollWidth - 1
+    setFade((f) => (f[0] === left && f[1] === right ? f : [left, right]))
+  }
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const on = el.querySelector<HTMLElement>('[aria-pressed="true"],[aria-checked="true"]')
+    if (on && on !== shown.current) {
+      const right = on.offsetLeft + on.offsetWidth + 32
+      if (right > el.scrollLeft + el.clientWidth) el.scrollLeft = right - el.clientWidth
+      else if (on.offsetLeft - 32 < el.scrollLeft) el.scrollLeft = Math.max(0, on.offsetLeft - 32)
+    }
+    shown.current = on
+    updateFade()
+  })
+  const mask = edgeFade(fade[0], fade[1])
+  return (
+    // The 4 px padding (cancelled by the margin) keeps focus rings and the
+    // selected chip's shadow from being clipped by the scroller.
+    <div
+      ref={ref}
+      onScroll={updateFade}
+      role="group"
+      aria-label={label}
+      className="scrollbar-none relative -m-1 flex gap-1.5 overflow-x-auto p-1 [&>*]:flex-none"
+      style={mask ? { maskImage: mask, WebkitMaskImage: mask } : undefined}
+    >
+      {children}
+    </div>
+  )
 }
 
 export function NewTransactionPanel({ onClose, editing }: { onClose: () => void; editing?: Transaction }) {
@@ -166,13 +210,6 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
   // "Sugerido" tag); typing your own (or emptying the field) clears it.
   const [titleSuggested, setTitleSuggested] = useState(!e0)
   const [titleHints, setTitleHints] = useState<string[]>([])
-  const hintsRef = useRef<HTMLDivElement>(null)
-  const [hintsFade, setHintsFade] = useState(false)
-  const updateHintsFade = () => {
-    const el = hintsRef.current
-    setHintsFade(!!el && el.scrollLeft + el.clientWidth < el.scrollWidth - 1)
-  }
-  useLayoutEffect(updateHintsFade, [titleHints, title])
   const [note, setNote] = useState(e0?.note ?? '')
   const [date, setDate] = useState(e0?.date ?? today)
   const [time, setTime] = useState(e0?.time ?? now)
@@ -479,7 +516,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
 
             {section === 'when' && (
               <>
-                <PillRow>
+                <PillRow label={t('nm.section.when')}>
                   <Flat on={date === today && time === now} onClick={edit(() => (setDate(today), setTime(now)))}>
                     {t('nm.now')}
                   </Flat>
@@ -500,7 +537,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
                   )}
                 </PillRow>
                 <div className={fieldLabel}>{t('nm.future')}</div>
-                <PillRow>
+                <PillRow label={t('nm.future')}>
                   {(
                     [
                       [t('nm.tomorrow'), addDays(today, 1)],
@@ -533,7 +570,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
             {section === 'repeat' && (
               <>
                 <div className="font-numeric text-caption text-v2-dim">{repeatSummary(rp.freq ? rp : null, date)}</div>
-                <PillRow>
+                <PillRow label={t('nm.section.repeat')}>
                   <Flat on={!rp.freq} onClick={() => rpSet({ freq: null })}>
                     {t('nm.noRepeat')}
                   </Flat>
@@ -546,7 +583,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
                 {rp.freq && (
                   <>
                     <div className={fieldLabel}>{t('nm.ends')}</div>
-                    <PillRow>
+                    <PillRow label={t('nm.ends')}>
                       {(
                         [
                           ['count', t('nm.ends.count')],
@@ -655,7 +692,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
               <>
                 <input value={from} onChange={(e) => edit(setFrom)(e.target.value.slice(0, 40))} placeholder={t('nm.from.ph')} className={textInput} />
                 <div className={fieldLabel}>{t('nm.from.kind')}</div>
-                <PillRow>
+                <PillRow label={t('nm.from.kind')}>
                   {FROM_KINDS.map((k) => (
                     <Flat key={k} on={fromKind === k} onClick={() => setFromKind(fromKind === k ? null : k)}>
                       {t(`nm.from.${k}` as TranslationKey)}
@@ -665,7 +702,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
                 {recents.length > 0 && (
                   <>
                     <div className={fieldLabel}>{t('nm.recents')}</div>
-                    <PillRow>
+                    <PillRow label={t('nm.recents')}>
                       {recents.map(([name, kind]) => (
                         <Flat key={name} on={from === name} onClick={edit(() => (setFrom(name), setFromKind(kind)))}>
                           {name}
@@ -950,14 +987,13 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
           <input id="nt-title" value={title} onChange={(e) => { const v = e.target.value.slice(0, 60); titleTouched.current = true; setTitleSuggested(false); edit(setTitle)(v) }} onFocus={(e) => { if (!titleTouched.current) e.target.select() }} placeholder={t('nm.titleEx')} className="min-w-0 flex-1 border-none bg-transparent text-body font-semibold text-ink outline-none placeholder:text-ink-tertiary" />
         </div>
         {titleHints.filter((h) => h !== title).length > 0 && (
-          // One line that scrolls sideways; the edge fades while there's more.
-          <div ref={hintsRef} onScroll={updateHintsFade} className="scrollbar-none flex gap-1.5 overflow-x-auto" style={hintsFade ? { maskImage: 'linear-gradient(to right, #000 calc(100% - 32px), transparent)', WebkitMaskImage: 'linear-gradient(to right, #000 calc(100% - 32px), transparent)' } : undefined} role="group" aria-label={t('nm.titleHints')}>
+          <PillRow label={t('nm.titleHints')}>
             {titleHints.filter((h) => h !== title).map((h) => (
               <button key={h} type="button" onClick={() => { titleTouched.current = true; setTitleSuggested(false); edit(setTitle)(h) }} className="inline-flex h-8 flex-none cursor-pointer items-center whitespace-nowrap rounded-[10px] border border-border-input px-3 text-body-sm text-ink-secondary hover:bg-surface-sunken">
                 <span className="truncate">{h}</span>
               </button>
             ))}
-          </div>
+          </PillRow>
         )}
       </div>
 
