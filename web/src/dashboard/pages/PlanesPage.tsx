@@ -16,13 +16,32 @@ const TABS: { id: 'presupuestos' | 'metas' | 'prestamos'; labelKey: TranslationK
   { id: 'prestamos', labelKey: 'planes.tab.loans' },
 ]
 
+// The last tab opened, per device: someone who mostly abona to goals lands
+// on Metas.
+const TAB_PREF = 'planes.tab'
+function readTab(): string | null {
+  try {
+    return localStorage.getItem(TAB_PREF)
+  } catch {
+    return null
+  }
+}
+
 // Planes = Presupuestos · Metas · Préstamos (Web v2 mockup). The tab is in
 // the URL (`?tab=`, plus `&side=lent|borrowed` for Préstamos) so Inicio's
-// "Ver en Planes →" links and alerts land on the right one.
+// "Ver en Planes →" links and alerts land on the right one; without one,
+// Planes opens on the last tab used.
 export default function PlanesPage() {
   const { t } = useTranslation()
   const [params, setParams] = useSearchParams()
-  const tab = TABS.find((x) => x.id === params.get('tab'))?.id ?? 'presupuestos'
+  const tab = TABS.find((x) => x.id === (params.get('tab') ?? readTab()))?.id ?? 'presupuestos'
+  useEffect(() => {
+    try {
+      localStorage.setItem(TAB_PREF, tab)
+    } catch {
+      // Storage unavailable: Planes opens on Presupuestos.
+    }
+  }, [tab])
   const side = params.get('side') === 'borrowed' ? 'borrowed' : 'lent'
   // Nuevo movimiento's "Es dinero que presté / me prestaron" lands here with
   // `new=loan` (and the amount and wallet it had) to open the loan form

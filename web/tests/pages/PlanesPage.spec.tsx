@@ -226,6 +226,63 @@ describe('Planes', () => {
     await vi.waitFor(() => expect(body).toEqual({ amount: 100_000, accountId: 'a2', date: '2026-09-23' }))
   })
 
+  it('caps an abono at what the goal still needs; "Completar" fills it and Enter sends it', async () => {
+    mockSession()
+    let body: unknown = null
+    server.use(
+      http.get(`${BASE}/accounts`, () => HttpResponse.json(wallets)),
+      http.get(`${BASE}/goals`, () => HttpResponse.json([goal, { ...goal, id: 'g2', name: 'Bici', currentAmount: 900_000, targetAmount: 900_000, remaining: 0, percentage: 100 }])),
+      http.post(`${BASE}/goals/:id/contribute`, async ({ request }) => {
+        body = await request.json()
+        return HttpResponse.json(goal)
+      }),
+    )
+    const user = userEvent.setup()
+    renderApp(<PlanesPage />, { route: '/planes?tab=metas' })
+
+    // A reached goal has nothing left to abonar.
+    expect(await screen.findByText('Meta cumplida')).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Abonar' })).toHaveLength(1)
+
+    await user.click(screen.getByRole('button', { name: 'Abonar' }))
+    const dialog = screen.getByRole('dialog', { name: 'Abonar a Viaje a Perú' })
+    expect(dialog).toHaveTextContent('Faltan $2.520.000 de $4.500.000')
+    const field = within(dialog).getByPlaceholderText('0')
+    await user.type(field, '3000000')
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('Máximo $2.520.000: es lo que le falta a la meta.')
+    expect(field).toHaveAttribute('aria-invalid', 'true')
+    await user.click(within(dialog).getByRole('button', { name: 'Abonar' }))
+    expect(body).toBeNull()
+
+    await user.click(within(dialog).getByRole('button', { name: 'Completar · $2.520.000' }))
+    expect(within(dialog).queryByRole('alert')).not.toBeInTheDocument()
+    // Enter submits; the wallet is short, so it asks first.
+    await user.type(field, '{Enter}')
+    await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Abonar de todos modos' }))
+    await vi.waitFor(() => expect(body).toMatchObject({ amount: 2_520_000, date: '2026-09-23' }))
+  })
+
+  it('shows the server\'s figure when it refuses an abono above what is left', async () => {
+    mockSession()
+    server.use(
+      http.get(`${BASE}/accounts`, () => HttpResponse.json(wallets)),
+      http.get(`${BASE}/goals`, () => HttpResponse.json([goal])),
+      http.post(`${BASE}/goals/:id/contribute`, () =>
+        HttpResponse.json({ error: 'The amount is more than the goal still needs.', code: 'GOAL_EXCEEDS_REMAINING', remaining: 50_000 }, { status: 422 }),
+      ),
+    )
+    const user = userEvent.setup()
+    renderApp(<PlanesPage />, { route: '/planes?tab=metas' })
+
+    await user.click(await screen.findByRole('button', { name: 'Abonar' }))
+    const dialog = screen.getByRole('dialog', { name: 'Abonar a Viaje a Perú' })
+    await user.type(within(dialog).getByPlaceholderText('0'), '100000')
+    await user.click(within(dialog).getByRole('button', { name: /^Billetera/ }))
+    await user.click(within(dialog).getByRole('radio', { name: 'Nequi' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Abonar' }))
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Máximo $50.000')
+  })
+
   it('warns before an abono takes the wallet below zero, and lets it through', async () => {
     mockSession()
     let body: unknown = null

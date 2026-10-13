@@ -74,6 +74,22 @@ class GoalRepositoryTest {
         assertEquals("x", created?.name)
     }
 
+    // "Abonar" above what the goal still needs: the backend's 422 comes back
+    // as GoalExceedsRemaining carrying the figure the sheet shows as the max.
+    @Test
+    fun `contribute turns the goal-cap 422 into GoalExceedsRemaining`() = runTest {
+        server.enqueue(
+            MockResponse().setResponseCode(422).setBody(
+                """{"error":"The amount is more than the goal still needs.","code":"GOAL_EXCEEDS_REMAINING","remaining":50000}""",
+            ),
+        )
+        val repository = GoalRepository(server.apiService())
+        val error = runCatching { repository.contribute("g1", 80_000.0, "w1") }.exceptionOrNull()
+        assertTrue(error is com.s2nova.app.data.remote.GoalExceedsRemaining)
+        assertEquals(50_000.0, error.remaining)
+        assertTrue(server.takeRequest().getHeader("Idempotency-Key")!!.isNotBlank())
+    }
+
     // Regression: deleteGoal was declared with @DELETE plus @Body, which
     // Retrofit rejects before sending — a goal with funds could never be
     // deleted. It must go out as a DELETE carrying the destination.

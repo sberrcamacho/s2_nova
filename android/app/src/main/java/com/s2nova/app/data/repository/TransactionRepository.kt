@@ -133,8 +133,10 @@ class TransactionRepository(
                     tx.copy(recurringSeriesId = series.id)
                 } ?: tx
             }
+            com.s2nova.app.data.AppContainer.goalRepository.checkDemo(tx)
             _transactions.value = listOf(tx) + _transactions.value
             DemoLedger.applyToWallets(tx, 1)
+            com.s2nova.app.data.AppContainer.goalRepository.applyDemo(tx, 1)
             return tx
         }
         val dto = api.createTransaction(
@@ -173,10 +175,19 @@ class TransactionRepository(
     suspend fun update(id: String, input: NewTransactionInput) {
         if (DemoModeFlag.active) {
             val old = getById(id) ?: return
-            DemoLedger.applyToWallets(old, -1)
+            val goals = com.s2nova.app.data.AppContainer.goalRepository
             val next = DemoLedger.movementFrom(input).copy(id = id, attachment = old.attachment)
+            goals.applyDemo(old, -1)
+            try {
+                goals.checkDemo(next)
+            } catch (error: Exception) {
+                goals.applyDemo(old, 1)
+                throw error
+            }
+            DemoLedger.applyToWallets(old, -1)
             _transactions.value = _transactions.value.map { if (it.id == id) next else it }
             DemoLedger.applyToWallets(next, 1)
+            goals.applyDemo(next, 1)
             return
         }
         val dto = api.updateTransaction(
@@ -320,7 +331,10 @@ class TransactionRepository(
         val existing = getById(id)
         if (DemoModeFlag.active) {
             _transactions.value = _transactions.value.filterNot { it.id == id }
-            existing?.let { DemoLedger.applyToWallets(it, -1) }
+            existing?.let {
+                DemoLedger.applyToWallets(it, -1)
+                com.s2nova.app.data.AppContainer.goalRepository.applyDemo(it, -1)
+            }
             // "Eliminar" on a repeating movement also stops its repetitions.
             if (stopSeries) existing?.recurringSeriesId?.let { com.s2nova.app.data.AppContainer.recurringSeriesRepository.delete(it) }
             return
@@ -334,7 +348,10 @@ class TransactionRepository(
     // deletion is delayed until the snackbar closes, see ui/Snack.kt).
     fun restoreLocal(tx: Transaction) {
         _transactions.value = listOf(tx) + _transactions.value
-        if (DemoModeFlag.active) DemoLedger.applyToWallets(tx, 1)
+        if (DemoModeFlag.active) {
+            DemoLedger.applyToWallets(tx, 1)
+            com.s2nova.app.data.AppContainer.goalRepository.applyDemo(tx, 1)
+        }
     }
 
     fun hideLocal(id: String) {

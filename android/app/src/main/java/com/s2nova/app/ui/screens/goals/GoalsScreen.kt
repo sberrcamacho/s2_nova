@@ -30,9 +30,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -48,6 +46,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -74,11 +75,8 @@ import com.s2nova.app.ui.screens.addtransaction.Freq
 import com.s2nova.app.ui.screens.addtransaction.shortWallet
 import androidx.compose.ui.text.TextStyle
 import com.s2nova.app.data.model.Goal
-import com.s2nova.app.data.model.NewTransactionInput
-import com.s2nova.app.data.model.TransactionType
 import com.s2nova.app.data.model.Wallet
 import com.s2nova.app.data.remote.toUserMessage
-import com.s2nova.app.data.todayISO
 import com.s2nova.app.ui.StringKey
 import com.s2nova.app.ui.components.ColorPill
 import com.s2nova.app.ui.components.DashedNewRow
@@ -224,6 +222,7 @@ fun GoalsTab(snackbarHostState: SnackbarHostState) {
             goal = goalToPay,
             wallets = wallets,
             snackbarHostState = snackbarHostState,
+            screenScope = scope,
             onDismiss = { paying = null },
         )
     }
@@ -305,17 +304,21 @@ private fun GoalCard(goal: Goal, onEdit: () -> Unit, onPay: () -> Unit) {
                     Text(planText(plan, wallet, principal) + " · " + tr(StringKey.GOAL_NEXT, fmtDate(plan.nextDate)), style = NovaType.bodySm.copy(fontFeatureSettings = TNUM), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            Box(
-                modifier = Modifier
-                    .padding(top = 12.dp)
-                    .fillMaxWidth()
-                    .height(48.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.primaryContainer)
-                    .clickable(role = Role.Button, onClick = onPay),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(tr(StringKey.GOAL_PAY), style = NovaType.label, color = MaterialTheme.colorScheme.onPrimaryContainer, maxLines = 1, softWrap = false)
+            // A reached goal (its line already says so) has nothing left to
+            // abonar: the backend refuses more than the goal needs.
+            if (goal.remaining > 0) {
+                Box(
+                    modifier = Modifier
+                        .padding(top = 12.dp)
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .clickable(role = Role.Button, onClick = onPay),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(tr(StringKey.GOAL_PAY), style = NovaType.label, color = MaterialTheme.colorScheme.onPrimaryContainer, maxLines = 1, softWrap = false)
+                }
             }
         }
     }
@@ -479,28 +482,40 @@ private fun DestinationRow(label: String, detail: String, selected: Boolean, onC
     }
 }
 
-// Mockup goalPay: amount, source wallet pills and "Abonar". Under the hood
-// a normal EXPENSE with `goalId` (backend sums linked COMPLETED rows), so
-// it stays editable/deletable like any movement; the snackbar's "Deshacer"
-// is only a fast path right after saving.
+// "Abonar": the amount, one-tap amounts ("Completar" and the plan's), the
+// source wallet and the button. Up to what
+// the goal still needs: the backend refuses more. It goes through
+// POST /goals/:id/contribute with an Idempotency-Key, so a retry never pays
+// twice. The sheet closes as soon as the abono is recorded; the wallets and
+// movements refresh behind it, on the screen's scope.
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun GoalPaySheet(
     goal: Goal,
     wallets: List<Wallet>,
     snackbarHostState: SnackbarHostState,
+    screenScope: kotlinx.coroutines.CoroutineScope,
     onDismiss: () -> Unit,
 ) {
     val t = rememberStrings()
     val format = rememberCurrencyFormatter()
     val colors = NovaColors.current
+    val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
     var amountText by remember { mutableStateOf("") }
-    var walletId by remember { mutableStateOf(wallets.firstOrNull()?.id) }
+    // The plan's wallet, else the last one used to abonar, else the first.
+    var walletId by remember {
+        val ids = wallets.map { it.id }
+        mutableStateOf(listOfNotNull(goal.plan?.walletId, com.s2nova.app.ui.screens.budgets.PlanesPrefs.payWallet(context)).firstOrNull { it in ids } ?: ids.firstOrNull())
+    }
     var error by remember { mutableStateOf<String?>(null) }
     var saving by remember { mutableStateOf(false) }
     var overdraftAsk by remember { mutableStateOf<Double?>(null) }
+    // What the goal still needs; the server's figure wins after a refusal.
+    var left by remember { mutableStateOf(goal.remaining.coerceAtLeast(0.0)) }
     val amount = com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(amountText)
+    val over = amount > left + 0.005
+    val planAmount = goal.plan?.amount?.takeIf { it < left }
     // The abono is in the principal currency; the wallet pays it in its own.
     // When that takes the wallet below zero, Abonar asks first.
     val principal = AppContainer.currencyRepository.principal
@@ -518,37 +533,25 @@ private fun GoalPaySheet(
             return
         }
         overdraftAsk = null
-        val input = NewTransactionInput(
-            walletId = selectedWallet,
-            description = t(StringKey.GOAL_CONTRIBUTION_DESCRIPTION_PREFIX) + goal.name,
-            amount = amount,
-            type = TransactionType.EXPENSE,
-            category = "exp.other",
-            date = todayISO(),
-            goalId = goal.id,
-        )
         saving = true
         scope.launch {
-            val created = runCatching { AppContainer.transactionRepository.add(input) }.getOrNull()
-            if (created == null) {
+            try {
+                AppContainer.goalRepository.contribute(goal.id, amount, selectedWallet)
+            } catch (exceeds: com.s2nova.app.data.remote.GoalExceedsRemaining) {
+                left = exceeds.remaining
                 saving = false
-                error = t(StringKey.COMMON_SAVE_ERROR)
+                return@launch
+            } catch (failure: Exception) {
+                error = failure.toUserMessage(t(StringKey.COMMON_SAVE_ERROR))
+                saving = false
                 return@launch
             }
-            runCatching { AppContainer.walletRepository.refresh() }
-            runCatching { AppContainer.goalRepository.refresh() }
+            com.s2nova.app.ui.screens.budgets.PlanesPrefs.setPayWallet(context, selectedWallet)
             onDismiss()
-            val result = snackbarHostState.showSnackbar(
-                message = t(StringKey.GOAL_CONTRIBUTION_SAVED),
-                actionLabel = t(StringKey.COMMON_UNDO),
-                duration = SnackbarDuration.Long,
-            )
-            if (result == SnackbarResult.ActionPerformed) {
-                runCatching {
-                    AppContainer.transactionRepository.delete(created.id)
-                    AppContainer.walletRepository.refresh()
-                    AppContainer.goalRepository.refresh()
-                }
+            screenScope.launch {
+                launch { runCatching { AppContainer.walletRepository.refresh() } }
+                launch { runCatching { AppContainer.transactionRepository.refresh() } }
+                snackbarHostState.showSnackbar(t(StringKey.GOAL_CONTRIBUTION_SAVED))
             }
         }
     }
@@ -557,7 +560,7 @@ private fun GoalPaySheet(
     NovaDraftSheet(
         onDismiss = onDismiss,
         title = if (pickingWallet) null else "${t(StringKey.GOAL_CONTRIBUTION_TITLE)} ${goal.name}",
-        subtitle = if (pickingWallet) null else buildAnnotatedString { append(String.format(t(StringKey.GOAL_PAY_NOTE), format(goal.currentAmount), format(goal.targetAmount))) },
+        subtitle = if (pickingWallet) null else buildAnnotatedString { append(String.format(t(StringKey.GOAL_PAY_NOTE), format(left), format(goal.targetAmount))) },
     ) {
         // The wallets on their own page, as in Nuevo movimiento and Préstamos.
         if (pickingWallet) {
@@ -573,7 +576,40 @@ private fun GoalPaySheet(
             return@NovaDraftSheet
         }
         Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-            com.s2nova.app.ui.components.AmountHeroField(t(StringKey.GOAL_CONTRIBUTION_AMOUNT), amountText, { amountText = it; error = null }, AppContainer.currencyRepository.principal, padTitle = tr(StringKey.GOAL_PAY_AMOUNT))
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                com.s2nova.app.ui.components.AmountHeroField(
+                    t(StringKey.GOAL_CONTRIBUTION_AMOUNT), amountText, { amountText = it; error = null }, principal,
+                    padTitle = tr(StringKey.GOAL_PAY_AMOUNT),
+                )
+                if (over) {
+                    // Icon and words, not color alone; announced when it appears.
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.semantics { liveRegion = androidx.compose.ui.semantics.LiveRegionMode.Polite },
+                    ) {
+                        V2Icon(com.s2nova.app.ui.components.V2Icons.warn, colors.negative, 16.dp)
+                        Text(
+                            if (left > 0) tr(StringKey.GOAL_PAY_MAX, format(left)) else t(StringKey.GOAL_PAY_FULL),
+                            style = NovaType.bodySm.copy(fontFeatureSettings = TNUM, fontWeight = FontWeight.SemiBold), color = colors.negative,
+                        )
+                    }
+                }
+            }
+            if (left > 0) {
+                val quick = listOfNotNull(left to tr(StringKey.GOAL_PAY_COMPLETE, format(left)), planAmount?.let { it to tr(StringKey.GOAL_PAY_PLAN_AMOUNT, format(it)) })
+                com.s2nova.app.ui.components.ScrollPillRow(
+                    quick.indexOfFirst { kotlin.math.abs(it.first - amount) < 0.005 },
+                    modifier = Modifier.semantics { contentDescription = t(StringKey.GOAL_PAY_QUICK) },
+                ) {
+                    quick.forEach { (value, label) ->
+                        com.s2nova.app.ui.components.V2Pill(label, kotlin.math.abs(value - amount) < 0.005, {
+                            amountText = com.s2nova.app.ui.screens.addtransaction.AmountPad.numStr(value)
+                            error = null
+                        })
+                    }
+                }
+            }
 
             if (wallets.isEmpty()) {
                 Text(t(StringKey.ADD_TXN_NO_WALLET_SUBTITLE), fontSize = 12.sp, color = colors.textDim)
@@ -591,13 +627,13 @@ private fun GoalPaySheet(
 
             DraftSheetPrimaryButton(
                 label = t(StringKey.GOAL_CONTRIBUTION_SAVE),
-                enabled = !saving && amount > 0 && walletId != null,
+                enabled = !saving && amount > 0 && !over && walletId != null,
                 onClick = { pay(false) },
             )
         }
     }
 
-    overdraftAsk?.let { left ->
+    overdraftAsk?.let { after ->
         val w = payWallet ?: return@let
         OverdraftDialog(
             title = t(StringKey.NM_OVERDRAFT_TITLE),
@@ -605,9 +641,9 @@ private fun GoalPaySheet(
             availableLabel = t(StringKey.NM_OVERDRAFT_AVAILABLE),
             available = formatMoney(w.currentBalance, w.currency),
             spendLabel = t(StringKey.GOAL_PAY_OVERDRAFT_SPEND),
-            spend = formatMoney(left - w.currentBalance, w.currency),
+            spend = formatMoney(after - w.currentBalance, w.currency),
             leftLabel = t(StringKey.NM_OVERDRAFT_LEFT),
-            left = formatMoney(left, w.currency),
+            left = formatMoney(after, w.currency),
             review = t(StringKey.NM_OVERDRAFT_REVIEW),
             confirm = t(StringKey.GOAL_PAY_OVERDRAFT_CONFIRM),
             onReview = { overdraftAsk = null },

@@ -6,6 +6,7 @@ import {
   Bell,
   Check,
   Coins,
+  Download,
   EyeOff,
   Fingerprint,
   FileSpreadsheet,
@@ -33,6 +34,11 @@ const PHONE_POINTS: { icon: LucideIcon; text: TranslationKey }[] = [
   { icon: Bell, text: 'landing.phone.p2' },
   { icon: ScanBarcode, text: 'landing.phone.p3' },
 ]
+
+// The Android app, published as a GitHub Release asset. `latest` always
+// points at the newest release, so a new APK needs no change here
+// (docs/RELEASE_ANDROID.md).
+const ANDROID_APK_URL = 'https://github.com/sberrcamacho/s2_nova/releases/latest/download/s2-nova.apk'
 
 const WEB_POINTS: { icon: LucideIcon; text: TranslationKey }[] = [
   { icon: BarChart3, text: 'landing.web.p1' },
@@ -255,8 +261,8 @@ export default function LandingPage() {
             </div>
             <div className="nova-reveal mt-14 grid gap-5 md:grid-cols-2 lg:gap-8">
               {[
-                { icon: Smartphone, title: t('landing.phone.title'), body: t('landing.phone.body'), points: PHONE_POINTS },
-                { icon: Monitor, title: t('landing.web.title'), body: t('landing.web.body'), points: WEB_POINTS },
+                { icon: Smartphone, title: t('landing.phone.title'), body: t('landing.phone.body'), points: PHONE_POINTS, android: true },
+                { icon: Monitor, title: t('landing.web.title'), body: t('landing.web.body'), points: WEB_POINTS, android: false },
               ].map((d) => (
                 <div key={d.title} className="nova-card relative overflow-hidden p-8 lg:p-10">
                   <d.icon aria-hidden="true" className="pointer-events-none absolute right-6 top-6 h-24 w-24 text-ink opacity-[.05]" strokeWidth={1.2} />
@@ -273,6 +279,17 @@ export default function LandingPage() {
                       </li>
                     ))}
                   </ul>
+                  {d.android && (
+                    <div className="mt-8 flex flex-col items-start gap-3">
+                      <a href={ANDROID_APK_URL} className={cn(PILL, 'btn-cta')} aria-describedby="landing-android-note">
+                        <Download className="h-4 w-4" aria-hidden="true" />
+                        {t('landing.android.download')}
+                      </a>
+                      <p id="landing-android-note" className="text-caption text-ink-secondary">
+                        {t('landing.android.note')}
+                      </p>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -413,6 +430,10 @@ export default function LandingPage() {
                 {t('landing.login')}
               </button>
             </div>
+            <a href={ANDROID_APK_URL} className="mt-6 inline-flex min-h-8 items-center gap-2 rounded-[var(--radius-sm)] text-body-sm font-semibold text-link underline-offset-4 hover:underline">
+              <Download className="h-4 w-4" aria-hidden="true" />
+              {t('landing.cta.android')}
+            </a>
           </div>
         </section>
       </main>

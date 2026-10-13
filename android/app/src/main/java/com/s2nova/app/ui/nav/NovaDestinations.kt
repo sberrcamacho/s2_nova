@@ -21,8 +21,8 @@ object NovaDestinations {
     const val BUDGETS = "budgets"
 
     // Planes with a preselected tab (0 Presupuestos, 1 Metas, 2 Préstamos)
-    // and loan side — alert targets deep-link here. Navigating to plain
-    // BUDGETS falls back to the defaults.
+    // and loan side — alert targets deep-link here. Plain BUDGETS opens the
+    // last tab used.
     const val BUDGETS_ROUTE = "budgets?tab={tab}&side={side}"
     const val WALLETS = "wallets"
     const val RECURRING = "recurring"

@@ -91,6 +91,20 @@ describe('Guest mode example account', () => {
     expect(await balanceOf('guest-nequi')).toBe(before.wallet)
   })
 
+  it('refuses an abono above what a goal still needs, as the backend does', async () => {
+    const peru = async () => (await goalService.getGoals()).find((g) => g.id === 'guest-goal-peru')!
+    const before = { wallet: await balanceOf('guest-bancolombia'), goal: await peru() }
+    await expect(goalService.contribute('guest-goal-peru', { amount: before.goal.remaining + 1, accountId: 'guest-bancolombia', date: todayISO() })).rejects.toMatchObject({
+      status: 422,
+      details: { code: 'GOAL_EXCEEDS_REMAINING', remaining: before.goal.remaining },
+    })
+    expect(await balanceOf('guest-bancolombia')).toBe(before.wallet)
+
+    const done = await goalService.contribute('guest-goal-peru', { amount: before.goal.remaining, accountId: 'guest-bancolombia', date: todayISO() })
+    expect(done).toMatchObject({ remaining: 0, percentage: 100 })
+    await expect(goalService.contribute('guest-goal-peru', { amount: 1, accountId: 'guest-bancolombia', date: todayISO() })).rejects.toMatchObject({ status: 422 })
+  })
+
   it('confirms a due aporte from its alert', async () => {
     const due = (await alertService.getAlerts()).find((a) => a.kind === 'goal_plan_due')
     expect(due).toMatchObject({ goalId: 'guest-goal-peru', amount: 250_000 })

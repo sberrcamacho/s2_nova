@@ -309,12 +309,13 @@ fun NovaApp() {
             composable(
                 NovaDestinations.BUDGETS_ROUTE,
                 arguments = listOf(
-                    navArgument("tab") { type = androidx.navigation.NavType.IntType; defaultValue = 0 },
+                    // -1: no tab asked for, Planes opens on the last one used.
+                    navArgument("tab") { type = androidx.navigation.NavType.IntType; defaultValue = -1 },
                     navArgument("side") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = null },
                 ),
             ) { entry ->
                 PlanesScreen(
-                    initialTab = entry.arguments?.getInt("tab") ?: 0,
+                    initialTab = entry.arguments?.getInt("tab")?.takeIf { it >= 0 },
                     initialLoanSide = entry.arguments?.getString("side")?.let { side -> LoanKind.entries.find { it.name == side } } ?: LoanKind.LENT,
                 )
             }

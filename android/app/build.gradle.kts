@@ -31,8 +31,8 @@ android {
         applicationId = "com.s2nova.app"
         minSdk = 31
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
 
         // 10.0.2.2 is the emulator's alias for the host machine's localhost —
         // reaches `backend/` running via `pnpm dev` on the dev machine.

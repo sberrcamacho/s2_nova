@@ -177,13 +177,28 @@ export function ChoiceCard({ icon, title, detail, on, onClick }: { icon: string[
 
 // The amount on the hero surface, as in Nuevo movimiento: overline, the
 // figure in display-sm (typed arithmetic allowed) and the calculator keys.
-export function AmountHero({ label, expr, onExpr, code = 'COP', symbol = '$' }: { label: string; expr: string; onExpr: (v: string) => void; code?: string; symbol?: string }) {
+export function AmountHero({
+  label,
+  expr,
+  onExpr,
+  code = 'COP',
+  symbol = '$',
+  describedBy,
+}: {
+  label: string
+  expr: string
+  onExpr: (v: string) => void
+  code?: string
+  symbol?: string
+  // The id of an error shown under the field; the field is then invalid.
+  describedBy?: string
+}) {
   const [calc, setCalc] = useState(false)
   const total = evalExpr(expr)
   const id = `amount-${label.replace(/\W+/g, '-')}`
   return (
     <div className="flex flex-col gap-2">
-      <div className="relative flex flex-col gap-1 overflow-hidden rounded-[16px] border border-border-input bg-surface px-[18px] py-4 text-ink focus-within:border-2 focus-within:border-primary-border">
+      <div className={cn('relative flex flex-col gap-1 overflow-hidden rounded-[16px] border bg-surface px-[18px] py-4 text-ink focus-within:border-2', describedBy ? 'border-negative focus-within:border-negative' : 'border-border-input focus-within:border-primary-border')}>
         <div className="flex items-center gap-2">
           <label htmlFor={id} className="flex-1 truncate text-overline font-semibold uppercase text-ink-secondary">
             {label}
@@ -208,6 +223,8 @@ export function AmountHero({ label, expr, onExpr, code = 'COP', symbol = '$' }: 
             placeholder="0"
             inputMode="decimal"
             autoFocus
+            aria-invalid={describedBy ? true : undefined}
+            aria-describedby={describedBy}
             className="min-w-0 flex-1 border-none bg-transparent px-0.5 py-px font-[inherit] text-display-sm font-semibold tracking-[-.02em] text-ink outline-none [font-variant-numeric:tabular-nums] placeholder:text-ink-tertiary"
           />
         </div>

@@ -8,7 +8,20 @@ import com.s2nova.app.ui.tr
 import com.s2nova.app.ui.StringKey
 
 @Serializable
-private data class ErrorBody(val error: String? = null)
+private data class ErrorBody(val error: String? = null, val code: String? = null, val remaining: Double? = null)
+
+// "Abonar" more than a goal still needs (backend GOAL_EXCEEDS_REMAINING, or
+// the guest mirror): `remaining` is what still fits.
+class GoalExceedsRemaining(val remaining: Double) : Exception("The amount is more than the goal still needs.")
+
+// The 422 a goal contribution gets back when it passes what the goal still
+// needs, as a GoalExceedsRemaining; any other failure unchanged.
+fun Throwable.asGoalExceeds(): Throwable {
+    if (this !is HttpException || code() != 422) return this
+    val body = runCatching { response()?.errorBody()?.string() }.getOrNull() ?: return this
+    val parsed = runCatching { errorJson.decodeFromString<ErrorBody>(body) }.getOrNull() ?: return this
+    return if (parsed.code == "GOAL_EXCEEDS_REMAINING" && parsed.remaining != null) GoalExceedsRemaining(parsed.remaining) else this
+}
 
 private val errorJson = Json { ignoreUnknownKeys = true }
 
@@ -23,6 +36,7 @@ fun Throwable.toUserMessage(fallback: String): String = when (this) {
         val parsed = body?.let { runCatching { errorJson.decodeFromString<ErrorBody>(it) }.getOrNull() }
         parsed?.error?.let { SERVER_MESSAGES[it]?.let(::tr) } ?: fallback
     }
+    is GoalExceedsRemaining -> tr(StringKey.API_GOAL_EXCEEDS)
     is IOException -> tr(StringKey.API_OFFLINE)
     else -> fallback
 }
@@ -39,4 +53,5 @@ private val SERVER_MESSAGES = mapOf(
     "Set a password before deleting your account." to StringKey.API_PASSWORD_FIRST_DELETE,
     "Invalid Google token." to StringKey.AUTH_GOOGLE_ERR,
     "Google Sign-In is not configured on this server." to StringKey.AUTH_GOOGLE_ERR,
+    "The amount is more than the goal still needs." to StringKey.API_GOAL_EXCEEDS,
 )

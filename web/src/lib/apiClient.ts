@@ -67,6 +67,7 @@ const SERVER_MESSAGES: Record<string, TranslationKey> = {
   'This loan has already been settled.': 'api.loanSettled',
   "This loan hasn't been confirmed yet — nothing to settle.": 'api.loanPlanned',
   'This plan has ended.': 'api.planEnded',
+  'The amount is more than the goal still needs.': 'api.goalExceeds',
   'This recurring series is paused.': 'api.seriesPaused',
   "Transfers can't repeat.": 'api.transferRepeat',
   'Destination must be a different wallet.': 'api.sameWallet',
@@ -94,6 +95,15 @@ async function parseErrorMessage(response: Response): Promise<string> {
     return body.error ? localizeServerMessage(body.error, response.status) : genericErrorMessage(response.status)
   } catch {
     return genericErrorMessage(response.status)
+  }
+}
+
+async function errorDetails(response: Response): Promise<Record<string, unknown>> {
+  try {
+    const { error: _message, ...rest } = (await response.clone().json()) as Record<string, unknown>
+    return rest
+  } catch {
+    return {}
   }
 }
 
@@ -168,10 +178,14 @@ async function refreshSession(): Promise<RefreshResult> {
 // A non-2xx response; `status` lets callers tell e.g. a 409 conflict apart.
 export class ApiError extends Error {
   readonly status: number
+  // The rest of the error body: a machine-readable `code` and its figures
+  // (GOAL_EXCEEDS_REMAINING carries `remaining`).
+  readonly details: Record<string, unknown>
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, details: Record<string, unknown> = {}) {
     super(localizeServerMessage(message, status))
     this.status = status
+    this.details = details
   }
 }
 
@@ -193,7 +207,7 @@ async function send(path: string, init: RequestInit, options: RequestOptions = {
   }
 
   if (!response.ok) {
-    throw new ApiError(await parseErrorMessage(response), response.status)
+    throw new ApiError(await parseErrorMessage(response), response.status, await errorDetails(response))
   }
   return response
 }

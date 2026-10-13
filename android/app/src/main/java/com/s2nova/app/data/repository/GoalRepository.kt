@@ -12,6 +12,13 @@ import com.s2nova.app.data.remote.GoalContributeRequest
 import com.s2nova.app.data.remote.GoalDto
 import com.s2nova.app.data.remote.GoalPlanRequest
 import com.s2nova.app.data.remote.UpdateGoalRequest
+import com.s2nova.app.data.remote.GoalExceedsRemaining
+import com.s2nova.app.data.remote.asGoalExceeds
+import com.s2nova.app.data.Currencies
+import com.s2nova.app.data.model.NewTransactionInput
+import com.s2nova.app.data.model.Transaction
+import com.s2nova.app.data.model.TransactionStatus
+import com.s2nova.app.data.model.TransactionType
 import com.s2nova.app.data.todayISO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,6 +26,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import java.time.LocalDate
 import java.util.UUID
 import kotlin.math.roundToInt
+
+// Amounts are compared with a cent's slack, so "Completar" never trips
+// on floating-point noise.
+private const val EPSILON = 0.005
 
 internal fun GoalDto.toGoal() = Goal(
     id = id,
@@ -110,17 +121,63 @@ class GoalRepository(private val api: ApiService = ApiClient.api) {
         return replace(goal)
     }
 
-    // "Abonar": a one-off contribution out of a wallet.
+    // "Abonar": a one-off contribution out of a wallet, up to what the goal
+    // still needs (more throws GoalExceedsRemaining, as the backend refuses
+    // it). In guest mode it is a real movement, as on the backend, so it
+    // shows in Movimientos and moves the wallet in its own currency.
     suspend fun contribute(id: String, amount: Double, walletId: String): Goal? {
         if (DemoModeFlag.active) {
             val old = _goals.value.firstOrNull { it.id == id } ?: return null
-            com.s2nova.app.data.AppContainer.walletRepository.adjustLocal(walletId, -amount)
-            val contributions = old.contributions + (walletId to (old.contributions[walletId] ?: 0.0) + amount)
-            return replace(recompute(old.copy(contributions = contributions), old.currentAmount + amount))
+            val left = leftOf(old)
+            if (amount > left + EPSILON) throw GoalExceedsRemaining(left)
+            com.s2nova.app.data.AppContainer.transactionRepository.add(
+                NewTransactionInput(
+                    walletId = walletId,
+                    description = "Aporte a ${old.name}",
+                    amount = amount,
+                    type = TransactionType.EXPENSE,
+                    category = "exp.other",
+                    date = todayISO(),
+                    currency = com.s2nova.app.data.AppContainer.currencyRepository.principal,
+                    goalId = id,
+                ),
+            )
+            return _goals.value.firstOrNull { it.id == id }
         }
         val key = requestKeys.getOrPut("contribute:$id:$walletId:$amount") { java.util.UUID.randomUUID().toString() }
-        return replace(api.contributeToGoal(id, GoalContributeRequest(amount, walletId), key).toGoal())
-            .also { requestKeys.remove("contribute:$id:$walletId:$amount") }
+        val goal = try {
+            api.contributeToGoal(id, GoalContributeRequest(amount, walletId), key).toGoal()
+        } catch (error: retrofit2.HttpException) {
+            throw error.asGoalExceeds()
+        }
+        return replace(goal).also { requestKeys.remove("contribute:$id:$walletId:$amount") }
+    }
+
+    private fun leftOf(goal: Goal): Double = (goal.targetAmount - goal.currentAmount).coerceAtLeast(0.0)
+
+    // Guest mode mirrors the backend: a completed movement linked to a goal
+    // counts toward it, and can't pass what the goal still needs.
+    private fun counts(tx: Transaction) = tx.goalId != null && tx.status == TransactionStatus.COMPLETED && tx.type != TransactionType.TRANSFER
+
+    private fun principalAmountOf(tx: Transaction): Double {
+        val principal = com.s2nova.app.data.AppContainer.currencyRepository.principal
+        return tx.amount * Currencies.referenceRate(tx.currency, principal)
+    }
+
+    fun checkDemo(tx: Transaction) {
+        if (!counts(tx)) return
+        val goal = _goals.value.firstOrNull { it.id == tx.goalId } ?: return
+        val left = leftOf(goal)
+        if (principalAmountOf(tx) > left + EPSILON) throw GoalExceedsRemaining(left)
+    }
+
+    // direction 1 adds a guest movement to its goal's progress, -1 takes it out.
+    fun applyDemo(tx: Transaction, direction: Int) {
+        if (!counts(tx)) return
+        val goal = _goals.value.firstOrNull { it.id == tx.goalId } ?: return
+        val walletMoved = (tx.walletAmount ?: tx.amount) * direction
+        val contributions = goal.contributions + (tx.walletId to (goal.contributions[tx.walletId] ?: 0.0) + walletMoved)
+        replace(recompute(goal.copy(contributions = contributions), goal.currentAmount + principalAmountOf(tx) * direction))
     }
 
     // One Idempotency-Key per pending abono / aporte, kept until it goes
@@ -133,11 +190,19 @@ class GoalRepository(private val api: ApiService = ApiClient.api) {
         if (DemoModeFlag.active) {
             val old = _goals.value.firstOrNull { it.id == id } ?: return null
             val plan = old.plan ?: return null
-            val after = contribute(id, plan.amount, plan.walletId) ?: return null
+            // The plan's amount, cut to what is left; a reached goal ends its plan.
+            val left = leftOf(old)
+            if (left <= 0.0) return replace(old.copy(plan = plan.copy(active = false, due = false)))
+            val after = contribute(id, minOf(plan.amount, left), plan.walletId) ?: return null
             return replace(after.copy(plan = plan.copy(nextDate = plan.nextAfter(), due = false)))
         }
         val key = requestKeys.getOrPut("confirm:$id") { java.util.UUID.randomUUID().toString() }
-        return replace(api.confirmGoalPlan(id, requestKey = key).toGoal()).also { requestKeys.remove("confirm:$id") }
+        val goal = try {
+            api.confirmGoalPlan(id, requestKey = key).toGoal()
+        } catch (error: retrofit2.HttpException) {
+            throw error.asGoalExceeds()
+        }
+        return replace(goal).also { requestKeys.remove("confirm:$id") }
     }
 
     suspend fun skipPlan(id: String): Goal? {

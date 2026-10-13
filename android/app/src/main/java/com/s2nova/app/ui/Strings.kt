@@ -153,9 +153,16 @@ enum class StringKey {
     AUTH_HAVE_CODE, AUTH_RESET_TITLE, AUTH_RESET_HINT, AUTH_RESET_CODE, AUTH_RESET_NEW, AUTH_RESET_CONFIRM, AUTH_RESET_SUBMIT, AUTH_RESET_INVALID, AUTH_RESET_DONE, AUTH_PW_RULES, SET_PW_TITLE, SET_PW_DETAIL, SET_PW_CURRENT, SET_PW_WRONG, SET_PW_SAME, SET_PW_DONE, SET_GUEST_ACCOUNT, SET_PW_CREATE_TITLE, SET_PW_CREATE_DETAIL, SET_PW_CREATE_SUBMIT, SET_PW_CREATED, SET_PW_ERR_CURRENT, SET_PW_ERR_RULES, SET_PW_ERR_MATCH, SET_PW_RULE_LENGTH, SET_PW_RULE_NUMBER, SET_PW_RULE_MATCH, SET_PW_RULE_MET, SET_PW_RULE_MISSING, SET_RISK_TITLE, SET_RISK_HINT, SET_RESET_TITLE, SET_RESET_DETAIL, SET_RESET_WORD, SET_RESET_SUBMIT, SET_RESET_DONE, SET_DELETE_TITLE, SET_DELETE_DETAIL, SET_DELETE_WORD, SET_DELETE_SUBMIT, SET_RISK_TYPE, SET_RISK_ACK, SET_RISK_NO_PASSWORD, NM_TITLE_GENERIC_EXPENSE, NM_TITLE_GENERIC_INCOME, NM_TITLE_GENERIC_TRANSFER, NM_TITLE_SUGGESTED, COMMON_LOADING,
     MV_SEARCH, MV_SEARCH_CLEAR, MV_FILTERS, MV_FILTERS_ACTIVE, MV_TYPE, MV_ALL_CATEGORIES, MV_NO_RESULTS, MV_CLEAR_FILTERS, MV_SHOW_RESULTS,
     AUTH_BIOMETRIC_ENTER, BIO_PROMPT_TITLE, BIO_PROMPT_LOGIN, BIO_PROMPT_ENABLE, BIO_PROMPT_CANCEL, BIO_UNAVAILABLE, BIO_ENABLE_ERR, BIO_LOGIN_ERR,
+    API_GOAL_EXCEEDS, GOAL_PAY_MAX, GOAL_PAY_FULL, GOAL_PAY_QUICK, GOAL_PAY_COMPLETE, GOAL_PAY_PLAN_AMOUNT,
 }
 
 private val ES: Map<StringKey, String> = mapOf(
+    StringKey.API_GOAL_EXCEEDS to "El monto supera lo que le falta a la meta.",
+    StringKey.GOAL_PAY_MAX to "Máximo %1\$s: es lo que le falta a la meta.",
+    StringKey.GOAL_PAY_FULL to "Esta meta ya está cumplida.",
+    StringKey.GOAL_PAY_QUICK to "Montos rápidos",
+    StringKey.GOAL_PAY_COMPLETE to "Completar · %1\$s",
+    StringKey.GOAL_PAY_PLAN_AMOUNT to "Aporte del plan · %1\$s",
     StringKey.NM_LOAN_GO_DETAIL to "Regístralo en Préstamos con la contraparte y el vencimiento; el monto pasa tal cual.",
     StringKey.NM_PICK_WALLET to "Elige una billetera",
     StringKey.GOAL_PAY_OVERDRAFT_BODY to "Con este abono, %1\$s queda en negativo.",
@@ -380,7 +387,7 @@ private val ES: Map<StringKey, String> = mapOf(
     StringKey.GOALS_NOTE_NONE to "Sin abonos aún",
     StringKey.GOALS_NOTE_DONE to "Meta cumplida",
     StringKey.GOALS_NOTE_LEFT to "Faltan %s",
-    StringKey.GOAL_PAY_NOTE to "%1\$s de %2\$s · el abono queda registrado en la billetera de origen",
+    StringKey.GOAL_PAY_NOTE to "Faltan %1\$s de %2\$s",
     StringKey.GOALS_DELETE_NAMED to "Eliminar “%s”",
     StringKey.GOALS_DELETE_HAS_BALANCE to "La meta tiene %s ahorrados. Elige a dónde vuelve ese dinero.",
     StringKey.GOALS_DELETE_ORIGIN to "Devolver a su origen",
@@ -1051,6 +1058,12 @@ private val ES: Map<StringKey, String> = mapOf(
 )
 
 private val EN: Map<StringKey, String> = mapOf(
+    StringKey.API_GOAL_EXCEEDS to "The amount is more than the goal still needs.",
+    StringKey.GOAL_PAY_MAX to "Up to %1\$s: that's what the goal still needs.",
+    StringKey.GOAL_PAY_FULL to "This goal is already reached.",
+    StringKey.GOAL_PAY_QUICK to "Quick amounts",
+    StringKey.GOAL_PAY_COMPLETE to "Complete · %1\$s",
+    StringKey.GOAL_PAY_PLAN_AMOUNT to "Plan amount · %1\$s",
     StringKey.NM_LOAN_GO_DETAIL to "Record it in Loans with the counterparty and due date; the amount carries over.",
     StringKey.NM_PICK_WALLET to "Choose a wallet",
     StringKey.GOAL_PAY_OVERDRAFT_BODY to "This contribution takes %1\$s below zero.",
@@ -1275,7 +1288,7 @@ private val EN: Map<StringKey, String> = mapOf(
     StringKey.GOALS_NOTE_NONE to "No contributions yet",
     StringKey.GOALS_NOTE_DONE to "Goal reached",
     StringKey.GOALS_NOTE_LEFT to "%s to go",
-    StringKey.GOAL_PAY_NOTE to "%1\$s of %2\$s · the contribution is recorded in the source wallet",
+    StringKey.GOAL_PAY_NOTE to "%1\$s left of %2\$s",
     StringKey.GOALS_DELETE_NAMED to "Delete “%s”",
     StringKey.GOALS_DELETE_HAS_BALANCE to "This goal holds %s. Choose where that money goes back to.",
     StringKey.GOALS_DELETE_ORIGIN to "Return to where it came from",

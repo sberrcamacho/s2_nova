@@ -114,12 +114,25 @@ import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import com.s2nova.app.ui.tr
 
+// Per-device: the last Planes tab opened, so someone who mostly abona to
+// goals lands on Metas, and the wallet the last Abonar came from.
+object PlanesPrefs {
+    private fun prefs(context: android.content.Context) = context.getSharedPreferences("planes", android.content.Context.MODE_PRIVATE)
+    fun tab(context: android.content.Context): Int = prefs(context).getInt("tab", 0)
+    fun setTab(context: android.content.Context, tab: Int) = prefs(context).edit().putInt("tab", tab).apply()
+    fun payWallet(context: android.content.Context): String? = prefs(context).getString("payWallet", null)
+    fun setPayWallet(context: android.content.Context, id: String) = prefs(context).edit().putString("payWallet", id).apply()
+}
+
+// initialTab null opens the last tab used.
 @Composable
-fun PlanesScreen(initialTab: Int = 0, initialLoanSide: LoanKind = LoanKind.LENT) {
+fun PlanesScreen(initialTab: Int? = null, initialLoanSide: LoanKind = LoanKind.LENT) {
     val t = rememberStrings()
+    val context = androidx.compose.ui.platform.LocalContext.current
     // Keyed on the deep-link arguments so an alert opening a different tab
     // while Planes is already showing still switches to it.
-    var tab by remember(initialTab, initialLoanSide) { mutableStateOf(initialTab) }
+    var tab by remember(initialTab, initialLoanSide) { mutableStateOf(initialTab ?: PlanesPrefs.tab(context)) }
+    LaunchedEffect(tab) { PlanesPrefs.setTab(context, tab) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(

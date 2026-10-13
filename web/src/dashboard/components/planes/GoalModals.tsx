@@ -1,7 +1,7 @@
 import { fill, tr } from '@/lib/i18n/translations'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { PlanMark } from '@/components/v2/CategoryMark'
-import { AmountField, CancelButton, ConfirmDialog, DateInput, ErrorBox, Field, Flat, IC, Label, V2Modal } from '@/components/v2/Kit'
+import { AmountField, CancelButton, ChipStrip, ConfirmDialog, DateInput, ErrorBox, Field, Flat, IC, Icon, Label, V2Modal } from '@/components/v2/Kit'
 import { AmountHero, ChoiceCard, PlanIconPicker, SegmentedChoice, StepChoiceRow, StepDeleteButton, StepModal, StepNote, StepOptionGroup, StepOptionRow, StepQuestion, WalletPicker } from '@/components/v2/Steps'
 import { evalExpr, numStr, overdraftAfter } from '@/lib/nuevoMovimiento'
 import { referenceRate } from '@/lib/currency'
@@ -11,7 +11,7 @@ import { shortWallet } from '@/lib/movimientos'
 import { addSteps, longDate, monthYearLong, shortDayMonth } from '@/lib/planCopy'
 import { guessPlanIcon } from '@/lib/taxonomy'
 import { goalService, type GoalPlanInput } from '@/services/goalService'
-import { newRequestKey } from '@/lib/apiClient'
+import { ApiError, newRequestKey } from '@/lib/apiClient'
 import { useCurrency } from '@/state/useCurrency'
 import { useToast } from '@/state/ToastContext'
 import type { Goal, GoalPlan, Wallet } from '@/types'
@@ -340,24 +340,54 @@ export function GoalModal({ goal, wallets, onClose, onSaved }: { goal: Goal | nu
   )
 }
 
-// "Abonar" — the mockup's gPay modal: a one-off contribution from a wallet.
+// The wallet "Abonar" starts on: the plan's, else the last one used to
+// abonar, else Nuevo movimiento's last wallet, else the first. Per device.
+const PAY_WALLET = 'goal.wallet'
+function readWallet(key: string): string | null {
+  try {
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+function defaultPayWallet(goal: Goal, wallets: Wallet[]): string {
+  const has = (id: string | null | undefined) => !!id && wallets.some((w) => w.id === id)
+  for (const id of [goal.plan?.accountId, readWallet(PAY_WALLET), readWallet('nm.wallet')]) if (has(id)) return id!
+  return wallets[0]?.id ?? ''
+}
+
+// "Abonar": a one-off contribution from a wallet, up to what the goal still
+// needs (the backend refuses more). "Completar" fills that amount in one tap.
 export function GoalPayModal({ goal, wallets, onClose, onSaved }: { goal: Goal; wallets: Wallet[]; onClose: () => void; onSaved: () => void }) {
   const { format, currency: principal } = useCurrency()
   const { showToast } = useToast()
   const [amount, setAmount] = useState('')
-  const [accountId, setAccountId] = useState(wallets[0]?.id ?? '')
+  const [accountId, setAccountId] = useState(() => defaultPayWallet(goal, wallets))
+  // Wallets may arrive after the modal opens.
+  useEffect(() => {
+    if (!accountId && wallets.length) setAccountId(defaultPayWallet(goal, wallets))
+  }, [accountId, goal, wallets])
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
   const [overdraftAsk, setOverdraftAsk] = useState<number | null>(null)
+  // What the goal still needs; the server's figure wins after a refusal.
+  const [left, setLeft] = useState(Math.max(0, goal.remaining))
   // One key per amount + wallet: retrying the same abono after an error
   // reuses it, so the server never records it twice.
   const requestKey = useRef<{ for: string; key: string } | null>(null)
-  const ok = evalExpr(amount) > 0 && !!accountId
+  const value = evalExpr(amount)
+  const over = value > left + 1e-9
+  const ok = value > 0 && !over && !!accountId
+  const planAmount = goal.plan && goal.plan.amount < left ? goal.plan.amount : null
   // The abono is in the principal currency; the wallet pays it in its own.
   const wallet = wallets.find((w) => w.id === accountId)
   const overdraft = wallet
-    ? overdraftAfter({ balance: wallet.currentBalance, spend: evalExpr(amount) * referenceRate(principal, wallet.currency), refund: 0, credit: wallet.accountType === 'BANK_CREDIT', future: false })
+    ? overdraftAfter({ balance: wallet.currentBalance, spend: value * referenceRate(principal, wallet.currency), refund: 0, credit: wallet.accountType === 'BANK_CREDIT', future: false })
     : null
+  const pick = (v: number) => {
+    setAmount(numStr(v))
+    setErr('')
+  }
 
   const confirm = async (anyway = false) => {
     if (!ok || busy) return
@@ -366,49 +396,82 @@ export function GoalPayModal({ goal, wallets, onClose, onSaved }: { goal: Goal; 
     setOverdraftAsk(null)
     setBusy(true)
     try {
-      const sig = `${evalExpr(amount)}|${accountId}`
+      const sig = `${value}|${accountId}`
       if (requestKey.current?.for !== sig) requestKey.current = { for: sig, key: newRequestKey() }
-      await goalService.contribute(goal.id, { amount: evalExpr(amount), accountId, date: todayISO() }, requestKey.current.key)
-      showToast(fill(tr('goal.pay.toast'), format(evalExpr(amount)), goal.name, shortWallet(wallets.find((w) => w.id === accountId)?.name ?? '')), 'success')
+      await goalService.contribute(goal.id, { amount: value, accountId, date: todayISO() }, requestKey.current.key)
+      try {
+        localStorage.setItem(PAY_WALLET, accountId)
+      } catch {
+        // Storage unavailable: the wallet just isn't remembered.
+      }
+      showToast(fill(tr('goal.pay.toast'), format(value), goal.name, shortWallet(wallets.find((w) => w.id === accountId)?.name ?? '')), 'success')
       onSaved()
     } catch (e) {
-      setErr(e instanceof Error ? e.message : tr('goal.pay.err'))
+      if (e instanceof ApiError && e.details.code === 'GOAL_EXCEEDS_REMAINING' && typeof e.details.remaining === 'number') setLeft(e.details.remaining)
+      else setErr(e instanceof Error ? e.message : tr('goal.pay.err'))
       setBusy(false)
     }
   }
 
   return (
     <V2Modal width={420} onClose={onClose} label={fill(tr('goal.pay.title'), goal.name)}>
-      <div className="flex items-center gap-3">
-        <PlanMark icon={goal.icon} box={38} />
-        <div className="min-w-0 flex-1">
-          <div className="text-title-sm font-semibold">{fill(tr('goal.pay.title'), goal.name)}</div>
-          <div className="font-numeric mt-[3px] text-caption leading-[1.45] text-ink-secondary">
-            {fill(tr('goal.pay.sub'), format(goal.currentAmount), format(goal.targetAmount))}
+      <form
+        className="contents"
+        onSubmit={(e) => {
+          e.preventDefault()
+          void confirm()
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <PlanMark icon={goal.icon} box={38} />
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-title-sm font-semibold" title={goal.name}>{fill(tr('goal.pay.title'), goal.name)}</div>
+            <div className="font-numeric mt-[3px] text-caption leading-[1.45] text-ink-secondary">
+              {fill(tr('goal.pay.left'), format(left), format(goal.targetAmount))}
+            </div>
           </div>
         </div>
-      </div>
-      <AmountHero
-        label={tr('goal.pay.amount')}
-        expr={amount}
-        onExpr={(v) => {
-          setAmount(v)
-          setErr('')
-        }}
-      />
-      <WalletPicker label={tr('nm.row.wallet')} listLabel={tr('goal.fromWallet')} wallets={wallets} value={accountId} onChange={setAccountId} principal={principal} />
-      {err && <ErrorBox>{err}</ErrorBox>}
-      <div className="flex justify-end gap-2.5">
-        <CancelButton onClick={onClose} />
-        <button
-          type="button"
-          onClick={() => void confirm()}
-          className="whitespace-nowrap rounded-[10px] px-[18px] py-2.5 text-body-sm font-semibold"
-          style={{ cursor: ok ? 'pointer' : 'not-allowed', color: ok ? '#fff' : 'var(--v2-dim)', background: ok ? 'var(--v2-accent)' : 'var(--v2-surface2)' }}
-        >
-          {tr('goal.pay')}
-        </button>
-      </div>
+        <AmountHero
+          label={tr('goal.pay.amount')}
+          expr={amount}
+          onExpr={(v) => {
+            setAmount(v)
+            setErr('')
+          }}
+          describedBy={over ? 'goal-pay-max' : undefined}
+        />
+        {over && (
+          <div id="goal-pay-max" role="alert" className="-mt-2 flex items-center gap-1.5 text-body-sm font-semibold text-negative">
+            <Icon paths={IC.warn} size={16} color="currentColor" />
+            <span className="font-numeric">{left > 0 ? fill(tr('goal.pay.max'), format(left)) : tr('goal.pay.full')}</span>
+          </div>
+        )}
+        {left > 0 && (
+          <ChipStrip label={tr('goal.pay.quick')}>
+            <Flat on={value === left} onClick={() => pick(left)}>
+              <span className="font-numeric">{fill(tr('goal.pay.complete'), format(left))}</span>
+            </Flat>
+            {planAmount !== null && (
+              <Flat on={value === planAmount} onClick={() => pick(planAmount)}>
+                <span className="font-numeric">{fill(tr('goal.pay.planAmount'), format(planAmount))}</span>
+              </Flat>
+            )}
+          </ChipStrip>
+        )}
+        <WalletPicker label={tr('nm.row.wallet')} listLabel={tr('goal.fromWallet')} wallets={wallets} value={accountId} onChange={setAccountId} principal={principal} />
+        {err && <ErrorBox>{err}</ErrorBox>}
+        <div className="flex justify-end gap-2.5">
+          <CancelButton onClick={onClose} />
+          <button
+            type="submit"
+            aria-disabled={!ok || busy}
+            className="h-11 whitespace-nowrap rounded-[12px] px-5 text-body-sm font-semibold"
+            style={{ cursor: ok && !busy ? 'pointer' : 'not-allowed', color: ok ? '#fff' : 'var(--v2-dim)', background: ok ? 'var(--v2-accent)' : 'var(--v2-surface2)' }}
+          >
+            {tr('goal.pay')}
+          </button>
+        </div>
+      </form>
       {overdraftAsk !== null && wallet && (
         <OverdraftWarning
           walletName={shortWallet(wallet.name)}

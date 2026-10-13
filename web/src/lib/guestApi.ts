@@ -586,6 +586,27 @@ function serializeGoal(s: GuestState, g: GGoal, today = todayISO()) {
   }
 }
 
+// What a goal still needs, never below 0. `exceptId` leaves out a movement
+// being edited.
+function goalLeft(s: GuestState, g: GGoal, exceptId?: string): number {
+  const own = exceptId ? s.txs.find((t) => t.id === exceptId) : undefined
+  const counted = own && own.goalId === g.id && own.status === 'COMPLETED' ? principalAmount(s, own) : 0
+  return Math.max(0, round(g.targetAmount - goalCurrent(s, g) + counted, s.principal))
+}
+
+// "Abonar" more than the goal still needs is refused, as the backend does.
+function goalExceeds(left: number) {
+  return new ApiError('The amount is more than the goal still needs.', 422, { code: 'GOAL_EXCEEDS_REMAINING', remaining: left })
+}
+
+function assertWithinGoal(s: GuestState, t: GTx, exceptId?: string) {
+  if (!t.goalId || t.status !== 'COMPLETED' || t.type === 'TRANSFER') return
+  const g = s.goals.find((x) => x.id === t.goalId)
+  if (!g) return
+  const left = goalLeft(s, g, exceptId)
+  if (principalAmount(s, t) > left + 1e-9) throw goalExceeds(left)
+}
+
 // One "Aporte": a real EXPENSE out of its wallet, linked to the goal.
 function recordContribution(s: GuestState, g: GGoal, accountId: string, amount: number, date: string) {
   const wallet = account(s, accountId)
@@ -624,7 +645,14 @@ function processDue(s: GuestState, today: string) {
   for (const g of s.goals) {
     for (let i = 0; i < 400 && g.plan?.active && g.plan.autoConfirm && g.plan.nextDate <= today; i++) {
       if (!s.accounts.some((a) => a.id === g.plan!.accountId)) break
-      recordContribution(s, g, g.plan.accountId, g.plan.amount, g.plan.nextDate)
+      // The last one is cut to what is left; a goal that needs nothing
+      // more ends its plan.
+      const left = goalLeft(s, g)
+      if (left <= 0) {
+        g.plan.active = false
+        break
+      }
+      recordContribution(s, g, g.plan.accountId, Math.min(g.plan.amount, left), g.plan.nextDate)
       advancePlan(s, g, true)
     }
   }
@@ -1191,6 +1219,7 @@ function createTransaction(s: GuestState, body: Row) {
     date,
     time,
   })
+  assertWithinGoal(s, t)
   s.txs.push(t)
   applyEffect(s, t, 1)
   return serializeTx(s, t)
@@ -1198,6 +1227,7 @@ function createTransaction(s: GuestState, body: Row) {
 
 function updateTransaction(s: GuestState, id: string, body: Row) {
   const t = tx(s, id)
+  const before = { ...t }
   applyEffect(s, t, -1)
   const set = <K extends keyof GTx>(key: K) => {
     if (body[key] !== undefined) t[key] = body[key] as GTx[K]
@@ -1218,6 +1248,17 @@ function updateTransaction(s: GuestState, id: string, body: Row) {
   // A new date/time decides Programado again (as the backend does).
   if (body.status === undefined && (body.date !== undefined || body.time !== undefined) && (t.status === 'PLANNED' || t.status === 'COMPLETED')) {
     t.status = new Date(`${t.date}T${t.time ?? '12:00'}:00`).getTime() > Date.now() ? 'PLANNED' : 'COMPLETED'
+  }
+  const goalFigureChanged =
+    body.amount !== undefined || body.currency !== undefined || body.accountId !== undefined || body.goalId !== undefined || t.status !== before.status
+  if (goalFigureChanged) {
+    try {
+      assertWithinGoal(s, t, t.id)
+    } catch (error) {
+      Object.assign(t, before)
+      applyEffect(s, t, 1)
+      throw error
+    }
   }
   applyEffect(s, t, 1)
   const repeat = body.repeat as GRepeat | null | undefined
@@ -1603,6 +1644,8 @@ function route(s: GuestState, method: Method, path: string, body: Row): unknown 
   }
   if (is('POST', '/goals/:id/contribute')) {
     const g = goal(s, p[1])
+    const left = goalLeft(s, g)
+    if ((body.amount as number) > left) throw goalExceeds(left)
     recordContribution(s, g, body.accountId as string, body.amount as number, (body.date as string | undefined) ?? todayISO())
     return serializeGoal(s, g)
   }
@@ -1635,7 +1678,14 @@ function route(s: GuestState, method: Method, path: string, body: Row): unknown 
     const confirm = p[3] === 'confirm'
     if (confirm) {
       if (!g.plan.active) throw new ApiError('This plan has ended.', 422)
-      recordContribution(s, g, g.plan.accountId, (body.amount as number | undefined) ?? g.plan.amount, todayISO())
+      const left = goalLeft(s, g)
+      const explicit = body.amount as number | undefined
+      if (explicit !== undefined && explicit > left) throw goalExceeds(left)
+      if (explicit === undefined && left <= 0) {
+        g.plan.active = false
+        return serializeGoal(s, g)
+      }
+      recordContribution(s, g, g.plan.accountId, explicit ?? Math.min(g.plan.amount, left), todayISO())
     }
     advancePlan(s, g, confirm)
     return serializeGoal(s, g)

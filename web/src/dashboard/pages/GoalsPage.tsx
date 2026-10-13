@@ -115,18 +115,22 @@ export default function GoalsPage({ adding, onAddingDone }: { adding: boolean; o
                     </span>
                   </div>
                 )}
-                <div className="mt-4 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setPaying(g)
-                    }}
-                    className="h-10 cursor-pointer whitespace-nowrap rounded-[12px] bg-accent-soft px-4 text-label font-semibold text-on-primary-soft hover:brightness-95"
-                  >
-                    {t('goal.pay')}
-                  </button>
-                </div>
+                {/* A reached goal (its line already says "Meta cumplida") has nothing
+                    left to abonar: the backend refuses more than the goal needs. */}
+                {g.remaining > 0 && (
+                  <div className="mt-4 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setPaying(g)
+                      }}
+                      className="h-10 cursor-pointer whitespace-nowrap rounded-[12px] bg-accent-soft px-4 text-label font-semibold text-on-primary-soft hover:brightness-95"
+                    >
+                      {t('goal.pay')}
+                    </button>
+                  </div>
+                )}
               </div>
             )
           })}
