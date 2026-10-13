@@ -8,6 +8,8 @@ import {
   computeContributions,
   computeProgress,
   contributionContext,
+  goalExceedsRemaining,
+  lockGoalRemaining,
   processDuePlans,
   recordContribution,
   serializeGoal,
@@ -165,10 +167,13 @@ export async function goalRoutes(app: FastifyInstance) {
     ]);
     if (!goal) return reply.status(404).send({ error: "Goal not found." });
     if (!account) return reply.status(422).send({ error: "Unknown wallet." });
+    const amountMinor = toMinor(body.amount, ctx.principal);
     try {
-      await prisma.$transaction((tx) =>
-        recordContribution(tx, goal, account.id, toMinor(body.amount, ctx.principal), body.date ? parseDateOnly(body.date) : new Date(), ctx, key),
-      );
+      await prisma.$transaction(async (tx) => {
+        const left = await lockGoalRemaining(tx, goal);
+        if (amountMinor > left) throw goalExceedsRemaining(left, ctx.principal);
+        await recordContribution(tx, goal, account.id, amountMinor, body.date ? parseDateOnly(body.date) : new Date(), ctx, key);
+      });
     } catch (error) {
       if (!isDuplicateKey(error)) throw error;
     }
@@ -226,7 +231,19 @@ export async function goalRoutes(app: FastifyInstance) {
     const plan = goal.plan;
     try {
       await prisma.$transaction(async (tx) => {
-        await recordContribution(tx, goal, plan.accountId, body.amount !== undefined ? toMinor(body.amount, ctx.principal) : plan.amountMinor, new Date(), ctx, key);
+        const left = await lockGoalRemaining(tx, goal);
+        if (body.amount !== undefined) {
+          const amountMinor = toMinor(body.amount, ctx.principal);
+          if (amountMinor > left) throw goalExceedsRemaining(left, ctx.principal);
+          await recordContribution(tx, goal, plan.accountId, amountMinor, new Date(), ctx, key);
+        } else if (left > 0n) {
+          // The plan's amount, cut to what the goal still needs.
+          await recordContribution(tx, goal, plan.accountId, plan.amountMinor < left ? plan.amountMinor : left, new Date(), ctx, key);
+        } else {
+          // Nothing left to save: the plan ends without a movement.
+          await tx.goalPlan.update({ where: { goalId: plan.goalId }, data: { active: false } });
+          return;
+        }
         await advancePlan(tx, plan, goal, true);
       });
     } catch (error) {

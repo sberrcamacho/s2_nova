@@ -52,6 +52,35 @@ export async function computeProgress(goalId: string, initialAmountMinor = 0n, u
   return initialAmountMinor + contributedOf(rows, await goalContext(owner, db));
 }
 
+// What a goal still needs, in the principal currency, never below 0. Takes
+// the goal's row lock first, so two contributions checked at the same moment
+// run one after the other and the second one sees the first. `exceptId`
+// leaves out a movement being edited.
+export async function lockGoalRemaining(
+  tx: Tx,
+  goal: Pick<Goal, "id" | "userId" | "initialAmountMinor" | "targetAmountMinor">,
+  exceptId?: string,
+): Promise<bigint> {
+  await tx.$queryRaw`SELECT id FROM goals WHERE id = ${goal.id} FOR UPDATE`;
+  const rows = await tx.transaction.findMany({
+    where: { goalId: goal.id, status: "COMPLETED", ...(exceptId ? { id: { not: exceptId } } : {}) },
+    select: goalRowSelect,
+  });
+  const saved = goal.initialAmountMinor + (rows.length > 0 ? contributedOf(rows, await goalContext(goal.userId, tx)) : 0n);
+  const left = goal.targetAmountMinor - saved;
+  return left > 0n ? left : 0n;
+}
+
+// "Abonar" more than the goal still needs is refused: the money would leave
+// the wallet without the goal having any use for it. The body carries what
+// is left, so the clients can say "Máximo $X".
+export function goalExceedsRemaining(remainingMinor: bigint, principal: string) {
+  return Object.assign(new Error("The amount is more than the goal still needs."), {
+    statusCode: 422,
+    payload: { code: "GOAL_EXCEEDS_REMAINING", remaining: fromMinor(remainingMinor, principal) },
+  });
+}
+
 // What each wallet has put into the goal (net of linked rows), so a goal
 // can be closed by returning every wallet its own share. Wallet currency.
 export async function computeContributions(goalId: string): Promise<{ accountId: string; amount: bigint }[]> {
@@ -143,37 +172,41 @@ export const PLAN_CATCH_UP_LIMIT = 60;
 // "Automático" plans: records the due contributions up to `today` the next
 // time the user's data is read. Each plan is one short transaction: the
 // due dates are worked out in memory, then written with one insert, one
-// balance update and one plan update.
+// balance update and one plan update. The last contribution is cut to what
+// the goal still needs, and a goal that needs nothing more ends its plan.
 export async function processDuePlans(userId: string, today: Date) {
   const plans = await prisma.goalPlan.findMany({
     where: { userId, active: true, autoConfirm: true, nextDate: { lte: today } },
     include: { goal: true },
   });
   if (plans.length === 0) return;
-  const [ctx, figures] = await Promise.all([contributionContext(userId), goalContext(userId)]);
+  const ctx = await contributionContext(userId);
 
   for (const plan of plans) {
     try {
       const account = await prisma.account.findFirst({ where: { id: plan.accountId, userId } });
       if (!account) continue;
       const goal = plan.goal;
-      let progress = await computeProgress(goal.id, goal.initialAmountMinor, userId);
-      let next = plan.nextDate;
-      let doneCount = plan.doneCount;
-      let active = true;
-      const rows: ContributionRow[] = [];
-      while (rows.length < PLAN_CATCH_UP_LIMIT && active && next <= today) {
-        const row = contributionData(goal, account, plan.amountMinor, next, ctx);
-        rows.push(row);
-        progress += convertMinor(row.walletAmountMinor ?? row.amountMinor, account.currency, figures.principal);
-        doneCount += 1;
-        next = addInterval(next, plan.frequency as Interval);
-        active = !planEnded({ ...plan, doneCount }, next, progress, goal.targetAmountMinor);
-      }
-      if (rows.length === 0) continue;
-
       await prisma.$transaction(
         async (tx) => {
+          let left = await lockGoalRemaining(tx, goal);
+          let next = plan.nextDate;
+          let doneCount = plan.doneCount;
+          let active = true;
+          const rows: ContributionRow[] = [];
+          while (rows.length < PLAN_CATCH_UP_LIMIT && active && next <= today) {
+            if (left <= 0n) {
+              active = false;
+              break;
+            }
+            const amountMinor = plan.amountMinor < left ? plan.amountMinor : left;
+            rows.push(contributionData(goal, account, amountMinor, next, ctx));
+            left -= amountMinor;
+            doneCount += 1;
+            next = addInterval(next, plan.frequency as Interval);
+            active = !planEnded({ ...plan, doneCount }, next, goal.targetAmountMinor - left, goal.targetAmountMinor);
+          }
+          if (rows.length === 0 && active) return;
           // Only the read that still sees the plan where it was records it,
           // so two reads at once (Inicio asks for goals and alerts together)
           // never record the same date twice.
@@ -181,7 +214,7 @@ export async function processDuePlans(userId: string, today: Date) {
             where: { goalId: plan.goalId, nextDate: plan.nextDate, doneCount: plan.doneCount, active: true },
             data: { nextDate: next, doneCount, active },
           });
-          if (moved.count === 0) return;
+          if (moved.count === 0 || rows.length === 0) return;
           await tx.transaction.createMany({ data: rows });
           const amountMinor = rows.reduce((sum, row) => sum + row.amountMinor, 0n);
           const walletAmountMinor = rows[0]!.walletAmountMinor == null ? null : rows.reduce((sum, row) => sum + row.walletAmountMinor!, 0n);

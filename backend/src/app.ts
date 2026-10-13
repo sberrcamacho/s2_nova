@@ -45,7 +45,9 @@ export async function buildApp(): Promise<FastifyInstance> {
       app.log.error(error);
       return reply.status(statusCode).send({ error: "Internal server error." });
     }
-    return reply.status(statusCode).send({ error: error.message || "Internal server error." });
+    // A route can attach machine-readable details (`payload`) to its error.
+    const payload = (error as { payload?: Record<string, unknown> }).payload;
+    return reply.status(statusCode).send({ error: error.message || "Internal server error.", ...payload });
   });
 
   await app.register(cors, {

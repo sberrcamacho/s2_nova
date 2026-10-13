@@ -9,8 +9,10 @@ import {
   attachmentMetaSelect,
   effectOf,
   serializeTransaction,
+  type Tx,
   walletCurrencyMap,
 } from "../lib/movements.js";
+import { goalContext, goalExceedsRemaining, lockGoalRemaining } from "../lib/goalProgress.js";
 import { prisma } from "../lib/prisma.js";
 import { seriesEnded } from "../lib/recurring.js";
 import { dateOnlySchema } from "../lib/validation.js";
@@ -208,6 +210,24 @@ async function assertOwned(userId: string, table: "account" | "category" | "budg
   }
 }
 
+// A completed movement linked to a goal counts toward it, so it can't be more
+// than the goal still needs: the same rule as "Abonar". `exceptId` is the
+// movement being edited, whose old amount doesn't count against it.
+async function assertWithinGoal(
+  tx: Tx,
+  userId: string,
+  goalId: string,
+  row: { accountId: string; amountMinor: bigint; walletAmountMinor: bigint | null },
+  exceptId?: string,
+) {
+  const goal = await tx.goal.findFirstOrThrow({ where: { id: goalId, userId } });
+  const left = await lockGoalRemaining(tx, goal, exceptId);
+  const ctx = await goalContext(userId, tx);
+  const walletMinor = row.walletAmountMinor ?? row.amountMinor;
+  const minor = convertMinor(walletMinor, ctx.currencyOf.get(row.accountId) ?? ctx.principal, ctx.principal);
+  if (minor > left) throw goalExceedsRemaining(left, ctx.principal);
+}
+
 async function assertCustomBudget(userId: string, id: string) {
   const budget = await prisma.budget.findFirst({ where: { id, userId, kind: "CUSTOM" } });
   if (!budget) throw Object.assign(new Error("Unknown custom budget."), { statusCode: 422 });
@@ -373,6 +393,9 @@ export async function transactionRoutes(app: FastifyInstance) {
         : await priced(body.amount, currency, account.currency, transactionDate);
 
     const created = await prisma.$transaction(async (tx) => {
+      if (body.goalId && status === "COMPLETED" && body.type !== "TRANSFER") {
+        await assertWithinGoal(tx, userId, body.goalId, { accountId: body.accountId, ...pricing });
+      }
       let seriesId: string | null = null;
       if (body.repeat && body.type !== "TRANSFER") {
         const series = await tx.recurringSeries.create({
@@ -525,6 +548,12 @@ export async function transactionRoutes(app: FastifyInstance) {
       });
 
       if (row.status === "COMPLETED") await applyBalanceEffect(tx, effectOf(row), 1);
+
+      const goalFigureChanged =
+        repriced !== null || body.goalId !== undefined || row.status !== existing.status;
+      if (goalFigureChanged && row.goalId && row.status === "COMPLETED" && row.type !== "TRANSFER") {
+        await assertWithinGoal(tx, userId, row.goalId, row, row.id);
+      }
 
       if (body.repeat === null && row.recurringSeriesId) {
         // "No se repite": the series stops; past occurrences keep their history.

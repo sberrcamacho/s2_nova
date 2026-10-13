@@ -99,7 +99,9 @@ describe("goal routes", () => {
         payload: { name: "Small goal", targetAmount: 1000 },
       });
       const goal = goalRes.json();
-      await contribute(app, user, wallet.id, goal.id, 500000, "COMPLETED");
+      await contribute(app, user, wallet.id, goal.id, 1000, "COMPLETED");
+      // A contribution can't pass the target, but lowering the target later can.
+      await app.inject({ method: "PATCH", url: `/api/v1/goals/${goal.id}`, headers: authHeader(user), payload: { targetAmount: 1 } });
 
       const res = await app.inject({ method: "GET", url: "/api/v1/goals", headers: authHeader(user) });
       const found = res.json().find((g: { id: string }) => g.id === goal.id);
@@ -319,6 +321,91 @@ describe("goal routes", () => {
       }
       expect(await prisma.transaction.count({ where: { goalId: goal.id } })).toBe(1);
       expect((await prisma.account.findUniqueOrThrow({ where: { id: wallet.id } })).currentBalanceMinor).toBe(900_000n);
+    });
+
+    const abonar = (user: Awaited<ReturnType<typeof createTestUser>>, goalId: string, accountId: string, amount: number, key?: string) =>
+      app.inject({
+        method: "POST",
+        url: `/api/v1/goals/${goalId}/contribute`,
+        headers: { ...authHeader(user), ...(key ? { "idempotency-key": key } : {}) },
+        payload: { amount, accountId },
+      });
+
+    it("refuses an Abonar above what the goal still needs and leaves the wallet alone", async () => {
+      const user = await createTestUser();
+      const wallet = await createAccount(user.id, { initialBalanceMinor: 1_000_000n });
+      const goal = await newGoal(user, 500_000);
+      expect((await abonar(user, goal.id, wallet.id, 200_000)).statusCode).toBe(200);
+      const over = await abonar(user, goal.id, wallet.id, 300_001);
+      expect(over.statusCode).toBe(422);
+      expect(over.json()).toMatchObject({ code: "GOAL_EXCEEDS_REMAINING", remaining: 300_000 });
+      expect((await prisma.account.findUniqueOrThrow({ where: { id: wallet.id } })).currentBalanceMinor).toBe(800_000n);
+      // The exact amount left completes it; after that nothing more fits.
+      expect((await abonar(user, goal.id, wallet.id, 300_000)).json()).toMatchObject({ currentAmount: 500_000, remaining: 0, percentage: 100 });
+      expect((await abonar(user, goal.id, wallet.id, 1)).json()).toMatchObject({ code: "GOAL_EXCEEDS_REMAINING", remaining: 0 });
+    });
+
+    it("lets only one of two concurrent Abonar fit in what the goal still needs", async () => {
+      const user = await createTestUser();
+      const wallet = await createAccount(user.id, { initialBalanceMinor: 1_000_000n });
+      const goal = await newGoal(user, 500_000);
+      const results = await Promise.all([abonar(user, goal.id, wallet.id, 300_000, "concurrent-a-1"), abonar(user, goal.id, wallet.id, 300_000, "concurrent-b-1")]);
+      expect(results.map((r) => r.statusCode).sort()).toEqual([200, 422]);
+      expect(await prisma.transaction.count({ where: { goalId: goal.id } })).toBe(1);
+    });
+
+    it("refuses a movement linked to a goal above what it still needs, on create and edit", async () => {
+      const user = await createTestUser();
+      const wallet = await createAccount(user.id, { initialBalanceMinor: 1_000_000n });
+      const goal = await newGoal(user, 100_000);
+      expect((await contribute(app, user, wallet.id, goal.id, 100_001)).statusCode).toBe(422);
+      const ok = await contribute(app, user, wallet.id, goal.id, 60_000);
+      expect(ok.statusCode).toBe(201);
+      const edit = (amount: number) =>
+        app.inject({ method: "PATCH", url: `/api/v1/transactions/${ok.json().id}`, headers: authHeader(user), payload: { amount } });
+      // Its own amount doesn't count against it: 100.000 fits, 100.001 doesn't.
+      expect((await edit(100_000)).statusCode).toBe(200);
+      expect((await edit(100_001)).statusCode).toBe(422);
+      // A planned one doesn't count yet, so it isn't checked.
+      expect((await contribute(app, user, wallet.id, goal.id, 500_000, "PLANNED")).statusCode).toBe(201);
+      expect((await prisma.account.findUniqueOrThrow({ where: { id: wallet.id } })).currentBalanceMinor).toBe(900_000n);
+    });
+
+    it("cuts a confirmed plan contribution to what is left, and refuses a larger explicit amount", async () => {
+      const user = await createTestUser();
+      const wallet = await createAccount(user.id, { initialBalanceMinor: 1_000_000n });
+      const goal = await newGoal(user, 500_000);
+      await app.inject({
+        method: "PUT",
+        url: `/api/v1/goals/${goal.id}/plan`,
+        headers: authHeader(user),
+        payload: { amount: 300_000, frequency: "MONTHLY", accountId: wallet.id, startDate: "2026-06-01" },
+      });
+      const confirm = (payload: object) => app.inject({ method: "POST", url: `/api/v1/goals/${goal.id}/plan/confirm`, headers: authHeader(user), payload });
+      expect((await confirm({})).json()).toMatchObject({ currentAmount: 300_000 });
+      expect((await confirm({ amount: 250_000 })).statusCode).toBe(422);
+      const last = (await confirm({})).json();
+      expect(last).toMatchObject({ currentAmount: 500_000, remaining: 0 });
+      expect(last.plan.active).toBe(false);
+      expect((await prisma.account.findUniqueOrThrow({ where: { id: wallet.id } })).currentBalanceMinor).toBe(500_000n);
+    });
+
+    it("cuts an automatic plan's last contribution to what is left", async () => {
+      const user = await createTestUser();
+      const wallet = await createAccount(user.id, { initialBalanceMinor: 1_000_000n });
+      const goal = await newGoal(user, 25_000);
+      await app.inject({
+        method: "PUT",
+        url: `/api/v1/goals/${goal.id}/plan`,
+        headers: authHeader(user),
+        payload: { amount: 10_000, frequency: "DAILY", accountId: wallet.id, startDate: "2026-01-01", endMode: "COUNT", count: 10, autoConfirm: true },
+      });
+      const goals = (await app.inject({ method: "GET", url: "/api/v1/goals?today=2026-01-10", headers: authHeader(user) })).json();
+      const mine = goals.find((g: { id: string }) => g.id === goal.id);
+      expect(mine).toMatchObject({ currentAmount: 25_000, remaining: 0 });
+      expect(mine.plan.active).toBe(false);
+      expect(await prisma.transaction.count({ where: { goalId: goal.id } })).toBe(3);
+      expect((await prisma.account.findUniqueOrThrow({ where: { id: wallet.id } })).currentBalanceMinor).toBe(975_000n);
     });
 
     it("ends a GOAL plan on the confirmed contribution that reaches the target", async () => {
