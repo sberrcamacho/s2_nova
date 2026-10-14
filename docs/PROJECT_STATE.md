@@ -85,6 +85,12 @@ Android set:
 - **Google Sign-In:** one OAuth "Web application" client ID is the
   audience on both platforms. A separate Android OAuth client (package
   name + the release machine's debug-keystore SHA-1) authorizes the app.
+  For the consent screen's brand verification, the domain root
+  `https://sberrcamacho.github.io/` is served by the repo
+  `sberrcamacho/sberrcamacho.github.io`. It carries the Search Console file
+  `google7819aad2a1783c46.html` and redirects to `/s2_nova/`. The homepage
+  is `https://sberrcamacho.github.io/s2_nova/` and the privacy policy is
+  `…/s2_nova/privacy.html`. Both must keep matching the consent screen.
 - **CI:** `backend-ci.yml`, `web-ci.yml` and `android-ci.yml` run each
   app's tests on pushes and pull requests that touch it. The deploys don't
   wait for them.
