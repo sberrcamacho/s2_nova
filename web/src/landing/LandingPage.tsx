@@ -15,6 +15,7 @@ import {
   PiggyBank,
   ReceiptText,
   ScanBarcode,
+  ShieldCheck,
   Smartphone,
   Target,
   type LucideIcon,
@@ -39,6 +40,12 @@ const PHONE_POINTS: { icon: LucideIcon; text: TranslationKey }[] = [
 // points at the newest release, so a new APK needs no change here
 // (docs/RELEASE_ANDROID.md).
 const ANDROID_APK_URL = 'https://github.com/sberrcamacho/s2_nova/releases/latest/download/s2-nova.apk'
+
+// The privacy policy and terms (web/public). The privacy URL must stay the
+// one set on Google's OAuth consent screen:
+// https://sberrcamacho.github.io/s2_nova/privacy.html
+const PRIVACY_URL = `${import.meta.env.BASE_URL}privacy.html`
+const TERMS_URL = `${import.meta.env.BASE_URL}terms.html`
 
 const WEB_POINTS: { icon: LucideIcon; text: TranslationKey }[] = [
   { icon: BarChart3, text: 'landing.web.p1' },
@@ -412,6 +419,18 @@ export default function LandingPage() {
                 </li>
               ))}
             </ul>
+            {/* What a Google sign-in shares and why (Google's homepage requirement). */}
+            <div className="nova-reveal nova-card mt-5 flex flex-col gap-5 p-7 md:flex-row md:items-start">
+              <IconTile icon={ShieldCheck} />
+              <div className="min-w-0">
+                <h3 className="text-title-sm font-semibold">{t('landing.data.title')}</h3>
+                <p className="mt-1.5 max-w-[72ch] text-body-sm text-ink-secondary">{t('landing.data.body')}</p>
+                <a href={PRIVACY_URL} className="mt-3 inline-flex min-h-8 items-center gap-1.5 rounded-[var(--radius-sm)] text-body-sm font-semibold text-link underline-offset-4 hover:underline">
+                  {t('landing.data.link')}
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </a>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -441,6 +460,14 @@ export default function LandingPage() {
       <footer className="relative border-t border-border bg-surface">
         <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-4 px-4 py-10 text-caption text-ink-tertiary sm:flex-row sm:items-center sm:px-6">
           <Logo size="sm" />
+          <nav aria-label={t('landing.legal')} className="flex flex-wrap items-center gap-x-5 gap-y-1">
+            <a href={PRIVACY_URL} className="inline-flex min-h-8 items-center text-label font-medium text-ink-secondary underline-offset-4 hover:text-ink hover:underline">
+              {t('auth.privacyLink')}
+            </a>
+            <a href={TERMS_URL} className="inline-flex min-h-8 items-center text-label font-medium text-ink-secondary underline-offset-4 hover:text-ink hover:underline">
+              {t('auth.termsLink')}
+            </a>
+          </nav>
           <span>© {new Date().getFullYear()} S2 Nova · {t('brand.tagline')}</span>
         </div>
       </footer>

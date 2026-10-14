@@ -434,7 +434,11 @@ computador" ends with a primary pill "Descargar para Android" (download
 icon) linking to the latest GitHub Release's `s2-nova.apk`
 (`RELEASE_ANDROID.md`), with a caption about Android 12+ and
 installing from this source; the closing call to action repeats it as a
-text link.
+text link. The trust section ends with a full-width card "Qué datos usa S2
+Nova" (what a Google sign-in shares and why, with a link to the privacy
+policy), and the footer has a "Información legal" nav with Política de
+privacidad and Términos. Both are Google OAuth homepage requirements; the
+same copy is in `web/index.html` as static HTML for crawlers.
 
 ---
 

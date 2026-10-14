@@ -117,9 +117,13 @@ function SignupTermsCheckbox({ checked, onChange }: { checked: boolean; onChange
       </span>
       <span className="text-caption leading-[1.45]" style={{ color: 'var(--color-login-checkbox-text)' }}>
         {t('auth.termsPrefix')}
-        <span className="font-semibold text-highlight">{t('auth.termsLink')}</span>
+        <a href={`${import.meta.env.BASE_URL}terms.html`} target="_blank" rel="noopener" className="font-semibold text-highlight underline-offset-2 hover:underline">
+          {t('auth.termsLink')}
+        </a>
         {t('auth.termsMiddle')}
-        <span className="font-semibold text-highlight">{t('auth.privacyLink')}</span>
+        <a href={`${import.meta.env.BASE_URL}privacy.html`} target="_blank" rel="noopener" className="font-semibold text-highlight underline-offset-2 hover:underline">
+          {t('auth.privacyLink')}
+        </a>
       </span>
     </label>
   )

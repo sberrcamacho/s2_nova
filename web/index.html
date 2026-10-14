@@ -1,10 +1,14 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/png" href="%BASE_URL%favicon.png" />
-    <title>S2 Nova</title>
+    <title>S2 Nova · Finanzas personales</title>
+    <meta
+      name="description"
+      content="S2 Nova es una app de finanzas personales para Android y web: registra gastos e ingresos, organiza tus billeteras en varias monedas, y sigue presupuestos, metas de ahorro y préstamos."
+    />
     <script type="text/javascript">
       // Restores the real path after the 404.html redirect for GitHub Pages SPA hosting.
       (function (l) {
@@ -22,7 +26,30 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <!-- Server-side copy of the landing for crawlers and Google's homepage
+         check; React replaces it on load. Keep it in step with
+         src/landing/LandingPage.tsx and public/privacy.html. -->
+    <div id="root">
+      <main style="max-width: 720px; margin: 0 auto; padding: 24px 16px; font-family: system-ui, sans-serif">
+        <h1>S2 Nova · Finanzas personales</h1>
+        <p>
+          S2 Nova es una app de finanzas personales para Android y web. Registra gastos, ingresos y transferencias;
+          organiza tus billeteras en varias monedas; sigue presupuestos, metas de ahorro y préstamos; programa pagos
+          recurrentes y revisa reportes de tus últimos meses.
+        </p>
+        <h2>Qué datos usa S2 Nova</h2>
+        <p>
+          Si entras con Google, S2 Nova recibe solo tu nombre, tu correo y tu identificador de Google, y los usa para crear
+          tu cuenta y dejarte entrar. No lee tus correos, contactos ni archivos. Tus datos financieros solo sirven para
+          mostrarte tus saldos, presupuestos y reportes: no los vendemos ni los usamos para publicidad.
+        </p>
+        <p>
+          <a href="%BASE_URL%privacy.html">Política de privacidad</a> ·
+          <a href="%BASE_URL%terms.html">Términos del servicio</a> ·
+          <a href="https://github.com/sberrcamacho/s2_nova/releases/latest/download/s2-nova.apk">Descargar para Android</a>
+        </p>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
