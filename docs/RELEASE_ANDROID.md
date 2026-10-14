@@ -34,16 +34,19 @@ The **staging** build type (`android/app/build.gradle.kts`):
 2. Run the three test suites (`docs/TESTING.md`).
 3. Build: `cd android && ./gradlew :app:assembleStaging`. The APK is
    `android/app/build/outputs/apk/staging/app-staging.apk`.
-4. Publish it under the name the landing links to:
+4. Publish it under the file name the landing links to. GitHub names an
+   asset after the uploaded file (a `#label` suffix only sets a label), so
+   copy it first:
 
    ```bash
-   gh release create v<versionName> \
-     "android/app/build/outputs/apk/staging/app-staging.apk#s2-nova.apk" \
+   cp android/app/build/outputs/apk/staging/app-staging.apk /tmp/s2-nova.apk
+   gh release create v<versionName> /tmp/s2-nova.apk \
      --title "S2 Nova <versionName>" --notes "<what changed>"
    ```
 
-   The `#s2-nova.apk` suffix sets the asset's name; it must stay
-   `s2-nova.apk`. Mark it as the latest release (the default).
+   Push `main` first, so the tag lands on the commit the APK was built
+   from. The asset must be named `s2-nova.apk`, and the release must be
+   the latest (the default).
 5. Check the landing's "Descargar para Android" link downloads the new
    file, and install it over the previous version on a phone.
 
