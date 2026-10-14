@@ -8,7 +8,7 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 
 // Wraps Credential Manager's "Sign in with Google" flow — see
-// ARCHITECTURE.md §7 and build.gradle.kts's `googleWebClientId` comment for
+// docs/ARCHITECTURE.md §7 and build.gradle.kts's `googleWebClientId` comment for
 // why `serverClientId` is the Web OAuth client ID even on Android.
 object GoogleAuthHelper {
     suspend fun getIdToken(context: Context, serverClientId: String): Result<String> = runCatching {

@@ -12,7 +12,7 @@ import { generateRefreshToken, hashRefreshToken, signAccessToken } from "../lib/
 // clients have no cookie jar, so they send/receive it in the JSON body
 // instead. The client declares which mode it wants via this header (there's
 // no cookie yet to infer it from at register/login time) — see
-// ARCHITECTURE.md §"Google Sign-In flow" / §6 for the rationale.
+// docs/ARCHITECTURE.md §"Google Sign-In flow" / §6 for the rationale.
 export const REFRESH_COOKIE = "s2nova_refresh";
 export const COOKIE_PATH = "/api/v1/auth";
 const AUTH_RATE_LIMIT = { max: 10, timeWindow: "1 minute" } as const;

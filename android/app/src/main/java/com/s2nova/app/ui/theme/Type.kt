@@ -31,7 +31,7 @@ val NovaFontFamily = FontFamily(
     inter(800),
 )
 
-// Type roles (DESIGN-SYSTEM.md §3), the same sizes as Web's `text-*` role
+// Type roles (docs/DESIGN-SYSTEM.md §3), the same sizes as Web's `text-*` role
 // utilities in index.css. Every role has an explicit line height so wrapped
 // text never overlaps its neighbours, and 12 sp is the floor. The numeric
 // roles carry tabular figures.
@@ -50,7 +50,7 @@ private fun role(size: Int, weight: FontWeight, lineHeight: Float, tracking: Flo
     ),
 )
 
-// Inter's large x-height reads well at the DESIGN-SYSTEM.md §3 sizes: the
+// Inter's large x-height reads well at the docs/DESIGN-SYSTEM.md §3 sizes: the
 // floor is 12 sp and secondary text 14 sp. Large roles take slight negative
 // tracking; body text keeps the default.
 object NovaType {

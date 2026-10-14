@@ -10,9 +10,17 @@ the root `AGENTS.md` for how it relates to `web/`.
 Open `android/` as the project root in Android Studio, or from the CLI:
 
 ```
-./gradlew assembleDebug   # build a debug APK
-./gradlew installDebug    # build + install on a running emulator/device
+./gradlew assembleDebug       # build a debug APK
+./gradlew installDebug        # build + install on a running emulator/device
+./gradlew testDebugUnitTest   # JVM unit tests (docs/TESTING.md)
+./gradlew assembleStaging     # the optimized APK that is published
 ```
+
+The published app is the `staging` build (R8, signed with the release
+machine's debug key); how to cut a release is in `docs/RELEASE_ANDROID.md`.
+Every build except debug sets `FLAG_SECURE`, and so does debug unless
+`adb shell settings put global s2nova_allow_capture 1`, so screenshots
+for the visual loop come from a debug build.
 
 Requires an Android SDK (`local.properties` → `sdk.dir`, gitignored — create
 it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
@@ -44,7 +52,7 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
 - **Real backend, real session.** `AuthRepository` calls
   `backend/src/routes/auth.ts` (register/login/refresh/logout) and persists
   the access/refresh tokens via `SessionStore` (plain DataStore — not yet
-  an encrypted store; a known follow-up, see `ARCHITECTURE.md` §14).
+  an encrypted store; a known follow-up, see `docs/ARCHITECTURE.md` §14).
   `AppContainer.refreshUserData()` reloads every domain repository from the
   backend after login/register and after a restored session at cold start.
   That cold-start rehydration only happens inside `NovaNavGraph.kt`'s
@@ -176,7 +184,7 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   running total that could drift. The bottom bar is **Inicio · Movimientos ·
   [+] · Planes · Reportes** (`ui/nav/BottomNavBar.kt`: a flat bar with a
   concave notch cradling a round "+" FAB, which shrinks below 340 dp); Perfil is a stacked screen
-  opened from Inicio's avatar. Inicio is a bento (DESIGN-SYSTEM.md §5.3):
+  opened from Inicio's avatar. Inicio is a bento (docs/DESIGN-SYSTEM.md §5.3):
   hero, Ingresos / Gastos stat tiles, the top alert with its action,
   Presupuestos beside Próximo pago, and the recent list; its eye button
   flips the shared `blurBalance` preference. Inicio's alert card and the bell sheet both
@@ -194,10 +202,8 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   list icon (`PlanesScreen.kt`'s
   `BudgetsTab`) is always its category's real icon (`CategoryIcon`) —
   never the small decorative theme palette in
-  `ui/components/BudgetGoalTheme.kt`. Goals pick one of their own
-  categories (`GoalCategory.kt`, stored in `themeIcon`) from colour pills,
-  and each goal category borrows a transaction category's glyph (the
-  mockup's `GOAL_GLYPH_CAT`). Category and subcategory glyphs are the v2
+  `ui/components/BudgetGoalTheme.kt`. A goal has a plan icon (`icon`, a
+  `PLAN_ICONS` key suggested from its name). Category and subcategory glyphs are the v2
   mockup's own outline paths (`CAT_GLYPHS`/`SUB_GLYPHS`, drawn with
   `strokeIcon`), not Material icons; Obsequio has no mockup glyph and keeps
   its Material gift icon. Deleting a goal with money in it returns that
@@ -227,31 +233,28 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   foreign wallets show their currency. Scanning is still off
   (`SCAN_ENABLED` in `AddActionsSheet.kt`); without a camera the scanner
   keeps the manual code entry instead of crashing.
-- **Goal contributions** (`GoalPaySheet`, a private composable inside
-  `ui/screens/goals/GoalsScreen.kt`, reached via a goal card's "Abonar"
-  button in `GoalsTab` — not its own screen/nav destination, per the
-  mockup's "Abonar" flow being a bottom sheet rather than a full page;
-  there used to be a dedicated `GoalContributionScreen.kt`, now deleted)
-  are a dedicated flow, separate from the general Add Transaction form,
-  for moving money
-  from a wallet straight into a goal's progress — no category picker (it
-  posts under `CategoryId.OTHER` without ever showing that choice).
-  Mechanically it's nothing new: a normal `EXPENSE` transaction with
-  `goalId` set, the same link `AddTransactionScreen`'s "more options" goal
-  chip already produces (`backend/src/routes/goals.ts`'s `computeProgress`
-  sums every `COMPLETED` transaction by `goalId`) — so it stays
-  editable/deletable from `TransactionDetailScreen` like any other
-  transaction. Saving shows a `Snackbar` with an "Undo" action
-  (`SnackbarHostState`, no new dependency) as the fast path for reversing
-  a contribution right after making it; that's in addition to, not
-  instead of, deleting it later from the transaction detail screen.
+- **Goal contributions** (`GoalPaySheet` in
+  `ui/screens/goals/GoalsScreen.kt`, opened by a goal card's "Abonar"): the
+  amount, quick-amount chips ("Completar · $X" for what the goal still
+  needs, "Aporte del plan · $X"), the wallet row (the plan's wallet, else
+  the last one used to abonar, `PlanesPrefs`) and "Abonar". It calls
+  `GoalRepository.contribute`, which is `POST /goals/:id/contribute` with an
+  Idempotency-Key. More than what is left is refused there, so the sheet
+  shows "Máximo $X" and disables the button; a 422 from the server comes
+  back as `GoalExceedsRemaining` with the server's figure. The sheet closes
+  as soon as the call returns; wallets and movements refresh behind it. A
+  reached goal has no Abonar button. In guest mode the contribution is a
+  real movement (`TransactionRepository.add`), and `GoalRepository.applyDemo`
+  keeps goal progress in step with every goal-linked guest movement (add,
+  edit, delete), with the same cap. Planes reopens on the last tab used
+  unless a deep link asks for one.
 - **First run** (`ui/screens/onboarding/FirstRunScreen.kt`, ONBOARDING.md
   in `design_handoff_s2_nova_v2/docs/`): a new account goes through two
   non-skippable steps — "Tu moneda principal" (detected from the device
   region) → "Crea tu primera billetera" — then lands on Inicio. The
   server's `onboardingCompleted` flag decides the route after auth
   (`routeAfterAuth` in `NovaNavGraph.kt`). The old welcome/income/budget/
-  tutorial carousel is gone; product tours (`ui/tour/`, DESIGN-SYSTEM.md
+  tutorial carousel is gone; product tours (`ui/tour/`, docs/DESIGN-SYSTEM.md
   §6.13) replace it: a general one on Inicio's first visit and one per
   screen. Screens tag what a step highlights with `Modifier.tourTarget(id)`;
   `TourHost` (root overlay in `NovaNavGraph`) runs the route's tour once the

@@ -70,7 +70,7 @@ enum TransactionType {
 
 // COMPLETED transactions affect their wallet's balance immediately;
 // PLANNED ones ("Upcoming") are recorded but don't move money yet — the
-// structural mechanism behind "Upcoming" per ARCHITECTURE.md's
+// structural mechanism behind "Upcoming" per docs/ARCHITECTURE.md's
 // requirement to model these as real behavior, not a category.
 enum TransactionStatus {
   COMPLETED
@@ -187,7 +187,7 @@ model User {
 // One user, many login methods — Google Sign-In links into an existing
 // user by verified email instead of minting a duplicate account, and a
 // future 'passkey' provider slots in without a schema change.
-// See ARCHITECTURE.md §7 for the link-or-create flow this table supports.
+// See docs/ARCHITECTURE.md §7 for the link-or-create flow this table supports.
 model AuthIdentity {
   id             String       @id @default(uuid())
   userId         String       @map("user_id")
@@ -406,7 +406,7 @@ model FxRate {
 }
 
 // Global, not per-user — the same barcode refers to the same product for
-// every S2 Nova user (ARCHITECTURE.md §11).
+// every S2 Nova user (docs/ARCHITECTURE.md §11).
 model Product {
   id          String   @id @default(uuid())
   barcode     String   @unique
@@ -630,7 +630,7 @@ model Budget {
 // A suggested split (e.g. 50/30/20), stored separately from real `budgets`
 // per the product requirement that a recommendation is never assumed to be
 // correct for every user — accepting one is a separate action that creates
-// real Budget rows (see ARCHITECTURE.md §"Budget suggestions").
+// real Budget rows (see docs/ARCHITECTURE.md §"Budget suggestions").
 model BudgetRecommendation {
   id                 String    @id @default(uuid())
   userId             String    @map("user_id")

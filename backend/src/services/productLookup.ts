@@ -1,7 +1,7 @@
 import { env } from "../env.js";
 import { prisma } from "../lib/prisma.js";
 
-// Barcode / QR product lookup (ARCHITECTURE.md §11). Products are global:
+// Barcode / QR product lookup (docs/ARCHITECTURE.md §11). Products are global:
 // the local table is tried first, then public product databases in order.
 // The first external hit is cached into `Product`, so the next scan of the
 // same code is served locally. One provider failing or timing out never

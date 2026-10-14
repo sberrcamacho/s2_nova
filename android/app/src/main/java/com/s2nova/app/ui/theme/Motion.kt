@@ -20,7 +20,7 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 
-// Motion tokens (DESIGN-SYSTEM.md §4.4). Short and decelerating: motion
+// Motion tokens (docs/DESIGN-SYSTEM.md §4.4). Short and decelerating: motion
 // explains what changed, it never makes anyone wait. Transform and opacity
 // only, and every animation is interruptible.
 object NovaMotion {

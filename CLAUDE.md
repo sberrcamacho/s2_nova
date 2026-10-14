@@ -7,7 +7,7 @@
 The old v2 interactive mockups (`design_handoff_s2_nova_v2/`) are **no longer
 a source of truth**. Do not look for them, reproduce them, or report them as
 missing. Mentions of "the mockup" in the per-app `AGENTS.md` files and in
-`PROJECT_STATE.md` are historical: they explain why the current UI looks the
+`docs/PROJECT_STATE.md` are historical: they explain why the current UI looks the
 way it does, not what it must look like.
 
 ### Brand palette (fixed)
@@ -27,8 +27,8 @@ tokens from the mark and do not replace it with an unrelated hue.
 
 ### Design direction
 
-The visual source of truth is `DESIGN-SYSTEM.md` (tokens, type, layout,
-components, accessibility). `DESIGN_AUDIT.md` explains the reasoning behind
+The visual source of truth is `docs/DESIGN-SYSTEM.md` (tokens, type, layout,
+components, accessibility); its Appendix A explains the reasoning behind
 it. Ask before applying a visual change the design system does not cover.
 When a screen changes, apply the change to **both** clients (Android and Web)
 so they stay visually consistent. Parity is a product rule (see `AGENTS.md`).

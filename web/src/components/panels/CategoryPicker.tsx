@@ -7,7 +7,7 @@ import type { CategoryId } from '@/types'
 import { useTranslation } from '@/state/useTranslation'
 
 // Nuevo movimiento's category picker, a page that takes the panel's place
-// (DESIGN-SYSTEM.md §6.11, drill-in with a back arrow) in two steps, as on
+// (docs/DESIGN-SYSTEM.md §6.11, drill-in with a back arrow) in two steps, as on
 // Android: the categories, then that category's subcategories. Picking one
 // returns to the form.
 export function CategoryPicker({

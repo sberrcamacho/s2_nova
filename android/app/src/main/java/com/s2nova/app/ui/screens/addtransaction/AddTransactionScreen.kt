@@ -481,7 +481,7 @@ fun AddTransactionScreen(
         }
     }
 
-    // Progressive disclosure (DESIGN-SYSTEM.md §5.3): type, amount,
+    // Progressive disclosure (docs/DESIGN-SYSTEM.md §5.3): type, amount,
     // category, wallet, the budget line and the title up front; everything
     // optional behind "Más opciones", which starts open when an option is
     // already set (editing). Guardar stays fixed at the bottom.
@@ -689,7 +689,7 @@ fun AddTransactionScreen(
     )
 }
 
-// Segmented control (DESIGN-SYSTEM.md §6.5): a `surface-sunken` track; the
+// Segmented control (docs/DESIGN-SYSTEM.md §6.5): a `surface-sunken` track; the
 // selected segment is `surface` with weight 600. 44 dp tall, tab semantics.
 @Composable
 private fun TypeSegmented(s: NmState, typeLocked: Boolean) {

@@ -1,6 +1,6 @@
 import type { TranslationKey } from '@/lib/i18n/translations'
 
-// Product tours (DESIGN-SYSTEM.md §6.13): a general one on the first visit
+// Product tours (docs/DESIGN-SYSTEM.md §6.13): a general one on the first visit
 // to Inicio and one per main screen. A finished or skipped tour's key goes
 // into the server's guidesSeen, shared with Android, so it never starts on
 // its own again; Ajustes › "Ver los recorridos otra vez" clears the list.

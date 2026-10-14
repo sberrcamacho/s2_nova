@@ -32,7 +32,7 @@ import com.s2nova.app.ui.theme.NovaType
 import com.s2nova.app.ui.tr
 import kotlin.math.abs
 
-// ListRow (DESIGN-SYSTEM.md §6.2) for Movimientos: category mark 40, a
+// ListRow (docs/DESIGN-SYSTEM.md §6.2) for Movimientos: category mark 40, a
 // one-line title and meta line, and an intrinsic-width amount column that
 // never shrinks; at least 64 dp tall. The attachment and repeat badges and
 // a `warning` clock for a Programado sit in the meta line, not next to the title.

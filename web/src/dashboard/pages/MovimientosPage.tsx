@@ -339,7 +339,7 @@ export default function MovimientosPage() {
   )
 }
 
-// ListRow (DESIGN-SYSTEM.md §6.2): icon 40, a one-line title and meta line,
+// ListRow (docs/DESIGN-SYSTEM.md §6.2): icon 40, a one-line title and meta line,
 // and an intrinsic-width amount column; at least 56 px tall. The attachment
 // and repeat badges and a Programado's `warning` clock sit in the meta line.
 function MovementRow({ x, last, wallet, principal, hidden, onOpen, fresh, tour }: { x: Transaction; last: boolean; wallet: string; principal: string; hidden: boolean; onOpen: () => void; fresh: boolean; tour?: string }) {

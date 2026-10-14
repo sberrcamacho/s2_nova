@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { lookupProduct, productSelect, serializeProduct } from "../services/productLookup.js";
 
-// Scanner product catalog (ARCHITECTURE.md §11). Global, not per-user: the
+// Scanner product catalog (docs/ARCHITECTURE.md §11). Global, not per-user: the
 // same barcode is the same product for everyone.
 
 const codeSchema = z.string().trim().min(1).max(200);

@@ -3,7 +3,7 @@ package com.s2nova.app.data.remote
 import kotlinx.serialization.Serializable
 
 // Wire shapes for backend/src/routes/*.ts — kept 1:1 with the JSON those
-// routes actually return/accept (see ARCHITECTURE.md §5). Field names are
+// routes actually return/accept (see docs/ARCHITECTURE.md §5). Field names are
 // already camelCase on the wire, so no @SerialName mapping is needed.
 
 @Serializable
@@ -97,7 +97,7 @@ data class UpdatePreferencesRequest(
 )
 
 // The account model is deliberately minimal — name, email, phone, city,
-// password/Google login only (see ARCHITECTURE.md's account-fields
+// password/Google login only (see docs/ARCHITECTURE.md's account-fields
 // decision). Editing name or email requires currentPassword (see
 // backend/src/routes/me.ts) except for a Google-only user renaming
 // themselves, who has no password to prove yet; phone/city need no

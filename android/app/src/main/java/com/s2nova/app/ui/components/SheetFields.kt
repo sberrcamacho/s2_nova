@@ -87,7 +87,7 @@ fun SheetInput(
     )
 }
 
-// The shared chip (V2Pill, DESIGN-SYSTEM.md §6.5).
+// The shared chip (V2Pill, docs/DESIGN-SYSTEM.md §6.5).
 @Composable
 fun SheetPill(label: String, selected: Boolean, onClick: () -> Unit) = com.s2nova.app.ui.components.V2Pill(label, selected, onClick)
 

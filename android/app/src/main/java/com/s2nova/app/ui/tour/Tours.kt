@@ -8,7 +8,7 @@ import com.s2nova.app.ui.nav.baseRoute
 // step) and its copy. A step whose element isn't on screen is left out.
 data class TourStep(val target: String?, val title: StringKey, val body: StringKey)
 
-// Product tours (DESIGN-SYSTEM.md §6.13): a general one on the first visit
+// Product tours (docs/DESIGN-SYSTEM.md §6.13): a general one on the first visit
 // to Inicio and one per main screen. A finished or skipped tour's key goes
 // into the server's guidesSeen, shared with Web, so it never starts on its
 // own again; Ajustes › "Ver los recorridos otra vez" clears the list.

@@ -2,7 +2,7 @@
 @import 'tailwindcss';
 
 /* ────────────────────────────────────────────────────────────────────────
-   S2 Nova design tokens — DESIGN-SYSTEM.md §2 is the source for every value
+   S2 Nova design tokens — docs/DESIGN-SYSTEM.md §2 is the source for every value
    (keep in sync with android/.../ui/theme/Color.kt). Brand colors come from
    the logo mark; income, expense and status use their own semantic colors.
    ──────────────────────────────────────────────────────────────────────── */
@@ -93,7 +93,7 @@
   --scan-surface: #0b0b12;
   color-scheme: light;
 
-  /* Login/signup screens — aliases of the semantic tokens (DESIGN-SYSTEM.md
+  /* Login/signup screens — aliases of the semantic tokens (docs/DESIGN-SYSTEM.md
      §10.2); kept as names so the auth screens don't need a rename pass. */
   --color-login-surface: var(--color-surface);
   --color-login-input-text: var(--color-text);
@@ -344,7 +344,7 @@
   --color-v2-warn: var(--v2-warn);
   --color-v2-neg-soft: var(--v2-neg-soft);
 
-  /* Type roles (DESIGN-SYSTEM.md §3) — `text-caption`, `text-body-sm`, …
+  /* Type roles (docs/DESIGN-SYSTEM.md §3) — `text-caption`, `text-body-sm`, …
      Size and line height together; weight stays a separate utility. 12 is
      the floor: nothing in the app renders smaller. */
   --text-display: 40px;
@@ -389,7 +389,7 @@
   --animate-scan-line: scan-line 2.2s ease-in-out infinite;
   --animate-shimmer: shimmer 1.6s ease-in-out infinite;
   --animate-fade-in: fade-in 0.35s ease;
-  /* Motion tokens (DESIGN-SYSTEM.md §4.4): fast 150 ms, base 250 ms, exit
+  /* Motion tokens (docs/DESIGN-SYSTEM.md §4.4): fast 150 ms, base 250 ms, exit
      ≈ 65 %. Decelerating curves; transform and opacity only. */
   --animate-route-in: route-in 250ms cubic-bezier(0, 0, 0, 1);
   --animate-panel-in: panel-in 250ms cubic-bezier(0.05, 0.7, 0.1, 1);
@@ -615,7 +615,7 @@ a:hover > .nova-nav-icon {
 }
 
 /* Visible focus ring for keyboard navigation — the brand blue/cyan, ≥ 3:1
-   on every surface in both themes (DESIGN-SYSTEM.md §2.2 focus-ring) */
+   on every surface in both themes (docs/DESIGN-SYSTEM.md §2.2 focus-ring) */
 :focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
@@ -776,7 +776,7 @@ button {
   display: none;
 }
 
-/* Chip (DESIGN-SYSTEM.md §6.5): a selected chip leads with a check, so
+/* Chip (docs/DESIGN-SYSTEM.md §6.5): a selected chip leads with a check, so
    selection is not color alone. The glyph is the IC.check path. */
 .chip-on::before {
   content: '';

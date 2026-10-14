@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-// Motion tokens (DESIGN-SYSTEM.md §4.4) for a figure moving to its new value.
+// Motion tokens (docs/DESIGN-SYSTEM.md §4.4) for a figure moving to its new value.
 const VALUE_MS = 450
 // A headline figure's first count from zero: long enough to notice.
 const INTRO_MS = 800

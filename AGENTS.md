@@ -45,9 +45,16 @@ physical IoT piggy bank.
 
 The two clients are still separate codebases, built and deployed
 independently. Do not reintroduce a single "responsive web app that is
-also the mobile app". See `ARCHITECTURE.md` for the backend/database/auth/
+also the mobile app". See `docs/ARCHITECTURE.md` for the backend/database/auth/
 sync design. For work inside either app, read that app's own `AGENTS.md`
 first — it has the concrete dev commands, structure, and conventions.
+
+**Documentation.** Technical documentation lives in `docs/` (index in
+`docs/README.md`); the `AGENTS.md` files and `CLAUDE.md` stay where tools
+look for them. A doc is kept only while it gives an agent current context
+the code and git history don't. When a change makes a doc wrong, fix the
+doc in the same commit. University deliverables (test formats, reports) are
+not kept in this repo.
 
 # UI IMPLEMENTATION RULES
 
@@ -56,8 +63,9 @@ source of truth; mentions of "the mockup" in the per-app `AGENTS.md` files
 are historical. The only fixed visual constraint is the palette of the S2
 Nova brand mark (`web/src/assets/logo-mark-*.png`,
 `android/app/src/main/res/drawable-nodpi/logo_mark_*.png`); everything else
-follows `DESIGN-SYSTEM.md` (reasoning in `DESIGN_AUDIT.md`). See `CLAUDE.md` for the full visual rules and the mandatory
-screenshot verification loop.
+follows `docs/DESIGN-SYSTEM.md` (reasoning in its Appendix A). See
+`CLAUDE.md` for the full visual rules and the mandatory screenshot
+verification loop.
 
 - Apply every visual change to both clients so they stay consistent.
 - Accessibility is required: text contrast ≥ 4.5:1 (UI boundaries ≥ 3:1),

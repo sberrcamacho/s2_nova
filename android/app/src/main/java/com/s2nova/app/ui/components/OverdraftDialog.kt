@@ -36,7 +36,7 @@ import androidx.compose.ui.window.Dialog
 import com.s2nova.app.ui.theme.NovaColors
 import com.s2nova.app.ui.theme.NovaType
 
-// Heads-up before Guardar leaves a wallet below zero (DESIGN-SYSTEM.md §6.11):
+// Heads-up before Guardar leaves a wallet below zero (docs/DESIGN-SYSTEM.md §6.11):
 // a `surface-raised` dialog with the warning tile, the balance before and
 // after the movement, and two full-width buttons. Revisar is the primary,
 // safe path; saving anyway stays one tap away as the secondary button.

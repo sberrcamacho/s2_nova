@@ -19,7 +19,7 @@ private val apiBaseUrl: String = localProperties.getProperty("API_BASE_URL", "ht
 // to the *Web* client, even when called from Android (a separate
 // Android-type OAuth client, registered with this app's package name +
 // signing SHA-1, is what authorizes this app to call Sign-In at all; see
-// ARCHITECTURE.md's Google Sign-In section). Empty by default — Google
+// docs/ARCHITECTURE.md's Google Sign-In section). Empty by default — Google
 // Sign-In is simply not offered until this is set in local.properties.
 private val googleWebClientId: String = localProperties.getProperty("GOOGLE_WEB_CLIENT_ID", "")
 
@@ -116,7 +116,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
 
     // JVM-only unit tests (no Robolectric/Espresso — no emulator in this
-    // pass; see android/AGENTS.md and TESTING.md's Phase 3 section).
+    // pass; see android/AGENTS.md and docs/TESTING.md's Phase 3 section).
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)

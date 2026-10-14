@@ -60,12 +60,12 @@ export function SidePanel({ title, onClose, footer, children }: SidePanelProps) 
 
 export const fieldLabelClass = 'text-caption font-semibold tracking-[.06em] text-ink-secondary'
 
-// The shared chip (DESIGN-SYSTEM.md §6.5).
+// The shared chip (docs/DESIGN-SYSTEM.md §6.5).
 export function chipClass(on: boolean): string {
   return flatClass(on)
 }
 
-// Button labels never wrap (DESIGN-SYSTEM.md): a row that runs out of room
+// Button labels never wrap (docs/DESIGN-SYSTEM.md): a row that runs out of room
 // moves whole buttons to the next line instead.
 export const secondaryButtonClass = 'cursor-pointer whitespace-nowrap rounded-[10px] border border-border-input px-4 py-2.5 text-body-sm font-semibold text-ink-secondary'
 export const primaryButtonClass = 'cursor-pointer whitespace-nowrap rounded-[10px] bg-primary px-4 py-2.5 text-body-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60'

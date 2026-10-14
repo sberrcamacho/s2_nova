@@ -423,7 +423,7 @@ internal fun splashDestinationFor(loggedIn: Boolean, onboardingDone: Boolean): S
     else -> NovaDestinations.HOME
 }
 
-// Route changes (DESIGN-SYSTEM.md §4.4), a fade-through on a horizontal
+// Route changes (docs/DESIGN-SYSTEM.md §4.4), a fade-through on a horizontal
 // axis: the old screen fades out in 90 ms while the new one slides a tenth of
 // the width in. Between bottom-bar tabs the direction follows the bar's
 // order (Inicio → Movimientos comes from the right, back to Inicio from the

@@ -164,7 +164,7 @@ fun Modifier.noRippleClick(onClick: () -> Unit): Modifier = this.clickable(
     onClick = onClick,
 )
 
-// Chip (DESIGN-SYSTEM.md §6.5): 40 dp tall on a 48 dp touch target, 16 dp
+// Chip (docs/DESIGN-SYSTEM.md §6.5): 40 dp tall on a 48 dp touch target, 16 dp
 // padding, `label` text on one line. Unselected: `surface` + `border-input`;
 // selected: `primary` fill + a leading check, so selection is not color
 // alone. It exposes its selected state (radio by default; pass
@@ -208,7 +208,7 @@ fun PillRow(content: @Composable () -> Unit) {
     ) { content() }
 }
 
-// One line of pills that scrolls sideways (DESIGN-SYSTEM.md §6.5): pills
+// One line of pills that scrolls sideways (docs/DESIGN-SYSTEM.md §6.5): pills
 // never wrap, an edge fades while there are more past it, and the pill at
 // `selectedIndex` (its position among `content`'s children, -1 for none)
 // is brought into view when the selection changes.
@@ -397,7 +397,7 @@ fun V2Button(
     }
 }
 
-// The FAB/CTA glow (DESIGN-SYSTEM.md §4.3): primary at 35 %, 0 8 24.
+// The FAB/CTA glow (docs/DESIGN-SYSTEM.md §4.3): primary at 35 %, 0 8 24.
 fun Modifier.androidShadow(color: Color): Modifier = this.drawBehind {
     drawIntoCanvas { canvas ->
         val paint = androidx.compose.ui.graphics.Paint()

@@ -135,7 +135,7 @@ export async function meRoutes(app: FastifyInstance) {
   });
 
   // The account model is deliberately minimal — name, email, and login
-  // method(s) only (see ARCHITECTURE.md's account-fields decision). Editing
+  // method(s) only (see docs/ARCHITECTURE.md's account-fields decision). Editing
   // name/email requires the current password so a stolen access token
   // alone can't take over the account; a Google-only user (no PASSWORD
   // identity yet) can still rename themselves, but must set a password

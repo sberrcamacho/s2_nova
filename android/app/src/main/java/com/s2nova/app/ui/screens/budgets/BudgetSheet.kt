@@ -142,7 +142,7 @@ data class BudgetEditDraft(
     }
 }
 
-// Budget create/edit as guided steps that never scroll (DESIGN-SYSTEM.md
+// Budget create/edit as guided steps that never scroll (docs/DESIGN-SYSTEM.md
 // §6.9). Category kind: Tipo → Categoría (tap advances) → Subcategoría
 // (only when the category has some; tap advances) → Límite (amount, name,
 // and Periodo / Billeteras rows that open their own sub-pages). Custom kind:

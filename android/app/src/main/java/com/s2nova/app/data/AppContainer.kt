@@ -30,7 +30,7 @@ import kotlinx.coroutines.launch
 
 // Manual DI container — a single set of repositories shared by every
 // screen. No DI framework, no ViewModels: this is intentional (see
-// android/AGENTS.md and ARCHITECTURE.md) — repositories are StateFlow-
+// android/AGENTS.md and docs/ARCHITECTURE.md) — repositories are StateFlow-
 // backed singletons, now calling the real backend via ApiClient instead of
 // holding an in-memory mock array, but the shape screens interact with
 // hasn't changed.

@@ -30,7 +30,7 @@ export function niceCeiling(max: number): number {
   return step * pow
 }
 
-// Bar chart for monthly figures (DESIGN-SYSTEM.md §2.3): a value axis with
+// Bar chart for monthly figures (docs/DESIGN-SYSTEM.md §2.3): a value axis with
 // units and `divider` gridlines, one group per month (series side by side,
 // always in the same order as the legend), a tooltip on hover, focus and
 // tap, a one-sentence summary for screen readers and a table alternative.
@@ -182,7 +182,7 @@ export function BarChart({
   )
 }
 
-// A card with nothing to show yet (DESIGN-SYSTEM.md §6.12): a glyph (the
+// A card with nothing to show yet (docs/DESIGN-SYSTEM.md §6.12): a glyph (the
 // Reportes one by default), what is missing and how to fill it, centered in the space the
 // content would take so the card keeps its size.
 export function EmptyChart({ title, description, icon, style }: { title: string; description: string; icon?: ReactNode; style?: CSSProperties }) {

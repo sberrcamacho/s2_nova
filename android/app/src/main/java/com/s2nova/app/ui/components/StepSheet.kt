@@ -61,7 +61,7 @@ import com.s2nova.app.ui.tr
 // segmented progress bar (the text carries the step, so it isn't color
 // alone), the step content, and the primary action fixed at the bottom.
 //
-// Sheets never need scrolling (DESIGN-SYSTEM.md §6.9): a choice never adds
+// Sheets never need scrolling (docs/DESIGN-SYSTEM.md §6.9): a choice never adds
 // content under itself. Options that depend on a choice open as a sub-page
 // (`subPage`) inside the same sheet, with the same header and a "Listo"
 // button; each step is designed to fit a 360×740 dp phone. The step content

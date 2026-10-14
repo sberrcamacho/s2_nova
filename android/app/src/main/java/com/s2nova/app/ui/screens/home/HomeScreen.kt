@@ -111,7 +111,7 @@ import kotlin.math.roundToInt
 
 private val TileShape = RoundedCornerShape(16.dp)
 
-// Inicio as a bento summary (DESIGN-SYSTEM.md §5.1 / §5.3): the balance
+// Inicio as a bento summary (docs/DESIGN-SYSTEM.md §5.1 / §5.3): the balance
 // hero, this month's Ingresos / Gastos tiles, the top unread alert with its
 // action, Presupuestos (the three riskiest) beside the next Programado, then
 // the 5 most recent movements as a flat list.
@@ -554,7 +554,7 @@ private fun LinkButton(text: String, onClick: () -> Unit) {
     }
 }
 
-// A tonal button (DESIGN-SYSTEM.md §6.3): 40 dp visual, 48 dp target.
+// A tonal button (docs/DESIGN-SYSTEM.md §6.3): 40 dp visual, 48 dp target.
 @Composable
 private fun TonalButton(text: String, onClick: () -> Unit) {
     Box(
@@ -783,7 +783,7 @@ private fun HeroBalanceBars(months: List<BalancePoint>, language: AppLanguage, f
     }
 }
 
-// StatTile (DESIGN-SYSTEM.md §6.7): overline label, the month's figure with
+// StatTile (docs/DESIGN-SYSTEM.md §6.7): overline label, the month's figure with
 // its sign in `title`, and the change against last month with an arrow.
 // Whether the change is good or bad decides its color, not its sign.
 @Composable
@@ -901,7 +901,7 @@ internal fun alertTone(alert: AppAlert, colors: NovaExtraColors): Color = when (
     is AppAlert.GoalPlanDue, is AppAlert.TxPlanned -> colors.warning
 }
 
-// Alert card (DESIGN-SYSTEM.md §6.10): a 4 dp leading bar in the semantic
+// Alert card (docs/DESIGN-SYSTEM.md §6.10): a 4 dp leading bar in the semantic
 // tone, the icon tile, a one-line title, a two-line body and an explicit
 // action ("Confirmar aporte" + "Omitir" for a due goal plan, "Revisar"
 // otherwise), plus a 48 dp dismiss button.
@@ -1084,7 +1084,7 @@ private fun NextPaymentTile(upcoming: List<UpcomingItem>, language: AppLanguage,
     }
 }
 
-// ListRow (DESIGN-SYSTEM.md §6.2): icon 40, one-line title and meta, and an
+// ListRow (docs/DESIGN-SYSTEM.md §6.2): icon 40, one-line title and meta, and an
 // intrinsic-width amount column; at least 64 dp tall.
 @Composable
 private fun RecentRow(

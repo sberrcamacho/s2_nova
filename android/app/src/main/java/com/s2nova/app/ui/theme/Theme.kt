@@ -20,7 +20,7 @@ data class NovaExtraColors(
     val negativeSoft: Color,
     val warning: Color,
     val warningSoft: Color,
-    // Balance hero (DESIGN-SYSTEM.md §2.2): a three-stop diagonal gradient
+    // Balance hero (docs/DESIGN-SYSTEM.md §2.2): a three-stop diagonal gradient
     // (heroMid at heroMidStop) plus a radial glow in the top-right corner.
     val heroFrom: Color,
     val heroMid: Color,

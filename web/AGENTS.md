@@ -7,15 +7,18 @@ relates to `android/`. This app has its own login/register screens
 (`src/auth/`, email/password + Google Sign-In) and talks to the real
 backend over `VITE_API_URL` (`src/lib/apiClient.ts`) — `src/services/*.ts`
 are thin wrappers around `fetch()` calls, not mock data (see
-`ARCHITECTURE.md` §9). `ProtectedRoute` gates every dashboard route behind
+`docs/ARCHITECTURE.md` §9). `ProtectedRoute` gates every dashboard route behind
 a real session; a signed-out visitor at `/` sees the public front page
 (`src/landing/LandingPage.tsx`, via `HomeRoute`), and any other route sends
 them to `/login`.
 
-**Visual source of truth**: `design_handoff_s2_nova_v2/S2 Nova Dashboard v2.dc.html`
-(specs in `design_handoff_s2_nova_v2/docs/` — `WEB_PARITY.md` lists what
-Web must match on Android). Screens are being reconciled against it one
-by one; a screen not yet migrated is unverified.
+**Visual source of truth**: `docs/DESIGN-SYSTEM.md`. The v2 mockups
+(`design_handoff_s2_nova_v2/`) were removed; "the mockup" below is history
+that explains why a screen looks the way it does.
+
+The public landing page (`src/landing/LandingPage.tsx`) links "Descargar
+para Android" (Android card and closing call to action) to the latest
+GitHub Release's `s2-nova.apk` (`ANDROID_APK_URL`, `docs/RELEASE_ANDROID.md`).
 
 **v2 parity status** (target: Android `8751c40`). Done on Web: the v2 data
 layer (taxonomy, multi-currency), Inicio, Movimientos, Planes
@@ -54,7 +57,7 @@ Reportes** — plus **Ajustes** in the footer. Pre-v2 paths (`/overview`,
 `/transactions`, `/budgets`, `/goals`, `/analytics`, `/insights`,
 `/reports`, `/settings`) redirect in `routes.tsx`.
 
-- **Inicio** (`InicioPage.tsx`) — bento (DESIGN-SYSTEM.md §5.3, F2), a
+- **Inicio** (`InicioPage.tsx`) — bento (docs/DESIGN-SYSTEM.md §5.3, F2), a
   12-column grid driven by a container query on the content width (12
   columns from 1024 px, 2 from 640 px, 1 below). Balance hero (sum of
   wallets, eye toggle for the shared hide-amounts preference, wallets pill
@@ -89,7 +92,7 @@ Reportes** — plus **Ajustes** in the footer. Pre-v2 paths (`/overview`,
   (`state/useIdleLogout.ts`, Ajustes › Seguridad row — not in the web
   mockup, parity with Android), when a request finds the session over
   (`apiClient.setSessionEndedHandler`), and in every tab at once
-  (`BroadcastChannel`). See ARCHITECTURE.md §3.
+  (`BroadcastChannel`). See docs/ARCHITECTURE.md §3.
 - **Planes** (`PlanesPage.tsx`) — v2-migrated tab host,
   `?tab=presupuestos|metas|prestamos` (+ `&side=lent|borrowed`), with the
   mockup's header button ("Nuevo presupuesto" / "Nueva meta" / "Registrar
@@ -101,7 +104,13 @@ Reportes** — plus **Ajustes** in the footer. Pre-v2 paths (`/overview`,
   Periodo tiles with inline sections — PLANS.md §4), `GoalModal` (icon,
   initial amount, target date, inline "Aporte periódico"; PUT
   /goals/:id/plan only when the plan changed, since it restarts the
-  schedule) and `GoalPayModal` ("Abonar"). Deleting a budget or goal goes
+  schedule) and `GoalPayModal` ("Abonar": "Faltan $X de $Y", quick-amount
+  chips "Completar" and "Aporte del plan", the wallet starting on the plan's
+  or the last one used to abonar, Enter submits; more than what is left
+  shows "Máximo $X" and disables the button, and a 422
+  `GOAL_EXCEEDS_REMAINING` updates that figure from `ApiError.details`). A
+  reached goal has no Abonar button. Planes opens on the last tab used
+  (`planes.tab` in localStorage) unless `?tab=` says otherwise. Deleting a budget or goal goes
   through Kit's two-step `ConfirmDialog`; a goal's money returns to its
   origin wallets. Préstamos (`components/LoansTab.tsx`) creates and edits
   loans in `planes/LoanModal.tsx` (the mockup's planDraft loan variant;
@@ -171,8 +180,8 @@ every interval and two receipts with real files. Its dates are relative
 to today's month, so the current month always has its salary. Balances,
 goal progress, Programado and plan counts and settled loans follow from
 the movements dated up to today. It mirrors the backend's balance,
-budget, goal, alert, summary, titles and CSV export rules, so everything
-is interactive. `user.isGuest` shows the "Modo invitado" banner above every
+budget, goal (including the cap on contributions), alert, summary, titles
+and CSV export rules, so everything is interactive. `user.isGuest` shows the "Modo invitado" banner above every
 page (`DashboardLayout`); the tours are on. Signing out, reloading, or
 reaching Login/Crear cuenta (the banner's button) drops the account.
 Ajustes hides what only a real account has (Editar perfil, Contraseña,
@@ -189,7 +198,7 @@ and a new or edited "Yo presté". Credit-card wallets and scheduled
 movements never ask; going ahead anyway is allowed. A goal's initial amount
 moves no wallet, so it never asks.
 
-Product tours (`components/tour/`, DESIGN-SYSTEM.md §6.13): a general
+Product tours (`components/tour/`, docs/DESIGN-SYSTEM.md §6.13): a general
 tour on the first visit to Inicio and one per screen (Movimientos, Planes,
 Reportes, Billeteras, and Nuevo movimiento over its side panel). Pages
 tag what a step highlights with `data-tour="…"` and ask for their tour
@@ -216,7 +225,7 @@ wallet can't be deleted.
 
 The header's "Nuevo movimiento" button (and the `N` shortcut) opens
 `components/panels/NewTransactionPanel.tsx` inside `SidePanel.tsx` (the
-mockup's 460px side panel), in progressive disclosure (DESIGN-SYSTEM.md
+mockup's 460px side panel), in progressive disclosure (docs/DESIGN-SYSTEM.md
 §5.3, F3): type, the amount hero with typed arithmetic and the
 Teclado/Calculadora switch, "Elige una categoría" (a drill-in page in the
 panel, `CategoryPicker.tsx`: the categories, then the subcategories, each with
@@ -235,7 +244,7 @@ uploaded after the movement is created. Planes' forms are centered
 modals instead, as in the mockup.
 
 v2 screens use `--v2-*` tokens (`bg-v2-surface`, `text-v2-dim`, …) in
-`index.css`, whose values are the DESIGN-SYSTEM.md semantic tokens since F1
+`index.css`, whose values are the docs/DESIGN-SYSTEM.md semantic tokens since F1
 (`v2-accent` = primary fill, `v2-accent2` = link text, `v2-accent-line` =
 selected boundaries; never use `v2-accent` as text on a surface), `line-height: normal`
 like the mockup, and `components/v2/` (CategoryMark with the mockup's
@@ -254,7 +263,7 @@ documented path is missing, or when the repository contradicts this guide.
 - `src/components/ui/`, `src/components/v2/` - Shared, reusable building blocks used across dashboard pages
 - `src/state/` - App-wide React context (auth, theme, toast, mock app data) plus `useCurrency`/`useTranslation`. `useCurrency` is bound to the user's principal currency (`format` for totals, `formatIn(amount, code)` for a wallet's or movement's own currency — `lib/currency.ts` is the mockup's `fmtCur`); `useTranslation` to `user.preferences.language`. Use these instead of importing `lib/currency.ts` or hardcoding copy directly
 - `src/lib/i18n/` - The hand-rolled `es`/`en` dictionary (`translations.ts`) with every visible string, keyed by screen (`nm.*`, `mv.*`, `bud.*`, `goal.*`, `loan.*`, `aj.*`, `cat.*`, `cur.*`, `api.*`…; `{0}` templates filled with `fill()`). Components use `useTranslation()`'s `t()`; code outside React (copy helpers, formatters, Kit defaults) uses `tr()`, which reads the module-level `currentLanguage()` that `AuthProvider` sets before its children render (the user's preference, or the last one used — localStorage `s2nova.language` — while signed out; guest mode starts in it). Built-in category names come from the taxonomy's `nameEn` via `lib/backendCategories.ts`'s `displayName()`/`categoryName()`/`categoryLabel()` (a renamed or custom category keeps the user's text). Backend error sentences are mapped to dictionary entries in `apiClient.localizeServerMessage`. Dates (`lib/date.ts`, `lib/nuevoMovimiento.ts` `fmtDate`, `lib/inicio.ts` months) follow the app language; amounts keep the currency's own grouping. Free-form seeded mock content (transaction descriptions/merchants) is intentionally left untranslated — same principle as not translating a user's own data.
-- `src/services/` - Thin wrappers around `apiClient.ts` fetch calls to the real backend (see `ARCHITECTURE.md` §9); each file maps the backend's wire shape (UUID `categoryId`, uppercase enums) to Web's existing domain types Categories follow the unified taxonomy (`design_handoff_s2_nova_v2/docs/CATEGORY_SYSTEM.md`): `lib/taxonomy.json` is generated from `design_handoff_s2_nova_v2/s2-categories.js` by the root `scripts/gen-taxonomy.mjs` (never edit it by hand; `lib/taxonomy.ts` types it and exports `PLAN_ICONS`), and `lib/backendCategories.ts` is the one registry every screen resolves names, colors and glyphs through (`useCategories()`), keyed by the taxonomy's dotted id (`exp.food.groceries`, `inc.other` — the backend's `Category.slug`); the backend UUID only appears on the wire. An unknown slug throws, so never send pre-taxonomy ids like `'other'`. `categoryService` backs Ajustes › Categorías; `currencyService` backs Ajustes › Monedas and the wallet modal's currency pills. `src/data/` holds `budgets.ts`'s `monthlyIncomeTarget` and legacy label metadata used only by the pre-v2 `components/ui/CategoryIcon.tsx`/`TransactionRow`; v2 screens draw categories with `components/v2/CategoryMark`. Functional parity (root AGENTS.md) supersedes the old "Web is read-only" rule: every write Android can do must exist on Web, landing screen by screen in whatever shell the mockup uses (side panel, centered modal). So far: `transactionService.addTransaction` ("Nuevo movimiento", goal contributions, new loans), `transactionService.deleteTransaction` (Movimientos' "Eliminar", loans), `transactionService.settleLoan` ("Registrar abono"), `transactionService.updateLoan`, `budgetService.createBudget`/`updateBudget`/`deleteBudget`, `goalService.createGoal`/`updateGoal`/`deleteGoal`, `recurringService.confirmOccurrence`/`skipOccurrence`, and the `blurBalance` preference. `apiClient` throws `ApiError` with the HTTP `status` (e.g. the 409 for a budget category that's taken). Each is a thin call — the backend applies every balance/goal side effect, so Web never re-implements them client-side. `summaryService.ts` and `alertService.ts` read the shared server aggregates and alert rules; never re-derive those figures from the client's partial transaction list.
+- `src/services/` - Thin wrappers around `apiClient.ts` fetch calls to the real backend (see `docs/ARCHITECTURE.md` §9); each file maps the backend's wire shape (UUID `categoryId`, uppercase enums) to Web's existing domain types Categories follow the unified taxonomy (`design_handoff_s2_nova_v2/docs/CATEGORY_SYSTEM.md`): `lib/taxonomy.json` is generated from `design_handoff_s2_nova_v2/s2-categories.js` by the root `scripts/gen-taxonomy.mjs` (never edit it by hand; `lib/taxonomy.ts` types it and exports `PLAN_ICONS`), and `lib/backendCategories.ts` is the one registry every screen resolves names, colors and glyphs through (`useCategories()`), keyed by the taxonomy's dotted id (`exp.food.groceries`, `inc.other` — the backend's `Category.slug`); the backend UUID only appears on the wire. An unknown slug throws, so never send pre-taxonomy ids like `'other'`. `categoryService` backs Ajustes › Categorías; `currencyService` backs Ajustes › Monedas and the wallet modal's currency pills. `src/data/` holds `budgets.ts`'s `monthlyIncomeTarget` and legacy label metadata used only by the pre-v2 `components/ui/CategoryIcon.tsx`/`TransactionRow`; v2 screens draw categories with `components/v2/CategoryMark`. Functional parity (root AGENTS.md) supersedes the old "Web is read-only" rule: every write Android can do must exist on Web, landing screen by screen in whatever shell the mockup uses (side panel, centered modal). So far: `transactionService.addTransaction` ("Nuevo movimiento", new loans), `goalService.contribute` ("Abonar", with an Idempotency-Key), `transactionService.deleteTransaction` (Movimientos' "Eliminar", loans), `transactionService.settleLoan` ("Registrar abono"), `transactionService.updateLoan`, `budgetService.createBudget`/`updateBudget`/`deleteBudget`, `goalService.createGoal`/`updateGoal`/`deleteGoal`, `recurringService.confirmOccurrence`/`skipOccurrence`, and the `blurBalance` preference. `apiClient` throws `ApiError` with the HTTP `status` (e.g. the 409 for a budget category that's taken) and the rest of the error body in `details` (e.g. `{ code: 'GOAL_EXCEEDS_REMAINING', remaining }`). Each is a thin call — the backend applies every balance/goal side effect, so Web never re-implements them client-side. `summaryService.ts` and `alertService.ts` read the shared server aggregates and alert rules; never re-derive those figures from the client's partial transaction list.
 - `src/index.css` - Global CSS entrypoint, Tailwind CSS v4 import, and the S2 Nova design tokens (light/dark palettes)
 - `index.html` - Vite HTML shell containing the `#root` element and loading `src/main.tsx`
 - `package.json` - Project dependencies and the Vite build, development, preview, and formatting scripts
@@ -296,7 +305,7 @@ mark ever changes, rather than re-deriving one from the other.
 panel (always the dark hero's violet in both themes — the app theme only
 affects the form column) plus a 340px form column, built as self-contained
 components rather than through a shared shell. Their `--color-login-*`
-tokens are aliases of the semantic tokens (DESIGN-SYSTEM.md §10.2); use
+tokens are aliases of the semantic tokens (docs/DESIGN-SYSTEM.md §10.2); use
 the semantic tokens for anything new. `GoogleSignInButton` (`src/auth/`) takes an
 optional `label` prop so Register can show "Registrarse con Google" instead
 of Login's default text.

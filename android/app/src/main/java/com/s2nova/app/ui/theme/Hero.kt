@@ -11,7 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 
-// The balance hero's surface (DESIGN-SYSTEM.md §2.2 "Hero card"): the
+// The balance hero's surface (docs/DESIGN-SYSTEM.md §2.2 "Hero card"): the
 // theme's diagonal brand gradient, a 1 px top highlight and a hairline
 // border. The hero is the one place the brand gradient appears.
 @Composable

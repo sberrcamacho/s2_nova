@@ -1,4 +1,4 @@
-// Thin fetch() wrapper around the real backend (see ARCHITECTURE.md §9).
+// Thin fetch() wrapper around the real backend (see docs/ARCHITECTURE.md §9).
 // The access token lives only in memory — never localStorage — so an XSS
 // bug can't exfiltrate a persisted token; the refresh token never touches
 // JS at all, it's the backend's httpOnly cookie (see auth.ts's

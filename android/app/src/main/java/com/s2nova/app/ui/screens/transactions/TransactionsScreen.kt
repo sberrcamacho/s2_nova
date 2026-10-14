@@ -199,7 +199,7 @@ fun TransactionsScreen(
                     }
                 }
             } else {
-                // Flat layout (DESIGN-SYSTEM.md §5.1): one `surface` card per day
+                // Flat layout (docs/DESIGN-SYSTEM.md §5.1): one `surface` card per day
                 // with `divider` between rows. The bottom padding clears the FAB.
                 LazyColumn(contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 56.dp)) {
                     val principal = AppContainer.currencyRepository.principal

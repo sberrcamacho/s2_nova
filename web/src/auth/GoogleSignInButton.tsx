@@ -5,7 +5,7 @@ import { useTranslation } from '@/state/useTranslation'
 
 // Minimal surface of the Google Identity Services JS SDK this component
 // needs — the SDK attaches itself to `window.google` once its script tag
-// loads, there's no npm package for it (see ARCHITECTURE.md §7).
+// loads, there's no npm package for it (see docs/ARCHITECTURE.md §7).
 declare global {
   interface Window {
     google?: {

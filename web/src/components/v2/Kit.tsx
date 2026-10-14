@@ -210,7 +210,7 @@ function writeCalcPref(on: boolean) {
   }
 }
 
-// Chip (DESIGN-SYSTEM.md §6.5): 32 px tall, 16 px padding, `label` text on
+// Chip (docs/DESIGN-SYSTEM.md §6.5): 32 px tall, 16 px padding, `label` text on
 // one line. Unselected: `surface` + `border-input`; selected: `primary` fill
 // plus a leading check (`.chip-on`), so selection is not color alone.
 export function flatClass(on: boolean): string {
@@ -234,7 +234,7 @@ function edgeFade(left: boolean, right: boolean): string | undefined {
   return `linear-gradient(to right, ${left ? 'transparent, #000 32px' : '#000'}, ${right ? '#000 calc(100% - 32px), transparent' : '#000'})`
 }
 
-// One line of chips that scrolls sideways (DESIGN-SYSTEM.md §6.5): chips
+// One line of chips that scrolls sideways (docs/DESIGN-SYSTEM.md §6.5): chips
 // never wrap, an edge fades while there is more past it, and the selected
 // chip is brought into view when the selection changes.
 export function ChipStrip({ children, label, role = 'group' }: { children: ReactNode; label?: string; role?: 'group' | 'radiogroup' }) {
@@ -535,7 +535,7 @@ export function ConfirmDialog({ title, lines, ack, cta, onCancel, onConfirm }: {
 }
 
 // One-step heads-up before an action that's allowed but probably not
-// intended (Guardar that leaves a wallet below zero), DESIGN-SYSTEM.md §6.11:
+// intended (Guardar that leaves a wallet below zero), docs/DESIGN-SYSTEM.md §6.11:
 // the warning tile, a short message, optional `details` (the balance
 // breakdown) and two buttons. Going back (`cancel`) is the primary, safe
 // path and takes focus; the action stays one click away as the secondary.

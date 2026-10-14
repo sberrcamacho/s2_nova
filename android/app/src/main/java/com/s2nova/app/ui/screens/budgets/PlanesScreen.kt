@@ -365,7 +365,7 @@ private fun BudgetsTab() {
     }
 }
 
-// BudgetBar (DESIGN-SYSTEM.md §6.8) inside a flat card: the name with the
+// BudgetBar (docs/DESIGN-SYSTEM.md §6.8) inside a flat card: the name with the
 // percentage and its state icon on the first line, the scope and period
 // below, the 8 dp bar, then "spent de limit" with the state in words. The
 // tone never travels by color alone. The card opens the budget's sheet and

@@ -3,7 +3,7 @@ package com.s2nova.app.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // Shared with web/src/index.css so both platforms share one visual
-// identity; DESIGN-SYSTEM.md §2 is the source for every value. Keep the two
+// identity; docs/DESIGN-SYSTEM.md §2 is the source for every value. Keep the two
 // in sync.
 
 // Brand primitives, sampled from the logo mark. Never recolor them; screens
@@ -68,11 +68,11 @@ val DarkAccentText = Color(0xFFC29BFF) // link, 8.23 (the electric violet, light
 val LightDividerSubtle = Color(0xFFEFEEF4)
 val DarkDividerSubtle = Color(0xFF1F1D2B)
 
-// Track of progress bars and input fills (DESIGN-SYSTEM.md §2.2 surface-sunken).
+// Track of progress bars and input fills (docs/DESIGN-SYSTEM.md §2.2 surface-sunken).
 val LightSurfaceSunken = Color(0xFFF0EFF5)
 val DarkSurfaceSunken = Color(0xFF1F1D2C)
 
-// Brand-derived tokens with no Material slot (DESIGN-SYSTEM.md §2.2).
+// Brand-derived tokens with no Material slot (docs/DESIGN-SYSTEM.md §2.2).
 val PrimaryPressed = BrandColors.indigo
 val LightAccent = BrandColors.blue // 6.52
 val DarkAccent = BrandColors.cyan // 9.42
@@ -109,7 +109,7 @@ val NavyPanel = Color(0xFF0C0B14)
 // Login/signup surfaces and the password-strength meter. The primary,
 // focus border and link colors of these screens are the semantic brand
 // tokens (Theme.kt maps loginPrimary/loginBorderFocus/loginHighlight onto
-// them, DESIGN-SYSTEM.md §10.2).
+// them, docs/DESIGN-SYSTEM.md §10.2).
 val LoginSurfaceDark = Color(0xFF0C0B14)
 val LoginSurfaceLight = Color(0xFFF6F6F9)
 val LoginTextMutedDark = Color(0x80FFFFFF) // rgba(255,255,255,.50)

@@ -202,7 +202,7 @@ export async function budgetRoutes(app: FastifyInstance) {
   });
 
   // Computes a split suggestion and stores it — never creates real budgets.
-  // See ARCHITECTURE.md §"Budget suggestions": a recommendation is only
+  // See docs/ARCHITECTURE.md §"Budget suggestions": a recommendation is only
   // ever a stored suggestion; turning it into real budgets is a separate,
   // explicit user action via the normal POST /budgets endpoint.
   app.post("/budgets/recommendations", { preHandler: app.authenticate }, async (request, reply) => {

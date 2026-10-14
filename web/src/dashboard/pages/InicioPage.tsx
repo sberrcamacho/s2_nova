@@ -95,7 +95,7 @@ function useInicioData(version: number) {
   return { data, syncFailed, refresh }
 }
 
-// Inicio as a bento summary (DESIGN-SYSTEM.md §5.2 / §5.3), laid out on the
+// Inicio as a bento summary (docs/DESIGN-SYSTEM.md §5.2 / §5.3), laid out on the
 // page's own width: 12 columns from 1024 px (hero 8 + stats 4; Alertas,
 // Presupuestos and Metas 4 each; Movimientos recientes 8 + Próximos 14 días
 // 4), 2 columns from 640 px and a single column below.
@@ -534,7 +534,7 @@ function CardHead({ title, subtitle, link, onLink }: { title: string; subtitle?:
   )
 }
 
-// StatTile (DESIGN-SYSTEM.md §6.7): overline label, the month's figure with
+// StatTile (docs/DESIGN-SYSTEM.md §6.7): overline label, the month's figure with
 // its sign in `title`, and the change against last month with an arrow.
 // Whether the change is good or bad decides its color, not its sign.
 function StatTile({
@@ -683,7 +683,7 @@ function alertTone(alert: AppAlert): string {
   }
 }
 
-// Alert card (DESIGN-SYSTEM.md §6.10): a 4 px leading bar in the semantic
+// Alert card (docs/DESIGN-SYSTEM.md §6.10): a 4 px leading bar in the semantic
 // tone, the icon tile, a one-line title, a two-line body and an explicit
 // action, plus a dismiss button.
 function AlertCard({
@@ -754,7 +754,7 @@ function AlertCard({
   )
 }
 
-// Tonal button (DESIGN-SYSTEM.md §6.3): primary-soft fill, 40 px on Web.
+// Tonal button (docs/DESIGN-SYSTEM.md §6.3): primary-soft fill, 40 px on Web.
 const TONAL = 'h-9 cursor-pointer whitespace-nowrap rounded-[10px] bg-accent-soft px-4 text-label font-semibold text-on-primary-soft hover:brightness-95'
 
 // Movimientos recientes as a table: the movement (icon, title, meta), its

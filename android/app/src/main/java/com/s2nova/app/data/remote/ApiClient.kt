@@ -69,7 +69,7 @@ object ApiClient {
 
     // Authenticated — attaches the stored access token to every request and
     // transparently refreshes+retries once on a 401 (see Authenticator
-    // below), matching ARCHITECTURE.md §6's rotate-on-refresh design.
+    // below), matching docs/ARCHITECTURE.md §6's rotate-on-refresh design.
     val api: ApiService by lazy {
         val sessionStore = SessionStore.getInstance(appContext)
         val client = OkHttpClient.Builder()

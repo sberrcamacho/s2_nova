@@ -21,7 +21,7 @@ declare module "fastify" {
 // Every route outside auth/*, health*, and the public product-barcode
 // lookup should use this as a preHandler. userId always comes from the
 // verified token, never from a client-supplied field — see
-// ARCHITECTURE.md §"Security model" / backend/AGENTS.md.
+// docs/ARCHITECTURE.md §"Security model" / backend/AGENTS.md.
 const authPlugin: FastifyPluginAsync = async (app) => {
   app.decorateRequest("userId", undefined);
   app.decorateRequest("sessionId", undefined);

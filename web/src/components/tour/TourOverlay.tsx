@@ -12,7 +12,7 @@ export interface Rect {
 }
 
 // Room around the highlighted element, the gap to the popover and the
-// screen gutter (DESIGN-SYSTEM.md §6.13).
+// screen gutter (docs/DESIGN-SYSTEM.md §6.13).
 const PAD = 6
 const GAP = 14
 const MARGIN = 16

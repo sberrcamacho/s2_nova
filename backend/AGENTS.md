@@ -2,9 +2,9 @@
 
 Node.js + TypeScript + Fastify API, backed by PostgreSQL via Prisma — the
 one shared backend `android/` and `web/` both talk to. See the root
-`ARCHITECTURE.md` for the full design rationale (why Fastify/Prisma/JWT
+`docs/ARCHITECTURE.md` for the full design rationale (why Fastify/Prisma/JWT
 were chosen, the schema, auth flows, sync strategy, and the phased
-migration plan). This file is the day-to-day dev reference; `ARCHITECTURE.md`
+migration plan). This file is the day-to-day dev reference; `docs/ARCHITECTURE.md`
 is the "why".
 
 ## Local development
@@ -81,7 +81,7 @@ and reuse it on retry, and the web client gives up on a request after 75 s.
 ## Project structure
 
 - `prisma/schema.prisma` — the database schema (source of truth for the
-  DB shape; see `ARCHITECTURE.md` §4 for the design behind it)
+  DB shape; see `docs/ARCHITECTURE.md` §4 for the design behind it)
 - `prisma/seed.ts` — seeds (or refreshes) the global (`user_id = null`)
   category taxonomy every user sees from `src/lib/taxonomy.json`. That
   JSON, and the copies in `web/src/lib/` and `android/app/src/main/assets/`,
@@ -126,7 +126,13 @@ and reuse it on retry, and the web client gives up on a request after 75 s.
 - `src/lib/budgetProgress.ts`, `src/lib/goalProgress.ts` — the single
   spent/percentage/status computation for budgets (CATEGORY and CUSTOM
   kinds, monthly or custom range) and goals (incl. periodic contribution
-  plans), shared by their routes and the alert rules.
+  plans), shared by their routes and the alert rules. No contribution may
+  pass what a goal still needs: `lockGoalRemaining` (row lock + remaining)
+  and `goalExceedsRemaining` (422 `{ code: "GOAL_EXCEEDS_REMAINING",
+  remaining }`) guard `/goals/:id/contribute`, `plan/confirm` and goal-linked
+  `POST`/`PATCH /transactions`; plan contributions are cut to what is left
+  (`docs/ARCHITECTURE.md` §5). An error can carry machine-readable fields in
+  `payload`, which `app.ts`'s error handler merges into the body.
 - `src/lib/movements.ts` — how a movement moves wallet balances and its
   wire shape, shared by transactions, Programados and goal plans.
   `src/lib/currency.ts` — multi-currency: each wallet and movement has a
@@ -141,12 +147,12 @@ and reuse it on retry, and the web client gives up on a request after 75 s.
   `GET /products/:barcode` lookup requires a valid access token; derive
   `userId` from the verified token, never from a client-supplied field —
   this is the actual enforcement of "a user can never read another user's
-  data," not a convenience default (`ARCHITECTURE.md` §"Security model").
+  data," not a convenience default (`docs/ARCHITECTURE.md` §"Security model").
 - Request/response validation goes through Zod schemas, not ad-hoc
   `if` checks — reject malformed input before it reaches Prisma.
 - Money is `BigInt` minor units in the DB and over the wire in internal
   code; only the route layer converts to/from the plain `number` shape
-  the clients already expect (see `ARCHITECTURE.md` §4, "Monetary
+  the clients already expect (see `docs/ARCHITECTURE.md` §4, "Monetary
   values").
 - Secrets live in `.env` (gitignored) only — never hardcode a DB URL,
   JWT secret, or the Google OAuth client secret in source.

@@ -181,7 +181,7 @@ fun ReportsScreen() {
     }
 }
 
-// Segmented control (DESIGN-SYSTEM.md §6.5), the same as Nuevo movimiento's.
+// Segmented control (docs/DESIGN-SYSTEM.md §6.5), the same as Nuevo movimiento's.
 @Composable
 private fun RangeSegmented(range: Int, onPick: (Int) -> Unit, modifier: Modifier = Modifier) {
     val t = rememberStrings()
@@ -234,7 +234,7 @@ private fun CardTitle(text: String, subtitle: String? = null) {
     }
 }
 
-// A card with nothing to show yet (DESIGN-SYSTEM.md §6.12): the Reportes
+// A card with nothing to show yet (docs/DESIGN-SYSTEM.md §6.12): the Reportes
 // glyph, what is missing and how to fill it, centered in the space the
 // content would take so the card keeps its size.
 @Composable
@@ -341,7 +341,7 @@ private fun StatTile(label: String, value: String?, delta: Delta?, modifier: Mod
     }
 }
 
-// "Ingresos vs gastos" (DESIGN-SYSTEM.md §2.3): grouped bars in a fixed
+// "Ingresos vs gastos" (docs/DESIGN-SYSTEM.md §2.3): grouped bars in a fixed
 // order with a signed legend, a value axis with units over `divider`
 // gridlines, and a tap on a month shows its figures in the readout above
 // the plot (the last month by default). TalkBack gets a summary sentence

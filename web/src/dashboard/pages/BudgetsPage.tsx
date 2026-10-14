@@ -23,7 +23,7 @@ const TONE_VAR: Record<Tone, string> = { neg: 'var(--color-negative)', warn: 'va
 const TONE_ICON: Record<Tone, string> = { neg: ICON_PATHS.alertCircle, warn: ICON_PATHS.warn, pos: ICON_PATHS.check }
 
 // Planes › Presupuestos: one flat card per budget, laid out as a BudgetBar
-// (DESIGN-SYSTEM.md §6.8): the name with the percentage and its state icon,
+// (docs/DESIGN-SYSTEM.md §6.8): the name with the percentage and its state icon,
 // the scope and period, the 8 px bar, then "spent de limit" with the state
 // in words, so the tone never travels by color alone. A card opens
 // the budget modal; the header's "Nuevo presupuesto" (PlanesPage) creates one.
