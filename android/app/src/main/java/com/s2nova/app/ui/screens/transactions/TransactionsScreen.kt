@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.data.AppContainer
+import com.s2nova.app.data.repository.displayName
 import com.s2nova.app.data.fmtDate
 import com.s2nova.app.data.formatApprox
 import com.s2nova.app.ui.screens.addtransaction.shortWallet
@@ -145,7 +146,7 @@ fun TransactionsScreen(
         typeOk && (cats.isEmpty() || txn.category in cats) && (
             query.isBlank() || matchesSearch(
                 listOfNotNull(
-                    txn.description, txn.merchant, txn.counterpartyName,
+                    txn.description, txn.displayName(categories), txn.merchant, txn.counterpartyName,
                     categories.label(if (txn.type == TransactionType.TRANSFER) CategoryRepository.TRANSFER else txn.subcategoryId ?: txn.category),
                     wallets.firstOrNull { it.id == txn.walletId }?.name,
                 ).joinToString(" "),

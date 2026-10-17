@@ -308,7 +308,7 @@ fun AddTransactionScreen(
                 st.sub = tx.subcategoryId
                 st.catPicked = true
                 st.expr = AmountPad.numStr(tx.amount)
-                st.title = tx.description
+                st.title = com.s2nova.app.data.repository.displayTitle(tx.description, tx.type, tx.subcategoryId ?: tx.category, AppContainer.categoryRepository)
                 st.note = tx.note.orEmpty()
                 st.date = LocalDate.parse(tx.date)
                 st.time = tx.time
@@ -346,8 +346,10 @@ fun AddTransactionScreen(
             s.titleSuggested = true
         }
         val res = AppContainer.transactionRepository.titleSuggestions(s.type, cat, if (cat != null) s.sub else null)
-        s.titleHints = res.titles
-        if (cat != null && res.last != null && !s.titleTouched) s.title = res.last
+        // A past suggested title reads in the current language.
+        val shown = { title: String -> com.s2nova.app.data.repository.displayTitle(title, s.type, if (cat != null) s.sub ?: cat else null, AppContainer.categoryRepository) }
+        s.titleHints = res.titles.map(shown).distinct()
+        if (cat != null && res.last != null && !s.titleTouched) s.title = shown(res.last)
     }
     if (s.walletId == null || wallets.none { it.id == s.walletId }) s.walletId = wallets.first().id
     val wallet = wallets.first { it.id == s.walletId }

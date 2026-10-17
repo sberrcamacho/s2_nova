@@ -425,6 +425,9 @@ describe("transaction routes", () => {
       expect(await search("transporte")).toEqual(["Viaje en app"]);
       expect(await search("nequi")).toEqual(["Viaje en app"]);
       expect(await search("efectivo")).toEqual(["Café"]);
+      // A built-in category's English name finds it too.
+      expect(await search("transportation")).toEqual(["Viaje en app"]);
+      expect(await search("Food")).toEqual(["Café"]);
     });
   });
 

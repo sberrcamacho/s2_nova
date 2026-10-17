@@ -8,7 +8,7 @@ import { OverdraftWarning } from '@/components/v2/OverdraftWarning'
 import { CategoryPicker } from '@/components/panels/CategoryPicker'
 import { StepChoiceRow, StepOptionGroup, StepOptionRow } from '@/components/v2/Steps'
 import { AjSwitch } from '@/dashboard/components/ajustes/AjustesUi'
-import { categoryColor, categoryIdFor, categoryGlyph, categoryLabel, categoryName, childCategories, isInCategory, parentCategories, parentOf, useCategories } from '@/lib/backendCategories'
+import { categoryColor, categoryIdFor, categoryGlyph, categoryLabel, categoryName, childCategories, displayTitle, isInCategory, parentCategories, parentOf, useCategories } from '@/lib/backendCategories'
 import { currencyInfo, formatMoney, referenceRate } from '@/lib/currency'
 import { todayISO } from '@/lib/date'
 import { shortWallet } from '@/lib/movimientos'
@@ -154,7 +154,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
   const [sub, setSub] = useState<CategoryId | null>(e0Parent && e0Parent !== e0?.category ? e0!.category : null)
   const [catDone, setCatDone] = useState(!!e0)
   const [expr, setExpr] = useState(e0 ? exprOf(e0.amount) : '')
-  const [title, setTitle] = useState(e0?.description ?? '')
+  const [title, setTitle] = useState(e0 ? displayTitle(e0) : '')
   // The title starts as a suggestion (a generic one the first time, then the
   // one used last) until the user types their own.
   const titleTouched = useRef(!!e0)
@@ -215,8 +215,10 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
       }
       const res = await transactionService.getTitleSuggestions({ type: type === 'income' ? 'INCOME' : 'EXPENSE', limit: 4, ...ids })
       if (cancelled) return
-      setTitleHints(res.titles)
-      if (cat && res.last && !titleTouched.current) setTitle(res.last)
+      // A past suggested title reads in the current language.
+      const shown = (title: string) => displayTitle({ description: title, type, category: (sub ?? cat ?? '') as CategoryId })
+      setTitleHints([...new Set(res.titles.map(shown))])
+      if (cat && res.last && !titleTouched.current) setTitle(shown(res.last))
     })()
     return () => {
       cancelled = true

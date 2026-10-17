@@ -15,6 +15,7 @@ import {
 import { goalContext, goalExceedsRemaining, lockGoalRemaining } from "../lib/goalProgress.js";
 import { prisma } from "../lib/prisma.js";
 import { seriesEnded } from "../lib/recurring.js";
+import { slugsMatchingEnglish } from "../lib/taxonomy.js";
 import { dateOnlySchema } from "../lib/validation.js";
 
 const transactionTypeEnum = z.enum(["INCOME", "EXPENSE", "TRANSFER"]);
@@ -354,6 +355,9 @@ export async function transactionRoutes(app: FastifyInstance) {
     // "De", category and wallet.
     if (query.search) {
       const contains = { contains: query.search, mode: "insensitive" as const };
+      // Built-in categories match by their English name too.
+      const english = slugsMatchingEnglish(query.search);
+      const builtIn = english.length ? [{ category: { userId: null, slug: { in: english } } }, { subcategory: { userId: null, slug: { in: english } } }] : [];
       and.push({
         OR: [
           { description: contains },
@@ -362,6 +366,7 @@ export async function transactionRoutes(app: FastifyInstance) {
           { counterpartyName: contains },
           { category: { name: contains } },
           { subcategory: { name: contains } },
+          ...builtIn,
           { account: { name: contains } },
           { transferToAccount: { name: contains } },
         ],

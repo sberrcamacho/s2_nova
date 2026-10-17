@@ -6,9 +6,9 @@
 // stands in. Components subscribe with useCategories().
 import { useSyncExternalStore } from 'react'
 import { apiClient } from '@/lib/apiClient'
-import { currentLanguage } from '@/lib/i18n/translations'
+import { currentLanguage, translate } from '@/lib/i18n/translations'
 import { TAX_NODES, TAX_TRANSFER, TAX_VIS, taxNode, visColor } from '@/lib/taxonomy'
-import type { CategoryId } from '@/types'
+import type { CategoryId, TransactionType } from '@/types'
 
 export interface CategoryNode {
   id: CategoryId
@@ -179,6 +179,26 @@ export function categoryName(id: CategoryId | null | undefined): string {
   if (id === TRANSFER) return currentLanguage() === 'en' ? TAX_TRANSFER.nameEn : TAX_TRANSFER.name
   const n = categoryNode(id)
   return n ? displayName(n) : ''
+}
+
+const GENERIC_TITLE = { expense: 'nm.titleGenericExpense', income: 'nm.titleGenericIncome', transfer: 'nm.titleGenericTransfer' } as const
+
+// A movement's title as shown. A title the app suggested (its category's
+// name, or "Gasto" / "Ingreso" / "Transferencia") reads in the current
+// language, whichever language it was saved in; any other title is the
+// user's own text and shows as typed. Android's displayTitle and the
+// backend's CSV export apply the same rule.
+export function displayTitle(tx: { description: string; type: TransactionType; category: CategoryId }): string {
+  const title = tx.description.trim()
+  if (!title) return title
+  const generic = GENERIC_TITLE[tx.type]
+  if (title === translate(generic, 'es') || title === translate(generic, 'en')) return translate(generic, currentLanguage())
+  if (tx.type === 'transfer') return tx.description
+  const n = categoryNode(tx.category)
+  const tax = taxNode(tx.category)
+  // Only a built-in category the user hasn't renamed: a renamed one is their own text.
+  if (tax && n && !n.custom && n.name === tax.name && (title === tax.name || title === tax.nameEn)) return categoryName(tx.category)
+  return tx.description
 }
 
 // "Alimentación · Mercado" for a leaf, "Alimentación" for a parent.

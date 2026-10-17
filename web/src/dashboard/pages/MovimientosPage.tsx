@@ -19,7 +19,7 @@ import { useAuth } from '@/state/AuthContext'
 import { useNewMovement } from '@/state/NewMovementContext'
 import { useHideAmounts } from '@/state/useHideAmounts'
 import { useToast } from '@/state/ToastContext'
-import { TRANSFER, allCategories, categoryLabel, categoryName, categoryNode, useCategories } from '@/lib/backendCategories'
+import { allCategories, categoryLabel, categoryName, categoryNode, displayTitle, TRANSFER, useCategories } from '@/lib/backendCategories'
 import { currencyInfo, formatApprox, formatMoney, referenceRate } from '@/lib/currency'
 import { addDays } from '@/lib/inicio'
 import { matchesSearch, shortWallet } from '@/lib/movimientos'
@@ -157,7 +157,7 @@ export default function MovimientosPage() {
       if (cat && !inCategory(x, cat)) return false
       if (!query) return true
       const label = categoryLabel(x.type === 'transfer' ? TRANSFER : x.category)
-      return matchesSearch(`${x.description} ${x.merchant ?? ''} ${x.counterpartyName ?? ''} ${label} ${walletOf(x.accountId)?.name ?? ''}`, query)
+      return matchesSearch(`${x.description} ${displayTitle(x)} ${x.merchant ?? ''} ${x.counterpartyName ?? ''} ${label} ${walletOf(x.accountId)?.name ?? ''}`, query)
     })
   }, [txns, filter, cat, query, walletOf])
 
@@ -347,7 +347,7 @@ function MovementRow({ x, last, wallet, principal, hidden, onOpen, fresh, tour }
   const label = categoryLabel(x.type === 'transfer' ? TRANSFER : x.category)
   const sub = `${label} · ${[x.merchant || x.counterpartyName, wallet].filter(Boolean).join(' · ')} · ${sched ? `${shortDayMonth(x.date)} ` : ''}${x.time}`
   const color = x.type === 'transfer' ? 'text-ink' : x.type === 'income' ? 'text-positive' : 'text-negative'
-  const title = x.description || label
+  const title = displayTitle(x) || label
   return (
     <button
       type="button"
@@ -460,7 +460,7 @@ function MovementDetail({
 
   const rate = referenceRate(txn.currency, principal)
   const rows = [
-    [tr('mv.row.title'), txn.description || label],
+    [tr('mv.row.title'), displayTitle(txn) || label],
     txn.note ? [tr('mv.row.note'), txn.note] : null,
     [tr('nm.section.when'), `${longDate(txn.date)} · ${txn.time}`],
     [tr('mv.row.wallet'), transfer ? `${walletName} → ${shortWallet(walletTo?.name ?? '')}` : `${walletName} · ${wallet?.currency ?? txn.currency}`],
@@ -537,11 +537,11 @@ function MovementDetail({
 
   return (
     <>
-      <V2Modal width={480} onClose={onClose} label={txn.description || label}>
+      <V2Modal width={480} onClose={onClose} label={displayTitle(txn) || label}>
         <div className="flex items-center gap-3">
           <CategoryMark category={transfer ? TRANSFER : txn.category} box={44} />
           <div className="min-w-0 flex-1">
-            <div className="text-title-sm font-semibold">{txn.description || label}</div>
+            <div className="text-title-sm font-semibold">{displayTitle(txn) || label}</div>
             <div className="mt-0.5 text-caption text-ink-secondary">{label}</div>
           </div>
           <button type="button" onClick={onClose} aria-label={tr('common.close')} className="flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-[9px] text-ink-secondary">
@@ -659,7 +659,7 @@ function MovementDetail({
 
       {confirm && (
         <ConfirmDialog
-          title={fill(tr('loan.delete.title'), txn.description || label)}
+          title={fill(tr('loan.delete.title'), displayTitle(txn) || label)}
           lines={[
             `${sign(txn)}${formatMoney(txn.amount, txn.currency)} · ${longDate(txn.date)} · ${walletName}`,
             attach ? fill(tr('mv.delete.receipt'), attach.name) : null,

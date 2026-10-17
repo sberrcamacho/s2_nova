@@ -72,6 +72,13 @@ Reportes** — plus **Ajustes** in the footer. Pre-v2 paths (`/overview`,
   (row → `EventDialog`: confirm or skip a Programado through the backend,
   or "Eliminar serie" in two clicks; Web has no Programados page). Pure
   presentation helpers live in `lib/inicio.ts` and `lib/alertCopy.ts`.
+- **Movement titles** are shown through `displayTitle` (`lib/backendCategories.ts`;
+  Android `displayTitle` in `TransactionRepository.kt`): a title equal to its
+  built-in category's name, or to the generic "Gasto"/"Ingreso"/
+  "Transferencia", in either language, reads in the current language; any
+  other title is the user's text and shows as typed. Nothing is stored for
+  it. Movimientos' server search also matches built-in categories by their
+  English name.
 - **Movimientos** (`MovimientosPage.tsx`) — v2-migrated. One month at a
   time (`transactionService.getMonth`, which pages past the 200-row
   limit), chosen by the header's period selector (`?period=YYYY-MM`,

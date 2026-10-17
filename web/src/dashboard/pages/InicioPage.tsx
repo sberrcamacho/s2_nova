@@ -23,7 +23,7 @@ import { budgetScope, planText, shortDayMonth } from '@/lib/planCopy'
 import { shortWallet } from '@/lib/movimientos'
 import { useToast } from '@/state/ToastContext'
 import { goalMark } from '@/lib/categoryGlyphs'
-import { TRANSFER, categoryLabel } from '@/lib/backendCategories'
+import { categoryLabel, displayTitle, TRANSFER } from '@/lib/backendCategories'
 import { todayISO } from '@/lib/date'
 import {
   MONTHS_LONG,
@@ -808,9 +808,9 @@ function RecentTable({
                         onOpen(x.id)
                       }}
                       className="block max-w-full cursor-pointer truncate text-left text-title-sm font-semibold"
-                      title={x.description || label}
+                      title={displayTitle(x) || label}
                     >
-                      {x.description || label}
+                      {displayTitle(x) || label}
                     </button>
                     <div className="truncate text-body-sm text-ink-tertiary">
                       {meta}

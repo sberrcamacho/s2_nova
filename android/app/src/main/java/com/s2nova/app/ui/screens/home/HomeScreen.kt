@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.s2nova.app.R
 import com.s2nova.app.data.AppContainer
+import com.s2nova.app.data.repository.displayName
 import com.s2nova.app.data.ThemeController
 import com.s2nova.app.data.formatApprox
 import com.s2nova.app.data.formatMoney
@@ -1106,7 +1107,7 @@ private fun RecentRow(
     ) {
         CategoryIcon(category = transaction.category, subcategoryId = transaction.subcategoryId, size = CategoryIconSize.MD)
         Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
-            Text(transaction.description, style = NovaType.titleSm, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(transaction.displayName(AppContainer.categoryRepository), style = NovaType.titleSm, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(subtitle, style = NovaType.bodySm, color = colors.textDim, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         AmountColumn(amount = transaction.amount, currency = transaction.currency, income = income, modifier = Modifier.padding(start = 12.dp))

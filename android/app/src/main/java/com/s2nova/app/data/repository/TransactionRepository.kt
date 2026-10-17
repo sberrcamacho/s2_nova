@@ -114,7 +114,31 @@ fun isFuture(input: NewTransactionInput): Boolean =
 
 // Display name (NEW_MOVEMENT.md §1): title, else note, else the category.
 fun Transaction.displayName(categories: CategoryRepository): String =
-    description.ifBlank { note?.takeIf { it.isNotBlank() } ?: categories.name(subcategoryId ?: category) }
+    displayTitle(description, type, subcategoryId ?: category, categories).ifBlank { note?.takeIf { it.isNotBlank() } ?: categories.name(subcategoryId ?: category) }
+
+// A movement's title as shown. A title the app suggested (its category's
+// name, or "Gasto" / "Ingreso" / "Transferencia") reads in the current
+// language, whichever language it was saved in; any other title is the
+// user's own text and shows as typed. Web's displayTitle is the same rule.
+fun displayTitle(description: String, type: com.s2nova.app.data.model.TransactionType, leaf: String?, categories: CategoryRepository): String {
+    val title = description.trim()
+    if (title.isEmpty()) return title
+    val language = com.s2nova.app.ui.AppLang.current
+    val generic = when (type) {
+        com.s2nova.app.data.model.TransactionType.EXPENSE -> com.s2nova.app.ui.StringKey.NM_TITLE_GENERIC_EXPENSE
+        com.s2nova.app.data.model.TransactionType.INCOME -> com.s2nova.app.ui.StringKey.NM_TITLE_GENERIC_INCOME
+        com.s2nova.app.data.model.TransactionType.TRANSFER -> com.s2nova.app.ui.StringKey.NM_TITLE_GENERIC_TRANSFER
+    }
+    val es = com.s2nova.app.ui.stringFor(generic, com.s2nova.app.data.model.AppLanguage.ES)
+    val en = com.s2nova.app.ui.stringFor(generic, com.s2nova.app.data.model.AppLanguage.EN)
+    if (title == es || title == en) return com.s2nova.app.ui.stringFor(generic, language)
+    if (type == com.s2nova.app.data.model.TransactionType.TRANSFER) return description
+    val node = categories.node(leaf)
+    val tax = com.s2nova.app.data.Taxonomy.node(leaf)
+    // Only a built-in category the user hasn't renamed: a renamed one is their own text.
+    if (tax != null && node != null && !node.custom && node.name == tax.name && (title == tax.name || title == tax.nameEn)) return categories.name(leaf)
+    return description
+}
 
 // Backed by backend/src/routes/transactions.ts — the server (not this
 // client) applies/reconciles wallet balance effects, so callers refresh the
