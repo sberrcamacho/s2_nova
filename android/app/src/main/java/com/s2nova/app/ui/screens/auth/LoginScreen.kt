@@ -255,11 +255,7 @@ fun LoginScreen(
                                     }
                                     .onFailure {
                                         googleLoading = false
-                                        error = if (it is androidx.credentials.exceptions.GetCredentialCancellationException) {
-                                            null
-                                        } else {
-                                            it.toUserMessage(tr(StringKey.AUTH_GOOGLE_ERR))
-                                        }
+                                        error = GoogleAuthHelper.failureMessage(it) { it.toUserMessage(tr(StringKey.AUTH_GOOGLE_ERR)) }
                                     }
                             }
                         },

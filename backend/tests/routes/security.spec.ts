@@ -1,10 +1,26 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { FastifyInstance } from "fastify";
 import { prisma } from "../../src/lib/prisma.js";
 import { hashRefreshToken } from "../../src/lib/tokens.js";
 import { createTestApp } from "../helpers/app.js";
 import { categoryBySlug, createAccount } from "../helpers/factories.js";
 import { authHeader, createTestUser, type TestUser } from "../helpers/testUser.js";
+
+const { verifyGoogleIdToken, GoogleNotConfiguredError } = vi.hoisted(() => {
+  class GoogleNotConfiguredError extends Error {}
+  return { verifyGoogleIdToken: vi.fn(), GoogleNotConfiguredError };
+});
+vi.mock("../../src/lib/googleAuth.js", () => ({ verifyGoogleIdToken, GoogleNotConfiguredError }));
+
+// A Google-only account: its password identity removed, a GOOGLE one added.
+async function googleOnlyUser(sub: string) {
+  const user = await createTestUser();
+  await prisma.authIdentity.deleteMany({ where: { userId: user.id, provider: "PASSWORD" } });
+  await prisma.authIdentity.create({ data: { userId: user.id, provider: "GOOGLE", providerUserId: sub } });
+  return user;
+}
+
+const nowSeconds = () => Math.floor(Date.now() / 1000);
 
 const CHROME_WINDOWS =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36";
@@ -186,5 +202,48 @@ describe("security routes", () => {
     expect(await prisma.user.findUnique({ where: { id: user.id } })).toBeNull();
     expect(await prisma.transaction.count({ where: { userId: user.id } })).toBe(0);
     expect(await prisma.account.count({ where: { userId: user.id } })).toBe(0);
+  });
+
+  it("lets a Google-only account delete itself by signing in with the same Google account again", async () => {
+    const sub = `sub-${Date.now()}-delete`;
+    const user = await googleOnlyUser(sub);
+
+    const none = await app.inject({ method: "DELETE", url: "/api/v1/me", headers: authHeader(user), payload: { password: "anything" } });
+    expect(none.statusCode).toBe(409);
+
+    verifyGoogleIdToken.mockResolvedValueOnce({ sub: "someone-else", email: "x@example.com", emailVerified: true, name: "X", issuedAt: nowSeconds() });
+    const other = await app.inject({ method: "DELETE", url: "/api/v1/me", headers: authHeader(user), payload: { googleIdToken: "t" } });
+    expect(other.statusCode).toBe(401);
+
+    verifyGoogleIdToken.mockResolvedValueOnce({ sub, email: user.email, emailVerified: true, name: "Me", issuedAt: nowSeconds() - 3600 });
+    const stale = await app.inject({ method: "DELETE", url: "/api/v1/me", headers: authHeader(user), payload: { googleIdToken: "t" } });
+    expect(stale.statusCode).toBe(401);
+    expect(await prisma.user.findUnique({ where: { id: user.id } })).not.toBeNull();
+
+    verifyGoogleIdToken.mockResolvedValueOnce({ sub, email: user.email, emailVerified: true, name: "Me", issuedAt: nowSeconds() });
+    const res = await app.inject({ method: "DELETE", url: "/api/v1/me", headers: authHeader(user), payload: { googleIdToken: "t" } });
+    expect(res.statusCode).toBe(204);
+    expect(await prisma.user.findUnique({ where: { id: user.id } })).toBeNull();
+  });
+
+  it("resets a Google-only account's data after a fresh Google sign-in", async () => {
+    const sub = `sub-${Date.now()}-reset`;
+    const user = await googleOnlyUser(sub);
+    const wallet = await createAccount(user.id);
+    const food = await categoryBySlug("food");
+    await prisma.transaction.create({
+      data: { userId: user.id, accountId: wallet.id, type: "EXPENSE", amountMinor: 1000n, categoryId: food.id, paymentMethod: "CASH", description: "x", transactionDate: new Date("2026-08-01") },
+    });
+
+    verifyGoogleIdToken.mockResolvedValueOnce({ sub, email: user.email, emailVerified: true, name: "Me", issuedAt: nowSeconds() });
+    const res = await app.inject({ method: "POST", url: "/api/v1/me/reset-data", headers: authHeader(user), payload: { googleIdToken: "t" } });
+    expect(res.statusCode).toBe(204);
+    expect(await prisma.transaction.count({ where: { userId: user.id } })).toBe(0);
+  });
+
+  it("still requires the password when the account has one, even with a Google token", async () => {
+    const user = await createTestUser();
+    const res = await app.inject({ method: "POST", url: "/api/v1/me/reset-data", headers: authHeader(user), payload: { googleIdToken: "t" } });
+    expect(res.statusCode).toBe(401);
   });
 });

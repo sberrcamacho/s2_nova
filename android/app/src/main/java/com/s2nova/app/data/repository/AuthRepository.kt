@@ -10,7 +10,7 @@ import com.s2nova.app.data.model.UserPreferences
 import com.s2nova.app.data.remote.ApiClient
 import com.s2nova.app.data.remote.ChangePasswordRequest
 import com.s2nova.app.data.remote.ForgotPasswordRequest
-import com.s2nova.app.data.remote.PasswordConfirmRequest
+import com.s2nova.app.data.remote.IdentityConfirmRequest
 import com.s2nova.app.data.remote.ResetPasswordRequest
 import retrofit2.HttpException
 import retrofit2.Response
@@ -245,15 +245,16 @@ class AuthRepository(
         ApiClient.api.changePassword(ChangePasswordRequest(currentPassword, newPassword)).requireOk()
     }
 
-    // Ajustes › Zona de riesgo. Both confirm with the current password.
-    suspend fun resetData(password: String): Result<Unit> = runCatching {
+    // Ajustes › Zona de riesgo. Both confirm with the current password, or
+    // with a fresh Google sign-in on an account that has no password.
+    suspend fun resetData(confirm: IdentityConfirmRequest): Result<Unit> = runCatching {
         if (DemoModeFlag.active) error(com.s2nova.app.ui.tr(com.s2nova.app.ui.StringKey.API_GUEST))
-        ApiClient.api.resetData(PasswordConfirmRequest(password)).requireOk()
+        ApiClient.api.resetData(confirm).requireOk()
     }
 
-    suspend fun deleteAccount(password: String): Result<Unit> = runCatching {
+    suspend fun deleteAccount(confirm: IdentityConfirmRequest): Result<Unit> = runCatching {
         if (DemoModeFlag.active) error(com.s2nova.app.ui.tr(com.s2nova.app.ui.StringKey.API_GUEST))
-        ApiClient.api.deleteMe(PasswordConfirmRequest(password)).requireOk()
+        ApiClient.api.deleteMe(confirm).requireOk()
         biometricStore.clear()
         logout()
     }

@@ -1,15 +1,61 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import { describeDevice } from "../lib/devices.js";
+import { GoogleNotConfiguredError, verifyGoogleIdToken } from "../lib/googleAuth.js";
 import { verifyPassword } from "../lib/password.js";
 import { prisma } from "../lib/prisma.js";
 import { COOKIE_PATH, REFRESH_COOKIE } from "./auth.js";
 
 const ACCOUNT_RATE_LIMIT = { max: 10, timeWindow: "1 minute" } as const;
 
-const deleteAccountSchema = z.object({
-  password: z.string().min(1),
-});
+// An account with a password confirms with it; a Google-only account
+// confirms by signing in with Google again (a fresh ID token for the same
+// Google account), since it has no password to type.
+const confirmSchema = z
+  .object({
+    password: z.string().min(1).optional(),
+    googleIdToken: z.string().min(1).optional(),
+  })
+  .refine((body) => body.password !== undefined || body.googleIdToken !== undefined, { message: "password or googleIdToken is required" });
+
+// How old a Google sign-in may be to count as "just confirmed".
+const GOOGLE_CONFIRM_MAX_AGE_SECONDS = 10 * 60;
+
+// Sends the error reply and returns false when the caller didn't prove it's
+// them; true when the destructive action may go ahead.
+async function confirmIdentity(userId: string, body: z.infer<typeof confirmSchema>, reply: FastifyReply): Promise<boolean> {
+  const identities = await prisma.authIdentity.findMany({ where: { userId } });
+  const password = identities.find((identity) => identity.provider === "PASSWORD" && identity.credentialHash);
+  if (password) {
+    if (body.password === undefined || !(await verifyPassword(password.credentialHash!, body.password))) {
+      reply.status(401).send({ error: "Incorrect password." });
+      return false;
+    }
+    return true;
+  }
+
+  const google = identities.find((identity) => identity.provider === "GOOGLE");
+  if (!google || body.googleIdToken === undefined) {
+    reply.status(409).send({ error: "Confirm with Google or set a password first." });
+    return false;
+  }
+  try {
+    const verified = await verifyGoogleIdToken(body.googleIdToken);
+    const fresh = verified.issuedAt === undefined || Date.now() / 1000 - verified.issuedAt <= GOOGLE_CONFIRM_MAX_AGE_SECONDS;
+    if (verified.sub !== google.providerUserId || !fresh) {
+      reply.status(401).send({ error: "That Google account is not this account." });
+      return false;
+    }
+    return true;
+  } catch (error) {
+    if (error instanceof GoogleNotConfiguredError) {
+      reply.status(501).send({ error: "Google Sign-In is not configured on this server." });
+    } else {
+      reply.status(401).send({ error: "Invalid Google token." });
+    }
+    return false;
+  }
+}
 
 // Ajustes › Seguridad (Web): active sessions, what deleting the account
 // removes, and the deletion itself.
@@ -87,18 +133,9 @@ export async function securityRoutes(app: FastifyInstance) {
     "/me/reset-data",
     { preHandler: app.authenticate, config: { rateLimit: ACCOUNT_RATE_LIMIT } },
     async (request, reply) => {
-      const body = deleteAccountSchema.parse(request.body);
+      const body = confirmSchema.parse(request.body);
       const userId = request.userId!;
-
-      const identity = await prisma.authIdentity.findUnique({
-        where: { userId_provider: { userId, provider: "PASSWORD" } },
-      });
-      if (!identity?.credentialHash) {
-        return reply.status(409).send({ error: "Set a password before resetting your data." });
-      }
-      if (!(await verifyPassword(identity.credentialHash, body.password))) {
-        return reply.status(401).send({ error: "Incorrect password." });
-      }
+      if (!(await confirmIdentity(userId, body, reply))) return reply;
 
       await prisma.$transaction([
         prisma.transaction.deleteMany({ where: { userId } }),
@@ -121,18 +158,9 @@ export async function securityRoutes(app: FastifyInstance) {
     "/me",
     { preHandler: app.authenticate, config: { rateLimit: ACCOUNT_RATE_LIMIT } },
     async (request, reply) => {
-      const body = deleteAccountSchema.parse(request.body);
+      const body = confirmSchema.parse(request.body);
       const userId = request.userId!;
-
-      const identity = await prisma.authIdentity.findUnique({
-        where: { userId_provider: { userId, provider: "PASSWORD" } },
-      });
-      if (!identity?.credentialHash) {
-        return reply.status(409).send({ error: "Set a password before deleting your account." });
-      }
-      if (!(await verifyPassword(identity.credentialHash, body.password))) {
-        return reply.status(401).send({ error: "Incorrect password." });
-      }
+      if (!(await confirmIdentity(userId, body, reply))) return reply;
 
       await prisma.$transaction([
         prisma.transaction.deleteMany({ where: { userId } }),

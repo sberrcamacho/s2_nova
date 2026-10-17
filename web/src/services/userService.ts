@@ -106,6 +106,10 @@ export interface ImportSummary {
   rows: { row: number; ok: boolean; error?: 'invalid' | 'wallet' }[]
 }
 
+// Zona de riesgo's proof that it's really the user: the password, or a fresh
+// Google sign-in for an account that has no password.
+export type IdentityConfirmation = { password: string } | { googleIdToken: string }
+
 export const userService = {
   async getCurrentUser(): Promise<User> {
     const me = await apiClient.get<MeResponse>('/me')
@@ -172,8 +176,8 @@ export const userService = {
     URL.revokeObjectURL(url)
   },
 
-  async resetData(password: string): Promise<void> {
-    await apiClient.post<void>('/me/reset-data', { password })
+  async resetData(confirm: IdentityConfirmation): Promise<void> {
+    await apiClient.post<void>('/me/reset-data', confirm)
   },
 
   // CSV template for Ajustes › Importar datos (fecha, título, monto, tipo,
@@ -186,7 +190,7 @@ export const userService = {
     return apiClient.post<ImportSummary>('/me/import/transactions', { rows, dryRun })
   },
 
-  async deleteAccount(password: string): Promise<void> {
-    await apiClient.delete('/me', { password })
+  async deleteAccount(confirm: IdentityConfirmation): Promise<void> {
+    await apiClient.delete('/me', confirm)
   },
 }

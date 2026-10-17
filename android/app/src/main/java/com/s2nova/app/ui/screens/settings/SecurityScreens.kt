@@ -37,7 +37,13 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Row
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
+import com.s2nova.app.BuildConfig
 import com.s2nova.app.data.AppContainer
+import com.s2nova.app.data.remote.IdentityConfirmRequest
+import com.s2nova.app.ui.components.GoogleSignInButton
+import com.s2nova.app.ui.screens.auth.GoogleAuthHelper
 import com.s2nova.app.data.remote.toUserMessage
 import com.s2nova.app.ui.Snack
 import com.s2nova.app.ui.StringKey
@@ -181,31 +187,95 @@ fun ChangePasswordScreen(onBack: () -> Unit) {
 enum class RiskAction { RESET, DELETE }
 
 // Ajustes › Zona de riesgo: restablecer datos / eliminar cuenta. Both ask
-// for the confirmation word, the current password and an acknowledgement.
+// for the confirmation word (in the app language: RESTABLECER / RESET,
+// ELIMINAR / DELETE), the current password — or, for an account created
+// with Google, signing in with Google again — and an acknowledgement.
 @Composable
 fun RiskActionScreen(action: RiskAction, onBack: () -> Unit, onDeleted: () -> Unit) {
     val user by AppContainer.authRepository.currentUser.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val reset = action == RiskAction.RESET
     val word = tr(if (reset) StringKey.SET_RESET_WORD else StringKey.SET_DELETE_WORD)
+    val hasPassword = user?.hasPassword != false
     var typed by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var googleToken by remember { mutableStateOf<String?>(null) }
+    var googleBusy by remember { mutableStateOf(false) }
     var show by remember { mutableStateOf(false) }
     var ack by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
     val colors = NovaColors.current
-    val canSubmit = typed.trim().equals(word, ignoreCase = true) && password.isNotEmpty() && ack && !busy && user?.hasPassword != false
+    val confirmation = when {
+        hasPassword -> IdentityConfirmRequest(password = password).takeIf { password.isNotEmpty() }
+        else -> googleToken?.let { IdentityConfirmRequest(googleIdToken = it) }
+    }
+    val canSubmit = typed.trim().equals(word, ignoreCase = true) && confirmation != null && ack && !busy
 
     SecurityFrame(tr(if (reset) StringKey.SET_RESET_TITLE else StringKey.SET_DELETE_TITLE), onBack) {
         Text(tr(if (reset) StringKey.SET_RESET_DETAIL else StringKey.SET_DELETE_DETAIL), style = NovaType.body, color = MaterialTheme.colorScheme.onSurface)
-        if (user?.hasPassword == false) Text(tr(StringKey.SET_RISK_NO_PASSWORD), style = NovaType.bodySm, color = colors.negative)
         NovaTextField(typed, { typed = it }, tr(StringKey.SET_RISK_TYPE, word))
-        NovaTextField(
-            password, { password = it; error = null }, tr(StringKey.SET_PW_CURRENT),
-            isPassword = true, passwordVisible = show, onTogglePasswordVisible = { show = !show },
-            isError = error != null, errorMessage = error,
-        )
+        if (hasPassword) {
+            NovaTextField(
+                password, { password = it; error = null }, tr(StringKey.SET_PW_CURRENT),
+                isPassword = true, passwordVisible = show, onTogglePasswordVisible = { show = !show },
+                isError = error != null, errorMessage = error,
+            )
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(tr(StringKey.SET_RISK_GOOGLE_LABEL), style = NovaType.label, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                val token = googleToken
+                if (token == null) {
+                    GoogleSignInButton(
+                        text = tr(StringKey.SET_RISK_GOOGLE_CONFIRM),
+                        enabled = BuildConfig.GOOGLE_WEB_CLIENT_ID.isNotBlank(),
+                        loading = googleBusy,
+                        onClick = {
+                            googleBusy = true
+                            error = null
+                            scope.launch {
+                                GoogleAuthHelper.getIdToken(context, BuildConfig.GOOGLE_WEB_CLIENT_ID)
+                                    .onSuccess { googleToken = it }
+                                    .onFailure { error = GoogleAuthHelper.failureMessage(it) { it.toUserMessage(tr(StringKey.AUTH_GOOGLE_ERR)) } }
+                                googleBusy = false
+                            }
+                        },
+                    )
+                } else {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 52.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .border(1.dp, colors.borderInput, RoundedCornerShape(12.dp))
+                            .padding(start = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        com.s2nova.app.ui.components.V2Icon(com.s2nova.app.ui.components.V2Icons.check, colors.positive, 18.dp)
+                        Text(
+                            tr(StringKey.SET_RISK_GOOGLE_DONE, user?.email.orEmpty()),
+                            style = NovaType.bodySm,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .heightIn(min = 48.dp)
+                                .clickable(role = Role.Button) { googleToken = null }
+                                .padding(horizontal = 14.dp),
+                        ) {
+                            Text(tr(StringKey.SET_RISK_GOOGLE_AGAIN), style = NovaType.label, color = colors.accentText, maxLines = 1, softWrap = false)
+                        }
+                    }
+                }
+                if (error != null) Text(error!!, style = NovaType.bodySm, color = colors.negative)
+            }
+        }
         Row(
             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).toggleable(value = ack, role = Role.Checkbox, onValueChange = { ack = it }),
             verticalAlignment = Alignment.CenterVertically,
@@ -227,7 +297,8 @@ fun RiskActionScreen(action: RiskAction, onBack: () -> Unit, onDeleted: () -> Un
                 .clickable(enabled = canSubmit, role = Role.Button) {
                     busy = true
                     scope.launch {
-                        val result = if (reset) AppContainer.authRepository.resetData(password) else AppContainer.authRepository.deleteAccount(password)
+                        val confirm = confirmation ?: return@launch
+                        val result = if (reset) AppContainer.authRepository.resetData(confirm) else AppContainer.authRepository.deleteAccount(confirm)
                         result
                             .onSuccess {
                                 if (reset) {
@@ -236,7 +307,11 @@ fun RiskActionScreen(action: RiskAction, onBack: () -> Unit, onDeleted: () -> Un
                                     onBack()
                                 } else onDeleted()
                             }
-                            .onFailure { error = if (it.isUnauthorized()) tr(StringKey.SET_PW_WRONG) else it.toUserMessage(tr(StringKey.SET_PW_WRONG)) }
+                            .onFailure {
+                                val wrong = tr(if (hasPassword) StringKey.SET_PW_WRONG else StringKey.SET_RISK_GOOGLE_MISMATCH)
+                                error = if (it.isUnauthorized()) wrong else it.toUserMessage(wrong)
+                                if (!hasPassword) googleToken = null
+                            }
                         busy = false
                     }
                 },

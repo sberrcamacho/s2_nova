@@ -108,6 +108,13 @@ describe("auth routes", () => {
       expect(res.statusCode).toBe(400);
     });
 
+    it("rejects a long password without a number or an uppercase letter", async () => {
+      for (const password of ["longenough1", "LongEnoughNoDigit"]) {
+        const res = await app.inject({ method: "POST", url: "/api/v1/auth/register", payload: { name: "Weak", email: randomEmail(), password } });
+        expect(res.statusCode).toBe(400);
+      }
+    });
+
     it("rejects a malformed email with 400", async () => {
       const res = await app.inject({
         method: "POST",
@@ -513,7 +520,7 @@ describe("auth routes", () => {
 
   describe("password recovery", () => {
     async function register(email: string) {
-      const res = await app.inject({ method: "POST", url: "/api/v1/auth/register", payload: { name: "Ana", email, password: "secret123" } });
+      const res = await app.inject({ method: "POST", url: "/api/v1/auth/register", payload: { name: "Ana", email, password: "Secret123" } });
       expect(res.statusCode).toBe(201);
     }
 
@@ -530,7 +537,7 @@ describe("auth routes", () => {
       const reset = await app.inject({ method: "POST", url: "/api/v1/auth/reset-password", payload: { token, newPassword: "newpass123" } });
       expect(reset.statusCode).toBe(204);
 
-      const old = await app.inject({ method: "POST", url: "/api/v1/auth/login", payload: { email, password: "secret123" } });
+      const old = await app.inject({ method: "POST", url: "/api/v1/auth/login", payload: { email, password: "Secret123" } });
       expect(old.statusCode).toBe(401);
       const fresh = await app.inject({ method: "POST", url: "/api/v1/auth/login", payload: { email, password: "newpass123" } });
       expect(fresh.statusCode).toBe(200);

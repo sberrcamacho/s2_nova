@@ -361,15 +361,23 @@ fun NovaApp() {
                     },
                 )
             }
-            composable(NovaDestinations.SETTINGS_PASSWORD) { ChangePasswordScreen(onBack = { navController.popBackStack() }) }
+            composable(NovaDestinations.SETTINGS_PASSWORD) {
+                AccountOnly(NovaDestinations.SETTINGS_PASSWORD, onLeave = { navController.popBackStack() }) {
+                    ChangePasswordScreen(onBack = { navController.popBackStack() })
+                }
+            }
             composable(NovaDestinations.SETTINGS_RESET) {
-                RiskActionScreen(RiskAction.RESET, onBack = { navController.popBackStack() }, onDeleted = {})
+                AccountOnly(NovaDestinations.SETTINGS_RESET, onLeave = { navController.popBackStack() }) {
+                    RiskActionScreen(RiskAction.RESET, onBack = { navController.popBackStack() }, onDeleted = {})
+                }
             }
             composable(NovaDestinations.SETTINGS_DELETE) {
-                RiskActionScreen(RiskAction.DELETE, onBack = { navController.popBackStack() }, onDeleted = {
-                    DemoModeFlag.set(false)
-                    navController.navigateAsRoot(NovaDestinations.LOGIN)
-                })
+                AccountOnly(NovaDestinations.SETTINGS_DELETE, onLeave = { navController.popBackStack() }) {
+                    RiskActionScreen(RiskAction.DELETE, onBack = { navController.popBackStack() }, onDeleted = {
+                        DemoModeFlag.set(false)
+                        navController.navigateAsRoot(NovaDestinations.LOGIN)
+                    })
+                }
             }
             composable(
                 NovaDestinations.CATEGORIES,
@@ -466,4 +474,12 @@ private fun NavHostController.navigateAsRoot(route: String) {
 private suspend fun leaveGuestMode() {
     DemoModeFlag.set(false)
     AppContainer.authRepository.logout()
+}
+
+// Sends a guest who reaches an account-only screen (a deep link, a stale
+// back stack) straight back instead of showing it.
+@Composable
+private fun AccountOnly(route: String, onLeave: () -> Unit, content: @Composable () -> Unit) {
+    val allowed = !DemoModeFlag.active || NovaDestinations.guestMayOpen(route)
+    if (allowed) content() else androidx.compose.runtime.LaunchedEffect(Unit) { onLeave() }
 }

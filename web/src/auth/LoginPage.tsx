@@ -197,7 +197,9 @@ export default function LoginPage() {
 
     const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
     const nextEmailError = isEmailValid ? null : t('auth.invalidEmail')
-    const nextPasswordError = password.length >= 8 ? null : t('auth.passwordTooShort')
+    // Only sign-up enforces the password rules; an older account may have a
+    // shorter password, so login only needs one.
+    const nextPasswordError = password.length > 0 ? null : t('auth.passwordRequired')
     setEmailError(nextEmailError)
     setPasswordError(nextPasswordError)
     if (nextEmailError || nextPasswordError) {

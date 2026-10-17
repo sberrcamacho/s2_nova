@@ -254,7 +254,7 @@ DELETE /api/v1/me/sessions               -- close every session but the caller's
 DELETE /api/v1/me/sessions/:id
 GET    /api/v1/me/footprint              -- counts shown before deleting the account
 GET    /api/v1/me/export                 -- CSV: movimientos, presupuestos, metas, préstamos
-DELETE /api/v1/me                        -- {password}; erases the account and its data
+DELETE /api/v1/me                        -- {password} or, with no password, {googleIdToken} (fresh, same Google account); erases the account and its data
 
 GET    /api/v1/accounts
 POST   /api/v1/accounts

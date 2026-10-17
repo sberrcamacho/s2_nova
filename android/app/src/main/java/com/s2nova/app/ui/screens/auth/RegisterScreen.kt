@@ -160,6 +160,11 @@ fun RegisterScreen(
                 NovaPrimaryButton(
                     text = tr(StringKey.AUTH_CREATE),
                     onClick = {
+                        // The rule the meter shows, checked before the request.
+                        if (password.length < 8 || password.none { it.isUpperCase() } || password.none { it.isDigit() }) {
+                            error = tr(StringKey.PW_RULES)
+                            return@NovaPrimaryButton
+                        }
                         loading = true
                         scope.launch {
                             AppContainer.authRepository.register(name, email, password)
@@ -211,11 +216,7 @@ fun RegisterScreen(
                                     }
                                     .onFailure {
                                         googleLoading = false
-                                        error = if (it is androidx.credentials.exceptions.GetCredentialCancellationException) {
-                                            null
-                                        } else {
-                                            it.toUserMessage(tr(StringKey.AUTH_GOOGLE_ERR))
-                                        }
+                                        error = GoogleAuthHelper.failureMessage(it) { it.toUserMessage(tr(StringKey.AUTH_GOOGLE_ERR)) }
                                     }
                             }
                         },

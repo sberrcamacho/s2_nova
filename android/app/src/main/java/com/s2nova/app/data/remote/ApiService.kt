@@ -61,10 +61,10 @@ interface ApiService {
     suspend fun changePassword(@Body body: ChangePasswordRequest): Response<Unit>
 
     @POST("me/reset-data")
-    suspend fun resetData(@Body body: PasswordConfirmRequest): Response<Unit>
+    suspend fun resetData(@Body body: IdentityConfirmRequest): Response<Unit>
 
     @HTTP(method = "DELETE", path = "me", hasBody = true)
-    suspend fun deleteMe(@Body body: PasswordConfirmRequest): Response<Unit>
+    suspend fun deleteMe(@Body body: IdentityConfirmRequest): Response<Unit>
 
     @GET("transactions/titles")
     suspend fun getTransactionTitles(

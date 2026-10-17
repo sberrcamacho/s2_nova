@@ -20,7 +20,9 @@ const AUTH_RATE_LIMIT = { max: 10, timeWindow: "1 minute" } as const;
 const registerSchema = z.object({
   name: z.string().trim().min(1).max(120),
   email: z.string().trim().email(),
-  password: z.string().min(6).max(200),
+  // The rule both sign-up forms show: 8+ characters, an uppercase letter and
+  // a number.
+  password: z.string().min(8).max(200).regex(/\d/, "Must include a number.").regex(/[A-Z]/, "Must include an uppercase letter."),
 });
 
 const loginSchema = z.object({

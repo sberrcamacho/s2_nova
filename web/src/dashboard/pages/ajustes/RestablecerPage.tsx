@@ -5,21 +5,23 @@ import { ApiError } from '@/lib/apiClient'
 import { counted } from '@/lib/ajustes'
 import { fill } from '@/lib/inicio'
 import { userService, type Footprint } from '@/services/userService'
+import { useAuth } from '@/state/AuthContext'
 import { useToast } from '@/state/ToastContext'
 import { useTranslation } from '@/state/useTranslation'
 import { cn } from '@/lib/cn'
-
-const CONFIRM_WORD = 'RESTABLECER'
+import { ConfirmIdentity } from '@/dashboard/components/ajustes/ConfirmIdentity'
 
 // Ajustes › Restablecer datos: what gets erased (counted by the backend), a
 // CSV copy, and the confirmation. The account itself stays.
 export default function RestablecerPage() {
+  const { user } = useAuth()
   const { t } = useTranslation()
   const { showToast } = useToast()
   const navigate = useNavigate()
   const [footprint, setFootprint] = useState<Footprint | null>(null)
   const [word, setWord] = useState('')
   const [password, setPassword] = useState('')
+  const [googleToken, setGoogleToken] = useState<string | null>(null)
   const [ack, setAck] = useState(false)
   const [busy, setBusy] = useState(false)
 
@@ -27,21 +29,28 @@ export default function RestablecerPage() {
     userService.getFootprint().then(setFootprint, () => setFootprint(null))
   }, [])
 
-  const canDelete = word.trim().toUpperCase() === CONFIRM_WORD && password.length > 0 && ack
+  // The word is the app language's (RESTABLECER / RESET, ELIMINAR / DELETE).
+  const confirmWord = t('aj.rst.word')
+  const hasPassword = user?.hasPassword ?? true
+  const confirmation = hasPassword ? { password } : googleToken ? { googleIdToken: googleToken } : null
+  const canDelete = word.trim().toUpperCase() === confirmWord && confirmation !== null && ack
 
   const fail = (err: unknown) => showToast(err instanceof Error ? err.message : t('api.generic'), 'error')
 
   const exportData = () => userService.exportData().then(() => showToast(t('aj.del.exported'), 'success'), fail)
 
   const remove = async () => {
-    if (!canDelete || busy) return
+    if (!canDelete || !confirmation || busy) return
     setBusy(true)
     try {
-      await userService.resetData(password)
+      await userService.resetData(confirmation)
       showToast(t('aj.rst.done'), 'success')
       navigate('/ajustes', { replace: true })
     } catch (err) {
-      if (err instanceof ApiError && err.status === 401) showToast(t('aj.pw.errWrong'), 'error')
+      if (err instanceof ApiError && err.status === 401) {
+        showToast(t(hasPassword ? 'aj.pw.errWrong' : 'aj.del.googleMismatch'), 'error')
+        setGoogleToken(null)
+      }
       else if (err instanceof ApiError && err.status === 409) showToast(t('aj.del.noPassword'), 'error')
       else fail(err)
       setBusy(false)
@@ -79,8 +88,8 @@ export default function RestablecerPage() {
       </AjCard>
 
       <AjCard className="flex flex-col gap-4 p-[22px]">
-        <AjField label={t('aj.rst.confirm')} type="text" autoComplete="off" value={word} onChange={(e) => setWord(e.target.value)} placeholder={CONFIRM_WORD} />
-        <AjField label={t('aj.del.password')} type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+        <AjField label={fill(t('aj.del.confirmWord'), confirmWord)} type="text" autoComplete="off" value={word} onChange={(e) => setWord(e.target.value)} placeholder={confirmWord} />
+        <ConfirmIdentity hasPassword={hasPassword} email={user?.email ?? ''} password={password} onPassword={setPassword} googleToken={googleToken} onGoogleToken={setGoogleToken} />
         <button type="button" role="checkbox" aria-checked={ack} onClick={() => setAck((v) => !v)} className="flex min-h-8 cursor-pointer items-center gap-2.5 text-left text-body-sm">
           <span
             className={cn(

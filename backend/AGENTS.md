@@ -39,8 +39,12 @@ First-time setup:
 2. On Render, create a new Web Service pointed at this repo, root directory
    `backend`, runtime **Docker**. Set env vars from `.env.example`:
    `DATABASE_URL` (from step 1), `JWT_SECRET` (generate with
-   `openssl rand -base64 48`), `GOOGLE_CLIENT_IDS`, `CORS_ORIGINS` (include
-   the deployed GitHub Pages origin), `NODE_ENV=production`.
+   `openssl rand -base64 48`), `GOOGLE_CLIENT_IDS` (the Web client ID),
+   `CORS_ORIGINS` (exactly `https://sberrcamacho.github.io`, no path),
+   `WEB_APP_URL` (`https://sberrcamacho.github.io/s2_nova`, with the base
+   path, or the recovery-email link misses the app), `RESEND_API_KEY` and
+   `MAIL_FROM` (recovery emails), `GEMINI_API_KEY` / `ANTHROPIC_API_KEY`
+   (optional AI features), `NODE_ENV=production`.
 3. Deploy. The `Dockerfile`'s `CMD` runs `prisma migrate deploy` before
    starting the server on every boot (safe/no-op if already up to date —
    there's no separate migration step on Render, unlike a docker-compose

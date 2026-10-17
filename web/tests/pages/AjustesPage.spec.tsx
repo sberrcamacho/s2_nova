@@ -7,6 +7,14 @@ import { BASE, mockSession, renderApp } from '../utils/renderApp'
 import AjustesPage from '@/dashboard/pages/AjustesPage'
 import ContrasenaPage from '@/dashboard/pages/ajustes/ContrasenaPage'
 import EliminarPage from '@/dashboard/pages/ajustes/EliminarPage'
+import RestablecerPage from '@/dashboard/pages/ajustes/RestablecerPage'
+
+// Google's real button needs its script; this stand-in hands back a token.
+vi.mock('@/auth/GoogleSignInButton', () => ({
+  GoogleSignInButton: ({ onToken, label }: { onToken: (token: string) => void; label?: string }) => (
+    <button type="button" onClick={() => onToken('google-token')}>{label}</button>
+  ),
+}))
 
 const SESSIONS = [
   { id: 's1', device: 'Chrome · Windows', kind: 'desktop', lastActiveAt: '2026-08-21T10:00:00.000Z', current: true },
@@ -164,5 +172,56 @@ describe('Ajustes', () => {
     await user.click(screen.getByRole('checkbox'))
     await user.click(submit)
     await waitFor(() => expect(deletes).toEqual([{ password: 'Actual123' }]))
+  })
+
+  it('asks for RESET in English, not the Spanish word', async () => {
+    mockSession({ language: 'en' })
+    const resets: unknown[] = []
+    server.use(
+      http.get(`${BASE}/me/footprint`, () => HttpResponse.json({ transactions: 1, budgets: 0, goals: 0, loans: 0, wallets: 1, recurringSeries: 0 })),
+      http.post(`${BASE}/me/reset-data`, async ({ request }) => {
+        resets.push(await request.json())
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+    const user = userEvent.setup()
+    renderApp(<RestablecerPage />, { route: '/ajustes/restablecer' })
+
+    const word = await screen.findByLabelText('TYPE RESET TO CONFIRM')
+    const submit = screen.getByRole('button', { name: 'Reset permanently' })
+    await user.type(screen.getByLabelText('CURRENT PASSWORD'), 'Actual123')
+    await user.click(screen.getByRole('checkbox'))
+    await user.type(word, 'restablecer')
+    expect(submit).toHaveAttribute('aria-disabled', 'true')
+
+    await user.clear(word)
+    await user.type(word, 'reset')
+    await user.click(submit)
+    await waitFor(() => expect(resets).toEqual([{ password: 'Actual123' }]))
+  })
+
+  it('confirms with Google instead of a password on an account created with Google', async () => {
+    mockSession({ hasPassword: false })
+    const deletes: unknown[] = []
+    server.use(
+      http.get(`${BASE}/me/footprint`, () => HttpResponse.json({ transactions: 1, budgets: 0, goals: 0, loans: 0, wallets: 1, recurringSeries: 0 })),
+      http.delete(`${BASE}/me`, async ({ request }) => {
+        deletes.push(await request.json())
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+    const user = userEvent.setup()
+    renderApp(<EliminarPage />, { route: '/ajustes/eliminar' })
+
+    await user.type(await screen.findByLabelText('ESCRIBE ELIMINAR PARA CONFIRMAR'), 'ELIMINAR')
+    expect(screen.queryByLabelText('CONTRASEÑA ACTUAL')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('checkbox'))
+    const submit = screen.getByRole('button', { name: 'Eliminar cuenta definitivamente' })
+    expect(submit).toHaveAttribute('aria-disabled', 'true')
+
+    await user.click(screen.getByRole('button', { name: 'Confirmar con Google' }))
+    expect(screen.getByText('Confirmado con Google · ada@example.com')).toBeInTheDocument()
+    await user.click(submit)
+    await waitFor(() => expect(deletes).toEqual([{ googleIdToken: 'google-token' }]))
   })
 })

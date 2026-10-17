@@ -90,8 +90,10 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   "Desde {mes} {año}". Editing the name (`AuthRepository.updateProfile`)
   calls the real backend.
   Ajustes offers Cambiar contraseña and a Zona de riesgo (Restablecer datos,
-  Eliminar cuenta; `SecurityScreens.kt`), both confirmed with the current
-  password. Managing sessions stays on Web (Ajustes › Seguridad); the email
+  Eliminar cuenta; `SecurityScreens.kt`), both confirmed with the word in
+  the app language (RESTABLECER/RESET, ELIMINAR/DELETE) and the current
+  password, or a fresh Google sign-in on an account created with Google.
+  `NovaDestinations.ACCOUNT_ONLY` keeps guests out of those routes. Managing sessions stays on Web (Ajustes › Seguridad); the email
   is read-only here. "Olvidaste tu contraseña" mails a code that
   `ResetPasswordScreen` exchanges for a new password. List screens show
   `NovaSkeletonRows` until `AppContainer.dataLoaded` flips. Ajustes links to Categorías and

@@ -14,6 +14,7 @@ declare global {
           initialize: (config: {
             client_id: string
             callback: (response: { credential: string }) => void
+            login_hint?: string
           }) => void
           renderButton: (parent: HTMLElement, options: Record<string, unknown>) => void
         }
@@ -55,9 +56,12 @@ function loadGoogleScript(): Promise<void> {
 export function GoogleSignInButton({
   onToken,
   label,
+  loginHint,
 }: {
   onToken: (idToken: string) => void
   label?: string
+  // Pre-selects this account in Google's picker (the lock screen's email).
+  loginHint?: string
 }) {
   const { t } = useTranslation()
   const { theme } = useTheme()
@@ -70,6 +74,13 @@ export function GoogleSignInButton({
   const [ready, setReady] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
   const [isPressed, setIsPressed] = useState(false)
+  // The latest callback, read when Google answers: callers pass a new
+  // function on every render, and re-running `initialize` for each one makes
+  // GIS warn and re-render its button on every keystroke.
+  const onTokenRef = useRef(onToken)
+  useEffect(() => {
+    onTokenRef.current = onToken
+  }, [onToken])
 
   useEffect(() => {
     if (!clientId || !realButtonRef.current) return
@@ -80,7 +91,8 @@ export function GoogleSignInButton({
         if (cancelled || !window.google || !realButtonRef.current) return
         window.google.accounts.id.initialize({
           client_id: clientId,
-          callback: (response) => onToken(response.credential),
+          callback: (response) => onTokenRef.current(response.credential),
+          ...(loginHint ? { login_hint: loginHint } : {}),
         })
         window.google.accounts.id.renderButton(realButtonRef.current, {
           type: 'standard',
@@ -98,7 +110,7 @@ export function GoogleSignInButton({
     return () => {
       cancelled = true
     }
-  }, [clientId, onToken])
+  }, [clientId, loginHint])
 
   if (!clientId) return null
 

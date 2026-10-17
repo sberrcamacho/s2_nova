@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 
@@ -26,5 +28,14 @@ object GoogleAuthHelper {
         }
 
         GoogleIdTokenCredential.createFrom(credential.data).idToken
+    }
+
+    // What to tell the user when the flow fails: nothing when they closed
+    // the picker, a way out when the phone has no Google account, otherwise
+    // `fallback` (the caller's server/generic message).
+    fun failureMessage(error: Throwable, fallback: () -> String): String? = when (error) {
+        is GetCredentialCancellationException -> null
+        is NoCredentialException -> com.s2nova.app.ui.tr(com.s2nova.app.ui.StringKey.AUTH_GOOGLE_NO_ACCOUNT)
+        else -> fallback()
     }
 }

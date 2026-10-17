@@ -18,8 +18,11 @@ data class ResetPasswordRequest(val token: String, val newPassword: String)
 @Serializable
 data class ChangePasswordRequest(val currentPassword: String? = null, val newPassword: String)
 
+// Zona de riesgo's proof that it's really the user: the password, or — for
+// an account created with Google — a fresh Google ID token. Only the one set
+// is sent (nulls are defaults, and defaults aren't encoded).
 @Serializable
-data class PasswordConfirmRequest(val password: String)
+data class IdentityConfirmRequest(val password: String? = null, val googleIdToken: String? = null)
 
 @Serializable
 data class TransactionTitlesDto(val titles: List<String> = emptyList(), val last: String? = null)
