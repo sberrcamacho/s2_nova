@@ -49,6 +49,7 @@ object DemoLedger {
             loanKind = input.loanKind,
             counterpartyName = input.counterpartyName,
             dueDate = input.dueDate,
+            interest = if (input.loanKind != null) input.interest else null,
         )
     }
 

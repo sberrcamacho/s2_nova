@@ -5,7 +5,7 @@ import { fromMinor, principalOf } from "../lib/currency.js";
 import { processDueSeries } from "../lib/recurring.js";
 import { dateKey, monthKeyOf } from "../lib/dates.js";
 import { processDuePlans, serializeGoals } from "../lib/goalProgress.js";
-import { loanRepaidMap, outstandingOf } from "../lib/loans.js";
+import { loanBalances } from "../lib/loans.js";
 import { prisma } from "../lib/prisma.js";
 import { dateOnlySchema } from "../lib/validation.js";
 import { resolveToday } from "./summary.js";
@@ -52,7 +52,7 @@ export async function alertRoutes(app: FastifyInstance) {
       prisma.goal.findMany({ where: { userId }, include: { plan: true } }),
     ]);
 
-    const repaid = await loanRepaidMap(loans.map((loan) => loan.id));
+    const balances = await loanBalances(loans, today);
     const budgetProgress = await Promise.all(budgets.map((budget) => serializeBudget(userId, budget, monthKeyOf(today))));
     const goalProgress = await serializeGoals(userId, goals, today);
     const autoContributions = await prisma.transaction.findMany({
@@ -75,7 +75,7 @@ export async function alertRoutes(app: FastifyInstance) {
     }));
 
     const loanAlerts = loans
-      .map((loan) => ({ loan, outstanding: outstandingOf(loan, repaid.get(loan.id)) }))
+      .map((loan) => ({ loan, outstanding: balances.get(loan.id)!.outstanding }))
       .filter(({ outstanding }) => outstanding > 0n)
       .map(({ loan, outstanding }) => ({
         id: `loan:${loan.id}`,

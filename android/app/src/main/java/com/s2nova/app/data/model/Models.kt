@@ -124,6 +124,23 @@ data class Transaction(
     // at the original Lent/Borrowed row. A loan's paid-so-far amount is the
     // sum of every transaction whose parentLoanId equals its id.
     val parentLoanId: String? = null,
+    // Loans only: what is still owed (principal + unpaid interest), as the
+    // server computed it; null in guest mode (TransactionRepository.outstandingFor
+    // computes it there).
+    val outstanding: Double? = null,
+    val interest: LoanInterest? = null,
+)
+
+// A loan's interest terms and, read from the server, what it has charged
+// (backend lib/loans.ts). Rate is a percentage; period and `from` are for
+// ON_BALANCE only.
+data class LoanInterest(
+    val mode: com.s2nova.app.data.LoanBalance.Mode,
+    val rate: Double,
+    val period: com.s2nova.app.data.LoanBalance.Period = com.s2nova.app.data.LoanBalance.Period.MONTHLY,
+    val from: String? = null,
+    val accrued: Double = 0.0,
+    val paid: Double = 0.0,
 )
 
 // No paymentMethod field — the backend derives it from the wallet
@@ -151,6 +168,7 @@ data class NewTransactionInput(
     val counterpartyKind: CounterpartyKind? = null,
     val dueDate: String? = null,
     val repeat: RepeatRule? = null,
+    val interest: LoanInterest? = null,
 )
 
 // "Repetir" (NEW_MOVEMENT.md §5). occurrences counts this movement too.

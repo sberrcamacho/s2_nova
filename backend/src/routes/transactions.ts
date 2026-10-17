@@ -3,7 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { convertMinor, CURRENCY_CODES, fromMinor, rateOn, toMinor } from "../lib/currency.js";
 import { addInterval, parseDateOnly } from "../lib/dates.js";
-import { loanRepaidMap } from "../lib/loans.js";
+import { currentLoanBalance, loanBalances } from "../lib/loans.js";
 import {
   applyBalanceEffect,
   attachmentMetaSelect,
@@ -97,6 +97,33 @@ export function paymentMethodForAccountType(
   }
 }
 
+// A loan's interest terms (lib/loans.ts loanBalance): the rate is a
+// percentage — per month or year for ON_BALANCE, once for FIXED — and
+// `from` (ON_BALANCE only) is when interest starts, else the loan's date.
+const loanInterestSchema = z
+  .object({
+    mode: z.enum(["NONE", "FIXED", "ON_BALANCE"]),
+    rate: z.number().positive().max(1000).optional(),
+    period: z.enum(["MONTHLY", "ANNUAL"]).optional(),
+    from: dateOnly.nullable().optional(),
+  })
+  .refine((i) => i.mode === "NONE" || i.rate !== undefined, { message: "rate is required.", path: ["rate"] })
+  .refine((i) => i.mode !== "ON_BALANCE" || i.period !== undefined, { message: "period is required.", path: ["period"] })
+  .refine((i) => i.mode === "ON_BALANCE" || !i.from, { message: "from is only for ON_BALANCE.", path: ["from"] });
+
+// The four loan columns for a set of terms (null clears them).
+function interestData(interest: z.infer<typeof loanInterestSchema> | null) {
+  if (!interest || interest.mode === "NONE") {
+    return { loanInterestMode: null, loanInterestRate: null, loanInterestPeriod: null, loanInterestFrom: null };
+  }
+  return {
+    loanInterestMode: interest.mode,
+    loanInterestRate: interest.rate!.toFixed(4),
+    loanInterestPeriod: interest.mode === "ON_BALANCE" ? interest.period! : null,
+    loanInterestFrom: interest.mode === "ON_BALANCE" && interest.from ? parseDateOnly(interest.from) : null,
+  };
+}
+
 const createTransactionSchema = z
   .object({
     accountId: z.string().uuid(),
@@ -118,6 +145,7 @@ const createTransactionSchema = z
     counterpartyName: z.string().trim().min(1).max(120).optional(),
     counterpartyKind: counterpartyKindEnum.optional(),
     dueDate: dateOnly.optional(),
+    interest: loanInterestSchema.optional(),
     // "Título" — required (NEW_MOVEMENT.md). The server never invents one;
     // the clients pre-fill it from GET /transactions/titles.
     description: z.string().trim().min(1).max(200),
@@ -146,6 +174,10 @@ const createTransactionSchema = z
   .refine((data) => !data.loanKind || data.type === (data.loanKind === "LENT" ? "EXPENSE" : "INCOME"), {
     message: "loanKind LENT requires type EXPENSE, and BORROWED requires type INCOME.",
     path: ["loanKind"],
+  })
+  .refine((data) => !data.interest || Boolean(data.loanKind), {
+    message: "interest is only for loans.",
+    path: ["interest"],
   });
 
 // accountId/type/transferToAccountId are fixed at creation, except for the
@@ -165,6 +197,8 @@ const updateTransactionSchema = z.object({
   counterpartyName: z.string().trim().min(1).max(120).nullable().optional(),
   counterpartyKind: counterpartyKindEnum.nullable().optional(),
   dueDate: dateOnly.nullable().optional(),
+  // null (or mode NONE) removes the interest.
+  interest: loanInterestSchema.nullable().optional(),
   description: z.string().trim().min(1).max(200).optional(),
   merchant: z.string().trim().max(120).nullable().optional(),
   note: z.string().trim().max(500).nullable().optional(),
@@ -345,8 +379,8 @@ export async function transactionRoutes(app: FastifyInstance) {
       }),
       walletCurrencyMap(prisma, userId),
     ]);
-    const repaid = await loanRepaidMap(rows.filter((row) => row.loanKind).map((row) => row.id));
-    return rows.map((row) => serializeTransaction(row, currencies, repaid.get(row.id)));
+    const balances = await loanBalances(rows.filter((row) => row.loanKind));
+    return rows.map((row) => serializeTransaction(row, currencies, balances.get(row.id)));
   });
 
   app.get("/transactions/:id", { preHandler: app.authenticate }, async (request, reply) => {
@@ -354,8 +388,8 @@ export async function transactionRoutes(app: FastifyInstance) {
     const userId = request.userId!;
     const row = await prisma.transaction.findFirst({ where: { id, userId }, include: { attachment: attachmentMetaSelect } });
     if (!row) return reply.status(404).send({ error: "Transaction not found." });
-    const repaid = row.loanKind ? await loanRepaidMap([row.id]) : new Map<string, bigint>();
-    return serializeTransaction(row, await walletCurrencyMap(prisma, userId), repaid.get(row.id));
+    const balances = row.loanKind ? await loanBalances([row]) : undefined;
+    return serializeTransaction(row, await walletCurrencyMap(prisma, userId), balances?.get(row.id));
   });
 
   app.post("/transactions", { preHandler: app.authenticate }, async (request, reply) => {
@@ -442,6 +476,7 @@ export async function transactionRoutes(app: FastifyInstance) {
           counterpartyName: body.counterpartyName,
           counterpartyKind: body.counterpartyKind ?? null,
           dueDate: body.dueDate ? parseDateOnly(body.dueDate) : null,
+          ...(body.loanKind ? interestData(body.interest ?? null) : {}),
           paymentMethod: paymentMethodForAccountType(account.type),
           description: body.description,
           merchant: body.merchant,
@@ -477,7 +512,7 @@ export async function transactionRoutes(app: FastifyInstance) {
     if (body.subcategoryId) {
       await assertValidSubcategory(userId, body.subcategoryId, body.categoryId ?? existing.categoryId);
     }
-    if (body.loanKind && !existing.loanKind) {
+    if ((body.loanKind || body.interest) && !existing.loanKind) {
       return reply.status(422).send({ error: "This transaction isn't a Lent/Borrowed record." });
     }
     // Patching accountId to equal a TRANSFER's destination would net its
@@ -517,7 +552,7 @@ export async function transactionRoutes(app: FastifyInstance) {
         ? await priced(body.amount ?? fromMinor(existing.amountMinor, existing.currency), currency, wallet?.currency ?? currency, nextDate)
         : null;
 
-    const updated = await prisma.$transaction(async (tx) => {
+    let updated = await prisma.$transaction(async (tx) => {
       if (existing.status === "COMPLETED") await applyBalanceEffect(tx, effectOf(existing), -1);
 
       const row = await tx.transaction.update({
@@ -538,6 +573,7 @@ export async function transactionRoutes(app: FastifyInstance) {
           counterpartyName: body.counterpartyName,
           counterpartyKind: body.counterpartyKind,
           dueDate: body.dueDate === undefined ? undefined : body.dueDate ? parseDateOnly(body.dueDate) : null,
+          ...(body.interest === undefined ? {} : interestData(body.interest)),
           description: body.description,
           merchant: body.merchant,
           note: body.note,
@@ -584,8 +620,14 @@ export async function transactionRoutes(app: FastifyInstance) {
       return row;
     });
 
-    const repaid = updated.loanKind ? await loanRepaidMap([updated.id]) : new Map<string, bigint>();
-    return serializeTransaction(updated, await walletCurrencyMap(prisma, userId), repaid.get(updated.id));
+    let balances = updated.loanKind ? await loanBalances([updated]) : undefined;
+    // New terms (more interest, a bigger amount) can leave a settled loan
+    // owing again: reopen it so it can take another abono.
+    if (updated.loanSettledAt && (balances?.get(updated.id)?.outstanding ?? 0n) > 0n) {
+      updated = await prisma.transaction.update({ where: { id: updated.id }, data: { loanSettledAt: null, settledByTransactionId: null }, include: { attachment: attachmentMetaSelect } });
+      balances = await loanBalances([updated]);
+    }
+    return serializeTransaction(updated, await walletCurrencyMap(prisma, userId), balances?.get(updated.id));
   });
 
   // Creates a real, opposite-direction transaction for the repayment
@@ -633,11 +675,15 @@ export async function transactionRoutes(app: FastifyInstance) {
       // read the same paid-so-far and jointly overpay.
       await tx.$queryRaw`SELECT id FROM transactions WHERE id = ${existing.id} FOR UPDATE`;
 
-      const paidSoFar = await tx.transaction.aggregate({
+      // What it owes on the abono's date: unpaid principal plus the
+      // interest accrued by then (lib/loans.ts). A backdated abono still
+      // counts every earlier one.
+      const payments = await tx.transaction.findMany({
         where: { parentLoanId: existing.id },
-        _sum: { amountMinor: true },
+        select: { amountMinor: true, transactionDate: true },
+        orderBy: [{ transactionDate: "asc" }, { createdAt: "asc" }],
       });
-      const outstandingMinor = existing.amountMinor - (paidSoFar._sum.amountMinor ?? BigInt(0));
+      const outstandingMinor = currentLoanBalance(existing, payments, settlementDate).outstanding;
       const amountMinor = body.amount !== undefined ? toMinor(body.amount, existing.currency) : outstandingMinor;
       if (amountMinor <= BigInt(0) || amountMinor > outstandingMinor) {
         throw Object.assign(new Error("Invalid settlement amount."), { statusCode: 422 });
@@ -678,10 +724,10 @@ export async function transactionRoutes(app: FastifyInstance) {
       return { settlement, updatedOriginal };
     });
 
-    const repaid = await loanRepaidMap([result.updatedOriginal.id]);
+    const balances = await loanBalances([result.updatedOriginal]);
     const currencies = await walletCurrencyMap(prisma, userId);
     return {
-      original: serializeTransaction(result.updatedOriginal, currencies, repaid.get(result.updatedOriginal.id)),
+      original: serializeTransaction(result.updatedOriginal, currencies, balances.get(result.updatedOriginal.id)),
       settlement: serializeTransaction(result.settlement, currencies),
     };
   });

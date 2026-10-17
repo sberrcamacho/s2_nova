@@ -120,10 +120,14 @@ describe('Guest mode example account', () => {
   it('settles a loan with an abono and clears its alert', async () => {
     const camilo = (a: { kind: string }) => a.kind === 'loan_open' && (a as { transactionId?: string }).transactionId === 'guest-loan-camilo'
     expect((await alertService.getAlerts()).some(camilo)).toBe(true)
-    // Half of it was already paid back.
-    expect((await transactionService.getLoans()).find((l) => l.id === 'guest-loan-camilo')).toMatchObject({ outstanding: 270_000 })
+    // Part of it was already paid back; it charges 2 % a month on the
+    // balance, so it owes more than the unpaid principal.
+    const open = (await transactionService.getLoans()).find((l) => l.id === 'guest-loan-camilo')!
+    expect(open.interest).toMatchObject({ mode: 'on_balance', rate: 2, period: 'monthly' })
+    expect(open.outstanding).toBe(open.interest!.principalOutstanding + open.interest!.accrued - open.interest!.paid)
+    expect(open.outstanding!).toBeGreaterThan(open.interest!.principalOutstanding)
 
-    await transactionService.settleLoan('guest-loan-camilo', { amount: 270_000, accountId: 'guest-bancolombia', date: todayISO() })
+    await transactionService.settleLoan('guest-loan-camilo', { amount: open.outstanding!, accountId: 'guest-bancolombia', date: todayISO() })
 
     const loan = (await transactionService.getLoans()).find((l) => l.id === 'guest-loan-camilo')!
     expect(loan).toMatchObject({ loanSettled: true, outstanding: 0 })

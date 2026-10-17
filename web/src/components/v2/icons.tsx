@@ -26,6 +26,8 @@ export const ICON_PATHS = {
   warn: 'M12 3 2 21h20z M12 10v5 M12 18h.01',
   clock: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M12 7v5l3 2',
   alertCircle: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M12 8v5 M12 16h.01',
+  // Lucide's percent glyph (loan interest).
+  percent: 'M19 5 5 19 M6.5 9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z M17.5 20a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z',
 }
 
 export function StrokeIcon({ paths, size, strokeWidth = 2 }: { paths: readonly string[] | string; size: number; strokeWidth?: number }) {

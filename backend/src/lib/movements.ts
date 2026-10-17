@@ -1,6 +1,6 @@
 import type { PrismaClient, Transaction } from "@prisma/client";
 import { fromMinor } from "./currency.js";
-import { outstandingOf } from "./loans.js";
+import { loanBalance, type LoanBalance } from "./loans.js";
 
 // Shared by routes/transactions.ts, the Programados and goal-plan
 // processors: how a movement moves wallet balances and how it goes over the
@@ -52,7 +52,9 @@ type AttachmentMeta = { id: string; kind: string; mime: string; name: string; si
 export function serializeTransaction(
   row: Transaction & { attachment?: AttachmentMeta },
   walletCurrencies: Map<string, string>,
-  repaidMinor?: bigint,
+  // A loan's balance (lib/loans.ts loanBalances); without it a loan reads
+  // as nothing repaid.
+  balance?: LoanBalance,
 ) {
   const walletCurrency =
     walletCurrencies.get(row.type === "TRANSFER" && row.transferToAccountId ? row.transferToAccountId : row.accountId) ?? row.currency;
@@ -81,8 +83,9 @@ export function serializeTransaction(
     loanSettledAt: row.loanSettledAt,
     settledByTransactionId: row.settledByTransactionId,
     parentLoanId: row.parentLoanId,
-    // Only loans carry an outstanding balance; null for everything else.
-    outstanding: row.loanKind ? fromMinor(outstandingOf(row, repaidMinor), row.currency) : null,
+    // Only loans carry an outstanding balance (principal plus unpaid
+    // interest) and interest terms; null for everything else.
+    ...loanFields(row, balance),
     paymentMethod: row.paymentMethod,
     // "Título" (optional). Display falls back to note, then the category.
     description: row.description,
@@ -112,4 +115,25 @@ export const attachmentMetaSelect = {
 export async function walletCurrencyMap(tx: Tx, userId: string): Promise<Map<string, string>> {
   const rows = await tx.account.findMany({ where: { userId }, select: { id: true, currency: true } });
   return new Map(rows.map((r) => [r.id, r.currency]));
+}
+
+function loanFields(row: Transaction, balance: LoanBalance | undefined) {
+  if (!row.loanKind) return { outstanding: null, interest: null };
+  const b = balance ?? loanBalance(row, [], new Date());
+  const mode = row.loanInterestMode ?? "NONE";
+  return {
+    outstanding: fromMinor(b.outstanding, row.currency),
+    interest:
+      mode === "NONE"
+        ? null
+        : {
+            mode,
+            rate: row.loanInterestRate === null ? 0 : Number(row.loanInterestRate),
+            period: row.loanInterestPeriod,
+            from: row.loanInterestFrom,
+            accrued: fromMinor(b.interestAccrued, row.currency),
+            paid: fromMinor(b.interestPaid, row.currency),
+            principalOutstanding: fromMinor(b.principalOutstanding, row.currency),
+          },
+  };
 }

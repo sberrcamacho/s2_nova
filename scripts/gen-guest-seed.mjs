@@ -181,8 +181,8 @@ mv({ wallet: VISA, amount: 1_380_000, category: 'exp.travel', sub: 'exp.travel.t
 
 // ---- Loans ---------------------------------------------------------------------
 
-// Lent to Camilo, half paid back.
-mv({ id: 'guest-loan-camilo', wallet: BANCO, amount: 420_000, category: 'exp.other', date: M(-1, 5), time: '19:00', title: 'Préstamo a Camilo', counterparty: 'Camilo Restrepo', loan: { kind: 'LENT', due: M(1, 15) } })
+// Lent to Camilo at 2 % a month on the balance, partly paid back.
+mv({ id: 'guest-loan-camilo', wallet: BANCO, amount: 420_000, category: 'exp.other', date: M(-1, 5), time: '19:00', title: 'Préstamo a Camilo', counterparty: 'Camilo Restrepo', loan: { kind: 'LENT', due: M(1, 15), interest: { mode: 'ON_BALANCE', rate: 2, period: 'MONTHLY' } } })
 mv({ wallet: NEQUI, type: 'INCOME', amount: 150_000, category: 'exp.other', date: T(-6), time: '12:30', title: 'Pago recibido de Camilo Restrepo', counterparty: 'Camilo Restrepo', parentLoan: 'guest-loan-camilo' })
 // Lent to Ana María, paid back in full.
 mv({ id: 'guest-loan-ana', wallet: NEQUI, amount: 200_000, category: 'exp.other', date: M(-3, 10), time: '18:00', title: 'Préstamo a Ana María', counterparty: 'Ana María Ruiz', loan: { kind: 'LENT', due: M(-2, 10) } })
@@ -190,8 +190,8 @@ mv({ wallet: NEQUI, type: 'INCOME', amount: 200_000, category: 'exp.other', date
 // Borrowed from Dad, paid back a bit each month.
 mv({ id: 'guest-loan-papa', wallet: BANCO, type: 'INCOME', amount: 1_500_000, category: 'inc.other', date: M(-8, 3), time: '10:00', title: 'Préstamo de papá', counterparty: 'Papá', counterpartyKind: 'FAMILY', note: 'Para el depósito del apartamento.', loan: { kind: 'BORROWED' } })
 for (const o of [-7, -6, -5, -4]) mv({ wallet: BANCO, amount: 250_000, category: 'inc.other', date: M(o, 4), time: '10:00', title: 'Pago realizado a Papá', counterparty: 'Papá', parentLoan: 'guest-loan-papa' })
-// Borrowed from Daniela, overdue.
-mv({ id: 'guest-loan-daniela', wallet: NEQUI, type: 'INCOME', amount: 300_000, category: 'inc.other', date: M(-2, 20), time: '14:00', title: 'Préstamo de Daniela', counterparty: 'Daniela Ortiz', counterpartyKind: 'FRIEND', loan: { kind: 'BORROWED', due: T(-5) } })
+// Borrowed from Daniela, overdue: 3 % a month from the due date on.
+mv({ id: 'guest-loan-daniela', wallet: NEQUI, type: 'INCOME', amount: 300_000, category: 'inc.other', date: M(-2, 20), time: '14:00', title: 'Préstamo de Daniela', counterparty: 'Daniela Ortiz', counterpartyKind: 'FRIEND', loan: { kind: 'BORROWED', due: T(-5), interest: { mode: 'ON_BALANCE', rate: 3, period: 'MONTHLY', from: T(-5) } } })
 
 // ---- Goals and their contributions -----------------------------------------------
 

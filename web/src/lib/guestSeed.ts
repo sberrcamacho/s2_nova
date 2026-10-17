@@ -24,7 +24,7 @@ export interface SeedMovement {
   goal?: string
   goalPlan?: boolean
   customBudget?: string
-  loan?: { kind: string; due?: string }
+  loan?: { kind: string; due?: string; interest?: { mode: string; rate: number; period?: string; from?: string } }
   parentLoan?: string
   attachment?: { kind: string; name: string; file: string }
 }

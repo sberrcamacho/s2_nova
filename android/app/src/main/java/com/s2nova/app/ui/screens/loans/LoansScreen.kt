@@ -1,5 +1,11 @@
 package com.s2nova.app.ui.screens.loans
 
+import androidx.compose.foundation.layout.width
+import com.s2nova.app.ui.components.ChoiceCard
+import com.s2nova.app.ui.components.BareField
+import com.s2nova.app.ui.components.InputBox
+import com.s2nova.app.data.model.LoanInterest
+import com.s2nova.app.data.LoanBalance
 import androidx.compose.runtime.LaunchedEffect
 import com.s2nova.app.data.formatMoney
 import com.s2nova.app.ui.components.OverdraftDialog
@@ -184,6 +190,10 @@ fun LoansTab(initialSide: LoanKind = LoanKind.LENT) {
                         amountText = com.s2nova.app.ui.screens.addtransaction.AmountPad.numStr(txn.amount),
                         walletId = txn.walletId,
                         dueDate = txn.dueDate,
+                        interestMode = txn.interest?.mode ?: LoanBalance.Mode.NONE,
+                        rateText = txn.interest?.rate?.let { com.s2nova.app.ui.screens.addtransaction.AmountPad.numStr(it) } ?: "",
+                        period = txn.interest?.period ?: LoanBalance.Period.MONTHLY,
+                        interestFrom = txn.interest?.from,
                     )
                 },
             )
@@ -233,15 +243,16 @@ fun LoansTab(initialSide: LoanKind = LoanKind.LENT) {
                                 description = tr(if (d.side == LoanKind.LENT) StringKey.LOAN_DESC_LENT else StringKey.LOAN_DESC_BORROWED, counterparty),
                                 amount = amount,
                                 type = if (d.side == LoanKind.LENT) TransactionType.EXPENSE else TransactionType.INCOME,
-                                category = "exp.other",
+                                category = if (d.side == LoanKind.LENT) "exp.other" else "inc.other",
                                 date = todayISO(),
                                 loanKind = d.side,
                                 counterpartyName = counterparty,
                                 dueDate = d.dueDate,
+                                interest = d.interest(),
                             ),
                         )
                     } else {
-                        AppContainer.transactionRepository.updateLoan(d.id, amount, walletId, d.side, counterparty, d.dueDate)
+                        AppContainer.transactionRepository.updateLoan(d.id, amount, walletId, d.side, counterparty, d.dueDate, d.interest())
                     }
                 }
                 runCatching { AppContainer.walletRepository.refresh() }
@@ -331,12 +342,27 @@ private fun LoanCard(txn: Transaction, outstanding: Double, onPay: () -> Unit, o
     val format = rememberCurrencyFormatter()
     val t = rememberStrings()
     val language = rememberAppLanguage()
-    val paid = txn.amount - outstanding
+    // What it has come to owe: the principal plus the interest charged so
+    // far (backend lib/loans.ts).
+    val interest = AppContainer.transactionRepository.interestFor(txn)
+    val total = txn.amount + interest
+    val paid = total - outstanding
     val due = if (txn.loanSettled) {
-        String.format(t(StringKey.LOANS_SETTLED_NOTE), format(txn.amount))
+        String.format(t(StringKey.LOANS_SETTLED_NOTE), format(total))
     } else {
         val base = txn.dueDate?.let { "${t(StringKey.LOANS_DUE)} ${shortDateLabel(it, language)}" } ?: t(StringKey.LOANS_NO_DUE_DATE)
-        base + if (paid > 0) String.format(t(StringKey.LOANS_PAID_NOTE), format(paid), format(txn.amount)) else ""
+        base + if (paid > 0) String.format(t(StringKey.LOANS_PAID_NOTE), format(paid), format(total)) else ""
+    }
+    val terms = txn.interest?.let { i ->
+        val r = com.s2nova.app.ui.screens.addtransaction.AmountPad.numStr(i.rate)
+        if (i.mode == LoanBalance.Mode.FIXED) tr(StringKey.LOANS_INTEREST_FIXED, r)
+        else tr(StringKey.LOANS_INTEREST_ON_BALANCE, r, t(if (i.period == LoanBalance.Period.ANNUAL) StringKey.LOANS_INTEREST_ANNUAL else StringKey.LOANS_INTEREST_MONTHLY))
+    }
+    val interestNote = when {
+        txn.loanSettled || txn.interest == null -> null
+        interest > 0 -> tr(StringKey.LOANS_INTEREST_SO_FAR, format(interest))
+        txn.interest.from != null -> tr(StringKey.LOANS_INTEREST_STARTS, shortDateLabel(txn.interest.from, language))
+        else -> null
     }
     val shape = RoundedCornerShape(16.dp)
     Column(
@@ -353,9 +379,18 @@ private fun LoanCard(txn: Transaction, outstanding: Double, onPay: () -> Unit, o
             Column(modifier = Modifier.weight(1f)) {
                 Text(txn.counterpartyName ?: txn.description, style = NovaType.titleSm, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                 Text(due, style = NovaType.bodySm.copy(fontFeatureSettings = "tnum"), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (terms != null) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.padding(top = 2.dp)) {
+                        com.s2nova.app.ui.components.V2Icon(LOAN_PERCENT_ICON, MaterialTheme.colorScheme.onSurfaceVariant, 14.dp)
+                        Text(terms, style = NovaType.bodySm, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                    }
+                }
+                if (interestNote != null) {
+                    Text(interestNote, style = NovaType.bodySm.copy(fontFeatureSettings = "tnum"), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
             Text(
-                format(if (txn.loanSettled) txn.amount else outstanding),
+                format(if (txn.loanSettled) total else outstanding),
                 style = NovaType.amount,
                 color = if (txn.loanSettled) colors.textDim else MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
@@ -364,7 +399,7 @@ private fun LoanCard(txn: Transaction, outstanding: Double, onPay: () -> Unit, o
             )
         }
         NovaProgressBar(
-            percentage = if (txn.amount > 0) ((paid / txn.amount) * 100).toInt().coerceIn(0, 100) else 0,
+            percentage = if (total > 0) ((paid / total) * 100).toInt().coerceIn(0, 100) else 0,
             color = if (txn.loanSettled) colors.positive else colors.link,
             height = 8.dp,
             cornerRadius = 4.dp,
@@ -397,7 +432,19 @@ private data class LoanDraft(
     val amountText: String,
     val walletId: String?,
     val dueDate: String?,
-)
+    // Interest (backend lib/loans.ts): the kind, the rate as typed, its
+    // period and when it starts (ON_BALANCE only).
+    val interestMode: LoanBalance.Mode = LoanBalance.Mode.NONE,
+    val rateText: String = "",
+    val period: LoanBalance.Period = LoanBalance.Period.MONTHLY,
+    val interestFrom: String? = null,
+) {
+    val rate: Double? get() = rateText.trim().replace(',', '.').toDoubleOrNull()?.takeIf { it > 0 && it <= 1000 }
+
+    fun interest(): LoanInterest? =
+        if (interestMode == LoanBalance.Mode.NONE || rate == null) null
+        else LoanInterest(interestMode, rate!!, period, if (interestMode == LoanBalance.Mode.ON_BALANCE) interestFrom else null)
+}
 
 // The loan form, one sheet: the direction, the amount on the hero surface,
 // the counterparty, the wallet the money left or entered, and an optional
@@ -421,10 +468,22 @@ private fun LoanDraftSheet(
     // The wallet list opens as its own page, so the form fits without
     // scrolling; the due date is a row that opens the date picker.
     var pickingWallet by remember { mutableStateOf(false) }
+    // The interest opens on its own pages (the kind, then its terms), so the
+    // form never grows under a choice.
+    var interestPage by remember { mutableStateOf<String?>(null) }
     NovaDraftSheet(
         onDismiss = onDismiss,
-        title = if (pickingWallet) null else t(if (isEdit) StringKey.LOANS_EDIT_TITLE else if (isLent) StringKey.LOANS_NEW_LENT else StringKey.LOANS_NEW_BORROWED),
+        title = if (pickingWallet || interestPage != null) null else t(if (isEdit) StringKey.LOANS_EDIT_TITLE else if (isLent) StringKey.LOANS_NEW_LENT else StringKey.LOANS_NEW_BORROWED),
     ) {
+        if (interestPage != null) {
+            LoanInterestPages(
+                draft = draft,
+                page = interestPage!!,
+                onDraftChange = onDraftChange,
+                onPage = { interestPage = it },
+            )
+            return@NovaDraftSheet
+        }
         if (pickingWallet) {
             SheetPageHeader(t(if (isLent) StringKey.LOANS_FORM_WALLET_LENT else StringKey.LOANS_FORM_WALLET_BORROWED)) { pickingWallet = false }
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -463,6 +522,8 @@ private fun LoanDraftSheet(
                     StepDivider()
                 }
                 DateOptionRow(t(StringKey.LOANS_DUE_ROW), draft.dueDate, t(StringKey.LOANS_NO_DATE), allowClear = true) { onDraftChange(draft.copy(dueDate = it)) }
+                StepDivider()
+                StepOptionRow(LOAN_PERCENT_ICON, t(StringKey.LOAN_INTEREST_ROW), interestSummary(draft)) { interestPage = "mode" }
             }
 
             val amount = com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(draft.amountText).takeIf { it > 0 }
@@ -477,6 +538,96 @@ private fun LoanDraftSheet(
         }
     }
 }
+
+// "3 % mensual · desde 30 nov", "10 % fijo" or "Sin interés", short so the
+// row's value rarely needs truncating.
+@Composable
+private fun interestSummary(draft: LoanDraft): String {
+    val language = rememberAppLanguage()
+    val rate = draft.rate ?: return tr(StringKey.LOAN_INTEREST_NONE)
+    val r = com.s2nova.app.ui.screens.addtransaction.AmountPad.numStr(rate)
+    return when (draft.interestMode) {
+        LoanBalance.Mode.NONE -> tr(StringKey.LOAN_INTEREST_NONE)
+        LoanBalance.Mode.FIXED -> tr(StringKey.LOANS_INTEREST_FIXED, r)
+        LoanBalance.Mode.ON_BALANCE -> "$r % " + tr(if (draft.period == LoanBalance.Period.ANNUAL) StringKey.LOANS_INTEREST_ANNUAL else StringKey.LOANS_INTEREST_MONTHLY) +
+            (draft.interestFrom?.let { " · " + tr(StringKey.LOAN_SUMMARY_FROM, shortDateLabel(it, language)) } ?: "")
+    }
+}
+
+// The interest pages of the loan sheet: "mode" (none / fixed / on the
+// balance, each explained) and "terms" (the rate, its period and the start
+// date). "Listo" returns to the form.
+@Composable
+private fun LoanInterestPages(draft: LoanDraft, page: String, onDraftChange: (LoanDraft) -> Unit, onPage: (String?) -> Unit) {
+    val t = rememberStrings()
+    val colors = NovaColors.current
+    val format = rememberCurrencyFormatter()
+    val isLent = draft.side == LoanKind.LENT
+    if (page == "mode") {
+        SheetPageHeader(t(if (isLent) StringKey.LOAN_INTEREST_Q_LENT else StringKey.LOAN_INTEREST_Q_BORROWED)) { onPage(null) }
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            ChoiceCard(V2Icons.check, colors.accentText, t(StringKey.LOAN_INTEREST_NONE), t(if (isLent) StringKey.LOAN_MODE_NONE_LENT else StringKey.LOAN_MODE_NONE_BORROWED), draft.interestMode == LoanBalance.Mode.NONE, {
+                onDraftChange(draft.copy(interestMode = LoanBalance.Mode.NONE))
+                onPage(null)
+            })
+            ChoiceCard(LOAN_PERCENT_ICON, colors.accentText, t(StringKey.LOAN_INTEREST_FIXED), t(StringKey.LOAN_MODE_FIXED_DETAIL), draft.interestMode == LoanBalance.Mode.FIXED, {
+                onDraftChange(draft.copy(interestMode = LoanBalance.Mode.FIXED))
+                onPage("terms")
+            })
+            ChoiceCard(V2Icons.repeat, colors.accentText, t(StringKey.LOAN_INTEREST_ON_BALANCE), t(StringKey.LOAN_MODE_ON_BALANCE_DETAIL), draft.interestMode == LoanBalance.Mode.ON_BALANCE, {
+                onDraftChange(draft.copy(interestMode = LoanBalance.Mode.ON_BALANCE))
+                onPage("terms")
+            })
+        }
+        return
+    }
+    val fixed = draft.interestMode == LoanBalance.Mode.FIXED
+    SheetPageHeader(t(if (fixed) StringKey.LOAN_TERMS_FIXED else StringKey.LOAN_TERMS_ON_BALANCE)) { onPage("mode") }
+    var error by remember { mutableStateOf<String?>(null) }
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Column {
+            FieldLabel(t(if (fixed) StringKey.LOAN_RATE_FIXED else StringKey.LOAN_RATE))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                InputBox(modifier = Modifier.width(120.dp), height = 56.dp) {
+                    BareField(draft.rateText, { v -> error = null; onDraftChange(draft.copy(rateText = v.filter { it.isDigit() || it == '.' || it == ',' }.take(8))) }, "2", fontSize = 16.sp, numeric = true, tabular = true)
+                    Text("%", style = NovaType.body, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                if (!fixed) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        SheetPill(t(StringKey.LOAN_PERIOD_MONTHLY), draft.period == LoanBalance.Period.MONTHLY) { onDraftChange(draft.copy(period = LoanBalance.Period.MONTHLY)) }
+                        SheetPill(t(StringKey.LOAN_PERIOD_ANNUAL), draft.period == LoanBalance.Period.ANNUAL) { onDraftChange(draft.copy(period = LoanBalance.Period.ANNUAL)) }
+                    }
+                }
+            }
+            val amount = com.s2nova.app.ui.screens.addtransaction.AmountPad.eval(draft.amountText).takeIf { it > 0 }
+            val rate = draft.rate
+            val hint = when {
+                amount == null || rate == null -> null
+                fixed -> tr(if (isLent) StringKey.LOAN_HINT_FIXED_LENT else StringKey.LOAN_HINT_FIXED_BORROWED, format(amount * (1 + rate / 100)))
+                else -> tr(StringKey.LOAN_HINT_ON_BALANCE, format(amount * rate / 100), t(if (draft.period == LoanBalance.Period.ANNUAL) StringKey.LOAN_PER_YEAR else StringKey.LOAN_PER_MONTH))
+            }
+            Text(hint ?: "", style = NovaType.bodySm.copy(fontFeatureSettings = "tnum"), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp).heightIn(min = 18.dp))
+        }
+        if (!fixed) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                StepOptionGroup {
+                    DateOptionRow(t(StringKey.LOAN_INTEREST_FROM), draft.interestFrom, t(StringKey.LOAN_INTEREST_FROM_NONE), allowClear = true) { onDraftChange(draft.copy(interestFrom = it)) }
+                }
+                Text(t(StringKey.LOAN_INTEREST_FROM_HINT), style = NovaType.bodySm, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (draft.dueDate != null && draft.interestFrom != draft.dueDate) {
+                    SheetPill(t(StringKey.LOAN_USE_DUE), false) { onDraftChange(draft.copy(interestFrom = draft.dueDate)) }
+                }
+            }
+        }
+        if (error != null) Text(error!!, style = NovaType.bodySm, color = colors.negative)
+        DraftSheetPrimaryButton(label = t(StringKey.STEP_DONE), enabled = true, onClick = {
+            if (draft.rate == null) error = t(StringKey.LOAN_ERR_RATE) else onPage(null)
+        })
+    }
+}
+
+// Lucide's percent glyph (loan interest).
+private val LOAN_PERCENT_ICON = listOf("M19 5 5 19", "M6.5 9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z", "M17.5 20a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z")
 
 // Arrows for the direction: money going out (lent) or coming in (borrowed).
 private val LOAN_OUT_ICON = listOf("M7 17 17 7", "M8 7h9v9")

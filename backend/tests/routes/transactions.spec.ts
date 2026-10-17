@@ -650,6 +650,83 @@ describe("transaction routes", () => {
     });
   });
 
+  describe("loan interest", () => {
+    async function lend(user: Awaited<ReturnType<typeof createTestUser>>, interest: object, amount = 1_000_000) {
+      const wallet = await createAccount(user.id, { initialBalanceMinor: 0n });
+      const category = await categoryBySlug("other");
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/v1/transactions",
+        headers: authHeader(user),
+        payload: { accountId: wallet.id, type: "EXPENSE", amount, categoryId: category.id, loanKind: "LENT", counterpartyName: "Camilo", description: "Préstamo", date: "2026-01-01", interest },
+      });
+      expect(res.statusCode).toBe(201);
+      return res.json();
+    }
+
+    it("charges a FIXED rate once and settles with principal plus interest", async () => {
+      const user = await createTestUser();
+      const loan = await lend(user, { mode: "FIXED", rate: 10 }, 100_000);
+      expect(loan.interest).toMatchObject({ mode: "FIXED", rate: 10, accrued: 10_000 });
+      expect(loan.outstanding).toBe(110_000);
+
+      const res = await app.inject({ method: "POST", url: `/api/v1/transactions/${loan.id}/settle-loan`, headers: authHeader(user), payload: { date: "2026-02-01" } });
+      expect(res.statusCode).toBe(200);
+      expect(res.json().settlement.amount).toBe(110_000);
+      expect(res.json().original.loanSettledAt).not.toBeNull();
+      expect(res.json().original.outstanding).toBe(0);
+    });
+
+    it("accrues ON_BALANCE interest per day and applies each abono to interest first", async () => {
+      const user = await createTestUser();
+      const loan = await lend(user, { mode: "ON_BALANCE", rate: 2, period: "MONTHLY" });
+
+      const first = await app.inject({ method: "POST", url: `/api/v1/transactions/${loan.id}/settle-loan`, headers: authHeader(user), payload: { amount: 500_000, date: "2026-01-31" } });
+      expect(first.statusCode).toBe(200);
+      expect(first.json().original.interest).toMatchObject({ paid: 20_000, principalOutstanding: 520_000 });
+      expect(first.json().original.loanSettledAt).toBeNull();
+
+      // 30 more days on 520 000 at 2 %: 10 400. More than that is rejected.
+      const over = await app.inject({ method: "POST", url: `/api/v1/transactions/${loan.id}/settle-loan`, headers: authHeader(user), payload: { amount: 530_401, date: "2026-03-02" } });
+      expect(over.statusCode).toBe(422);
+      const last = await app.inject({ method: "POST", url: `/api/v1/transactions/${loan.id}/settle-loan`, headers: authHeader(user), payload: { amount: 530_400, date: "2026-03-02" } });
+      expect(last.statusCode).toBe(200);
+      expect(last.json().original.loanSettledAt).not.toBeNull();
+      expect(last.json().original.outstanding).toBe(0);
+    });
+
+    it("validates the terms and only allows them on loans", async () => {
+      const user = await createTestUser();
+      const wallet = await createAccount(user.id);
+      const category = await categoryBySlug("other");
+      const base = { accountId: wallet.id, type: "EXPENSE", amount: 1000, categoryId: category.id, description: "x", date: "2026-01-01" };
+      for (const payload of [
+        { ...base, loanKind: "LENT", interest: { mode: "ON_BALANCE", rate: 2 } },
+        { ...base, loanKind: "LENT", interest: { mode: "FIXED" } },
+        { ...base, loanKind: "LENT", interest: { mode: "FIXED", rate: 5, from: "2026-02-01" } },
+        { ...base, interest: { mode: "FIXED", rate: 5 } },
+      ]) {
+        const res = await app.inject({ method: "POST", url: "/api/v1/transactions", headers: authHeader(user), payload });
+        expect(res.statusCode).toBe(400);
+      }
+    });
+
+    it("editing the terms changes what is owed, and can reopen a settled loan", async () => {
+      const user = await createTestUser();
+      const loan = await lend(user, { mode: "NONE" }, 100_000);
+      await app.inject({ method: "POST", url: `/api/v1/transactions/${loan.id}/settle-loan`, headers: authHeader(user), payload: { date: "2026-02-01" } });
+
+      const res = await app.inject({ method: "PATCH", url: `/api/v1/transactions/${loan.id}`, headers: authHeader(user), payload: { interest: { mode: "FIXED", rate: 5 } } });
+      expect(res.statusCode).toBe(200);
+      expect(res.json().outstanding).toBe(5_000);
+      expect(res.json().loanSettledAt).toBeNull();
+
+      const cleared = await app.inject({ method: "PATCH", url: `/api/v1/transactions/${loan.id}`, headers: authHeader(user), payload: { interest: null } });
+      expect(cleared.json().interest).toBeNull();
+      expect(cleared.json().outstanding).toBe(0);
+    });
+  });
+
   describe("GET /transactions", () => {
     it("returns a loan's live outstanding balance (null for non-loans and settlement rows)", async () => {
       const user = await createTestUser();

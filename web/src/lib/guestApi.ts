@@ -2,6 +2,7 @@ import { ApiError } from '@/lib/apiClient'
 import { currentLanguage } from '@/lib/i18n/translations'
 import { CURRENCY_CATALOG, currencyInfo, referenceRate } from '@/lib/currency'
 import { todayISO } from '@/lib/date'
+import { currentLoanBalance, loanBalance, type LoanBalanceMinor } from '@/lib/loanBalance'
 import { TAX_NODES, visColor } from '@/lib/taxonomy'
 import { SEED, resolveSeedDate } from '@/lib/guestSeed'
 
@@ -62,6 +63,11 @@ interface GTx {
   loanSettledAt: string | null
   settledByTransactionId: string | null
   parentLoanId: string | null
+  // Interest terms (backend lib/loans.ts): null mode = none.
+  loanInterestMode: 'FIXED' | 'ON_BALANCE' | null
+  loanInterestRate: number | null
+  loanInterestPeriod: 'MONTHLY' | 'ANNUAL' | null
+  loanInterestFrom: string | null
   paymentMethod: string
   description: string
   merchant: string | null
@@ -287,6 +293,7 @@ function seed(): GuestState {
       loanSettledAt: null,
       settledByTransactionId: null,
       parentLoanId: m.parentLoan ?? null,
+      ...interestColumns(m.loan?.interest ? { ...m.loan.interest, from: m.loan.interest.from ? at(m.loan.interest.from) : null } : null),
       paymentMethod: paymentMethodFor(typeOf(m.wallet)),
       description: m.title,
       merchant: m.merchant ?? null,
@@ -309,10 +316,11 @@ function seed(): GuestState {
     }
   })
 
-  // A loan whose repayments cover it is settled by the last one.
+  // A loan whose repayments cover it (interest included) is settled by the
+  // last one.
   for (const loan of txs.filter((t) => t.loanKind)) {
     const repayments = txs.filter((t) => t.parentLoanId === loan.id).sort((a, b) => a.date.localeCompare(b.date))
-    if (repayments.length && repayments.reduce((sum, t) => sum + t.amount, 0) >= loan.amount) {
+    if (repayments.length && loanBalanceOf(txs, loan, repayments[repayments.length - 1].date).outstanding === 0n) {
       const last = repayments[repayments.length - 1]
       loan.loanSettledAt = `${last.date}T12:00:00.000Z`
       loan.settledByTransactionId = last.id
@@ -459,21 +467,71 @@ function priced(amount: number, currency: string, wallet: string) {
   return { fxRate: referenceRate(currency, wallet), walletAmount: convert(amount, currency, wallet) }
 }
 
-function repaid(s: GuestState, loanId: string): number {
-  return s.txs.filter((t) => t.parentLoanId === loanId).reduce((sum, t) => sum + t.amount, 0)
+// ---- Loans (backend lib/loans.ts, ported in lib/loanBalance.ts) ----------
+
+const toMinor = (amount: number, code: string) => BigInt(Math.round(amount * 10 ** currencyInfo(code).decimals))
+const fromMinor = (minor: bigint, code: string) => Number(minor) / 10 ** currencyInfo(code).decimals
+
+function interestColumns(i: { mode?: string; rate?: number; period?: string | null; from?: string | null } | null) {
+  if (!i || !i.mode || i.mode === 'NONE' || !i.rate) return { loanInterestMode: null, loanInterestRate: null, loanInterestPeriod: null, loanInterestFrom: null }
+  const onBalance = i.mode === 'ON_BALANCE'
+  return {
+    loanInterestMode: (onBalance ? 'ON_BALANCE' : 'FIXED') as GTx['loanInterestMode'],
+    loanInterestRate: Math.round(i.rate * 10_000) / 10_000,
+    loanInterestPeriod: onBalance ? ((i.period === 'ANNUAL' ? 'ANNUAL' : 'MONTHLY') as GTx['loanInterestPeriod']) : null,
+    loanInterestFrom: onBalance && i.from ? i.from.slice(0, 10) : null,
+  }
 }
 
-function outstanding(s: GuestState, loan: GTx): number {
-  return Math.max(0, round(loan.amount - repaid(s, loan.id), loan.currency))
+function loanTerms(loan: GTx) {
+  return {
+    amountMinor: toMinor(loan.amount, loan.currency),
+    date: loan.date,
+    mode: loan.loanInterestMode,
+    rate: loan.loanInterestRate,
+    period: loan.loanInterestPeriod,
+    from: loan.loanInterestFrom,
+  }
+}
+
+function loanPayments(txs: GTx[], loan: GTx) {
+  return txs.filter((t) => t.parentLoanId === loan.id).map((t) => ({ amountMinor: toMinor(t.amount, loan.currency), date: t.date }))
+}
+
+// What a loan owes on `asOf`, counting only abonos up to then.
+function loanBalanceOf(txs: GTx[], loan: GTx, asOf: string): LoanBalanceMinor {
+  return loanBalance(loanTerms(loan), loanPayments(txs, loan), asOf)
+}
+
+// Where it stands now (every abono counts).
+function balanceNow(s: GuestState, loan: GTx, today = todayISO()): LoanBalanceMinor {
+  return currentLoanBalance(loanTerms(loan), loanPayments(s.txs, loan), today)
+}
+
+function outstanding(s: GuestState, loan: GTx, today = todayISO()): number {
+  return fromMinor(balanceNow(s, loan, today).outstanding, loan.currency)
 }
 
 function serializeTx(s: GuestState, t: GTx) {
-  const { seq: _seq, time, attachment, ...rest } = t
+  const { seq: _seq, time, attachment, loanInterestMode, loanInterestRate, loanInterestPeriod, loanInterestFrom, ...rest } = t
+  const balance = t.loanKind ? balanceNow(s, t) : null
   return {
     ...rest,
     date: `${t.date}T00:00:00.000Z`,
     occurredAt: `${t.date}T${time}:00.000Z`,
-    outstanding: t.loanKind ? outstanding(s, t) : null,
+    outstanding: balance ? fromMinor(balance.outstanding, t.currency) : null,
+    interest:
+      balance && loanInterestMode
+        ? {
+            mode: loanInterestMode,
+            rate: loanInterestRate ?? 0,
+            period: loanInterestPeriod,
+            from: loanInterestFrom ? `${loanInterestFrom}T00:00:00.000Z` : null,
+            accrued: fromMinor(balance.interestAccrued, t.currency),
+            paid: fromMinor(balance.interestPaid, t.currency),
+            principalOutstanding: fromMinor(balance.principalOutstanding, t.currency),
+          }
+        : null,
     attachment: attachment && { id: attachment.id, kind: attachment.kind, mime: attachment.mime, name: attachment.name, size: attachment.size, createdAt: attachment.createdAt },
   }
 }
@@ -499,6 +557,10 @@ function newTx(s: GuestState, p: Partial<GTx> & Pick<GTx, 'accountId' | 'type' |
     loanSettledAt: null,
     settledByTransactionId: null,
     parentLoanId: null,
+    loanInterestMode: null,
+    loanInterestRate: null,
+    loanInterestPeriod: null,
+    loanInterestFrom: null,
     paymentMethod: paymentMethodFor(wallet.type),
     description: '',
     merchant: null,
@@ -791,8 +853,7 @@ function report(s: GuestState, range: number, today: string) {
   const loansAt = (end: string) =>
     loanRows.reduce((sum, l) => {
       if (l.date > end) return sum
-      const paid = s.txs.filter((t) => t.parentLoanId === l.id && t.date <= end).reduce((p, t) => p + t.amount, 0)
-      const open = Math.max(0, l.amount - paid)
+      const open = fromMinor(loanBalanceOf(s.txs, l, end).outstanding, l.currency)
       return l.loanKind === 'LENT' ? sum + open : sum - open
     }, 0)
   const monthLastDay = (key: string) => {
@@ -1213,6 +1274,7 @@ function createTransaction(s: GuestState, body: Row) {
     counterpartyName: (body.counterpartyName as string | undefined) ?? null,
     counterpartyKind: (body.counterpartyKind as string | undefined) ?? null,
     dueDate: (body.dueDate as string | undefined) ?? null,
+    ...(body.loanKind ? interestColumns((body.interest as Parameters<typeof interestColumns>[0]) ?? null) : {}),
     description: ((body.description as string | undefined) ?? '').trim(),
     merchant: (body.merchant as string | undefined) ?? null,
     note: (body.note as string | undefined) ?? null,
@@ -1238,6 +1300,12 @@ function updateTransaction(s: GuestState, id: string, body: Row) {
   if (body.loanKind !== undefined && t.loanKind) {
     t.loanKind = body.loanKind as GTx['loanKind']
     t.type = t.loanKind === 'LENT' ? 'EXPENSE' : 'INCOME'
+  }
+  if (body.interest !== undefined && t.loanKind) Object.assign(t, interestColumns(body.interest as Parameters<typeof interestColumns>[0]))
+  // New terms can leave a settled loan owing again: reopen it (backend too).
+  if (t.loanKind && t.loanSettledAt && outstanding(s, t) > 0) {
+    t.loanSettledAt = null
+    t.settledByTransactionId = null
   }
   if (t.type !== 'TRANSFER' && body.currency !== undefined) t.currency = body.currency as string
   if (body.amount !== undefined || body.currency !== undefined || body.accountId !== undefined) {
@@ -1297,7 +1365,9 @@ function settleLoan(s: GuestState, id: string, body: Row) {
   if (loan.status !== 'COMPLETED') throw new ApiError("This loan hasn't been confirmed yet — nothing to settle.", 422)
   if (loan.loanSettledAt) throw new ApiError('This loan has already been settled.', 409)
   const wallet = account(s, (body.accountId as string | undefined) ?? loan.accountId)
-  const open = outstanding(s, loan)
+  const date = (body.date as string | undefined) ?? todayISO()
+  // What it owes on the abono's date, interest included.
+  const open = outstanding(s, loan, date)
   const amount = body.amount !== undefined ? round(body.amount as number, loan.currency) : open
   if (amount <= 0 || amount > open) throw new ApiError('Invalid settlement amount.', 422)
   const lent = loan.loanKind === 'LENT'
@@ -1312,7 +1382,7 @@ function settleLoan(s: GuestState, id: string, body: Row) {
     paymentMethod: loan.paymentMethod,
     description: who ? (lent ? `Pago recibido de ${who}` : `Pago realizado a ${who}`) : lent ? 'Pago de préstamo recibido' : 'Pago de préstamo realizado',
     counterpartyName: who,
-    date: (body.date as string | undefined) ?? todayISO(),
+    date,
     parentLoanId: loan.id,
   })
   s.txs.push(settlement)

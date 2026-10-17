@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { computeProgress } from "../lib/goalProgress.js";
-import { loanRepaidMap, outstandingOf } from "../lib/loans.js";
+import { loanBalances } from "../lib/loans.js";
 import { prisma } from "../lib/prisma.js";
 
 // "Guardar una copia" on the delete-account screen: one CSV with a block
@@ -41,7 +41,7 @@ export async function dataExportRoutes(app: FastifyInstance) {
     ]);
 
     const loans = transactions.filter((tx) => tx.loanKind !== null);
-    const repaid = await loanRepaidMap(loans.map((loan) => loan.id));
+    const balances = await loanBalances(loans);
     const saved = await Promise.all(goals.map((goal) => computeProgress(goal.id)));
 
     const csv = [
@@ -74,15 +74,16 @@ export async function dataExportRoutes(app: FastifyInstance) {
       ),
       block(
         "Préstamos",
-        ["Fecha", "Tipo", "Persona", "Monto", "Pendiente", "Vence", "Billetera"],
+        ["Fecha", "Tipo", "Persona", "Monto", "Pendiente", "Vence", "Billetera", "Interés"],
         loans.map((loan) => [
           day(loan.transactionDate),
           LOAN_LABEL[loan.loanKind!],
           loan.counterpartyName,
           loan.amountMinor,
-          outstandingOf(loan, repaid.get(loan.id)),
+          balances.get(loan.id)!.outstanding,
           day(loan.dueDate),
           loan.account.name,
+          interestLabel(loan),
         ]),
       ),
     ].join("\r\n\r\n");
@@ -94,4 +95,13 @@ export async function dataExportRoutes(app: FastifyInstance) {
       // BOM so Excel opens the accents as UTF-8.
       .send(`﻿${csv}\r\n`);
   });
+}
+
+// "2 % mensual sobre el saldo desde 2026-11-30", "10 % fijo", or empty.
+function interestLabel(loan: { loanInterestMode: string | null; loanInterestRate: { toString(): string } | null; loanInterestPeriod: string | null; loanInterestFrom: Date | null }): string {
+  if (!loan.loanInterestMode || loan.loanInterestMode === "NONE" || loan.loanInterestRate === null) return "";
+  const rate = `${Number(loan.loanInterestRate.toString())} %`;
+  if (loan.loanInterestMode === "FIXED") return `${rate} fijo`;
+  const period = loan.loanInterestPeriod === "ANNUAL" ? "anual" : "mensual";
+  return `${rate} ${period} sobre el saldo${loan.loanInterestFrom ? ` desde ${day(loan.loanInterestFrom)}` : ""}`;
 }

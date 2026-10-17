@@ -47,7 +47,10 @@ data class SeedWallet(val id: String, val name: String, val type: String, val cu
 data class SeedCategory(val id: String, val parentId: String? = null, val kind: String, val name: String, val nameEn: String, val vis: String)
 
 @Serializable
-data class SeedLoan(val kind: String, val due: String? = null)
+data class SeedLoan(val kind: String, val due: String? = null, val interest: SeedInterest? = null)
+
+@Serializable
+data class SeedInterest(val mode: String, val rate: Double, val period: String? = null, val from: String? = null)
 
 @Serializable
 data class SeedAttachment(val kind: String, val name: String, val file: String)
@@ -259,6 +262,14 @@ object GuestSeed {
                 counterpartyName = m.counterparty,
                 dueDate = m.loan?.due?.let(at),
                 parentLoanId = m.parentLoan,
+                interest = m.loan?.interest?.let { i ->
+                    com.s2nova.app.data.model.LoanInterest(
+                        mode = com.s2nova.app.data.LoanBalance.Mode.valueOf(i.mode),
+                        rate = i.rate,
+                        period = if (i.period == "ANNUAL") com.s2nova.app.data.LoanBalance.Period.ANNUAL else com.s2nova.app.data.LoanBalance.Period.MONTHLY,
+                        from = i.from?.let(at),
+                    )
+                },
             )
         }
         // A loan whose repayments cover it is settled by the last one. The
@@ -266,7 +277,7 @@ object GuestSeed {
         val transactions = built.sortedWith(compareByDescending<Transaction> { it.date }.thenByDescending { it.time }).map { t ->
             if (t.loanKind == null) return@map t
             val repayments = built.filter { it.parentLoanId == t.id }.sortedBy { it.date }
-            if (repayments.isNotEmpty() && repayments.sumOf { it.amount } >= t.amount) t.copy(loanSettled = true, settledByTransactionId = repayments.last().id) else t
+            if (repayments.isNotEmpty() && com.s2nova.app.data.repository.loanBalanceOf(t, built, repayments.last().date).outstanding <= 0.0) t.copy(loanSettled = true, settledByTransactionId = repayments.last().id) else t
         }
         val completed = transactions.filter { it.status == TransactionStatus.COMPLETED }
 
@@ -371,14 +382,14 @@ object GuestSeed {
         val weekAgo = today.minusDays(7).toString()
         val weekAhead = today.plusDays(7).toString()
         val walletName = { id: String -> wallets.firstOrNull { it.id == id }?.name ?: "" }
-        val repaid = { id: String -> transactions.filter { it.parentLoanId == id }.sumOf { it.amount } }
 
         val seriesDue = series.filter { it.active && !it.autoConfirm && it.nextOccurrenceDate <= todayIso }
             .sortedBy { it.nextOccurrenceDate }
             .map { AppAlert.SeriesDue("series:${it.id}:${it.nextOccurrenceDate}", it.id, it.name, it.type, it.amount, it.category, it.nextOccurrenceDate, it.nextOccurrenceDate < todayIso) }
-        val loans = transactions.filter { it.status == TransactionStatus.COMPLETED && it.loanKind != null && !it.loanSettled && it.dueDate != null && it.amount - repaid(it.id) > 0 }
+        val owed = { t: Transaction -> com.s2nova.app.data.repository.loanBalanceOf(t, transactions).outstanding }
+        val loans = transactions.filter { it.status == TransactionStatus.COMPLETED && it.loanKind != null && !it.loanSettled && it.dueDate != null && owed(it) > 0 }
             .sortedBy { it.dueDate }
-            .map { AppAlert.LoanOpen("loan:${it.id}", it.id, it.loanKind!!, it.counterpartyName, it.amount - repaid(it.id), it.dueDate!!, it.dueDate < todayIso) }
+            .map { AppAlert.LoanOpen("loan:${it.id}", it.id, it.loanKind!!, it.counterpartyName, owed(it), it.dueDate!!, it.dueDate < todayIso) }
         val month = todayIso.substring(0, 7)
         val budgetAlerts = budgets
             .filter { p ->

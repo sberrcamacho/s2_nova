@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { monthEnd, monthKeyOf, monthStart, parseDateOnly } from "../lib/dates.js";
-import { loanRepaidMap, outstandingOf } from "../lib/loans.js";
+import { LOAN_TERMS, currentLoanBalance, loanBalance, loanPaymentsMap } from "../lib/loans.js";
 import { convertMinor, principalOf } from "../lib/currency.js";
 import { prisma } from "../lib/prisma.js";
 import type { Prisma } from "@prisma/client";
@@ -182,7 +182,7 @@ export async function summaryRoutes(app: FastifyInstance) {
       prisma.recurringSeries.findMany({ where: { userId, active: true, type: "EXPENSE" }, select: { categoryId: true } }),
       prisma.transaction.findMany({
         where: { userId, status: "COMPLETED", loanKind: { not: null } },
-        select: { id: true, loanKind: true, counterpartyName: true, amountMinor: true, transactionDate: true },
+        select: { id: true, loanKind: true, counterpartyName: true, ...LOAN_TERMS },
       }),
     ]);
 
@@ -301,20 +301,14 @@ export async function summaryRoutes(app: FastifyInstance) {
         };
       });
 
-    const repaid = await loanRepaidMap(loans.map((loan) => loan.id));
-    // Each loan's repayments with their dates, for the outstanding balance
-    // at every month-end of the history.
-    const repayments = loans.length
-      ? await prisma.transaction.findMany({
-          where: { userId, parentLoanId: { in: loans.map((loan) => loan.id) } },
-          select: { parentLoanId: true, amountMinor: true, transactionDate: true },
-        })
-      : [];
+    // Each loan's abonos with their dates: what it owed (principal plus
+    // interest, lib/loans.ts) at every month-end of the history and today.
+    const repayments = await loanPaymentsMap(loans.map((loan) => loan.id));
+    const owedAt = (loan: (typeof loans)[number], end: Date) => loanBalance(loan, repayments.get(loan.id) ?? [], end).outstanding;
     const loansAt = (end: Date) =>
       loans.reduce((sum, loan) => {
         if (loan.transactionDate > end) return sum;
-        const paid = repayments.filter((r) => r.parentLoanId === loan.id && r.transactionDate <= end).reduce((p, r) => p + r.amountMinor, 0n);
-        const open = outstandingOf(loan, paid);
+        const open = owedAt(loan, end);
         return loan.loanKind === "LENT" ? sum + open : sum - open;
       }, 0n);
 
@@ -331,7 +325,9 @@ export async function summaryRoutes(app: FastifyInstance) {
 
 
     const loanSide = (kind: "LENT" | "BORROWED") => {
-      const own = loans.filter((loan) => loan.loanKind === kind).map((loan) => ({ loan, outstanding: outstandingOf(loan, repaid.get(loan.id)) }));
+      const own = loans
+        .filter((loan) => loan.loanKind === kind)
+        .map((loan) => ({ loan, outstanding: currentLoanBalance(loan, repayments.get(loan.id) ?? [], today).outstanding }));
       const open = own.filter(({ outstanding }) => outstanding > 0n);
       return {
         outstanding: open.reduce((sum, { outstanding }) => sum + outstanding, 0n),

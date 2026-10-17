@@ -1,6 +1,6 @@
 import { apiClient } from '@/lib/apiClient'
 import { categoryIdFor, categoryWireIds, movementCategory } from '@/lib/backendCategories'
-import type { AttachmentMeta, CounterpartyKind, LoanKind, NewTransactionInput, PaymentMethod, RepeatRule, Transaction, TransactionStatus, TransactionType } from '@/types'
+import type { AttachmentMeta, CounterpartyKind, LoanKind, NewTransactionInput, PaymentMethod, RepeatRule, Transaction, TransactionStatus, TransactionType, LoanInterestTerms } from '@/types'
 
 interface BackendTransaction {
   id: string
@@ -27,6 +27,15 @@ interface BackendTransaction {
   settledByTransactionId: string | null
   parentLoanId: string | null
   outstanding: number | null
+  interest?: {
+    mode: 'FIXED' | 'ON_BALANCE'
+    rate: number
+    period: 'MONTHLY' | 'ANNUAL' | null
+    from: string | null
+    accrued: number
+    paid: number
+    principalOutstanding: number
+  } | null
   paymentMethod: string
   description: string
   merchant: string | null
@@ -73,6 +82,27 @@ async function mapTransaction(row: BackendTransaction): Promise<Transaction> {
     settledByTransactionId: row.settledByTransactionId ?? undefined,
     parentLoanId: row.parentLoanId ?? undefined,
     outstanding: row.outstanding ?? undefined,
+    interest: row.interest
+      ? {
+          mode: row.interest.mode === 'FIXED' ? 'fixed' : 'on_balance',
+          rate: row.interest.rate,
+          period: row.interest.period === 'ANNUAL' ? 'annual' : row.interest.period === 'MONTHLY' ? 'monthly' : undefined,
+          from: row.interest.from?.slice(0, 10),
+          accrued: row.interest.accrued,
+          paid: row.interest.paid,
+          principalOutstanding: row.interest.principalOutstanding,
+        }
+      : undefined,
+  }
+}
+
+// The wire shape of a loan's interest terms; null (or no terms) clears them.
+export function interestWire(terms: LoanInterestTerms | null | undefined) {
+  if (!terms) return { mode: 'NONE' as const }
+  return {
+    mode: terms.mode === 'fixed' ? ('FIXED' as const) : ('ON_BALANCE' as const),
+    rate: terms.rate,
+    ...(terms.mode === 'on_balance' ? { period: terms.period === 'annual' ? ('ANNUAL' as const) : ('MONTHLY' as const), from: terms.from ?? null } : {}),
   }
 }
 
@@ -239,6 +269,7 @@ export const transactionService = {
       counterpartyName: input.counterpartyName,
       counterpartyKind: input.counterpartyKind?.toUpperCase(),
       dueDate: input.dueDate,
+      interest: input.loanKind && input.interest ? interestWire(input.interest) : undefined,
       description: input.description,
       merchant: input.merchant,
       note: input.note,
@@ -309,8 +340,8 @@ export const transactionService = {
 
   // Loan edits (Android's loan sheet): the wallet, the direction (which
   // flips the type server-side), the counterparty, amount and due date.
-  async updateLoan(id: string, input: { amount: number; accountId: string; loanKind: LoanKind; counterpartyName: string; dueDate: string | null }): Promise<void> {
-    await apiClient.patch(`/transactions/${id}`, { ...input, loanKind: input.loanKind.toUpperCase() })
+  async updateLoan(id: string, input: { amount: number; accountId: string; loanKind: LoanKind; counterpartyName: string; dueDate: string | null; interest: LoanInterestTerms | null }): Promise<void> {
+    await apiClient.patch(`/transactions/${id}`, { ...input, loanKind: input.loanKind.toUpperCase(), interest: interestWire(input.interest) })
   },
 
   // Every open or settled loan of both kinds, newest first. Pending balances

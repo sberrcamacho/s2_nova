@@ -1,5 +1,8 @@
 package com.s2nova.app.data.repository
 
+import com.s2nova.app.data.remote.LoanInterestRequest
+import com.s2nova.app.data.model.LoanInterest
+import com.s2nova.app.data.LoanBalance
 import android.util.Base64
 import com.s2nova.app.data.model.CategoryId
 import com.s2nova.app.data.model.AttachmentMeta
@@ -64,7 +67,46 @@ internal fun TransactionDto.toTransaction(categoryRepository: CategoryRepository
         loanSettled = loanSettledAt != null,
         settledByTransactionId = settledByTransactionId,
         parentLoanId = parentLoanId,
+        outstanding = outstanding,
+        interest = interest?.let { i ->
+            LoanInterest(
+                mode = runCatching { LoanBalance.Mode.valueOf(i.mode) }.getOrDefault(LoanBalance.Mode.FIXED),
+                rate = i.rate,
+                period = if (i.period == "ANNUAL") LoanBalance.Period.ANNUAL else LoanBalance.Period.MONTHLY,
+                from = i.from?.take(10),
+                accrued = i.accrued,
+                paid = i.paid,
+            )
+        },
     )
+}
+
+data class LoanBalanceAmounts(val outstanding: Double, val interestAccrued: Double)
+
+// A loan's balance from the movements on hand (guest mode's copy of the
+// backend rule, LoanBalance): on `asOf` counting abonos up to then, or —
+// null — where it stands now.
+fun loanBalanceOf(loan: Transaction, all: List<Transaction>, asOf: String? = null): LoanBalanceAmounts {
+    val factor = Math.pow(10.0, com.s2nova.app.data.Currencies.info(loan.currency).decimals.toDouble())
+    fun minor(v: Double) = Math.round(v * factor)
+    val terms = LoanBalance.Terms(
+        amountMinor = minor(loan.amount),
+        date = loan.date,
+        mode = loan.interest?.mode ?: LoanBalance.Mode.NONE,
+        rate = loan.interest?.rate ?: 0.0,
+        period = loan.interest?.period ?: LoanBalance.Period.MONTHLY,
+        from = loan.interest?.from,
+    )
+    val payments = all.filter { it.parentLoanId == loan.id }.map { LoanBalance.Payment(minor(it.amount), it.date) }
+    val r = if (asOf != null) LoanBalance.balance(terms, payments, asOf) else LoanBalance.current(terms, payments, java.time.LocalDate.now().toString())
+    return LoanBalanceAmounts(r.outstanding / factor, r.interestAccrued / factor)
+}
+
+// The wire form of a loan's terms; null means none (sent as NONE on edits).
+internal fun LoanInterest?.toRequest(): LoanInterestRequest = when {
+    this == null || mode == LoanBalance.Mode.NONE -> LoanInterestRequest("NONE")
+    mode == LoanBalance.Mode.FIXED -> LoanInterestRequest("FIXED", rate)
+    else -> LoanInterestRequest("ON_BALANCE", rate, period.name, from)
 }
 
 fun isFuture(input: NewTransactionInput): Boolean =
@@ -159,6 +201,7 @@ class TransactionRepository(
                 counterpartyName = input.counterpartyName,
                 counterpartyKind = input.counterpartyKind?.name,
                 dueDate = input.dueDate,
+                interest = if (input.loanKind != null && input.interest != null) input.interest.toRequest() else null,
                 description = input.description,
                 merchant = input.merchant,
                 note = input.note,
@@ -267,16 +310,19 @@ class TransactionRepository(
         loanKind: LoanKind,
         counterpartyName: String?,
         dueDate: String?,
+        interest: LoanInterest? = null,
     ) {
         if (DemoModeFlag.active) {
             _transactions.value = _transactions.value.map {
-                if (it.id == id) it.copy(amount = amount, walletId = walletId, loanKind = loanKind, counterpartyName = counterpartyName, dueDate = dueDate) else it
+                if (it.id == id) it.copy(amount = amount, walletId = walletId, loanKind = loanKind, counterpartyName = counterpartyName, dueDate = dueDate, interest = interest) else it
             }
+            // New terms can leave a settled loan owing again (backend too).
+            _transactions.value = _transactions.value.map { if (it.id == id && it.loanSettled && outstandingFor(it) > 0) it.copy(loanSettled = false, settledByTransactionId = null) else it }
             return
         }
         val dto = api.updateTransaction(
             id,
-            UpdateTransactionRequest(amount = amount, accountId = walletId, loanKind = loanKind.name, counterpartyName = counterpartyName, dueDate = dueDate),
+            UpdateTransactionRequest(amount = amount, accountId = walletId, loanKind = loanKind.name, counterpartyName = counterpartyName, dueDate = dueDate, interest = interest.toRequest()),
         )
         applyUpdated(id, dto)
     }
@@ -323,7 +369,16 @@ class TransactionRepository(
 
     fun paidSoFar(loanId: String): Double = _transactions.value.filter { it.parentLoanId == loanId }.sumOf { it.amount }
 
-    fun outstandingFor(loan: Transaction): Double = (loan.amount - paidSoFar(loan.id)).coerceAtLeast(0.0)
+    // What a loan still owes (principal + unpaid interest): the server's
+    // figure for a real account, the same rule computed here in guest mode
+    // (or before the server has answered).
+    fun outstandingFor(loan: Transaction): Double =
+        if (!DemoModeFlag.active && loan.outstanding != null) loan.outstanding else loanBalanceOf(loan, _transactions.value).outstanding
+
+    // Interest charged so far, likewise.
+    fun interestFor(loan: Transaction): Double =
+        if (!DemoModeFlag.active && loan.interest != null) loan.interest.accrued else loanBalanceOf(loan, _transactions.value).interestAccrued
+
 
     // stopSeries also deletes the movement's Programado (its future
     // repetitions), as the two-step confirmation lists.

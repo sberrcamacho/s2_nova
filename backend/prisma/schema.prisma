@@ -102,6 +102,24 @@ enum LoanKind {
   @@map("loan_kind")
 }
 
+// How a loan charges interest (lib/loans.ts loanBalance). FIXED adds the
+// rate once to the principal; ON_BALANCE accrues simple interest per day on
+// the unpaid principal, each abono paying the accrued interest first.
+enum LoanInterestMode {
+  NONE
+  FIXED
+  ON_BALANCE
+
+  @@map("loan_interest_mode")
+}
+
+enum LoanInterestPeriod {
+  MONTHLY
+  ANNUAL
+
+  @@map("loan_interest_period")
+}
+
 // A transaction's payment method is never chosen independently by a
 // client — the route layer derives it from the transaction's account's
 // AccountType (CASH->CASH, NEQUI->NEQUI, DAVIPLATA->DAVIPLATA,
@@ -456,6 +474,13 @@ model Transaction {
   counterpartyName       String?           @map("counterparty_name")
   dueDate                DateTime?         @map("due_date") @db.Date
   loanSettledAt          DateTime?         @map("loan_settled_at")
+  // Interest terms (null mode = no interest). The rate is a percentage per
+  // period for ON_BALANCE, or once over the principal for FIXED; interest
+  // starts on loanInterestFrom (ON_BALANCE only), else the loan's date.
+  loanInterestMode       LoanInterestMode?   @map("loan_interest_mode")
+  loanInterestRate       Decimal?            @map("loan_interest_rate") @db.Decimal(9, 4)
+  loanInterestPeriod     LoanInterestPeriod? @map("loan_interest_period")
+  loanInterestFrom       DateTime?           @map("loan_interest_from") @db.Date
   // The repayment transaction created when this loan was settled — a real
   // opposite-direction transaction (see backend/src/routes/transactions.ts
   // `settleLoan`), not just a status flag, so the wallet balance actually

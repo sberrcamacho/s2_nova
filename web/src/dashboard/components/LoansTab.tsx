@@ -49,7 +49,17 @@ export function LoansTab({ side, onSide, adding, onAddingDone, prefill = null }:
   const isLent = side === 'lent'
   const sideLoans = (loans ?? []).filter((l) => l.loanKind === side)
   const outOf = (l: Transaction) => l.outstanding ?? 0
-  const paidOf = (l: Transaction) => l.amount - outOf(l)
+  // What the loan has come to owe: the principal plus the interest charged
+  // so far (server-computed, backend lib/loans.ts).
+  const totalOf = (l: Transaction) => l.amount + (l.interest?.accrued ?? 0)
+  const paidOf = (l: Transaction) => totalOf(l) - outOf(l)
+  const interestTerms = (l: Transaction) => {
+    const i = l.interest
+    if (!i) return null
+    const rate = i.rate.toLocaleString(language === 'es' ? 'es-CO' : 'en-US', { maximumFractionDigits: 4 })
+    if (i.mode === 'fixed') return fill(t('loans.interestFixed'), rate)
+    return fill(t('loans.interestOnBalance'), rate, t(i.period === 'annual' ? 'loans.interestAnnual' : 'loans.interestMonthly'))
+  }
   const nextSide = sideLoans.filter((l) => outOf(l) > 0 && l.dueDate).sort((a, b) => (a.dueDate! < b.dueDate! ? -1 : 1))[0]
 
   return (
@@ -87,8 +97,10 @@ export function LoansTab({ side, onSide, adding, onAddingDone, prefill = null }:
         {sideLoans.map((l, i) => {
           const out = outOf(l)
           const paid = paidOf(l)
+          const total = totalOf(l)
           const done = out === 0
-          const pct = l.amount > 0 ? Math.round((paid / l.amount) * 100) : 0
+          const pct = total > 0 ? Math.round((paid / total) * 100) : 0
+          const terms = interestTerms(l)
           const payments = transactions.filter((x) => x.parentLoanId === l.id).sort((a, b) => (a.date < b.date ? -1 : 1))
           const meta =
             fill(t(isLent ? 'loans.metaLent' : 'loans.metaBorrowed'), walletName(l.accountId), shortDate(l.date, language)) +
@@ -100,6 +112,12 @@ export function LoansTab({ side, onSide, adding, onAddingDone, prefill = null }:
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-title-sm font-semibold" title={l.counterpartyName ?? undefined}>{l.counterpartyName ?? t('loans.unknownPerson')}</div>
                   <div className="text-body-sm text-ink-secondary">{meta}</div>
+                  {terms && (
+                    <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-body-sm text-ink-secondary">
+                      <StrokeIcon paths={ICON_PATHS.percent} size={14} />
+                      <span className="truncate" title={terms}>{terms}</span>
+                    </div>
+                  )}
                 </div>
                 {/* The state carries an icon, not just the tone. */}
                 <span className={cn('flex flex-none items-center gap-1 whitespace-nowrap rounded-[6px] px-2.5 py-1 text-caption font-semibold', done ? 'bg-positive-soft text-positive' : 'bg-warning-soft text-warning')}>
@@ -110,12 +128,17 @@ export function LoansTab({ side, onSide, adding, onAddingDone, prefill = null }:
               {/* Each figure stays on one line; on a narrow card the progress note moves below. */}
               <div className="flex flex-wrap items-baseline justify-between gap-x-2.5 gap-y-1">
                 <Money hidden={hidden} className="whitespace-nowrap text-title font-semibold tabular-nums">
-                  {done ? format(l.amount) : fill(t('loans.pendingAmount'), format(out))}
+                  {done ? format(total) : fill(t('loans.pendingAmount'), format(out))}
                 </Money>
                 <Money hidden={hidden} className="whitespace-nowrap text-body-sm tabular-nums text-ink-secondary">
-                  {fill(t('loans.progress'), format(paid), format(l.amount), pct)}
+                  {fill(t('loans.progress'), format(paid), format(total), pct)}
                 </Money>
               </div>
+              {l.interest && !done && (l.interest.accrued > 0 || l.interest.from) && (
+                <Money hidden={hidden} className="-mt-2 text-body-sm tabular-nums text-ink-secondary">
+                  {l.interest.accrued > 0 ? fill(t('loans.interestSoFar'), format(l.interest.accrued)) : fill(t('loans.interestStarts'), shortDate(l.interest.from!, language))}
+                </Money>
+              )}
               <div role="progressbar" aria-label={l.counterpartyName ?? t('loans.unknownPerson')} aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} className="h-2 overflow-hidden rounded-full bg-surface-sunken">
                 <div className="h-full rounded-full" style={{ width: `${pct}%`, background: done ? 'var(--color-positive)' : 'var(--color-primary-border)' }} />
               </div>

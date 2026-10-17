@@ -157,7 +157,25 @@ export interface Transaction {
   loanSettled?: boolean
   settledByTransactionId?: string // the real repayment transaction, once settled
   parentLoanId?: string // set on an abono — points back at the loan it pays
-  outstanding?: number // loans only: server-computed pending balance
+  outstanding?: number // loans only: server-computed pending balance (principal + unpaid interest)
+  interest?: LoanInterest // loans with interest only, server-computed
+}
+
+export type LoanInterestMode = 'fixed' | 'on_balance'
+export type LoanInterestPeriod = 'monthly' | 'annual'
+
+// The terms a loan charges interest with (backend lib/loans.ts).
+export interface LoanInterestTerms {
+  mode: LoanInterestMode
+  rate: number // a percentage
+  period?: LoanInterestPeriod // on_balance only
+  from?: string // on_balance only: interest starts here instead of the loan's date
+}
+
+export interface LoanInterest extends LoanInterestTerms {
+  accrued: number // interest charged so far
+  paid: number // of which the abonos have paid
+  principalOutstanding: number
 }
 
 export interface RepeatRule {
@@ -192,6 +210,7 @@ export interface NewTransactionInput {
   loanKind?: LoanKind
   counterpartyName?: string
   dueDate?: string
+  interest?: LoanInterestTerms
 }
 
 export type BudgetKind = 'category' | 'custom'

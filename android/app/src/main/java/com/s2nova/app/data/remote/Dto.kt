@@ -193,6 +193,8 @@ data class TransactionDto(
     val loanSettledAt: String? = null,
     val settledByTransactionId: String? = null,
     val parentLoanId: String? = null,
+    val outstanding: Double? = null,
+    val interest: LoanInterestDto? = null,
     val paymentMethod: String,
     val description: String,
     val merchant: String? = null,
@@ -203,6 +205,20 @@ data class TransactionDto(
     val createdAt: String,
     val updatedAt: String,
 )
+
+@Serializable
+data class LoanInterestDto(
+    val mode: String,
+    val rate: Double = 0.0,
+    val period: String? = null,
+    val from: String? = null,
+    val accrued: Double = 0.0,
+    val paid: Double = 0.0,
+)
+
+// A loan's interest terms on create/update; mode NONE removes them.
+@Serializable
+data class LoanInterestRequest(val mode: String, val rate: Double? = null, val period: String? = null, val from: String? = null)
 
 // No paymentMethod field — the backend derives it from accountId's wallet
 // type (see backend/src/routes/transactions.ts's paymentMethodForAccountType),
@@ -226,6 +242,7 @@ data class CreateTransactionRequest(
     val counterpartyName: String? = null,
     val counterpartyKind: String? = null,
     val dueDate: String? = null,
+    val interest: LoanInterestRequest? = null,
     val description: String = "",
     val merchant: String? = null,
     val note: String? = null,
@@ -252,6 +269,7 @@ data class UpdateTransactionRequest(
     val loanKind: String? = null,
     val counterpartyName: String? = null,
     val dueDate: String? = null,
+    val interest: LoanInterestRequest? = null,
     val description: String? = null,
     val merchant: String? = null,
     val note: String? = null,
