@@ -17,7 +17,7 @@ interface HeaderProps {
 
 // Web v2 header: breadcrumb, search, the period selector (Movimientos
 // only, per the mockup's showPeriod) and "Nuevo movimiento". Reportes has
-// its own in-page 3M/6M/12M range.
+// its own in-page period (any months the user picks).
 export function Header({ title, onMenuClick, onNewTransaction }: HeaderProps) {
   const { t } = useTranslation()
   const location = useLocation()

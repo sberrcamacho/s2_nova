@@ -45,6 +45,7 @@ object AppContainer {
     lateinit var biometricStore: com.s2nova.app.data.local.BiometricStore
         private set
     lateinit var alertStateStore: AlertStateStore
+    lateinit var reportRangeStore: com.s2nova.app.data.local.ReportRangeStore
         private set
 
     // `by lazy` (not eager `val`s) is load-bearing: merely referencing
@@ -104,6 +105,7 @@ object AppContainer {
         demoModeStore = DemoModeStore.getInstance(context)
         idleTimeoutStore = IdleTimeoutStore.getInstance(context)
         alertStateStore = AlertStateStore.getInstance(context)
+        reportRangeStore = com.s2nova.app.data.local.ReportRangeStore.getInstance(context)
         val credentialManager = androidx.credentials.CredentialManager.create(context.applicationContext)
         biometricStore = com.s2nova.app.data.local.BiometricStore.getInstance(context)
         authRepository = AuthRepository(

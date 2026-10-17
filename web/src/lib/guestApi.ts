@@ -788,11 +788,31 @@ function monthTotals(s: GuestState, keys: string[]) {
   })
 }
 
-function report(s: GuestState, range: number, today: string) {
+// "2026-04" → "2026-04-30".
+function monthEndOf(key: string): string {
+  const [y, m] = key.split('-').map(Number)
+  return `${key}-${String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, '0')}`
+}
+
+// Months in from..to, both included.
+function monthsBetween(from: string, to: string): number {
+  const [fy, fm] = from.split('-').map(Number)
+  const [ty, tm] = to.split('-').map(Number)
+  return (ty - fy) * 12 + (tm - fm) + 1
+}
+
+// The backend's range rule: a 3/6/12 preset ending this month, or from..to
+// (at most 24 months, not after this month).
+function report(s: GuestState, range: number, today: string, span?: { from: string; to: string }) {
   const current = monthOf(today)
   const previous = shiftMonth(current, -1)
-  const rangeKeys = Array.from({ length: range }, (_, i) => shiftMonth(current, i - range + 1))
-  const previousKeys = rangeKeys.map((k) => shiftMonth(k, -range))
+  if (span && (span.from > span.to || span.to > current || monthsBetween(span.from, span.to) > 24)) throw new ApiError('Invalid report range.', 400)
+  const last = span?.to ?? current
+  const length = span ? monthsBetween(span.from, span.to) : range
+  const lastPrevious = shiftMonth(last, -1)
+  const lastEnd = last === current ? today : monthEndOf(last)
+  const rangeKeys = Array.from({ length }, (_, i) => shiftMonth(last, i - length + 1))
+  const previousKeys = rangeKeys.map((k) => shiftMonth(k, -length))
   const rows = completedIncomeExpense(s)
   const byMonth = new Map<string, { income: number; expenses: number }>()
   const bucketOf = (k: string) => byMonth.get(k) ?? byMonth.set(k, { income: 0, expenses: 0 }).get(k)!
@@ -817,7 +837,7 @@ function report(s: GuestState, range: number, today: string) {
       bucket.expenses += amount
       const key = `${t.categoryId}|${month}`
       categoryMonth.set(key, (categoryMonth.get(key) ?? 0) + amount)
-      if (month === current) {
+      if (month === last) {
         const leaf = t.subcategoryId ?? t.categoryId
         leafMonth.set(leaf, (leafMonth.get(leaf) ?? 0) + amount)
       }
@@ -845,7 +865,7 @@ function report(s: GuestState, range: number, today: string) {
   const totals = sumOf(rangeKeys)
   const walletTotal = s.accounts.reduce((sum, a) => sum + convert(a.currentBalance, a.currency, s.principal), 0)
   const peak = weekdays.reduce((best, amount, day) => (amount > weekdays[best] ? day : best), 0)
-  const average = totals.expenses / range
+  const average = totals.expenses / length
 
   // Loans still open at a date (lent adds, borrowed subtracts), for the
   // net worth at each month-end (backend's loansAt).
@@ -856,15 +876,11 @@ function report(s: GuestState, range: number, today: string) {
       const open = fromMinor(loanBalanceOf(s.txs, l, end).outstanding, l.currency)
       return l.loanKind === 'LENT' ? sum + open : sum - open
     }, 0)
-  const monthLastDay = (key: string) => {
-    const [y, m] = key.split('-').map(Number)
-    return `${key}-${String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, '0')}`
-  }
 
   const history: { month: string; balance: number; netWorth: number }[] = []
   for (let i = 0; i < 6; i++) {
     const key = shiftMonth(current, -i)
-    history.unshift({ month: key, balance: walletTotal - after, netWorth: walletTotal - after + loansAt(key === current ? today : monthLastDay(key)) })
+    history.unshift({ month: key, balance: walletTotal - after, netWorth: walletTotal - after + loansAt(key === current ? today : monthEndOf(key)) })
     const bucket = byMonth.get(key)
     after += (bucket?.income ?? 0) - (bucket?.expenses ?? 0)
   }
@@ -883,7 +899,7 @@ function report(s: GuestState, range: number, today: string) {
   // "¿Qué cambió?" (backend's `changes`): this month so far against the same
   // days of last month, top three categories by the size of their change.
   const todayDay = parse(today).getDate()
-  const cutoff = Math.min(todayDay, Number(monthLastDay(previous).slice(8)))
+  const cutoff = Math.min(todayDay, Number(monthEndOf(previous).slice(8)))
   const now = new Map<string, number>()
   const before = new Map<string, number>()
   for (const t of rows) {
@@ -904,8 +920,10 @@ function report(s: GuestState, range: number, today: string) {
   const borrowed = loanSide('BORROWED')
 
   return {
-    range,
-    month: current,
+    range: length,
+    from: rangeKeys[0],
+    to: last,
+    month: last,
     months: rangeKeys.map((month) => {
       const { income, expenses } = byMonth.get(month) ?? { income: 0, expenses: 0 }
       return { month, income, expenses, net: income - expenses }
@@ -913,16 +931,16 @@ function report(s: GuestState, range: number, today: string) {
     totals,
     previousTotals: sumOf(previousKeys),
     categories: [...categoryMonth.entries()]
-      .filter(([key]) => key.endsWith(`|${current}`))
+      .filter(([key]) => key.endsWith(`|${last}`))
       .map(([key, amount]) => {
         const categoryId = key.split('|')[0]
-        const previousAmount = categoryMonth.get(`${categoryId}|${previous}`) ?? 0
+        const previousAmount = categoryMonth.get(`${categoryId}|${lastPrevious}`) ?? 0
         const change = previousAmount > 0 ? Math.round(((amount - previousAmount) / previousAmount) * 100) : null
         return { categoryId, amount, previousAmount, change, rising: change !== null && change >= 50 }
       })
       .sort((a, b) => b.amount - a.amount),
     subcategories: [...leafMonth.entries()].map(([categoryId, amount]) => ({ categoryId, amount })).sort((a, b) => b.amount - a.amount),
-    dailyAverage: Math.round((byMonth.get(current)?.expenses ?? 0) / parse(today).getDate()),
+    dailyAverage: Math.round((byMonth.get(last)?.expenses ?? 0) / Number(lastEnd.slice(8, 10))),
     peakWeekday: weekdays[peak] > 0 ? peak : null,
     fixedShare: totals.expenses > 0 ? Math.round((rangeFixed / totals.expenses) * 100) : null,
     fixedAmount: rangeFixed,
@@ -1810,7 +1828,11 @@ function route(s: GuestState, method: Method, path: string, body: Row): unknown 
       .sort((a, b) => b.amount - a.amount)
     return { month, total, categories }
   }
-  if (is('GET', '/summary/report')) return report(s, Number(q.get('range') ?? 6), today)
+  if (is('GET', '/summary/report')) {
+    const [from, to] = [q.get('from'), q.get('to')]
+    if ((from === null) !== (to === null)) throw new ApiError('Invalid report range.', 400)
+    return report(s, Number(q.get('range') ?? 6), today, from && to ? { from, to } : undefined)
+  }
 
   throw new ApiError(NOT_FOR_GUESTS, 404)
 }

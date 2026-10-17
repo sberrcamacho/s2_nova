@@ -467,11 +467,15 @@ data class ReportChanges(val current: Double, val previous: Double, val categori
 data class BalancePoint(val month: String, val balance: Double)
 
 data class Report(
-    val range: Int,
+    val range: Int, // months covered
     val months: List<MonthlySummary>,
     val totals: ReportTotals,
     val previousTotals: ReportTotals,
     val categories: List<ReportCategory>,
     val changes: ReportChanges = ReportChanges(0.0, 0.0, emptyList()),
     val balanceHistory: List<BalancePoint> = emptyList(),
+    // The range's first and last month (YYYY-MM); the category figures are
+    // about the last one.
+    val from: String = "",
+    val to: String = "",
 )

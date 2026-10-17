@@ -77,6 +77,17 @@ describe('Guest mode example account', () => {
     for (const c of report.changes.categories) expect(c.delta).toBe(c.current - c.previous)
   })
 
+  it('reports a picked span of months, with its last month as the breakdown month', async () => {
+    const today = todayISO()
+    const to = `${Number(today.slice(0, 4)) - 1}-11`
+    const from = `${Number(today.slice(0, 4)) - 1}-08`
+    const custom = await summaryService.getReport({ from, to }, today)
+    expect(custom).toMatchObject({ range: 4, from, to, month: to })
+    expect(custom.months.map((m) => m.month)).toEqual([`${from.slice(0, 4)}-08`, `${from.slice(0, 4)}-09`, `${from.slice(0, 4)}-10`, to])
+    expect(custom.totals.income).toBe(custom.months.reduce((sum, m) => sum + m.income, 0))
+    await expect(summaryService.getReport({ from: to, to: from }, today)).rejects.toMatchObject({ status: 400 })
+  })
+
   it('applies a new expense to its wallet, the month and the budget', async () => {
     const food = async () => (await budgetService.getBudgets()).find((b) => b.category === 'exp.food')!
     const before = { wallet: await balanceOf('guest-nequi'), budget: (await food()).spent, month: (await summaryService.getMonths(1))[0].expenses }

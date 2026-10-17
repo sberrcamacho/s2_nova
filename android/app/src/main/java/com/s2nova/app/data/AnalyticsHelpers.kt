@@ -40,10 +40,15 @@ object AnalyticsHelpers {
     }
 
     // Demo mode's stand-in for GET /summary/report, with the backend's rules:
-    // totals over the last `range` months against the `range` before them,
-    // category spending for the current month only.
-    fun report(transactions: List<Transaction>, range: Int, principal: String = DEMO_PRINCIPAL, today: String = todayISO()): Report {
-        val history = monthlyHistory(transactions, range * 2, principal)
+    // totals over the range (the last `range` months, or `span`) against
+    // the same number of months before it, category spending for the
+    // range's last month.
+    fun report(transactions: List<Transaction>, range: Int, principal: String = DEMO_PRINCIPAL, today: String = todayISO(), span: ReportSelection.Span? = null): Report {
+        val current = today.substring(0, 7)
+        require(span == null || (span.from <= span.to && span.to <= current && ReportRange.monthsBetween(span.from, span.to) <= ReportRange.MAX_MONTHS)) { "Invalid report range" }
+        val last = span?.to ?: current
+        val length = span?.let { ReportRange.monthsBetween(it.from, it.to) } ?: range
+        val history = (length * 2 - 1 downTo 0).map { summarizeMonth(transactions, ReportRange.shift(last, -it), principal) }
         fun totals(months: List<MonthlySummary>): ReportTotals {
             val income = months.sumOf { it.income }
             val expenses = months.sumOf { it.expenses }
@@ -51,12 +56,14 @@ object AnalyticsHelpers {
             return ReportTotals(income, expenses, income - expenses, rate)
         }
         return Report(
-            range = range,
-            months = history.drop(range),
-            totals = totals(history.drop(range)),
-            previousTotals = totals(history.take(range)),
-            categories = categoryBreakdown(transactions, principal = principal).map { ReportCategory(it.category, it.amount) },
+            range = length,
+            months = history.drop(length),
+            totals = totals(history.drop(length)),
+            previousTotals = totals(history.take(length)),
+            categories = categoryBreakdown(transactions, last, principal).map { ReportCategory(it.category, it.amount) },
             changes = changes(transactions, today, principal),
+            from = history[length].month,
+            to = last,
         )
     }
 

@@ -228,10 +228,13 @@ interface ApiService {
         @Query("today") today: String,
     ): List<MonthSummaryDto>
 
+    // `range` (3/6/12) or `from` + `to` (YYYY-MM); a null query is left out.
     @GET("summary/report")
     suspend fun getReport(
-        @Query("range") range: Int,
+        @Query("range") range: Int?,
         @Query("today") today: String,
+        @Query("from") from: String? = null,
+        @Query("to") to: String? = null,
     ): ReportDto
 
     @GET("alerts")

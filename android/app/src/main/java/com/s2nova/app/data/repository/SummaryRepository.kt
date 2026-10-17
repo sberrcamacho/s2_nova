@@ -1,6 +1,7 @@
 package com.s2nova.app.data.repository
 
 import com.s2nova.app.data.AnalyticsHelpers
+import com.s2nova.app.data.ReportSelection
 import com.s2nova.app.data.model.BalancePoint
 import com.s2nova.app.data.model.CategoryId
 import com.s2nova.app.data.model.MonthlySummary
@@ -38,13 +39,21 @@ class SummaryRepository(
         _months.value = api.getMonthSummaries(count, today).map(::toSummary)
     }
 
-    // Reportes for a 3/6/12-month range ending with `today`'s month. Demo
-    // mode derives the same shape from the fictitious transactions instead.
-    suspend fun report(range: Int, today: String = todayISO(), demoTransactions: () -> List<Transaction> = { emptyList() }): Report {
-        if (DemoModeFlag.active) return AnalyticsHelpers.report(demoTransactions(), range, com.s2nova.app.data.AppContainer.currencyRepository.principal)
-        val body = api.getReport(range, today)
+    // Reportes for a 3/6/12-month range ending with `today`'s month, or a
+    // picked span. Demo mode derives the same shape from the fictitious
+    // transactions instead.
+    suspend fun report(range: Int, today: String = todayISO(), demoTransactions: () -> List<Transaction> = { emptyList() }): Report =
+        report(ReportSelection.Preset(range), today, demoTransactions)
+
+    suspend fun report(selection: ReportSelection, today: String = todayISO(), demoTransactions: () -> List<Transaction> = { emptyList() }): Report {
+        val span = selection as? ReportSelection.Span
+        val preset = (selection as? ReportSelection.Preset)?.months
+        if (DemoModeFlag.active) return AnalyticsHelpers.report(demoTransactions(), preset ?: 0, com.s2nova.app.data.AppContainer.currencyRepository.principal, today, span)
+        val body = api.getReport(preset, today, span?.from, span?.to)
         return Report(
             range = body.range,
+            from = body.from,
+            to = body.to,
             months = body.months.map(::toSummary),
             totals = toTotals(body.totals),
             previousTotals = toTotals(body.previousTotals),

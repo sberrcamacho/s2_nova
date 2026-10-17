@@ -123,8 +123,12 @@ Reportes** — plus **Ajustes** in the footer. Pre-v2 paths (`/overview`,
   blocks live in `components/v2/Kit.tsx`; budget/goal copy shared with
   Inicio lives in `lib/planCopy.ts`.
 - **Reportes** (`ReportesPage.tsx`) — Gastos · Ingresos · Flujo de caja ·
-  Patrimonio (`?tab=gastos|ingresos|flujo|patrimonio`). The 3M/6M/12M range
+  Patrimonio (`?tab=gastos|ingresos|flujo|patrimonio`). The "Periodo"
+  button (any span of up to 24 months, picked in `MonthRangeDialog`)
   shows only on Gastos and Ingresos; every card states its own period.
+  The pick is kept in localStorage (`lib/reportRange.ts`: one ending this
+  month keeps following it, any other stays put; default the last six
+  months). Android keeps it the same way in `ReportRangeStore`.
   Figures come from `summaryService.getReport` (backend
   `GET /summary/report`, which Android's Reportes also uses).
   - **Gastos** opens with "¿Qué cambió?" (`changes`: this month so far

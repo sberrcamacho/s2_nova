@@ -7,7 +7,7 @@ import { Money } from '@/components/v2/Money'
 import { RowSkeletons, SkeletonBar, SyncBanner } from '@/components/v2/Rows'
 import { accountService } from '@/services/accountService'
 import { recurringService } from '@/services/recurringService'
-import { summaryService, type Report, type ReportRange } from '@/services/summaryService'
+import { summaryService, type Report } from '@/services/summaryService'
 import { useAppData } from '@/state/AppDataContext'
 import { useCurrency } from '@/state/useCurrency'
 import { useHideAmounts } from '@/state/useHideAmounts'
@@ -18,6 +18,10 @@ import { cn } from '@/lib/cn'
 import { formatApprox, referenceRate } from '@/lib/currency'
 import { todayISO } from '@/lib/date'
 import { MONTHS_LONG, MONTHS_SHORT, fill, monthAbbr, monthYear, projectUntil, shortDate } from '@/lib/inicio'
+import { loadRange, rangeChipLabel, saveRange, spanLabel, type ReportSpan } from '@/lib/reportRange'
+import { MonthRangeDialog } from '@/dashboard/components/reportes/MonthRangeDialog'
+import { IC, Icon } from '@/components/v2/Kit'
+import { ICON_PATHS } from '@/components/v2/icons'
 import type { TranslationKey } from '@/lib/i18n/translations'
 import type { RecurringSeries, Wallet } from '@/types'
 
@@ -27,10 +31,9 @@ const TABS: { id: 'gastos' | 'ingresos' | 'flujo' | 'patrimonio'; labelKey: Tran
   { id: 'flujo', labelKey: 'rep.tab.cashFlow' },
   { id: 'patrimonio', labelKey: 'rep.tab.netWorth' },
 ]
-const RANGES: ReportRange[] = [3, 6, 12]
 
 // Reportes (Web v2 mockup `isAnalytics`): Gastos · Ingresos · Flujo de caja ·
-// Patrimonio over its own 3M/6M/12M range. Every figure comes from
+// Patrimonio over the months the user picks ("Periodo", kept until changed). Every figure comes from
 // GET /summary/report, the same one Android's Reportes uses; only the
 // upcoming-Programados projection is built here, with Inicio's rule.
 export default function ReportesPage() {
@@ -38,12 +41,14 @@ export default function ReportesPage() {
   const { version } = useAppData()
   const [params, setParams] = useSearchParams()
   const tab = TABS.find((x) => x.id === params.get('tab'))?.id ?? 'gastos'
-  const [range, setRange] = useState<ReportRange>(6)
+  const [range, setRange] = useState<ReportSpan>(() => loadRange(todayISO().slice(0, 7)))
+  const [picking, setPicking] = useState(false)
   const [report, setReport] = useState<Report | null>(null)
   const [wallets, setWallets] = useState<Wallet[] | null>(null)
   const [series, setSeries] = useState<RecurringSeries[] | null>(null)
   const [failed, setFailed] = useState(false)
   const today = todayISO()
+  const currentMonth = today.slice(0, 7)
   useAutoTour('tour.reportes', report !== null)
 
   const load = useCallback(async () => {
@@ -65,23 +70,23 @@ export default function ReportesPage() {
         {/* The range only applies to Gastos and Ingresos; Flujo de caja looks
             ahead and Patrimonio is today's, so they don't show it. */}
         {(tab === 'gastos' || tab === 'ingresos') && (
-        <div role="radiogroup" aria-label={t('rep.range')} data-tour="rep.range" className="flex h-10 gap-1 rounded-[12px] bg-surface-sunken p-1">
-          {RANGES.map((r) => (
-            <button
-              key={r}
-              type="button"
-              role="radio"
-              aria-checked={range === r}
-              onClick={() => setRange(r)}
-              className={cn(
-                'min-w-12 cursor-pointer rounded-[9px] px-3 text-label tabular-nums',
-                range === r ? 'border border-border bg-surface font-semibold text-ink shadow-[0_1px_2px_rgba(0,0,0,.08)]' : 'font-medium text-ink-secondary hover:text-ink',
-              )}
-            >
-              {r}M
-            </button>
-          ))}
-        </div>
+        <button
+          type="button"
+          data-tour="rep.range"
+          aria-haspopup="dialog"
+          aria-label={`${t('rep.range')}: ${spanLabel(range.from, range.to, language)}. ${t('rep.range.customAria')}`}
+          onClick={() => setPicking(true)}
+          className="flex h-10 min-w-0 max-w-full cursor-pointer items-center gap-2 rounded-[12px] border border-border-input bg-surface px-3 text-label transition-colors duration-150 hover:bg-surface-sunken"
+        >
+          <span className="flex-none text-ink-secondary">
+            <Icon paths={IC.cal} size={16} color="currentColor" />
+          </span>
+          <span className="flex-none font-medium text-ink-secondary">{t('rep.range')}</span>
+          <span className="font-numeric truncate whitespace-nowrap font-semibold text-ink">{rangeChipLabel(range.from, range.to, language)}</span>
+          <span className="flex-none text-ink-tertiary">
+            <Icon paths={[ICON_PATHS.chevronDown]} size={16} color="currentColor" />
+          </span>
+        </button>
         )}
       </div>
 
@@ -113,6 +118,18 @@ export default function ReportesPage() {
       {tab === 'ingresos' && <IncomeTab report={report} />}
       {tab === 'flujo' && <CashFlowTab wallets={wallets} series={series} />}
       {tab === 'patrimonio' && <NetWorthTab report={report} />}
+      {picking && (
+        <MonthRangeDialog
+          initial={range}
+          currentMonth={currentMonth}
+          onClose={() => setPicking(false)}
+          onApply={(from, to) => {
+            setRange({ from, to })
+            saveRange(from, to, currentMonth)
+            setPicking(false)
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -143,8 +160,11 @@ function Kpi({ label, children, className, labelClass, style }: { label: string;
   )
 }
 
+// "Últimos 6 meses" for a range that ends this month, else its months:
+// "Febrero 2026 – Abril 2026".
 function useRangeSubtitle(report: Report | null) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
+  if (report && report.to !== todayISO().slice(0, 7)) return spanLabel(report.from, report.to, language)
   return fill(t('rep.lastMonths'), report?.range ?? 6)
 }
 
@@ -208,8 +228,8 @@ function SpendingTab({ report }: { report: Report | null }) {
 
         <Card tour="rep.breakdown">
           <div className="flex flex-wrap items-start justify-between gap-2.5">
-            {/* The current month, not the range: the title says which. */}
-            <CardTitle title={fill(t('rep.whereMoneyWentIn'), monthName(month, language))} subtitle={t('rep.thisMonthSub')} />
+            {/* The range's last month, not the whole range: the title says which. */}
+            <CardTitle title={fill(t('rep.whereMoneyWentIn'), monthName(month, language))} subtitle={t(month === todayISO().slice(0, 7) ? 'rep.thisMonthSub' : 'rep.lastMonthSub')} />
             <div role="radiogroup" aria-label={t('rep.whereMoneyWent')} className="flex gap-0.5 rounded-[12px] border border-border bg-v2-surface2 p-[3px]">
               {(['parent', 'sub'] as const).map((k) => (
                 <button
@@ -270,7 +290,8 @@ function WhatChanged({ report }: { report: Report | null }) {
   const { format } = useCurrency()
   const { hidden } = useHideAmounts()
   const today = todayISO()
-  const current = (report?.month ?? today.slice(0, 7))
+  // Always this month: "¿Qué cambió?" doesn't follow the range.
+  const current = today.slice(0, 7)
   const [y, m] = current.split('-').map(Number)
   const previousKey = `${m === 1 ? y! - 1 : y}-${String(m === 1 ? 12 : m! - 1).padStart(2, '0')}`
   const money = (v: number) => (hidden ? t('inicio.amountHidden') : format(v))
@@ -450,7 +471,7 @@ function IncomeTab({ report }: { report: Report | null }) {
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-label font-semibold capitalize" title={monthYear(m.month, language)}>{monthYear(m.month, language)}</div>
                     {/* The current month is still open, so its change isn't final. */}
-                    {m.month === report?.month && <div className="text-caption text-ink-tertiary">{t('rep.inProgress')}</div>}
+                    {m.month === todayISO().slice(0, 7) && <div className="text-caption text-ink-tertiary">{t('rep.inProgress')}</div>}
                   </div>
                   <Money hidden={hidden} className="flex-none whitespace-nowrap text-right text-label">
                     {format(m.income)}

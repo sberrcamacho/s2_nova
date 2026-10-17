@@ -122,7 +122,9 @@ and reuse it on retry, and the web client gives up on a request after 75 s.
   `src/lib/devices.ts` (the Android client sends
   `S2Nova-Android/<version> (<model>)`).
   `summary.ts` (`GET /summary/months`, `GET /summary/categories`,
-  `GET /summary/report?range=3|6|12` for Reportes) and `alerts.ts`
+  `GET /summary/report?from=YYYY-MM&to=YYYY-MM` for Reportes: any span
+  of up to 24 months, not after the current one; the older
+  `range=3|6|12` still answers for clients that send it) and `alerts.ts`
   (`GET /alerts`) are the shared Inicio/Reportes aggregates and alert
   rules both clients consume — add figures there rather than computing
   them per client. Both accept `?today=YYYY-MM-DD` (the client's local

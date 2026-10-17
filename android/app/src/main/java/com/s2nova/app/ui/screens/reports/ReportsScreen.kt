@@ -10,6 +10,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -64,6 +65,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.s2nova.app.data.AppContainer
+import com.s2nova.app.data.ReportRange
+import com.s2nova.app.data.ReportSelection
 import com.s2nova.app.data.model.AppLanguage
 import com.s2nova.app.data.model.Report
 import com.s2nova.app.data.model.ReportTotals
@@ -86,16 +89,12 @@ import kotlin.math.log10
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
-private val RANGES = listOf(
-    Triple(3, StringKey.REPORTS_RANGE_3M, StringKey.REPORTS_SUBTITLE_3M),
-    Triple(6, StringKey.REPORTS_RANGE_6M, StringKey.REPORTS_SUBTITLE_6M),
-    Triple(12, StringKey.REPORTS_RANGE_12M, StringKey.REPORTS_SUBTITLE_12M),
-)
+private val RangeIcon = com.s2nova.app.ui.components.strokeIcon("Calendar", "M4 5h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z", "M3 10h18", "M8 3v4", "M16 3v4")
 
 // Chart month labels: "Mar", "Abr", … "Sep" (capitalized, no period — the
 // JDK's es-CO short months read "sept."), the same as Web's.
-private val CHART_MONTHS_ES = listOf("Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic")
-private val CHART_MONTHS_EN = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+internal val CHART_MONTHS_ES = listOf("Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic")
+internal val CHART_MONTHS_EN = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
 private fun chartMonth(monthKey: String, language: AppLanguage): String =
     (if (language == AppLanguage.EN) CHART_MONTHS_EN else CHART_MONTHS_ES)[monthKey.substring(5, 7).toInt() - 1]
@@ -126,7 +125,7 @@ private fun percentText(value: Int, language: AppLanguage): String =
     if (language == AppLanguage.EN) "$value%" else "$value %"
 
 // Reportes: "¿Qué cambió?" (this month so far against the same days of last
-// month), a 3M/6M/12M segmented control, the period totals as a 2×2
+// month), the period button (any span of months, kept until changed), the period totals as a 2×2
 // bento against the range before it, "Ingresos vs gastos" as a grouped bar
 // chart with a value axis and a tap readout, and this month's "Gasto por
 // categoría". Every figure comes from GET /summary/report — the same one
@@ -135,17 +134,23 @@ private fun percentText(value: Int, language: AppLanguage): String =
 fun ReportsScreen() {
     val t = rememberStrings()
     val scope = rememberCoroutineScope()
-    var range by remember { mutableIntStateOf(6) }
+    val language = rememberAppLanguage()
+    val currentMonth = todayISO().take(7)
+    // The kept range (ReportRangeStore); null until it's read.
+    var range by remember { mutableStateOf<ReportSelection.Span?>(null) }
+    var picking by remember { mutableStateOf(false) }
     var report by remember { mutableStateOf<Report?>(null) }
     var failed by remember { mutableStateOf(false) }
 
     suspend fun load() {
+        val span = range ?: return
         runCatching {
-            AppContainer.summaryRepository.report(range, demoTransactions = { AppContainer.transactionRepository.transactions.value })
+            AppContainer.summaryRepository.report(span, demoTransactions = { AppContainer.transactionRepository.transactions.value })
         }
             .onSuccess { report = it; failed = false }
             .onFailure { failed = true }
     }
+    LaunchedEffect(Unit) { range = ReportRange.decode(runCatching { AppContainer.reportRangeStore.get() }.getOrNull(), currentMonth) }
     LaunchedEffect(range) { load() }
 
     Scaffold(
@@ -171,47 +176,67 @@ fun ReportsScreen() {
                 }
                 item { Box(Modifier.novaRise(0)) { ChangesCard(report) } }
                 // The range applies to what follows, not to "¿Qué cambió?".
-                item { RangeSegmented(range, onPick = { range = it }, modifier = Modifier.padding(top = 4.dp).tourTarget("rep.range", 12.dp)) }
+                item { PeriodButton(range, onClick = { picking = true }, modifier = Modifier.padding(top = 4.dp).tourTarget("rep.range", 12.dp)) }
                 item { Box(Modifier.novaRise(1).tourTarget("rep.totals", 20.dp)) { TotalsBento(report) } }
-                item { Box(Modifier.novaRise(2)) { BarsCard(report, t(RANGES.first { it.first == range }.third)) } }
+                item { Box(Modifier.novaRise(2)) { BarsCard(report, rangeSubtitle(report, range, t, language)) } }
                 item { Box(Modifier.novaRise(3).tourTarget("rep.breakdown", 20.dp)) { CategoryCard(report) } }
                 item { Spacer(Modifier.height(58.dp)) }
             }
         }
     }
-}
-
-// Segmented control (docs/DESIGN-SYSTEM.md §6.5), the same as Nuevo movimiento's.
-@Composable
-private fun RangeSegmented(range: Int, onPick: (Int) -> Unit, modifier: Modifier = Modifier) {
-    val t = rememberStrings()
-    val colors = NovaColors.current
-    Row(
-        modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(14.dp)).background(colors.surfaceSunken).padding(4.dp)
-            .selectableGroup().semantics { contentDescription = t(StringKey.REPORTS_RANGE) },
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        RANGES.forEach { (months, label, _) ->
-            val on = range == months
-            Box(
-                Modifier.weight(1f).fillMaxHeight()
-                    .then(if (on) Modifier.shadow(2.dp, RoundedCornerShape(10.dp)) else Modifier)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(if (on) MaterialTheme.colorScheme.surface else Color.Transparent)
-                    .then(if (on) Modifier.border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(10.dp)) else Modifier)
-                    .selectable(selected = on, role = Role.Tab) { onPick(months) },
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    t(label),
-                    style = NovaType.label.copy(fontWeight = if (on) FontWeight.SemiBold else FontWeight.Medium),
-                    color = if (on) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                )
-            }
-        }
+    val picked = range
+    if (picking && picked != null) {
+        MonthRangeSheet(
+            initial = picked,
+            currentMonth = currentMonth,
+            onDismiss = { picking = false },
+            onApply = { from, to ->
+                range = ReportSelection.Span(from, to)
+                picking = false
+                scope.launch { runCatching { AppContainer.reportRangeStore.set(ReportRange.encode(from, to, currentMonth)) } }
+            },
+        )
     }
 }
+
+// "Últimos 6 meses" for a range that ends this month, else its months:
+// "Febrero 2026 – Abril 2026".
+private fun rangeSubtitle(report: Report?, range: ReportSelection.Span?, t: (StringKey) -> String, language: AppLanguage): String {
+    val span = range ?: return ""
+    if (span.to == todayISO().take(7)) return t(StringKey.REPORTS_SUBTITLE_MONTHS).format(ReportRange.monthsBetween(span.from, span.to).toString())
+    return spanLabel(span.from, span.to, t, language)
+}
+
+// "Febrero 2026 – Abril 2026", or "Febrero 2026" for one month.
+internal fun spanLabel(from: String, to: String, t: (StringKey) -> String, language: AppLanguage): String =
+    if (from == to) monthKeyLabel(from, language) else t(StringKey.REPORTS_RANGE_SPAN).format(monthKeyLabel(from, language), monthKeyLabel(to, language))
+
+// "Periodo": the months the figures below cover; opens the month picker.
+// An option row (DESIGN-SYSTEM §6.11): icon, label, value, chevron.
+@Composable
+private fun PeriodButton(range: ReportSelection.Span?, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val t = rememberStrings()
+    val language = rememberAppLanguage()
+    val colors = NovaColors.current
+    val value = range?.let { ReportRange.chipLabel(it.from, it.to, if (language == AppLanguage.EN) CHART_MONTHS_EN else CHART_MONTHS_ES) } ?: ""
+    val description = t(StringKey.REPORTS_RANGE) + (range?.let { ": " + spanLabel(it.from, it.to, t, language) } ?: "")
+    Row(
+        modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(14.dp))
+            .clickable(role = Role.Button, onClickLabel = t(StringKey.REPORTS_RANGE_CUSTOM_DESC), onClick = onClick)
+            .semantics(mergeDescendants = true) { contentDescription = description }
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Icon(RangeIcon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+        Text(t(StringKey.REPORTS_RANGE), style = NovaType.label, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, modifier = Modifier.weight(1f))
+        Text(value, style = NovaType.label.copy(fontFeatureSettings = "tnum", fontWeight = FontWeight.SemiBold), color = MaterialTheme.colorScheme.onBackground, maxLines = 1, softWrap = false)
+        Icon(PeriodChevron, contentDescription = null, tint = colors.textDim, modifier = Modifier.size(18.dp))
+    }
+}
+
+private val PeriodChevron = com.s2nova.app.ui.components.strokeIcon("ChevronRight", "M9 18l6-6-6-6")
 
 @Composable
 private fun ReportCard(modifier: Modifier = Modifier, padding: Dp = 16.dp, content: @Composable () -> Unit) {
@@ -562,8 +587,12 @@ private fun CategoryCard(report: Report?) {
     val format = rememberCurrencyFormatter()
     val top = report?.categories?.take(5)
     ReportCard {
-        // The current month, not the range: the title names it.
-        CardTitle(t(StringKey.REPORTS_SPEND_IN).format(monthName(java.time.LocalDate.parse(todayISO()).monthValue, rememberAppLanguage())), t(StringKey.REPORTS_THIS_MONTH))
+        // The range's last month, not the whole range: the title names it.
+        val month = report?.to?.takeIf { it.isNotEmpty() } ?: todayISO().take(7)
+        CardTitle(
+            t(StringKey.REPORTS_SPEND_IN).format(monthName(month.substring(5, 7).toInt(), rememberAppLanguage())),
+            t(if (month == todayISO().take(7)) StringKey.REPORTS_THIS_MONTH else StringKey.REPORTS_LAST_MONTH_SUB),
+        )
         Column(modifier = Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             if (top == null) {
                 repeat(4) { Placeholder(1f, 28) }

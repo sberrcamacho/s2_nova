@@ -296,7 +296,7 @@ POST   /api/v1/products                       -- register an unknown product
 
 GET    /api/v1/summary/months               -- income/expenses per month (Inicio)
 GET    /api/v1/summary/categories           -- the month's spending per category
-GET    /api/v1/summary/report?range=3|6|12  -- every Reportes figure, both clients
+GET    /api/v1/summary/report?from=&to=     -- every Reportes figure for a span of months (≤ 24), both clients
 ```
 
 Every route except `auth/*` and the `GET /products/:barcode` lookup

@@ -525,6 +525,8 @@ data class ReportNetWorthDto(val history: List<BalancePointDto> = emptyList())
 @Serializable
 data class ReportDto(
     val range: Int,
+    val from: String = "",
+    val to: String = "",
     val months: List<MonthSummaryDto>,
     val totals: ReportTotalsDto,
     val previousTotals: ReportTotalsDto,

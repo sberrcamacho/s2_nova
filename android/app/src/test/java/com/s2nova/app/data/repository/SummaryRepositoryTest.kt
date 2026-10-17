@@ -66,4 +66,24 @@ class SummaryRepositoryTest {
         assertEquals("exp.food", report.categories.single().category)
         assertEquals(612_400.0, report.categories.single().amount)
     }
+
+    @Test
+    fun `report asks for a picked span of months`() = runTest {
+        server.enqueue(
+            MockResponse().setBody(
+                """{"range": 3, "from": "2026-02", "to": "2026-04", "month": "2026-04",
+                "months": [{"month": "2026-02", "income": 0, "expenses": 0, "net": 0}, {"month": "2026-03", "income": 0, "expenses": 0, "net": 0}, {"month": "2026-04", "income": 0, "expenses": 0, "net": 0}],
+                "totals": {"income": 0, "expenses": 0, "savings": 0, "savingsRate": 0},
+                "previousTotals": {"income": 0, "expenses": 0, "savings": 0, "savingsRate": 0},
+                "categories": []}""",
+            ),
+        )
+        val report = SummaryRepository(CategoryRepository(server.apiService()), server.apiService())
+            .report(com.s2nova.app.data.ReportSelection.Span("2026-02", "2026-04"), today = "2026-08-21")
+
+        assertEquals("/summary/report?today=2026-08-21&from=2026-02&to=2026-04", server.takeRequest().path)
+        assertEquals("2026-02", report.from)
+        assertEquals("2026-04", report.to)
+        assertEquals(3, report.months.size)
+    }
 }

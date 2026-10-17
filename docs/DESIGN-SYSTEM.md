@@ -524,7 +524,7 @@ padding or a pseudo-element on Web.
   - Unselected: `surface` + 1 px `border-input` + `text`.
   - Selected: `primary` fill + `on-primary` + a leading check icon, so selection is not color alone.
   - As built (F4): Android `V2Pill` (also behind `SheetPill`, the auto-lock options and the type filter in the Movimientos filters sheet) and Web `flatClass` / `chipClass` / `Flat` / `Pills` (the check is the `.chip-on` mask in `index.css`). Single-choice collections expose radio semantics; multi-select ones checkbox (Android) or `aria-pressed` (Web).
-- **Segmented** (Gasto | Ingreso | Transferencia, 3M/6M/12M, theme):
+- **Segmented** (Gasto | Ingreso | Transferencia, theme):
   - `surface-sunken` track; the selected segment is `surface` with elevation 1 and weight 600.
   - Height 44 dp / 36 px. It exposes tab or radio semantics.
 

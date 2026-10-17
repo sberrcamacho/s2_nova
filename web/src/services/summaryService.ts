@@ -1,6 +1,7 @@
 import { apiClient } from '@/lib/apiClient'
 import { categorySlugFor } from '@/lib/backendCategories'
 import { todayISO } from '@/lib/date'
+import type { ReportPreset, ReportSelection } from '@/lib/reportRange'
 import type { CategoryId } from '@/types'
 
 // Server-side monthly aggregates (backend/src/routes/summary.ts) — the same
@@ -55,8 +56,9 @@ export const summaryService = {
 }
 
 // Reportes (backend GET /summary/report): every figure both clients show,
-// for a 3/6/12-month range ending with the current month.
-export type ReportRange = 3 | 6 | 12
+// for a 3/6/12-month range ending with the current month or any from..to
+// span (lib/reportRange.ts).
+export type ReportRange = ReportPreset
 
 export interface ReportTotals {
   income: number
@@ -95,7 +97,10 @@ export interface LoanSide {
 }
 
 export interface Report {
-  range: ReportRange
+  range: number // months covered
+  from: string // first month, YYYY-MM
+  to: string // last month
+  // The month the category figures are about: the range's last.
   month: string
   months: MonthTotals[]
   totals: ReportTotals
@@ -132,8 +137,10 @@ type BackendReport = Omit<Report, 'categories' | 'subcategories' | 'incomeSource
   incomeSources: (Omit<IncomeSource, 'category'> & { categoryId: string })[]
 }
 
-export async function getReport(range: ReportRange, today: string = todayISO()): Promise<Report> {
-  const body = await apiClient.get<BackendReport>(`/summary/report?range=${range}&today=${today}`)
+export async function getReport(range: ReportRange | ReportSelection, today: string = todayISO()): Promise<Report> {
+  const selection: ReportSelection = typeof range === 'number' ? { preset: range } : range
+  const span = 'from' in selection ? `from=${selection.from}&to=${selection.to}` : `range=${selection.preset}`
+  const body = await apiClient.get<BackendReport>(`/summary/report?${span}&today=${today}`)
   const [categories, subcategories, incomeSources, changeCategories] = await Promise.all([
     Promise.all(body.categories.map(async ({ categoryId, ...row }) => ({ ...row, category: await categorySlugFor(categoryId) }))),
     Promise.all((body.subcategories ?? []).map(async ({ categoryId, amount }) => ({ amount, category: await categorySlugFor(categoryId) }))),

@@ -73,10 +73,29 @@ const monthsQuerySchema = z.object({
   today: dateOnlySchema.optional(),
 });
 
-const reportQuerySchema = z.object({
-  range: z.coerce.number().int().refine((value) => [3, 6, 12].includes(value)).default(6),
-  today: dateOnlySchema.optional(),
-});
+// Reportes' range: one of the 3M/6M/12M presets ending with the current
+// month, or any `from`..`to` span of up to REPORT_MAX_MONTHS months, none
+// after the current one.
+export const REPORT_MAX_MONTHS = 24;
+const reportQuerySchema = z
+  .object({
+    range: z.coerce.number().int().refine((value) => [3, 6, 12].includes(value)).default(6),
+    from: monthKeySchema.optional(),
+    to: monthKeySchema.optional(),
+    today: dateOnlySchema.optional(),
+  })
+  .refine((query) => (query.from === undefined) === (query.to === undefined), { message: "Send both from and to." })
+  .refine((query) => query.from === undefined || query.to === undefined || query.from <= query.to, { message: "from must not be after to." })
+  .refine((query) => query.from === undefined || query.to === undefined || monthsBetween(query.from, query.to) <= REPORT_MAX_MONTHS, {
+    message: `A range covers at most ${REPORT_MAX_MONTHS} months.`,
+  });
+
+// Months in from..to, both included.
+function monthsBetween(from: string, to: string): number {
+  const [fy, fm] = from.split("-").map(Number);
+  const [ty, tm] = to.split("-").map(Number);
+  return (ty! - fy!) * 12 + (tm! - fm!) + 1;
+}
 
 // Reportes' category trend flag: a category up this much or more against
 // the previous month is shown in the negative tone ("Transporte · +82%").
@@ -153,20 +172,28 @@ export async function summaryRoutes(app: FastifyInstance) {
   });
 
   // Everything Reportes shows (Android's three cards, Web's four tabs) in one
-  // request, so both clients show the same figures. `range` is the 3M/6M/12M
-  // selector: `months`, `totals` and the range-wide figures cover the last
-  // `range` months including the current one; `previousTotals` the `range`
-  // months before that. Category spending is the current month's.
-  app.get("/summary/report", { preHandler: app.authenticate }, async (request) => {
+  // request, so both clients show the same figures. The range is a 3M/6M/12M
+  // preset (`range`, ending with the current month) or `from`..`to`:
+  // `months`, `totals` and the range-wide figures cover it; `previousTotals`
+  // the same number of months before it. Category spending and the daily
+  // average are the range's last month's (`month`). "¿Qué cambió?" and
+  // Patrimonio are always about today.
+  app.get("/summary/report", { preHandler: app.authenticate }, async (request, reply) => {
     const query = reportQuerySchema.parse(request.query);
     const userId = request.userId!;
     const today = resolveToday(query.today);
     const currentMonth = monthKeyOf(today);
+    const lastMonth = query.to ?? currentMonth;
+    if (lastMonth > currentMonth) return reply.code(400).send({ error: "BadRequest", message: "The range can't end after the current month." });
+    const length = query.from ? monthsBetween(query.from, lastMonth) : query.range;
+    const rangeKeys = Array.from({ length }, (_, index) => shiftMonth(lastMonth, index - length + 1));
+    const previousKeys = rangeKeys.map((key) => shiftMonth(key, -length));
+    // The month the category figures are about, up to today when it's the
+    // current one, and the month before it.
+    const anchorEnd = lastMonth === currentMonth ? today : monthEnd(lastMonth);
+    const anchorPrevious = shiftMonth(lastMonth, -1);
     const previousMonth = shiftMonth(currentMonth, -1);
-    const span = Math.max(query.range * 2, NET_WORTH_MONTHS);
-    const firstMonth = shiftMonth(currentMonth, -span + 1);
-    const rangeKeys = Array.from({ length: query.range }, (_, index) => shiftMonth(currentMonth, index - query.range + 1));
-    const previousKeys = rangeKeys.map((key) => shiftMonth(key, -query.range));
+    const firstMonth = [previousKeys[0]!, anchorPrevious, shiftMonth(currentMonth, -NET_WORTH_MONTHS + 1)].sort()[0]!;
 
     const [rows, laterNet, accounts, fixedCategories, series, loans] = await Promise.all([
       principalRows(userId, {
@@ -212,7 +239,7 @@ export async function summaryRoutes(app: FastifyInstance) {
       if (row.type === "EXPENSE") {
         const key = `${row.categoryId}|${month}`;
         categoryMonth.set(key, (categoryMonth.get(key) ?? 0n) + amount);
-        if (month === currentMonth) {
+        if (month === lastMonth) {
           const leaf = row.subcategoryId ?? row.categoryId;
           leafMonth.set(leaf, (leafMonth.get(leaf) ?? 0n) + amount);
         }
@@ -243,10 +270,10 @@ export async function summaryRoutes(app: FastifyInstance) {
     const totals = sumOf(rangeKeys);
 
     const monthCategories = [...categoryMonth.entries()]
-      .filter(([key]) => key.endsWith(`|${currentMonth}`))
+      .filter(([key]) => key.endsWith(`|${lastMonth}`))
       .map(([key, amount]) => {
         const categoryId = key.split("|")[0]!;
-        const previousAmount = categoryMonth.get(`${categoryId}|${previousMonth}`) ?? 0n;
+        const previousAmount = categoryMonth.get(`${categoryId}|${anchorPrevious}`) ?? 0n;
         const change = previousAmount > 0n ? Math.round(((Number(amount) - Number(previousAmount)) / Number(previousAmount)) * 100) : null;
         return { categoryId, amount, previousAmount, change, rising: change !== null && change >= CATEGORY_RISE_PERCENTAGE };
       })
@@ -282,10 +309,10 @@ export async function summaryRoutes(app: FastifyInstance) {
       })
       .slice(0, 3);
 
-    const monthExpenses = byMonth.get(currentMonth)?.expenses ?? 0n;
+    const monthExpenses = byMonth.get(lastMonth)?.expenses ?? 0n;
     const peak = weekdays.reduce((best, amount, day) => (amount > weekdays[best]! ? day : best), 0);
     const walletTotal = accounts;
-    const averageExpenses = Number(totals.expenses) / query.range;
+    const averageExpenses = Number(totals.expenses) / length;
 
     const incomeSources = [...sources.values()]
       .sort((a, b) => (a.amount === b.amount ? 0 : a.amount > b.amount ? -1 : 1))
@@ -340,8 +367,10 @@ export async function summaryRoutes(app: FastifyInstance) {
     const borrowed = loanSide("BORROWED");
 
     return {
-      range: query.range,
-      month: currentMonth,
+      range: length,
+      from: rangeKeys[0],
+      to: lastMonth,
+      month: lastMonth,
       months: rangeKeys.map((month) => {
         const { income, expenses } = byMonth.get(month) ?? { income: 0n, expenses: 0n };
         return { month, income, expenses, net: income - expenses };
@@ -352,7 +381,7 @@ export async function summaryRoutes(app: FastifyInstance) {
       subcategories: [...leafMonth.entries()]
         .map(([categoryId, amount]) => ({ categoryId, amount }))
         .sort((a, b) => (a.amount === b.amount ? 0 : a.amount > b.amount ? -1 : 1)),
-      dailyAverage: monthExpenses / BigInt(today.getUTCDate()),
+      dailyAverage: monthExpenses / BigInt(anchorEnd.getUTCDate()),
       peakWeekday: weekdays[peak]! > 0n ? peak : null,
       fixedShare: totals.expenses > 0n ? Math.round((Number(rangeFixed) / Number(totals.expenses)) * 100) : null,
       fixedAmount: rangeFixed,

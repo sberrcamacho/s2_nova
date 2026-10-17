@@ -243,6 +243,51 @@ describe("summary routes", () => {
       expect(res.json().fixedAmount).toBe(0);
     });
 
+    it("reports any from..to range, with the categories of its last month", async () => {
+      const user = await createTestUser();
+      const wallet = await createAccount(user.id, { initialBalanceMinor: 1000000n });
+      const [food, transport, salary] = await Promise.all(["exp.food", "exp.transportation", "inc.work.salary"].map((slug) => categoryBySlug(slug)));
+      const base = { accountId: wallet.id, description: "x" };
+      await post(user, { ...base, type: "INCOME", categoryId: salary.id, amount: 3000000, date: "2026-02-01" });
+      await post(user, { ...base, type: "EXPENSE", categoryId: transport.id, amount: 100000, date: "2026-03-04" });
+      await post(user, { ...base, type: "EXPENSE", categoryId: food.id, amount: 310000, date: "2026-04-20" });
+      await post(user, { ...base, type: "EXPENSE", categoryId: transport.id, amount: 300000, date: "2026-04-21" });
+      // Before the range (the previous window) and after it (this month).
+      await post(user, { ...base, type: "EXPENSE", categoryId: food.id, amount: 70000, date: "2025-12-10" });
+      await post(user, { ...base, type: "EXPENSE", categoryId: food.id, amount: 99000, date: "2026-08-03" });
+
+      const res = await app.inject({ method: "GET", url: "/api/v1/summary/report?from=2026-02&to=2026-04&today=2026-08-21", headers: authHeader(user) });
+      expect(res.statusCode).toBe(200);
+      const body = res.json();
+      expect(body).toMatchObject({ range: 3, from: "2026-02", to: "2026-04", month: "2026-04" });
+      expect(body.months.map((m: { month: string }) => m.month)).toEqual(["2026-02", "2026-03", "2026-04"]);
+      expect(body.totals).toEqual({ income: 3000000, expenses: 710000, savings: 2290000, savingsRate: 76 });
+      expect(body.previousTotals.expenses).toBe(70000);
+      // April's spending against March, and April's daily average over all its 30 days.
+      expect(body.categories).toEqual([
+        { categoryId: food.id, amount: 310000, previousAmount: 0, change: null, rising: false },
+        { categoryId: transport.id, amount: 300000, previousAmount: 100000, change: 200, rising: true },
+      ]);
+      expect(body.dailyAverage).toBe(20333);
+      // "¿Qué cambió?" and Patrimonio stay about today.
+      expect(body.changes.current).toBe(99000);
+      expect(body.netWorth.history.at(-1).month).toBe("2026-08");
+
+      // A span across the year.
+      const year = await app.inject({ method: "GET", url: "/api/v1/summary/report?from=2025-11&to=2026-02&today=2026-08-21", headers: authHeader(user) });
+      expect(year.json().months.map((m: { month: string }) => m.month)).toEqual(["2025-11", "2025-12", "2026-01", "2026-02"]);
+    });
+
+    it("rejects a range that is reversed, too long, half given or in the future", async () => {
+      const user = await createTestUser();
+      const ask = (q: string) => app.inject({ method: "GET", url: `/api/v1/summary/report?${q}&today=2026-08-21`, headers: authHeader(user) });
+      expect((await ask("from=2026-05&to=2026-03")).statusCode).toBe(400);
+      expect((await ask("from=2024-08&to=2026-08")).statusCode).toBe(400);
+      expect((await ask("from=2024-09&to=2026-08")).statusCode).toBe(200);
+      expect((await ask("from=2026-05")).statusCode).toBe(400);
+      expect((await ask("from=2026-07&to=2026-09")).statusCode).toBe(400);
+    });
+
     it("has empty figures for a new user and rejects other ranges", async () => {
       const user = await createTestUser();
       const res = await app.inject({ method: "GET", url: "/api/v1/summary/report?today=2026-08-21", headers: authHeader(user) });
