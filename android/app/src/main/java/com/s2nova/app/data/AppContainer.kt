@@ -68,6 +68,8 @@ object AppContainer {
     val notificationRepository by lazy { NotificationRepository() }
     val summaryRepository by lazy { SummaryRepository(categoryRepository) }
     val alertRepository by lazy { AlertRepository(categoryRepository, stateStore = alertStateStore) }
+    val suggestionRepository by lazy { com.s2nova.app.data.repository.SuggestionRepository(categoryRepository) }
+    val assistantRepository by lazy { com.s2nova.app.data.repository.AssistantRepository(categoryRepository) }
 
     lateinit var authRepository: AuthRepository
         private set
@@ -114,6 +116,7 @@ object AppContainer {
         )
         com.s2nova.app.ui.AppLang.init(context)
         com.s2nova.app.data.notifications.AlertNotifier.init(context)
+        com.s2nova.app.data.notifications.NotificationCapture.init(context)
         appScope.launch {
             authRepository.currentUser.collect { user -> user?.let { com.s2nova.app.ui.AppLang.set(it.preferences.language) } }
         }

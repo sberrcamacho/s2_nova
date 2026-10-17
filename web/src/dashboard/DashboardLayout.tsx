@@ -4,9 +4,12 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Sidebar } from '@/dashboard/components/Sidebar'
 import { TourProvider } from '@/components/tour/TourProvider'
 import { Header } from '@/dashboard/components/Header'
-import { NewTransactionPanel } from '@/components/panels/NewTransactionPanel'
+import { NewTransactionPanel, type MovementDraft } from '@/components/panels/NewTransactionPanel'
 import { useAuth } from '@/state/AuthContext'
+import { useBrowserNotifications } from '@/state/useBrowserNotifications'
 import { NewMovementContext } from '@/state/NewMovementContext'
+import { AssistantPanel, type AssistantTurn } from '@/dashboard/components/AssistantPanel'
+import { assistantService } from '@/services/assistantService'
 import type { Transaction } from '@/types'
 import { useTranslation } from '@/state/useTranslation'
 import type { TranslationKey } from '@/lib/i18n/translations'
@@ -49,17 +52,30 @@ export function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [newTxOpen, setNewTxOpen] = useState(false)
   const [editing, setEditing] = useState<Transaction | undefined>(undefined)
+  const [draft, setDraft] = useState<MovementDraft | undefined>(undefined)
+  // "Asistente": shown when the server has it on (guests see why to sign up).
+  const [assistantOn, setAssistantOn] = useState(false)
+  const [assistantOpen, setAssistantOpen] = useState(false)
+  const [assistantTurns, setAssistantTurns] = useState<AssistantTurn[]>([])
+  useEffect(() => {
+    if (!user) return
+    if (user.isGuest) return setAssistantOn(true)
+    assistantService.status().then((s) => setAssistantOn(s.available)).catch(() => setAssistantOn(false))
+  }, [user])
   const location = useLocation()
   const { t } = useTranslation()
+  useBrowserNotifications()
   // Ajustes' sub-views (/ajustes/perfil, …) share its title.
   const titleKey = PAGE_TITLES[location.pathname] ?? (location.pathname.startsWith('/ajustes/') ? PAGE_TITLES['/ajustes'] : undefined)
   const title = titleKey ? t(titleKey) : 'S2 Nova'
   const closeNewTx = useCallback(() => {
     setNewTxOpen(false)
     setEditing(undefined)
+    setDraft(undefined)
   }, [])
-  const openNewTx = useCallback((tx?: Transaction) => {
+  const openNewTx = useCallback((tx?: Transaction, from?: MovementDraft) => {
     setEditing(tx)
+    setDraft(from)
     setNewTxOpen(true)
   }, [])
 
@@ -82,7 +98,7 @@ export function DashboardLayout() {
         {/* `relative` so absolutely positioned descendants (sr-only text, bars)
             are contained and clipped here instead of growing the document. */}
         <div className="relative flex min-w-0 flex-1 flex-col overflow-y-auto">
-          <Header title={title} onMenuClick={() => setSidebarOpen(true)} onNewTransaction={() => setNewTxOpen(true)} />
+          <Header title={title} onMenuClick={() => setSidebarOpen(true)} onNewTransaction={() => setNewTxOpen(true)} onAssistant={assistantOn ? () => setAssistantOpen(true) : undefined} />
           {user?.isGuest && <GuestBanner />}
           {/* Each page arrives with a short rise and fade (route-in); keyed by
               path so query changes (filters, tabs, period) don't replay it. */}
@@ -91,7 +107,18 @@ export function DashboardLayout() {
           </main>
         </div>
       </div>
-      {newTxOpen && <NewTransactionPanel key={editing?.id ?? 'new'} onClose={closeNewTx} editing={editing} />}
+      {assistantOpen && (
+        <AssistantPanel
+          turns={assistantTurns}
+          setTurns={setAssistantTurns}
+          onClose={() => setAssistantOpen(false)}
+          onDraft={(p) => {
+            setAssistantOpen(false)
+            openNewTx(undefined, { type: p.type, amount: p.amount, title: p.description || undefined, category: p.category, date: p.date ?? undefined })
+          }}
+        />
+      )}
+      {newTxOpen && <NewTransactionPanel key={editing?.id ?? (draft ? `draft-${draft.amount}-${draft.title ?? ''}` : 'new')} onClose={closeNewTx} editing={editing} draft={draft} />}
       </TourProvider>
     </NewMovementContext.Provider>
   )

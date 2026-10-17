@@ -142,6 +142,18 @@ object AlertNotifier {
         prefs(context).edit().putStringSet(KEY_NOTIFIED, notified.filterTo(mutableSetOf()) { it in keep }).apply()
     }
 
+    // Whether a background call can use the session without ending it: the
+    // app is open, or it was left less than "Cierre automático" ago.
+    @Volatile var appInForeground = false
+
+    internal suspend fun sessionUsable(context: Context): Boolean {
+        if (AppContainer.sessionStore.refreshTokenOnce() == null) return false
+        if (appInForeground) return true
+        val minutes = load(context).autoLockMinutes
+        val idle = AppContainer.idleTimeoutStore.persistedIdleMillis()
+        return !(minutes > 0 && (idle == null || idle >= minutes * 60_000L))
+    }
+
     // The backend's alerts as (id, title, body), or null when the session
     // can't be used without ending it.
     private suspend fun liveAlerts(context: Context, snapshot: Snapshot, today: String): List<Triple<String, String, String>>? {

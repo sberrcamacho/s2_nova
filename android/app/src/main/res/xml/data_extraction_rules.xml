@@ -6,15 +6,18 @@
   it holds the plaintext access/refresh tokens, which must never end up in
   Android Auto Backup or a device-to-device transfer alongside everything
   else allowBackup="true" would otherwise include, and LockedAccountStore's
-  (who the lock screen asks back on this device).
+  (who the lock screen asks back on this device), and the queue of
+  captured bank notifications waiting to be sent (NotificationCapture).
 -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="file" path="datastore/s2nova_session.preferences_pb" />
         <exclude domain="file" path="datastore/s2nova_locked_account.preferences_pb" />
+        <exclude domain="sharedpref" path="s2nova_capture_queue.xml" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="file" path="datastore/s2nova_session.preferences_pb" />
         <exclude domain="file" path="datastore/s2nova_locked_account.preferences_pb" />
+        <exclude domain="sharedpref" path="s2nova_capture_queue.xml" />
     </device-transfer>
 </data-extraction-rules>

@@ -29,6 +29,7 @@ class MainActivity : FragmentActivity() {
             android.provider.Settings.Global.getInt(contentResolver, "s2nova_allow_capture", 0) == 1
         if (!allowCapture) window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
         enableEdgeToEdge()
+        openSuggestionFrom(intent)
         setContent {
             val darkOverride by ThemeController.darkOverride.collectAsStateWithLifecycle()
             S2NovaTheme(darkTheme = darkOverride ?: isSystemInDarkTheme()) {
@@ -41,7 +42,27 @@ class MainActivity : FragmentActivity() {
     // process that gets killed in the background (AuthRepository.bootstrap()).
     override fun onStop() {
         super.onStop()
+        com.s2nova.app.data.notifications.AlertNotifier.appInForeground = false
         AppContainer.appScope.launch { AppContainer.idleTimeoutStore.persist() }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        com.s2nova.app.data.notifications.AlertNotifier.appInForeground = true
+    }
+
+    // A "¿Registrar…?" notification opens Nuevo movimiento with it.
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        openSuggestionFrom(intent)
+    }
+
+    private fun openSuggestionFrom(intent: android.content.Intent?) {
+        intent?.getStringExtra(com.s2nova.app.data.notifications.NotificationCapture.EXTRA_SUGGESTION)?.let {
+            com.s2nova.app.data.notifications.SuggestionLaunch.request(it)
+            com.s2nova.app.data.notifications.NotificationCapture.cancel(it)
+            intent.removeExtra(com.s2nova.app.data.notifications.NotificationCapture.EXTRA_SUGGESTION)
+        }
     }
 
     // "Cierre automático" counts any touch or key press as activity.

@@ -9,6 +9,7 @@ import { useHideAmounts } from '@/state/useHideAmounts'
 import { useTheme, type ThemePreference } from '@/state/ThemeContext'
 import { useToast } from '@/state/ToastContext'
 import { useTranslation } from '@/state/useTranslation'
+import { notificationsSupported } from '@/state/useBrowserNotifications'
 import { initialsOf, timeAgo } from '@/lib/ajustes'
 import { MONTHS_LONG, fill } from '@/lib/inicio'
 import type { LanguageCode } from '@/types'
@@ -27,6 +28,7 @@ export default function AjustesPage() {
   const categories = useCategories()
   const [sessions, setSessions] = useState<Session[] | null>(null)
   const [exporting, setExporting] = useState(false)
+  const [permission, setPermission] = useState(() => (notificationsSupported() ? Notification.permission : 'denied'))
 
   // Every movement as a CSV download (it used to live in Reportes).
   const exportData = async () => {
@@ -63,8 +65,14 @@ export default function AjustesPage() {
     })
   }
 
-  const toggleNotifications = () => {
+  // Turning notifications on asks the browser for permission (it must come
+  // from this click). Denied: the preference still saves, and the row says
+  // how to allow them.
+  const toggleNotifications = async () => {
     const next = !user.preferences.notifications
+    if (next && notificationsSupported() && Notification.permission === 'default') {
+      setPermission(await Notification.requestPermission())
+    }
     updateUser({ preferences: { ...user.preferences, notifications: next } })
     userService.updatePreferences({ notifications: next }).catch((err) => {
       updateUser({ preferences: { ...user.preferences, notifications: !next } })
@@ -168,8 +176,11 @@ export default function AjustesPage() {
               ]}
             />
           </AjRow>
-          <AjRow label={t('aj.notifications')} detail={t('aj.notificationsHint')}>
-            <AjSwitch on={user.preferences.notifications} label={t('aj.notifications')} onToggle={toggleNotifications} />
+          <AjRow
+            label={t('aj.notifications')}
+            detail={user.preferences.notifications && permission === 'denied' && !user.isGuest ? t('aj.notificationsBlocked') : t('aj.notificationsHint')}
+          >
+            <AjSwitch on={user.preferences.notifications} label={t('aj.notifications')} onToggle={() => void toggleNotifications()} />
           </AjRow>
           <AjRow label={t('aj.hideAmounts')} detail={t('aj.hideAmountsHint')}>
             <AjSwitch on={hidden} label={t('aj.hideAmounts')} onToggle={toggleHidden} />

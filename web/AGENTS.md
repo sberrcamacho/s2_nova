@@ -57,6 +57,15 @@ Reportes** — plus **Ajustes** in the footer. Pre-v2 paths (`/overview`,
 `/transactions`, `/budgets`, `/goals`, `/analytics`, `/insights`,
 `/reports`, `/settings`) redirect in `routes.tsx`.
 
+- **Asistente** (`dashboard/components/AssistantPanel.tsx`, Header button,
+  only when `/assistant/status` says it's on; guests see why to sign up):
+  a side-panel chat over the user's data. A draft opens Nuevo movimiento
+  prefilled (`MovementDraft`, `useNewMovement(undefined, draft)`); Android's
+  `AssistantScreen` is the same.
+- **Browser notifications** (`state/useBrowserNotifications.ts`): with
+  Ajustes › Notificaciones on and the browser's permission (asked from that
+  switch), each new shared alert shows once while a tab is open (checked
+  every 15 min). No push server.
 - **Inicio** (`InicioPage.tsx`) — bento (docs/DESIGN-SYSTEM.md §5.3, F2), a
   12-column grid driven by a container query on the content width (12
   columns from 1024 px, 2 from 640 px, 1 below). Balance hero (sum of
@@ -66,7 +75,9 @@ Reportes** — plus **Ajustes** in the footer. Pre-v2 paths (`/overview`,
   Patrimonio) · Ingresos / Gastos / Ahorro stat
   tiles (month from `summaryService`, change vs last month) · Alertas
   (shared backend rules via `alertService`; two shown, "Ver todas" expands;
-  dismissals are per user in localStorage, pruned to live ids) ·
+  dismissals are per user in localStorage, pruned to live ids; up to three
+  "Por confirmar" suggestions from the phone's bank notifications come
+  first, `suggestionService`) ·
   Presupuestos (three riskiest) · Metas (three) · Movimientos recientes
   (table, row → `/movimientos?tx=`) · Próximos 14 días with running balance
   (row → `EventDialog`: confirm or skip a Programado through the backend,

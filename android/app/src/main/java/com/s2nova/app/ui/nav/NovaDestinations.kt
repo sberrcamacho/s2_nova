@@ -35,10 +35,12 @@ object NovaDestinations {
     const val SETTINGS_PASSWORD = "settings_password"
     const val SETTINGS_RESET = "settings_reset"
     const val SETTINGS_DELETE = "settings_delete"
+    const val SETTINGS_CAPTURE = "settings_capture"
+    const val ASSISTANT = "assistant"
 
     // What only a real account has (the guest account has no password and
     // nothing on the server to reset or delete), like Web's AccountOnly.
-    val ACCOUNT_ONLY = setOf(SETTINGS_PASSWORD, SETTINGS_RESET, SETTINGS_DELETE)
+    val ACCOUNT_ONLY = setOf(SETTINGS_PASSWORD, SETTINGS_RESET, SETTINGS_DELETE, SETTINGS_CAPTURE)
 
     fun guestMayOpen(route: String) = route !in ACCOUNT_ONLY
     const val RESET_PASSWORD = "reset_password"

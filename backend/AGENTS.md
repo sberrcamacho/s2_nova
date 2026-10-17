@@ -129,6 +129,19 @@ and reuse it on retry, and the web client gives up on a request after 75 s.
   rules both clients consume — add figures there rather than computing
   them per client. Both accept `?today=YYYY-MM-DD` (the client's local
   date) because month and "due today" boundaries are the user's.
+- `src/routes/suggestions.ts` + `src/services/notificationParser.ts` —
+  "Registrar desde notificaciones": Android posts a bank/wallet
+  notification; rules read it (COP formats, compra/recibiste…, merchant →
+  category), Gemini only when the rules fail and the user allowed it, with
+  long digit runs masked. Only the result is stored (`MovementSuggestion`),
+  never the text. Confirming is a normal `POST /transactions` plus
+  `/confirm`.
+- `src/routes/assistant.ts` + `src/services/assistant.ts` — the Asistente:
+  Gemini function calling whose tools are GETs of this API made with the
+  caller's own token (`app.inject`), so it can only read what the user can;
+  `propose_movement` returns a draft and nothing writes. Quota in
+  `AssistantUsage` (20/day, failed calls don't count). `GEMINI_BASE_URL`
+  only exists to point local runs at a stand-in server.
 - `src/lib/budgetProgress.ts`, `src/lib/goalProgress.ts` — the single
   spent/percentage/status computation for budgets (CATEGORY and CUSTOM
   kinds, monthly or custom range) and goals (incl. periodic contribution

@@ -8,6 +8,15 @@
         android:name="android.hardware.camera"
         android:required="false" />
 
+    <!-- "Registrar desde notificaciones" lists the launchable apps so the
+         user can pick their bank and wallet apps (no QUERY_ALL_PACKAGES). -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -25,6 +34,22 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- "Registrar desde notificaciones": Android binds it only while the
+             user allows this app under Notification access; only the system
+             can bind it (BIND_NOTIFICATION_LISTENER_SERVICE). -->
+        <service
+            android:name=".data.notifications.NotificationCaptureService"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+        <!-- "Descartar" on a "¿Registrar…?" notification. -->
+        <receiver
+            android:name=".data.notifications.SuggestionActionReceiver"
+            android:exported="false" />
         <!-- Receipts shared/opened from Movimiento › Comprobante. -->
         <provider
             android:name="androidx.core.content.FileProvider"

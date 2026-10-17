@@ -239,4 +239,22 @@ interface ApiService {
 
     @GET("alerts")
     suspend fun getAlerts(@Query("today") today: String): List<AlertDto>
+
+    @POST("suggestions/from-notification")
+    suspend fun suggestFromNotification(@Body body: NotificationCaptureRequest): SuggestionEnvelope
+
+    @GET("suggestions")
+    suspend fun getSuggestions(): List<SuggestionDto>
+
+    @POST("suggestions/{id}/confirm")
+    suspend fun confirmSuggestion(@Path("id") id: String, @Body body: SuggestionConfirmRequest): Response<Unit>
+
+    @POST("suggestions/{id}/dismiss")
+    suspend fun dismissSuggestion(@Path("id") id: String): Response<Unit>
+
+    @GET("assistant/status")
+    suspend fun assistantStatus(): AssistantStatusDto
+
+    @POST("assistant/messages")
+    suspend fun assistantMessage(@Body body: AssistantRequest): AssistantReplyDto
 }

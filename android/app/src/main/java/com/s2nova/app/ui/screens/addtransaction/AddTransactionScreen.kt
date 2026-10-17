@@ -232,6 +232,8 @@ class NmState(initialCalc: Boolean) {
     var editing = false
     // Editing a recurring series rather than a movement.
     var seriesMode = false
+    // A "Por confirmar" suggestion this movement confirms once saved.
+    var suggestionId: String? = null
 
     val isIncome get() = type == TransactionType.INCOME
     val isTransfer get() = type == TransactionType.TRANSFER
@@ -328,6 +330,31 @@ fun AddTransactionScreen(
                     ?.let(::repeatOf)
                 st.attach = tx.attachment?.let { AttachDraft(it.name, it.mime, ByteArray(0), existing = true, size = it.size) }
                 st.sheet = null
+            }
+            // A suggestion or the assistant's draft prefills a new movement.
+            val draft = if (rs == null && tx == null && state == null) com.s2nova.app.data.PendingDraft.take() else null
+            if (draft != null) {
+                st.type = draft.type
+                draft.category?.let { leaf ->
+                    AppContainer.categoryRepository.parentOf(leaf)?.let { p ->
+                        st.category = p.id
+                        st.sub = leaf.takeIf { it != p.id }
+                        st.catPicked = true
+                    }
+                }
+                st.expr = AmountPad.numStr(draft.amount)
+                draft.title?.takeIf { it.isNotBlank() }?.let {
+                    st.title = it
+                    st.titleTouched = true
+                    st.titleSuggested = false
+                }
+                draft.date?.let { d -> runCatching { LocalDate.parse(d) }.getOrNull()?.let { st.date = it; st.cal = it.withDayOfMonth(1) } }
+                draft.time?.let { st.time = it }
+                st.walletId = draft.walletId?.takeIf { id -> wallets.any { it.id == id } }
+                val walletCurrency = wallets.firstOrNull { it.id == st.walletId }?.currency ?: principal
+                st.currency = draft.currency?.takeIf { it != walletCurrency }
+                st.suggestionId = draft.suggestionId
+                st.sheet = if (st.catPicked) null else NmSheet.CATEGORY
             }
         }
     }
@@ -467,6 +494,9 @@ fun AddTransactionScreen(
                 }
                 // Its receipt was removed while editing.
                 if (saved != null && a == null && saved.attachment != null) AppContainer.transactionRepository.removeAttachment(saved.id)
+                // It came from "Por confirmar": link the suggestion to it.
+                val suggestion = s.suggestionId
+                if (saved != null && suggestion != null) runCatching { AppContainer.suggestionRepository.confirm(suggestion, saved.id) }
                 if (!guest) {
                     runCatching { AppContainer.walletRepository.refresh() }
                     runCatching { AppContainer.budgetRepository.refresh() }

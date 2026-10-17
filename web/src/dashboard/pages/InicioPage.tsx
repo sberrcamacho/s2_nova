@@ -13,6 +13,8 @@ import { goalService } from '@/services/goalService'
 import { newRequestKey } from '@/lib/apiClient'
 import { recurringService } from '@/services/recurringService'
 import { summaryService, type MonthTotals } from '@/services/summaryService'
+import { suggestionService, type MovementSuggestion } from '@/services/suggestionService'
+import { useNewMovement } from '@/state/NewMovementContext'
 import { useAppData } from '@/state/AppDataContext'
 import { useAuth } from '@/state/AuthContext'
 import { useCurrency } from '@/state/useCurrency'
@@ -22,7 +24,7 @@ import { alertCopy } from '@/lib/alertCopy'
 import { budgetScope, planText, shortDayMonth } from '@/lib/planCopy'
 import { shortWallet } from '@/lib/movimientos'
 import { useToast } from '@/state/ToastContext'
-import { goalMark } from '@/lib/categoryGlyphs'
+import { categoryColor, glyphOf, goalMark } from '@/lib/categoryGlyphs'
 import { categoryLabel, displayTitle, TRANSFER } from '@/lib/backendCategories'
 import { todayISO } from '@/lib/date'
 import {
@@ -111,6 +113,34 @@ export default function InicioPage() {
   const today = todayISO()
   const [openSeriesId, setOpenSeriesId] = useState<string | null>(null)
   const [allAlerts, setAllAlerts] = useState(false)
+  const openMovement = useNewMovement()
+
+  // "Por confirmar": movements read from the phone's bank notifications.
+  const [suggestions, setSuggestions] = useState<MovementSuggestion[]>([])
+  const loadSuggestions = useCallback(() => {
+    if (user?.isGuest) return
+    suggestionService.getPending().then(setSuggestions).catch(() => undefined)
+  }, [user?.isGuest])
+  useEffect(() => loadSuggestions(), [loadSuggestions, version])
+  const registerSuggestion = (s: MovementSuggestion) => {
+    const at = new Date(s.occurredAt)
+    const pad = (n: number) => String(n).padStart(2, '0')
+    openMovement?.(undefined, {
+      type: s.type,
+      amount: s.amount,
+      currency: s.currency,
+      title: s.merchant ?? undefined,
+      category: s.category,
+      walletId: s.walletId,
+      date: `${at.getFullYear()}-${pad(at.getMonth() + 1)}-${pad(at.getDate())}`,
+      time: `${pad(at.getHours())}:${pad(at.getMinutes())}`,
+      onSaved: (saved) => suggestionService.confirm(s.id, saved.id).finally(loadSuggestions),
+    })
+  }
+  const dismissSuggestion = (s: MovementSuggestion) => {
+    setSuggestions((list) => list.filter((x) => x.id !== s.id))
+    suggestionService.dismiss(s.id).catch(() => loadSuggestions())
+  }
 
   const userId = user?.id ?? 'anon'
   const [dismissed, setDismissed] = useState<string[]>(() => loadDismissed(userId))
@@ -274,13 +304,16 @@ export default function InicioPage() {
         <Card tour="inicio.alerts" className="col-span-full @min-[1024px]:col-span-4">
           <CardHead
             title={t('inicio.alerts.title')}
-            subtitle={data.alerts === null ? undefined : visibleAlerts.length === 0 ? undefined : visibleAlerts.length === 1 ? t('inicio.alerts.oneOpen') : fill(t('inicio.alerts.manyOpen'), visibleAlerts.length)}
+            subtitle={data.alerts === null ? undefined : visibleAlerts.length + suggestions.length === 0 ? undefined : visibleAlerts.length + suggestions.length === 1 ? t('inicio.alerts.oneOpen') : fill(t('inicio.alerts.manyOpen'), visibleAlerts.length + suggestions.length)}
           />
           <div className="mt-3 flex flex-col gap-2.5">
+            {suggestions.slice(0, 3).map((s) => (
+              <SuggestionCard key={s.id} suggestion={s} hidden={hidden} walletName={s.walletId ? walletName(s.walletId) : null} onRegister={() => registerSuggestion(s)} onDismiss={() => dismissSuggestion(s)} />
+            ))}
             {data.alerts === null ? (
               <RowSkeletons count={2} box={40} />
             ) : visibleAlerts.length === 0 ? (
-              <div className="py-2 text-body-sm text-ink-tertiary">
+              suggestions.length > 0 && dismissed.length === 0 ? null : <div className="py-2 text-body-sm text-ink-tertiary">
                 {t('inicio.alerts.none')}{' '}
                 {dismissed.length > 0 && (
                   <button type="button" onClick={() => setAndSaveDismissed([])} className="min-h-6 cursor-pointer font-semibold text-link">
@@ -750,6 +783,37 @@ function AlertCard({
       >
         <StrokeIcon paths={ICON_PATHS.close} size={16} />
       </button>
+    </div>
+  )
+}
+
+// "Por confirmar": a movement read from a bank notification on the phone.
+// Registrar opens the normal form prefilled; nothing is saved until then.
+function SuggestionCard({ suggestion: s, hidden, walletName, onRegister, onDismiss }: { suggestion: MovementSuggestion; hidden: boolean; walletName: string | null; onRegister: () => void; onDismiss: () => void }) {
+  const { t, language } = useTranslation()
+  const category = s.category ?? (s.type === 'income' ? 'inc.other' : 'exp.other')
+  const when = new Date(s.occurredAt).toLocaleString(language === 'en' ? 'en-US' : 'es-CO', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })
+  const meta = [s.merchant, walletName ?? s.appLabel, when].filter(Boolean).join(' · ')
+  const title = t(s.type === 'income' ? 'inicio.suggest.titleIncome' : 'inicio.suggest.titleExpense')
+  return (
+    <div className="relative flex items-start gap-3 overflow-hidden rounded-[16px] border border-border bg-bg-secondary py-3.5 pl-4 pr-1.5">
+      <span aria-hidden="true" className="absolute inset-y-0 left-0 w-1 bg-primary" />
+      <GlyphMark paths={glyphOf(category)} color={categoryColor(category)} box={40} />
+      <div className="min-w-0 flex-1">
+        <div className="text-overline uppercase text-ink-secondary">{fill(t('inicio.suggest.from'), s.appLabel)}</div>
+        <div className="truncate text-title-sm font-semibold">
+          <MoneyText parts={[{ template: title, args: [{ amount: s.amount, currency: s.currency }] }]} hidden={hidden} format={(v) => formatMoney(v, s.currency)} />
+        </div>
+        <div className="mt-0.5 truncate text-body-sm text-ink-tertiary" title={meta}>{meta}</div>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <button type="button" onClick={onRegister} className={TONAL}>
+            {t('inicio.suggest.register')}
+          </button>
+          <button type="button" onClick={onDismiss} aria-label={`${t('inicio.suggest.dismiss')}: ${s.merchant ?? s.appLabel}`} className="h-8 cursor-pointer whitespace-nowrap rounded-[10px] px-2 text-label font-semibold text-link hover:bg-v2-subtle">
+            {t('inicio.suggest.dismiss')}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

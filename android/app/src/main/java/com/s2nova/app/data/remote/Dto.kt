@@ -585,3 +585,51 @@ data class ProductDto(
     val imageUrl: String? = null,
     val source: String? = null,
 )
+
+// "Por confirmar" (backend routes/suggestions.ts): a movement read from a
+// bank or wallet app's notification.
+@Serializable
+data class SuggestionDto(
+    val id: String,
+    val appLabel: String,
+    val type: String, // EXPENSE | INCOME
+    val amount: Double,
+    val currency: String,
+    val merchant: String? = null,
+    val categoryId: String? = null,
+    val accountId: String? = null,
+    val occurredAt: String,
+)
+
+@Serializable
+data class SuggestionEnvelope(val suggestion: SuggestionDto? = null)
+
+@Serializable
+data class NotificationCaptureRequest(
+    val packageName: String,
+    val appLabel: String,
+    val title: String,
+    val text: String,
+    val postedAt: String,
+    val accountId: String? = null,
+    val allowAi: Boolean = false,
+)
+
+@Serializable
+data class SuggestionConfirmRequest(val transactionId: String)
+
+// "Asistente" (backend routes/assistant.ts).
+@Serializable
+data class AssistantStatusDto(val available: Boolean, val dailyLimit: Int = 20, val remaining: Int = 0)
+
+@Serializable
+data class ChatTurnDto(val role: String, val text: String)
+
+@Serializable
+data class AssistantRequest(val messages: List<ChatTurnDto>, val today: String)
+
+@Serializable
+data class ProposalDto(val type: String, val amount: Double, val description: String, val categoryId: String? = null, val date: String? = null)
+
+@Serializable
+data class AssistantReplyDto(val reply: String, val proposals: List<ProposalDto> = emptyList(), val remaining: Int = 0)

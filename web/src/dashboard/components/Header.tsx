@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { Calendar, Check, ChevronDown } from 'lucide-react'
+import { Calendar, Check, ChevronDown, Sparkles } from 'lucide-react'
 import { ICON_PATHS, StrokeIcon } from '@/components/v2/icons'
 import { useTranslation } from '@/state/useTranslation'
 import { cn } from '@/lib/cn'
@@ -13,12 +13,14 @@ interface HeaderProps {
   title: string
   onMenuClick: () => void
   onNewTransaction: () => void
+  // "Asistente"; absent when the assistant is off.
+  onAssistant?: () => void
 }
 
 // Web v2 header: breadcrumb, search, the period selector (Movimientos
 // only, per the mockup's showPeriod) and "Nuevo movimiento". Reportes has
 // its own in-page period (any months the user picks).
-export function Header({ title, onMenuClick, onNewTransaction }: HeaderProps) {
+export function Header({ title, onMenuClick, onNewTransaction, onAssistant }: HeaderProps) {
   const { t } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
@@ -81,6 +83,18 @@ export function Header({ title, onMenuClick, onNewTransaction }: HeaderProps) {
           />
         </label>
         {onMovimientos && <PeriodSelector />}
+        {onAssistant && (
+          <button
+            type="button"
+            onClick={onAssistant}
+            aria-label={t('asst.open')}
+            title={t('asst.title')}
+            className="flex h-10 flex-none cursor-pointer items-center gap-2 rounded-[12px] border border-v2-line bg-v2-surface px-3 text-label font-semibold text-v2-text hover:bg-surface-sunken max-[1099px]:w-10 max-[1099px]:justify-center max-[1099px]:px-0"
+          >
+            <Sparkles size={16} strokeWidth={2} aria-hidden="true" className="text-[var(--color-on-primary-soft)]" />
+            <span className="whitespace-nowrap max-[1099px]:sr-only">{t('asst.title')}</span>
+          </button>
+        )}
         <button
           type="button"
           onClick={onNewTransaction}

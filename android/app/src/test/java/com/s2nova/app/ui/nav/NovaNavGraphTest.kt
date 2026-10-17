@@ -21,8 +21,8 @@ class NovaNavGraphTest {
     }
 
     @Test
-    fun `a guest can't open the password, reset or delete screens`() {
-        for (route in listOf(NovaDestinations.SETTINGS_PASSWORD, NovaDestinations.SETTINGS_RESET, NovaDestinations.SETTINGS_DELETE)) {
+    fun `a guest can't open the password, reset, delete or notification-reading screens`() {
+        for (route in listOf(NovaDestinations.SETTINGS_PASSWORD, NovaDestinations.SETTINGS_RESET, NovaDestinations.SETTINGS_DELETE, NovaDestinations.SETTINGS_CAPTURE)) {
             kotlin.test.assertFalse(NovaDestinations.guestMayOpen(route), route)
         }
         kotlin.test.assertTrue(NovaDestinations.guestMayOpen(NovaDestinations.SETTINGS))

@@ -198,6 +198,8 @@ model User {
   goalPlans             GoalPlan[]
   passwordResetTokens   PasswordResetToken[]
   biometricCredentials  BiometricCredential[]
+  movementSuggestions   MovementSuggestion[]
+  assistantUsage        AssistantUsage[]
 
   @@map("users")
 }
@@ -726,4 +728,59 @@ model GoalPlan {
 
   @@index([userId])
   @@map("goal_plans")
+}
+
+enum SuggestionStatus {
+  PENDING
+  CONFIRMED
+  DISMISSED
+
+  @@map("suggestion_status")
+}
+
+// A movement read from a bank or wallet app's notification on the user's
+// phone (Android's "Registrar desde notificaciones"), waiting for the user
+// to confirm it on either client. The notification's text is never stored:
+// only what was read from it. Confirming creates an ordinary transaction
+// (POST /transactions) and links it here.
+model MovementSuggestion {
+  id            String           @id @default(uuid())
+  userId        String           @map("user_id")
+  // The app that posted the notification: its package and its label.
+  sourceApp     String           @map("source_app")
+  appLabel      String           @map("app_label")
+  type          TransactionType
+  amountMinor   BigInt           @map("amount_minor")
+  currency      String           @db.VarChar(3)
+  merchant      String?
+  // Taxonomy slug the parser guessed; the user can change it.
+  categorySlug  String?          @map("category_slug")
+  // The wallet the user mapped to that app.
+  accountId     String?          @map("account_id")
+  occurredAt    DateTime         @map("occurred_at")
+  status        SuggestionStatus @default(PENDING)
+  transactionId String?          @map("transaction_id")
+  // One suggestion per notification (hash of app, post time and text).
+  dedupeKey     String           @map("dedupe_key")
+  // RULES or AI: how it was read.
+  parsedBy      String           @map("parsed_by")
+  createdAt     DateTime         @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dedupeKey])
+  @@index([userId, status])
+  @@map("movement_suggestions")
+}
+
+// The assistant's daily message count per user (its free-tier quota).
+model AssistantUsage {
+  userId String   @map("user_id")
+  day    DateTime @db.Date
+  count  Int      @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, day])
+  @@map("assistant_usage")
 }

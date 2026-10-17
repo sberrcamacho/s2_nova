@@ -84,7 +84,7 @@ private val LOCK_OPTIONS = listOf(1, 5, 15, 60, 0)
 // Cambiar contraseña, Zona de riesgo and Acerca de. Sessions live on Web.
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpenCurrencies: () -> Unit = {}, onOpenPassword: () -> Unit = {}, onOpenReset: () -> Unit = {}, onOpenDelete: () -> Unit = {}, onCreateAccount: () -> Unit = {}) {
+fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpenCurrencies: () -> Unit = {}, onOpenPassword: () -> Unit = {}, onOpenReset: () -> Unit = {}, onOpenDelete: () -> Unit = {}, onCreateAccount: () -> Unit = {}, onOpenCapture: () -> Unit = {}) {
     val user by AppContainer.authRepository.currentUser.collectAsStateWithLifecycle()
     val darkOverride by ThemeController.darkOverride.collectAsStateWithLifecycle()
     val isDark = darkOverride ?: androidx.compose.foundation.isSystemInDarkTheme()
@@ -227,6 +227,8 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
                 val principal = AppContainer.currencyRepository.principal
                 val others = currencies.filter { it.code != principal }.map { it.code }
                 LinkCard(tr(StringKey.CUR_TITLE), tr(StringKey.SET_CUR_DETAIL, principal) + if (others.isNotEmpty()) " · " + others.joinToString(", ") else "", Modifier, onOpenCurrencies)
+                // Reading bank notifications needs a real account.
+                if (!guest) LinkCard(t(StringKey.CAPTURE_TITLE), t(StringKey.CAPTURE_ROW_DETAIL), Modifier, onOpenCapture)
 
                 SectionTitle(t(StringKey.SETTINGS_PRIVACY_SESSION), modifier = Modifier.padding(top = 16.dp))
                 NovaCard(modifier = Modifier.fillMaxWidth()) {
@@ -329,7 +331,7 @@ private fun GuestAccountCard(onCreateAccount: () -> Unit) {
 }
 
 @Composable
-private fun LinkCard(title: String, detail: String, modifier: Modifier, onClick: () -> Unit) {
+internal fun LinkCard(title: String, detail: String, modifier: Modifier, onClick: () -> Unit) {
     NovaCard(modifier = modifier.fillMaxWidth(), onClick = onClick) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Column(modifier = Modifier.weight(1f)) {
@@ -357,7 +359,7 @@ private fun DangerLinkCard(title: String, detail: String, onClick: () -> Unit) {
 }
 
 @Composable
-private fun SectionTitle(text: String, modifier: Modifier = Modifier) {
+internal fun SectionTitle(text: String, modifier: Modifier = Modifier) {
     Text(text, style = NovaType.title, color = MaterialTheme.colorScheme.onBackground, modifier = modifier.semantics { heading() })
 }
 
@@ -396,7 +398,7 @@ private fun FieldBox(label: String, value: String, onValueChange: (String) -> Un
 
 // A switch row: the whole row toggles, on a 56 dp target.
 @Composable
-private fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+internal fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).toggleable(value = checked, role = Role.Switch, onValueChange = onChange),
         horizontalArrangement = Arrangement.spacedBy(12.dp),

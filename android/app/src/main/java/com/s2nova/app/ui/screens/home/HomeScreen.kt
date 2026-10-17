@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -76,6 +77,7 @@ import com.s2nova.app.data.repository.homeAlertOf
 import com.s2nova.app.ui.AlertTarget
 import com.s2nova.app.ui.CurrencyFormatter
 import com.s2nova.app.ui.StringKey
+import com.s2nova.app.ui.components.shortWalletName
 import com.s2nova.app.ui.components.CategoryIcon
 import com.s2nova.app.ui.components.CategoryIconSize
 import com.s2nova.app.ui.components.IconCircle
@@ -127,6 +129,8 @@ fun HomeScreen(
     onOpenWallets: () -> Unit,
     onOpenAlertTarget: (AlertTarget) -> Unit,
     onCreateAccount: () -> Unit = {},
+    onRegisterSuggestion: (com.s2nova.app.data.repository.MovementSuggestion) -> Unit = {},
+    onOpenAssistant: () -> Unit = {},
 ) {
     var showNotifications by remember { mutableStateOf(false) }
     var peek by remember { mutableStateOf(false) }
@@ -138,6 +142,10 @@ fun HomeScreen(
     val user by AppContainer.authRepository.currentUser.collectAsStateWithLifecycle()
     val notices by AppContainer.notificationRepository.notifications.collectAsStateWithLifecycle()
     val alerts by AppContainer.alertRepository.alerts.collectAsStateWithLifecycle()
+    val suggestions by AppContainer.suggestionRepository.pending.collectAsStateWithLifecycle()
+    // "Asistente" shows when the server has it on; guests see why to sign up.
+    var assistantOn by remember { mutableStateOf(AppContainer.isGuest) }
+    LaunchedEffect(Unit) { if (!AppContainer.isGuest) assistantOn = AppContainer.assistantRepository.available() }
     val readAlertIds by AppContainer.alertRepository.readIds.collectAsStateWithLifecycle()
     val dismissedAlertIds by AppContainer.alertRepository.dismissedIds.collectAsStateWithLifecycle()
     val months by AppContainer.summaryRepository.months.collectAsStateWithLifecycle()
@@ -164,6 +172,7 @@ fun HomeScreen(
             runCatching { AppContainer.budgetRepository.refresh() },
             runCatching { AppContainer.recurringSeriesRepository.refresh() },
             runCatching { AppContainer.transactionRepository.refresh() },
+            runCatching { AppContainer.suggestionRepository.refresh() },
             // The hero's bars: the balance at each month's close, as on Web.
             runCatching {
                 AppContainer.summaryRepository.refreshBalances(
@@ -176,6 +185,11 @@ fun HomeScreen(
     }
 
     LaunchedEffect(Unit) { refreshHome() }
+    // Back in the app: what the bank notifications brought meanwhile.
+    androidx.lifecycle.compose.LifecycleResumeEffect(Unit) {
+        val job = scope.launch { runCatching { AppContainer.suggestionRepository.refresh() } }
+        onPauseOrDispose { job.cancel() }
+    }
 
     // Tiles rise in once when Inicio opens; scrolling back never replays it.
     var introPlayed by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
@@ -244,6 +258,25 @@ fun HomeScreen(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+            }
+            if (assistantOn) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .clickable(onClickLabel = t(StringKey.ASST_OPEN), role = Role.Button, onClick = onOpenAssistant)
+                        .semantics { contentDescription = t(StringKey.ASST_OPEN) },
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(MaterialTheme.colorScheme.surface, CircleShape)
+                            .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape),
+                    ) {
+                        Icon(AssistantIcon, contentDescription = null, tint = colors.accentText, modifier = Modifier.size(20.dp).align(Alignment.Center))
+                    }
+                }
             }
             Box(
                 contentAlignment = Alignment.Center,
@@ -377,6 +410,17 @@ fun HomeScreen(
                             modifier = Modifier.weight(1f).fillMaxHeight(),
                         )
                     }
+                }
+
+                // "Por confirmar": movements read from the bank's notifications.
+                items(suggestions.take(2), key = { "suggestion-" + it.id }) { suggestion ->
+                    SuggestionCard(
+                        suggestion = suggestion,
+                        hidden = hidden,
+                        walletName = suggestion.walletId?.let { walletNames[it] }?.let(::shortWalletName),
+                        onRegister = { onRegisterSuggestion(suggestion) },
+                        onDismiss = { scope.launch { runCatching { AppContainer.suggestionRepository.dismiss(suggestion.id) } } },
+                    )
                 }
 
                 // 2×1 alert with its action.
@@ -900,6 +944,50 @@ internal fun alertTone(alert: AppAlert, colors: NovaExtraColors): Color = when (
     is AppAlert.BudgetAtRisk -> if (alert.percentage > 100) colors.negative else colors.warning
     is AppAlert.GoalNear, is AppAlert.GoalPlanAuto -> colors.positive
     is AppAlert.GoalPlanDue, is AppAlert.TxPlanned -> colors.warning
+}
+
+// Lucide's "sparkles": the assistant.
+private val AssistantIcon = com.s2nova.app.ui.components.strokeIcon(
+    "Sparkles",
+    "M9.94 14.06A2 2 0 0 0 8.5 12.62l-6.13-1.58a.5.5 0 0 1 0-.96L8.5 8.5a2 2 0 0 0 1.44-1.44l1.58-6.13a.5.5 0 0 1 .96 0L14.06 7.06a2 2 0 0 0 1.44 1.44l6.13 1.58a.5.5 0 0 1 0 .96L15.5 12.62a2 2 0 0 0-1.44 1.44l-1.58 6.13a.5.5 0 0 1-.96 0z",
+    "M20 3v4", "M22 5h-4", "M4 17v2", "M5 18H3",
+)
+
+// "Por confirmar" (an alert card, §6.10, in the primary tone): a movement
+// read from a bank or wallet notification. Registrar opens Nuevo movimiento
+// prefilled; nothing is saved until then.
+@Composable
+private fun SuggestionCard(suggestion: com.s2nova.app.data.repository.MovementSuggestion, hidden: Boolean, walletName: String?, onRegister: () -> Unit, onDismiss: () -> Unit) {
+    val colors = NovaColors.current
+    val t = rememberStrings()
+    val primary = MaterialTheme.colorScheme.primary
+    val money = if (hidden) "•••" else com.s2nova.app.data.formatMoney(suggestion.amount, suggestion.currency)
+    val title = t(if (suggestion.type == com.s2nova.app.data.model.TransactionType.INCOME) StringKey.CAPTURE_ASK_INCOME else StringKey.CAPTURE_ASK_EXPENSE).format(money)
+    val time = runCatching { java.time.Instant.parse(suggestion.occurredAt).atZone(java.time.ZoneId.systemDefault()) }.getOrNull()
+    val meta = listOfNotNull(suggestion.merchant, walletName ?: suggestion.appLabel, time?.let { com.s2nova.app.data.fmtDate(it.toLocalDate().toString()) + " " + it.toLocalTime().toString().take(5) }).joinToString(" · ")
+    Row(
+        verticalAlignment = Alignment.Top,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(TileShape)
+            .background(MaterialTheme.colorScheme.surface)
+            .drawBehind { drawRect(primary, size = Size(4.dp.toPx(), size.height)) }
+            .border(1.dp, MaterialTheme.colorScheme.outline, TileShape)
+            .padding(start = 16.dp, end = 4.dp, top = 12.dp, bottom = 4.dp),
+    ) {
+        com.s2nova.app.ui.components.CatMark(suggestion.category ?: if (suggestion.type == com.s2nova.app.data.model.TransactionType.INCOME) "inc.other" else "exp.other", 40.dp)
+        Column(modifier = Modifier.weight(1f).padding(start = 12.dp, top = 2.dp)) {
+            Text(t(StringKey.CAPTURE_FROM).format(suggestion.appLabel).uppercase(), style = NovaType.overline, color = colors.textDim, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(title, style = NovaType.titleSm, color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(meta, style = NovaType.bodySm, color = colors.textDim, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp)) {
+                TonalButton(t(StringKey.CAPTURE_REGISTER), onRegister)
+                Box(Modifier.semantics { contentDescription = t(StringKey.CAPTURE_DISMISS_DESC).format(suggestion.merchant ?: suggestion.appLabel) }) {
+                    LinkButton(t(StringKey.CAPTURE_DISMISS), onDismiss)
+                }
+            }
+        }
+    }
 }
 
 // Alert card (docs/DESIGN-SYSTEM.md §6.10): a 4 dp leading bar in the semantic

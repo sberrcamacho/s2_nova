@@ -6,8 +6,9 @@ import { server } from '../mocks/server'
 import { BASE, mockSession, renderApp } from '../utils/renderApp'
 import InicioPage from '@/dashboard/pages/InicioPage'
 
-function mockInicio({ alertsFail = false, empty = false } = {}) {
+function mockInicio({ alertsFail = false, empty = false, suggestions = [] as unknown[] } = {}) {
   server.use(
+    http.get(`${BASE}/suggestions`, () => HttpResponse.json(suggestions)),
     http.get(`${BASE}/accounts`, () =>
       HttpResponse.json(empty ? [] : [
         { id: 'a1', name: 'Bancolombia', type: 'SAVINGS', initialBalance: 0, currentBalance: 13_740_000 },
@@ -54,6 +55,25 @@ describe('InicioPage', () => {
     expect(screen.getByText('Sin alertas pendientes.')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Restaurar' }))
     expect(screen.getByText('Camilo Restrepo te debe')).toBeInTheDocument()
+  })
+
+  it('lists a movement read from a bank notification, prefilled when recorded, and dismisses it', async () => {
+    const dismissed: string[] = []
+    mockSession()
+    mockInicio({
+      suggestions: [{ id: 's1', sourceApp: 'com.todo1.mobile', appLabel: 'Bancolombia', type: 'EXPENSE', amount: 25_000, currency: 'COP', merchant: 'EXITO CALLE 80', categoryId: 'uuid-exp.food.groceries', accountId: 'a1', occurredAt: '2026-08-21T14:05:00.000Z', status: 'PENDING', transactionId: null, parsedBy: 'RULES' }],
+    })
+    server.use(http.post(`${BASE}/suggestions/:id/dismiss`, ({ params }) => (dismissed.push(String(params.id)), new HttpResponse(null, { status: 204 }))))
+    const user = userEvent.setup()
+    renderApp(<InicioPage />)
+
+    const title = (_: string, el: Element | null) => el?.tagName === 'DIV' && el.textContent === '¿Registrar gasto de $25.000?'
+    expect(await screen.findByText(title)).toBeInTheDocument()
+    expect(screen.getByText('Leído de Bancolombia')).toBeInTheDocument()
+    expect(screen.getByText(/EXITO CALLE 80 · Bancolombia/)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Descartar: EXITO CALLE 80' }))
+    expect(screen.queryByText(title)).not.toBeInTheDocument()
+    await waitFor(() => expect(dismissed).toEqual(['s1']))
   })
 
   it('charts the balance at each month close, named for screen readers', async () => {

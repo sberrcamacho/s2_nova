@@ -460,3 +460,17 @@ usable, otherwise from the Programados' next dates that `syncFromApp()`
 saves after every foreground refresh (`AppContainer.refreshUserData`),
 because "Cierre automático" ends the server session minutes after the app
 closes. Signing out clears the saved state.
+
+"Registrar desde notificaciones" (`data/notifications/NotificationCapture.kt`,
+Ajustes › `CaptureSettingsScreen`): a `NotificationListenerService` reads
+only the apps the user checked (never SMS or messaging apps), queues each
+notification on the device (`s2nova_capture_queue`, excluded from
+backups, a week at most) and `CaptureWorker` sends it to
+`POST /suggestions/from-notification` only while the session can be used
+without ending it (`AlertNotifier.sessionUsable`); otherwise Inicio sends
+the queue when the app opens. A new suggestion posts "¿Registrar…?"
+(channel "Movimientos por confirmar") whose Registrar opens Nuevo
+movimiento prefilled (`PendingDraft`, `SuggestionLaunch`) and Descartar
+dismisses it (`SuggestionActionReceiver`). The prominent disclosure sheet
+comes before Android's notification-access settings. A lock keeps the
+setup; signing out clears it.

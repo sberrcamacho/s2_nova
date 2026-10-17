@@ -21,9 +21,12 @@ const envSchema = z.object({
   // Scanner: last-resort product identification with Claude + web search when
   // no product database knows a barcode. Unset = that step is skipped.
   ANTHROPIC_API_KEY: z.string().default(""),
-  // Same step through Google Gemini + Google Search grounding (free tier).
-  // Tried before Claude when both are set.
+  // Google Gemini (free tier): the scanner's product identification (tried
+  // before Claude), the Asistente and, when the user allows it, reading
+  // bank notifications the rules don't recognise. Unset = all three off.
   GEMINI_API_KEY: z.string().default(""),
+  // Only for local runs against a stand-in server; production uses Google's.
+  GEMINI_BASE_URL: z.string().url().default("https://generativelanguage.googleapis.com"),
   // Where the recovery link in the email points (the Web client).
   WEB_APP_URL: z.string().default("http://localhost:8443"),
 });

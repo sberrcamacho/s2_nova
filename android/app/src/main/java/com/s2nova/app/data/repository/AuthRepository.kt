@@ -320,6 +320,10 @@ class AuthRepository(
         // whichever account signs in next on this device.
         val wasGuest = DemoModeFlag.active
         com.s2nova.app.data.notifications.AlertNotifier.clear()
+        // A lock keeps "Registrar desde notificaciones" for the same account;
+        // what it captures meanwhile goes out after the unlock.
+        if (!keepLock) com.s2nova.app.data.notifications.NotificationCapture.clear()
+        com.s2nova.app.ui.screens.assistant.AssistantConversation.turns.clear()
         DemoModeFlag.set(false)
         val refreshToken = sessionStore.refreshTokenOnce()
         sessionStore.clear()

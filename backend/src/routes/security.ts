@@ -138,6 +138,7 @@ export async function securityRoutes(app: FastifyInstance) {
       if (!(await confirmIdentity(userId, body, reply))) return reply;
 
       await prisma.$transaction([
+        prisma.movementSuggestion.deleteMany({ where: { userId } }),
         prisma.transaction.deleteMany({ where: { userId } }),
         prisma.recurringSeries.deleteMany({ where: { userId } }),
         prisma.budget.deleteMany({ where: { userId } }),

@@ -14,6 +14,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -132,6 +133,37 @@ fun NovaApp() {
         }
     }
 
+    // Nuevo movimiento prefilled with a suggestion read from a bank
+    // notification ("Por confirmar", or its "¿Registrar…?" notification).
+    fun registerSuggestion(s: com.s2nova.app.data.repository.MovementSuggestion) {
+        val at = runCatching { java.time.Instant.parse(s.occurredAt).atZone(java.time.ZoneId.systemDefault()) }.getOrNull()
+        com.s2nova.app.data.PendingDraft.set(
+            com.s2nova.app.data.MovementDraft(
+                type = s.type,
+                amount = s.amount,
+                currency = s.currency,
+                title = s.merchant,
+                category = s.category,
+                walletId = s.walletId,
+                date = at?.toLocalDate()?.toString(),
+                time = at?.toLocalTime()?.toString()?.take(5),
+                suggestionId = s.id,
+            ),
+        )
+        navController.navigate(NovaDestinations.ADD_TRANSACTION)
+    }
+
+    // A tapped "¿Registrar…?" notification, once a real session is on Inicio
+    // (also when the app was already open there).
+    val launchRequest by com.s2nova.app.data.notifications.SuggestionLaunch.requested.collectAsState()
+    LaunchedEffect(currentRoute, launchRequest) {
+        if (currentRoute != NovaDestinations.HOME) return@LaunchedEffect
+        val id = launchRequest ?: return@LaunchedEffect
+        com.s2nova.app.data.notifications.SuggestionLaunch.requested.value = null
+        runCatching { AppContainer.suggestionRepository.refresh() }
+        AppContainer.suggestionRepository.pending.value.firstOrNull { it.id == id }?.let(::registerSuggestion)
+    }
+
     // Switches bottom-bar tabs: Inicio stays the root, so Back from any
     // other tab returns to it instead of walking the tab history.
     fun navigateToTab(route: String) {
@@ -244,6 +276,26 @@ fun NovaApp() {
                     onOpenRecurring = { navController.navigate(NovaDestinations.RECURRING) },
                     onOpenWallets = { navController.navigate(NovaDestinations.WALLETS) },
                     onOpenAlertTarget = ::openAlertTarget,
+                    onCreateAccount = {
+                        scope.launch {
+                            leaveGuestMode()
+                            navController.navigateAsRoot(NovaDestinations.LOGIN)
+                            navController.navigate(NovaDestinations.REGISTER)
+                        }
+                    },
+                    onRegisterSuggestion = ::registerSuggestion,
+                    onOpenAssistant = { navController.navigate(NovaDestinations.ASSISTANT) },
+                )
+            }
+            composable(NovaDestinations.ASSISTANT) {
+                com.s2nova.app.ui.screens.assistant.AssistantScreen(
+                    onBack = { navController.popBackStack() },
+                    onDraft = { p ->
+                        com.s2nova.app.data.PendingDraft.set(
+                            com.s2nova.app.data.MovementDraft(type = p.type, amount = p.amount, title = p.description.ifBlank { null }, category = p.category, date = p.date),
+                        )
+                        navController.navigate(NovaDestinations.ADD_TRANSACTION)
+                    },
                     onCreateAccount = {
                         scope.launch {
                             leaveGuestMode()
@@ -367,6 +419,7 @@ fun NovaApp() {
                     onOpenPassword = { navController.navigate(NovaDestinations.SETTINGS_PASSWORD) },
                     onOpenReset = { navController.navigate(NovaDestinations.SETTINGS_RESET) },
                     onOpenDelete = { navController.navigate(NovaDestinations.SETTINGS_DELETE) },
+                    onOpenCapture = { navController.navigate(NovaDestinations.SETTINGS_CAPTURE) },
                     onCreateAccount = {
                         scope.launch {
                             leaveGuestMode()
@@ -375,6 +428,11 @@ fun NovaApp() {
                         }
                     },
                 )
+            }
+            composable(NovaDestinations.SETTINGS_CAPTURE) {
+                AccountOnly(NovaDestinations.SETTINGS_CAPTURE, onLeave = { navController.popBackStack() }) {
+                    com.s2nova.app.ui.screens.settings.CaptureSettingsScreen(onBack = { navController.popBackStack() })
+                }
             }
             composable(NovaDestinations.SETTINGS_PASSWORD) {
                 AccountOnly(NovaDestinations.SETTINGS_PASSWORD, onLeave = { navController.popBackStack() }) {

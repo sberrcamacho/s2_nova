@@ -297,6 +297,13 @@ POST   /api/v1/products                       -- register an unknown product
 GET    /api/v1/summary/months               -- income/expenses per month (Inicio)
 GET    /api/v1/summary/categories           -- the month's spending per category
 GET    /api/v1/summary/report?from=&to=     -- every Reportes figure for a span of months (≤ 24), both clients
+
+POST   /api/v1/suggestions/from-notification -- Android: a bank notification's text → a pending suggestion (text not stored)
+GET    /api/v1/suggestions                  -- "Por confirmar" on Inicio, both clients
+POST   /api/v1/suggestions/:id/confirm      -- link the movement the user saved (POST /transactions) to it
+POST   /api/v1/suggestions/:id/dismiss
+GET    /api/v1/assistant/status             -- whether the Asistente is on (GEMINI_API_KEY) and today's remaining messages
+POST   /api/v1/assistant/messages           -- one chat turn; read-only tools over this API, 20 messages/user/day
 ```
 
 Every route except `auth/*` and the `GET /products/:barcode` lookup

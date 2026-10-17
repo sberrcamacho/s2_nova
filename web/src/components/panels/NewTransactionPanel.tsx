@@ -134,7 +134,21 @@ function repeatOf(series: RecurringSeries): RepeatDraft {
 
 type AttachDraft = { file?: File; name: string; size: number; photo: boolean }
 
-export function NewTransactionPanel({ onClose, editing }: { onClose: () => void; editing?: Transaction }) {
+// What a new movement starts with when it comes from a suggestion or the
+// assistant; `onSaved` runs once it is saved (to link the suggestion).
+export interface MovementDraft {
+  type: 'expense' | 'income'
+  amount: number
+  currency?: string
+  title?: string
+  category?: CategoryId | null // a leaf or a parent
+  walletId?: string | null
+  date?: string
+  time?: string
+  onSaved?: (saved: Transaction) => Promise<unknown>
+}
+
+export function NewTransactionPanel({ onClose, editing, draft }: { onClose: () => void; editing?: Transaction; draft?: MovementDraft }) {
   useCategories()
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -148,26 +162,30 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
   const [goals, setGoals] = useState<Goal[]>([])
 
   const e0 = editing
-  const e0Parent = e0 && e0.type !== 'transfer' ? parentOf(e0.category)?.id : undefined
-  const [type, setType] = useState<TransactionType>(e0?.type ?? 'expense')
+  // A draft (a suggestion read from a notification, or the assistant's)
+  // prefills a new movement; the user still reviews and saves it.
+  const d0 = editing ? undefined : draft
+  const leaf0 = e0 && e0.type !== 'transfer' ? e0.category : (d0?.category ?? null)
+  const e0Parent = leaf0 ? parentOf(leaf0)?.id : undefined
+  const [type, setType] = useState<TransactionType>(e0?.type ?? d0?.type ?? 'expense')
   const [cat, setCat] = useState<CategoryId | null>(e0Parent ?? null)
-  const [sub, setSub] = useState<CategoryId | null>(e0Parent && e0Parent !== e0?.category ? e0!.category : null)
-  const [catDone, setCatDone] = useState(!!e0)
-  const [expr, setExpr] = useState(e0 ? exprOf(e0.amount) : '')
-  const [title, setTitle] = useState(e0 ? displayTitle(e0) : '')
+  const [sub, setSub] = useState<CategoryId | null>(e0Parent && e0Parent !== leaf0 ? leaf0 : null)
+  const [catDone, setCatDone] = useState(!!e0 || !!e0Parent)
+  const [expr, setExpr] = useState(e0 ? exprOf(e0.amount) : d0 ? exprOf(d0.amount) : '')
+  const [title, setTitle] = useState(e0 ? displayTitle(e0) : (d0?.title ?? ''))
   // The title starts as a suggestion (a generic one the first time, then the
   // one used last) until the user types their own.
-  const titleTouched = useRef(!!e0)
+  const titleTouched = useRef(!!e0 || !!d0?.title)
   // True while the title in the field is one the app suggested (shows the
   // "Sugerido" tag); typing your own (or emptying the field) clears it.
-  const [titleSuggested, setTitleSuggested] = useState(!e0)
+  const [titleSuggested, setTitleSuggested] = useState(!e0 && !d0?.title)
   const [titleHints, setTitleHints] = useState<string[]>([])
   const [note, setNote] = useState(e0?.note ?? '')
-  const [date, setDate] = useState(e0?.date ?? today)
-  const [time, setTime] = useState(e0?.time ?? now)
+  const [date, setDate] = useState(e0?.date ?? d0?.date ?? today)
+  const [time, setTime] = useState(e0?.time ?? d0?.time ?? now)
   const [repeat, setRepeat] = useState<RepeatDraft | null>(null)
   const [rpDraft, setRpDraft] = useState<RepeatDraft | null>(null)
-  const [cur, setCur] = useState<string | null>(e0 && e0.type !== 'transfer' ? e0.currency : null)
+  const [cur, setCur] = useState<string | null>(e0 && e0.type !== 'transfer' ? e0.currency : (d0?.currency ?? null))
   const [attach, setAttach] = useState<AttachDraft | null>(
     e0?.attachment ? { name: e0.attachment.name, size: e0.attachment.size, photo: e0.attachment.kind === 'image' } : null,
   )
@@ -234,7 +252,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
         setWallets(list)
         if (editing) return
         const last = readPref(PREFS.wallet)
-        const first = list.find((w) => w.id === last) ?? list[0]
+        const first = list.find((w) => w.id === d0?.walletId) ?? list.find((w) => w.id === last) ?? list[0]
         setWalletId(first?.id ?? null)
         setToId(list.find((w) => w.id !== first?.id)?.id ?? null)
       })
@@ -429,6 +447,7 @@ export function NewTransactionPanel({ onClose, editing }: { onClose: () => void;
         repeat: rule,
       }
       const saved = editing ? await transactionService.editMovement(editing.id, input, rule ?? null) : await addTransaction(input)
+      if (d0?.onSaved) await d0.onSaved(saved).catch(() => undefined)
       writePref(PREFS.wallet, walletId)
       if (whenOn) writePref(PREFS.lastWhen, `${date} ${time}`)
       if (attach?.file) await transactionService.uploadAttachment(saved.id, attach.file)

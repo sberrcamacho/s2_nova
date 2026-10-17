@@ -87,7 +87,7 @@ internal fun passwordErrors(needsCurrent: Boolean, current: String, next: String
 // Shared frame of the three account-security screens: back header and a
 // scrolling column of labeled fields.
 @Composable
-private fun SecurityFrame(title: String, onBack: () -> Unit, content: @Composable () -> Unit) {
+internal fun SecurityFrame(title: String, onBack: () -> Unit, content: @Composable () -> Unit) {
     Scaffold(containerColor = androidx.compose.ui.graphics.Color.Transparent, modifier = Modifier.appCanvas(MaterialTheme.colorScheme.background), contentWindowInsets = WindowInsets(0, 0, 0, 0)) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             BackHeader(title = title, onBack = onBack)
