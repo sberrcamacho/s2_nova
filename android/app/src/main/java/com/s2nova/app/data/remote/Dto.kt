@@ -80,6 +80,7 @@ data class MeResponse(
     val city: String? = null,
     val createdAt: String,
     val hasPassword: Boolean = false,
+    val hasGoogle: Boolean = false,
     val preferences: MePreferencesDto? = null,
     val principalCurrency: String = "COP",
 )

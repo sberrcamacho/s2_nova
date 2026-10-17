@@ -5,13 +5,16 @@
   Excludes SessionStore's DataStore file (see data/local/SessionStore.kt):
   it holds the plaintext access/refresh tokens, which must never end up in
   Android Auto Backup or a device-to-device transfer alongside everything
-  else allowBackup="true" would otherwise include.
+  else allowBackup="true" would otherwise include, and LockedAccountStore's
+  (who the lock screen asks back on this device).
 -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="file" path="datastore/s2nova_session.preferences_pb" />
+        <exclude domain="file" path="datastore/s2nova_locked_account.preferences_pb" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="file" path="datastore/s2nova_session.preferences_pb" />
+        <exclude domain="file" path="datastore/s2nova_locked_account.preferences_pb" />
     </device-transfer>
 </data-extraction-rules>

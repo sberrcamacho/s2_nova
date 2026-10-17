@@ -80,7 +80,14 @@ table gives for free (see §4).
   that long without the user touching the app. Both clients enforce it and
   report activity (`POST /auth/activity`, at most once a minute); the
   server ends a session idle longer than the setting + 1 min on its own
-  (`lib/sessions.ts`), which covers a killed or offline client.
+  (`lib/sessions.ts`), which covers a killed or offline client. After an
+  inactivity logout both clients lock instead of showing Login: they keep
+  who was signed in (web localStorage `s2nova.lockedAccount`, Android
+  `LockedAccountStore`, never a credential) and the lock screen (web
+  `/bloqueo`, Android `LOCK`) asks only that account back — its password,
+  Google (`/me` `hasGoogle`; another Google account is signed straight
+  out) or, on Android, the fingerprint — plus "Cerrar sesión", which
+  forgets it. A manual sign-out or deleting the account clears it.
 - Web: refresh token in an `httpOnly`, `Secure`, `SameSite=Lax` cookie
   (never readable by JS, so an XSS can't exfiltrate it). Access token kept
   in memory only.

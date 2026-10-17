@@ -25,7 +25,7 @@ describe('Session end', () => {
     localStorage.clear()
   })
 
-  it('signs out with a notice when the server says the session went idle', async () => {
+  it('locks the account when the server says the session went idle', async () => {
     server.use(
       http.post(`${BASE}/auth/refresh`, () => HttpResponse.json({ accessToken: 't' })),
       http.get(`${BASE}/me`, () => HttpResponse.json(me(5))),
@@ -38,7 +38,9 @@ describe('Session end', () => {
       await apiClient.get('/accounts').catch(() => undefined)
     })
     expect(result.current.isAuthenticated).toBe(false)
-    expect(result.current.error).toBe('Cerramos tu sesión por inactividad. Vuelve a entrar.')
+    // The lock screen explains itself, so no notice.
+    expect(result.current.error).toBeNull()
+    expect(result.current.lockedAccount).toEqual({ userId: 'u1', name: 'Ada Lovelace', email: 'ada@example.com', hasPassword: true, hasGoogle: false })
     expect(apiClient.getAccessToken()).toBeNull()
   })
 
@@ -59,7 +61,7 @@ describe('Session end', () => {
     expect(result.current.error).toBe('Tu sesión terminó. Vuelve a iniciar sesión.')
   })
 
-  it('logs out for real after Cierre automático without activity, and not before', async () => {
+  it('logs out for real and locks after Cierre automático without activity, and not before', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     let loggedOut = false
     server.use(
@@ -86,7 +88,23 @@ describe('Session end', () => {
     })
     await waitFor(() => expect(result.current.isAuthenticated).toBe(false))
     expect(loggedOut).toBe(true)
-    expect(result.current.error).toBe('Cerramos tu sesión por inactividad. Vuelve a entrar.')
+    expect(result.current.lockedAccount?.email).toBe('ada@example.com')
+  })
+
+  it('forgets the locked account on a manual sign-out', async () => {
+    localStorage.setItem('s2nova.lockedAccount', JSON.stringify({ userId: 'u1', name: 'Ada', email: 'ada@example.com', hasPassword: true, hasGoogle: false }))
+    server.use(
+      http.post(`${BASE}/auth/refresh`, () => HttpResponse.json({ accessToken: 't' })),
+      http.get(`${BASE}/me`, () => HttpResponse.json(me(5))),
+      http.post(`${BASE}/auth/logout`, () => new HttpResponse(null, { status: 204 })),
+    )
+    const { result } = renderHook(() => useAuth(), { wrapper })
+    await waitFor(() => expect(result.current.isAuthenticated).toBe(true))
+    await act(async () => {
+      await result.current.logout()
+    })
+    expect(result.current.lockedAccount).toBeNull()
+    expect(localStorage.getItem('s2nova.lockedAccount')).toBeNull()
   })
 
   it('never logs out on its own when Cierre automático is Nunca', async () => {

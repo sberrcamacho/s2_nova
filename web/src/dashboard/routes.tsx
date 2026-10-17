@@ -4,6 +4,7 @@ import { DashboardLayout } from '@/dashboard/DashboardLayout'
 import { ProtectedRoute } from '@/dashboard/ProtectedRoute'
 import { AccountOnly } from '@/dashboard/AccountOnly'
 import LoginPage from '@/auth/LoginPage'
+import LockPage from '@/auth/LockPage'
 import RegisterPage from '@/auth/RegisterPage'
 import { RecuperarPage, NuevaContrasenaPage } from '@/auth/RecoveryPages'
 import FirstRunPage from '@/auth/FirstRunPage'
@@ -34,6 +35,7 @@ export const dashboardRoutes: RouteObject[] = [
   // `/`: the public front page signed out, Inicio signed in.
   { index: true, element: <HomeRoute /> },
   { path: 'login', element: <LoginPage /> },
+  { path: 'bloqueo', element: <LockPage /> },
   { path: 'register', element: <RegisterPage /> },
   { path: 'recuperar', element: <RecuperarPage /> },
   { path: 'restablecer', element: <NuevaContrasenaPage /> },

@@ -35,4 +35,18 @@ class NovaNavGraphTest {
         assertEquals("RESET", com.s2nova.app.ui.stringFor(com.s2nova.app.ui.StringKey.SET_RESET_WORD, com.s2nova.app.data.model.AppLanguage.EN))
         assertEquals("DELETE", com.s2nova.app.ui.stringFor(com.s2nova.app.ui.StringKey.SET_DELETE_WORD, com.s2nova.app.data.model.AppLanguage.EN))
     }
+
+    @Test
+    fun `a locked account opens the lock screen instead of login`() {
+        assertEquals(NovaDestinations.LOCK, splashDestinationFor(loggedIn = false, onboardingDone = true, locked = true))
+        assertEquals(NovaDestinations.LOGIN, splashDestinationFor(loggedIn = false, onboardingDone = true, locked = false))
+        // A restored session wins over a stale lock.
+        assertEquals(NovaDestinations.HOME, splashDestinationFor(loggedIn = true, onboardingDone = true, locked = true))
+    }
+
+    @Test
+    fun `the lock screen avatar shows up to two initials`() {
+        assertEquals("AL", com.s2nova.app.ui.screens.auth.initialsOf("Ada  Lovelace Byron"))
+        assertEquals("S2", com.s2nova.app.ui.screens.auth.initialsOf("  "))
+    }
 }

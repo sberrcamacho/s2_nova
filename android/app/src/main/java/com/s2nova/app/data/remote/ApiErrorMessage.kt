@@ -37,6 +37,7 @@ fun Throwable.toUserMessage(fallback: String): String = when (this) {
         parsed?.error?.let { SERVER_MESSAGES[it]?.let(::tr) } ?: fallback
     }
     is GoalExceedsRemaining -> tr(StringKey.API_GOAL_EXCEEDS)
+    is OtherAccountException -> tr(StringKey.LOCK_OTHER_ACCOUNT)
     is IOException -> tr(StringKey.API_OFFLINE)
     else -> fallback
 }
@@ -55,3 +56,7 @@ private val SERVER_MESSAGES = mapOf(
     "Google Sign-In is not configured on this server." to StringKey.AUTH_GOOGLE_ERR,
     "The amount is more than the goal still needs." to StringKey.API_GOAL_EXCEEDS,
 )
+
+// The lock screen signed in an account other than the locked one (another
+// Google account), which was signed straight back out.
+class OtherAccountException : Exception("Signed in with another account")

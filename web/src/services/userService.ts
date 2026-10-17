@@ -10,6 +10,7 @@ export interface MeResponse {
   city: string | null
   createdAt: string
   hasPassword: boolean
+  hasGoogle?: boolean
   passwordChangedAt: string | null
   preferences: {
     language: string
@@ -45,6 +46,7 @@ export function mapMeResponse(me: MeResponse): User {
     name: me.name,
     email: me.email,
     hasPassword: me.hasPassword,
+    hasGoogle: me.hasGoogle ?? false,
     passwordChangedAt: me.passwordChangedAt,
     phone: me.phone ?? '',
     city: me.city ?? '',

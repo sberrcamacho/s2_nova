@@ -36,6 +36,8 @@ function serializeMe(user: {
     city: user.city,
     createdAt: user.createdAt,
     hasPassword: user.authIdentities.some((identity) => identity.provider === "PASSWORD"),
+    // Lets a locked session offer "Continuar con Google" to unlock.
+    hasGoogle: user.authIdentities.some((identity) => identity.provider === "GOOGLE"),
     passwordChangedAt: user.authIdentities.find((identity) => identity.provider === "PASSWORD")?.credentialUpdatedAt ?? null,
     preferences: user.preferences
       ? {

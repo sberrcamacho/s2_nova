@@ -115,7 +115,9 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   `AuthRepository.bootstrap()` refuses to restore a session that sat idle
   too long after the process was killed — so rotating or reopening the app
   can't dodge it. It calls `AuthRepository.logoutForIdle()` (server
-  revokes the session, tokens cleared) and Login shows why. While active,
+  revokes the session, tokens cleared) and locks the account: the `LOCK`
+  route (`ui/screens/auth/LockScreen.kt`) asks for that account's password,
+  Google or fingerprint, and its "Cerrar sesión" goes to Login. While active,
   the app posts `POST /auth/activity` at most once a minute; the server
   ends idle sessions itself too (backend `lib/sessions.ts`) and rejects
   their access tokens at once. Tokens are AES-GCM encrypted with an

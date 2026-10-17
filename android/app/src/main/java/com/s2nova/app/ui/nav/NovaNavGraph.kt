@@ -37,6 +37,7 @@ import com.s2nova.app.ui.AlertTarget
 import com.s2nova.app.ui.components.AddActionsSheet
 import com.s2nova.app.ui.screens.addtransaction.AddTransactionScreen
 import com.s2nova.app.ui.screens.auth.ForgotPasswordScreen
+import com.s2nova.app.ui.screens.auth.LockScreen
 import com.s2nova.app.ui.screens.auth.LoginScreen
 import com.s2nova.app.ui.screens.auth.RegisterScreen
 import com.s2nova.app.ui.screens.budgets.PlanesScreen
@@ -108,18 +109,26 @@ fun NovaApp() {
     // triggering screen's refresh() throw an uncaught HttpException.
     LaunchedEffect(Unit) {
         AppContainer.sessionStore.sessionEnded.collect { reason ->
-            AppContainer.authRepository.onSessionEnded()
-            navController.navigateAsRoot(NovaDestinations.LOGIN)
-            snackbarHostState.showSnackbar(t(if (reason == SessionEndReason.IDLE) StringKey.COMMON_SESSION_IDLE else StringKey.COMMON_SESSION_EXPIRED))
+            // The server's own idle check locks the account like "Cierre
+            // automático"; any other end goes to Login and says why.
+            if (AppContainer.authRepository.onSessionEnded(idle = reason == SessionEndReason.IDLE)) {
+                navController.navigateAsRoot(NovaDestinations.LOCK)
+            } else {
+                navController.navigateAsRoot(NovaDestinations.LOGIN)
+                snackbarHostState.showSnackbar(t(if (reason == SessionEndReason.IDLE) StringKey.COMMON_SESSION_IDLE else StringKey.COMMON_SESSION_EXPIRED))
+            }
         }
     }
 
     // "Cierre automático" signed the user out (ui/components/IdleLogout.kt,
-    // or a restart after too long away — AuthRepository.bootstrap()).
+    // or a restart after too long away — AuthRepository.bootstrap()): the
+    // lock screen asks the same account back (Login if nothing was locked,
+    // e.g. the guest).
     LaunchedEffect(Unit) {
         AppContainer.authRepository.idleLogouts.collect {
-            navController.navigateAsRoot(NovaDestinations.LOGIN)
-            snackbarHostState.showSnackbar(t(StringKey.COMMON_SESSION_IDLE))
+            val locked = AppContainer.authRepository.lockedAccountOnce() != null
+            navController.navigateAsRoot(if (locked) NovaDestinations.LOCK else NovaDestinations.LOGIN)
+            if (!locked) snackbarHostState.showSnackbar(t(StringKey.COMMON_SESSION_IDLE))
         }
     }
 
@@ -190,6 +199,12 @@ fun NovaApp() {
                     onLoginSuccess = { scope.launch { routeAfterAuth() } },
                     onForgotPassword = { navController.navigate(NovaDestinations.FORGOT_PASSWORD) },
                     onGoToRegister = { navController.navigate(NovaDestinations.REGISTER) },
+                )
+            }
+            composable(NovaDestinations.LOCK) {
+                LockScreen(
+                    onUnlocked = { scope.launch { routeAfterAuth() } },
+                    onSignOut = { navController.navigateAsRoot(NovaDestinations.LOGIN) },
                 )
             }
             composable(NovaDestinations.REGISTER) {
@@ -419,13 +434,15 @@ private fun LaunchedSplashNavigation(navController: NavHostController) {
         val loggedIn = AppContainer.authRepository.bootstrap()
         if (loggedIn) AppContainer.refreshUserData()
         val onboardingDone = AppContainer.onboardingStore.onboardingCompleted.first()
-        navController.navigateAsRoot(splashDestinationFor(loggedIn, onboardingDone))
+        val locked = !loggedIn && AppContainer.authRepository.lockedAccountOnce() != null
+        navController.navigateAsRoot(splashDestinationFor(loggedIn, onboardingDone, locked))
     }
 }
 
 // Pure — kept separate from LaunchedSplashNavigation's suspend/NavHost body
 // so this routing decision is unit-testable without a NavController.
-internal fun splashDestinationFor(loggedIn: Boolean, onboardingDone: Boolean): String = when {
+internal fun splashDestinationFor(loggedIn: Boolean, onboardingDone: Boolean, locked: Boolean = false): String = when {
+    !loggedIn && locked -> NovaDestinations.LOCK
     !loggedIn -> NovaDestinations.LOGIN
     !onboardingDone -> NovaDestinations.FIRST_RUN
     else -> NovaDestinations.HOME

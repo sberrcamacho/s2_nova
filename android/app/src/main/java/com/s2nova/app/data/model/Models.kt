@@ -303,6 +303,9 @@ data class User(
     // false for a Google-only account that hasn't set a password yet —
     // gates whether Settings shows "change password" or "create password".
     val hasPassword: Boolean,
+    // Signs in with Google (alone or besides a password); the lock screen
+    // offers it to unlock.
+    val hasGoogle: Boolean = false,
     val avatarInitials: String,
     val memberSince: String,
     val preferences: UserPreferences,

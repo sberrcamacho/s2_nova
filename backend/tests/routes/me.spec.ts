@@ -20,7 +20,7 @@ describe("me routes", () => {
       const res = await app.inject({ method: "GET", url: "/api/v1/me", headers: authHeader(user) });
       expect(res.statusCode).toBe(200);
       const body = res.json();
-      expect(body).toMatchObject({ name: "Profile Person", email: user.email, hasPassword: true });
+      expect(body).toMatchObject({ name: "Profile Person", email: user.email, hasPassword: true, hasGoogle: false });
       expect(body.preferences).toMatchObject({
         language: "es",
         currency: "COP",

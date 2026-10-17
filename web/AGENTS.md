@@ -92,7 +92,11 @@ Reportes** — plus **Ajustes** in the footer. Pre-v2 paths (`/overview`,
   (`state/useIdleLogout.ts`, Ajustes › Seguridad row — not in the web
   mockup, parity with Android), when a request finds the session over
   (`apiClient.setSessionEndedHandler`), and in every tab at once
-  (`BroadcastChannel`). See docs/ARCHITECTURE.md §3.
+  (`BroadcastChannel`). An inactivity sign-out locks the account
+  (`lib/lockedAccount.ts`): `ProtectedRoute` and `/` send to `/bloqueo`
+  (`auth/LockPage.tsx`: that account's password or Google, and "Cerrar
+  sesión" to Login), which returns to the same path. See
+  docs/ARCHITECTURE.md §3.
 - **Planes** (`PlanesPage.tsx`) — v2-migrated tab host,
   `?tab=presupuestos|metas|prestamos` (+ `&side=lent|borrowed`), with the
   mockup's header button ("Nuevo presupuesto" / "Nueva meta" / "Registrar

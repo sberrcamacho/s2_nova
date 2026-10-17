@@ -1,7 +1,8 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { apiClient, setGuestHandler, setSessionEndedHandler, type SessionEndReason } from '@/lib/apiClient'
 import { resetCategoryCache } from '@/lib/backendCategories'
 import { createGuestApi } from '@/lib/guestApi'
+import { clearLockedAccount, readLockedAccount, saveLockedAccount, type LockedAccount } from '@/lib/lockedAccount'
 import { authService } from '@/services/authService'
 import { userService } from '@/services/userService'
 import { useIdleLogout } from '@/state/useIdleLogout'
@@ -21,6 +22,11 @@ interface AuthContextValue {
   logout: () => Promise<void>
   clearError: () => void
   updateUser: (patch: Partial<User>) => void
+  // Set after "Cierre automático" ended the session: /bloqueo asks only
+  // this account to confirm it's them.
+  lockedAccount: LockedAccount | null
+  unlock: (attempt: { password: string } | { googleIdToken: string }) => Promise<boolean>
+  forgetLockedAccount: () => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -76,6 +82,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isInitializing, setIsInitializing] = useState(() => sessionHint() !== '0')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [lockedAccount, setLockedAccount] = useState<LockedAccount | null>(() => readLockedAccount())
+  const userRef = useRef(user)
+  userRef.current = user
 
   // Before the children render, so helpers outside React agree with them.
   const language = user?.preferences.language ?? lastLanguage()
@@ -136,6 +145,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(notice)
   }, [])
 
+  // Inactivity (this tab's timer or the server's own idle check) locks
+  // instead of a plain sign-out: the lock screen asks the same account back.
+  // True when it locked (the lock screen explains itself, so no notice).
+  const lockCurrentUser = useCallback(() => {
+    const current = userRef.current
+    if (!current || current.isGuest) return false
+    saveLockedAccount(current)
+    setLockedAccount(readLockedAccount())
+    return true
+  }, [])
+
+  const forgetLockedAccount = useCallback(() => {
+    clearLockedAccount()
+    setLockedAccount(null)
+  }, [])
+
   const noticeFor = useCallback(
     (reason: SessionEndReason) => translate(reason === 'idle' ? 'auth.sessionIdle' : 'auth.sessionExpired', language),
     [language],
@@ -155,15 +180,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // A request found the session over (expired, closed from another device,
   // or ended by the server's own idle check).
   useEffect(() => {
-    setSessionEndedHandler((reason) => clearSession(noticeFor(reason)))
+    setSessionEndedHandler((reason) => {
+      const locked = reason === 'idle' && lockCurrentUser()
+      clearSession(locked ? null : noticeFor(reason))
+    })
     return () => setSessionEndedHandler(null)
-  }, [clearSession, noticeFor])
+  }, [clearSession, noticeFor, lockCurrentUser])
 
   useEffect(() => {
     const channel = openChannel()
     if (!channel) return
     channel.onmessage = (event: MessageEvent<{ type?: string; notice?: string | null }>) => {
-      if (event.data?.type === 'logout') clearSession(event.data.notice ?? null)
+      if (event.data?.type === 'logout') {
+        clearSession(event.data.notice ?? null)
+        // The tab that signed out saved (or cleared) the lock in storage.
+        setLockedAccount(readLockedAccount())
+      }
     }
     return () => channel.close()
   }, [clearSession])
@@ -171,7 +203,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useIdleLogout(
     user?.preferences.autoLockMinutes ?? 0,
     !!user,
-    () => void endSession(noticeFor('idle')),
+    () => {
+      void endSession(lockCurrentUser() ? null : noticeFor('idle'))
+    },
     () => {
       if (!user?.isGuest) void authService.activity()
     },
@@ -189,7 +223,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsSubmitting(true)
         setError(null)
         try {
-          setUser(await authService.login(credentials))
+          const me = await authService.login(credentials)
+          forgetLockedAccount()
+          setUser(me)
           return true
         } catch (err) {
           setError(err instanceof Error ? err.message : tr('auth.err.login'))
@@ -202,7 +238,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsSubmitting(true)
         setError(null)
         try {
-          setUser(await authService.register(input))
+          const me = await authService.register(input)
+          forgetLockedAccount()
+          setUser(me)
           return true
         } catch (err) {
           setError(err instanceof Error ? err.message : tr('auth.err.register'))
@@ -215,7 +253,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsSubmitting(true)
         setError(null)
         try {
-          setUser(await authService.loginWithGoogle(idToken))
+          const me = await authService.loginWithGoogle(idToken)
+          forgetLockedAccount()
+          setUser(me)
           return true
         } catch (err) {
           setError(err instanceof Error ? err.message : tr('auth.err.google'))
@@ -232,12 +272,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const me = await userService.getCurrentUser()
         setUser({ ...me, isGuest: true })
       },
-      logout: () => endSession(null),
+      logout: () => {
+        forgetLockedAccount()
+        return endSession(null)
+      },
+      lockedAccount,
+      forgetLockedAccount,
+      // Signs the locked account back in. Another Google account than the
+      // locked one is signed straight out again, so the lock can't be used
+      // to switch accounts.
+      unlock: async (attempt) => {
+        const locked = lockedAccount
+        if (!locked) return false
+        setIsSubmitting(true)
+        setError(null)
+        try {
+          const me =
+            'password' in attempt
+              ? await authService.login({ email: locked.email, password: attempt.password })
+              : await authService.loginWithGoogle(attempt.googleIdToken)
+          if (me.id !== locked.userId) {
+            await authService.logout()
+            apiClient.setAccessToken(null)
+            setError(tr('lock.otherAccount'))
+            return false
+          }
+          forgetLockedAccount()
+          setUser(me)
+          return true
+        } catch (err) {
+          setError(err instanceof Error ? err.message : tr('auth.err.login'))
+          return false
+        } finally {
+          setIsSubmitting(false)
+        }
+      },
       updateUser: (patch) => {
         setUser((prev) => (prev ? { ...prev, ...patch } : prev))
       },
     }),
-    [user, isInitializing, isSubmitting, error, endSession],
+    [user, isInitializing, isSubmitting, error, endSession, lockedAccount, forgetLockedAccount],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

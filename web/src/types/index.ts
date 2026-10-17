@@ -230,6 +230,7 @@ export interface User {
   name: string
   email: string
   hasPassword: boolean // false for Google-only accounts that haven't set one yet
+  hasGoogle: boolean // signs in with Google (alone or besides a password)
   passwordChangedAt: string | null
   phone: string
   city: string

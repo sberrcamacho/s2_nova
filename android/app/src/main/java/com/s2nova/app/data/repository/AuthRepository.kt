@@ -45,6 +45,7 @@ internal fun MeResponse.toUser(): User {
         phone = phone,
         city = city,
         hasPassword = hasPassword,
+        hasGoogle = hasGoogle,
         avatarInitials = initialsFor(name),
         memberSince = createdAt.take(10),
         preferences = UserPreferences(
@@ -74,6 +75,7 @@ class AuthRepository(
     private val credentialManager: androidx.credentials.CredentialManager,
     private val idleTimeoutStore: IdleTimeoutStore,
     private val biometricStore: com.s2nova.app.data.local.BiometricStore,
+    private val lockedAccountStore: com.s2nova.app.data.local.LockedAccountStore,
 ) {
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
@@ -81,8 +83,39 @@ class AuthRepository(
     private val _idleLogouts = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
     // Emitted after "Cierre automático" signed the user out, so the app can
-    // go to Login and say why.
+    // go to the lock screen.
     val idleLogouts: SharedFlow<Unit> = _idleLogouts.asSharedFlow()
+
+    // The account the lock screen asks back (null: nothing locked).
+    val lockedAccount: kotlinx.coroutines.flow.Flow<com.s2nova.app.data.local.LockedAccount?> = lockedAccountStore.account
+
+    suspend fun lockedAccountOnce(): com.s2nova.app.data.local.LockedAccount? = lockedAccountStore.current()
+
+    // Lock screen › "Cerrar sesión": forget the account; Login comes next.
+    suspend fun forgetLockedAccount() = lockedAccountStore.clear()
+
+    // Saves who was signed in (a real account, not the guest) before an
+    // inactivity sign-out. Returns whether it locked.
+    private suspend fun lockCurrentUser(): Boolean {
+        val user = _currentUser.value ?: return false
+        if (DemoModeFlag.active) return false
+        lockedAccountStore.save(user)
+        return true
+    }
+
+    // Lock screen: signs the locked account back in. Any other account (a
+    // different Google account, say) is signed straight back out, so the
+    // lock can't be used to switch accounts.
+    suspend fun unlock(signIn: suspend () -> Result<Unit>): Result<Unit> {
+        val locked = lockedAccountStore.current() ?: return Result.failure(IllegalStateException("Nothing locked"))
+        return signIn().mapCatching {
+            if (_currentUser.value?.id != locked.userId) {
+                logout(keepLock = true)
+                throw com.s2nova.app.data.remote.OtherAccountException()
+            }
+            lockedAccountStore.clear()
+        }
+    }
 
     // Keeps the local (per-device, offline-checkable) onboarding flag in
     // sync with the backend's — matters when the same account signs in on
@@ -279,7 +312,10 @@ class AuthRepository(
     // Signing out is immediate on the device; telling the server (which can
     // be slow or unreachable) happens afterwards on a scope of its own, so
     // neither a timeout nor the screen leaving can hold the user back.
-    suspend fun logout() {
+    // A manual sign-out also forgets a locked account; "Cierre automático"
+    // keeps the one it just locked (`keepLock`).
+    suspend fun logout(keepLock: Boolean = false) {
+        if (!keepLock) lockedAccountStore.clear()
         // A stale per-device demo flag must never silently apply to
         // whichever account signs in next on this device.
         val wasGuest = DemoModeFlag.active
@@ -302,17 +338,22 @@ class AuthRepository(
     private val backgroundScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO)
 
     // "Cierre automático": a real sign-out (the server revokes the session,
-    // this device forgets its tokens), then Login explains why.
+    // this device forgets its tokens) that locks the account, then the lock
+    // screen asks it back.
     suspend fun logoutForIdle() {
-        logout()
+        lockCurrentUser()
+        logout(keepLock = true)
         _idleLogouts.tryEmit(Unit)
     }
 
     // The session ended under the user (SessionStore.sessionEnded): the
-    // tokens are already gone; forget who was signed in.
-    fun onSessionEnded() {
+    // tokens are already gone; forget who was signed in. The server's own
+    // idle check locks like "Cierre automático"; returns whether it did.
+    suspend fun onSessionEnded(idle: Boolean): Boolean {
+        val locked = idle && lockCurrentUser()
         DemoModeFlag.set(false)
         _currentUser.value = null
+        return locked
     }
 
     // Swaps in the fictitious local persona (demo mode) or restores a

@@ -14,7 +14,8 @@ import { cn } from '@/lib/cn'
 const BRAND_PANEL_GRADIENT =
   'radial-gradient(90% 70% at 100% 0%, rgba(168,15,250,.34) 0%, rgba(0,71,245,.18) 45%, rgba(0,196,251,0) 80%), radial-gradient(70% 50% at 0% 100%, rgba(0,196,251,.12) 0%, rgba(0,196,251,0) 70%), #0a0a0c'
 
-function BrandPanel() {
+// Shared with the lock screen (LockPage).
+export function BrandPanel() {
   const { t } = useTranslation()
   return (
     <div

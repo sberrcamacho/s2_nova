@@ -106,7 +106,10 @@ object AppContainer {
         alertStateStore = AlertStateStore.getInstance(context)
         val credentialManager = androidx.credentials.CredentialManager.create(context.applicationContext)
         biometricStore = com.s2nova.app.data.local.BiometricStore.getInstance(context)
-        authRepository = AuthRepository(sessionStore, onboardingStore, credentialManager, idleTimeoutStore, biometricStore)
+        authRepository = AuthRepository(
+            sessionStore, onboardingStore, credentialManager, idleTimeoutStore, biometricStore,
+            com.s2nova.app.data.local.LockedAccountStore.getInstance(context),
+        )
         com.s2nova.app.ui.AppLang.init(context)
         com.s2nova.app.data.notifications.AlertNotifier.init(context)
         appScope.launch {

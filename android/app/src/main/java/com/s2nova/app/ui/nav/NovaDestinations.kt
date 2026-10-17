@@ -3,6 +3,7 @@ package com.s2nova.app.ui.nav
 object NovaDestinations {
     const val SPLASH = "splash"
     const val LOGIN = "login"
+    const val LOCK = "lock"
     const val REGISTER = "register"
     const val FORGOT_PASSWORD = "forgot_password"
 

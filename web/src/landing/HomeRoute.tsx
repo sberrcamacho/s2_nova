@@ -7,8 +7,9 @@ import LandingPage from '@/landing/LandingPage'
 // front page for a flash; ProtectedRoute takes it from /inicio (first run
 // included).
 export function HomeRoute() {
-  const { isAuthenticated, isInitializing } = useAuth()
+  const { isAuthenticated, isInitializing, lockedAccount } = useAuth()
   if (isInitializing) return <SplashScreen />
   if (isAuthenticated) return <Navigate to="/inicio" replace />
+  if (lockedAccount) return <Navigate to="/bloqueo" replace />
   return <LandingPage />
 }
