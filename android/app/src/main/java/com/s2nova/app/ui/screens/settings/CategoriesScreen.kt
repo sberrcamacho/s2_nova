@@ -171,6 +171,7 @@ fun CategoriesScreen(initialIncome: Boolean, onBack: () -> Unit) {
         onDismiss = { draft = null },
         title = tr(if (editing.parentId != null) StringKey.CAT_EDIT_SUB else StringKey.CAT_EDIT),
         subtitle = androidx.compose.ui.text.AnnotatedString(tr(if (editing.custom) StringKey.CAT_SUB_CUSTOM else StringKey.CAT_SUB_BUILTIN)),
+        scrollable = true,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
             CategoryFields(d, d.parentId?.let(repo::node)) { draft = it }

@@ -116,8 +116,8 @@ fun AssistantScreen(onBack: () -> Unit, onDraft: (AssistantProposal) -> Unit, on
     }
 
     Scaffold(containerColor = Color.Transparent, modifier = Modifier.appCanvas(MaterialTheme.colorScheme.background), contentWindowInsets = WindowInsets(0, 0, 0, 0)) { padding ->
-        // The window pans to the focused field when the keyboard opens, as
-        // everywhere in the app, so no imePadding here (it would count twice).
+        // The nav host already ends above the keyboard (adjustResize +
+        // imePadding), so no imePadding here (it would count twice).
         Column(Modifier.fillMaxSize().padding(padding)) {
             BackHeader(title = t(StringKey.ASST_TITLE), onBack = onBack)
             LazyColumn(

@@ -1,5 +1,7 @@
 package com.s2nova.app.ui.components
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -76,6 +78,10 @@ fun NovaDraftSheet(
     scrimAlpha: Float = 0.65f,
     // .sheet padding-bottom (26); the amount pad uses 18.
     bottomPadding: androidx.compose.ui.unit.Dp = 26.dp,
+    // A sheet with a text field: the sheet stops at the keyboard, so what
+    // no longer fits above it (Guardar) scrolls instead of being cut off.
+    // Off for sheets that lay out their own scroll (StepSheet) or lists.
+    scrollable: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = NovaColors.current
@@ -114,6 +120,7 @@ fun NovaDraftSheet(
             modifier = modifier
                 .countsAsActivity()
                 .fillMaxWidth()
+                .then(if (scrollable) Modifier.verticalScroll(rememberScrollState()) else Modifier)
                 .padding(horizontal = 20.dp)
                 .padding(bottom = bottomPadding),
         ) {

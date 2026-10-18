@@ -1,5 +1,8 @@
 package com.s2nova.app.ui.screens.auth
 
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.isImeVisible
+import com.s2nova.app.ui.components.revealOnFocus
 import com.s2nova.app.ui.theme.appCanvas
 import androidx.compose.ui.draw.alpha
 import androidx.compose.foundation.background
@@ -50,6 +53,7 @@ import kotlinx.coroutines.launch
 import com.s2nova.app.ui.tr
 import com.s2nova.app.ui.StringKey
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
@@ -106,7 +110,8 @@ fun LoginScreen(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
+            // Entrar → the Google block (Entrar now ends the fields group).
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 NovaTextField(
@@ -115,55 +120,60 @@ fun LoginScreen(
                     label = tr(StringKey.AUTH_EMAIL),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 )
-                NovaTextField(
-                    value = password,
-                    onValueChange = { password = it; error = null },
-                    label = tr(StringKey.AUTH_PASSWORD),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    isPassword = true,
-                    passwordVisible = showPassword,
-                    onTogglePasswordVisible = { showPassword = !showPassword },
-                )
+                // With the keyboard up, the password, "¿Olvidaste…?" and Entrar
+                // stay in view together.
+                Column(Modifier.revealOnFocus(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    NovaTextField(
+                        value = password,
+                        onValueChange = { password = it; error = null },
+                        label = tr(StringKey.AUTH_PASSWORD),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        isPassword = true,
+                        passwordVisible = showPassword,
+                        onTogglePasswordVisible = { showPassword = !showPassword },
+                    )
 
-                if (error != null) {
-                    Text(error!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                }
+                    if (error != null) {
+                        Text(error!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
 
-                Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = tr(StringKey.AUTH_FORGOT),
-                        style = com.s2nova.app.ui.theme.NovaType.label,
-                        // `link`, not `primary`: primary is 2.5:1 on the dark background.
-                        color = colors.link,
-                        modifier = Modifier
-                            .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onForgotPassword)
-                            .padding(vertical = 14.dp),
+                    Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = tr(StringKey.AUTH_FORGOT),
+                            style = com.s2nova.app.ui.theme.NovaType.label,
+                            // `link`, not `primary`: primary is 2.5:1 on the dark background.
+                            color = colors.link,
+                            modifier = Modifier
+                                .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onForgotPassword)
+                                .padding(vertical = 14.dp),
+                        )
+                    }
+                    NovaPrimaryButton(
+                        text = tr(StringKey.AUTH_ENTER),
+                        // 14 + 6: the 20 dp between the fields and Entrar.
+                        modifier = Modifier.padding(top = 6.dp),
+                        onClick = {
+                            loading = true
+                            scope.launch {
+                                AppContainer.authRepository.login(email, password)
+                                    .onSuccess {
+                                        AppContainer.refreshUserData()
+                                        loading = false
+                                        onLoginSuccess()
+                                    }
+                                    .onFailure {
+                                        loading = false
+                                        error = it.toUserMessage(tr(StringKey.AUTH_BAD_CREDENTIALS))
+                                    }
+                            }
+                        },
+                        enabled = !loading,
+                        loading = loading,
                     )
                 }
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                NovaPrimaryButton(
-                    text = tr(StringKey.AUTH_ENTER),
-                    onClick = {
-                        loading = true
-                        scope.launch {
-                            AppContainer.authRepository.login(email, password)
-                                .onSuccess {
-                                    AppContainer.refreshUserData()
-                                    loading = false
-                                    onLoginSuccess()
-                                }
-                                .onFailure {
-                                    loading = false
-                                    error = it.toUserMessage(tr(StringKey.AUTH_BAD_CREDENTIALS))
-                                }
-                        }
-                    },
-                    enabled = !loading,
-                    loading = loading,
-                )
-
                 if (BuildConfig.GOOGLE_WEB_CLIENT_ID.isNotBlank()) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -235,25 +245,29 @@ fun LoginScreen(
         // phone chrome for a static image; the real device already draws its
         // own system navigation affordance, so adding one here would just be
         // a second, fake nav bar on top of it.
-        Row(
-            horizontalArrangement = Arrangement.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp, bottom = 12.dp)
-                .heightIn(min = 48.dp)
-                .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onGoToRegister),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = tr(StringKey.AUTH_NEW_HERE) + " ",
-                style = com.s2nova.app.ui.theme.NovaType.bodySm,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = tr(StringKey.AUTH_CREATE),
-                style = com.s2nova.app.ui.theme.NovaType.label,
-                color = colors.link,
-            )
+        // Hidden while typing: it would take the room the form needs above
+        // the keyboard.
+        if (!WindowInsets.isImeVisible) {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp, bottom = 12.dp)
+                    .heightIn(min = 48.dp)
+                    .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onGoToRegister),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = tr(StringKey.AUTH_NEW_HERE) + " ",
+                    style = com.s2nova.app.ui.theme.NovaType.bodySm,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = tr(StringKey.AUTH_CREATE),
+                    style = com.s2nova.app.ui.theme.NovaType.label,
+                    color = colors.link,
+                )
+            }
         }
     }
 }

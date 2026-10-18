@@ -52,6 +52,14 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   not introduce Hilt or ViewModels "to do it properly" — this pattern is an
   explicit, standing choice for this codebase, not a placeholder for a
   future migration.
+- **The keyboard resizes, it doesn't pan.** `MainActivity` is
+  `adjustResize` and `NovaNavGraph` gives the `NavHost` `imePadding()`
+  (after consuming the Scaffold's padding), so every route ends above the
+  keyboard; screens don't add their own `imePadding`. Fields bring their
+  whole box into view on focus (`ui/components/RevealOnFocus.kt`); a form
+  wraps its last field and submit button in one `revealOnFocus()` group; a
+  `NovaDraftSheet` with a text field passes `scrollable = true`. The rules
+  are in `docs/DESIGN-SYSTEM.md` §6.6.
 - **Real backend, real session.** `AuthRepository` calls
   `backend/src/routes/auth.ts` (register/login/refresh/logout) and persists
   the access/refresh tokens via `SessionStore` (plain DataStore — not yet

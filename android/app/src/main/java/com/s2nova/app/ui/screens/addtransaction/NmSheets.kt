@@ -667,7 +667,7 @@ private fun FromSheet(s: NmState) {
     val txs = AppContainer.transactionRepository.transactions.value
     val recents = txs.filter { it.type == TransactionType.INCOME && !it.counterpartyName.isNullOrBlank() }
         .distinctBy { it.counterpartyName }.take(3).map { it.counterpartyName!! to it.counterpartyKind }
-    NovaDraftSheet(onDismiss = { s.sheet = null }) {
+    NovaDraftSheet(onDismiss = { s.sheet = null }, scrollable = true) {
         SheetHeader(tr(StringKey.NM_SECTION_FROM), tr(StringKey.NM_FROM_HINT))
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             InputBox(height = 50.dp) {

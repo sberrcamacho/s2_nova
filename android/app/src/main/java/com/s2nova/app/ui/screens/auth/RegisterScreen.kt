@@ -1,5 +1,8 @@
 package com.s2nova.app.ui.screens.auth
 
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.isImeVisible
+import com.s2nova.app.ui.components.revealOnFocus
 import com.s2nova.app.ui.theme.appCanvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -53,6 +56,7 @@ import kotlinx.coroutines.launch
 import com.s2nova.app.ui.tr
 import com.s2nova.app.ui.StringKey
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun RegisterScreen(
     onRegisterSuccess: () -> Unit,
@@ -122,7 +126,8 @@ fun RegisterScreen(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(26.dp),
+            // Crear cuenta → the Google block (the button now ends the fields group).
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 NovaTextField(
@@ -136,55 +141,60 @@ fun RegisterScreen(
                     label = tr(StringKey.AUTH_EMAIL),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 )
-                Column {
-                    NovaTextField(
-                        value = password,
-                        onValueChange = { password = it; error = null },
-                        label = tr(StringKey.AUTH_PASSWORD),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                        isPassword = true,
-                        passwordVisible = showPassword,
-                        onTogglePasswordVisible = { showPassword = !showPassword },
-                    )
-                    PasswordStrengthMeter(password = password)
-                }
+                // With the keyboard up, the password, its rule, Términos and
+                // Crear cuenta stay in view together.
+                Column(Modifier.revealOnFocus()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                        Column {
+                            NovaTextField(
+                                value = password,
+                                onValueChange = { password = it; error = null },
+                                label = tr(StringKey.AUTH_PASSWORD),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                                isPassword = true,
+                                passwordVisible = showPassword,
+                                onTogglePasswordVisible = { showPassword = !showPassword },
+                            )
+                            PasswordStrengthMeter(password = password)
+                        }
 
-                if (error != null) {
-                    Text(error!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                        if (error != null) {
+                            Text(error!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                    TermsCheckbox(checked = agreedToTerms, onCheckedChange = { agreedToTerms = it }, modifier = Modifier.padding(top = 26.dp))
+                    NovaPrimaryButton(
+                        text = tr(StringKey.AUTH_CREATE),
+                        modifier = Modifier.padding(top = 26.dp),
+                        onClick = {
+                            // The rule the meter shows, checked before the request.
+                            if (password.length < 8 || password.none { it.isUpperCase() } || password.none { it.isDigit() }) {
+                                error = tr(StringKey.PW_RULES)
+                                return@NovaPrimaryButton
+                            }
+                            loading = true
+                            scope.launch {
+                                AppContainer.authRepository.register(name, email, password)
+                                    .onSuccess {
+                                        AppContainer.refreshUserData()
+                                        loading = false
+                                        onRegisterSuccess()
+                                    }
+                                    .onFailure {
+                                        loading = false
+                                        error = it.toUserMessage(
+                                            tr(StringKey.AUTH_REGISTER_ERR),
+                                        )
+                                    }
+                            }
+                        },
+                        enabled = !loading && agreedToTerms,
+                        loading = loading,
+                    )
                 }
             }
 
-            TermsCheckbox(checked = agreedToTerms, onCheckedChange = { agreedToTerms = it })
-
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                NovaPrimaryButton(
-                    text = tr(StringKey.AUTH_CREATE),
-                    onClick = {
-                        // The rule the meter shows, checked before the request.
-                        if (password.length < 8 || password.none { it.isUpperCase() } || password.none { it.isDigit() }) {
-                            error = tr(StringKey.PW_RULES)
-                            return@NovaPrimaryButton
-                        }
-                        loading = true
-                        scope.launch {
-                            AppContainer.authRepository.register(name, email, password)
-                                .onSuccess {
-                                    AppContainer.refreshUserData()
-                                    loading = false
-                                    onRegisterSuccess()
-                                }
-                                .onFailure {
-                                    loading = false
-                                    error = it.toUserMessage(
-                                        tr(StringKey.AUTH_REGISTER_ERR),
-                                    )
-                                }
-                        }
-                    },
-                    enabled = !loading && agreedToTerms,
-                    loading = loading,
-                )
-
                 if (BuildConfig.GOOGLE_WEB_CLIENT_ID.isNotBlank()) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -231,25 +241,29 @@ fun RegisterScreen(
         // Footer — pinned near the bottom, no decorative home-indicator bar;
         // same reasoning as LoginScreen (the real device already draws its own
         // system navigation affordance).
-        Row(
-            horizontalArrangement = Arrangement.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp, bottom = 12.dp)
-                .heightIn(min = 48.dp)
-                .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onGoToLogin),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = tr(StringKey.AUTH_HAVE_ACCOUNT) + " ",
-                style = com.s2nova.app.ui.theme.NovaType.bodySm,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = tr(StringKey.AUTH_LOGIN_TITLE),
-                style = com.s2nova.app.ui.theme.NovaType.label,
-                color = colors.link,
-            )
+        // Hidden while typing: it would take the room the form needs above
+        // the keyboard.
+        if (!WindowInsets.isImeVisible) {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp, bottom = 12.dp)
+                    .heightIn(min = 48.dp)
+                    .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onGoToLogin),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = tr(StringKey.AUTH_HAVE_ACCOUNT) + " ",
+                    style = com.s2nova.app.ui.theme.NovaType.bodySm,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = tr(StringKey.AUTH_LOGIN_TITLE),
+                    style = com.s2nova.app.ui.theme.NovaType.label,
+                    color = colors.link,
+                )
+            }
         }
     }
 }

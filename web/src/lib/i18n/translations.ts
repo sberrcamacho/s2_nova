@@ -105,7 +105,8 @@ const dictionary = {
   "lock.unlock": { es: "Desbloquear", en: "Unlock" },
   "lock.or": { es: "O", en: "OR" },
   "lock.signOut": { es: "Cerrar sesión", en: "Sign out" },
-  "lock.signOutHint": { es: "Para entrar con otra cuenta o crear una.", en: "To sign in with another account or create one." },
+  "lock.greeting": { es: "Hola, {0}", en: "Hi, {0}" },
+  "lock.notYou": { es: "¿No eres {0}?", en: "Not {0}?" },
   "lock.otherAccount": { es: "Esa cuenta de Google no es la de esta sesión.", en: "That Google account isn't the one signed in." },
   // ── Stage 2 v2 shell, Inicio, Planes (s2_nova_stage2_handoff) ──
   "v2.nav.inicio": { es: "Inicio", en: "Home" },

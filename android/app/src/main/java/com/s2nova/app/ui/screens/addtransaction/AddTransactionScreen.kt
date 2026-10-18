@@ -30,7 +30,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -519,7 +518,7 @@ fun AddTransactionScreen(
     // already set (editing). Guardar stays fixed at the bottom.
     var moreOpen by remember { mutableStateOf(s.whenOn || s.repeat != null || s.attach != null || s.note.isNotBlank() || s.from.isNotBlank() || s.customBudgetId != null || s.loan || s.goalId != null) }
 
-    Column(Modifier.fillMaxSize().appCanvas(MaterialTheme.colorScheme.background).imePadding()) {
+    Column(Modifier.fillMaxSize().appCanvas(MaterialTheme.colorScheme.background)) {
         Row(
             // 48 dp back target.
             Modifier.padding(start = 4.dp, end = 16.dp, top = 4.dp, bottom = 4.dp),

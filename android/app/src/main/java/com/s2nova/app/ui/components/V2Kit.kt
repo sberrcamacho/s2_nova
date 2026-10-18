@@ -103,6 +103,7 @@ object V2Icons {
     val eye = listOf("M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z", "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z")
     val eyeOff = listOf("M17.9 17.9A10 10 0 0 1 12 20c-7 0-11-8-11-8a18 18 0 0 1 5.1-5.9", "M9.9 4.2A9 9 0 0 1 12 4c7 0 11 8 11 8a18 18 0 0 1-2.2 3.2", "M14.1 14.1a3 3 0 1 1-4.2-4.2", "M1 1l22 22")
     val plus = listOf("M12 5v14", "M5 12h14")
+    val lock = listOf("M7 11h10a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2z", "M8 11V8a4 4 0 0 1 8 0v3")
     val fingerprint = listOf(
         "M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4", "M14 13.12c0 2.38 0 6.38-1 8.88", "M17.29 21.02c.12-.6.43-2.3.5-3.02",
         "M2 12a10 10 0 0 1 18-6", "M2 16h.01", "M21.8 16c.2-2 .131-5.354 0-6", "M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2",
@@ -453,6 +454,7 @@ fun InputBox(
 ) {
     Row(
         modifier = modifier
+            .revealOnFocus()
             .fillMaxWidth()
             .then(if (height != null) Modifier.height(height) else Modifier)
             .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(14.dp))

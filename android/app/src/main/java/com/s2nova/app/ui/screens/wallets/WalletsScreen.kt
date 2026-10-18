@@ -217,7 +217,7 @@ fun WalletsScreen(onBack: () -> Unit) {
     // and the starting balance. Currency and balance are fixed once the
     // wallet exists, so editing shows them as a note.
     val editingWallet = d.id?.let { id -> wallets.firstOrNull { it.id == id } }
-    NovaDraftSheet(onDismiss = { draft = null; walletPage = null }, title = if (walletPage != null) null else tr(if (d.id != null) StringKey.WALLET_EDIT else StringKey.WALLET_NEW)) {
+    NovaDraftSheet(onDismiss = { draft = null; walletPage = null }, title = if (walletPage != null) null else tr(if (d.id != null) StringKey.WALLET_EDIT else StringKey.WALLET_NEW), scrollable = true) {
         when (walletPage) {
             "type" -> {
                 SheetPageHeader(tr(StringKey.WALLET_TYPE)) { walletPage = null }

@@ -9,6 +9,9 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import com.s2nova.app.ui.theme.NovaMotion
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -203,6 +206,7 @@ fun NovaApp() {
         },
     ) { padding ->
         val reducedMotion = com.s2nova.app.ui.theme.rememberReducedMotion()
+        val navBottom = (padding.calculateBottomPadding() - FabTouchTop).coerceAtLeast(0.dp)
         NavHost(
             navController = navController,
             startDestination = NovaDestinations.SPLASH,
@@ -212,10 +216,13 @@ fun NovaApp() {
             popExitTransition = { routeExit(initialState.destination.route, targetState.destination.route, forward = false, reducedMotion) },
             // The bar reserves a transparent strip for the FAB's top half;
             // content runs under that strip instead of leaving a blank band.
-            modifier = Modifier.padding(
-                top = padding.calculateTopPadding(),
-                bottom = (padding.calculateBottomPadding() - FabTouchTop).coerceAtLeast(0.dp),
-            ),
+            // The keyboard resizes the window (adjustResize): every screen
+            // ends above it, minus what the bar already takes, so a focused
+            // field scrolls into view and a fixed Guardar rides above it.
+            modifier = Modifier
+                .padding(top = padding.calculateTopPadding(), bottom = navBottom)
+                .consumeWindowInsets(PaddingValues(top = padding.calculateTopPadding(), bottom = navBottom))
+                .imePadding(),
         ) {
             composable(NovaDestinations.SPLASH) {
                 SplashScreen()

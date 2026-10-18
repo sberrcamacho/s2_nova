@@ -1,5 +1,6 @@
 package com.s2nova.app.ui.screens.settings
 
+import com.s2nova.app.ui.components.revealOnFocus
 import com.s2nova.app.ui.theme.appCanvas
 import androidx.compose.foundation.border
 import androidx.compose.ui.semantics.semantics
@@ -126,61 +127,65 @@ fun ChangePasswordScreen(onBack: () -> Unit) {
                 isError = errors.current != null, errorMessage = errors.current?.let { tr(it) },
             )
         }
-        NovaTextField(
-            next, { next = it; errors = errors.copy(next = null); error = null }, tr(StringKey.AUTH_RESET_NEW),
-            isPassword = true, passwordVisible = show, onTogglePasswordVisible = { show = !show },
-            isError = errors.next != null, errorMessage = errors.next?.let { tr(it) },
-        )
-        NovaTextField(
-            confirm, { confirm = it; errors = errors.copy(confirm = null); error = null }, tr(StringKey.AUTH_RESET_CONFIRM),
-            isPassword = true, passwordVisible = show, onTogglePasswordVisible = { show = !show },
-            isError = errors.confirm != null, errorMessage = errors.confirm?.let { tr(it) },
-        )
-        // Live checklist: a met rule shows a check, not only a colour.
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            passwordRules(next, confirm).forEach { (key, ok) ->
-                val label = tr(key)
-                val state = tr(if (ok) StringKey.SET_PW_RULE_MET else StringKey.SET_PW_RULE_MISSING)
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = "$label, $state" },
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.size(18.dp).clip(CircleShape)
-                            .then(if (ok) Modifier.background(colors.positive) else Modifier.border(1.dp, colors.borderInput, CircleShape)),
+        // With the keyboard up, the new password, its checklist and Guardar
+        // stay in view together.
+        Column(Modifier.revealOnFocus(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            NovaTextField(
+                next, { next = it; errors = errors.copy(next = null); error = null }, tr(StringKey.AUTH_RESET_NEW),
+                isPassword = true, passwordVisible = show, onTogglePasswordVisible = { show = !show },
+                isError = errors.next != null, errorMessage = errors.next?.let { tr(it) },
+            )
+            NovaTextField(
+                confirm, { confirm = it; errors = errors.copy(confirm = null); error = null }, tr(StringKey.AUTH_RESET_CONFIRM),
+                isPassword = true, passwordVisible = show, onTogglePasswordVisible = { show = !show },
+                isError = errors.confirm != null, errorMessage = errors.confirm?.let { tr(it) },
+            )
+            // Live checklist: a met rule shows a check, not only a colour.
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                passwordRules(next, confirm).forEach { (key, ok) ->
+                    val label = tr(key)
+                    val state = tr(if (ok) StringKey.SET_PW_RULE_MET else StringKey.SET_PW_RULE_MISSING)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = "$label, $state" },
                     ) {
-                        if (ok) com.s2nova.app.ui.components.V2Icon(com.s2nova.app.ui.components.V2Icons.check, Color.White, 12.dp, strokeWidth = 3f)
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.size(18.dp).clip(CircleShape)
+                                .then(if (ok) Modifier.background(colors.positive) else Modifier.border(1.dp, colors.borderInput, CircleShape)),
+                        ) {
+                            if (ok) com.s2nova.app.ui.components.V2Icon(com.s2nova.app.ui.components.V2Icons.check, Color.White, 12.dp, strokeWidth = 3f)
+                        }
+                        Text(label, style = NovaType.bodySm, color = if (ok) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    Text(label, style = NovaType.bodySm, color = if (ok) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
+            if (error != null) Text(error!!, style = NovaType.bodySm, color = colors.negative)
+            NovaPrimaryButton(
+                text = tr(if (needsCurrent) StringKey.AUTH_RESET_SUBMIT else StringKey.SET_PW_CREATE_SUBMIT),
+                loading = busy,
+                enabled = !busy,
+                onClick = {
+                    errors = passwordErrors(needsCurrent, current, next, confirm)
+                    if (!errors.none) return@NovaPrimaryButton
+                    busy = true
+                    scope.launch {
+                        AppContainer.authRepository.changePassword(current, next)
+                            .onSuccess {
+                                AppContainer.authRepository.updateUser { it.copy(hasPassword = true) }
+                                Snack.show(tr(if (needsCurrent) StringKey.SET_PW_DONE else StringKey.SET_PW_CREATED))
+                                onBack()
+                            }
+                            .onFailure {
+                                if (it.isUnauthorized()) errors = PasswordErrors(current = StringKey.SET_PW_WRONG)
+                                else error = it.toUserMessage(tr(StringKey.SET_PW_WRONG))
+                            }
+                        busy = false
+                    }
+                },
+            )
         }
-        if (error != null) Text(error!!, style = NovaType.bodySm, color = colors.negative)
-        NovaPrimaryButton(
-            text = tr(if (needsCurrent) StringKey.AUTH_RESET_SUBMIT else StringKey.SET_PW_CREATE_SUBMIT),
-            loading = busy,
-            enabled = !busy,
-            onClick = {
-                errors = passwordErrors(needsCurrent, current, next, confirm)
-                if (!errors.none) return@NovaPrimaryButton
-                busy = true
-                scope.launch {
-                    AppContainer.authRepository.changePassword(current, next)
-                        .onSuccess {
-                            AppContainer.authRepository.updateUser { it.copy(hasPassword = true) }
-                            Snack.show(tr(if (needsCurrent) StringKey.SET_PW_DONE else StringKey.SET_PW_CREATED))
-                            onBack()
-                        }
-                        .onFailure {
-                            if (it.isUnauthorized()) errors = PasswordErrors(current = StringKey.SET_PW_WRONG)
-                            else error = it.toUserMessage(tr(StringKey.SET_PW_WRONG))
-                        }
-                    busy = false
-                }
-            },
-        )
     }
 }
 

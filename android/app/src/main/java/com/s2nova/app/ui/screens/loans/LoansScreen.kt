@@ -474,6 +474,7 @@ private fun LoanDraftSheet(
     NovaDraftSheet(
         onDismiss = onDismiss,
         title = if (pickingWallet || interestPage != null) null else t(if (isEdit) StringKey.LOANS_EDIT_TITLE else if (isLent) StringKey.LOANS_NEW_LENT else StringKey.LOANS_NEW_BORROWED),
+        scrollable = true,
     ) {
         if (interestPage != null) {
             LoanInterestPages(

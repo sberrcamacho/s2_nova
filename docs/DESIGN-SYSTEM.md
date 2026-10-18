@@ -429,6 +429,18 @@ Abonar a una meta (both; Android sheet, Web centered modal):
 A reached goal has no Abonar button; its card already says "Meta cumplida".
 Planes opens on the last tab used.
 
+Lock screen (Android `LockScreen`, Web `/bloqueo`), on the plain `bg`
+(no brand wash): the logo mark on top (on Web ≥ 900 px the brand panel
+carries it instead); in the middle an 88 dp `primary` avatar with the
+initials and a `primary-soft` lock badge (its accessible name is "Sesión
+bloqueada"), "Hola, {first name}" (28, 600, the screen's heading), the
+email and the reason line; at the bottom, within thumb reach, the password
+field, Desbloquear and, when the fingerprint is set up, a 56 dp
+`primary-soft` fingerprint button beside it, then Google under an "O"
+divider, and last the text button "¿No eres {first name}? Cerrar sesión".
+With the keyboard up it scrolls to keep the field and Desbloquear visible
+(§6.6, the open keyboard).
+
 Landing page (Web, signed out): the Android card in "En el celular y en el
 computador" ends with a primary pill "Descargar para Android" (download
 icon) linking to the latest GitHub Release's `s2-nova.apk`
@@ -536,6 +548,21 @@ padding or a pseudo-element on Web.
   - Focus: 2 px `primary` border + `focus-ring` on Web.
   - Error: 2 px `negative` border + message below (`caption`, `negative`, with an icon), linked with `aria-describedby`.
 - Use the right keyboard (email, number, decimal) and autofill hints. Password fields have a show/hide toggle.
+- The open keyboard never hides the field being typed in or the action that
+  finishes the form (Android):
+  - The window resizes for the keyboard (`adjustResize`) and the nav host
+    ends above it (`imePadding`), so a screen's scroll area shrinks and a
+    fixed bottom action (Guardar) rides above the keyboard. Screens don't add
+    their own `imePadding`.
+  - Every field (`NovaTextField`, `InputBox`) brings its whole box into view
+    on focus (`revealOnFocus`), not only the cursor line.
+  - On a form, the last field, what it shows while typing (rules, errors)
+    and the submit button are one `revealOnFocus` group, so they show
+    together (Login, Crear cuenta, the password screens). A footer link
+    pinned to the bottom ("¿Nuevo aquí?") hides while the keyboard is up.
+  - A sheet stops at the keyboard; a `NovaDraftSheet` with a text field sets
+    `scrollable = true` so what no longer fits (Guardar) scrolls instead of
+    being cut off. `StepSheet` already scrolls its step.
 - The amount input uses `display-sm` with tnum and a currency pill.
 
 ### 6.7 Card and StatTile

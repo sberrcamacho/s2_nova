@@ -1,5 +1,6 @@
 package com.s2nova.app.ui.screens.auth
 
+import com.s2nova.app.ui.components.revealOnFocus
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -46,27 +47,31 @@ fun ResetPasswordScreen(onBackToLogin: () -> Unit) {
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 NovaTextField(code, { code = it; error = null }, tr(StringKey.AUTH_RESET_CODE))
-                NovaTextField(next, { next = it; error = null }, tr(StringKey.AUTH_RESET_NEW), isPassword = true, passwordVisible = show, onTogglePasswordVisible = { show = !show })
-                NovaTextField(
-                    confirm, { confirm = it; error = null }, tr(StringKey.AUTH_RESET_CONFIRM),
-                    isPassword = true, passwordVisible = show, onTogglePasswordVisible = { show = !show },
-                    isError = error != null, errorMessage = error,
-                )
-                Text(tr(StringKey.AUTH_PW_RULES), style = NovaType.bodySm, color = NovaColors.current.textDim, modifier = Modifier.fillMaxWidth().padding(top = 0.dp))
-                NovaPrimaryButton(
-                    text = tr(StringKey.AUTH_RESET_SUBMIT),
-                    loading = busy,
-                    enabled = code.isNotBlank() && rulesOk && !busy,
-                    onClick = {
-                        busy = true
-                        scope.launch {
-                            AppContainer.authRepository.resetPassword(code, next)
-                                .onSuccess { done = true }
-                                .onFailure { error = if (it is HttpException && it.code() == 400) tr(StringKey.AUTH_RESET_INVALID) else tr(StringKey.API_OFFLINE) }
-                            busy = false
-                        }
-                    },
-                )
+                // With the keyboard up, the passwords, the rules and Guardar
+                // stay in view together.
+                Column(Modifier.revealOnFocus(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    NovaTextField(next, { next = it; error = null }, tr(StringKey.AUTH_RESET_NEW), isPassword = true, passwordVisible = show, onTogglePasswordVisible = { show = !show })
+                    NovaTextField(
+                        confirm, { confirm = it; error = null }, tr(StringKey.AUTH_RESET_CONFIRM),
+                        isPassword = true, passwordVisible = show, onTogglePasswordVisible = { show = !show },
+                        isError = error != null, errorMessage = error,
+                    )
+                    Text(tr(StringKey.AUTH_PW_RULES), style = NovaType.bodySm, color = NovaColors.current.textDim, modifier = Modifier.fillMaxWidth().padding(top = 0.dp))
+                    NovaPrimaryButton(
+                        text = tr(StringKey.AUTH_RESET_SUBMIT),
+                        loading = busy,
+                        enabled = code.isNotBlank() && rulesOk && !busy,
+                        onClick = {
+                            busy = true
+                            scope.launch {
+                                AppContainer.authRepository.resetPassword(code, next)
+                                    .onSuccess { done = true }
+                                    .onFailure { error = if (it is HttpException && it.code() == 400) tr(StringKey.AUTH_RESET_INVALID) else tr(StringKey.API_OFFLINE) }
+                                busy = false
+                            }
+                        },
+                    )
+                }
                 com.s2nova.app.ui.screens.auth.BackToLoginLink(onBackToLogin)
             }
         }

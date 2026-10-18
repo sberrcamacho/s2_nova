@@ -65,7 +65,7 @@ fun NovaTextField(
     }
     val textColor = MaterialTheme.colorScheme.onBackground
 
-    Column(modifier = modifier.fillMaxWidth()) {
+    Column(modifier = modifier.revealOnFocus().fillMaxWidth()) {
         Text(
             text = label,
             fontSize = 12.sp,

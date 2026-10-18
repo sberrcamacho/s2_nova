@@ -133,7 +133,7 @@ describe('LockPage', () => {
     const user = userEvent.setup()
     renderLock()
 
-    await user.click(await screen.findByRole('button', { name: 'Cerrar sesión' }))
+    await user.click(await screen.findByRole('button', { name: '¿No eres Ada? Cerrar sesión' }))
     expect(await screen.findByText('Pantalla de login')).toBeInTheDocument()
     expect(localStorage.getItem('s2nova.lockedAccount')).toBeNull()
   })
