@@ -170,6 +170,73 @@ that Access Sensitive Information" policy for whether notification access
 needs a declaration form. If review asks for it, record a short video of
 the disclosure, the app picker and a suggestion being confirmed.
 
+## Release readiness (review of 2026-10-17)
+
+Verdict: **ready for the closed test, not yet for production.**
+Production needs the 14-day closed test anyway, and the items below.
+
+The review covered the 1.2.0 changes (loan interest, lock screen, Reportes
+range, notification capture, assistant), a security review, and a manual
+audit of the whole app. What it found and fixed:
+
+- fastify 5.12.1 had published advisories, including an auth bypass
+  through malformed URLs. Updated to 5.12.7.
+- On Android, the lock screen's "Cerrar sesión" left the previous
+  account's notification capture in place, so its queued bank
+  notifications could be sent as the next account. Now cleared, and a
+  queue is only sent by its owner.
+- Unlocking with another Google account could create a new account or
+  link Google to a different one. `/auth/google` now takes
+  `expectedUserId` and refuses those.
+- Assistant: movements reached the model without their category, one long
+  answer broke the rest of the conversation, timeouts used up the daily
+  quota, and the tool reads of all users shared one rate-limit bucket.
+- Suggestions: a re-posted bank notification became a second suggestion,
+  and two identical posts at once returned a 500.
+
+What was checked and found sound:
+
+- Every user-data query is scoped by `userId`. That includes the
+  suggestion confirm/dismiss routes, the assistant's tools (GETs with the
+  caller's token, fixed paths, encoded query) and settle-loan.
+- zod validation on every new body and query, and no raw SQL beyond the
+  existing parameterized `FOR UPDATE`.
+- The AI can't write: `propose_movement` only returns a draft. Digits are
+  masked before Gemini, and the key is server-side only.
+- No `dangerouslySetInnerHTML`. Refresh cookie `httpOnly`, and the access
+  token is in memory on web.
+- Android exports only `MainActivity` and the notification listener
+  (system-only permission). Cleartext is off (targetSdk 36, no network
+  config). Session, lock and capture-queue stores are excluded from
+  backups.
+- No secrets in git history. `local.properties`, `keystore.properties`
+  and the keystore are gitignored.
+- Production probes: `/auth/google` answers 401 for a bad token (so Google
+  is configured), and CORS doesn't allow foreign origins.
+
+Accepted for now:
+
+- `pnpm audit` still lists deepmerge-ts and source-map-js under the
+  Prisma CLI (build tooling, DoS only), and uuid under google-auth-library
+  (a buffer API this code doesn't use).
+
+Open before production:
+
+1. **Rate limits on Render see the proxy, not the user.** Fastify runs
+   without `trustProxy`, so `request.ip` is Render's proxy and all users
+   share each per-IP bucket (100/min overall, plus the auth limits). With
+   real traffic, logins start failing for everyone. Render appends to a
+   client-supplied `X-Forwarded-For` rather than replacing it, so
+   `trustProxy: true` would let anyone fake their IP. Set a fixed hop count
+   instead, after checking the header chain on one real request.
+2. After pushing: Render applies the two new migrations on deploy. Set
+   `GEMINI_API_KEY` there for the assistant and the AI parser. The
+   assistant stays hidden without it.
+3. Add the Play app signing SHA-1 and the upload SHA-1 to the Android
+   OAuth client (see "Signing and Google Sign-In").
+4. Not tried on a phone yet: Google unlock on the Android lock screen, and
+   the capture owner check after a real sign-out and sign-in.
+
 ## Releases
 
 | Version | Code | Date | Notes |
