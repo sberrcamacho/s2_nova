@@ -41,7 +41,8 @@ async function confirmIdentity(userId: string, body: z.infer<typeof confirmSchem
   }
   try {
     const verified = await verifyGoogleIdToken(body.googleIdToken);
-    const fresh = verified.issuedAt === undefined || Date.now() / 1000 - verified.issuedAt <= GOOGLE_CONFIRM_MAX_AGE_SECONDS;
+    // A token without `iat` counts as stale: freshness must be proven.
+    const fresh = verified.issuedAt !== undefined && Date.now() / 1000 - verified.issuedAt <= GOOGLE_CONFIRM_MAX_AGE_SECONDS;
     if (verified.sub !== google.providerUserId || !fresh) {
       reply.status(401).send({ error: "That Google account is not this account." });
       return false;

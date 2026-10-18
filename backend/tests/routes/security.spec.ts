@@ -220,6 +220,11 @@ describe("security routes", () => {
     expect(stale.statusCode).toBe(401);
     expect(await prisma.user.findUnique({ where: { id: user.id } })).not.toBeNull();
 
+    // No issue time: freshness can't be shown, so it's refused too.
+    verifyGoogleIdToken.mockResolvedValueOnce({ sub, email: user.email, emailVerified: true, name: "Me" });
+    const undated = await app.inject({ method: "DELETE", url: "/api/v1/me", headers: authHeader(user), payload: { googleIdToken: "t" } });
+    expect(undated.statusCode).toBe(401);
+
     verifyGoogleIdToken.mockResolvedValueOnce({ sub, email: user.email, emailVerified: true, name: "Me", issuedAt: nowSeconds() });
     const res = await app.inject({ method: "DELETE", url: "/api/v1/me", headers: authHeader(user), payload: { googleIdToken: "t" } });
     expect(res.statusCode).toBe(204);
