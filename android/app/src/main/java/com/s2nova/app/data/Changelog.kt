@@ -49,15 +49,32 @@ object WhatsNewStore {
     private const val PREFS = "s2nova_whats_new"
     private const val SEEN = "seen"
 
+    // The last version that shipped without this store: an update with
+    // nothing saved came from it (or earlier).
+    private const val BEFORE_STORE = "1.1.0"
+
+    // What's new since the version last seen, as one "version" (this
+    // build's) holding the items of every version in between, newest
+    // first; null when there is nothing to show.
     fun pending(context: Context): ChangelogVersion? {
-        val current = Changelog.current(context) ?: return null
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val seen = prefs.getString(SEEN, null)
         if (seen == null && freshInstall(context)) {
             markSeen(context)
             return null
         }
-        return current.takeIf { seen != it.version }
+        val combined = since(Changelog.versions(context), seen ?: BEFORE_STORE, BuildConfig.VERSION_NAME)
+        if (combined == null) markSeen(context)
+        return combined
+    }
+
+    internal fun since(versions: List<ChangelogVersion>, seen: String, current: String): ChangelogVersion? {
+        val entry = versions.firstOrNull { it.version == current } ?: return null
+        if (compareVersions(current, seen) <= 0) return null
+        val items = versions
+            .filter { compareVersions(it.version, seen) > 0 && compareVersions(it.version, current) <= 0 }
+            .flatMap { it.items }
+        return if (items.isEmpty()) null else entry.copy(items = items, also = emptyList())
     }
 
     fun markSeen(context: Context) {

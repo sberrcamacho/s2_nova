@@ -33,7 +33,7 @@ export function WhatsNewDialog({ version, onClose, onSeeAll }: { version: Change
       </div>
       <div className="flex flex-col gap-4" aria-live="polite">
         <img
-          key={item.image}
+          key={page}
           src={changelogImage(item.image, theme)}
           alt=""
           className="aspect-[3/2] w-full rounded-[16px] border border-border bg-surface-sunken object-cover object-top"
@@ -45,8 +45,8 @@ export function WhatsNewDialog({ version, onClose, onSeeAll }: { version: Change
         </div>
       </div>
       <div className="flex justify-center gap-1.5" aria-hidden="true">
-        {version.items.map((it, i) => (
-          <span key={it.image} className={`h-1.5 rounded-full transition-[width] ${i === page ? 'w-[18px] bg-link' : 'w-1.5 bg-border-input'}`} />
+        {version.items.map((_, i) => (
+          <span key={i} className={`h-1.5 rounded-full transition-[width] ${i === page ? 'w-[18px] bg-link' : 'w-1.5 bg-border-input'}`} />
         ))}
       </div>
       <div className="flex gap-3">

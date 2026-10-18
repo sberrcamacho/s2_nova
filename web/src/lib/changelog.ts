@@ -50,11 +50,24 @@ export function markWhatsNewSeen(version: string = CHANGELOG[0]?.version ?? ''):
   }
 }
 
-// The newest version's Novedades, once per browser. An account created on
-// or after that release has nothing "new" to see (its tours come first),
-// and the example account doesn't get it either.
-export function pendingWhatsNew(user: Pick<User, 'isGuest' | 'memberSince'> | null): ChangelogVersion | null {
-  const latest = CHANGELOG[0]
+// "1.10.0" > "1.9.2".
+export function compareVersions(a: string, b: string): number {
+  const x = a.replace(/^v/, '').split('.').map(Number)
+  const y = b.replace(/^v/, '').split('.').map(Number)
+  for (let i = 0; i < Math.max(x.length, y.length); i++) {
+    const d = (x[i] ?? 0) - (y[i] ?? 0)
+    if (d !== 0) return d
+  }
+  return 0
+}
+
+// What's new since the version this browser last showed, as one entry (the
+// newest version's) holding the items of every version in between, once.
+// An account created on or after the newest release has nothing "new" to
+// see (its tours come first), and the example account doesn't get it
+// either. Null when there is nothing to page through.
+export function pendingWhatsNew(user: Pick<User, 'isGuest' | 'memberSince'> | null, versions: ChangelogVersion[] = CHANGELOG): ChangelogVersion | null {
+  const latest = versions[0]
   if (!latest || !user || user.isGuest) return null
   const seen = readSeen()
   if (seen === latest.version) return null
@@ -62,5 +75,12 @@ export function pendingWhatsNew(user: Pick<User, 'isGuest' | 'memberSince'> | nu
     markWhatsNewSeen(latest.version)
     return null
   }
-  return latest
+  // Never shown here: what came out after the account was created.
+  const since = seen ?? versions.find((v) => v.date <= user.memberSince)?.version ?? '0.0.0'
+  const items = versions.filter((v) => compareVersions(v.version, since) > 0).flatMap((v) => v.items)
+  if (items.length === 0) {
+    markWhatsNewSeen(latest.version)
+    return null
+  }
+  return { ...latest, items, also: [] }
 }

@@ -2,6 +2,21 @@
   "_comment": "What's new in each version, newest first. Run `node scripts/gen-changelog.mjs` after editing: it writes web/src/lib/changelog.json and android/app/src/main/assets/changelog.json and checks that every image exists in both clients (light and dark). `version` must match the Android versionName of that release.",
   "versions": [
     {
+      "version": "1.2.2",
+      "date": "2026-10-18",
+      "items": [],
+      "also": [
+        {
+          "es": "Si cierras la app y la vuelves a abrir, te pedimos confirmar que eres tú con tu contraseña, Google o tu huella. Si cerraste sesión, empiezas en Iniciar sesión.",
+          "en": "If you close the app and open it again, you're asked to confirm it's you with your password, Google or your fingerprint. If you signed out, you start at Sign in."
+        },
+        {
+          "es": "La huella para entrar ahora está en la pantalla de bloqueo.",
+          "en": "Fingerprint sign-in now lives on the lock screen."
+        }
+      ]
+    },
+    {
       "version": "1.2.1",
       "date": "2026-10-18",
       "items": [

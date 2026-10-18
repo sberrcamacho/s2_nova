@@ -279,3 +279,4 @@ Open before production:
 | 1.1.0 | 2 | 2026-10-13 | First published APK: Abonar capped at what the goal needs, "Completar" chip, one-line chip rows in Más opciones. |
 | 1.2.0 | 3 | 2026-10-18 | Loan interest, lock screen, custom Reportes range, notification capture, assistant, Novedades and the update check. Blocked by Play Protect (notification listener). |
 | 1.2.1 | 4 | 2026-10-18 | 1.2.0 without "Registrar desde notificaciones", so it installs. |
+| 1.2.2 | 5 | 2026-10-18 | Reopening the app locks it (lock screen, not Login); no fingerprint on Login. |

@@ -81,7 +81,9 @@ table gives for free (see §4).
   report activity (`POST /auth/activity`, at most once a minute); the
   server ends a session idle longer than the setting + 1 min on its own
   (`lib/sessions.ts`), which covers a killed or offline client. After an
-  inactivity logout both clients lock instead of showing Login: they keep
+  inactivity logout both clients lock instead of showing Login (Android
+  also locks every time the app is reopened after being closed or killed;
+  only a manual sign-out opens on Login): they keep
   who was signed in (web localStorage `s2nova.lockedAccount`, Android
   `LockedAccountStore`, never a credential) and the lock screen (web
   `/bloqueo`, Android `LOCK`) asks only that account back — its password,

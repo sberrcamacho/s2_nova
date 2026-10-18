@@ -120,7 +120,13 @@ it if missing) with `compileSdk 36` / `minSdk 31` platforms installed.
   can't dodge it. It calls `AuthRepository.logoutForIdle()` (server
   revokes the session, tokens cleared) and locks the account: the `LOCK`
   route (`ui/screens/auth/LockScreen.kt`) asks for that account's password,
-  Google or fingerprint, and its "Cerrar sesión" goes to Login. While active,
+  Google or fingerprint, and its "Cerrar sesión" goes to Login. Reopening
+  the app (closed, swiped away in recents or killed) locks too, with no
+  network needed: `LockedAccountStore` remembers the signed-in account on
+  every sign-in, and `bootstrap()` locks it (`lockKnown()`) and ends that
+  session. Only a manual sign-out forgets it, so then the app opens on
+  Login. Login has no fingerprint button; the fingerprint is on the lock
+  screen. While active,
   the app posts `POST /auth/activity` at most once a minute; the server
   ends idle sessions itself too (backend `lib/sessions.ts`) and rejects
   their access tokens at once. Tokens are AES-GCM encrypted with an
@@ -482,7 +488,8 @@ Ajustes row (`BuildConfig.NOTIFICATION_CAPTURE`), because Play Protect
 blocks sideloaded apps that can read notifications.
 
 Novedades and updates (`ui/screens/whatsnew/WhatsNew.kt`): after an update
-Inicio shows that version's Novedades once (`WhatsNewSheet`, a pager with a
+Inicio shows the items of every version since the last one seen, once
+(`WhatsNewStore.since`; `WhatsNewSheet`, a pager with a
 capture per feature; a fresh install skips it and gets the tour), from
 `assets/changelog.json` (`data/Changelog.kt`, written by
 `scripts/gen-changelog.mjs`). `data/UpdateChecker.kt` asks GitHub for the

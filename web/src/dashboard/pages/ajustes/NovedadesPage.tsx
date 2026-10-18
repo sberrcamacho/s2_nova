@@ -20,7 +20,7 @@ export default function NovedadesPage() {
             {v === 0 && <span className="whitespace-nowrap rounded-full border border-primary-border px-2 py-0.5 text-caption font-semibold text-link">{t('wn.current')}</span>}
           </div>
           <div className="text-body-sm text-ink-tertiary">{formatLongDate(version.date, language)}</div>
-          <ul className="mt-4 flex flex-col gap-3">
+          {version.items.length > 0 && <ul className="mt-4 flex flex-col gap-3">
             {version.items.map((item) => (
               <li key={item.image} className="flex flex-col gap-3 rounded-[16px] border border-border p-3 min-[560px]:flex-row min-[560px]:items-start">
                 <img
@@ -35,10 +35,10 @@ export default function NovedadesPage() {
                 </div>
               </li>
             ))}
-          </ul>
+          </ul>}
           {version.also.length > 0 && (
             <>
-              <h3 className="mt-5 text-title-sm font-semibold text-ink">{t('wn.also')}</h3>
+              <h3 className={`${version.items.length > 0 ? 'mt-5' : 'mt-4'} text-title-sm font-semibold text-ink`}>{t('wn.also')}</h3>
               <ul className="mt-2 flex list-disc flex-col gap-1.5 pl-5 text-body-sm text-ink-secondary marker:text-ink-tertiary">
                 {version.also.map((line) => (
                   <li key={line.es}>{line[language]}</li>

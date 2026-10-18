@@ -63,9 +63,10 @@ Reportes** — plus **Ajustes** in the footer. Pre-v2 paths (`/overview`,
   prefilled (`MovementDraft`, `useNewMovement(undefined, draft)`); Android's
   `AssistantScreen` is the same.
 - **Novedades** (`lib/changelog.ts`, `dashboard/components/WhatsNewDialog.tsx`,
-  `pages/ajustes/NovedadesPage.tsx` at `/ajustes/novedades`): the newest
-  version's changes, one feature per page with its capture, once per
-  browser to accounts older than that release (not to guests); Ajustes ›
+  `pages/ajustes/NovedadesPage.tsx` at `/ajustes/novedades`): the items of
+  every version since the one this browser last showed, one feature per
+  page with its capture, once (not to guests, nor to accounts newer than
+  the release; a version with only "also" lines shows nothing); Ajustes ›
   S2 Nova › Novedades lists every version. The text comes from
   `lib/changelog.json` (`scripts/gen-changelog.mjs`), the same as Android.
   The landing's top pill and the Android card show that version.

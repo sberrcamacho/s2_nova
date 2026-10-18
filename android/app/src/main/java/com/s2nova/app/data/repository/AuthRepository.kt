@@ -121,9 +121,10 @@ class AuthRepository(
         return signIn().mapCatching {
             if (_currentUser.value?.id != locked.userId) {
                 logout(keepLock = true)
+                lockedAccountStore.relock(locked)
                 throw com.s2nova.app.data.remote.OtherAccountException()
             }
-            lockedAccountStore.clear()
+            lockedAccountStore.unlock()
         }
     }
 
@@ -140,10 +141,12 @@ class AuthRepository(
         // only works while that account's preference is on (it is retired
         // server-side otherwise): forget one that can no longer be used.
         if (biometricStore.userId().let { it != null && (it != user.id || !user.preferences.biometricLogin) }) biometricStore.clear()
+        // Remembered for the lock screen the next time the app opens.
+        if (!DemoModeFlag.active) lockedAccountStore.remember(user)
         return user
     }
 
-    // Whether this device can offer "Ingreso biométrico" on Login.
+    // Whether this device can offer the fingerprint on the lock screen.
     val biometricEnrolled: kotlinx.coroutines.flow.Flow<Boolean> = biometricStore.enrolled
 
     // Ajustes › Ingreso biométrico, on: the server issues this device a
@@ -193,6 +196,15 @@ class AuthRepository(
     // log in again. Returns whether a session was restored.
     suspend fun bootstrap(): Boolean {
         if (sessionStore.refreshTokenOnce() == null) return false
+        // Reopening the app (after it was closed, swiped away or killed)
+        // locks the account it remembers: the lock screen asks it back, and
+        // this session ends like an inactivity lock's. It needs no network,
+        // so a sleeping backend can't send the user to Login instead. Only a
+        // session from before the account was remembered goes on below.
+        if (lockedAccountStore.lockKnown()) {
+            logout(keepLock = true)
+            return false
+        }
         return try {
             val user = fetchAndSyncMe()
             // The app was closed (or killed) longer ago than "Cierre

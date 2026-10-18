@@ -22,7 +22,20 @@ class ChangelogTest {
     fun `this build has its Novedades`() {
         val current = versions.firstOrNull { it.version == BuildConfig.VERSION_NAME }
         assertNotNull("changelog.json needs an entry for ${BuildConfig.VERSION_NAME}", current)
-        assertTrue(current!!.items.isNotEmpty())
+    }
+
+    @Test
+    fun `an update shows every version since the one last seen`() {
+        fun v(version: String, vararg images: String) =
+            ChangelogVersion(version, "2026-10-18", images.map { ChangelogItem(it, LocalizedText(it, it), LocalizedText(it, it)) })
+        val list = listOf(v("1.3.0"), v("1.2.1", "a", "b"), v("1.1.0", "c"))
+        // From 1.1.0: 1.3.0 has no items of its own, 1.2.1's show.
+        assertEquals(listOf("a", "b"), WhatsNewStore.since(list, "1.1.0", "1.3.0")!!.items.map { it.image })
+        assertEquals("1.3.0", WhatsNewStore.since(list, "1.1.0", "1.3.0")!!.version)
+        // From 1.2.1: nothing new to page through.
+        assertEquals(null, WhatsNewStore.since(list, "1.2.1", "1.3.0"))
+        assertEquals(null, WhatsNewStore.since(list, "1.3.0", "1.3.0"))
+        assertEquals(listOf("a", "b", "c"), WhatsNewStore.since(list, "1.0.0", "1.3.0")!!.items.map { it.image })
     }
 
     @Test
