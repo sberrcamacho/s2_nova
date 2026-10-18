@@ -90,7 +90,7 @@ function HeroComposition() {
   return (
     <div className="relative mx-auto h-[520px] w-full max-w-[540px]" aria-hidden="true">
       {/* Balance panel */}
-      <div className="absolute left-1/2 top-1/2 w-[92%] max-w-[460px] -translate-x-1/2 -translate-y-1/2 rounded-[24px] border border-border bg-surface/80 p-6 shadow-[var(--shadow-lg)] backdrop-blur-xl nova-rise [animation-delay:150ms]">
+      <div className="absolute left-1/2 top-1/2 w-full max-w-[460px] -translate-x-1/2 -translate-y-1/2 rounded-[24px] border border-border bg-surface/80 p-5 shadow-[var(--shadow-lg)] min-[420px]:w-[92%] sm:p-6 backdrop-blur-xl nova-rise [animation-delay:150ms]">
         <div className="flex items-start justify-between">
           <div>
             <div className="text-body-sm font-medium text-ink-secondary">{t('landing.preview.balance')}</div>
@@ -120,7 +120,7 @@ function HeroComposition() {
         <ul className="mt-2 flex flex-col gap-2">
           {rows.map((r) => (
             <li key={r.title} className="flex items-center gap-3 rounded-[14px] border border-border bg-bg-secondary/70 px-3 py-2.5">
-              <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full border border-border bg-surface text-ink-secondary">
+              <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full border border-border bg-surface text-ink-secondary max-[400px]:hidden">
                 <r.icon className="h-4 w-4" strokeWidth={1.8} />
               </span>
               <div className="min-w-0 flex-1">
@@ -238,8 +238,8 @@ export default function LandingPage() {
 
       <main id="contenido" className="relative">
         {/* Hero */}
-        <section className="mx-auto grid max-w-7xl items-center gap-12 px-4 pb-20 pt-14 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:gap-8 lg:pb-28 lg:pt-20">
-          <div className="nova-rise flex flex-col items-start gap-7">
+        <section className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-4 pb-20 pt-14 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:gap-8 lg:pb-28 lg:pt-20">
+          <div className="nova-rise flex min-w-0 flex-col items-start gap-7">
             {/* The latest version's news, down to the Android download. */}
             <a
               href="#dispositivos"
@@ -329,8 +329,8 @@ export default function LandingPage() {
             {/* Wallets and currencies, 2×2 */}
             <BentoCard className="justify-between md:col-span-2 md:row-span-2">
               <FeatureText icon={Coins} title="landing.f.currencies" body="landing.f.currenciesBody" />
-              <div aria-hidden="true" className="relative mt-10 h-64">
-                <div className="absolute bottom-16 right-[min(52%,300px)] flex h-40 w-72 max-w-[85%] -rotate-6 flex-col justify-between rounded-[20px] border border-border bg-bg-secondary p-5 shadow-[var(--shadow-md)]">
+              <div aria-hidden="true" className="relative mt-10 h-[22rem] sm:h-64">
+                <div className="absolute left-1 top-0 flex h-40 w-72 max-w-[85%] -rotate-6 sm:bottom-16 sm:left-auto sm:right-[min(52%,300px)] sm:top-auto flex-col justify-between rounded-[20px] border border-border bg-bg-secondary p-5 shadow-[var(--shadow-md)]">
                   <div className="flex justify-between text-caption font-semibold text-ink-tertiary">
                     <span>Wise</span>
                     <span>USD</span>

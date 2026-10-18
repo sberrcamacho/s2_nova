@@ -1241,7 +1241,7 @@ const dictionary = {
   "landing.android.note": { es: "APK para Android 12 o superior. Al instalarla, Android te pide permitir apps de esta fuente.", en: "APK for Android 12 or later. When installing, Android asks you to allow apps from this source." },
   "landing.android.version": { es: "Versión {0} · Qué hay de nuevo", en: "Version {0} · What's new" },
   "landing.news.badge": { es: "Nuevo", en: "New" },
-  "landing.news.text": { es: "Ya está la versión {0}. Mira qué hay de nuevo", en: "Version {0} is out. See what's new" },
+  "landing.news.text": { es: "Versión {0}: qué hay de nuevo", en: "Version {0}: what's new" },
   "landing.cta.android": { es: "¿Usas Android? Descarga la app", en: "On Android? Download the app" },
   "landing.phone.body": { es: "Para el día a día: registra un gasto en el momento y revisa cómo vas.", en: "For every day: record a purchase on the spot and check how you're doing." },
   "landing.phone.p1": { es: "Registro rápido de movimientos, con foto del recibo", en: "Quick entry, with a photo of the receipt" },
