@@ -73,22 +73,22 @@ function merchantOf(text: string, type: "INCOME" | "EXPENSE"): string | null {
 
 // Well-known Colombian merchants and services → taxonomy slug.
 const MERCHANT_CATEGORY: [RegExp, string][] = [
-  [/[eé]xito|carulla|\bd1\b|\bara\b|ol[ií]mpica|jumbo|metro\b|makro|surtimax|supermercado/i, "exp.food.groceries"],
+  [/[eé]xito|carulla|\bd1\b|\bara\b|ol[ií]mpica|\bjumbo\b|\bmetro\b(?! de medell)|makro|surtimax|supermercado/i, "exp.food.groceries"],
   [/rappi|ifood|domicilio/i, "exp.food.delivery"],
-  [/juan valdez|starbucks|tostao|oma\b|caf[eé]/i, "exp.food.cafes"],
+  [/juan valdez|starbucks|tostao|\boma\b|\bcaf[eé]/i, "exp.food.cafes"],
   [/restaurante|crepes|frisby|kfc|mcdonald|burger|el corral|pizza/i, "exp.food.restaurants"],
-  [/uber|didi|cabify|indriver|beat\b|taxi/i, "exp.transportation.rideshare"],
-  [/transmilenio|tullave|metro de medell|sitp|mio\b/i, "exp.transportation.public_transit"],
-  [/terpel|primax|texaco|biomax|esso|mobil|gasolina/i, "exp.transportation.fuel"],
+  [/\buber\b|\bdidi\b|cabify|indriver|\bbeat\b|\btaxi/i, "exp.transportation.rideshare"],
+  [/transmilenio|tullave|metro de medell|\bsitp\b|\bmio\b/i, "exp.transportation.public_transit"],
+  [/terpel|primax|texaco|biomax|\besso\b|\bmobil\b|gasolina/i, "exp.transportation.fuel"],
   [/netflix|spotify|disney|hbo|\bmax\b|prime video|youtube|apple\.com|deezer|crunchyroll/i, "exp.entertainment.streaming"],
   [/cine ?colombia|cinemark|procinal|royal films/i, "exp.entertainment.cinema"],
-  [/\bepm\b|codensa|enel|air-e|afinia|electricaribe/i, "exp.utilities.electricity"],
+  [/\bepm\b|codensa|\benel\b|\bair-e\b|afinia|electricaribe/i, "exp.utilities.electricity"],
   [/acueducto|aguas de/i, "exp.utilities.water"],
   [/vanti|gas natural|gases de/i, "exp.utilities.gas"],
-  [/claro|movistar|tigo|wom\b|etb\b/i, "exp.utilities.phone"],
+  [/\bclaro\b|movistar|\btigo\b|\bwom\b|\betb\b/i, "exp.utilities.phone"],
   [/farmacia|drogueri|cruz verde|farmatodo|la rebaja|copidrogas/i, "exp.health.medication"],
-  [/falabella|zara|h&m|arturo calle|koaj|studio f|tennis\b/i, "exp.shopping.clothing"],
-  [/homecenter|easy\b|ikea|tugo/i, "exp.shopping.home"],
+  [/falabella|\bzara\b|h&m|arturo calle|\bkoaj\b|studio f\b|\btennis\b/i, "exp.shopping.clothing"],
+  [/homecenter|\beasy\b|\bikea\b|\btugo\b/i, "exp.shopping.home"],
   [/alkosto|ktronix|mercado ?libre|amazon|apple store/i, "exp.shopping.technology"],
 ];
 

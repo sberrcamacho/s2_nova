@@ -84,8 +84,9 @@ fun CaptureSettingsScreen(onBack: () -> Unit) {
     val shown = apps.filter { showAll || FINANCE.containsMatchIn(it.packageName + " " + it.label) || it.packageName in settings.apps }
 
     fun save(next: NotificationCapture.Settings) {
-        settings = next
-        NotificationCapture.saveSettings(next, context)
+        val owned = next.copy(ownerId = AppContainer.authRepository.currentUser.value?.id)
+        settings = owned
+        NotificationCapture.saveSettings(owned, context)
     }
     // Back from Android's settings: is access allowed now?
     LifecycleResumeEffect(Unit) {

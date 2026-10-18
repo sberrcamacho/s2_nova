@@ -110,6 +110,24 @@ describe('LockPage', () => {
     expect(localStorage.getItem('s2nova.lockedAccount')).not.toBeNull()
   })
 
+  it('asks the server for the locked account only, and explains a refusal', async () => {
+    lock(false, true)
+    let sent: unknown = null
+    server.use(
+      http.post(`${BASE}/auth/google`, async ({ request }) => {
+        sent = await request.json()
+        return HttpResponse.json({ error: 'That Google account is not this account.', code: 'OtherAccount' }, { status: 403 })
+      }),
+    )
+    const user = userEvent.setup()
+    renderLock()
+
+    await user.click(await screen.findByRole('button', { name: 'Continuar con Google' }))
+    expect(await screen.findByText('Esa cuenta de Google no es la de esta sesión.')).toBeInTheDocument()
+    expect(sent).toEqual({ idToken: 'google-token', expectedUserId: 'u1' })
+    expect(localStorage.getItem('s2nova.lockedAccount')).not.toBeNull()
+  })
+
   it('"Cerrar sesión" forgets the account and goes to Login', async () => {
     lock(true, false)
     const user = userEvent.setup()

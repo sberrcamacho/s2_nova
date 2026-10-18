@@ -91,8 +91,18 @@ class AuthRepository(
 
     suspend fun lockedAccountOnce(): com.s2nova.app.data.local.LockedAccount? = lockedAccountStore.current()
 
-    // Lock screen › "Cerrar sesión": forget the account; Login comes next.
-    suspend fun forgetLockedAccount() = lockedAccountStore.clear()
+    // Lock screen › Google: only the locked account may come back.
+    suspend fun unlockWithGoogle(idToken: String): Result<Unit> {
+        val locked = lockedAccountStore.current()
+        return unlock { loginWithGoogle(idToken, locked?.userId) }
+    }
+
+    // Lock screen › "Cerrar sesión": forget the account; Login comes next,
+    // and whoever signs in must not inherit its notification capture.
+    suspend fun forgetLockedAccount() {
+        lockedAccountStore.clear()
+        com.s2nova.app.data.notifications.NotificationCapture.clear()
+    }
 
     // Saves who was signed in (a real account, not the guest) before an
     // inactivity sign-out. Returns whether it locked.
@@ -230,8 +240,13 @@ class AuthRepository(
         _currentUser.value = fetchAndSyncMe()
     }
 
-    suspend fun loginWithGoogle(idToken: String): Result<Unit> = runCatching {
-        val session = ApiClient.authApi.loginWithGoogle(GoogleLoginRequest(idToken))
+    suspend fun loginWithGoogle(idToken: String, expectedUserId: String? = null): Result<Unit> = runCatching {
+        val session = try {
+            ApiClient.authApi.loginWithGoogle(GoogleLoginRequest(idToken, expectedUserId))
+        } catch (e: retrofit2.HttpException) {
+            if (expectedUserId != null && e.code() == 403) throw com.s2nova.app.data.remote.OtherAccountException()
+            throw e
+        }
         sessionStore.saveSession(session.accessToken, session.refreshToken)
         idleTimeoutStore.touch()
         _currentUser.value = fetchAndSyncMe()
@@ -355,6 +370,8 @@ class AuthRepository(
     // idle check locks like "Cierre automático"; returns whether it did.
     suspend fun onSessionEnded(idle: Boolean): Boolean {
         val locked = idle && lockCurrentUser()
+        // Not locked: anyone may sign in next, so the capture goes too.
+        if (!locked) com.s2nova.app.data.notifications.NotificationCapture.clear()
         DemoModeFlag.set(false)
         _currentUser.value = null
         return locked

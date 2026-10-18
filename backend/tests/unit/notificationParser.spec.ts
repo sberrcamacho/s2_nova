@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { maskDigits, parseNotification, parseWithRules, readNumber } from "../../src/services/notificationParser.js";
+import { guessSlug, maskDigits, parseNotification, parseWithRules, readNumber } from "../../src/services/notificationParser.js";
 import { env } from "../../src/env.js";
 
 const n = (text: string, title = "", appLabel = "Banco") => ({ appLabel, title, text });
@@ -56,5 +56,14 @@ describe("notification parser", () => {
     expect(await parseNotification(n("Tu clave dinámica es 1234"), { allowAi: true, fetcher })).toBeNull();
     expect(fetcher).toHaveBeenCalledTimes(1);
     (env as { GEMINI_API_KEY: string }).GEMINI_API_KEY = original;
+  });
+
+  it("matches merchants as whole words", () => {
+    expect(guessSlug("EXPENSE", "Compraste $20.000 en Paloma Store", "Paloma Store")).toBeNull();
+    expect(guessSlug("EXPENSE", "Pagaste $8.000 en un premio", null)).toBeNull();
+    expect(guessSlug("EXPENSE", "Compra con tarjeta, contigo siempre", null)).toBeNull();
+    expect(guessSlug("EXPENSE", "Pagaste $3.200 en Metro de Medellín", "Metro de Medellín")).toBe("exp.transportation.public_transit");
+    expect(guessSlug("EXPENSE", "Compraste $45.000 en Metro Calle 80", "Metro Calle 80")).toBe("exp.food.groceries");
+    expect(guessSlug("EXPENSE", "Compraste $9.000 en OMA Andino", "OMA Andino")).toBe("exp.food.cafes");
   });
 });

@@ -134,13 +134,17 @@ and reuse it on retry, and the web client gives up on a request after 75 s.
   notification; rules read it (COP formats, compra/recibiste…, merchant →
   category), Gemini only when the rules fail and the user allowed it, with
   long digit runs masked. Only the result is stored (`MovementSuggestion`),
-  never the text. Confirming is a normal `POST /transactions` plus
-  `/confirm`.
+  never the text. The same movement re-posted by the bank app within 10
+  minutes (same app, amount, merchant) returns the existing suggestion.
+  Confirming is a normal `POST /transactions` plus `/confirm`.
 - `src/routes/assistant.ts` + `src/services/assistant.ts` — the Asistente:
   Gemini function calling whose tools are GETs of this API made with the
   caller's own token (`app.inject`), so it can only read what the user can;
-  `propose_movement` returns a draft and nothing writes. Quota in
-  `AssistantUsage` (20/day, failed calls don't count). `GEMINI_BASE_URL`
+  `propose_movement` returns a draft and nothing writes. Those reads carry
+  a per-process secret header (`lib/internalRequest.ts`) that skips the
+  per-IP limiter, since injected requests all come from 127.0.0.1. Quota in
+  `AssistantUsage` (20/day; failed, timed-out or unreachable calls don't
+  count). `GEMINI_BASE_URL`
   only exists to point local runs at a stand-in server.
 - `src/lib/budgetProgress.ts`, `src/lib/goalProgress.ts` — the single
   spent/percentage/status computation for budgets (CATEGORY and CUSTOM

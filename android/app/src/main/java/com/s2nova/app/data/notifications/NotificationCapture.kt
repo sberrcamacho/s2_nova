@@ -62,6 +62,9 @@ object NotificationCapture {
         // Package → the wallet its movements go to (null: ask on confirm).
         val apps: Map<String, String?> = emptyMap(),
         val labels: Map<String, String> = emptyMap(),
+        // The account that turned it on: another account never sends what
+        // was captured for it.
+        val ownerId: String? = null,
     )
 
     @Serializable
@@ -119,6 +122,15 @@ object NotificationCapture {
         val pending = synchronized(this) { queue(context).filter { now - it.postedAt < MAX_AGE_MS } }
         if (pending.isEmpty()) return
         val settings = settings(context)
+        // In the background nothing is signed in yet: ask the server who
+        // this session is.
+        val me = AppContainer.authRepository.currentUser.value?.id
+            ?: runCatching { com.s2nova.app.data.remote.ApiClient.api.me().id }.getOrNull()
+            ?: return
+        if (settings.ownerId != me) {
+            clear()
+            return
+        }
         val sent = mutableSetOf<Captured>()
         for (item in pending) {
             val result = runCatching {

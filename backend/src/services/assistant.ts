@@ -98,7 +98,7 @@ async function runTool(name: string, args: Record<string, unknown>, read: Read, 
       case "list_movements": {
         const limit = Math.min(50, Math.max(1, Number(args.limit) || 20));
         const rows = (await read(`/transactions?${query({ from: args.from, to: args.to, search: args.search, type: args.type, limit })}`)) as Record<string, unknown>[];
-        return rows.map((t) => ({ date: t.date, title: t.description, type: t.type, amount: t.amount, currency: t.currency, categoryId: t.categoryId, subcategoryId: t.subcategoryId, merchant: t.merchant, status: t.status }));
+        return rows.map((t) => ({ date: t.date, title: t.description, type: t.type, amount: t.amount, currency: t.currency, category: t.category, subcategory: t.subcategory, merchant: t.merchant, status: t.status }));
       }
       case "get_wallets": {
         const rows = (await read("/accounts")) as Record<string, unknown>[];
@@ -129,6 +129,16 @@ async function runTool(name: string, args: Record<string, unknown>, read: Read, 
 
 export class AssistantUnavailableError extends Error {}
 
+// A timeout, a network failure or an unreadable answer is the AI being
+// unavailable too, not a server error.
+async function callModel<T>(run: () => Promise<T>): Promise<T> {
+  try {
+    return await run();
+  } catch (err) {
+    throw new AssistantUnavailableError(err instanceof Error ? err.message : "AI request failed.");
+  }
+}
+
 export async function runAssistant(
   messages: ChatMessage[],
   { language, today, read, fetcher = fetch }: { language: "es" | "en"; today: string; read: Read; fetcher?: typeof fetch },
@@ -138,7 +148,7 @@ export async function runAssistant(
   const proposals: Proposal[] = [];
 
   for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
-    const res = await fetcher(`${env.GEMINI_BASE_URL}/v1beta/models/gemini-2.5-flash:generateContent`, {
+    const res = await callModel(() => fetcher(`${env.GEMINI_BASE_URL}/v1beta/models/gemini-2.5-flash:generateContent`, {
       method: "POST",
       signal: AbortSignal.timeout(30000),
       headers: { "content-type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
@@ -149,9 +159,9 @@ export async function runAssistant(
         ...(round < MAX_TOOL_ROUNDS ? { tools: [{ functionDeclarations: TOOLS }] } : {}),
         generationConfig: { temperature: 0.3, maxOutputTokens: 1024 },
       }),
-    });
+    }));
     if (!res.ok) throw new AssistantUnavailableError(`AI request failed (${res.status}).`);
-    const body = (await res.json()) as { candidates?: { content?: { parts?: Part[] } }[] };
+    const body = (await callModel(() => res.json())) as { candidates?: { content?: { parts?: Part[] } }[] };
     const parts = body.candidates?.[0]?.content?.parts ?? [];
     const calls = parts.filter((p) => p.functionCall);
     if (calls.length === 0) {

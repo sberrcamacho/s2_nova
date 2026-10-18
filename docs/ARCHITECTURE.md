@@ -85,9 +85,11 @@ table gives for free (see §4).
   who was signed in (web localStorage `s2nova.lockedAccount`, Android
   `LockedAccountStore`, never a credential) and the lock screen (web
   `/bloqueo`, Android `LOCK`) asks only that account back — its password,
-  Google (`/me` `hasGoogle`; another Google account is signed straight
-  out) or, on Android, the fingerprint — plus "Cerrar sesión", which
-  forgets it. A manual sign-out or deleting the account clears it.
+  Google (`/me` `hasGoogle`; `POST /auth/google` with `expectedUserId`
+  answers 403 for any other Google account and never creates or links
+  one) or, on Android, the fingerprint — plus "Cerrar sesión", which
+  forgets it along with Android's notification capture. A manual sign-out
+  or deleting the account clears it.
 - Web: refresh token in an `httpOnly`, `Secure`, `SameSite=Lax` cookie
   (never readable by JS, so an XSS can't exfiltrate it). Access token kept
   in memory only.

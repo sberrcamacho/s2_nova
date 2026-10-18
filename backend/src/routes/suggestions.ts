@@ -55,6 +55,8 @@ async function categoryIdsFor(rows: MovementSuggestion[]): Promise<Map<string, s
   return new Map(found.map((c) => [c.slug, c.id]));
 }
 
+const REPOST_WINDOW_MS = 10 * 60 * 1000;
+
 export async function suggestionRoutes(app: FastifyInstance) {
   app.post(
     "/suggestions/from-notification",
@@ -70,6 +72,23 @@ export async function suggestionRoutes(app: FastifyInstance) {
       const parsed = await parseNotification({ appLabel: body.appLabel, title: body.title, text: body.text }, { allowAi: body.allowAi });
       if (!parsed) return reply.send({ suggestion: null });
 
+      // A bank app that updates or re-posts its notification sends the same
+      // movement again with a new time: within a few minutes, it's that one.
+      const occurredAt = new Date(body.postedAt);
+      const amountMinor = toMinor(parsed.amount, parsed.currency);
+      const repost = await prisma.movementSuggestion.findFirst({
+        where: {
+          userId,
+          sourceApp: body.packageName,
+          type: parsed.type,
+          amountMinor,
+          currency: parsed.currency,
+          merchant: parsed.merchant,
+          occurredAt: { gte: new Date(occurredAt.getTime() - REPOST_WINDOW_MS), lte: new Date(occurredAt.getTime() + REPOST_WINDOW_MS) },
+        },
+      });
+      if (repost) return reply.send({ suggestion: await serialize(repost, await categoryIdsFor([repost])) });
+
       // Only one of the user's own wallets.
       const account = body.accountId ? await prisma.account.findFirst({ where: { id: body.accountId, userId }, select: { id: true } }) : null;
       const row = await prisma.movementSuggestion.create({
@@ -78,16 +97,24 @@ export async function suggestionRoutes(app: FastifyInstance) {
           sourceApp: body.packageName,
           appLabel: body.appLabel,
           type: parsed.type,
-          amountMinor: toMinor(parsed.amount, parsed.currency),
+          amountMinor,
           currency: parsed.currency,
           merchant: parsed.merchant,
           categorySlug: parsed.categorySlug,
           accountId: account?.id ?? null,
-          occurredAt: new Date(body.postedAt),
+          occurredAt,
           dedupeKey,
           parsedBy: parsed.parsedBy,
         },
+      }).catch(async (error: unknown) => {
+        // The same notification sent twice at once: the other request won.
+        if ((error as { code?: string }).code !== "P2002") throw error;
+        return null;
       });
+      if (!row) {
+        const winner = await prisma.movementSuggestion.findUniqueOrThrow({ where: { userId_dedupeKey: { userId, dedupeKey } } });
+        return reply.send({ suggestion: await serialize(winner, await categoryIdsFor([winner])) });
+      }
       return reply.status(201).send({ suggestion: await serialize(row, await categoryIdsFor([row])) });
     },
   );

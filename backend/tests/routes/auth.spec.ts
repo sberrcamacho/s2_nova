@@ -172,6 +172,32 @@ describe("auth routes", () => {
       expect(res.json().user.email).toBe(email);
     });
 
+    it("with expectedUserId, signs in only that account and never creates or links one", async () => {
+      const email = randomEmail();
+      verifyGoogleIdToken.mockResolvedValueOnce({ sub: `sub-${email}`, email, emailVerified: true, name: "Locked" });
+      const locked = (await app.inject({ method: "POST", url: "/api/v1/auth/google", payload: { idToken: "tok" } })).json().user;
+
+      verifyGoogleIdToken.mockResolvedValueOnce({ sub: `sub-${email}`, email, emailVerified: true, name: "Locked" });
+      const same = await app.inject({ method: "POST", url: "/api/v1/auth/google", payload: { idToken: "tok", expectedUserId: locked.id } });
+      expect(same.statusCode).toBe(200);
+      expect(same.json().user.id).toBe(locked.id);
+
+      // A Google account S2 Nova has never seen: refused, nothing created.
+      const stranger = randomEmail();
+      verifyGoogleIdToken.mockResolvedValueOnce({ sub: `sub-${stranger}`, email: stranger, emailVerified: true, name: "Other" });
+      const other = await app.inject({ method: "POST", url: "/api/v1/auth/google", payload: { idToken: "tok", expectedUserId: locked.id } });
+      expect(other.statusCode).toBe(403);
+      expect(await prisma.user.findUnique({ where: { email: stranger } })).toBeNull();
+
+      // Another existing account's email: not linked either.
+      const registered = randomEmail();
+      const existing = (await app.inject({ method: "POST", url: "/api/v1/auth/register", payload: { name: "Someone", email: registered, password: "Sup3rSecret" } })).json().user;
+      verifyGoogleIdToken.mockResolvedValueOnce({ sub: `sub-${registered}`, email: registered, emailVerified: true, name: "Someone" });
+      const link = await app.inject({ method: "POST", url: "/api/v1/auth/google", payload: { idToken: "tok", expectedUserId: locked.id } });
+      expect(link.statusCode).toBe(403);
+      expect(await prisma.authIdentity.count({ where: { userId: existing.id, provider: "GOOGLE" } })).toBe(0);
+    });
+
     it("links into an existing user by verified email instead of creating a duplicate account", async () => {
       const email = randomEmail();
       const registerRes = await app.inject({

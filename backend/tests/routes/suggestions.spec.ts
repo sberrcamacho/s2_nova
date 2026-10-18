@@ -48,6 +48,23 @@ describe("suggestion routes", () => {
     expect(JSON.stringify(row, (_, v) => (typeof v === "bigint" ? v.toString() : v))).not.toContain("1234");
   });
 
+  it("treats a re-posted notification as the same movement", async () => {
+    const user = await createTestUser();
+    const first = await send(user, notice());
+    expect(first.statusCode).toBe(201);
+    // The bank app updates it two minutes later: same movement, new time.
+    const repost = await send(user, notice({ postedAt: "2026-10-17T14:07:00.000Z" }));
+    expect(repost.statusCode).toBe(200);
+    expect(repost.json().suggestion.id).toBe(first.json().suggestion.id);
+    // The same purchase again much later is a new one.
+    const later = await send(user, notice({ postedAt: "2026-10-17T18:00:00.000Z" }));
+    expect(later.statusCode).toBe(201);
+    // Two copies sent at once: one is created, the other gets it back.
+    const both = await Promise.all([send(user, notice({ postedAt: "2026-10-18T09:00:00.000Z" })), send(user, notice({ postedAt: "2026-10-18T09:00:00.000Z" }))]);
+    expect(both.map((r) => r.statusCode).sort()).toEqual([200, 201]);
+    expect(both[0]!.json().suggestion.id).toBe(both[1]!.json().suggestion.id);
+  });
+
   it("returns nothing for a notification that isn't a movement", async () => {
     const user = await createTestUser();
     const res = await send(user, notice({ text: "Tu código de verificación es 482913" }));

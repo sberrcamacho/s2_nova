@@ -88,6 +88,9 @@ describe("assistant routes", () => {
     const user = await createTestUser();
     vi.stubGlobal("fetch", vi.fn(async () => new Response("boom", { status: 500 })));
     expect((await ask(user, "hola")).statusCode).toBe(503);
+    // A timeout or network failure is the same: 503, and not counted.
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("fetch failed"); }));
+    expect((await ask(user, "hola")).statusCode).toBe(503);
     expect((await app.inject({ method: "GET", url: "/api/v1/assistant/status", headers: authHeader(user) })).json()).toMatchObject({ available: true, remaining: ASSISTANT_DAILY_LIMIT });
 
     const today = new Date();
@@ -104,5 +107,32 @@ describe("assistant routes", () => {
     expect((await bad({ messages: [{ role: "model", text: "hola" }] })).statusCode).toBe(400);
     expect((await bad({ messages: Array.from({ length: 21 }, () => ({ role: "user", text: "x" })) })).statusCode).toBe(400);
     expect((await bad({ messages: [{ role: "user", text: "x".repeat(2001) }] })).statusCode).toBe(400);
+    // A long earlier answer from the assistant still goes back as history.
+    vi.stubGlobal("fetch", vi.fn(async () => answer([{ text: "Listo." }])));
+    const history = { messages: [{ role: "user", text: "Lista todo" }, { role: "model", text: "x".repeat(4000) }, { role: "user", text: "¿Y ahora?" }], today: "2026-10-17" };
+    // (from another address: this file's requests add up past the route's per-minute limit)
+    const ok = await app.inject({ method: "POST", url: "/api/v1/assistant/messages", headers: authHeader(user), payload: history, remoteAddress: "10.0.0.2" });
+    expect(ok.statusCode).toBe(200);
+  });
+
+  it("gives the model each movement's category and doesn't spend the IP limit on its reads", async () => {
+    setKey("test-key");
+    const user = await createTestUser();
+    const wallet = await createAccount(user.id, { initialBalanceMinor: 2_000_000n });
+    const food = await categoryBySlug("exp.food");
+    await app.inject({ method: "POST", url: "/api/v1/transactions", headers: authHeader(user), payload: { accountId: wallet.id, type: "EXPENSE", categoryId: food.id, amount: 50_000, description: "Mercado", date: "2026-10-10" } });
+    const sent: { contents: { role: string; parts: Part[] }[] }[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init: { body: string }) => {
+      sent.push(JSON.parse(init.body));
+      // Many reads in one turn: more than the global per-IP limit allows.
+      if (sent.length === 1) return answer(Array.from({ length: 120 }, () => ({ functionCall: { name: "list_movements", args: {} } })));
+      return answer([{ text: "Hecho." }]);
+    }));
+    const res = await app.inject({ method: "POST", url: "/api/v1/assistant/messages", headers: authHeader(user), payload: { messages: [{ role: "user", text: "¿En qué gasté?" }], today: "2026-10-17" }, remoteAddress: "10.0.0.3" });
+    expect(res.statusCode).toBe(200);
+    const toolTurn = JSON.stringify(sent[1]!.contents.at(-1));
+    expect(toolTurn).toContain('"category":"Alimentación"');
+    expect(toolTurn).not.toContain("Too Many Requests");
+    expect(toolTurn).not.toContain('"error"');
   });
 });

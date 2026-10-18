@@ -239,7 +239,7 @@ private fun androidx.compose.foundation.layout.ColumnScope.LockContent(account: 
                     scope.launch {
                         GoogleAuthHelper.getIdToken(context, BuildConfig.GOOGLE_WEB_CLIENT_ID)
                             .fold(
-                                onSuccess = { idToken -> finish(repo.unlock { repo.loginWithGoogle(idToken) }, tr(StringKey.AUTH_GOOGLE_ERR)) },
+                                onSuccess = { idToken -> finish(repo.unlockWithGoogle(idToken), tr(StringKey.AUTH_GOOGLE_ERR)) },
                                 onFailure = { error = GoogleAuthHelper.failureMessage(it) { it.toUserMessage(tr(StringKey.AUTH_GOOGLE_ERR)) } },
                             )
                         googleBusy = false

@@ -34,7 +34,8 @@ data class LoginRequest(val email: String, val password: String)
 data class RefreshRequest(val refreshToken: String? = null)
 
 @Serializable
-data class GoogleLoginRequest(val idToken: String)
+// `expectedUserId` (lock screen): only that account may sign in.
+data class GoogleLoginRequest(val idToken: String, val expectedUserId: String? = null)
 
 // "Ingreso biométrico": the credential this device keeps behind its biometrics.
 @Serializable

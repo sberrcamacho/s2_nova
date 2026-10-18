@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { env } from "../env.js";
+import { INTERNAL_HEADER, INTERNAL_TOKEN } from "../lib/internalRequest.js";
 import { prisma } from "../lib/prisma.js";
 import { TAXONOMY_NODES } from "../lib/taxonomy.js";
 import { AssistantUnavailableError, runAssistant } from "../services/assistant.js";
@@ -17,7 +18,14 @@ const ASSISTANT_RATE_LIMIT = { max: 10, timeWindow: "1 minute" } as const;
 
 const messagesSchema = z.object({
   messages: z
-    .array(z.object({ role: z.enum(["user", "model"]), text: z.string().trim().min(1).max(2000) }))
+    // The user's turns are capped at 2000 characters; the assistant's own
+    // replies (up to 1024 output tokens) come back as history and may be longer.
+    .array(
+      z.discriminatedUnion("role", [
+        z.object({ role: z.literal("user"), text: z.string().trim().min(1).max(2000) }),
+        z.object({ role: z.literal("model"), text: z.string().trim().min(1).max(8000) }),
+      ]),
+    )
     .min(1)
     .max(20)
     .refine((list) => list.at(-1)?.role === "user", { message: "The last message must be the user's." }),
@@ -90,7 +98,7 @@ export async function assistantRoutes(app: FastifyInstance) {
     const { idToName, nameToId } = await categoryNames(userId, language);
     // Each tool is a GET of this API with the caller's own session.
     const read = async (path: string) => {
-      const res = await app.inject({ method: "GET", url: `/api/v1${path}`, headers: { authorization: request.headers.authorization ?? "" } });
+      const res = await app.inject({ method: "GET", url: `/api/v1${path}`, headers: { authorization: request.headers.authorization ?? "", [INTERNAL_HEADER]: INTERNAL_TOKEN } });
       if (res.statusCode !== 200) throw new Error(res.json<{ message?: string }>().message ?? `HTTP ${res.statusCode}`);
       return withNames(res.json(), idToName);
     };

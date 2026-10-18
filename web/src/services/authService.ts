@@ -27,8 +27,9 @@ export const authService = {
     return completeSession(response)
   },
 
-  async loginWithGoogle(idToken: string): Promise<User> {
-    const response = await apiClient.post<SessionResponse>('/auth/google', { idToken }, { skipAuthRetry: true })
+  // `expectedUserId` (lock screen): only that account may sign in.
+  async loginWithGoogle(idToken: string, expectedUserId?: string): Promise<User> {
+    const response = await apiClient.post<SessionResponse>('/auth/google', { idToken, expectedUserId }, { skipAuthRetry: true })
     return completeSession(response)
   },
 

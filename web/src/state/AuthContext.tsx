@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { apiClient, setGuestHandler, setSessionEndedHandler, type SessionEndReason } from '@/lib/apiClient'
+import { ApiError, apiClient, setGuestHandler, setSessionEndedHandler, type SessionEndReason } from '@/lib/apiClient'
 import { resetCategoryCache } from '@/lib/backendCategories'
 import { createGuestApi } from '@/lib/guestApi'
 import { clearLockedAccount, readLockedAccount, saveLockedAccount, type LockedAccount } from '@/lib/lockedAccount'
@@ -290,7 +290,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const me =
             'password' in attempt
               ? await authService.login({ email: locked.email, password: attempt.password })
-              : await authService.loginWithGoogle(attempt.googleIdToken)
+              : await authService.loginWithGoogle(attempt.googleIdToken, locked.userId)
           if (me.id !== locked.userId) {
             await authService.logout()
             apiClient.setAccessToken(null)
@@ -301,7 +301,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(me)
           return true
         } catch (err) {
-          setError(err instanceof Error ? err.message : tr('auth.err.login'))
+          if ('googleIdToken' in attempt && err instanceof ApiError && err.status === 403) setError(tr('lock.otherAccount'))
+          else setError(err instanceof Error ? err.message : tr('auth.err.login'))
           return false
         } finally {
           setIsSubmitting(false)

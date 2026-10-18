@@ -32,6 +32,9 @@ const loginSchema = z.object({
 
 const googleSchema = z.object({
   idToken: z.string().min(1),
+  // Lock screen: only this account may sign in, and nothing is created or
+  // linked for any other Google account.
+  expectedUserId: z.string().uuid().optional(),
 });
 
 const forgotPasswordSchema = z.object({
@@ -204,6 +207,10 @@ export async function authRoutes(app: FastifyInstance) {
     const existingIdentity = await prisma.authIdentity.findUnique({
       where: { provider_providerUserId: { provider: "GOOGLE", providerUserId: identity.sub } },
     });
+
+    if (body.expectedUserId !== undefined && existingIdentity?.userId !== body.expectedUserId) {
+      return reply.status(403).send({ error: "That Google account is not this account.", code: "OtherAccount" });
+    }
 
     let userId: string;
     if (existingIdentity) {

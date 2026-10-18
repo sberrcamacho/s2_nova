@@ -5,6 +5,7 @@ import cookie from "@fastify/cookie";
 import rateLimit from "@fastify/rate-limit";
 import { ZodError } from "zod";
 import { env } from "./env.js";
+import { isInternalRequest } from "./lib/internalRequest.js";
 import authPlugin from "./plugins/auth.js";
 import { accountRoutes } from "./routes/accounts.js";
 import { suggestionRoutes } from "./routes/suggestions.js";
@@ -64,6 +65,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(rateLimit, {
     max: 100,
     timeWindow: "1 minute",
+    allowList: (request) => isInternalRequest(request.headers),
   });
 
   await app.register(authPlugin);
