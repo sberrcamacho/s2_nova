@@ -43,8 +43,8 @@ First-time setup:
    `CORS_ORIGINS` (exactly `https://sberrcamacho.github.io`, no path),
    `WEB_APP_URL` (`https://sberrcamacho.github.io/s2_nova`, with the base
    path, or the recovery-email link misses the app), `RESEND_API_KEY` and
-   `MAIL_FROM` (recovery emails), `GEMINI_API_KEY` / `ANTHROPIC_API_KEY`
-   (optional AI features), `NODE_ENV=production`.
+   `MAIL_FROM` (recovery emails), `GEMINI_API_KEY` (optional AI
+   features; free tier only, from a project without billing), `NODE_ENV=production`.
 3. Deploy. The `Dockerfile`'s `CMD` runs `prisma migrate deploy` before
    starting the server on every boot (safe/no-op if already up to date —
    there's no separate migration step on Render, unlike a docker-compose

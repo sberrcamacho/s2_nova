@@ -109,28 +109,6 @@ const geminiIdentify: ProductProvider = {
   },
 };
 
-const claudeIdentify: ProductProvider = {
-  name: "claude",
-  timeoutMs: 25000,
-  async fetch(code, signal) {
-    if (!env.ANTHROPIC_API_KEY) return null;
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      signal,
-      headers: { "content-type": "application/json", "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 700,
-        tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 3 }],
-        messages: [{ role: "user", content: aiPrompt(code) }],
-      }),
-    });
-    if (!res.ok) return null;
-    const body = (await res.json()) as { content?: { type: string; text?: string }[] };
-    return parseAiAnswer((body.content ?? []).filter((b) => b.type === "text").map((b) => b.text ?? "").join(""));
-  },
-};
-
 // Order matters: food first (the common supermarket case), the rate-limited
 // trial API last. Append more providers here.
 export const PROVIDERS: ProductProvider[] = [
@@ -140,7 +118,6 @@ export const PROVIDERS: ProductProvider[] = [
   openFacts("openpetfoodfacts", "world.openpetfoodfacts.org"),
   upcItemDb,
   geminiIdentify,
-  claudeIdentify,
 ];
 
 // Keyword -> taxonomy slug (src/lib/taxonomy.json). First match wins.

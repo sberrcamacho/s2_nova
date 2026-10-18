@@ -230,8 +230,11 @@ Open before production:
    `trustProxy: true` would let anyone fake their IP. Set a fixed hop count
    instead, after checking the header chain on one real request.
 2. After pushing: Render applies the two new migrations on deploy. Set
-   `GEMINI_API_KEY` there for the assistant and the AI parser. The
-   assistant stays hidden without it.
+   `GEMINI_API_KEY` there for the assistant and the AI parser, created in
+   Google AI Studio in a project **without billing**, so it can only use
+   the free tier (past the quota requests fail and nothing is charged). The
+   assistant stays hidden without it. Remove `ANTHROPIC_API_KEY` from
+   Render if it is set: no paid AI is used.
 3. Add the Play app signing SHA-1 and the upload SHA-1 to the Android
    OAuth client (see "Signing and Google Sign-In").
 4. Not tried on a phone yet: Google unlock on the Android lock screen, and

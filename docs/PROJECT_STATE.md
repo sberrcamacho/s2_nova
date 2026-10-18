@@ -19,8 +19,8 @@ exists on Web. The UI follows `DESIGN-SYSTEM.md`; the old
 - `security`: sessions, account footprint, `DELETE /me`, reset data.
 - `dataExport` / `dataImport`: CSV.
 - `products`: the scanned-code catalog (local table, then Open
-  Food/Beauty/Products/Pet Food Facts and UPCitemdb, with an optional AI
-  fallback when `GEMINI_API_KEY` / `ANTHROPIC_API_KEY` are set).
+  Food/Beauty/Products/Pet Food Facts and UPCitemdb, with an optional
+  free-tier Gemini fallback when `GEMINI_API_KEY` is set).
 - `accounts`: wallets, each with its own currency.
 - `currencies`: user currencies, the principal currency, rates.
 - `categories`: the global taxonomy, plus per-user overrides and custom

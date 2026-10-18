@@ -18,12 +18,10 @@ const envSchema = z.object({
   // unset, the message is printed to the server log instead of being sent.
   RESEND_API_KEY: z.string().default(""),
   MAIL_FROM: z.string().default("S2 Nova <no-reply@s2nova.app>"),
-  // Scanner: last-resort product identification with Claude + web search when
-  // no product database knows a barcode. Unset = that step is skipped.
-  ANTHROPIC_API_KEY: z.string().default(""),
-  // Google Gemini (free tier): the scanner's product identification (tried
-  // before Claude), the Asistente and, when the user allows it, reading
-  // bank notifications the rules don't recognise. Unset = all three off.
+  // Google Gemini, free tier only (a key from a project without billing):
+  // the scanner's last-resort product identification, the Asistente and,
+  // when the user allows it, reading bank notifications the rules don't
+  // recognise. Unset = all three off. No paid AI is used anywhere.
   GEMINI_API_KEY: z.string().default(""),
   // Only for local runs against a stand-in server; production uses Google's.
   GEMINI_BASE_URL: z.string().url().default("https://generativelanguage.googleapis.com"),
