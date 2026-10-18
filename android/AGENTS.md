@@ -477,3 +477,13 @@ movimiento prefilled (`PendingDraft`, `SuggestionLaunch`) and Descartar
 dismisses it (`SuggestionActionReceiver`). The prominent disclosure sheet
 comes before Android's notification-access settings. A lock keeps the
 setup; signing out clears it.
+
+Novedades and updates (`ui/screens/whatsnew/WhatsNew.kt`): after an update
+Inicio shows that version's Novedades once (`WhatsNewSheet`, a pager with a
+capture per feature; a fresh install skips it and gets the tour), from
+`assets/changelog.json` (`data/Changelog.kt`, written by
+`scripts/gen-changelog.mjs`). `data/UpdateChecker.kt` asks GitHub for the
+latest release; a newer one gets `UpdateSheet` once per version on Inicio
+and, from the daily `UpdateCheckWorker`, a notification (channel
+"Actualizaciones"). Ajustes › Novedades (`WhatsNewScreen`) shows the
+installed version, "Buscar actualización" and every version's changes.

@@ -62,6 +62,13 @@ Reportes** — plus **Ajustes** in the footer. Pre-v2 paths (`/overview`,
   a side-panel chat over the user's data. A draft opens Nuevo movimiento
   prefilled (`MovementDraft`, `useNewMovement(undefined, draft)`); Android's
   `AssistantScreen` is the same.
+- **Novedades** (`lib/changelog.ts`, `dashboard/components/WhatsNewDialog.tsx`,
+  `pages/ajustes/NovedadesPage.tsx` at `/ajustes/novedades`): the newest
+  version's changes, one feature per page with its capture, once per
+  browser to accounts older than that release (not to guests); Ajustes ›
+  S2 Nova › Novedades lists every version. The text comes from
+  `lib/changelog.json` (`scripts/gen-changelog.mjs`), the same as Android.
+  The landing's top pill and the Android card show that version.
 - **Browser notifications** (`state/useBrowserNotifications.ts`): with
   Ajustes › Notificaciones on and the browser's permission (asked from that
   switch), each new shared alert shows once while a tab is open (checked

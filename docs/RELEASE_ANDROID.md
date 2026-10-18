@@ -5,9 +5,17 @@ The Android app is distributed as an APK attached to a GitHub Release of
 `ANDROID_APK_URL`) links to
 `https://github.com/sberrcamacho/s2_nova/releases/latest/download/s2-nova.apk`,
 which always resolves to the newest release, so a new APK needs no web
-change. A Google Play release is being prepared from the `release` build
-type; see "Google Play" below. Until it is live, the GitHub APK is the
-only way to install the app.
+change. A Google Play release is ready from the `release` build type but
+on hold (the developer account costs US$25); see "Google Play" below.
+The GitHub APK is the way to install the app.
+
+The app tells people about new versions itself: `data/UpdateChecker.kt`
+asks GitHub's API for the latest release (once a day in the background,
+at most every 6 hours when the app opens) and, when its tag is newer than
+the installed `versionName`, shows a sheet with "Descargar" once per
+version and posts a notification. After an update, the app shows that
+version's Novedades once (both clients; Ajustes › Novedades lists them
+all).
 
 ## What gets published
 
@@ -32,11 +40,24 @@ The **staging** build type (`android/app/build.gradle.kts`):
 ## Steps
 
 1. Bump `versionCode` (always +1, or the install over the old one fails)
-   and `versionName` in `android/app/build.gradle.kts`, and commit.
-2. Run the three test suites (`docs/TESTING.md`).
-3. Build: `cd android && ./gradlew :app:assembleStaging`. The APK is
+   and `versionName` in `android/app/build.gradle.kts`.
+2. Write the version's Novedades: add an entry on top of
+   `scripts/changelog.json` (`version` = the new `versionName`, the date,
+   one item per feature with es/en title and body, and `also` lines for
+   smaller changes). Each item needs an image in both themes for both
+   clients. Capture the feature (`s2-nova-screenshoots/`), then frame it
+   with `scripts/whatsnew/compose-app.sh` (into
+   `android/app/src/main/res/drawable-nodpi/whatsnew_<image>_<theme>.webp`)
+   and `scripts/whatsnew/compose-web.sh` (into
+   `web/src/assets/whatsnew/<image>-<theme>.webp`), and add the new image
+   name to `imageFor` in `ui/screens/whatsnew/WhatsNew.kt`. Run
+   `node scripts/gen-changelog.mjs`, which copies the JSON to both clients
+   and fails if an image is missing. Commit.
+3. Run the three test suites (`docs/TESTING.md`). `ChangelogTest` fails
+   when the new `versionName` has no Novedades.
+4. Build: `cd android && ./gradlew :app:assembleStaging`. The APK is
    `android/app/build/outputs/apk/staging/app-staging.apk`.
-4. Publish it under the file name the landing links to. GitHub names an
+5. Publish it under the file name the landing links to. GitHub names an
    asset after the uploaded file (a `#label` suffix only sets a label), so
    copy it first:
 
@@ -47,9 +68,11 @@ The **staging** build type (`android/app/build.gradle.kts`):
    ```
 
    Push `main` first, so the tag lands on the commit the APK was built
-   from. The asset must be named `s2-nova.apk`, and the release must be
-   the latest (the default).
-5. Check the landing's "Descargar para Android" link downloads the new
+   from. The asset must be named `s2-nova.apk`, the tag must be
+   `v<versionName>` (the update check compares it), and the release must
+   be the latest (the default). The notes are what people read on GitHub:
+   write them for users, in Spanish, from the Novedades.
+6. Check the landing's "Descargar para Android" link downloads the new
    file, and install it over the previous version on a phone.
 
 Installing an APK from the browser asks the user to allow installs from
@@ -246,4 +269,4 @@ Open before production:
 | Version | Code | Date | Notes |
 |---|---|---|---|
 | 1.1.0 | 2 | 2026-10-13 | First published APK: Abonar capped at what the goal needs, "Completar" chip, one-line chip rows in Más opciones. |
-| 1.2.0 | 3 | not yet | Loan interest, lock screen, custom Reportes range, notification capture, assistant. First signed `release` bundle for Play. |
+| 1.2.0 | 3 | 2026-10-18 | Loan interest, lock screen, custom Reportes range, notification capture, assistant, Novedades and the update check. |

@@ -1,0 +1,96 @@
+{
+  "_comment": "What's new in each version, newest first. Run `node scripts/gen-changelog.mjs` after editing: it writes web/src/lib/changelog.json and android/app/src/main/assets/changelog.json and checks that every image exists in both clients (light and dark). `version` must match the Android versionName of that release.",
+  "versions": [
+    {
+      "version": "1.2.0",
+      "date": "2026-10-18",
+      "items": [
+        {
+          "image": "assistant",
+          "title": { "es": "Asistente", "en": "Assistant" },
+          "body": {
+            "es": "Pregúntale cuánto gastaste, cómo van tus presupuestos o pídele que prepare un movimiento. Tú lo revisas antes de guardarlo.",
+            "en": "Ask how much you spent or how your budgets are doing, or have it prepare a movement. You review it before it's saved."
+          }
+        },
+        {
+          "image": "suggestions",
+          "title": { "es": "Movimientos por confirmar", "en": "Movements to confirm" },
+          "body": {
+            "es": "Activa Registrar desde notificaciones en Ajustes y los avisos de tu banco o billetera llegan como movimientos listos para confirmar.",
+            "en": "Turn on Record from notifications in Settings and your bank or wallet notifications arrive as movements ready to confirm."
+          }
+        },
+        {
+          "image": "loans",
+          "title": { "es": "Préstamos con interés", "en": "Loans with interest" },
+          "body": {
+            "es": "Cobra un interés fijo o uno mensual o anual sobre el saldo, desde la fecha que elijas. S2 Nova calcula cuánto falta.",
+            "en": "Charge a fixed interest, or a monthly or yearly one on the balance, from the date you choose. S2 Nova works out what's left."
+          }
+        },
+        {
+          "image": "reports",
+          "title": { "es": "Reportes del periodo que quieras", "en": "Reports for any period" },
+          "body": {
+            "es": "Elige cualquier rango de meses, hasta 24. Queda guardado hasta que lo cambies.",
+            "en": "Pick any span of months, up to 24. It stays until you change it."
+          }
+        },
+        {
+          "image": "lock",
+          "title": { "es": "Pantalla de bloqueo", "en": "Lock screen" },
+          "body": {
+            "es": "Tras un rato sin usar la app, la bloqueamos en vez de cerrar tu sesión. Vuelves con tu contraseña, con Google o con tu huella.",
+            "en": "After a while without use, the app locks instead of signing you out. Come back with your password, Google or your fingerprint."
+          }
+        },
+        {
+          "image": "titles",
+          "title": { "es": "Títulos en tu idioma", "en": "Titles in your language" },
+          "body": {
+            "es": "Los títulos sugeridos cambian entre español e inglés con la app. Los que escribiste tú quedan igual.",
+            "en": "Suggested titles switch between Spanish and English with the app. The ones you wrote stay as they are."
+          }
+        }
+      ],
+      "also": [
+        {
+          "es": "Te avisamos cuando hay una versión nueva, y en Ajustes › Novedades ves qué cambió en cada una.",
+          "en": "You're told when a new version is out, and Settings › What's new shows what changed in each one."
+        },
+        {
+          "es": "Las cuentas creadas con Google ya pueden restablecer o eliminar sus datos confirmando con Google.",
+          "en": "Accounts created with Google can now reset or delete their data by confirming with Google."
+        },
+        {
+          "es": "Las contraseñas nuevas llevan al menos 8 caracteres, una mayúscula y un número.",
+          "en": "New passwords need at least 8 characters, an uppercase letter and a number."
+        }
+      ]
+    },
+    {
+      "version": "1.1.0",
+      "date": "2026-10-13",
+      "items": [
+        {
+          "image": "home",
+          "title": { "es": "La primera versión", "en": "The first version" },
+          "body": {
+            "es": "Billeteras, movimientos, presupuestos, metas, préstamos y reportes, con tu cuenta o como invitado.",
+            "en": "Wallets, movements, budgets, goals, loans and reports, with your account or as a guest."
+          }
+        },
+        {
+          "image": "goals",
+          "title": { "es": "Abonos a metas sin pasarte", "en": "Goal contributions that fit" },
+          "body": {
+            "es": "Un abono nunca pasa de lo que le falta a la meta, y Completar la termina de un toque.",
+            "en": "A contribution never goes past what the goal still needs, and Complete finishes it in one tap."
+          }
+        }
+      ],
+      "also": []
+    }
+  ]
+}

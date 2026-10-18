@@ -10,6 +10,8 @@ import { useBrowserNotifications } from '@/state/useBrowserNotifications'
 import { NewMovementContext } from '@/state/NewMovementContext'
 import { AssistantPanel, type AssistantTurn } from '@/dashboard/components/AssistantPanel'
 import { assistantService } from '@/services/assistantService'
+import { WhatsNewDialog } from '@/dashboard/components/WhatsNewDialog'
+import { markWhatsNewSeen, pendingWhatsNew, type ChangelogVersion } from '@/lib/changelog'
 import type { Transaction } from '@/types'
 import { useTranslation } from '@/state/useTranslation'
 import type { TranslationKey } from '@/lib/i18n/translations'
@@ -62,6 +64,14 @@ export function DashboardLayout() {
     if (user.isGuest) return setAssistantOn(true)
     assistantService.status().then((s) => setAssistantOn(s.available)).catch(() => setAssistantOn(false))
   }, [user])
+  // Novedades once after an update (lib/changelog.ts decides).
+  const [whatsNew, setWhatsNew] = useState<ChangelogVersion | null>(null)
+  useEffect(() => setWhatsNew(pendingWhatsNew(user)), [user?.id, user?.isGuest])
+  const closeWhatsNew = () => {
+    if (whatsNew) markWhatsNewSeen(whatsNew.version)
+    setWhatsNew(null)
+  }
+  const navigate = useNavigate()
   const location = useLocation()
   const { t } = useTranslation()
   useBrowserNotifications()
@@ -115,6 +125,16 @@ export function DashboardLayout() {
           onDraft={(p) => {
             setAssistantOpen(false)
             openNewTx(undefined, { type: p.type, amount: p.amount, title: p.description || undefined, category: p.category, date: p.date ?? undefined })
+          }}
+        />
+      )}
+      {whatsNew && (
+        <WhatsNewDialog
+          version={whatsNew}
+          onClose={closeWhatsNew}
+          onSeeAll={() => {
+            closeWhatsNew()
+            navigate('/ajustes/novedades')
           }}
         />
       )}

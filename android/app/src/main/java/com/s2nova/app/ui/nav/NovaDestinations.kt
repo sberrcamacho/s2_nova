@@ -37,6 +37,7 @@ object NovaDestinations {
     const val SETTINGS_DELETE = "settings_delete"
     const val SETTINGS_CAPTURE = "settings_capture"
     const val ASSISTANT = "assistant"
+    const val WHATS_NEW = "whats_new"
 
     // What only a real account has (the guest account has no password and
     // nothing on the server to reset or delete), like Web's AccountOnly.

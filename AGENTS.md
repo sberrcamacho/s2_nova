@@ -17,6 +17,11 @@ backend, one database, one user identity and one domain model:
   (`web/src/lib/guestSeed.json`, `android/app/src/main/assets/guest_seed.json`).
   Re-run it after editing the account; it checks, for a set of sample
   days, that no wallet but the credit card goes negative.
+- `scripts/gen-changelog.mjs` — "Novedades", what changed in each
+  version, described once in `scripts/changelog.json` and written to both
+  clients (`web/src/lib/changelog.json`,
+  `android/app/src/main/assets/changelog.json`). Every release adds an
+  entry (`docs/RELEASE_ANDROID.md` › Steps).
 - `scripts/gen-taxonomy.mjs` — generates each app's category taxonomy
   (adding the English names from `scripts/taxonomy-en.json`). It still reads
   `design_handoff_s2_nova_v2/s2-categories.js`, which is no longer in the

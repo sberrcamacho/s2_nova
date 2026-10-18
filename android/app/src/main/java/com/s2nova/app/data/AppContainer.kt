@@ -117,6 +117,7 @@ object AppContainer {
         com.s2nova.app.ui.AppLang.init(context)
         com.s2nova.app.data.notifications.AlertNotifier.init(context)
         com.s2nova.app.data.notifications.NotificationCapture.init(context)
+        UpdateChecker.init(context)
         appScope.launch {
             authRepository.currentUser.collect { user -> user?.let { com.s2nova.app.ui.AppLang.set(it.preferences.language) } }
         }

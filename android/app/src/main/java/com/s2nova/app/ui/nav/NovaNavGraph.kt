@@ -420,6 +420,7 @@ fun NovaApp() {
                     onOpenReset = { navController.navigate(NovaDestinations.SETTINGS_RESET) },
                     onOpenDelete = { navController.navigate(NovaDestinations.SETTINGS_DELETE) },
                     onOpenCapture = { navController.navigate(NovaDestinations.SETTINGS_CAPTURE) },
+                    onOpenWhatsNew = { navController.navigate(NovaDestinations.WHATS_NEW) },
                     onCreateAccount = {
                         scope.launch {
                             leaveGuestMode()
@@ -459,12 +460,14 @@ fun NovaApp() {
                 CategoriesScreen(initialIncome = entry.arguments?.getBoolean("income") ?: false, onBack = { navController.popBackStack() })
             }
             composable(NovaDestinations.CURRENCIES) { CurrenciesScreen(onBack = { navController.popBackStack() }) }
+            composable(NovaDestinations.WHATS_NEW) { com.s2nova.app.ui.screens.whatsnew.WhatsNewScreen(onBack = { navController.popBackStack() }) }
         }
     }
 
     val barVisible = bottomBarVisibleFor(currentRoute)
     SnackHost(bottom = if (barVisible) 92.dp else 24.dp)
     TourHost(currentRoute, tourRegistry)
+    com.s2nova.app.ui.screens.whatsnew.WhatsNewHost(currentRoute, onSeeAll = { navController.navigate(NovaDestinations.WHATS_NEW) })
     ConfirmHost()
     }
     }

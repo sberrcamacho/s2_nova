@@ -84,7 +84,7 @@ private val LOCK_OPTIONS = listOf(1, 5, 15, 60, 0)
 // Cambiar contraseña, Zona de riesgo and Acerca de. Sessions live on Web.
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpenCurrencies: () -> Unit = {}, onOpenPassword: () -> Unit = {}, onOpenReset: () -> Unit = {}, onOpenDelete: () -> Unit = {}, onCreateAccount: () -> Unit = {}, onOpenCapture: () -> Unit = {}) {
+fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpenCurrencies: () -> Unit = {}, onOpenPassword: () -> Unit = {}, onOpenReset: () -> Unit = {}, onOpenDelete: () -> Unit = {}, onCreateAccount: () -> Unit = {}, onOpenCapture: () -> Unit = {}, onOpenWhatsNew: () -> Unit = {}) {
     val user by AppContainer.authRepository.currentUser.collectAsStateWithLifecycle()
     val darkOverride by ThemeController.darkOverride.collectAsStateWithLifecycle()
     val isDark = darkOverride ?: androidx.compose.foundation.isSystemInDarkTheme()
@@ -291,12 +291,14 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
                         V2Icon(V2Icons.chevronRight, colors.textDim, 20.dp)
                     }
                 }
-                NovaCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                        Text(t(StringKey.SETTINGS_ABOUT), style = NovaType.titleSm, color = MaterialTheme.colorScheme.onSurface)
-                        Text("S2 Nova · v${BuildConfig.VERSION_NAME}", style = NovaType.bodySm, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
+                // Novedades: every version's changes, and whether a newer APK is out.
+                val newer by com.s2nova.app.data.UpdateChecker.available.collectAsStateWithLifecycle()
+                LinkCard(
+                    t(StringKey.WHATS_NEW_TITLE),
+                    newer?.let { t(StringKey.UPDATE_STATUS_NEW).format(it.version) } ?: t(StringKey.WHATS_NEW_ROW_DETAIL).format(BuildConfig.VERSION_NAME),
+                    Modifier,
+                    onOpenWhatsNew,
+                )
                 if (!guest) {
                     SectionTitle(tr(StringKey.SET_RISK_TITLE), modifier = Modifier.padding(top = 16.dp))
                     Text(tr(StringKey.SET_RISK_HINT), style = NovaType.bodySm, color = colors.textDim)

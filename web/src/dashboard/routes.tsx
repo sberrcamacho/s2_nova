@@ -23,6 +23,7 @@ import RestablecerPage from '@/dashboard/pages/ajustes/RestablecerPage'
 import PerfilPage from '@/dashboard/pages/ajustes/PerfilPage'
 import MonedasPage from '@/dashboard/pages/ajustes/MonedasPage'
 import SesionesPage from '@/dashboard/pages/ajustes/SesionesPage'
+import NovedadesPage from '@/dashboard/pages/ajustes/NovedadesPage'
 
 // Web v2 information architecture (root AGENTS.md, STAGE-2-INICIO §2):
 // Inicio · Movimientos · Planes · Reportes, plus Billeteras and Ajustes. The pre-v2 paths
@@ -54,6 +55,7 @@ export const dashboardRoutes: RouteObject[] = [
           { path: 'ajustes/perfil', element: <AccountOnly><PerfilPage /></AccountOnly> },
           { path: 'ajustes/contrasena', element: <AccountOnly><ContrasenaPage /></AccountOnly> },
           { path: 'ajustes/sesiones', element: <SesionesPage /> },
+          { path: 'ajustes/novedades', element: <NovedadesPage /> },
           { path: 'ajustes/eliminar', element: <AccountOnly><EliminarPage /></AccountOnly> },
           { path: 'ajustes/restablecer', element: <AccountOnly><RestablecerPage /></AccountOnly> },
           { path: 'ajustes/importar', element: <ImportarPage /> },

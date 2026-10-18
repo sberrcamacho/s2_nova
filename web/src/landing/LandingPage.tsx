@@ -1,4 +1,6 @@
 import { useEffect, type ReactNode } from 'react'
+import { CHANGELOG } from '@/lib/changelog'
+import { fill } from '@/lib/i18n/translations'
 import { useNavigate, Link } from 'react-router-dom'
 import {
   ArrowRight,
@@ -40,6 +42,9 @@ const PHONE_POINTS: { icon: LucideIcon; text: TranslationKey }[] = [
 // points at the newest release, so a new APK needs no change here
 // (docs/RELEASE_ANDROID.md).
 const ANDROID_APK_URL = 'https://github.com/sberrcamacho/s2_nova/releases/latest/download/s2-nova.apk'
+// The release page, with what changed in it.
+const RELEASE_NOTES_URL = 'https://github.com/sberrcamacho/s2_nova/releases/latest'
+const LATEST_VERSION = CHANGELOG[0]?.version ?? ''
 
 // The privacy policy and terms (web/public). The privacy URL must stay the
 // one set on Google's OAuth consent screen:
@@ -235,10 +240,17 @@ export default function LandingPage() {
         {/* Hero */}
         <section className="mx-auto grid max-w-7xl items-center gap-12 px-4 pb-20 pt-14 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:gap-8 lg:pb-28 lg:pt-20">
           <div className="nova-rise flex flex-col items-start gap-7">
-            <span className="inline-flex items-center gap-2 rounded-full border border-border bg-surface/70 px-3.5 py-1.5 text-label font-medium text-ink-secondary backdrop-blur">
-              <span aria-hidden="true" className="h-2 w-2 rounded-full" style={{ background: 'var(--brand-bar)' }} />
-              {t('brand.tagline')}
-            </span>
+            {/* The latest version's news, down to the Android download. */}
+            <a
+              href="#dispositivos"
+              className="group inline-flex max-w-full items-center gap-2 rounded-full border border-border bg-surface/70 py-1.5 pl-1.5 pr-3.5 text-label font-medium text-ink-secondary backdrop-blur transition-colors hover:border-primary-border hover:text-ink"
+            >
+              <span className="flex-none rounded-full px-2 py-0.5 text-caption font-semibold text-white" style={{ background: 'var(--cta-bg)' }}>
+                {t('landing.news.badge')}
+              </span>
+              <span className="truncate">{fill(t('landing.news.text'), LATEST_VERSION)}</span>
+              <ArrowRight className="h-3.5 w-3.5 flex-none transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+            </a>
             <h1 className="text-[clamp(44px,6.2vw,76px)] font-semibold leading-[1.04] tracking-[-.045em] text-balance">
               {t('landing.hero.title1')} <span className="text-brand-gradient">{t('landing.hero.title2')}</span>
             </h1>
@@ -261,7 +273,7 @@ export default function LandingPage() {
         </section>
 
         {/* Phone and computer */}
-        <section className="relative border-y border-border bg-bg-secondary/70" aria-labelledby="landing-devices">
+        <section id="dispositivos" className="relative scroll-mt-20 border-y border-border bg-bg-secondary/70" aria-labelledby="landing-devices">
           <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:py-28">
             <div className="nova-reveal mx-auto max-w-2xl text-center">
               <h2 id="landing-devices" className="text-[clamp(32px,4vw,48px)] font-semibold leading-[1.1] tracking-[-.035em] text-balance">{t('landing.devices.title')}</h2>
@@ -296,6 +308,9 @@ export default function LandingPage() {
                       <p id="landing-android-note" className="text-caption text-ink-secondary">
                         {t('landing.android.note')}
                       </p>
+                      <a href={RELEASE_NOTES_URL} className="inline-flex min-h-8 items-center text-caption font-semibold text-link underline-offset-4 hover:underline">
+                        {fill(t('landing.android.version'), LATEST_VERSION)}
+                      </a>
                     </div>
                   )}
                 </div>

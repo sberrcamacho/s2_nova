@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { CHANGELOG } from '@/lib/changelog'
 import { useNavigate } from 'react-router-dom'
 import { AjCard, AjCardTitle, AjOutlineButton, AjPills, AjRow, AjSegmented, AjSwitch } from '@/dashboard/components/ajustes/AjustesUi'
 import { parentCategories, useCategories } from '@/lib/backendCategories'
@@ -233,6 +234,15 @@ export default function AjustesPage() {
           </AjRow>
           <AjRow label={t('aj.import')} detail={t('aj.importHint')} last>
             <AjOutlineButton onClick={() => navigate('/ajustes/importar')}>{t('aj.importBtn')}</AjOutlineButton>
+          </AjRow>
+        </div>
+      </AjCard>
+
+      <AjCard className="p-5">
+        <AjCardTitle>S2 Nova</AjCardTitle>
+        <div className="mt-2 flex flex-col">
+          <AjRow label={t('wn.title')} detail={fill(t('wn.rowDetail'), CHANGELOG[0]?.version ?? '')} last>
+            <AjOutlineButton onClick={() => navigate('/ajustes/novedades')}>{t('wn.open')}</AjOutlineButton>
           </AjRow>
         </div>
       </AjCard>
