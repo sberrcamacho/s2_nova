@@ -39,8 +39,8 @@ android {
         applicationId = "com.s2nova.app"
         minSdk = 31
         targetSdk = 36
-        versionCode = 3
-        versionName = "1.2.0"
+        versionCode = 4
+        versionName = "1.2.1"
 
         // 10.0.2.2 is the emulator's alias for the host machine's localhost —
         // reaches `backend/` running via `pnpm dev` on the dev machine.
@@ -48,6 +48,10 @@ android {
         // once a deployed backend exists.
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
         buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleWebClientId\"")
+        // "Registrar desde notificaciones" (a notification listener). Off in
+        // the APK installed from the web (staging): Play Protect blocks
+        // sideloaded apps that can read notifications (src/staging/AndroidManifest.xml).
+        buildConfigField("boolean", "NOTIFICATION_CAPTURE", "true")
     }
 
     signingConfigs {
@@ -82,6 +86,7 @@ android {
             isShrinkResources = true
             signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += listOf("release")
+            buildConfigField("boolean", "NOTIFICATION_CAPTURE", "false")
         }
     }
 

@@ -1,7 +1,7 @@
 {
   "versions": [
     {
-      "version": "1.2.0",
+      "version": "1.2.1",
       "date": "2026-10-18",
       "items": [
         {
@@ -13,17 +13,6 @@
           "body": {
             "es": "Pregúntale cuánto gastaste, cómo van tus presupuestos o pídele que prepare un movimiento. Tú lo revisas antes de guardarlo.",
             "en": "Ask how much you spent or how your budgets are doing, or have it prepare a movement. You review it before it's saved."
-          }
-        },
-        {
-          "image": "suggestions",
-          "title": {
-            "es": "Movimientos por confirmar",
-            "en": "Movements to confirm"
-          },
-          "body": {
-            "es": "Activa Registrar desde notificaciones en Ajustes y los avisos de tu banco o billetera llegan como movimientos listos para confirmar.",
-            "en": "Turn on Record from notifications in Settings and your bank or wallet notifications arrive as movements ready to confirm."
           }
         },
         {

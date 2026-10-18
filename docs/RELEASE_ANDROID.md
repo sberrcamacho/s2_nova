@@ -36,6 +36,14 @@ The **staging** build type (`android/app/build.gradle.kts`):
   For a release they must point at production
   (`https://s2-nova.onrender.com/api/v1`).
 - `minSdk` 31, so Android 12 or later.
+- No notification listener: Google Play Protect's enhanced fraud
+  protection blocks installing a sideloaded app that declares
+  `BIND_NOTIFICATION_LISTENER_SERVICE` (also SMS and accessibility
+  permissions), and 1.2.0 was blocked on a phone in Colombia for it. So
+  `src/staging/AndroidManifest.xml` removes `NotificationCaptureService`
+  and `BuildConfig.NOTIFICATION_CAPTURE` is false, which hides
+  "Registrar desde notificaciones". Debug and the Play `release` build keep
+  it. Never add one of those permissions to this build.
 
 ## Steps
 
@@ -269,4 +277,5 @@ Open before production:
 | Version | Code | Date | Notes |
 |---|---|---|---|
 | 1.1.0 | 2 | 2026-10-13 | First published APK: Abonar capped at what the goal needs, "Completar" chip, one-line chip rows in Más opciones. |
-| 1.2.0 | 3 | 2026-10-18 | Loan interest, lock screen, custom Reportes range, notification capture, assistant, Novedades and the update check. |
+| 1.2.0 | 3 | 2026-10-18 | Loan interest, lock screen, custom Reportes range, notification capture, assistant, Novedades and the update check. Blocked by Play Protect (notification listener). |
+| 1.2.1 | 4 | 2026-10-18 | 1.2.0 without "Registrar desde notificaciones", so it installs. |

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The APK people download from the web (docs/RELEASE_ANDROID.md): Google
+     Play Protect's fraud protection blocks installing a sideloaded app that
+     can read notifications, so this build leaves out "Registrar desde
+     notificaciones" (BuildConfig.NOTIFICATION_CAPTURE is false here too). -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application>
+        <service
+            android:name="com.s2nova.app.data.notifications.NotificationCaptureService"
+            tools:node="remove" />
+    </application>
+</manifest>

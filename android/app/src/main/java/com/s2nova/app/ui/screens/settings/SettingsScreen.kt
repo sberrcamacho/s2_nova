@@ -228,7 +228,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenCategories: () -> Unit = {}, onOpen
                 val others = currencies.filter { it.code != principal }.map { it.code }
                 LinkCard(tr(StringKey.CUR_TITLE), tr(StringKey.SET_CUR_DETAIL, principal) + if (others.isNotEmpty()) " · " + others.joinToString(", ") else "", Modifier, onOpenCurrencies)
                 // Reading bank notifications needs a real account.
-                if (!guest) LinkCard(t(StringKey.CAPTURE_TITLE), t(StringKey.CAPTURE_ROW_DETAIL), Modifier, onOpenCapture)
+                if (!guest && BuildConfig.NOTIFICATION_CAPTURE) LinkCard(t(StringKey.CAPTURE_TITLE), t(StringKey.CAPTURE_ROW_DETAIL), Modifier, onOpenCapture)
 
                 SectionTitle(t(StringKey.SETTINGS_PRIVACY_SESSION), modifier = Modifier.padding(top = 16.dp))
                 NovaCard(modifier = Modifier.fillMaxWidth()) {

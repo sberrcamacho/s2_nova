@@ -476,7 +476,10 @@ the queue when the app opens. A new suggestion posts "¿Registrar…?"
 movimiento prefilled (`PendingDraft`, `SuggestionLaunch`) and Descartar
 dismisses it (`SuggestionActionReceiver`). The prominent disclosure sheet
 comes before Android's notification-access settings. A lock keeps the
-setup; signing out clears it.
+setup; signing out clears it. It only exists in debug and the Play
+`release` build: the web APK (`staging`) removes the service and hides the
+Ajustes row (`BuildConfig.NOTIFICATION_CAPTURE`), because Play Protect
+blocks sideloaded apps that can read notifications.
 
 Novedades and updates (`ui/screens/whatsnew/WhatsNew.kt`): after an update
 Inicio shows that version's Novedades once (`WhatsNewSheet`, a pager with a

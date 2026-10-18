@@ -75,7 +75,6 @@ import kotlinx.coroutines.launch
 @DrawableRes
 private fun imageFor(key: String, dark: Boolean): Int? = when (key) {
     "assistant" -> if (dark) R.drawable.whatsnew_assistant_dark else R.drawable.whatsnew_assistant_light
-    "suggestions" -> if (dark) R.drawable.whatsnew_suggestions_dark else R.drawable.whatsnew_suggestions_light
     "loans" -> if (dark) R.drawable.whatsnew_loans_dark else R.drawable.whatsnew_loans_light
     "reports" -> if (dark) R.drawable.whatsnew_reports_dark else R.drawable.whatsnew_reports_light
     "lock" -> if (dark) R.drawable.whatsnew_lock_dark else R.drawable.whatsnew_lock_light
