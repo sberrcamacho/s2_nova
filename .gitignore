@@ -12,6 +12,11 @@ logs/
 
 # Android
 android/local.properties
+# Google Play upload key and its passwords: never committed.
+android/keystore.properties
+android/keystore/
+*.jks
+*.keystore
 android/.gradle/
 android/**/build/
 android/.idea/

@@ -23,6 +23,14 @@ private val apiBaseUrl: String = localProperties.getProperty("API_BASE_URL", "ht
 // Sign-In is simply not offered until this is set in local.properties.
 private val googleWebClientId: String = localProperties.getProperty("GOOGLE_WEB_CLIENT_ID", "")
 
+// Google Play upload key (docs/RELEASE_ANDROID.md › Google Play):
+// android/keystore.properties (gitignored) with storeFile, storePassword,
+// keyAlias and keyPassword. Without it a release build is unsigned.
+private val keystoreProperties = Properties().apply {
+    val file = rootProject.file("keystore.properties")
+    if (file.exists()) FileInputStream(file).use { load(it) }
+}
+
 android {
     namespace = "com.s2nova.app"
     compileSdk = 36
@@ -31,8 +39,8 @@ android {
         applicationId = "com.s2nova.app"
         minSdk = 31
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.2.0"
 
         // 10.0.2.2 is the emulator's alias for the host machine's localhost —
         // reaches `backend/` running via `pnpm dev` on the dev machine.
@@ -42,10 +50,26 @@ android {
         buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleWebClientId\"")
     }
 
+    signingConfigs {
+        if (keystoreProperties.getProperty("storeFile") != null) {
+            create("upload") {
+                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
+        // What goes to Google Play (`./gradlew :app:bundleRelease`): shrunk
+        // by R8 and signed with the upload key; Play re-signs it with the
+        // app signing key.
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.findByName("upload")
         }
         // Optimized build for trying the app on a real phone: not
         // debuggable, shrunk by R8 and signed with the debug key so it
@@ -58,6 +82,19 @@ android {
             isShrinkResources = true
             signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += listOf("release")
+        }
+    }
+
+    // A Play build must talk to the deployed API over HTTPS and offer Google
+    // Sign-In, and be signed: fail early instead of uploading a broken one.
+    tasks.matching { it.name == "bundleRelease" || it.name == "assembleRelease" }.configureEach {
+        val url = apiBaseUrl
+        val clientId = googleWebClientId
+        val signed = keystoreProperties.getProperty("storeFile") != null
+        doFirst {
+            check(url.startsWith("https://")) { "API_BASE_URL must be the deployed HTTPS API for a release build (local.properties)." }
+            check(clientId.isNotBlank()) { "GOOGLE_WEB_CLIENT_ID must be set in local.properties for a release build." }
+            check(signed) { "android/keystore.properties is missing: see docs/RELEASE_ANDROID.md › Google Play." }
         }
     }
 

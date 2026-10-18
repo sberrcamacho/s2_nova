@@ -46,6 +46,7 @@ const ANDROID_APK_URL = 'https://github.com/sberrcamacho/s2_nova/releases/latest
 // https://sberrcamacho.github.io/s2_nova/privacy.html
 const PRIVACY_URL = `${import.meta.env.BASE_URL}privacy.html`
 const TERMS_URL = `${import.meta.env.BASE_URL}terms.html`
+const DELETE_ACCOUNT_URL = `${import.meta.env.BASE_URL}delete-account.html`
 
 const WEB_POINTS: { icon: LucideIcon; text: TranslationKey }[] = [
   { icon: BarChart3, text: 'landing.web.p1' },
@@ -466,6 +467,9 @@ export default function LandingPage() {
             </a>
             <a href={TERMS_URL} className="inline-flex min-h-8 items-center text-label font-medium text-ink-secondary underline-offset-4 hover:text-ink hover:underline">
               {t('auth.termsLink')}
+            </a>
+            <a href={DELETE_ACCOUNT_URL} className="inline-flex min-h-8 items-center text-label font-medium text-ink-secondary underline-offset-4 hover:text-ink hover:underline">
+              {t('aj.deleteAccount')}
             </a>
           </nav>
           <span>© {new Date().getFullYear()} S2 Nova · {t('brand.tagline')}</span>

@@ -13,11 +13,14 @@ Open `android/` as the project root in Android Studio, or from the CLI:
 ./gradlew assembleDebug       # build a debug APK
 ./gradlew installDebug        # build + install on a running emulator/device
 ./gradlew testDebugUnitTest   # JVM unit tests (docs/TESTING.md)
-./gradlew assembleStaging     # the optimized APK that is published
+./gradlew assembleStaging     # the optimized APK published on GitHub
+./gradlew bundleRelease       # the signed bundle for Google Play
 ```
 
-The published app is the `staging` build (R8, signed with the release
-machine's debug key); how to cut a release is in `docs/RELEASE_ANDROID.md`.
+The GitHub APK is the `staging` build (R8, signed with the release
+machine's debug key). The Play bundle is the `release` build, signed with
+the upload key in the gitignored `keystore.properties`. How to cut either
+is in `docs/RELEASE_ANDROID.md`.
 Every build except debug sets `FLAG_SECURE`, and so does debug unless
 `adb shell settings put global s2nova_allow_capture 1`, so screenshots
 for the visual loop come from a debug build.
