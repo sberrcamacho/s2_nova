@@ -86,8 +86,9 @@ can be reset through Play Console support, but that takes days.
 ### Signing and Google Sign-In
 
 Play App Signing re-signs the app with Google's **app signing key**. Google
-Sign-In checks the signature of the installed app, so the Android OAuth
-client in Google Cloud (package `com.s2nova.app`) must list:
+Sign-In checks the signature of the installed app. An Android OAuth client
+in Google Cloud holds one SHA-1, so there is one Android client (package
+`com.s2nova.app`) for each of these:
 
 - The **app signing key** SHA-1, from Play Console › Test and release ›
   App integrity. Builds installed from Play carry this one.
